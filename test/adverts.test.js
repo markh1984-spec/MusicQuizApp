@@ -154,3 +154,47 @@ test('deleting a set removes the file', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+/*
+ * AND THE PROJECTOR HAS TO REDRAW WHEN A SLIDE CHANGES.
+ *
+ * Rule 9 is explicit: an advert's words are looked up when a VIEW is built
+ * rather than copied into state, *"so correcting a price on a venue's slide
+ * changes the projector without taking it down and putting it back"*. The
+ * lookup did exactly that and the projector refused to redraw — the card key
+ * was `ad:${s.advert.heading}`, so a corrected price arrived on the wire and
+ * never reached the wall, and switching between two of a venue's slides that
+ * share a heading did nothing at all. The break rotation had the same fault
+ * wearing a count: `breakAdverts.length` is not identity either.
+ *
+ * A SOURCE CHECK, deliberately, and the reason is written up in `CLAUDE.md`:
+ * importing from a page's own module runs that page's boot code, and
+ * `screen.js` has a page. So what is pinned is the PATTERN — a card key over
+ * advert content is a fingerprint of the content, never one field of it —
+ * which is what would have caught this the first time and what catches the
+ * next card built the same way.
+ */
+test('THE PROJECTOR KEYS AN ADVERT ON WHAT IT SAYS, NEVER ON ONE FIELD', () => {
+  const src = fs.readFileSync(new URL('../public/assets/screen.js', import.meta.url), 'utf8')
+    // Comments stripped first: this repo has already had a guard go green
+    // because it matched the note explaining the fix rather than the code.
+    .replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
+
+  const registry = src.slice(src.indexOf('const cards = {'), src.indexOf('function draw('));
+  assert.ok(registry.includes('advert:'), 'the advert card has gone from the registry');
+
+  const keys = [...registry.matchAll(/key: \(s?\) => ([^,\n]+)/g)].map((m) => m[1]);
+  const advert = keys.find((k) => k.includes('ad:'));
+  const board = keys.find((k) => k.includes('board:'));
+
+  assert.match(String(advert), /fingerprint\(s\.advert\)/,
+    'the advert card must be keyed on the whole slide — a heading is not '
+    + 'identity, so a corrected price never reaches the projector');
+  assert.match(String(board), /fingerprint\(s\.breakAdverts\)/,
+    'the break rotation must be keyed on the slides themselves — a count is '
+    + 'not identity either');
+  // And the fingerprint has to be a whole-value comparison rather than a
+  // second way of naming one field.
+  assert.match(src, /const fingerprint = \(value\) => JSON\.stringify/,
+    'fingerprint() must compare the whole value');
+});

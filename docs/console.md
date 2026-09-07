@@ -1480,3 +1480,124 @@ including the `showWanted` this whole move exists to carry.
 `save-a-night.mjs` now saves a night and loads it back from the Workshop door.
 Saving and loading belong in one script because they are one round trip: a
 night that saves and cannot be got back is not saved.
+
+## The console's polish pass, 25 August 2026 — in full
+
+Kept whole here when `CLAUDE.md` was trimmed to the rules: every measurement,
+every report in the host's own words, and the two attempts that were tried
+and turned down. The rules themselves stay in `CLAUDE.md` verbatim.
+
+- **THE CONSOLE'S TOPBAR IS A GRID ITEM, AND A GRID ITEM DEFAULTS TO
+  `min-width: auto` TOO.** Reported as *"UI issue"* off a screenshot with both
+  ends cut off. `.topbar` sits in `.wrap`, which is `overflow-x: hidden`, so a
+  bar that refuses to shrink below its own max-content is **CLIPPED with no
+  scrollbar to reach it** — with a game running at ~960px it came out 1128px
+  wide and **the tier rungs were off the side of the screen**. `min-width: 0`
+  on the BAR is what makes the existing `min-width: 0` on `#whoami` and
+  `#runningNow` do anything. **The rule was applied one level too deep**, and
+  the projector's own topbar has had `.screen .topbar > *` since a long pack
+  name stacked it to four lines. Third sighting of `min-width: auto` here —
+  `.option`, the `minmax(0, 1fr)` content column, and this. **A clipped
+  overflow is worse than a scrolling one**: nothing throws and the control is
+  simply unreachable.
+- **…AND CONSTRAINING IT MOVED THE OVERFLOW ONTO THE MENU.** The next
+  screenshot came back *"what happened to the other menu?"* with the Community
+  chip cut down the middle: `.topnav` is `flex: 1 1 auto` with a deliberately
+  invisible `overflow-x`, so once the bar could shrink, the MENU was what gave
+  way — 376px of the 519px it needs at 1000px, and **My account simply was not
+  there**. **A door you cannot see is a door that does not exist.** **A fix
+  that relieves pressure has to be followed to wherever the pressure went**;
+  the first half was right and finished nothing.
+- **THE DIET HAS NO UPPER BOUND, BECAUSE `.console .wrap` CAPS THE BAR AT
+  1180px.** Reported as *"the menu at the top is fucked AGAIN"*: the diet was
+  `@media (max-width: 1179px)`, which measures the WINDOW — but the bar is
+  ~1148px wide at every window width there is, so a 1900px laptop gets the same
+  bar as a 1200px one and the diet switched OFF exactly where the bar still
+  needed it. With a night running the owner's header wrapped to two rows at
+  **every desktop size**. **A media query on the window is the wrong tool the
+  moment a CONTAINER caps the thing you are protecting.**
+- **AND `#runningNow` IS WHY NOTHING SAW IT: `aNightIsOn()` IS FALSE FOR AN
+  EMPTY LOBBY.** `console-frame.mjs` launched a quiz and let nobody join, so it
+  measured a bar **230px narrower than the one the host drives**. **A guard
+  that sets a night up but never lets anybody in is measuring a console nobody
+  uses** — it joins two phones now and asserts the line is there first.
+- **WHAT IS PLAYING NOW IS WORDED IN ONE PLACE — `nowPlaying()`.** Asked for:
+  *"can we make it so what is displayed as 'playing now' is all read from the
+  same place so its never drifting?"* There were THREE, one fact and three
+  sentences. **The SHORT form is a different job, not
+  an abbreviation**: the bar says *something is on and how many are in* from
+  any door, and the TITLE stays in the panel, which is also the 222px the
+  capped bar could not afford. **Under 1050px the live line stands down** — it
+  is the only thing in that bar that is a summary of something else on screen,
+  so it is the only thing that may go; a door that is not there is a door that
+  does not exist.
+- **THE BAR GOES ON A DIET BELOW 1180px; WRAPPING IS ONLY THE FALLBACK.**
+  *"The menu items all need to sit at the top."* Two rows read as a second bar
+  and, under the fixed frame, every row the header takes comes off the tab
+  column below it. So the **wordmark goes and the mark stays** — the trade the
+  control view already makes on a phone — plus tighter gaps, padding and door
+  chips. **Scoped with `:has(.hat-switch)` to the OWNER's bar**, the only one
+  carrying the switch and the rungs' 326px: nobody else was ever close, and
+  putting an ordinary quizmaster's wordmark on a diet for a problem they do not
+  have is how a fix for one account lands on everybody.
+- **THE FIXED FRAME NEEDS A MINIMUM HEIGHT, AND THAT IS THE SAME ARGUMENT AS
+  THE WIDTH.** *"The sub menu is still missing from the console."* The frame is
+  off under 900px because the header would be most of a phone screen — a
+  statement about ROOM, and height was never asked. On a 476px-tall window the
+  bay alone is 425, so `.consolecols` was handed **zero height** inside a
+  `.wrap` that is `overflow: hidden`: the tab column and the whole pack shelf
+  sat 592px down a 515px frame. **`@media (min-width: 900px) and
+  (min-height: 700px)`** — 73 for the topbar, 425 for the bay, 200 for a
+  readable tab column — and under it the console SCROLLS, exactly as it does
+  under 900px of width. **LETTING THE BAY SHRINK INSTEAD WAS TRIED AND IS
+  WORSE**: the Console's bay IS the launch bar, which deliberately has no
+  `--bay-h`, so the doorhead shrank and the bar did not and it **painted over
+  the tab column** — measured 200px tall at y=315 and invisible. **The numbers
+  said fixed and the render said broken**, which is this file's oldest trap and
+  why the screenshot is the check.
+- **AND THE FRAME'S MINIMUM HEIGHT IS TWO NUMBERS, BECAUSE THE DOORHEAD IS TWO
+  HEIGHTS.** 700 was 73 + 425 + 200 and was worked out from an **IDLE** launch
+  bar. Measured with a night actually running, the doorhead is **573px at
+  1150px and up and 636-690px below it** — so the frame pinned itself at
+  heights it could not honour and handed `.consolecols` **0-134px**, with the
+  tab column off the bottom and nothing able to reach it. It is
+  `(min-width: 1150px) and (min-height: 850px), (min-width: 900px) and
+  (min-height: 965px)` now, from the measurement. **Do not collapse it to one
+  number**: one either takes the frame off a 1500x900 laptop that fits it, or
+  keeps it at 960x760 where it does not. **A 720p laptop scrolls now and that
+  is correct** — 73 + 549 + 200 does not fit in 720, and it only ever "fitted"
+  by hiding the tabs.
+- **AND THE EQUAL-BAY RULE ONLY EXISTS BECAUSE OF THE FRAME**, so
+  `community-bay.mjs` checks it only where the frame is on. Its own reason is
+  that a bay which changes height moves the tab column and everything under
+  it — a fact about a PINNED page. Where the console scrolls, a taller bay
+  just makes a longer page, exactly as under 900px where there is no rule.
+  **Both scripts carry the frame's two numbers; if they move, they move
+  together** — a guard holding a stale threshold reports the app broken when it
+  is the check that is out of date.
+- **TWO COLUMNS IS A WIDTH DECISION; THE PINNED FRAME IS A HEIGHT ONE.** They
+  were in one media query, so gating it on height took the SIDEBAR away too —
+  the tabs went full width above the shelf, which pushed the pack cards down
+  the page and put a wall of tab between them and the drop slots: *"the submenu
+  was meant to allow for the content to be dragged to the launch bar, at the
+  moment it takes up the full width of the page and is in the way of this
+  functionality."* **THE DRAG IS WHAT THE LAYOUT IS FOR**, so the 190px rail
+  holds at every height and only the pinning goes. **A media query is two
+  decisions the moment it names two axes** — split it, or a fix on one axis
+  silently removes something that was never about that axis.
+- **`main` IS A FLEX COLUMN — never give it a row template.** Its
+  `auto minmax(0,1fr)` grid assumed exactly two children, so ANY banner above
+  the doorhead (the no-accounts maker, Workshop's backup warning) pushed the
+  doorhead into the `1fr` row — STRETCHED, ~160px of nothing under the launch
+  bar — and dropped the columns into an implicit row, quietly turning the
+  fixed frame back into a scrolling page. Flex takes any number of banners;
+  only `.consolecols` grows.
+- **THE SHELF IS SIX ACROSS, BY DECISION — it mirrors the six bays above it.**
+  What made the 146px poster hold its content was never width: the meta's
+  two-line clamp, dropping the "· N rounds" that duplicated the round squares,
+  and the title getting back 44px a stale pin-clearance rule stole. **Do not
+  "fix" a squeezed card by dropping a column.**
+- **THE FINISH LAYER at the foot of `style.css` owns selection, caret,
+  `:focus-visible` and the card hover** — one named block, so the next control
+  gets finished there rather than growing scattered rules. `::selection` follows
+  `--hot` (rgba fallback first); reduced-motion keeps the border, drops the lift.

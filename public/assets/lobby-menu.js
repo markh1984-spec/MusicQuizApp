@@ -99,15 +99,31 @@ export function arcadeCard(s) {
    * are, which is the part somebody needs before deciding to tap.
    */
   const many = choices.length > 1;
+  /*
+   * THE BIG SCREEN IS ONLY PROMISED WHERE THE BOARD ACTUALLY DRAWS.
+   *
+   * The board is deliberately LOBBY-ONLY — it lives inside the white QR panel,
+   * and a round board already carries the board the room looked up for. When
+   * the game was generalised from "the lobby" to "a break that offers a game",
+   * the three guards changed subject with it and this sentence did not: at a
+   * break between rounds sixty phones were told *"Top scores go on the big
+   * screen"* and the scores went nowhere anybody could see.
+   *
+   * So at a break it says how many games there are and nothing else — the
+   * *clarity beats everything* rule read the other way round: a line the app
+   * cannot keep is worse than no line.
+   */
+  const onTheScreen = s.phase === 'lobby';
+  const sub = many
+    ? `${choices.length} to choose from${onTheScreen ? ' — top scores go on the big screen' : ''}`
+    : (onTheScreen ? 'Top scores go on the big screen' : 'A quick game while you wait');
   return `
     <div class="arcade" ${s.gameSeed ? '' : 'hidden'}>
       <button class="wait-item arcade-open" type="button">
         <span class="wait-item-icon" aria-hidden="true">🕹️</span>
         <span class="wait-item-what">
           <b>${many ? 'Play a game' : `Play ${game.name}`}</b>
-          <span class="tiny">${many
-            ? `${choices.length} to choose from — top scores go on the big screen`
-            : 'Top scores go on the big screen'}</span>
+          <span class="tiny">${sub}</span>
         </span>
       </button>
       <div class="arcade-box" hidden>

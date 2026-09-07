@@ -36,17 +36,53 @@ const SRC = consoleSource();
  */
 const BUILDERS = ['function gameSection(', 'function launchBar(', 'function packCard('];
 
+/**
+ * THE WHOLE FUNCTION, by matching its braces — not "up to the first DOM
+ * query".
+ *
+ * That was the window this test used, and it stopped at the first
+ * `querySelector` after the function's name. `gameSection()` is 14,485
+ * characters and the first query lands at 4,974, so **~9,500 characters of the
+ * pack shelf were never counted** — and `launchBar()` was checked for 21,151
+ * of its 155,851. An unbalanced `<div>` past that point passes all three
+ * markup guards and does exactly what this file's own header describes: the
+ * section closes early, every later panel becomes a sibling, and the first
+ * query for one of them returns null.
+ *
+ * A window drawn at "where the template probably ends" is a window that moves
+ * every time somebody queries the DOM a little earlier.
+ *
+ * **If a legitimate fragment ever fails this — a helper inside one of these
+ * three returning an unclosed wrapper — extract it into its own function
+ * rather than adding an exception.** A test that needs a growing list of
+ * exceptions has stopped being a test, which is the reason the whole-FILE
+ * version of this check was turned down.
+ */
+function functionBody(src, start) {
+  const at = src.indexOf(start);
+  if (at < 0) return null;
+  let depth = 0;
+  for (let i = src.indexOf('{', at); i < src.length; i += 1) {
+    if (src[i] === '{') depth += 1;
+    else if (src[i] === '}') {
+      depth -= 1;
+      if (!depth) return src.slice(at, i);
+    }
+  }
+  return src.slice(at);
+}
+
 for (const start of BUILDERS) {
   const name = start.replace('function ', '').replace('(', '');
   test(`${name}() builds balanced markup`, () => {
-    const at = SRC.indexOf(start);
-    assert.ok(at > 0, `${name}() has gone`);
-    // The markup is everything up to the first DOM query — past that it is
-    // wiring rather than template.
-    const until = SRC.indexOf('querySelector', at);
-    const chunk = SRC.slice(at, until > at ? until : at + 6000)
-      // Comments carry example markup and prose arrows; they are not tags.
-      .replace(/<!--[\s\S]*?-->/g, '');
+    const body = functionBody(SRC, start);
+    assert.ok(body, `${name}() has gone`);
+    const chunk = body
+      // Comments carry example markup and prose arrows; they are not tags —
+      // both kinds, since a JS comment inside the wiring can name one too.
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .replace(/^\s*\/\/.*$/gm, ' ');
     const opened = (chunk.match(/<div\b/g) || []).length;
     const closed = (chunk.match(/<\/div>/g) || []).length;
     assert.equal(closed, opened,

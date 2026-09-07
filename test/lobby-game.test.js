@@ -20,6 +20,7 @@ import assert from 'node:assert/strict';
 import { Engine } from '../src/engine.js';
 import { MAZE, COLS, ROWS, pellets, reachable, startPoints, open, stepToward, turnFrom } from '../public/assets/maze.js';
 import { lobbyGamesFor } from '../public/assets/lobby-games.js';
+import { arcadeCard } from '../public/assets/lobby-menu.js';
 import { arcadeFields } from '../src/arcade.js';
 import { readFileSync } from 'node:fs';
 
@@ -462,4 +463,38 @@ test('THE QUIET LAUNCH CARRIES THE WHOLE NIGHT — tapping a pack is a launch to
     'the quiet launch, doLaunch and doLaunchOrder all send a night, so all '
     + 'three spread nightOpts() — a fourth caller writing its own list is how '
     + 'this came back the first time');
+});
+
+test('THE BIG SCREEN IS ONLY PROMISED WHERE THE BOARD ACTUALLY DRAWS', () => {
+  /*
+   * The board is deliberately LOBBY-ONLY: it draws inside the white QR panel,
+   * and a round board already carries the board the room looked up for. When
+   * the game was generalised from "the lobby" to "a break that offers a game",
+   * the three guards changed subject with it and the phone's sentence did not
+   * — so at a break between rounds sixty phones read *"Top scores go on the
+   * big screen"* and the scores went nowhere anybody could see.
+   *
+   * The lobby's own wording is asserted byte for byte, because that half is
+   * true and must not drift while the other half is being fixed.
+   */
+  const sub = (card) => /<span class="tiny">([^<]*)/.exec(card)[1].trim();
+  const lobby = { gameSeed: 7, game: 'quiz', phase: 'lobby', lobbySound: true };
+
+  assert.equal(sub(arcadeCard(lobby)), 'Top scores go on the big screen');
+  assert.equal(sub(arcadeCard({ ...lobby, lobbyGames: ['maze', 'rally'] })),
+    '2 to choose from — top scores go on the big screen');
+
+  for (const phase of ['round_board', 'question', 'final']) {
+    const card = arcadeCard({ ...lobby, phase });
+    assert.doesNotMatch(card, /big screen/,
+      `a ${phase} break must not promise the room a board it will not draw`);
+    assert.doesNotMatch(arcadeCard({ ...lobby, phase, lobbyGames: ['maze', 'rally'] }),
+      /big screen/, `and not with a choice of games either (${phase})`);
+  }
+  // It still says something — a blank line under a button is a control that
+  // failed to load, which is the rule the 📵 dial already records.
+  assert.equal(sub(arcadeCard({ ...lobby, phase: 'round_board' })),
+    'A quick game while you wait');
+  assert.equal(sub(arcadeCard({ ...lobby, phase: 'round_board', lobbyGames: ['maze', 'rally'] })),
+    '2 to choose from');
 });

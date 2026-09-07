@@ -41,6 +41,21 @@ let joinUrl = '';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
+/**
+ * WHAT A CARD IS ABOUT TO DRAW, AS ONE COMPARABLE STRING.
+ *
+ * A card key exists to be STABLE — the card is built once and refreshed in
+ * place, or the projector flashes every time a phone pings. That makes a key
+ * naming one field a trap: everything else about the card can change on the
+ * wire and the screen will never notice. Both sightings so far were adverts,
+ * where the thing that silently failed to update is what a venue is paying
+ * for.
+ *
+ * The server builds these objects from a literal, so key order is stable and
+ * an unchanged push stringifies identically.
+ */
+const fingerprint = (value) => JSON.stringify(value ?? null);
+
 // --------------------------------------------------------------- card registry
 
 const cards = {
@@ -51,7 +66,24 @@ const cards = {
   // every state push and flash the projector every time anybody's phone
   // pinged.
   scoreboard: { key: () => 'scores', render: renderScoreboard, update: updateScoreboard },
-  advert: { key: (s) => `ad:${s.advert && s.advert.heading}`, render: renderAdvert },
+  /*
+   * KEYED ON WHAT IT SAYS, NOT ON ITS HEADING.
+   *
+   * Rule 9 is explicit that an advert's words are looked up when a VIEW is
+   * built rather than copied into state, *"so correcting a price on a venue's
+   * slide changes the projector without taking it down and putting it back"*.
+   * The lookup did exactly that and the projector then refused to redraw: the
+   * key was the heading alone, so a corrected price arrived on the wire and
+   * never reached the wall, and switching between two of a venue's slides
+   * that happen to share a heading did nothing at all — with a paying
+   * advertiser on the other end of both.
+   *
+   * A fingerprint of the whole slide is the identity. An unchanged push
+   * stringifies to the same thing, so the card is still built once and left
+   * alone, which is what stops the projector flashing every time a phone
+   * pings.
+   */
+  advert: { key: (s) => `ad:${fingerprint(s.advert)}`, render: renderAdvert },
   photos: { key: () => 'photos', render: renderPhotosSlide },
   round_intro: { key: (s) => `intro:${s.roundIndex}`, render: renderRoundIntro },
   question: { key: (s) => `q:${s.roundIndex}:${s.questionIndex}`, render: renderQuestion, update: updateQuestion },
@@ -64,7 +96,10 @@ const cards = {
    * `board:2` alone would never notice.
    */
   round_board: {
-    key: (s) => `board:${s.roundIndex}:${Array.isArray(s.leaderboard) ? 1 : 0}:${(s.breakAdverts || []).length}`,
+    // The slides themselves, not how MANY there are — a count is not identity,
+    // so a price corrected on one of a venue's three slides changed nothing
+    // here for the same reason it changed nothing on the advert card above.
+    key: (s) => `board:${s.roundIndex}:${Array.isArray(s.leaderboard) ? 1 : 0}:${fingerprint(s.breakAdverts)}`,
     render: renderBoard,
   },
   final: { key: () => 'final', render: renderWinner },
