@@ -1221,6 +1221,42 @@ export class Session {
       this.engine.state.archivedAs = prevState.archivedAs;
     }
     /*
+     * AND EVERY VOUCHER ALREADY IN SOMEBODY'S HAND COMES WITH IT.
+     *
+     * A bingo interlude mints its vouchers the instant a prize is claimed, and
+     * `startOrderSegment()` builds a FRESH engine — so pressing *Continue to
+     * the quiz* destroyed them. Measured over real HTTP: the line winner's
+     * code answered 200 from `/api/voucher` before the press and **404 "That
+     * code is not a voucher here"** after it; redeeming at the bar failed the
+     * same way, and the host's own voucher panel came back empty. Worst on the
+     * sharpest press, because the primary button advances automatically the
+     * moment the last bingo prize is claimed — and its confirm says *"Nobody's
+     * scores or cards are lost."*
+     *
+     * It is also why the interlude's prize never reached Past gigs: the
+     * archive reads `results().vouchers` off the LAST part's engine, which had
+     * never seen them. This is the live complaint already in `CLAUDE.md` —
+     * *"my quiz and bingo winners on thursday didn't receive a QR code"* —
+     * arriving again by a different route.
+     *
+     * **MARKED `carried`, and that flag is load-bearing.** `issueVouchers()`
+     * refuses to pay anybody already holding one, which is how `Back` off the
+     * final and forward again does not mint a second code — right within a
+     * part, and wrong across one: the person who won the bingo line is still
+     * entitled to win the quiz. So the idempotency check looks at THIS part's
+     * vouchers only, while the lookup, the redeem, the host panel and the
+     * archive see all of them.
+     *
+     * `prizeWinners` deliberately does NOT carry. It is a fact about one bingo
+     * ROUND — `stageIndex` starts again at 0 in a new part, so a carried list
+     * would make `stageTaken()` true for a prize nobody has played for yet.
+     */
+    if (prevState && prevState.vouchers && Object.keys(prevState.vouchers).length) {
+      const kept = {};
+      for (const [code, v] of Object.entries(prevState.vouchers)) kept[code] = { ...v, carried: true };
+      this.engine.state.vouchers = { ...this.engine.state.vouchers, ...kept };
+    }
+    /*
      * THE TEAMS GO ON BEFORE ANYBODY IS SEEDED, and that ordering is the whole
      * fix rather than an implementation detail: `join()` deals a random-mode
      * player into a team the moment it is called, so seeding first would deal

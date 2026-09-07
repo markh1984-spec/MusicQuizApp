@@ -222,10 +222,33 @@ test('quiz -> bingo -> quiz: the same team keeps its identity and its score acro
     it.session.engine.answer({ playerId: id, optionIndex: 0 });
     it.session.engine.next(); // QUESTION -> REVEAL
     it.session.engine.next(); // REVEAL -> ROUND_BOARD
-    assert.equal(Object.keys(it.session.engine.state.vouchers || {}).length, 0, 'a fresh quiz engine holds no vouchers yet');
+    /*
+     * THE BINGO PRIZE IS STILL IN SOMEBODY'S HAND — and this assertion is
+     * REVERSED, deliberately.
+     *
+     * It used to read *"a fresh quiz engine holds no vouchers yet"*, which was
+     * true and was the bug: the interlude's voucher answered 200 from
+     * `/api/voucher` before *Continue to the quiz* and 404 after it, the bar
+     * could not redeem it, the host's panel was empty, and the prize never
+     * reached the filed night. The old line was pinning the loss.
+     *
+     * What has NOT changed is the half it was really guarding: the QUIZ's own
+     * prize is still minted at the true end and nowhere else. It is asserted
+     * below by counting the ones that are not carried.
+     */
+    const beforeTheEnd = Object.values(it.session.engine.state.vouchers || {});
+    assert.equal(beforeTheEnd.length, 1, "the bingo interlude's voucher was destroyed by the part boundary");
+    assert.equal(beforeTheEnd[0].carried, true, 'and it has to be marked, or it blocks the quiz from paying out');
+    assert.equal(beforeTheEnd.filter((v) => !v.carried).length, 0, 'no quiz prize before the final');
+
     it.session.engine.next(); // ROUND_BOARD -> FINAL, the real end of the night
     assert.equal(it.session.engine.state.phase, 'final');
-    assert.equal(Object.keys(it.session.engine.state.vouchers).length, 1, 'the quiz prize was not given out at the true end');
+    const atTheEnd = Object.values(it.session.engine.state.vouchers);
+    assert.equal(atTheEnd.filter((v) => !v.carried).length, 1, 'the quiz prize was not given out at the true end');
+    assert.equal(atTheEnd.length, 2, 'and the bingo one is still live at the bar');
+    // The same person won both, which is exactly the case the `carried` flag
+    // exists for: the old idempotency check would have refused the second.
+    assert.equal(new Set(atTheEnd.map((v) => v.winnerId)).size, 1);
   } finally {
     it.done();
   }

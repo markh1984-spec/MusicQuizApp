@@ -68,17 +68,39 @@ export function bingoActions(s, act, minor) {
     if (confirm('New cards for everyone and nothing called. Carry on?')) act('newRound');
   }));
   out.push(minor('Console', () => { location.href = '/console' + location.search; }));
-  // A deliberate way to move on EARLY — before the last configured prize is
-  // won — without it being mistaken for ending the whole night. "Finish"
-  // below still does that, unchanged, for the host who genuinely wants to
-  // stop here rather than carry on to the next part.
-  if (continuing) {
+  /*
+   * A DELIBERATE WAY TO MOVE ON EARLY — before the last configured prize is
+   * won — without it being mistaken for ending the whole night.
+   *
+   * **And only while the primary is not already offering it.** At the last
+   * stage with a win on the board the big button says *"Continue to the
+   * quiz"* and this one said *"Continue to the quiz now"* three inches below
+   * it: two controls, one word apart, both calling `advanceOrder`. That is the
+   * label collision this repo keeps recording — and here it is not even two
+   * things sharing a word, it is one thing drawn twice. `earlyExit` is what is
+   * left: the case this button was actually built for.
+   */
+  const earlyExit = continuing && !(s.win && stage.last);
+  if (earlyExit) {
     out.push(minor(`Continue to ${continueWord} now`, () => {
       if (confirm(`Move on to ${continueWord} now? Nobody's scores or cards are lost.`)) act('advanceOrder');
     }));
   }
+  /*
+   * FINISH STAYS — it is a deliberate escape hatch and `CLAUDE.md` says so.
+   * What it must not be is silent about what it costs: pressing it mid-order
+   * files the evening on the BINGO's results and leaves the rest of the night
+   * out of Past gigs, the league and the landlord's report. The quiz hides its
+   * own Stop mid-order because that confirm promised Back would undo it and
+   * Back does not undo an archive; this one has no such promise to break, so
+   * the honest fix is to say what happens rather than to take the hatch away.
+   */
   out.push(minor('Finish', () => {
-    if (confirm('End the game and save the result?')) act('finish');
+    const question = continuing
+      ? `End the whole night here? ${continueWord === 'the quiz' ? 'The quiz' : 'The bingo'} still to come `
+        + 'will not be played, and tonight is filed on the bingo alone.'
+      : 'End the game and save the result?';
+    if (confirm(question)) act('finish');
   }, true));
 
   return out;
@@ -171,13 +193,18 @@ function claimsPanel(s) {
             <span class="nm">${esc(c.name)}</span>
             <span class="sc" style="color:${c.valid ? 'var(--good)' : 'var(--bad)'}">${
   /*
-   * THREE OUTCOMES, NOT TWO — a correct call that took no prize has to be
-   * told apart from both. The room heard the shout and is looking at the
-   * host, so "GOOD" alone would have them handing over a prize that went
-   * elsewhere, and "false alarm" would call a right answer wrong. See the
-   * one-prize-each rule in `bingo.js`.
+   * FOUR OUTCOMES, NOT TWO — a correct call that took no prize has to be told
+   * apart from both. The room heard the shout and is looking at the host, so
+   * "GOOD" alone would have them handing over a prize that went elsewhere, and
+   * "false alarm" would call a right answer wrong. See the one-prize-each rule
+   * in `bingo.js`.
+   *
+   * And the two kinds of "took no prize" are different sentences, because one
+   * is about the PLAYER and the other is about the CLOCK: "had one" is a fact
+   * about them and is simply untrue of somebody beaten to a stage by a beat.
    */
-  c.standDown ? 'GOOD — had one' : (c.valid ? 'GOOD' : 'false alarm')}</span>
+  c.tooLate ? 'GOOD — just missed it'
+    : (c.standDown ? 'GOOD — had one' : (c.valid ? 'GOOD' : 'false alarm'))}</span>
           </div>`).join('')}
       </div>
     </div>`);

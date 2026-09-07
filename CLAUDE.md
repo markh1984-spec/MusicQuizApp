@@ -2231,37 +2231,27 @@ for each."* One winner draws no podium and issues one voucher.
 bingo winners on thursday didn't receive a QR code"*.
 
 - **PRIZES ARE READ OFF THE VENUE RECORD AT LAUNCH AND NOWHERE ELSE.** A night
-  with no venue picked has none, mints no voucher, and the winner's phone is
-  simply blank at the end — which reads as the app being broken rather than as
-  a setting nobody filled in. **The warning now names the CONSEQUENCE and
-  draws with no venue too**: it began `if (!name) return null`, switched off in
-  precisely the case it was for.
+  with no venue picked mints no voucher and the winner's phone is simply blank
+  at the end, which reads as the app being broken. **The warning names the
+  CONSEQUENCE and draws with no venue too**: it began `if (!name) return null`,
+  switched off in precisely the case it was for.
 - **SO PRESSING *Prizes* AFTERWARDS PAYS ANYBODY ALREADY OWED.** Both engines
   said the change "takes effect for the NEXT prize onwards", which was true and
-  was the bug — the obvious thing a host does about a blank phone did nothing
-  at all, for ever. **Both catch-ups are IDEMPOTENT** (`issueVouchers()` skips
-  a winner already holding one, `drawLuckyDip()` returns on `s.luckyDip`),
-  which is what makes replaying them safe rather than a second live code in one
-  hand.
+  was the bug: the obvious thing a host does about a blank phone did nothing at
+  all, for ever. **Both catch-ups are IDEMPOTENT**, which is what makes
+  replaying them safe rather than a second live code in one hand.
 - **BINGO KEYS ON THE WIN'S OWN TIMESTAMP, NEVER THE STAGE ALONE** —
   `newRound()` clears `prizeWinners` and deliberately does NOT clear
-  `vouchers`, so a guard asking only *"is stage 1 paid"* refuses round two's
-  line winner.
+  `vouchers`, so *"is stage 1 paid"* alone refuses round two's line winner.
 - **THE CARD SHAPE CHOOSES THE PRIZE COUNT, AND IT IS A NUMBER PER SHAPE
-  RATHER THAN A FORMULA.** `defaultPrizes()` / the `prizes` field on
-  `CARD_SHAPES`: 3x3 → 1, 4x4 → 2, 5x5 → 5, 4x6 → 4, 3x8 → 3. **It WAS a
-  formula for one commit and that was wrong** — the first three named were each
-  exactly `maxPrizes()`, so "the most that card can carry" looked like the one
-  rule behind them, and then *"3 x 3 should give one prize for a full house and
-  4 x 4 should give 2"* arrived, where the maximum is five. A 3x3 stopped four
-  times before a full house is over before the room has settled. **The table
-  lives BESIDE the shape, never in the console** — like `plans` and `minimum`,
+  RATHER THAN A FORMULA** — `defaultPrizes()`: 3x3 → 1, 4x4 → 2, 5x5 → 5,
+  4x6 → 4, 3x8 → 3. **The table lives BESIDE the shape, never in the console**,
   so a sixth shape must name its own default in the line that adds it rather
   than inherit an answer nobody chose. **Clamped**, so it can never promise a
-  prize the geometry cannot pay. It also ended a disagreement with the launch —
-  the picker showed one prize while a falsy count launched the pack's own two —
-  and **the picker CLAMPS too**, or a count carried onto a smaller card names an
-  option that no longer exists and the select goes silently blank.
+  prize the geometry cannot pay — and **the picker CLAMPS too**, or a count
+  carried onto a smaller card names an option that no longer exists and the
+  select goes silently blank. Why it is not a formula:
+  **[`docs/bingo.md`](docs/bingo.md)**.
 
 ### ONE PRIZE EACH PER BINGO ROUND, WHILE ANYBODY IS STILL WITHOUT ONE
 
@@ -2270,47 +2260,57 @@ bingo winners on thursday didn't receive a QR code"*.
 music bingo prizes yesterday… it looks really bad on me if one guy wins all
 the prizes."*
 
-- **IT IS THE SHAPE OF THE GAME, NOT LUCK.** The best card wins the line and
-  is then nearest to two lines and nearest to the house, so **whoever takes
-  the first prize is the favourite for every prize after it.**
+- **IT IS THE SHAPE OF THE GAME, NOT LUCK.** The best card wins the line and is
+  then nearest to two lines and nearest to the house, so **whoever takes the
+  first prize is the favourite for every prize after it.**
 - **THE CLAIM IS STILL RIGHT AND IS RECORDED AS RIGHT** — no false call, no
-  telling-off. The prize passes to somebody who has not had one. **A room that
-  hears a shout and sees the app call it a mistake is worse than the problem
-  this fixes**, so the control view has THREE outcomes rather than two.
-- **AND NO SENTENCE ON A PHONE MAY SAY "you have already won".** Asked for in
-  those words, and the first build was reverted off the live app for it. **The
-  wording is about the PRIZE, never about the person** — the button says
-  *"Playing on"* and a forced press says *"Correct — that one has gone"*. Same
-  fact; the difference is whether the app is describing the night or telling
-  somebody off for winning. The `yourPrizes` line already prints what they
-  hold, so the button repeating it was the app saying it twice.
-- **THE CARDS CANNOT DO THIS ON THEIR OWN, and that was asked for twice** —
-  *"I want the cards to be produced with different winners at source."* A card
-  is dealt at JOIN and who wins is decided by **the order the host plays the
-  tracks in**, which the app never sees. **What IS in the cards is the real
-  cause**: the stages are NESTED — a line ⊂ 2 lines ⊂ 3 lines ⊂ a full house —
-  so the first winner already holds part of every prize after it. Measured over
-  400 simulated rounds at 60 players: somebody wins 2+ of 4 in **100%** of
-  rounds as it stands, 3+ in 19%. **Disjoint patterns** (rows 1-2, 3-4, 5-6,
-  house) take that to **11%** with no rig at all, and **two rounds of two
-  prizes** to 15% with no code at all. Both were offered and the rig was chosen
-  — *"just rig it that way bro, it's meant to be a bit of fun and it's not fun
-  if one person wins everything."* Keep the numbers here: the next session to
-  wonder whether dealing could do it should read them rather than re-derive
-  them.
-- **IT LIFTS THE MOMENT EVERYBODY HAS ONE**, which is what stops a small room
-  stalling — four prizes and three players, and the fourth is open again. **The
-  test is "is anybody left without", never a count of prizes**, so it holds at
-  any room size. Removing that valve breaks two tests that predate it.
-- **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert — one
-  vanishing at the exact moment somebody has just won reads as the app
-  breaking.
+  telling-off, so the control view has THREE outcomes rather than two. **AND NO
+  SENTENCE ON A PHONE MAY SAY "you have already won"** — asked for in those
+  words, and the first build was reverted off the live app for it. **The
+  wording is about the PRIZE, never about the person.**
+- **THE CARDS CANNOT DO THIS ON THEIR OWN, and that was asked for twice.** A
+  card is dealt at JOIN and who wins is decided by **the order the host plays
+  the tracks in**, which the app never sees; the stages are NESTED, so the
+  first winner already holds part of every prize after it. The measurements and
+  the two alternatives that were offered are in `docs/bingo.md` — **read them
+  before re-proposing dealing as the fix.**
+- **IT LIFTS THE MOMENT EVERYBODY HAS ONE.** **The test is "is anybody left
+  without", never a count of prizes**, so it holds at any room size.
+- **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert.
 - **NO SETTING.** A venue wanting one person to take the lot is not a thing
-  anybody has asked for, and it is one line to invert if it ever is.
+  anybody has asked for; it is one line to invert if it ever is.
+- **AND A STAGE CAN ONLY BE TAKEN ONCE — `stageTaken()`, checked BEFORE
+  anything is recorded.** A second GENUINE line a beat later — the ordinary
+  thing that happens in a pub — stopped the second voucher and let everything
+  after it run: **the projector changed the winner's name while the prize
+  stayed with the first**, and `results()` filed BOTH into Past gigs and the
+  landlord's report. **The button stands down for EVERYBODY** while a prize is
+  taken. **`tooLate` is a separate flag**: the host's list says *"just missed
+  it"*, because *"had one"* is a fact about the player and is untrue here.
+- **AND THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE.**
+  `hasMarkedPattern()` asked for one line whatever the prize needed, so on the
+  5x5/five-prize settings every 40-track pack ships with, **every phone lit up
+  the moment one line landed** — 223.9 false calls a round at sixty players,
+  each recorded against the player who made it. It is `evaluate()`'s shape on
+  MARKS; **the two may not disagree about what the prize IS.**
+- **AND A VOUCHER SURVIVES A PART BOUNDARY — `carried` in
+  `startOrderSegment()`.** *Continue to the quiz* built a fresh engine and
+  destroyed them: 200 from `/api/voucher` before the press, **404 after** — the
+  live *"my bingo winners didn't receive a QR code"* complaint by another
+  route. **The flag is load-bearing**: the idempotency check sees THIS part's
+  only, while the lookup, the redeem, the host panel and the archive see all of
+  them. **`prizeWinners` does NOT carry** — `stageIndex` restarts, so a carried
+  list makes `stageTaken()` true for a prize nobody has played for.
+- **`Continue to the quiz` IS DRAWN ONCE**, and **bingo's `Finish` STAYS AND
+  SAYS WHAT IT COSTS** — it is a deliberate escape hatch, so it is not hidden
+  the way the quiz's *Stop* is — but its confirm names what filing on the bingo
+  alone leaves out.
 - **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS — it reads `quizzes/`
-  only and never loads a bingo pack.** IDENTICAL on a bingo change is the
-  guard answering confidently about something it is not looking at, which is
-  this repo's oldest trap. Drive two real phones instead.
+  only.** IDENTICAL on a bingo change is the guard answering confidently about
+  something it is not looking at. `node scripts/bingo-prizes.mjs` drives three
+  phones over real HTTP instead.
+
+Full reasoning, with the measurements: **[`docs/bingo.md`](docs/bingo.md)**.
 
 ### A PAGE SCROLLS. THE PROJECTOR IS THE ONE THAT DOES NOT
 
@@ -3807,6 +3807,7 @@ npm test        # 1,690 tests, no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
+node scripts/bingo-prizes.mjs          # does a bingo prize reach the person who won it?
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break the pub night?
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
 node scripts/community-bay.mjs          # does the Community bay still fit the frame?

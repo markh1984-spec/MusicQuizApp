@@ -1353,7 +1353,17 @@ export class Engine {
     const rewards = this.rewardList();
     if (!rewards.length) return;
     if (!s.vouchers) s.vouchers = {};
-    const already = new Set(Object.values(s.vouchers).map((v) => v.winnerId));
+    /*
+     * THIS PART'S VOUCHERS ONLY — a `carried` one was won earlier tonight.
+     *
+     * The set exists so `Back` off the final and forward again cannot mint a
+     * second code for the same winner. Across a running-order boundary that
+     * reasoning inverts: the table that won the bingo line has not yet won
+     * anything in THIS quiz, and blocking them would be the app taking a prize
+     * away for having already had one — which is a bingo rule, deliberately,
+     * and not a rule about the night. See `startOrderSegment()`.
+     */
+    const already = new Set(Object.values(s.vouchers).filter((v) => !v.carried).map((v) => v.winnerId));
     for (const row of this.leaderboard()) {
       /*
        * POSITIONS, NOT THE TOP THREE ROWS. `rankPlayers` gives 1, 2, 2, 4 so
@@ -2774,7 +2784,15 @@ export class Engine {
     }
 
     if (s.phase === PHASES.FINAL && s.vouchers) {
-      const mine = Object.values(s.vouchers).find((v) => v.winnerId === this.boardIdFor(playerId));
+      /*
+       * TONIGHT'S QUIZ PRIZE BEATS ONE CARRIED FROM EARLIER IN THE EVENING.
+       * A table that won the bingo line and then won the quiz holds two live
+       * codes; the card on the final slide is about the quiz that has just
+       * ended, so a `find()` that happened to reach the older one first would
+       * show the wrong prize on the one screen that names it.
+       */
+      const held = Object.values(s.vouchers).filter((v) => v.winnerId === this.boardIdFor(playerId));
+      const mine = held.find((v) => !v.carried) || held[0];
       if (mine) {
         view.voucher = {
           code: mine.code,

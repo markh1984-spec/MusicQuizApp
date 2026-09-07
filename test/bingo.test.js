@@ -1109,6 +1109,111 @@ test('the phone is told to stand down, and the control view says which of three 
 });
 
 /*
+ * THE BINGO BUTTON MAY NOT LIGHT UP BEFORE THE PRIZE IS ACTUALLY WINNABLE.
+ *
+ * `hasMarkedPattern()` asked for ONE marked line whatever the stage was, so on
+ * the 5x5 / five-prize settings every 40-track pack ships with, every phone in
+ * the room read "BINGO!" the moment one line landed while the prize needed
+ * two, three, four or the house. Simulated at sixty players: **223.9 false
+ * calls a round** — each one recorded against the player, each one an
+ * "honourable mention for the false alarm" on the win card, and all of them
+ * poisoning `falseCalls`, which is the only number the host has for telling a
+ * chancer from somebody who miscounted.
+ *
+ * The button reads MARKS and the claim reads what was actually CALLED; that
+ * split is deliberate and unchanged. What was wrong is that the two used
+ * different definitions of the prize.
+ */
+test('THE BINGO BUTTON WAITS FOR THE STAGE, not for one line', () => {
+  const game = new BingoGame({ pack: makePack(), now: () => Date.parse('2026-09-04T21:00:00.000Z') });
+  const dave = game.join({ name: 'Dave' });
+  game.join({ name: 'Sue' });
+  // Two lines, then the house — the shape of every default 5x5 night.
+  game.state.stages = [2, 'full'];
+  game.start();
+
+  const player = game.state.players[dave.id];
+  const [first, second] = game.lines();
+  for (const i of first) {
+    game.call(player.card[i]);
+    game.mark({ playerId: dave.id, index: i, marked: true });
+  }
+  assert.equal(game.playerView(dave.id).canClaim, false,
+    'one line is not two, and a lit button here is a false call the app invited');
+  assert.equal(game.claim(dave.id).valid, false, 'and the claim itself was never going to stand');
+
+  for (const i of second) {
+    if (!game.state.called.includes(player.card[i])) game.call(player.card[i]);
+    game.mark({ playerId: dave.id, index: i, marked: true });
+  }
+  assert.equal(game.playerView(dave.id).canClaim, true, 'two lines IS the prize');
+  assert.equal(game.claim(dave.id).valid, true);
+});
+
+/*
+ * A SECOND CORRECT SHOUT MUST NOT MOVE THE WINNER'S NAME ON THE PROJECTOR.
+ *
+ * Found by driving two phones: Alpha claims the line, the projector says
+ * "Alpha" and the voucher is Alpha's. Bravo holds no prize, so nothing stood
+ * Bravo's button down — and Bravo genuinely had a line a beat later, which is
+ * the ordinary thing that happens in a pub, not cheating.
+ *
+ * The guard stopped the second VOUCHER and let everything after it run:
+ * `state.lastWin` was overwritten unconditionally and Bravo was pushed into
+ * `state.winners.line`. Measured after the press: **projector winner
+ * "Bravo"**, Alpha's phone back to "Press BINGO!", Bravo's saying "You got
+ * it", zero vouchers for Bravo, and `results()` marking BOTH as winners — so
+ * the filed night, Past gigs and the landlord's report all recorded two.
+ */
+test('A SECOND CORRECT BINGO ON A PRIZE ALREADY TAKEN CHANGES NOTHING', () => {
+  const game = new BingoGame({ pack: makePack(), now: () => Date.parse('2026-09-04T21:00:00.000Z') });
+  const alpha = game.join({ name: 'Alpha' });
+  const bravo = game.join({ name: 'Bravo' });
+  game.state.stages = [1, 2, 'full'];
+  game.start();
+
+  playWholeCard(game, alpha.id);
+  assert.equal(game.claim(alpha.id).valid, true);
+  const winnerOnTheWall = game.screenView().win.name;
+  assert.equal(winnerOnTheWall, 'Alpha');
+
+  // Bravo's card is a line too, and Bravo holds nothing, so the old
+  // `standDown` said nothing about it.
+  playWholeCard(game, bravo.id);
+  const second = game.claim(bravo.id);
+
+  assert.equal(second.valid, true, 'Bravo really did have a line — this is not a false alarm');
+  assert.equal(second.prize, false, 'but the prize had gone');
+  assert.equal(second.reason, 'stage_gone');
+  assert.equal(game.state.players[bravo.id].falseCalls, 0,
+    'a correct call charged as a false alarm is what this rule must never do');
+
+  assert.equal(game.screenView().win.name, 'Alpha',
+    'THE PROJECTOR MUST STILL NAME THE PERSON WHO ACTUALLY HOLDS THE PRIZE');
+  assert.equal(game.state.winners.line.includes(bravo.id), false,
+    'and the filed night must not record two winners of one prize');
+  assert.equal(game.state.prizeWinners.length, 1);
+  assert.equal(game.playerView(alpha.id).won, true,
+    "Alpha's own phone must not revert to Press BINGO");
+  assert.equal(game.playerView(bravo.id).won, false,
+    'and Bravo must not be told they got it while holding no voucher');
+
+  // And the button stands down for EVERYBODY while the prize is taken — a live
+  // BINGO button on a prize already gone is a promise the app cannot keep.
+  assert.equal(game.playerView(bravo.id).standDown, true);
+  const [latest] = game.hostView().claims;
+  assert.equal(latest.tooLate, true,
+    'the host needs "just missed it" rather than "had one", which would be untrue of Bravo');
+
+  // The next prize is open to Bravo the moment the host presses on.
+  game.playOn();
+  assert.equal(game.playerView(bravo.id).standDown, false);
+  assert.equal(game.claim(bravo.id).valid, true);
+  assert.equal(game.state.prizeWinners.length, 2);
+  assert.equal(game.state.prizeWinners[1].playerId, bravo.id);
+});
+
+/*
  * THE SAME RULE AS THE QUIZ, ON THE ENGINE NOBODY WENT BACK TO — rule 3.
  *
  * `engine.js` closed this leak, wrote the reasoning above its own version of

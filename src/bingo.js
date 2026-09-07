@@ -518,6 +518,33 @@ export class BingoGame {
      * is not a thing anybody has asked for, and this is one line to invert if
      * it ever is.
      */
+    /*
+     * AND A STAGE CAN ONLY BE TAKEN ONCE — checked BEFORE anything is
+     * recorded.
+     *
+     * Alpha claims the line: projector says "Alpha", voucher to Alpha. Bravo's
+     * button is still live, because Bravo holds no prize and so stands down
+     * for nothing. Bravo has a genuine line a beat later — the ordinary thing
+     * that happens in a pub — presses, and the guard below stopped the second
+     * VOUCHER while everything after it ran anyway: `state.lastWin` was
+     * overwritten unconditionally, so **the projector changed the winner's
+     * name to Bravo while the prize stayed with Alpha**, Alpha's phone
+     * reverted to "Press BINGO!", and `results()` filed BOTH as winners — into
+     * Past gigs and the landlord's report.
+     *
+     * The third outcome is the one the phone already has wording for:
+     * *"Correct — that one has gone"*. Their call was right and is recorded as
+     * right; the prize simply went a moment earlier. **`tooLate` rather than
+     * `standDown` alone**, so the host's claim list can say which of the two
+     * happened — "had one" is a fact about the player and would be a lie here.
+     */
+    if (this.stageTaken()) {
+      record.standDown = true;
+      record.tooLate = true;
+      this.changed();
+      return { ok: true, valid: true, prize: false, reason: 'stage_gone' };
+    }
+
     if (this.holdsAPrize(playerId) && this.stillWithoutAPrize(playerId) > 0) {
       record.standDown = true;
       this.changed();
@@ -592,6 +619,19 @@ export class BingoGame {
    * the fallback is to pay: an unpaid winner standing at the bar costs more
    * than a duplicate code the host can void.
    */
+  /**
+   * Has the prize being played for already gone?
+   *
+   * Keyed on `stageIndex` — the same key `prizeWinners` is written under, and
+   * for the same reason: "2 lines" and "3 lines" are both the `line` pattern
+   * and are different prizes. It goes false again the moment the host presses
+   * on (`playOn()` advances the index) and on a fresh round.
+   */
+  stageTaken() {
+    const stageIndex = this.state.stageIndex || 0;
+    return (this.state.prizeWinners || []).some((w) => w.stageIndex === stageIndex);
+  }
+
   /** Has this player already taken a prize in the round being played? */
   holdsAPrize(playerId) {
     return (this.state.prizeWinners || []).some((w) => w.playerId === playerId);
@@ -938,7 +978,14 @@ export class BingoGame {
      * just won reads as the app breaking. It is also what stops the room
      * hearing a shout the screen then ignores.
      */
-    view.standDown = this.holdsAPrize(playerId) && this.stillWithoutAPrize(playerId) > 0;
+    /*
+     * THE BUTTON STANDS DOWN FOR EVERYBODY ONCE THE PRIZE HAS GONE, not only
+     * for the people who hold one. A live BINGO button on a prize already
+     * taken is a promise the app cannot keep, and pressing it used to change
+     * the name on the projector.
+     */
+    view.standDown = this.stageTaken()
+      || (this.holdsAPrize(playerId) && this.stillWithoutAPrize(playerId) > 0);
     /*
      * "You got it" means the prize ON THE TABLE, not one won earlier.
      *
@@ -977,10 +1024,30 @@ export class BingoGame {
     return view;
   }
 
-  /** Marked a full line, regardless of whether those tracks were really played. */
+  /**
+   * Enough marked lines for THE PRIZE BEING PLAYED FOR, regardless of whether
+   * those tracks were really played.
+   *
+   * This is `evaluate()`'s shape on MARKS rather than on `isGood()` — which is
+   * the whole point of the two existing: the button lights up on what the
+   * player has marked, and the claim is then checked against what was actually
+   * called.
+   *
+   * **IT USED TO ASK FOR ONE LINE WHATEVER THE STAGE WAS.** On the 5x5 /
+   * five-prize settings every 40-track pack ships with, that meant every phone
+   * in the room lit up "BINGO!" the moment ONE line landed while the prize
+   * needed two, three, four or the house — measured at **223.9 false calls a
+   * round with sixty players**. Each press is recorded as a false alarm, which
+   * puts an "honourable mention" on the win card and poisons `falseCalls`, the
+   * only number the host has for telling a chancer from somebody who miscounted.
+   * Only the 4x4 two-stage default escaped it.
+   */
   hasMarkedPattern(player) {
-    if (this.stage === TARGETS.FULL) return player.marks.every(Boolean);
-    return this.lines().some((line) => line.every((i) => player.marks[i]));
+    const stage = this.stage;
+    if (stage === TARGETS.FULL) return player.marks.every(Boolean);
+    const wanted = Math.max(1, Number(stage) || 1);
+    const done = this.lines().filter((line) => line.every((i) => player.marks[i]));
+    return done.length >= wanted;
   }
 
   /** Where the game has got to, in one line — see Engine.where(). */

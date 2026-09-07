@@ -5,17 +5,37 @@
  *
  * Also doubles as a working check that a card really is fixed to a phone —
  * it reloads a player page and compares the card before and after.
+ *
+ * ---
+ *
+ * **IT STARTS ITS OWN APP.** It took `http://localhost:3000` on trust, so
+ * running it the way `CLAUDE.md` lists it (`node scripts/shot-bingo.mjs`, no
+ * server up) died on `ERR_CONNECTION_REFUSED` — and with a server up it drove
+ * whatever was already listening, with its data. Both halves are the fault
+ * `helpers/live-app.mjs` exists for: it asks the OS for a free port, hands the
+ * app its own `DATA_DIR` and a COPY of the catalogue, and stops it whatever
+ * happens. `BASE` still overrides, for driving a deployment on purpose.
+ *
+ * **AND THE EXIT CODE WAS A `ReferenceError`.** The last line read
+ * `process.exit(same ? 0 : 1)` while `same` is a `const` declared inside the
+ * `else` block above it — so the script THREW on its way out, on every run,
+ * including every passing one. `node --check` cannot see it: the file parses,
+ * and the fault only exists when the line runs. Same class as the import that
+ * shipped a broken Launch.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 
+import { startApp } from './helpers/live-app.mjs';
+
 const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 
-const BASE = process.env.BASE || 'http://localhost:3000';
-const KEY = process.env.HOST_KEY || 'test-key';
+const KEY = process.env.HOST_KEY || 'shot-bingo';
+const started = process.env.BASE ? null : await startApp({ key: KEY });
+const BASE = process.env.BASE || started.base;
 const OUT = path.resolve('screenshots');
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -98,6 +118,7 @@ await shot(p0, 'bingo-card');
  * with "somebody can see it": count what you found, and say so.
  */
 const EXPECT_LEAST = 9;  // the smallest card this app deals is 3 x 3
+let same = false;
 if (cardBefore.length < EXPECT_LEAST) {
   console.log(`\n  CARD CHECK CANNOT RUN — found ${cardBefore.length} squares before the reload.`);
   console.log('  The selector ".bingo-cell .bt" matches nothing, so this check would compare');
@@ -108,7 +129,7 @@ if (cardBefore.length < EXPECT_LEAST) {
   await p0.reload({ waitUntil: 'domcontentloaded' });
   await wait(1200);
   const cardAfter = await p0.$$eval('.bingo-cell .bt', (els) => els.map((e) => e.textContent));
-  const same = cardAfter.length === cardBefore.length
+  same = cardAfter.length === cardBefore.length
     && JSON.stringify(cardBefore) === JSON.stringify(cardAfter);
   console.log(`\n  card identical after a full page reload: ${same ? 'YES' : 'NO'} (${cardBefore.length} squares)`);
   if (!same) {
@@ -133,5 +154,6 @@ if (callBtn && !(await callBtn.isDisabled())) {
 }
 
 await browser.close();
+if (started) started.stop();
 console.log('\ndone');
 process.exit(same ? 0 : 1);
