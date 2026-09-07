@@ -311,6 +311,42 @@ test('A SHOW SAVED IN THE ONE-GAME SHAPE STILL READS, as a list of one', () => {
   assert.deepEqual(itemsOf({}), []);
 });
 
+test('A BINGO PART KEEPS ITS OWN CARD AND PRIZE COUNT', () => {
+  /*
+   * On a MIXED night the launch bar keeps the card shape and the prize count
+   * on the SLOT — `launchRunningOrder()` sends one per bingo segment — so the
+   * show's own night-level pair is a pair nothing writes. Dropped here, a 3x3
+   * one-prize interlude prepared on Monday came back on Thursday as the
+   * pack's own 4x4 and two prizes, with the row looking exactly as it was
+   * left.
+   */
+  const show = normalise({
+    name: 'Quiz, bingo, quiz',
+    items: [
+      { kind: 'quiz', packId: 'eighties', order: [{ packId: 'eighties', round: 0 }] },
+      { kind: 'bingo', packId: 'disco-funk', shape: { rows: 3, cols: 3 }, prizes: 1 },
+      { kind: 'quiz', packId: 'eighties', order: [{ packId: 'eighties', round: 1 }] },
+    ],
+  });
+  assert.deepEqual(show.items[1], {
+    kind: 'bingo', packId: 'disco-funk', shape: { rows: 3, cols: 3 }, prizes: 1,
+  });
+  // A QUIZ PART NEVER CARRIES THEM — a quiz pack has no card, so the fields
+  // could only ever confuse whatever read them.
+  assert.deepEqual(Object.keys(show.items[0]).sort(), ['kind', 'order', 'packId']);
+  // CLAMPED AND VALIDATED ON THE WAY IN, like every other field — an item is a
+  // chunk of a request body, not something the server wrote.
+  const junk = normalise({
+    name: 'Junk',
+    items: [{ kind: 'bingo', packId: 'disco-funk', shape: { rows: 'x', cols: 0 }, prizes: 99 }],
+  });
+  assert.deepEqual(junk.items[0], { kind: 'bingo', packId: 'disco-funk', prizes: 5 });
+  // And a part with neither still reads as "the pack's own", which is every
+  // show saved before this existed.
+  const plain = normalise({ name: 'Plain', items: [{ kind: 'bingo', packId: 'disco-funk' }] });
+  assert.deepEqual(plain.items[0], { kind: 'bingo', packId: 'disco-funk' });
+});
+
 test('A BROKEN PACK IN THE SECOND HALF BREAKS THE SHOW', () => {
   // The whole point of building in advance: a deleted bingo pack must be found
   // on the card, not at half ten with the quiz already finished.

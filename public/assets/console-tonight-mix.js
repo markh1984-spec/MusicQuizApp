@@ -286,6 +286,89 @@ export function segmentsFromSlots(slots) {
   return segments;
 }
 
+/**
+ * WHICH GAP EACH TILE OWNS — one list per FILLED slot, in tile order.
+ *
+ * **A BURST PACK IS SEVERAL TILES OF ONE PACK, so "the gaps this pack makes"
+ * stopped being the right answer for a tile the day packs began bursting.**
+ * Every round tile of a four-round pack was handed the same four gap ids, so
+ * pressing the last tile's dial changed the first — the exact duplication the
+ * strip of chips under the row was deleted for, back through the tile it was
+ * replaced by. Nothing threw: all four dials agreed with each other, and each
+ * of them was telling the truth about a set nobody had asked it about.
+ *
+ * A tile owns the gap that FOLLOWS its own round, which is the promise the
+ * dial's corner position makes. This walks the same merge `segmentsFromSlots()`
+ * does — a run of quiz slots is one part, and a slot's rounds land at
+ * consecutive positions in that part's order — so the two cannot drift.
+ *
+ * A bingo slot owns the gap BEFORE it, its own lobby, because it has no
+ * rounds to follow; and never `p0:lobby`, which is the doors and has a dial
+ * of its own in the head.
+ *
+ * The board after the last round of the last part is the FINAL rather than a
+ * gap, so these are candidates: the caller drops any that `breaksOf()` does
+ * not list, which is the one place that rule is written.
+ *
+ * @param {Array} slots the row
+ * @param {number} at which FILLED slot, in the order the tiles are drawn
+ * @returns {string[]}
+ */
+export function gapIdsOfSlot(slots, at) {
+  const list = (slots || []).filter(Boolean);
+  let part = -1;
+  let order = 0;
+  let inQuiz = false;
+  for (let i = 0; i < list.length; i += 1) {
+    const slot = list[i];
+    if (slot.kind === 'bingo') {
+      part += 1;
+      inQuiz = false;
+      order = 0;
+      if (i === at) return part > 0 ? [`p${part}:lobby`] : [];
+      continue;
+    }
+    if (!inQuiz) { part += 1; order = 0; inQuiz = true; }
+    const rounds = (slot.rounds || []).length;
+    if (i === at) {
+      return Array.from({ length: rounds }, (_, n) => `p${part}:r${order + n}`);
+    }
+    order += rounds;
+  }
+  return [];
+}
+
+/**
+ * How many rounds one quiz may be built from.
+ *
+ * **The SERVER is the authority** — `MAX_ROUNDS` in `src/running-order.js`,
+ * which refuses anything longer whatever this page thinks. This copy exists
+ * only so the row can say no before somebody drags a fourth pack in and finds
+ * out at Launch, in a venue. A test asserts the two agree, because a limit
+ * stated in two places is a limit that disagrees with itself within a month —
+ * the same reason `plans.js` and `looks.js` are shared rather than copied.
+ * They cannot be shared here: `running-order.js` imports the quiz validator,
+ * which is server-only.
+ *
+ * It lives with the row model rather than with the bar because the row is what
+ * has to be measured, and `longestQuiz()` below is that measurement.
+ */
+export const MAX_NIGHT_ROUNDS = 12;
+
+/**
+ * THE LONGEST QUIZ THIS ROW WOULD PLAY.
+ *
+ * Measured against the SEGMENTS rather than the tiles, because that is what
+ * the server enforces: `composeQuiz()` refuses more than `MAX_ROUNDS` in one
+ * quiz, and a bingo interlude splits a row into two quizzes that are each
+ * allowed a full twelve. Counting tiles would refuse a legal night.
+ */
+export function longestQuiz(slots) {
+  return segmentsFromSlots(slots)
+    .filter((seg) => seg.kind === 'quiz')
+    .reduce((n, seg) => Math.max(n, seg.order.length), 0);
+}
+
 /** The first slot naming this pack — where an OFF round for it is shown, and where a brand new one lands if the pack has no slot at all yet. */
 export function homeSlotIndex(slots, packId) {
   return slots.findIndex((s) => s && s.kind === 'quiz' && s.packId === packId);

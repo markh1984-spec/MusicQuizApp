@@ -148,7 +148,36 @@ function normaliseItem(raw = {}) {
     : [];
   const packId = String(raw.packId || (order[0] && order[0].packId) || '').trim();
   if (!packId) return null;
-  return { kind, packId, ...(order.length ? { order } : {}) };
+  /*
+   * A BINGO PART CARRIES ITS OWN CARD AND ITS OWN PRIZE COUNT.
+   *
+   * The show has a `shape` and a `prizes` of its own and this looks like a
+   * duplicate of them; it is not, and the difference is what a mixed night
+   * is. The launch bar keeps those two ON THE SLOT the moment a night has
+   * more than one part (`setPickedBingo`), because `launchRunningOrder()`
+   * sends a shape per bingo segment — so a 3x3 one-prize interlude prepared
+   * on Monday was saved with the night-level pair, which nothing had written,
+   * and came back on Thursday as the pack's own 4x4 and two prizes.
+   *
+   * The show-level pair stays for an ordinary one-game night, which is what
+   * it has always meant and what every show saved before this carries. A part
+   * with neither reads as "the pack's own", exactly as it did.
+   *
+   * Clamped and validated HERE rather than trusted, like every other field on
+   * the way in — an item is a chunk of a request body.
+   */
+  const shape = kind === 'bingo' && raw.shape
+    && Number(raw.shape.rows) && Number(raw.shape.cols)
+    ? { rows: Number(raw.shape.rows), cols: Number(raw.shape.cols) }
+    : null;
+  const prizes = kind === 'bingo' ? Math.max(0, Math.min(5, Number(raw.prizes) || 0)) : 0;
+  return {
+    kind,
+    packId,
+    ...(order.length ? { order } : {}),
+    ...(shape ? { shape } : {}),
+    ...(prizes ? { prizes } : {}),
+  };
 }
 
 /**

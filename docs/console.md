@@ -1424,3 +1424,59 @@ Changing `node()` to return a fragment was the other option and was not taken:
 callers do `.querySelector()`, `.classList` and `.addEventListener` on the
 result, and a silent type change across every page in the app — including the
 protected launch path — to fix two cosmetic drops is the wrong trade.
+
+## A prepared night that could not be got back
+
+Two faults from the September sweep, both on the same round trip: a show is
+saved on Monday and dragged onto Tonight on Thursday.
+
+### A mixed night lost its bingo card and prize count
+
+A show carries a `shape` and a `prizes` of its own, and on an ordinary
+one-game night those are what the launch reads. On a MIXED night they are not:
+`setPickedBingo()` writes the card and the prize count to the SLOT the moment
+a night has more than one part, because `launchRunningOrder()` sends a shape
+per bingo segment. So the show-level pair is a pair nothing writes — and a 3x3
+one-prize interlude prepared on Monday came back on Thursday as the pack's own
+4x4 with two prizes, silently, with the row looking exactly as it was left.
+
+A bingo ITEM carries its own now, in all three places the round trip passes
+through: `tonightAsShow()` reads them off the segment, `normaliseItem()` in
+`src/shows.js` validates and clamps them on the way in — it had been dropping
+both, which is the whitelist trap this repo already records for
+`accounts.create()`, `shows.js`'s own show-level whitelist and `doLaunch()` —
+and `applyShow()` prefers the part's own over the show's.
+
+**The part's beats the show's and the show's is the fallback**, never the other
+way round. A show is loaded one part at a time, so those two fields are set to
+whatever the part about to be played wants; every one-game night and every show
+saved before this has only the show-level pair, which is exactly what those
+nights played. Nothing has to be migrated, and a quiz part never carries them
+at all — a quiz pack has no card, so the fields could only confuse whatever
+read them.
+
+### Loading a night from the Workshop door did nothing at all
+
+"Prepare a night" is behind the Workshop door as well as the Console's, and
+`CLAUDE.md` says the Workshop is where a show is edited. But Tonight is only
+ever built on the CONSOLE door — `render()` draws `launchBar()` for that door
+and an empty `<div>` for the others — and `loadShow()` puts the evening in
+`showWanted`, which is module state read by the bar as it builds itself.
+
+So tapping a show on the Workshop shelf set a variable that nothing on screen
+would look at, and re-rendered. Nothing threw and nothing moved. The drag was
+dead for a second reason: there is no Tonight over there to drop one onto, so
+the gesture had no target either — and on a phone, where HTML5 drag never
+fires at all, the tap is the only way in.
+
+`goToDoor()` in `console.js` is the fix, and its shape is the point: change
+`?door=` with `history.replaceState` and re-render in place, exactly as
+`goToTab()` already does for `?tab=`. The door chips in the topbar are
+`location.href = …`, which is right for a chip — it is navigation, and the
+address bar should say where you are — and wrong for the app moving you
+itself, because a reload throws away every module binding the console holds,
+including the `showWanted` this whole move exists to carry.
+
+`save-a-night.mjs` now saves a night and loads it back from the Workshop door.
+Saving and loading belong in one script because they are one round trip: a
+night that saves and cannot be got back is not saved.

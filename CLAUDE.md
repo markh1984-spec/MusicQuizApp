@@ -770,47 +770,24 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
 ### THE INVOICE BOOK IS NOT ENCRYPTED, AND THAT IS THE DECISION
 
-Settled on 14 August 2026, and the reasoning is kept because the instinct to
-revisit it will come back.
-
-**The bank details are the quizmaster's OWN, printed on every invoice they
-send.** A sort code and an account number exist to be given to the venue; every
-pub they have invoiced already has them. Encrypting data whose entire purpose
-is to be handed out is theatre.
-
-**The venue records are BUSINESS contact details** — a pub name, an address, a
-landlord's email, all on the pub's own website. Not consumer personal data, and
-the stakes are correspondingly low.
-
-**No card details are stored and none ever will be.** The processor holds
-those; the app never sees a card number. That is the real answer to *"people
-put their bank account into apps all the time"* — those apps mostly do not
-store it either.
-
-**Server-side encryption where the SERVER holds the key buys almost nothing.**
-The server decrypts to draft an invoice, so key and data sit on one machine. It
-helps in one case: the private-repo backup, the only copy that can leak without
-the server.
-
-**And the cost is severe in a shape this app has already been bitten by.** On
-Render's free tier the disk is wiped every deploy, so the backup IS the data:
-lose the key and the invoice book is landfill — and the host has already lost
-his own console once when `HOST_KEY` rotated. Encryption converts *"GitHub
-suffers a breach"*, unlikely and their problem, into *"I lose an environment
-variable"*, likely and entirely his.
-
-**AND THE HOST'S OWN CLINCHER: INVOICING IS OPTIONAL.** *"You can invoice them
-personally if you want, or you can invoice through the software if you want."*
-A quizmaster who would rather use their own accounts package never fills the
-tab in, so the data is there because somebody chose to put it there.
+Settled on 14 August 2026. **The bank details are the quizmaster's OWN,
+printed on every invoice they send**, and the venue records are BUSINESS
+contact details already on the pub's own website — encrypting data whose whole
+purpose is to be handed out is theatre. **No card details are stored and none
+ever will be.** Server-side encryption where the SERVER holds the key buys
+almost nothing and costs everything in the one shape this app has been bitten
+by: the free tier wipes the disk every deploy, so the backup IS the data, and
+losing the key makes the invoice book landfill. **AND INVOICING IS OPTIONAL**,
+which is the host's own clincher — the data is there because somebody chose to
+put it there.
 
 **NEVER CLAIM IT CANNOT BE READ.** That would be a lie, and it is the rule
 this file already sets for own-packs: the honest pitch is *"the app will not
 let me in unless you let me, and here is the log"*, never *"I cannot see it"*.
+**Instead of encrypting, do not store what is not needed** — a venue needs a
+name, an address and one email, not a phone number nobody dials.
 
-**Instead of encrypting**, and worth more: **do not store what is not
-needed.** A venue needs a name, an address and one email — not a phone number
-nobody dials.
+Full reasoning: **[`docs/business.md`](docs/business.md)**.
 
 ### THE CONSOLE'S THEME — one surface, one heading ladder, a bar that stays
 
@@ -899,17 +876,14 @@ they say next.
   **every desktop size**. **A media query on the window is the wrong tool the
   moment a CONTAINER caps the thing you are protecting.**
 - **AND `#runningNow` IS WHY NOTHING SAW IT: `aNightIsOn()` IS FALSE FOR AN
-  EMPTY LOBBY.** `console-frame.mjs` launched a quiz and let nobody join, so
-  the live line stayed blank and it measured a bar **230px narrower than the
-  one the host drives** — passing every size while his header was on two rows.
-  **A guard that sets a night up but never lets anybody in is measuring a
-  console nobody uses.** It joins two phones now and asserts the line is
-  actually there before trusting a single measurement.
+  EMPTY LOBBY.** `console-frame.mjs` launched a quiz and let nobody join, so it
+  measured a bar **230px narrower than the one the host drives**. **A guard
+  that sets a night up but never lets anybody in is measuring a console nobody
+  uses** — it joins two phones now and asserts the line is there first.
 - **WHAT IS PLAYING NOW IS WORDED IN ONE PLACE — `nowPlaying()`.** Asked for:
   *"can we make it so what is displayed as 'playing now' is all read from the
-  same place so its never drifting?"* There were THREE — the topbar, the
-  running panel and the launch bar's live line — one fact, three sentences,
-  nothing stopping them disagreeing. **The SHORT form is a different job, not
+  same place so its never drifting?"* There were THREE, one fact and three
+  sentences. **The SHORT form is a different job, not
   an abbreviation**: the bar says *something is on and how many are in* from
   any door, and the TITLE stays in the panel, which is also the 222px the
   capped bar could not afford. **Under 1050px the live line stands down** — it
@@ -1181,16 +1155,15 @@ board), `src/arcade.js` (the scores, shared by both engines),
   did at nine o'clock. **A list of ONE is dropped**: a menu with one thing on it
   is not a choice. **An unknown tier falls to the bottom rung**, so it holds the
   two everybody has rather than none.
-- **AND THE QUIET LAUNCH CARRIES THE CHOICE — `switchIfFree()`.** Tapping a
-  pack puts it on the projector immediately, and that call sent the venue and
-  `online` but NOT the game, so a tapped-up night ran the DEFAULT while the bar
-  above said *Let them choose*. **Reported twice as *"still only allowing maze
-  mouth"*, both times on a night nobody had pressed Launch on** — the
-  console-and-projector disagreement this bar exists to prevent. **The comment
-  over it claimed it sent "no venue" while the code had sent one all along**,
-  which is how the gap stayed invisible: a note nobody re-read against the line
-  beneath it. **A stale comment is not a tidiness problem — it is where the
-  next bug hides.**
+- **AND THE QUIET LAUNCH SENDS THE WHOLE NIGHT — `nightOpts()`.** Tapping a
+  pack put it on the projector with FIVE of the twelve fields Launch sends, so
+  the default look ran, Game sound Off was ignored and "at random" dealt
+  nobody — with the live line asserting the console and the projector agreed.
+  **Fixed once for `lobbyGame` alone** (*"still only allowing maze mouth"*),
+  which left the other seven, so **the SHAPE changed rather than the list: one
+  `nightOpts()`, spread into all three launches**, with a test that
+  fails if a fourth caller writes its own. **Its comment claimed it sent "no
+  venue" while the code had sent one all along.**
 - **ONE ROW EITHER WAY, AND THE CHOICE IS ONE TAP INSIDE IT.** Three phone
   layouts were rendered at 390px first: a row per game is **423px of menu** and
   pushes *Send a photo* off the bottom, which breaks *don't disincentivise
@@ -1626,10 +1599,14 @@ right of the pack ONCE LOADED."*
 - **THE DUPLICATION WAS REAL** — one `chip()`, one plan, one setter, drawn in
   two places and neither beside the thing it acted on. The label collision
   Sweep mode hunts, which nothing had caught.
-- **A GAP IS NOT AT THE END OF A SLOT.** A two-round quiz owns the gap INSIDE
-  it as well as the one at its end, so "the end of this slot" can only ever
-  address a pack's LAST gap. A tile's corner owns **every gap that pack
-  creates**, and one dial sets them together — stated, not hidden.
+- **A TILE'S DIAL OWNS THE GAP AFTER ITS OWN ROUND — `gapIdsOfSlot()`.** It
+  owned *every gap the pack makes*, right when a tile was a pack and wrong the
+  day packs began BURSTING: **pressing the last tile's dial changed the
+  first.** A BINGO slot owns the gap BEFORE it, never `p0:lobby`; **the FINAL
+  is not a gap**, so the caller filters through `breaksOf()`. **`drag-check`
+  asserts ONE face moved** — pressing the FIRST dial passed with the fault in,
+  the first pack having one round: **a guard aimed at whatever happens to be
+  first is measuring the shelf, not the row.**
 - **THE TILE'S SIZE DECIDED THE SHAPE, MEASURED FIRST**: 179 x 76, ticks 22px
   bottom-left, **58px clear** in the corner on a four-round pack. That is ONE
   44px control and never two — so the dial is the PHONES and the big screen
@@ -1689,6 +1666,16 @@ right of the pack ONCE LOADED."*
   already on screen. `bingoToSet()`: the picked pack when it is a bingo, else the
   first in the order. **The three WRITES had to move with the read**, or the row
   shows one pack's card and saves it onto another.
+- **"IN THE GAPS" IS INERT ON A NIGHT WITH NO GAP.** A bingo game contributes
+  only its own lobby, whose screen is the join code — so the picker was live,
+  took any of four choices and the launch sent an empty plan.
+  **Present, live and IGNORED is what *present and inert* exists to refuse**,
+  so the reason goes on the control (*"Add a quiz round"*).
+- **THE ROUND CEILING IS CHECKED ON THE ROW THE NIGHT IS BUILT ON.**
+  `MAX_NIGHT_ROUNDS` had one check, unreachable since packs began bursting, so
+  a thirteen-round night launched as twelve with **nothing said anywhere**.
+  Measured against the SEGMENTS (`longestQuiz()`), never the tiles. **The
+  server still slices** — a refusal costs the night.
 - **📵 RATHER THAN A DOT for "nothing on the phones".** Asked outright — *"what
   does this mean? the . ?"* — which is the *clarity beats everything* test
   failing. The other three states are pictures; punctuation on a button reads
@@ -2520,11 +2507,15 @@ itself is wrong.
 
 ## Where the reasoning lives
 
-**A THIRD SPLIT ON 15 AUGUST 2026, and this time with a test on it.** The
-decisions TABLE alone was 43,034 bytes, a quarter of everything loaded before
-any work could start; it moved whole to
-**[`docs/decisions.md`](docs/decisions.md)**, leaving every decision NAME and
-every sentence that FORBIDS something, verbatim.
+**Every RULE is in this file. The WHY is in `docs/`.** Split three times —
+14 and 15 August 2026 — because it had reached ~90,000 tokens and loaded in
+full at the start of every session, and grew back to ~50,000 as each feature
+landed with its reasoning inline. The decisions TABLE alone was 43,034 bytes
+and moved whole to **[`docs/decisions.md`](docs/decisions.md)**, leaving every
+decision NAME and every sentence that FORBIDS something, verbatim. Nothing was
+summarised: whole sections moved by line number, so nothing could be quietly
+reworded on the way through. Open the one you are touching; do not read them
+all.
 
 **A WRITTEN RULE TO KEEP THIS FILE SHORT HAS NOW FAILED TWICE**, so
 `test/claude-md-budget.test.js` asserts the byte count, that every `docs/` link
@@ -2540,16 +2531,6 @@ table rows worked — a row is a row. The same script pointed at prose, keeping
 table and every rule under the lobby-games heading: in this file the first
 paragraph is often the CONTEXT and the rule is below it. **If more has to come
 out, move whole named sections by hand and read what is left.**
-
-**Every RULE is in this file. The WHY is in `docs/`.** Split on 14 August 2026
-because this file had reached ~90,000 tokens and loaded in full at the start of
-every session, and **again on 15 August 2026** the same way, having grown back
-to ~50,000 as each new feature landed with its full reasoning inline.
-
-Nothing was deleted and nothing was summarised — whole sections moved
-verbatim, by line number, so nothing was retyped and nothing could be quietly
-reworded on the way through. **Each one left its RULE behind, plus a link.**
-Open the one you are touching; do not read them all.
 
 **[`docs/engine.md`](docs/engine.md)** — phases, scoring, and what each screen is told
 
@@ -2576,10 +2557,6 @@ before touching a drag handler.**
 
 - A launch must say what it is about to destroy
 - The restart notice, and the one state that made it a lie
-- TONIGHT — one launch section, and it PINS WHERE IT ALREADY IS on a drag
-- FIVE DOORS, and why Community is the fifth
-- WHAT MOVES TO COMMUNITY — a summary may repeat, a queue may not
-- A CONTROL IS PRESENT AND INERT, NEVER ABSENT
 
 **[`docs/gigs.md`](docs/gigs.md)** — venues, prizes, the diary, past nights,
 getting paid; **[`docs/gigs/photos.md`](docs/gigs/photos.md)** is the
@@ -2593,7 +2570,6 @@ costs. Both split off at the 100,000-byte cap.
 - Past gigs — the record of somebody's work, and who may take it away
 - Invoicing
 - Getting paid: what you have not billed, and who has not paid
-- THE LEAGUE, EXPORTED — evidence for the landlord, a wall for the teams
 - **A deleted photo leaves the repo but NOT git history — never imply
   otherwise.**
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
@@ -3433,6 +3409,19 @@ having a nights section."*
   carry neither the venue nor the prizes.
 - **THE ORDER IS REBUILT INTO `lbExtra` AND `lbOff`, never held a third way.**
   **A BROKEN SHOW IS NAMED ON THE CARD, DAYS EARLY** — every part.
+- **A BINGO PART CARRIES ITS OWN CARD AND PRIZE COUNT**, beside the show's own
+  pair rather than instead of it: on a mixed night `setPickedBingo()` writes
+  them to the SLOT, so the show-level pair is one nothing writes and a 3x3
+  interlude came back as the pack's own 4x4. **The part's own beats
+  the show's and the show's is the fallback**, so every one-game night and
+  every older show reads as it did. `normaliseItem()` had dropped both —
+  **the whitelist trap, for the fifth time.**
+- **DROPPING ONE IN FROM ANOTHER DOOR GOES TO THE CONSOLE DOOR — `goToDoor()`.**
+  Tonight is only built on the CONSOLE door, so tapping a show on the Workshop
+  shelf set `showWanted` and re-rendered a page with nothing that reads it:
+  **nothing threw and nothing moved**, and the drag had no target.
+  **`history.replaceState` and a re-render, never a door chip's
+  `location.href`** — a reload throws `showWanted` away.
 - **KEEPING A NIGHT IS ON TONIGHT'S SETTINGS; WHAT IT PLAYS IS EDITED ON THE
   CARD, WORKSHOP ONLY** — no second composer to disagree with the launch.
 - **DROPPING ONE IN NEVER LAUNCHES**, and there is a TAP as well as a drag,

@@ -141,10 +141,49 @@ try {
   const kept = (lib.shows || []).map((s) => s.name);
   check('and the server kept it', kept.includes('Sweep night'), true);
 
+  /*
+   * AND THEN IT IS LOADED BACK, FROM THE DOOR THE SHELF IS ON.
+   *
+   * "Prepare a night" is behind the WORKSHOP door as well as the Console's,
+   * and CLAUDE.md says the Workshop is where a show is edited — but Tonight
+   * is only ever built on the CONSOLE door, so tapping a show over there set
+   * `showWanted` (module state) and re-rendered a page with nothing that
+   * reads it. Nothing threw and nothing moved. Dragging was dead for a second
+   * reason: there is no Tonight on that door to drop one onto, and on a phone
+   * the tap is the only way in at all.
+   *
+   * Saving and loading belong in one script because they are one round trip:
+   * a night that saves and cannot be got back is not saved.
+   */
+  console.log('\nAND LOADED BACK — from the Workshop door, where the shelf is\n');
+  await page.goto(`${BASE}/console?door=workshop&key=${KEY}`, { waitUntil: 'load' });
+  await page.waitForTimeout(2000);
+  await page.evaluate(() => document.querySelector('button.tab[data-tab="shows"]')?.click());
+  await page.waitForTimeout(600);
+
+  const cards = await page.evaluate(() => document.querySelectorAll('.show-card').length);
+  check('the saved night is on the Workshop shelf', cards > 0, true);
+
+  await page.evaluate(() => document.querySelector('.show-card')?.click());
+  await page.waitForTimeout(1200);
+
+  const after = await page.evaluate(() => ({
+    door: new URL(location.href).searchParams.get('door') || 'console',
+    // `.launchbar` is the class EVERY door's bay wears, so asking for it
+    // passes on the Workshop too and says nothing. `.lb-go` is Launch,
+    // which only the real bar has.
+    bar: document.querySelectorAll('.lb-go').length,
+    tiles: document.querySelectorAll('.lb-tiles .lb-tile.is-pack').length,
+  }));
+  check('tapping it moves to the Console door', after.door, 'console');
+  check('where Tonight actually exists', after.bar > 0, true);
+  check('with the night back in it', after.tiles > 0, true);
+  check('and nothing threw on the way', errors.join(' | ') || 'none', 'none');
+
   await browser.close();
   console.log(failures
-    ? `\n${failures} check${failures === 1 ? '' : 's'} failed — a night cannot be saved.\n`
-    : '\nA night can be saved, and the server has it.\n');
+    ? `\n${failures} check${failures === 1 ? '' : 's'} failed — a night cannot be saved and got back.\n`
+    : '\nA night can be saved, the server has it, and it loads back.\n');
   process.exitCode = failures ? 1 : 0;
 } catch (err) {
   console.error('\nthrew:', err.message, '\n');

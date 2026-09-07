@@ -1682,6 +1682,100 @@ Both name the same thing and only one of them is a noun on sight. "Look" reads
 as an instruction for a moment before it reads as a label — a word doing two
 jobs, on the row where clarity beats everything.
 
+## The September sweep, in the bar
+
+Four faults found by the sweep, each in the same shape: a control that drew
+perfectly, answered when pressed, and was acting on the wrong set.
+
+### A tile's dial owned every gap the pack makes
+
+The dial in a tile's bottom-right corner asked `gapsOfPack()` for the tile's
+pack. That was exactly right when a tile WAS a pack: the corner owned every
+board between that pack's rounds and one dial set them together, stated rather
+than hidden.
+
+Then packs began BURSTING into one tile per round, and the sentence stopped
+being true without a line of it changing. All four tiles of a four-round pack
+were handed the same four gap ids, so **pressing the last tile's dial changed
+the first** — the duplication the strip of chips under the row was deleted for,
+back through the tile that replaced it. Nothing threw. All four dials agreed
+with each other, and every one of them was telling the truth about a set nobody
+had asked it about.
+
+`gapIdsOfSlot()` in `console-tonight-mix.js` answers the question the corner
+actually asks: the gap that follows THIS tile's round. It walks the same merge
+`segmentsFromSlots()` does — a run of quiz slots is one part, and a slot's
+rounds land at consecutive positions in that part's order — so the two cannot
+drift. A bingo slot owns the gap BEFORE it, its own lobby, because it has no
+round to follow; and never `p0:lobby`, which is the doors and has a dial of its
+own in the head. The board after the last round of the last part is the FINAL
+rather than a gap, so what comes back is a list of CANDIDATES and the caller
+drops any that `breaksOf()` does not list — one place, one rule.
+
+**And the guard that was written for it passed with the fault in.** The first
+version pressed the first dial on the row and counted how many faces moved; the
+first pack on the shelf has one round and therefore one tile, and a set of one
+cannot be over-written. `drag-check.mjs` now finds a pack that is genuinely
+burst across several tiles before it presses anything, and fails if that pack
+is not there — **a guard aimed at whatever happens to be first is measuring the
+shelf, not the row.**
+
+### "In the gaps" was live on a night with no gaps
+
+A bingo game contributes exactly one break, its own lobby, and a lobby's screen
+is the join code, which nothing in this app may dim. So on a bingo-only night
+`gapsWithScreen()` is empty, `applyGapScreen()` writes nothing, and the launch
+sends a break plan with nothing in it — while the picker sat there enabled,
+offering four choices and accepting any of them.
+
+Present, live and ignored is the one shape *present and inert* exists to
+refuse: the whole point of that rule is that a control which is off says why.
+It is disabled now and reads **"Add a quiz round"**, the same treatment Card
+and Prizes already get on a quiz night and Secs per Q gets on a bingo one.
+
+### A thirteen-round night launched as twelve, in silence
+
+`MAX_NIGHT_ROUNDS` had exactly one check, in the `lbExtra` branch of
+`addPackToNight()` — which is unreachable for any pack drop now, because a quiz
+pack bursts and every add goes through the mixed row. So the alert was dead
+code, a thirteen-round night built itself happily, the bar drew thirteen tiles,
+and `server.js` sliced the order back to twelve at launch. The room played
+twelve rounds and the last one simply never happened, with nothing said
+anywhere.
+
+It is measured against the SEGMENTS rather than the tiles (`longestQuiz()`),
+because that is what the server enforces: `composeQuiz()` refuses more than
+`MAX_ROUNDS` in one quiz, and a bingo interlude splits a row into two quizzes
+that are each allowed a full twelve. Counting tiles would refuse a legal night.
+The constant moved to `console-tonight-mix.js` with the measurement, since the
+row is the thing being measured; the test comparing it with
+`src/running-order.js` reads every console module and did not have to change.
+
+**The server still slices rather than refusing, and that is deliberate.**
+`running-order.js` throws where `server.js` slices, which is a real
+disagreement — but a refusal at Launch costs the night, where a slice costs a
+round, and the console is now where a human can still fix it. That is the same
+trade the lobby game already makes: a game above the tier is dropped in favour
+of the default rather than refusing the launch.
+
+### The quiet launch sent five fields out of twelve
+
+Tapping a pack card puts it straight on the projector through
+`switchIfFree()`, and that call sent the game, the pack, the venue, `online`
+and the lobby game. Launch sends twelve. Set Appearance to Halloween, Game
+sound to off, Playing to "dealt at random" and Winners to one, then tap a pack
+in: the projector ran the default look, sixty phones ignored the sound setting,
+"at random" dealt nobody, and three winners were paid — with the live line
+under the bar asserting that the console and the projector agreed.
+
+The `lobbyGame` half of this is already recorded in `CLAUDE.md` as fixed, and
+that fix went on one field and left the other seven. So this one changes the
+SHAPE rather than the list: one `nightOpts()`, spread into `switchIfFree()`,
+`doLaunch()` and `doLaunchOrder()`, and a test that fails if a fourth caller
+writes its own. Proved by reading the request body out of a real browser, which
+is the rule `winners` taught — the real launch came back byte-identical and the
+quiet one grew from five keys to fourteen.
+
 ## And the drags have a page of their own
 
 Picking a pack up, dropping it on a slot, dragging a round out of

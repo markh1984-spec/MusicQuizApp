@@ -1227,6 +1227,33 @@ export function goToTab(id) {
   renderKeepingPlace();
 }
 
+/**
+ * GO TO A DOOR WITHOUT RELOADING THE PAGE.
+ *
+ * The door chips in the topbar are `location.href = …`, which is right for a
+ * chip — it is navigation, and the address bar should say where you are. It
+ * is wrong for the app moving you itself, because a reload throws away every
+ * module binding the console holds.
+ *
+ * **That is why loading a prepared night from the Workshop door did nothing at
+ * all.** "Prepare a night" is behind the Workshop door, `loadShow()` puts the
+ * evening in `showWanted` — module state — and the launch bar it is read by is
+ * only ever built on the CONSOLE door. Tapping a show set a variable nothing
+ * on screen would look at, and dragging one was worse: there is no Tonight to
+ * drop it on over there, so the gesture had no target either. On a phone,
+ * where HTML5 drag never fires, the tap is the only way in and it was dead.
+ *
+ * Same shape as `goToTab()` above and for the same reason: change the address,
+ * then re-render in place.
+ */
+export function goToDoor(door) {
+  const url = new URL(location.href);
+  if (door && door !== 'console') url.searchParams.set('door', door);
+  else url.searchParams.delete('door');
+  history.replaceState(null, '', url.toString());
+  renderKeepingPlace();
+}
+
 /** Logo and name, top left, linking home — as any website does. */
 function paintBrand(name) {
   const slot = document.getElementById('brandSlot');

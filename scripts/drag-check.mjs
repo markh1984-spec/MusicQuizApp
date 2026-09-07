@@ -168,21 +168,62 @@ try {
    * dial rather than initialising one — which is the same distinction the
    * seconds field turned out to be hiding.
    */
-  const dialFaces = () => page.evaluate(() =>
-    [...document.querySelectorAll('.gap-dial')].map((d) => d.textContent.trim()).join(' '));
+  /*
+   * EACH DIAL WITH THE PACK ITS TILE BELONGS TO, so the press below can be
+   * aimed at a pack that is genuinely burst across several tiles. Written the
+   * lazy way — press the first dial and count how many faces moved — this
+   * check passed with the fault in, because the first pack on the shelf has
+   * ONE round and one tile, and a set of one cannot be over-written. **A
+   * guard aimed at whatever happens to be first is measuring the shelf, not
+   * the row.**
+   */
+  const dialInfo = () => page.evaluate(() => {
+    const groupOf = (tile) => {
+      const t = tile.getAttribute('title') || '';
+      const at = t.indexOf(' — ');
+      return at === -1 ? t : t.slice(at + 3);
+    };
+    return [...document.querySelectorAll('.lb-tiles .lb-tile')].flatMap((tile) => {
+      const dial = tile.querySelector('.gap-dial');
+      if (!dial) return [];
+      return [{
+        group: tile.classList.contains('is-pack') ? groupOf(tile) : 'doors',
+        face: dial.textContent.trim(),
+      }];
+    });
+  });
+  const faces = async () => (await dialInfo()).map((d) => d.face);
+  const moved = (a, b) => a.filter((face, i) => face !== b[i]).length;
 
-  const dials = await page.evaluate(() => document.querySelectorAll('.gap-dial').length);
-  check('a gap dial exists to press', dials > 0 ? 'yes' : 'no', 'yes');
-  if (dials) {
-    const first = await dialFaces();
-    await page.locator('.gap-dial').first().click();
-    await wait(250);
-    const second = await dialFaces();
-    check('pressing a gap dial changes it', second === first ? 'nothing happened' : 'changed', 'changed');
-    await page.locator('.gap-dial').first().click();
-    await wait(250);
-    const third = await dialFaces();
-    check('a second press moves it on again', third !== second && third !== first ? 'changed' : `stuck on ${third}`, 'changed');
+  const info = await dialInfo();
+  check('a gap dial exists to press', info.length > 0 ? 'yes' : 'no', 'yes');
+  const seen = {};
+  for (const d of info) seen[d.group] = (seen[d.group] || 0) + 1;
+  const at = info.findIndex((d) => d.group !== 'doors' && seen[d.group] > 1);
+  check('and a burst pack has more than one of them', at !== -1, true);
+  if (at !== -1) {
+    const press = async () => {
+      await page.locator('.lb-tiles .lb-tile .gap-dial').nth(at).click();
+      await wait(250);
+    };
+    const first = await faces();
+    await press();
+    const second = await faces();
+    check('pressing a gap dial changes it', moved(first, second) ? 'changed' : 'nothing happened', 'changed');
+    /*
+     * AND IT CHANGES ONE TILE, NOT THE WHOLE PACK.
+     *
+     * Every round tile of a burst pack was handed "the gaps this pack makes",
+     * so one press moved all of that pack's faces at once — the duplication
+     * the strip of chips under the row was deleted for, back through the tile
+     * that replaced it. Nothing threw, and the checks either side of this one
+     * pass with it in: the dial ran, and it stepped.
+     */
+    check('and only the tile you pressed', moved(first, second), 1);
+    await press();
+    const third = await faces();
+    const stepped = moved(second, third) === 1 && third[at] !== first[at];
+    check('a second press moves it on again', stepped ? 'changed' : `stuck on ${third[at]}`, 'changed');
   }
 
   check('no console errors', errors.join(' | ') || 'none', 'none');

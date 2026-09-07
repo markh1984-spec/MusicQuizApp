@@ -1,6 +1,6 @@
 /** TONIGHT — the launch bar, what is running, and the settings for one night. */
 
-import { breakPlumbing, gapDial, gapsOfPack, prunePlan } from './console-breaks.js';
+import { breakPlumbing, breaksOf, gapDial, gapsOfPack, gapsWithScreen, prunePlan } from './console-breaks.js';
 import { refreshPicks } from './console-pick.js';
 import { esc, gripIcon, node, postJson } from './client.js';
 import { tonightsVenue } from './console-gigs.js';
@@ -12,13 +12,13 @@ import {
 import { ANY_LOBBY_GAME } from './lobby-games.js';
 import { packTitle, shelfFor } from './console-shows.js';
 import {
-  addBingoSlot, addQuizPackSlot, moveRoundToSlot, segmentsFromSlots, simpleNight,
-  slotsFromSimple,
+  MAX_NIGHT_ROUNDS, addBingoSlot, addQuizPackSlot, gapIdsOfSlot, longestQuiz,
+  moveRoundToSlot, segmentsFromSlots, simpleNight, slotsFromSimple,
 } from './console-tonight-mix.js';
 import { renderSlots } from './console-tonight-mix-ui.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
 import { nowNextRows } from './console-venues.js';
-import { TABS, can, goTo, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone } from './console.js';
+import { TABS, can, doorNow, goTo, goToDoor, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone } from './console.js';
 import { clashTonight, nightKey, tonight, upcoming } from './diary.js';
 import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
 import { FEATURES } from './plans.js';
@@ -244,19 +244,6 @@ let lbOff = new Set();
 /** Which round chip is being dragged within the strip, if any. */
 let roundDrag = null;
 
-/**
- * How many rounds one night may be built from.
- *
- * **The SERVER is the authority** — `MAX_ROUNDS` in `src/running-order.js`,
- * which refuses anything longer whatever this page thinks. This copy exists
- * only so the strip can say no before somebody drags a fourth pack in and
- * finds out at Launch, in a venue. A test asserts the two agree, because a
- * limit stated in two places is a limit that disagrees with itself within a
- * month — the same reason `plans.js` and `looks.js` are shared rather than
- * copied. They cannot be shared here: `running-order.js` imports the quiz
- * validator, which is server-only.
- */
-const MAX_NIGHT_ROUNDS = 12;
 /** True while the CHOSEN pack is being dragged out of the section. */
 let offDrag = false;
 
@@ -469,7 +456,22 @@ export function loadShow(show) {
   showWanted = show;
   tonightOpen = true;
   localStorage.setItem(TONIGHT_STORE, '1');
-  renderKeepingPlace();
+  /*
+   * AND IT GOES TO THE DOOR THE NIGHT IS ON.
+   *
+   * "Prepare a night" is behind the WORKSHOP door and Tonight is only ever
+   * built on the CONSOLE door, so tapping a show over there set `showWanted`
+   * — module state — and re-rendered a page with nothing that reads it.
+   * Nothing threw, nothing moved, and the shelf is exactly where CLAUDE.md
+   * says the show editor lives. Dragging was dead for a second reason: there
+   * is no Tonight on that door to drop one onto, and on a phone the tap is
+   * the only way in at all.
+   *
+   * `goToDoor()` rather than a door chip's `location.href`: a reload would
+   * throw `showWanted` away, which is the fault one layer down.
+   */
+  if (doorNow() !== 'console') goToDoor('console');
+  else renderKeepingPlace();
 }
 
 /**
@@ -1363,16 +1365,12 @@ export function launchBar() {
    * place because it was written out in three and one of them was short.
    *
    * The quiet launch (`switchIfFree`, below) sent five fields where the real
-   * one sends twelve: set Appearance, Playing, Game sound and Winners, then
-   * tap a pack in, and the projector ran a Halloween night on the default
-   * look, sixty phones ignored a Game sound of Off, and "dealt at random"
-   * dealt nobody — with the live line under the bar asserting that the
-   * console and the projector agreed. The `lobbyGame` half of exactly this is
-   * already recorded as fixed in CLAUDE.md; that fix went on one field.
-   *
-   * The two `doLaunch`/`doLaunchOrder` calls read this too, so a field added
-   * to a night has one place to be added and cannot reach two launches out of
-   * three.
+   * one sends twelve, so a tapped-up night ran on the default look with the
+   * game sound the host had turned off and nobody dealt at random — with the
+   * live line under the bar asserting the console and the projector agreed.
+   * The `lobbyGame` half of exactly this is recorded as fixed in CLAUDE.md;
+   * that fix went on one field. A field added to a night now has one place to
+   * be added and cannot reach two launches out of three.
    */
   function nightOpts() {
     return {
@@ -1476,32 +1474,11 @@ export function launchBar() {
     // ONE root element. `node()` returns the first child, so a template with a
     // sibling after it silently loses the sibling — which here was the Launch
     // button, the only thing on the panel that does anything.
-    /*
-     * `chosen` USED TO HOLD A FOLD OF SETTINGS ("Set it up"), which moved to
-     * its own tab and has since moved AGAIN — onto the bar itself, as the
-     * always-visible `.lb-set` row rather than a fold anybody had to open.
-     * *"Not sure what the point of the Set it up bit on the console is"* was
-     * the report that started that history: the point was never the
-     * settings, it was them hanging off a control that came and went with
-     * whether a pack was chosen. `chosen` itself is now empty — nothing left
-     * needs a place to fold into — and is kept only because other code still
-     * toggles its `hidden` attribute.
-     */
+    /* `chosen` IS EMPTY AND IS KEPT FOR ITS `hidden` ALONE. It held the "Set
+       it up" fold, whose settings are now the always-visible `.lb-set` row —
+       the point was never the settings, it was them hanging off a control
+       that came and went with whether a pack was chosen. */
     chosen.replaceChildren(node('<div></div>'));
-
-    /*
-     * SET IT UP is shut by default and REMEMBERED once opened.
-     *
-     * Shut, because the common job is "this pack, this pub, go" and a wall of
-     * dropdowns in front of it is the panic control defeating itself. Open, it
-     * stays open — a quizmaster setting up a bingo night touches three of
-     * these in a row, and this panel is rebuilt every time somebody joins.
-     */
-    // The toggle lives in the row above and outlives this render; only the
-    // panel it opens is rebuilt here, so it is re-pointed rather than rewired.
-    // It is never hidden — see the comment on `.lb-row` — only switched on.
-
-    // The same prize list the pack card builds, from the shape actually picked.
 
 
     goBtn.onclick = async (ev) => {
@@ -1929,6 +1906,27 @@ export function launchBar() {
       // the row, and `lobbyGameOptions()` never read the kind it was handed.
       lobbyGamePick.innerHTML = lobbyGameOptions();
       if (night.lobbyGame) lobbyGamePick.value = night.lobbyGame;
+    }
+
+    /*
+     * IN THE GAPS — INERT WHEN THE NIGHT HAS NO GAP TO PUT ANYTHING IN.
+     *
+     * A bingo game contributes only its own lobby, and a lobby's screen is
+     * the join code, which nothing may dim. So on a bingo-only night
+     * `gapsWithScreen()` is empty and the launch sends an empty plan — while
+     * the picker sat there enabled, offering four choices and taking any of
+     * them. Present, live and IGNORED is the shape *present and inert*
+     * exists to refuse, so the reason goes on the control like Card's.
+     */
+    if (screenPick) {
+      const gaps = gapsWithScreen(segmentsNow()).length;
+      screenPick.disabled = !gaps;
+      if (!gaps) {
+        screenPick.innerHTML = '<option data-short="No gaps">Add a quiz round</option>';
+      } else {
+        screenPick.innerHTML = screenOptions();
+        screenPick.value = night.gapScreen || 'scores';
+      }
     }
 
     /*
@@ -2467,18 +2465,6 @@ export function launchBar() {
       lbOff = new Set();
       lbSlots = null;
       chosen.hidden = true;
-      /*
-       * AND SET IT UP GOES BACK TO SLEEP WITH IT. `pick()` switches that
-       * button on and nothing switched it off, so clearing the night left a
-       * control offering to configure a night that no longer existed — it
-       * opened a panel with nothing in it to set. A fresh page load has it
-       * disabled, so the two states of "nothing chosen" disagreed depending on
-       * how you got there, which is the leftover-state fault this file keeps
-       * recording in other forms.
-       *
-       * Disabled rather than hidden, so the row does not change height on the
-       * way out any more than it does on the way in.
-       */
       paintOrder();
       paintLive();
       return;
@@ -2621,15 +2607,20 @@ export function launchBar() {
        PART, so the nth tile owns the nth part's gaps — the same rule the
        ordinary row follows, and no new argument to say so. */
     const mixSegments = segmentsFromSlots(lbSlots);
-    // The nth pack TILE is the nth filled slot — `renderSlots()` draws them in
-    // slot order and only a filled slot gets `.is-pack`.
-    const filled = (lbSlots || []).filter(Boolean);
+    /* ONE TILE, ITS OWN GAP — never the whole pack's. This asked
+       `gapsOfPack()`, which was right when a tile was a pack and wrong the
+       day packs began bursting: all four tiles of a four-round pack were
+       handed the same four gaps, so pressing the last tile's dial changed the
+       first. The nth tile is the nth filled slot, and the FINAL is not a gap
+       — filtered here so each caller does not repeat that rule. */
+    const liveGaps = new Set(breaksOf(mixSegments).map((b) => b.id));
     [...row.querySelectorAll('.lb-tile.is-pack')].forEach((tile, at) => {
+      const ids = gapIdsOfSlot(lbSlots, at).filter((id) => liveGaps.has(id));
       const dial = gapDial({
-        ids: gapsOfPack(mixSegments, (filled[at] || {}).packId || '', at),
+        ids,
         plan: night.breaks,
         onSet: setGaps,
-        what: 'the breaks this pack makes',
+        what: 'the break this makes',
       });
       if (dial) tile.appendChild(dial);
     });
@@ -2665,7 +2656,15 @@ export function launchBar() {
     if (items.length < 2) return null;
     const segments = items.map((item) => {
       if (item.kind === 'bingo') {
-        return { kind: 'bingo', packId: item.packId, shape: night.shape, prizes: night.prizes };
+        /* EACH PART'S OWN, falling back to the night's — a mixed show saves a
+           card per bingo part, and `night.*` is what the settings row wrote
+           for the part currently picked. */
+        return {
+          kind: 'bingo',
+          packId: item.packId,
+          shape: item.shape || night.shape,
+          prizes: Number(item.prizes) || night.prizes,
+        };
       }
       const order = (item.order && item.order.length)
         ? item.order
@@ -3174,26 +3173,10 @@ export function launchBar() {
     goBtn.textContent = `Launch tonight — ${packs.length} packs, ${rounds} round${rounds === 1 ? '' : 's'}`;
   }
 
-  /**
-   * ONE LINE THAT SAYS EVERYTHING ELSE — where, when, and what for.
-   *
-   * ALL THREE ARE READ, none is a control: the venue is picked once, at the
-   * head of the bar. Two controls for one field is how a night gets launched
-   * with the setting the other one was showing.
-   *
-   * It was three squares the same size as the pack slots above, which said
-   * they were the same KIND of thing: something you drag onto. They are not —
-   * they are three short facts somebody READS, and dressed as targets they
-   * took as much room as the targets while doing none of the work.
-   *
-   * Tonight sits at the top of EVERY tab, so its height is charged to every
-   * page in the console. Slots, a line, a button — that is the whole section,
-   * and it now fits in a glance rather than a scroll.
-   *
-   * **THE VENUE STAYS A BUTTON.** It is the only way into the venue picker
-   * from here, and CLAUDE.md is explicit that the venue is chosen in one place
-   * and nowhere else. Losing it to a tidy-up would take the choice with it.
-   */
+  /* THE VENUE STAYS A BUTTON at the head of the bar and is READ here — it is
+     the only way into the venue picker from this section, and the venue is
+     chosen in one place and nowhere else. Two controls for one field is how a
+     night gets launched with the setting the other one was showing. */
   /**
    * THE ONE THING THAT IS WRONG, IF ANYTHING IS — and silence otherwise.
    *
@@ -3229,18 +3212,13 @@ export function launchBar() {
      *
      * Off a live night: *"my quiz and bingo winners didn't receive a QR
      * code"*. Prizes are read off the venue record at launch and nowhere
-     * else, so a night with no venue has none, issues no vouchers, and the
-     * warning began `if (!name) return null` — switched off in exactly the
-     * case it was for. It names the VOUCHER rather than the list: "no prizes
-     * set" is a fact about a form, "nothing to scan" is what the room sees.
-     */
-    /*
-     * "VENUE prizes", because "Prizes" is taken 80px lower on the same panel.
-     * That control is how many stopping points a bingo CARD pays out; this is
-     * the venue's list of what they are — a bottle of house red — read at
-     * launch onto the voucher. A bar reading "Prizes 5" under "No prizes set"
-     * says the app is broken, and this line exists because a real night's
-     * winners got no QR code.
+     * else, so a night with no venue has none — and the warning began
+     * `if (!name) return null`, switched off in exactly the case it was for.
+     * It names the VOUCHER rather than the list, and says "VENUE prizes"
+     * because "Prizes" is taken 80px lower on the same panel: that one is how
+     * many stopping points a bingo CARD pays out, this one is the venue's
+     * list of what they are. A bar reading "Prizes 5" under "No prizes set"
+     * says the app is broken.
      */
     return node(`<div class="lb-say lb-say-none">No venue prizes set${
       name ? '' : ' — no venue picked'}, so the winners get no voucher to scan${
@@ -3287,6 +3265,30 @@ export function launchBar() {
    * panel where letting go should mean something different, which is exactly
    * why the two paths were never going to stay in step.
    */
+  /**
+   * THE CEILING, SAID BEFORE THE ROW TAKES THE DROP.
+   *
+   * It had exactly one check, in the `lbExtra` branch below — which is
+   * unreachable for any pack drop now that a quiz pack BURSTS and every add
+   * goes through the mixed row. A thirteen-round night built itself happily,
+   * drew thirteen tiles, and `server.js` sliced the order back to twelve at
+   * launch with nothing said anywhere: the room played twelve and the last
+   * round simply never happened.
+   *
+   * @returns {boolean} true when it said no — the caller then does nothing.
+   */
+  function tooLong(next) {
+    const most = longestQuiz(next);
+    if (most <= MAX_NIGHT_ROUNDS) return false;
+    sayTooLong(most);
+    return true;
+  }
+
+  /** ONE SENTENCE FOR ONE RULE, wherever it is hit. */
+  function sayTooLong(n) {
+    alert(`A quiz can have at most ${MAX_NIGHT_ROUNDS} rounds — that would make ${n}.`);
+  }
+
   function addPackToNight(from, kind = gameOf().id, at) {
     if (!from) return;
     /*
@@ -3345,9 +3347,11 @@ export function launchBar() {
        * above is about: a drag that stopped an inch short has not asked for a
        * position, so inventing one for it would be worse than appending.
        */
-      lbSlots = kind === 'bingo'
+      const next = kind === 'bingo'
         ? addBingoSlot(lbSlots, from, { at })
         : addQuizPackSlot(lbSlots, from, at);
+      if (tooLong(next)) return;
+      lbSlots = next;
       paintOrder();
       return;
     }
@@ -3359,10 +3363,7 @@ export function launchBar() {
       return;
     }
     const rounds = activeRounds().length + (from.rounds || []).length;
-    if (rounds > MAX_NIGHT_ROUNDS) {
-      alert(`A night can have at most ${MAX_NIGHT_ROUNDS} rounds — that would make ${rounds}.`);
-      return;
-    }
+    if (rounds > MAX_NIGHT_ROUNDS) { sayTooLong(rounds); return; }
     lbExtra.push(from.id);
     paintOrder();
   }
@@ -3395,7 +3396,9 @@ export function launchBar() {
       return;
     }
     if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf: anyPack });
-    lbSlots = moveRoundToSlot(lbSlots, { packId: round.packId, round: round.round }, lbSlots.length);
+    const next = moveRoundToSlot(lbSlots, { packId: round.packId, round: round.round }, lbSlots.length);
+    if (tooLong(next)) return;
+    lbSlots = next;
     paintOrder();
   }
 
@@ -3419,7 +3422,9 @@ export function launchBar() {
     if (!pack) return;
     if (!currentPack) { addRoundToNight(round); return; }
     if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf: anyPack });
-    lbSlots = moveRoundToSlot(lbSlots, { packId: round.packId, round: round.round }, at);
+    const next = moveRoundToSlot(lbSlots, { packId: round.packId, round: round.round }, at);
+    if (tooLong(next)) return;
+    lbSlots = next;
     paintOrder();
   }
 
@@ -3672,9 +3677,16 @@ export function launchBar() {
     // A show saved before this existed carries no `winners`, and three is what
     // those nights did — so an old show restores to exactly the night it was.
     night.winners = Number(show.winners) >= 1 && Number(show.winners) <= 3 ? Number(show.winners) : 3;
-    night.shape = (show.shape && show.shape.rows && show.shape.cols)
-      ? { rows: Number(show.shape.rows), cols: Number(show.shape.cols) } : null;
-    night.prizes = Math.max(0, Math.min(5, Number(show.prizes) || 0));
+    /* THE PART'S OWN CARD BEATS THE SHOW'S, and the show's is the fallback. A
+       show loads ONE PART AT A TIME, so these are set to what the part about
+       to be played wants; a show saved before `tonightAsShow()` kept a card
+       per bingo part has only the show-level pair, which is what it played. */
+    const partShape = item.kind === 'bingo' ? item.shape : null;
+    const wantShape = (partShape && partShape.rows && partShape.cols) ? partShape : show.shape;
+    night.shape = (wantShape && wantShape.rows && wantShape.cols)
+      ? { rows: Number(wantShape.rows), cols: Number(wantShape.cols) } : null;
+    const partPrizes = item.kind === 'bingo' ? Number(item.prizes) || 0 : 0;
+    night.prizes = Math.max(0, Math.min(5, partPrizes || Number(show.prizes) || 0));
     /*
      * WHAT HAPPENS IN THE GAPS — restored, and it is one of the things a show
      * is FOR. A break plan is exactly the sort of decision worth making days
@@ -3790,8 +3802,19 @@ function tonightAsShow(name, segmentsNow) {
    */
   const segments = segmentsNow();
   if (!segments.length) return null;
+  /* A BINGO PART KEEPS ITS OWN CARD AND PRIZE COUNT. These were dropped and
+     the night-level pair below saved in their place — which on a MIXED night
+     is a pair nothing writes, because `setPickedBingo()` puts them on the
+     SLOT the moment there is more than one part. A 3x3 one-prize interlude
+     set up on Monday came back on Thursday as the pack's own 4x4 and two
+     prizes. The night-level pair stays for an ordinary one-game night. */
   const items = segments.map((seg) => (seg.kind === 'bingo'
-    ? { kind: 'bingo', packId: seg.packId }
+    ? {
+      kind: 'bingo',
+      packId: seg.packId,
+      ...(seg.shape ? { shape: seg.shape } : {}),
+      ...(seg.prizes ? { prizes: seg.prizes } : {}),
+    }
     : { kind: 'quiz', packId: (seg.order[0] || {}).packId || '', order: seg.order }));
   return {
     name,

@@ -9,12 +9,14 @@ import assert from 'node:assert/strict';
 import {
   slotsFromSimple, placedRounds, moveRoundToSlot, addQuizPackSlot, addBingoSlot,
   removeSlot, swapSlots, segmentsFromSlots, homeSlotIndex, toggleRoundOff, offRoundsFor,
-  simpleNight,
+  simpleNight, gapIdsOfSlot,
 } from '../public/assets/console-tonight-mix.js';
+import { breaksOf } from '../public/assets/console-breaks.js';
 
 const PACK_A = { id: 'a', title: 'Pack A', rounds: [{ title: 'R1' }, { title: 'R2' }, { title: 'R3' }] };
 const PACK_B = { id: 'b', title: 'Pack B', rounds: [{ title: 'R1' }] };
-const packOf = (id) => ({ a: PACK_A, b: PACK_B }[id]);
+const PACK_C = { id: 'c', title: 'Pack C', rounds: [{ title: 'R1' }] };
+const packOf = (id) => ({ a: PACK_A, b: PACK_B, c: PACK_C }[id]);
 
 /*
  * THESE TWO WERE REVERSED DELIBERATELY on 5 September 2026. They pinned a pack
@@ -263,4 +265,48 @@ test('SIMPLE NIGHT: anything the ordinary launch cannot express keeps the runnin
   for (const [what, slots] of cases) {
     assert.equal(simpleNight(slots), null, `${what} was wrongly called a simple night`);
   }
+});
+
+/*
+ * A TILE'S DIAL OWNS ITS OWN GAP.
+ *
+ * A burst pack is several tiles of one pack, and every one of them used to be
+ * handed "the gaps this pack makes" — so pressing the last tile's dial
+ * changed the first. All four agreed with each other and none of them was
+ * answering the question the corner they sit in asks.
+ */
+test('gapIdsOfSlot: each round tile owns the gap after its OWN round', () => {
+  const slots = slotsFromSimple({ currentPack: PACK_A, lbExtra: [], lbOff: new Set(), packOf });
+  assert.deepEqual(gapIdsOfSlot(slots, 0), ['p0:r0']);
+  assert.deepEqual(gapIdsOfSlot(slots, 1), ['p0:r1']);
+  // The board after the last round of the last part is the FINAL, not a gap —
+  // the candidate is offered and the caller drops it against `breaksOf()`.
+  assert.deepEqual(gapIdsOfSlot(slots, 2), ['p0:r2']);
+  const live = new Set(breaksOf(segmentsFromSlots(slots)).map((b) => b.id));
+  assert.equal(live.has('p0:r1'), true);
+  assert.equal(live.has('p0:r2'), false);
+});
+
+test('gapIdsOfSlot: a bingo slot owns the gap BEFORE it, and never the doors', () => {
+  // Bingo first: its lobby IS the doors, which has a dial of its own in the head.
+  const bingoFirst = addBingoSlot([], { id: 'bg' }, { at: 0 });
+  assert.deepEqual(gapIdsOfSlot(bingoFirst, 0), []);
+  // Quiz, then bingo, then quiz — three parts, and the two later lobbies are
+  // real gaps that belong to whatever follows them.
+  let slots = slotsFromSimple({ currentPack: PACK_B, lbExtra: [], lbOff: new Set(), packOf });
+  slots = addBingoSlot(slots, { id: 'bg' }, { at: 1 });
+  slots = addQuizPackSlot(slots, PACK_C, { at: 2, packOf });
+  assert.deepEqual(segmentsFromSlots(slots).map((s) => s.kind), ['quiz', 'bingo', 'quiz']);
+  assert.deepEqual(gapIdsOfSlot(slots, 0), ['p0:r0']);
+  assert.deepEqual(gapIdsOfSlot(slots, 1), ['p1:lobby']);
+  assert.deepEqual(gapIdsOfSlot(slots, 2), ['p2:r0']);
+});
+
+test('gapIdsOfSlot: two packs in one part keep counting up the SAME part', () => {
+  // Consecutive quiz slots merge into one segment, so pack B's round is
+  // position 3 of part 0 — not round 0 of a part of its own.
+  let slots = slotsFromSimple({ currentPack: PACK_A, lbExtra: [], lbOff: new Set(), packOf });
+  slots = addQuizPackSlot(slots, PACK_B, { at: 3, packOf });
+  assert.deepEqual(gapIdsOfSlot(slots, 3), ['p0:r3']);
+  assert.equal(gapIdsOfSlot(slots, 4).length, 0, 'there is no fifth tile');
 });
