@@ -35,6 +35,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import net from 'node:net';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -45,14 +46,52 @@ const KEY = 'savecheck';
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'savecheck-'));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/*
+ * REFUSE TO RUN AGAINST SOMEBODY ELSE'S SERVER — and this check learned that
+ * the hard way, on itself.
+ *
+ * `spawn` here has `stdio: 'ignore'`, so a port already in use fails silently:
+ * no server of our own starts, and every request goes to whatever is already
+ * listening — with ITS data directory, which outlives this run. A stale server
+ * from an earlier crash made "and the server kept it" pass on a deliberately
+ * broken Save, because the show it read back was the previous run's.
+ *
+ * A guard that quietly measures the wrong process is worse than no guard, so
+ * this one stops rather than lying.
+ */
+const busy = await new Promise((resolve) => {
+  const probe = net.createServer();
+  probe.once('error', () => resolve(true));
+  probe.once('listening', () => probe.close(() => resolve(false)));
+  probe.listen(PORT, '127.0.0.1');
+});
+if (busy) {
+  console.error(`\nPort ${PORT} is already in use, so this check would talk to somebody`);
+  console.error('else\'s server and could pass on a broken Save. Stop that process, or');
+  console.error(`run with PORT=<free port>.\n`);
+  process.exit(1);
+}
+
 const server = spawn(process.execPath, ['server.js'], {
   env: { ...process.env, PORT: String(PORT), HOST_KEY: KEY, DATA_DIR: DATA },
   stdio: 'ignore',
 });
+/*
+ * `unref()` AND AN EXPLICIT STOP, not just the exit hook.
+ *
+ * A spawned child keeps node's event loop alive, so `process.on('exit')` never
+ * fires: the script printed every result and then sat there for ever, which
+ * from outside is indistinguishable from the app hanging. It cost this check
+ * eight hours on its first run before anybody looked at where it was stuck.
+ */
+let stopped = false;
 const stop = () => {
+  if (stopped) return;
+  stopped = true;
   server.kill();
   fs.rmSync(DATA, { recursive: true, force: true });
 };
+server.unref();
 process.on('exit', stop);
 
 let failures = 0;
@@ -63,12 +102,13 @@ const check = (name, got, want) => {
   if (!ok) console.log(`        wanted ${want}\n        got    ${got}`);
 };
 
+let browser;
 try {
   for (let i = 0; i < 40; i += 1) {
     try { await fetch(`http://127.0.0.1:${PORT}/`); break; } catch { await wait(250); }
   }
 
-  const browser = await chromium.launch();
+  browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1400, height: 1100 } });
 
   const errors = [];
@@ -135,11 +175,16 @@ try {
   check('the show it sent has a name', String(body.name || ''), 'Sweep night');
   check('and something to play', Array.isArray(body.items) && body.items.length > 0, true);
 
-  // The server's own answer, rather than the browser's optimism.
-  const shows = await (await fetch(`http://127.0.0.1:${PORT}/api/shows`, {
+  /*
+   * THE SERVER'S OWN ANSWER, rather than the browser's optimism — and it comes
+   * back on `/api/library`, because `/api/shows` is a POST-only route. Reading
+   * a show back from the thing that stores it is the difference between "the
+   * request left" and "the night is saved".
+   */
+  const lib = await (await fetch(`http://127.0.0.1:${PORT}/api/library`, {
     headers: { 'X-Host-Key': KEY },
   })).json();
-  const kept = (shows.shows || []).map((s) => s.name);
+  const kept = (lib.shows || []).map((s) => s.name);
   check('and the server kept it', kept.includes('Sweep night'), true);
 
   await browser.close();
@@ -150,4 +195,13 @@ try {
 } catch (err) {
   console.error('\nthrew:', err.message, '\n');
   process.exitCode = 1;
+} finally {
+  /*
+   * THE BROWSER IS CLOSED EVEN WHEN SOMETHING THREW, or node keeps its handles
+   * open and never exits — which is not a hang in the app, it is a hang in the
+   * check, and it looks identical from outside. This script's own first run
+   * spent eight hours that way over a mistyped read-back URL.
+   */
+  try { await browser?.close(); } catch { /* already gone */ }
+  stop();
 }
