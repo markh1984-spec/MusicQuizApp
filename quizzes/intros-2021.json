@@ -1,0 +1,188 @@
+{
+  "id": "intros-2021",
+  "title": "2021 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2021. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2021)",
+      "blurb": "10 intros from 2021. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Traitor",
+            "Drivers License",
+            "Deja Vu",
+            "Good 4 U"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Drivers License",
+            "artist": "Olivia Rodrigo",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Peaches",
+            "Sorry",
+            "Ghost",
+            "Love Yourself"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Peaches",
+            "artist": "Justin Bieber",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Thats What I Want",
+            "Sun Goes Down",
+            "Montero (Call Me by Your Name)",
+            "Industry Baby"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Montero (Call Me by Your Name)",
+            "artist": "Lil Nas X",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Skate",
+            "Fly As Me",
+            "Smokin Out the Window",
+            "Leave the Door Open"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Leave the Door Open",
+            "artist": "Silk Sonic",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Kiss Me More",
+            "Woman",
+            "Agora Hills",
+            "Need to Know"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Kiss Me More",
+            "artist": "Doja Cat",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Shivers",
+            "Overpass Graffiti",
+            "Bad Habits",
+            "Eyes Closed"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Bad Habits",
+            "artist": "Ed Sheeran",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Tokyo Drifting",
+            "Heat Waves",
+            "Space Ghost Coast to Coast",
+            "Gooey"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Heat Waves",
+            "artist": "Glass Animals",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "I'm Still Standing",
+            "Rocket Man",
+            "Tiny Dancer",
+            "Cold Heart"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Cold Heart",
+            "artist": "Elton John",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Mammamia",
+            "Beggin'",
+            "I Wanna Be Your Slave",
+            "Zitti e Buoni"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Beggin'",
+            "artist": "Maneskin",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Body",
+            "Keisha & Becky",
+            "Gun Lean",
+            "Reggae & Calypso"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Body",
+            "artist": "Russ Millions",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

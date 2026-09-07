@@ -1,0 +1,188 @@
+{
+  "id": "intros-2015",
+  "title": "2015 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2015. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2015)",
+      "blurb": "10 intros from 2015. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "The Hills",
+            "Blinding Lights",
+            "Starboy",
+            "Can't Feel My Face"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Can't Feel My Face",
+            "artist": "The Weeknd",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "God's Plan",
+            "One Dance",
+            "Hotline Bling",
+            "Started from the Bottom"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Hotline Bling",
+            "artist": "Drake",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Run Up",
+            "Lean On",
+            "Cold Water",
+            "Light It Up"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Lean On",
+            "artist": "Major Lazer",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "See You Again",
+            "Young, Wild & Free",
+            "Black and Yellow",
+            "We Dem Boyz"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "See You Again",
+            "artist": "Wiz Khalifa",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Hula Hoop",
+            "Standing on All Threes",
+            "Cheerleader",
+            "Drop in the Ocean"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Cheerleader",
+            "artist": "OMI",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Thinking Out Loud",
+            "Photograph",
+            "Castle on the Hill",
+            "Shape of You"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Thinking Out Loud",
+            "artist": "Ed Sheeran",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Anything Could Happen",
+            "Love Me Like You Do",
+            "On My Mind",
+            "Burn"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Love Me Like You Do",
+            "artist": "Ellie Goulding",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Desire",
+            "If You're Over Me",
+            "Shine",
+            "King"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "King",
+            "artist": "Years & Years",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Where Are You Now",
+            "Are You with Me",
+            "Crazy",
+            "Reality"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Are You with Me",
+            "artist": "Lost Frequencies",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Us",
+            "Let It Go",
+            "Hold Back the River",
+            "Craving"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Hold Back the River",
+            "artist": "James Bay",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

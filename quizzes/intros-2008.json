@@ -1,0 +1,188 @@
+{
+  "id": "intros-2008",
+  "title": "2008 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2008. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2008)",
+      "blurb": "10 intros from 2008. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Manhattan",
+            "Sex on Fire",
+            "Notion",
+            "Use Somebody"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Sex on Fire",
+            "artist": "Kings of Leon",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Yellow",
+            "Violet Hill",
+            "Clocks",
+            "Viva la Vida"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Viva la Vida",
+            "artist": "Coldplay",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "1980",
+            "Come Over",
+            "American Boy",
+            "Freak"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "American Boy",
+            "artist": "Estelle",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "That's Not My Name",
+            "Be the One",
+            "Great DJ",
+            "Shut Up and Let Me Go"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "That's Not My Name",
+            "artist": "The Ting Tings",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Mercy",
+            "Rain on Your Parade",
+            "Warwick Avenue",
+            "Stepping Stone"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Mercy",
+            "artist": "Duffy",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Fix Up, Look Sharp",
+            "Bonkers",
+            "Dance Wiv Me",
+            "Holiday"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Dance Wiv Me",
+            "artist": "Dizzee Rascal",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "We Cry",
+            "The Man Who Can't Be Moved",
+            "The End Where I Begin",
+            "Breakeven"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "The Man Who Can't Be Moved",
+            "artist": "The Script",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Make You Feel My Love",
+            "Cold Shoulder",
+            "Chasing Pavements",
+            "Hometown Glory"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Hometown Glory",
+            "artist": "Adele",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Rude Boy",
+            "Unfaithful",
+            "Hate That I Love You",
+            "Disturbia"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Disturbia",
+            "artist": "Rihanna",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Cottonmouth",
+            "Black and Gold",
+            "21st Century Life",
+            "Pocket"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Black and Gold",
+            "artist": "Sam Sparro",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

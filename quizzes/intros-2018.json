@@ -1,0 +1,188 @@
+{
+  "id": "intros-2018",
+  "title": "2018 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2018. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2018)",
+      "blurb": "10 intros from 2018. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Way 2 Sexy",
+            "Laugh Now Cry Later",
+            "Toosie Slide",
+            "God's Plan"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "God's Plan",
+            "artist": "Drake",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Rewrite the Stars",
+            "Never Enough",
+            "This Is Me",
+            "A Million Dreams"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "This Is Me",
+            "artist": "Keala Settle",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Rather Be",
+            "Solo",
+            "I Miss You",
+            "Rockabye"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Solo",
+            "artist": "Clean Bandit",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "In My Blood",
+            "Stitches",
+            "There's Nothing Holdin' Me Back",
+            "Treat You Better"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "In My Blood",
+            "artist": "Shawn Mendes",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Goodbyes",
+            "Congratulations",
+            "Wow.",
+            "Better Now"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Better Now",
+            "artist": "Post Malone",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "By Your Side",
+            "One Kiss",
+            "Promises",
+            "Giant"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "One Kiss",
+            "artist": "Calvin Harris",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Started from the Bottom",
+            "Hotline Bling",
+            "Nice for What",
+            "Controlla"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Nice for What",
+            "artist": "Drake",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "High Hopes",
+            "Say Amen",
+            "Death of a Bachelor",
+            "I Write Sins Not Tragedies"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "High Hopes",
+            "artist": "Panic! At the Disco",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Blame It on Me",
+            "Budapest",
+            "Hold My Girl",
+            "Shotgun"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Shotgun",
+            "artist": "George Ezra",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Teeth",
+            "She Looks So Perfect",
+            "Youngblood",
+            "Amnesia"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Youngblood",
+            "artist": "5 Seconds of Summer",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

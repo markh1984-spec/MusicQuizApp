@@ -1,0 +1,188 @@
+{
+  "id": "intros-2024",
+  "title": "2024 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2024. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2024)",
+      "blurb": "10 intros from 2024. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Taste",
+            "Feather",
+            "Espresso",
+            "Please Please Please"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Espresso",
+            "artist": "Sabrina Carpenter",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "In the Stars",
+            "Beautiful Things",
+            "Slow It Down",
+            "Ghost Town"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Beautiful Things",
+            "artist": "Benson Boone",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Halo",
+            "Formation",
+            "16 Carriages",
+            "Texas Hold 'Em"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Texas Hold 'Em",
+            "artist": "Beyonce",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Stumblin' In",
+            "Bags",
+            "Bloody Mary",
+            "Bird Song"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Stumblin' In",
+            "artist": "CYRIL",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Physical",
+            "Levitating",
+            "Break My Heart",
+            "Houdini"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Houdini",
+            "artist": "Dua Lipa",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Birds of a Feather",
+            "What Was I Made For?",
+            "Chihiro",
+            "Lunch"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Birds of a Feather",
+            "artist": "Billie Eilish",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Unknown / Nth",
+            "Eat Your Young",
+            "Too Sweet",
+            "Francesca"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Too Sweet",
+            "artist": "Hozier",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Red Wine Supernova",
+            "Good Luck, Babe!",
+            "Hot to Go!",
+            "Pink Pony Club"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Good Luck, Babe!",
+            "artist": "Chappell Roan",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Not Like Us",
+            "Humble",
+            "Alright",
+            "Squabble Up"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Not Like Us",
+            "artist": "Kendrick Lamar",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Pour Me a Drink",
+            "I Had Some Help",
+            "Losers",
+            "Guy for That"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "I Had Some Help",
+            "artist": "Post Malone",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

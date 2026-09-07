@@ -1,0 +1,188 @@
+{
+  "id": "intros-2014",
+  "title": "2014 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2014. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2014)",
+      "blurb": "10 intros from 2014. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Marilyn Monroe",
+            "Come Get It Bae",
+            "Freedom",
+            "Happy"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Happy",
+            "artist": "Pharrell Williams",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Rather Be",
+            "Solo",
+            "Rockabye",
+            "Symphony"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Rather Be",
+            "artist": "Clean Bandit",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Valerie",
+            "Nothing Breaks Like a Heart",
+            "Uptown Funk",
+            "Late Night Feelings"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Uptown Funk",
+            "artist": "Mark Ronson",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "No",
+            "All About That Bass",
+            "Lips Are Movin",
+            "Dear Future Husband"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "All About That Bass",
+            "artist": "Meghan Trainor",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Shake It Off",
+            "Blank Space",
+            "Style",
+            "Love Story"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Shake It Off",
+            "artist": "Taylor Swift",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Too Good at Goodbyes",
+            "Stay With Me",
+            "I'm Not the Only One",
+            "Money on My Mind"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Stay With Me",
+            "artist": "Sam Smith",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Someone New",
+            "Cherry Wine",
+            "From Eden",
+            "Take Me to Church"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Take Me to Church",
+            "artist": "Hozier",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Paradise",
+            "Shotgun",
+            "Budapest",
+            "Blame It on Me"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Budapest",
+            "artist": "George Ezra",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Gone",
+            "Nothing Really Matters",
+            "Fine Wine",
+            "Waves"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Waves",
+            "artist": "Mr. Probz",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "No Way No",
+            "Let Your Hair Down",
+            "Rude",
+            "Lay You Down Easy"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Rude",
+            "artist": "MAGIC!",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

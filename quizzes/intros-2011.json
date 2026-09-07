@@ -1,0 +1,188 @@
+{
+  "id": "intros-2011",
+  "title": "2011 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2011. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2011)",
+      "blurb": "10 intros from 2011. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Domino",
+            "Do It Like a Dude",
+            "Price Tag",
+            "Bang Bang"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Price Tag",
+            "artist": "Jessie J",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "This Love",
+            "Moves Like Jagger",
+            "She Will Be Loved",
+            "Payphone"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Moves Like Jagger",
+            "artist": "Maroon 5",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Pumped Up Kicks",
+            "Houdini",
+            "Don't Stop",
+            "Sit Next to Me"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Pumped Up Kicks",
+            "artist": "Foster the People",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Sexy and I Know It",
+            "Champagne Showers",
+            "Shots",
+            "Party Rock Anthem"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Party Rock Anthem",
+            "artist": "LMFAO",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Summertime Sadness",
+            "Blue Jeans",
+            "Born to Die",
+            "Video Games"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Video Games",
+            "artist": "Lana Del Rey",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Sexy Bitch",
+            "Titanium",
+            "When Love Takes Over",
+            "Turn Me On"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Titanium",
+            "artist": "David Guetta",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Timber",
+            "I Know You Want Me",
+            "Give Me Everything",
+            "Hotel Room Service"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Give Me Everything",
+            "artist": "Pitbull",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "What Makes You Beautiful",
+            "Live While We're Young",
+            "One Thing",
+            "Story of My Life"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "What Makes You Beautiful",
+            "artist": "One Direction",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Gold on the Ceiling",
+            "Tighten Up",
+            "Howlin' for You",
+            "Lonely Boy"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Lonely Boy",
+            "artist": "The Black Keys",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "People Help the People",
+            "Not About Angels",
+            "Skinny Love",
+            "Wings"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Skinny Love",
+            "artist": "Birdy",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

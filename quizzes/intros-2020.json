@@ -1,0 +1,188 @@
+{
+  "id": "intros-2020",
+  "title": "2020 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2020. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2020)",
+      "blurb": "10 intros from 2020. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Take My Breath",
+            "Blinding Lights",
+            "Heartless",
+            "In Your Eyes"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Blinding Lights",
+            "artist": "The Weeknd",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Trap",
+            "Monica Lewinsky, Election Year",
+            "Borders",
+            "Roses"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Roses",
+            "artist": "SAINt JHN",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Woman",
+            "Streets",
+            "Say So",
+            "Kiss Me More"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Say So",
+            "artist": "Doja Cat",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Watermelon Sugar",
+            "Sign of the Times",
+            "Adore You",
+            "As It Was"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Watermelon Sugar",
+            "artist": "Harry Styles",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Levitating",
+            "Physical",
+            "Break My Heart",
+            "Don't Start Now"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Physical",
+            "artist": "Dua Lipa",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Rain on Me",
+            "Shallow",
+            "Always Remember Us This Way",
+            "Stupid Love"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Rain on Me",
+            "artist": "Lady Gaga",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Bed",
+            "Lonely",
+            "Out Out",
+            "Head & Heart"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Head & Heart",
+            "artist": "Joel Corry",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Bruises",
+            "Grace",
+            "Before You Go",
+            "Wish You the Best"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Before You Go",
+            "artist": "Lewis Capaldi",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Do It Again",
+            "Laxed (Siren Beat)",
+            "Savage Love",
+            "Lonely"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Savage Love",
+            "artist": "Jawsh 685",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Dynamite",
+            "Boy with Luv",
+            "Butter",
+            "Permission to Dance"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Dynamite",
+            "artist": "BTS",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,188 @@
+{
+  "id": "intros-2007",
+  "title": "2007 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2007. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2007)",
+      "blurb": "10 intros from 2007. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Take a Bow",
+            "Shut Up and Drive",
+            "Umbrella",
+            "Don't Stop the Music"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Umbrella",
+            "artist": "Rihanna",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Grace Kelly",
+            "Relax, Take It Easy",
+            "Love Today",
+            "Big Girl (You Are Beautiful)"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Grace Kelly",
+            "artist": "Mika",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "I Predict a Riot",
+            "Everyday I Love You Less and Less",
+            "Oh My God",
+            "Ruby"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Ruby",
+            "artist": "Kaiser Chiefs",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Merry Happy",
+            "Foundations",
+            "Pumpkin Soup",
+            "Mouthwash"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Foundations",
+            "artist": "Kate Nash",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "I Will Be",
+            "Bleeding Love",
+            "Better in Time",
+            "Footprints in the Sand"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Bleeding Love",
+            "artist": "Leona Lewis",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Old Yellow Bricks",
+            "Brianstorm",
+            "Teddy Picker",
+            "Fluorescent Adolescent"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Fluorescent Adolescent",
+            "artist": "Arctic Monkeys",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Take You There",
+            "Me Love",
+            "Beautiful Girls",
+            "Fire Burning"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Beautiful Girls",
+            "artist": "Sean Kingston",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Shine",
+            "Rule the World",
+            "Back for Good",
+            "Patience"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Shine",
+            "artist": "Take That",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Read My Mind",
+            "Bones",
+            "When You Were Young",
+            "For Reasons Unknown"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Read My Mind",
+            "artist": "The Killers",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "When You're Gone",
+            "Sk8er Boi",
+            "Complicated",
+            "Girlfriend"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Girlfriend",
+            "artist": "Avril Lavigne",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

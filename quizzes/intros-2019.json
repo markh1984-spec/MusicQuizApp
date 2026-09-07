@@ -1,0 +1,188 @@
+{
+  "id": "intros-2019",
+  "title": "2019 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2019. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2019)",
+      "blurb": "10 intros from 2019. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Montero (Call Me by Your Name)",
+            "Old Town Road",
+            "Industry Baby",
+            "Panini"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Old Town Road",
+            "artist": "Lil Nas X",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Everything I Wanted",
+            "Therefore I Am",
+            "Happier Than Ever",
+            "Bad Guy"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Bad Guy",
+            "artist": "Billie Eilish",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Someone You Loved",
+            "Hold Me While You Wait",
+            "Forget Me",
+            "Before You Go"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Someone You Loved",
+            "artist": "Lewis Capaldi",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Lost in Japan",
+            "Mercy",
+            "Señorita",
+            "Wonder"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Señorita",
+            "artist": "Shawn Mendes",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Fly Away",
+            "Never Seen the Rain",
+            "Dance Monkey",
+            "Cloudy Day"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Dance Monkey",
+            "artist": "Tones and I",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "What a Man Gotta Do",
+            "Only Human",
+            "Cool",
+            "Sucker"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Sucker",
+            "artist": "Jonas Brothers",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Giant",
+            "Outside",
+            "My Way",
+            "Blame"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Giant",
+            "artist": "Calvin Harris",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "South of the Border",
+            "Beautiful People",
+            "I Don't Care",
+            "Happier"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Beautiful People",
+            "artist": "Ed Sheeran",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Let Them Know",
+            "Don't Call Me Up",
+            "Mad Love",
+            "Finders Keepers"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Don't Call Me Up",
+            "artist": "Mabel",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Rockstar",
+            "Psycho",
+            "Sunflower",
+            "I Fall Apart"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Sunflower",
+            "artist": "Post Malone",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

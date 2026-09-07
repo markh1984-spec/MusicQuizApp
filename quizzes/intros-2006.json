@@ -1,0 +1,188 @@
+{
+  "id": "intros-2006",
+  "title": "2006 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2006. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2006)",
+      "blurb": "10 intros from 2006. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Smiley Faces",
+            "Crazy",
+            "Going On",
+            "Who's Gonna Save My Soul"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Crazy",
+            "artist": "Gnarls Barkley",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Run",
+            "Shut Your Eyes",
+            "Open Your Eyes",
+            "Chasing Cars"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Chasing Cars",
+            "artist": "Snow Patrol",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Smile",
+            "Alfie",
+            "LDN",
+            "Littlest Things"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Smile",
+            "artist": "Lily Allen",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Tears Dry on Their Own",
+            "You Know I'm No Good",
+            "Rehab",
+            "Back to Black"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Rehab",
+            "artist": "Amy Winehouse",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Rock Your Body",
+            "Cry Me a River",
+            "My Love",
+            "SexyBack"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "SexyBack",
+            "artist": "Justin Timberlake",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "She Moves in Her Own Way",
+            "Ooh La",
+            "Naive",
+            "Always Where I Need to Be"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Naive",
+            "artist": "The Kooks",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "By the Way",
+            "Dani California",
+            "Californication",
+            "Under the Bridge"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Dani California",
+            "artist": "Red Hot Chili Peppers",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Hips Don't Lie",
+            "Whenever, Wherever",
+            "She Wolf",
+            "Underneath Your Clothes"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Hips Don't Lie",
+            "artist": "Shakira",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Like a Star",
+            "Closer",
+            "Put Your Records On",
+            "Trouble Sleeping"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Put Your Records On",
+            "artist": "Corinne Bailey Rae",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "In the Morning",
+            "America",
+            "Golden Touch",
+            "Somewhere Else"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "America",
+            "artist": "Razorlight",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

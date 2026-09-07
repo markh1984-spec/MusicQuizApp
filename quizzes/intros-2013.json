@@ -1,0 +1,188 @@
+{
+  "id": "intros-2013",
+  "title": "2013 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2013. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2013)",
+      "blurb": "10 intros from 2013. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Around the World",
+            "Instant Crush",
+            "Get Lucky",
+            "One More Time"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Get Lucky",
+            "artist": "Daft Punk",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Give It 2 U",
+            "Lost Without U",
+            "Feel Good",
+            "Blurred Lines"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Blurred Lines",
+            "artist": "Robin Thicke",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Wake Me Up",
+            "Levels",
+            "Waiting for Love",
+            "Hey Brother"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Wake Me Up",
+            "artist": "Avicii",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Team",
+            "Royals",
+            "Tennis Court",
+            "Green Light"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Royals",
+            "artist": "Lorde",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Thunder",
+            "Radioactive",
+            "Demons",
+            "Believer"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Radioactive",
+            "artist": "Imagine Dragons",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Love Runs Out",
+            "Apologize",
+            "Good Life",
+            "Counting Stars"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Counting Stars",
+            "artist": "OneRepublic",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Same Love",
+            "Can't Hold Us",
+            "Thrift Shop",
+            "Downtown"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Thrift Shop",
+            "artist": "Macklemore & Ryan Lewis",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Let Her Go",
+            "Things That Stop You Dreaming",
+            "Holes",
+            "Scare Away the Dark"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Let Her Go",
+            "artist": "Passenger",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Pompeii",
+            "Things We Lost in the Fire",
+            "Good Grief",
+            "Of the Night"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Pompeii",
+            "artist": "Bastille",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Should've Been Me",
+            "Lifted",
+            "La La La",
+            "Runnin' (Lose It All)"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "La La La",
+            "artist": "Naughty Boy",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

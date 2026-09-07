@@ -1,0 +1,188 @@
+{
+  "id": "intros-2023",
+  "title": "2023 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2023. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2023)",
+      "blurb": "10 intros from 2023. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Midnight Sky",
+            "Flowers",
+            "Party in the U.S.A.",
+            "Wrecking Ball"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Flowers",
+            "artist": "Miley Cyrus",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Dumebi",
+            "Charm",
+            "Calm Down",
+            "Soundgasm"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Calm Down",
+            "artist": "Rema",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Blame",
+            "Slide",
+            "Outside",
+            "Miracle"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Miracle",
+            "artist": "Calvin Harris",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Boy's a Liar Pt. 2",
+            "Mosquito",
+            "Pain",
+            "Just for Me"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Boy's a Liar Pt. 2",
+            "artist": "PinkPantheress",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Loading",
+            "Doja",
+            "Sprinter",
+            "Obsessed with You"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Sprinter",
+            "artist": "Central Cee",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "These Walls",
+            "Dance the Night",
+            "Training Season",
+            "Illusion"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Dance the Night",
+            "artist": "Dua Lipa",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Attention",
+            "Demons",
+            "Say So",
+            "Paint the Town Red"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Paint the Town Red",
+            "artist": "Doja Cat",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Vampire",
+            "Bad Idea Right?",
+            "Obsessed",
+            "Get Him Back!"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Vampire",
+            "artist": "Olivia Rodrigo",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Lover",
+            "Cruel Summer",
+            "August",
+            "Willow"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Cruel Summer",
+            "artist": "Taylor Swift",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Escapism",
+            "Genesis",
+            "Ice Cream Man",
+            "Black Mascara"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Escapism",
+            "artist": "RAYE",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

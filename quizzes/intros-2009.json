@@ -1,0 +1,188 @@
+{
+  "id": "intros-2009",
+  "title": "2009 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2009. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2009)",
+      "blurb": "10 intros from 2009. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Paparazzi",
+            "Poker Face",
+            "Bad Romance",
+            "Just Dance"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Poker Face",
+            "artist": "Lady Gaga",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Empire",
+            "L.S.F.",
+            "Fire",
+            "Club Foot"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Fire",
+            "artist": "Kasabian",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Where Is the Love?",
+            "Boom Boom Pow",
+            "Meet Me Halfway",
+            "I Gotta Feeling"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "I Gotta Feeling",
+            "artist": "The Black Eyed Peas",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Beat Again",
+            "One Shot",
+            "Everybody in Love",
+            "The Club Is Alive"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Beat Again",
+            "artist": "JLS",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Empire State of Mind",
+            "Dirt Off Your Shoulder",
+            "99 Problems",
+            "Run This Town"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Empire State of Mind",
+            "artist": "JAY-Z",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Knights of Cydonia",
+            "Starlight",
+            "Supermassive Black Hole",
+            "Uprising"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Uprising",
+            "artist": "Muse",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Science of Fear",
+            "Fader",
+            "Sweet Disposition",
+            "Love Lost"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Sweet Disposition",
+            "artist": "The Temper Trap",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Cry Me Out",
+            "Mama Do (Uh Oh, Uh Oh)",
+            "All About Tonight",
+            "Boys and Girls"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Mama Do (Uh Oh, Uh Oh)",
+            "artist": "Pixie Lott",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Roll Away Your Stone",
+            "Winter Winds",
+            "Little Lion Man",
+            "The Cave"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Little Lion Man",
+            "artist": "Mumford & Sons",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Dynamite",
+            "Break Your Heart",
+            "Hangover",
+            "Higher"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Break Your Heart",
+            "artist": "Taio Cruz",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

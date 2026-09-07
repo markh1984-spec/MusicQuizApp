@@ -1,0 +1,188 @@
+{
+  "id": "intros-2012",
+  "title": "2012 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2012. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2012)",
+      "blurb": "10 intros from 2012. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Somebody That I Used to Know",
+            "Eyes Wide Open",
+            "Hearts a Mess",
+            "Easy Way Out"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Somebody That I Used to Know",
+            "artist": "Gotye",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "I Really Like You",
+            "Call Me Maybe",
+            "Run Away with Me",
+            "Good Time"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Call Me Maybe",
+            "artist": "Carly Rae Jepsen",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Gentleman",
+            "Daddy",
+            "Gangnam Style",
+            "Hangover"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Gangnam Style",
+            "artist": "PSY",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Why Am I the One",
+            "Carry On",
+            "Some Nights",
+            "We Are Young"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "We Are Young",
+            "artist": "fun.",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Little Talks",
+            "King and Lionheart",
+            "Dirty Paws",
+            "Mountain Sound"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Little Talks",
+            "artist": "Of Monsters and Men",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "My Life Would Suck Without You",
+            "Since U Been Gone",
+            "Because of You",
+            "Stronger (What Doesn't Kill You)"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Stronger (What Doesn't Kill You)",
+            "artist": "Kelly Clarkson",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Stubborn Love",
+            "Cleopatra",
+            "Ho Hey",
+            "Ophelia"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Ho Hey",
+            "artist": "The Lumineers",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Low",
+            "Wild Ones",
+            "Whistle",
+            "Good Feeling"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Wild Ones",
+            "artist": "Flo Rida",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Waiting All Night",
+            "These Days",
+            "Feel the Love",
+            "Not Giving In"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Feel the Love",
+            "artist": "Rudimental",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Send My Love (To Your New Lover)",
+            "Skyfall",
+            "Hello",
+            "Water Under the Bridge"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Skyfall",
+            "artist": "Adele",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

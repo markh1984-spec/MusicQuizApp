@@ -1,0 +1,188 @@
+{
+  "id": "intros-2010",
+  "title": "2010 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2010. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2010)",
+      "blurb": "10 intros from 2010. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Set Fire to the Rain",
+            "Rolling in the Deep",
+            "Someone Like You",
+            "Rumour Has It"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Rolling in the Deep",
+            "artist": "Adele",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Both of Us",
+            "Magic",
+            "Nothin' on You",
+            "Airplanes"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Airplanes",
+            "artist": "B.o.B",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Pass Out",
+            "Frisky",
+            "Written in the Stars",
+            "Miami 2 Ibiza"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Pass Out",
+            "artist": "Tinie Tempah",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "California Gurls",
+            "Hot n Cold",
+            "Firework",
+            "Teenage Dream"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Firework",
+            "artist": "Katy Perry",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Not Afraid",
+            "The Real Slim Shady",
+            "Lose Yourself",
+            "Love the Way You Lie"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Love the Way You Lie",
+            "artist": "Eminem",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Shake It Out",
+            "You've Got the Love",
+            "Dog Days Are Over",
+            "Rabbit Heart"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Dog Days Are Over",
+            "artist": "Florence + the Machine",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Forget You",
+            "Cry Baby",
+            "Fool for You",
+            "Bright Lights Bigger City"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Forget You",
+            "artist": "CeeLo Green",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Your Love Is My Drug",
+            "Tik Tok",
+            "Blow",
+            "We R Who We R"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Tik Tok",
+            "artist": "Kesha",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Big Bad Wolf",
+            "It's You",
+            "aNYway",
+            "Barbra Streisand"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Barbra Streisand",
+            "artist": "Duck Sauce",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "The Lazy Song",
+            "Locked Out of Heaven",
+            "Grenade",
+            "Just the Way You Are"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Grenade",
+            "artist": "Bruno Mars",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

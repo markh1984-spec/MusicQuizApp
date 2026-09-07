@@ -1,0 +1,188 @@
+{
+  "id": "intros-2016",
+  "title": "2016 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2016. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2016)",
+      "blurb": "10 intros from 2016. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Nice for What",
+            "One Dance",
+            "In My Feelings",
+            "Passionfruit"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "One Dance",
+            "artist": "Drake",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Closer",
+            "Paris",
+            "Don't Let Me Down",
+            "Something Just Like This"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Closer",
+            "artist": "The Chainsmokers",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "The Greatest",
+            "Chandelier",
+            "Elastic Heart",
+            "Cheap Thrills"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Cheap Thrills",
+            "artist": "Sia",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Love Someone",
+            "You're Not There",
+            "7 Years",
+            "Mama Said"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "7 Years",
+            "artist": "Lukas Graham",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Mirrors",
+            "Can't Stop the Feeling!",
+            "Filthy",
+            "Suit & Tie"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Can't Stop the Feeling!",
+            "artist": "Justin Timberlake",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Summer",
+            "Feel So Close",
+            "This Is What You Came For",
+            "How Deep Is Your Love"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "This Is What You Came For",
+            "artist": "Calvin Harris",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Human",
+            "Skin",
+            "Giant",
+            "All You Ever Wanted"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Human",
+            "artist": "Rag'n'Bone Man",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Naked",
+            "Car's Outside",
+            "Impossible",
+            "Say You Won't Let Go"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Say You Won't Let Go",
+            "artist": "James Arthur",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Earned It",
+            "Save Your Tears",
+            "I Feel It Coming",
+            "Starboy"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Starboy",
+            "artist": "The Weeknd",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Mama",
+            "Rise",
+            "Perfect Strangers",
+            "By Your Side"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Perfect Strangers",
+            "artist": "Jonas Blue",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

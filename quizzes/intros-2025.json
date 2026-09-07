@@ -1,0 +1,188 @@
+{
+  "id": "intros-2025",
+  "title": "2025 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2025. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2025)",
+      "blurb": "10 intros from 2025. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Gone",
+            "Number One Girl",
+            "On the Ground",
+            "APT."
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "APT.",
+            "artist": "ROSE",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Alejandro",
+            "Abracadabra",
+            "Die With A Smile",
+            "Disease"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Die With A Smile",
+            "artist": "Lady Gaga",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Luther",
+            "Peekaboo",
+            "Man at the Garden",
+            "TV Off"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Luther",
+            "artist": "Kendrick Lamar",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "One Thing",
+            "Messy",
+            "Wish You Were Dead",
+            "Conceited"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Messy",
+            "artist": "Lola Young",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Alligator Bites Never Heal",
+            "Denial Is a River",
+            "Anxiety",
+            "Nissan Altima"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Anxiety",
+            "artist": "Doechii",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Carry You Home",
+            "Bloodline",
+            "Burning Down",
+            "Ordinary"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Ordinary",
+            "artist": "Alex Warren",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Azizam",
+            "Old Phone",
+            "Sapphire",
+            "Camera"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Azizam",
+            "artist": "Ed Sheeran",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Chemistry",
+            "Sailor Song",
+            "Fable",
+            "Please Be Rude"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Sailor Song",
+            "artist": "Gigi Perez",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Open Hearts",
+            "Timeless",
+            "Cry for Me",
+            "Sao Paulo"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Timeless",
+            "artist": "The Weeknd",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Nobody's Son",
+            "Tears",
+            "Manchild",
+            "Busy Woman"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Manchild",
+            "artist": "Sabrina Carpenter",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}

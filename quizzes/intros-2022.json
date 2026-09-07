@@ -1,0 +1,188 @@
+{
+  "id": "intros-2022",
+  "title": "2022 Intros",
+  "subtitle": "One round. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-07T00:00:00.000Z",
+  "notes": "Name that intro, 2022. Written by hand — every question's correct answer and its cue are the same string, so the track that plays and the answer key cannot disagree. Press \"Make playlist\" to resolve each cue against Spotify and build the playlist in question order, then set each cue's start offset in the editor once you have heard it.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "intro",
+      "title": "Round One — Name That Intro (2022)",
+      "blurb": "10 intros from 2022. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Golden",
+            "Music for a Sushi Restaurant",
+            "As It Was",
+            "Late Night Talking"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "As It Was",
+            "artist": "Harry Styles",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Cloudbusting",
+            "Running Up That Hill",
+            "Babooshka",
+            "Wuthering Heights"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Running Up That Hill",
+            "artist": "Kate Bush",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "About Damn Time",
+            "Truth Hurts",
+            "Good as Hell",
+            "Juice"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "About Damn Time",
+            "artist": "Lizzo",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Single Ladies (Put a Ring on It)",
+            "Cuff It",
+            "Crazy in Love",
+            "Break My Soul"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Break My Soul",
+            "artist": "Beyonce",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Without You",
+            "Love Again",
+            "Thousand Miles",
+            "Stay"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Stay",
+            "artist": "The Kid LAROI",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Dark Red",
+            "Bad Habit",
+            "Static",
+            "Mercury"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Bad Habit",
+            "artist": "Steve Lacy",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Where Are You Now",
+            "Melody",
+            "Sun Is Shining",
+            "Reality"
+          ],
+          "correctIndex": 0,
+          "cue": {
+            "title": "Where Are You Now",
+            "artist": "Lost Frequencies",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Pretty Shining People",
+            "Anyone for You",
+            "Green Green Grass",
+            "Hold My Girl"
+          ],
+          "correctIndex": 2,
+          "cue": {
+            "title": "Green Green Grass",
+            "artist": "George Ezra",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Cruel Summer",
+            "Lavender Haze",
+            "Karma",
+            "Anti-Hero"
+          ],
+          "correctIndex": 3,
+          "cue": {
+            "title": "Anti-Hero",
+            "artist": "Taylor Swift",
+            "from": "0:00",
+            "hint": ""
+          }
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "I'm Not Here to Make Friends",
+            "Unholy",
+            "Dancing with a Stranger",
+            "Gloria"
+          ],
+          "correctIndex": 1,
+          "cue": {
+            "title": "Unholy",
+            "artist": "Sam Smith",
+            "from": "0:00",
+            "hint": ""
+          }
+        }
+      ]
+    }
+  ]
+}
