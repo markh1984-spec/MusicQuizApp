@@ -444,6 +444,15 @@ body::after {
   font-size: 1.9vh;
   line-height: 1.35;
 }
+/* A MIXED BOARD HAS FOUR THINGS IN A ROW, so it needs a fourth column.
+   The game icon is only drawn when the room chose its own game — and with
+   three columns declared, that fourth child dropped onto an implicit second
+   row: the score on a line of its own, every row twice as tall, and three of
+   five rows below the fold on a projector that cannot scroll. "Let them
+   choose" is the selected default, so the mixed board is the ordinary case.
+   A class rather than `:has(.ab-game)`, so a projector too old for it is not
+   the one left with the fault. */
+.arcade-board .ab-row.ab-mixed { grid-template-columns: 2.4vh 1fr auto auto; }
 .arcade-board .ab-pos { color: #7a7a92; font-weight: 800; }
 /* A team name has no spaces in it if somebody decides it does not — there is
    deliberately no filtering and 28 characters is the only limit, so a solid

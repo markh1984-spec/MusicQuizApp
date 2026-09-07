@@ -90,7 +90,7 @@ export function paintArcadeBoard(s) {
       ${rows.map((r, i) => {
     const played = lobbyGameById(r.game);
     return `
-        <div class="ab-row">
+        <div class="ab-row${mixed ? ' ab-mixed' : ''}">
           <span class="ab-pos">${i + 1}</span>
           <span class="ab-name">${esc(r.name)}</span>
           ${mixed ? `<span class="ab-game" title="${esc(played ? played.name : '')}">${played ? played.icon : ''}</span>` : ''}

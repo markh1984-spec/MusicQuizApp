@@ -1902,8 +1902,9 @@ export function launchBar() {
       // What plays in the LOBBY follows the FIRST thing tonight plays, not
       // "is there any bingo anywhere" — a quiz opening a mixed night wants
       // Maze Mouth in the lobby even with a bingo interlude waiting after it.
-      const firstKind = mixed ? ((lbSlots.find(Boolean) || {}).kind || 'quiz') : (hasBingo ? 'bingo' : 'quiz');
-      lobbyGamePick.innerHTML = lobbyGameOptions(firstKind);
+      // No argument: the picker leads with "Let them choose" whatever is in
+      // the row, and `lobbyGameOptions()` never read the kind it was handed.
+      lobbyGamePick.innerHTML = lobbyGameOptions();
       if (night.lobbyGame) lobbyGamePick.value = night.lobbyGame;
     }
 

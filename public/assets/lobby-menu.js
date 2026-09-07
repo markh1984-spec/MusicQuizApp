@@ -166,7 +166,38 @@ let running = null;
  * into a server that rightly refused it. Nothing showed on screen, which is
  * why it survived; the comment above it claimed it could not happen.
  */
+/*
+ * THE "TAP TO PLAY AGAIN" LISTENER IS PART OF THE GAME AND DIES WITH IT.
+ *
+ * `{ once: true }` removes it when it FIRES, which is not the same as removing
+ * it when the game ends. Close the box or switch game before tapping and the
+ * listener stayed on the canvas, closed over the OLD game's `play` — so the
+ * next tap started a second loop alongside the new one. Measured at 180 rAF
+ * callbacks a second, two games drawing on one canvas, and scores posted under
+ * a game nobody chose; one loop and a window `keydown` survived into the
+ * question.
+ *
+ * That is the exact fault this app already records as fixed — a loop left
+ * running when the canvas was torn down — coming back through a different
+ * door. The rule it taught is the one applied here: **a teardown belongs where
+ * every exit passes**, and every exit passes `stopArcade()`.
+ */
+let waitingTap = null;
+
+function armTapAgain(canvas, play) {
+  clearTapAgain();
+  waitingTap = { canvas, play };
+  canvas.addEventListener('click', play, { once: true });
+}
+
+function clearTapAgain() {
+  if (!waitingTap) return;
+  waitingTap.canvas.removeEventListener('click', waitingTap.play);
+  waitingTap = null;
+}
+
 export function stopArcade() {
+  clearTapAgain();
   if (!running) return;
   running.stop();
   running = null;
@@ -232,7 +263,7 @@ export function wireArcade(el, s, postScore) {
           // ONE post, at game over. Not a stream of positions: the lobby is
           // exactly when the connection is busiest.
           postScore(score, pick.id);
-          canvas.addEventListener('click', play, { once: true });
+          armTapAgain(canvas, play);
         },
       });
     };

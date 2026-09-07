@@ -831,11 +831,15 @@ export function shapeOptions(pack) {
  * The lobby games, for the picker under Set it up.
  *
  * Locked ones are `disabled` and say which tier they are on, rather than being
- * filtered out — the subtle upsell the Adverts tab already uses. The default
- * for THIS kind of night is the one selected, so somebody who never opens this
- * gets exactly what they got before the picker existed.
+ * filtered out — the subtle upsell the Adverts tab already uses.
+ *
+ * **IT TAKES NO KIND, AND THE DOCSTRING SAID IT DID** — "the default for THIS
+ * kind of night is the one selected", true until **Let them choose** became
+ * the default. The parameter was never read, and the launch bar was working
+ * out a `firstKind` to pass to it. The DEFAULT still follows the kind of
+ * night, in `lobbyGame()` on the phone, where the state is.
  */
-export function lobbyGameOptions(kind) {
+export function lobbyGameOptions() {
   /*
    * `tierInUse`, NOT `tier` — a comped account (the owner's own quizmaster
    * one) and a live trial hold the whole ladder's features while `tier` still

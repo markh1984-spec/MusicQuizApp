@@ -75,7 +75,18 @@ export function startGame(canvas, { onEnd = () => {}, onBank = () => {}, seed = 
      */
     if (g.lives < livesWas) {
       livesWas = g.lives;
-      onBank({ score: g.score });
+      /*
+       * A NUMBER, like the other four. `onEnd` takes `{ score, won }` and
+       * `onBank` takes the score itself — this passed the object shape to
+       * both, so every per-life bank arrived as `[object Object]`, came back
+       * off `Number()` as NaN and was recorded as ZERO. Silently: the POST
+       * answers 200 either way, and all 93 lobby tests passed with it in.
+       *
+       * Per-life banking is precisely what puts the people still playing when
+       * the host starts on the board, so on Pile Up that half was worth
+       * nothing at all.
+       */
+      onBank(g.score);
     }
     if (g.over) {
       playLost();
