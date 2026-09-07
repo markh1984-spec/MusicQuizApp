@@ -279,3 +279,109 @@ now (`--glow-1`, `--glow-2`, `--drift-1`, `--drift-2`). They were written out
 as hex, which meant changing `--bg` for Halloween moved almost nothing.
 
 ---
+
+## The projector showed things the wire had moved on from
+
+Four faults, one shape: a card key exists to be STABLE — built once, refreshed
+in place, or the projector flashes every time a phone pings — and a key that
+names one field, or nothing at all, lets everything else about the card change
+on the wire without the screen noticing.
+
+Every one of them passes the unit tests, `pub-unchanged` and every static
+check, because the PAYLOAD was right each time. Whether anybody drew it is a
+different question.
+
+### A question corrected mid-quiz
+
+Rule 11 is the whole reason `reloadPackEverywhere()` exists: a fix saved at
+nine o'clock reaches a quiz already on question four. It did — the PUT returned
+200, the server re-read the pack and pushed a fresh state — and the projector
+and every phone kept the old prompt and the old options, because
+`q:${roundIndex}:${questionIndex}` is the same string before and after. Worse
+when the ANSWER moves: the reveal then lights the new index against the old
+option list, so the room is told the wrong one was right.
+
+The key carries a fingerprint of `view.question` now. That field is only the
+static half — the id, the prompt, the options and the per-type extras — and the
+clock, the answered count and the reveal banner are siblings of it, refreshed
+in place by `updateQuestion()`. So the card cannot be rebuilt while somebody is
+answering, and the question and reveal phases still share a key, which is why
+the reveal updates rather than rebuilding.
+
+### A score fixed in front of the room
+
+`final` was `key: () => 'final'` with no `update`, so the winner slide was
+built once and left for the rest of the night. Measured: Bob on 9,999 on the
+host's screen and the projector still announcing Ann in gold at 13vh, with the
+voucher going to whoever the engine actually had first — the app disagreeing
+with itself in the loudest place it has. The round board had the same fault in
+a milder form, keyed on *whether* there were scores rather than on the scores.
+
+The final's key names exactly what `renderWinner()` reads — the leaderboard,
+`winners`, the league band, the draw and the comeback — so an ordinary push
+stringifies the same and the slide is not rebuilt under the room. A rebuild
+re-runs `fitWinner()` on the next frame, which `draw()` already does for a
+fresh card.
+
+### A big photo over a live question
+
+`showBigPhoto()` queued photos through two chained `setTimeout`s that nothing
+could reach. Six photos posted at a round board were still arriving at +5s,
++10s, +15s and +20s of the next question: the stage scrimmed to 72% black with
+the prompt and all four options greyed under a tilted polaroid, clock running.
+That is 5.3 seconds of a 20-second question the room cannot read, so everybody
+scores worse for a reason unrelated to the question.
+
+`pointer-events: none` on the photo means `elementFromPoint()` still reports
+the options as visible, so `console-frame.mjs` and every check like it says the
+screen is fine — only looking at the render finds it. Any joined phone can
+queue forty.
+
+And the host's kill switch could not reach it either: `photosOn {on:false}`
+empties `s.photos`, the strip vanished, and the polaroid stayed up in 9 of 9
+samples over 17 seconds. The one control for *"take that down"* did nothing.
+
+`stopBigPhotos()` clears the queue, the timer and the element, and it is called
+from `draw()` rather than from `paintPhotos()` — the strip is BUILT there, and
+this repo has already paid for putting a teardown where the thing is built
+rather than where every phase change passes: the lobby game's loop ran all
+night on a detached canvas for exactly that reason.
+
+## A phone when the request does not land
+
+### An answer that failed to send said "Locked in"
+
+`choose()` and `lockIn()` paint the buttons disabled optimistically and then
+POST. The catch set `pendingChoice = null` under a comment saying the buttons
+come back on the next update — and nothing did that, because `updateScreen()`
+only ever PAINTS a choice; it has no branch that un-paints one. So one dropped
+request on pub wifi left the phone disabled for the rest of the question with
+*"Locked in. No changing your mind."* under it.
+
+That team loses the whole question, and is told they answered it, which is the
+worse half: they do not even know to try again. Bingo's `toggle()` reverts its
+optimistic paint correctly — the quiz path was the outlier.
+
+`paintUnlocked()` puts them back and says what happened. A `.picked` tick is
+left alone on a multi round, deliberately: the picker's own `picks` set still
+holds them, so the phone comes back exactly where it was and one tap re-sends —
+clearing them would make a dropped request cost the choosing as well as the
+sending. It cannot un-answer a real answer, because it runs only in the catch
+and a server that took the answer sends `yourAnswer` on the next push.
+
+### Reopening a phone while the door was held
+
+`boot()` did not check the join gate's 202. `showJoin()` and `silentRejoin()`
+both do; this one posted, got `{ waiting: true, … }`, and passed it straight to
+`saveMe()` — writing that object over the stored id, token and team name — then
+called `startLive()` on an id the server has never issued.
+
+The phone came back to a bare join box with the name gone and nothing on screen
+saying why, which reads as being thrown out: exactly what rule 5 exists to
+prevent. And a phone that can prove who it is is never held (rule 4), so the
+one this bites is the phone whose token has gone — a redeploy, or one that
+joined before tokens existed.
+
+It shows the same "Just a moment" screen the join button shows and knocks again
+every three seconds, saving nothing until it is let in.
+

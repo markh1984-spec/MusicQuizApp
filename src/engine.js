@@ -1119,7 +1119,15 @@ export class Engine {
     }
     if (this.state.scoreboard === wanted) return { ok: true, scoreboard: wanted };
     this.state.scoreboard = wanted;
-    if (wanted) this.state.advert = null;
+    /*
+     * AND THE PHOTOS SLIDE GOES TOO — rule 9 says the flags clear EACH OTHER,
+     * and this pair only cleared one way. `showPhotoSlide()` puts the scores
+     * and the advert down; neither of them put the photos down, so at the
+     * final the room went on looking at the photographs while the host's
+     * button said the scores were up — and pressing it again did nothing,
+     * because the flag it toggles was already right.
+     */
+    if (wanted) { this.state.advert = null; this.state.photoSlide = false; }
     this.changed();
     return { ok: true, scoreboard: wanted };
   }
@@ -1146,8 +1154,10 @@ export class Engine {
       return { ok: false, reason: 'question_live' };
     }
     this.state.advert = { packId: String(ref.packId || ''), slideId: String(ref.slideId || '') };
-    // Two things cannot be on the projector at once.
+    // Two things cannot be on the projector at once — and the photos slide is
+    // the third, which only ever cleared the other two. See `showScoreboard()`.
     this.state.scoreboard = false;
+    this.state.photoSlide = false;
     this.changed();
     return { ok: true, advert: this.state.advert };
   }

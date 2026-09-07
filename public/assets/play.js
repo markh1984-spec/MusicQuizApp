@@ -1511,6 +1511,7 @@ async function lockIn(optionIndexes) {
     await postJson('/api/answer', { playerId: me.id, token: me.token, optionIndexes, joinCode: roomCode() });
   } catch {
     pendingChoice = null;
+    paintUnlocked();
   }
 }
 
@@ -1537,10 +1538,44 @@ async function choose(optionIndex) {
   try {
     await postJson('/api/answer', { playerId: me.id, token: me.token, optionIndex, joinCode: roomCode() });
   } catch {
-    // The state push is the source of truth; if the answer did not land the
-    // buttons come back live on the next update.
     pendingChoice = null;
+    paintUnlocked();
   }
+}
+
+/**
+ * PUT THE BUTTONS BACK WHEN THE ANSWER DID NOT LAND.
+ *
+ * **The comment that used to sit in the catch said the buttons come back on
+ * the next update. Nothing did that.** `updateScreen()` only ever PAINTS a
+ * choice — it has no branch that un-paints one — so a single dropped request
+ * on pub wifi left the phone `disabled` for the rest of the question with
+ * *"Locked in. No changing your mind."* under it. That team loses the whole
+ * question AND is told they answered it, which is the worse half: they do not
+ * even know to try again.
+ *
+ * Bingo's `toggle()` reverts its optimistic paint correctly; the quiz path was
+ * the outlier.
+ *
+ * **A `.picked` tick is left alone on a multi round**, deliberately: the
+ * picker's own `picks` set still holds them, so the phone comes back exactly
+ * where it was and one tap re-sends. Clearing them would make a dropped
+ * request cost the choosing as well as the sending.
+ *
+ * **And it cannot un-answer a real answer.** It runs only in the catch, and a
+ * server that took the answer sends `yourAnswer` on the next push, which
+ * `updateScreen()` paints back over this — plus `choose()`/`lockIn()` refuse
+ * outright once `answered(state)` is true.
+ */
+function paintUnlocked() {
+  for (const btn of document.querySelectorAll('.answer-btn')) {
+    btn.disabled = false;
+    btn.classList.remove('chosen', 'faded');
+  }
+  const lock = document.getElementById('lockBtn');
+  if (lock) { lock.disabled = false; lock.textContent = 'Lock it in'; }
+  const hint = document.getElementById('pHint');
+  if (hint) hint.textContent = 'That did not send — tap again';
 }
 
 function paintChoice(index) {
@@ -1910,7 +1945,29 @@ async function boot() {
 
   if (me && me.id) {
     try {
-      const player = await postJson('/api/join', { playerId: me.id, token: me.token, name: me.name, joinCode: roomCode() });
+      const player = await postJson('/api/join', {
+        playerId: me.id, token: me.token, name: me.name, joinCode: roomCode(), tryId: tryId(),
+      });
+      /*
+       * HELD AT THE DOOR — AND THIS IS NOT A PLAYER, SO IT MUST NOT BE SAVED.
+       *
+       * `showJoin()` and `silentRejoin()` both check `waiting`; this one did
+       * not, so reopening a held phone did `saveMe({ waiting: true, … })` —
+       * writing that object OVER the stored id, token and team name — and then
+       * `startLive()` on an id the server has never issued. The phone came
+       * back to a bare join box with the name gone and nothing on screen
+       * saying why, which reads as being thrown out and is exactly what rule 5
+       * exists to prevent.
+       *
+       * A phone that can prove who it is is never held (rule 4), so this is
+       * the phone whose token has gone — the one that has least to spare.
+       */
+      if (player.waiting) {
+        showWaiting();
+        setStatus('offline');
+        setTimeout(knockAgain, 3000);
+        return;
+      }
       rememberRoom(player.joinCode);
       saveMe(player);
       startLive();
@@ -1922,5 +1979,27 @@ async function boot() {
   showJoin();
   setStatus('offline');
   statusText.textContent = 'Not joined yet';
+}
+
+/**
+ * KEEP KNOCKING QUIETLY while the door is held, for a phone that already has
+ * a name — the same three seconds the join button uses, and the same rule:
+ * nothing has gone wrong, so this must not read as an error.
+ */
+async function knockAgain() {
+  try {
+    const player = await postJson('/api/join', {
+      playerId: me && me.id, token: me && me.token, name: me && me.name,
+      joinCode: roomCode(), tryId: tryId(),
+    });
+    if (player.waiting) { setTimeout(knockAgain, 3000); return; }
+    rememberRoom(player.joinCode);
+    saveMe(player);
+    startLive();
+  } catch {
+    // The door is not the problem any more, so ask in the ordinary way.
+    showJoin();
+    setStatus('offline');
+  }
 }
 boot();

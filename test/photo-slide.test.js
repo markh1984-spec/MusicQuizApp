@@ -103,6 +103,29 @@ test('TWO THINGS CANNOT BE ON ONE PROJECTOR', () => {
   assert.equal(e.state.photoSlide, true);
 });
 
+test('AND IT CLEARS BOTH WAYS — rule 9 says the flags clear EACH OTHER', () => {
+  /*
+   * This pair only cleared one way. `showPhotoSlide()` put the scores and the
+   * advert down and neither of them put the photos down — so at the final the
+   * room went on looking at the photographs while the host's button said the
+   * scores were up, and pressing it again did nothing at all, because the flag
+   * it toggles was already right.
+   */
+  const { engine: e } = atFinal();
+  e.showPhotoSlide(true);
+  assert.equal(e.state.photoSlide, true);
+  e.showScoreboard(true);
+  assert.equal(e.state.photoSlide, false, 'the scores went up behind the photographs');
+  assert.equal(e.state.scoreboard, true);
+
+  // …and the same for an advert, which is the third flag.
+  e.showPhotoSlide(true);
+  assert.equal(e.state.photoSlide, true);
+  e.showAdvert({ packId: 'crown', slideId: 's1' });
+  assert.equal(e.state.photoSlide, false, 'a venue slide went up behind the photographs');
+  assert.equal(e.state.scoreboard, false);
+});
+
 test('A MOVE TAKES IT DOWN — the same rule the scoreboard follows', () => {
   const { engine: e } = atFinal();
   e.showPhotoSlide(true);

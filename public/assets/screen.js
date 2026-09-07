@@ -86,8 +86,27 @@ const cards = {
   advert: { key: (s) => `ad:${fingerprint(s.advert)}`, render: renderAdvert },
   photos: { key: () => 'photos', render: renderPhotosSlide },
   round_intro: { key: (s) => `intro:${s.roundIndex}`, render: renderRoundIntro },
-  question: { key: (s) => `q:${s.roundIndex}:${s.questionIndex}`, render: renderQuestion, update: updateQuestion },
-  reveal: { key: (s) => `q:${s.roundIndex}:${s.questionIndex}`, render: renderQuestion, update: updateQuestion },
+  /*
+   * AND THE QUESTION ITSELF IS IN THE KEY, or a CORRECTION never reaches the
+   * wall.
+   *
+   * Rule 11 is the whole point of `reloadPackEverywhere()`: a question fixed
+   * at nine o'clock reaches a quiz already on question four. It did — the PUT
+   * returned 200, the server re-read the pack and pushed a fresh state — and
+   * the projector kept the old prompt and the old options, because
+   * `q:round:question` is the same string before and after. Worse when the
+   * ANSWER moves: the reveal then lights the new index against the old list.
+   *
+   * `view.question` is only the static half — the id, the prompt, the options
+   * and the per-type extras. The clock, the answered count and the reveal
+   * banner are siblings of it and are what `updateQuestion()` refreshes in
+   * place, so this cannot rebuild the card while somebody is answering.
+   *
+   * The two phases keep the SAME key deliberately, which is why the reveal
+   * updates rather than rebuilding.
+   */
+  question: { key: (s) => `q:${s.roundIndex}:${s.questionIndex}:${fingerprint(s.question)}`, render: renderQuestion, update: updateQuestion },
+  reveal: { key: (s) => `q:${s.roundIndex}:${s.questionIndex}:${fingerprint(s.question)}`, render: renderQuestion, update: updateQuestion },
   /*
    * The key carries WHAT THIS BREAK SHOWS as well as which round it is. The
    * card is built once and left alone — that is the point of a stable key,
@@ -99,10 +118,30 @@ const cards = {
     // The slides themselves, not how MANY there are — a count is not identity,
     // so a price corrected on one of a venue's three slides changed nothing
     // here for the same reason it changed nothing on the advert card above.
-    key: (s) => `board:${s.roundIndex}:${Array.isArray(s.leaderboard) ? 1 : 0}:${fingerprint(s.breakAdverts)}`,
+    // THE SCORES THEMSELVES, not merely whether there are any. A score fixed
+    // in front of the room reached the wire and never the wall: the host's
+    // screen read Bob on 9,999 and the projector still said "1 Ann 390".
+    key: (s) => `board:${s.roundIndex}:${fingerprint(s.leaderboard)}:${fingerprint(s.breakAdverts)}`,
     render: renderBoard,
   },
-  final: { key: () => 'final', render: renderWinner },
+  /*
+   * THE FINAL REDRAWS WHEN WHAT IT SAYS CHANGES — it never did.
+   *
+   * `key: () => 'final'` with no `update`, so the card was built once and left
+   * for the rest of the night. A score corrected at the final announced the
+   * WRONG TEAM in gold, at 13vh, while the voucher went to whoever the engine
+   * actually had first — the app disagreeing with itself in the loudest place
+   * it has.
+   *
+   * The fingerprint names exactly what `renderWinner()` reads and nothing
+   * else, so an ordinary push still stringifies the same and the slide is not
+   * rebuilt under the room. A rebuild re-runs `fitWinner()` on the next frame,
+   * which is what `draw()` already does for a fresh card.
+   */
+  final: {
+    key: (s) => `final:${fingerprint([s.leaderboard, s.winners, s.league, s.luckyDip, s.comeBack])}`,
+    render: renderWinner,
+  },
 };
 
 function draw(next) {
@@ -173,6 +212,12 @@ function draw(next) {
    */
   if (card.update) card.update(state);
 
+  /*
+   * A PHOTOGRAPH THAT IS NO LONGER ALLOWED COMES DOWN NOW, not when its own
+   * timer next fires. Above `paintPhotos()`, which only ever removed the
+   * STRIP — see `stopBigPhotos()`.
+   */
+  if (!photosAllowed(state)) stopBigPhotos();
   paintPhotos(state);
   paintJoinCorner(state);
   paintJoinUrls();
@@ -223,6 +268,20 @@ function paintTheLook(s) {
 const BIG_PHOTO_MS = 4400;
 const bigQueue = [];
 let bigShowing = false;
+/*
+ * THE TIMERS ARE HELD so the photo can be taken DOWN.
+ *
+ * `nextBigPhoto()` chains two `setTimeout`s — hold, then fade — and nothing
+ * could reach them. Six photos posted at a round board were still arriving at
+ * +5s, +10s, +15s and +20s of the NEXT QUESTION: the stage scrimmed to 72%
+ * black with the prompt and all four options greyed under a tilted polaroid,
+ * clock running. That is 5.3 seconds of a 20-second question the room cannot
+ * read, so everybody scores worse for a reason unrelated to the question —
+ * and `pointer-events: none` means `elementFromPoint()` still reports the
+ * options as visible, so only looking at the render finds it. Any joined
+ * phone can queue forty.
+ */
+let bigTimer = null;
 const seenPhotos = new Set();
 let photosSeeded = false;
 
@@ -322,10 +381,32 @@ function nextBigPhoto() {
   document.querySelector('.stage').appendChild(el);
 
   // Fade out on its own, then hand over to whoever is behind it in the queue.
-  setTimeout(() => {
+  bigTimer = setTimeout(() => {
     el.classList.add('going');
-    setTimeout(() => { el.remove(); nextBigPhoto(); }, 900);
+    bigTimer = setTimeout(() => { el.remove(); nextBigPhoto(); }, 900);
   }, BIG_PHOTO_MS);
+}
+
+/**
+ * TAKE THE BIG PHOTOS DOWN — the one on screen, the queue behind it and the
+ * timer that would bring the next one up.
+ *
+ * Called from `draw()` on every push where photos are not allowed, which is
+ * where every phase change passes. It is deliberately not inside
+ * `paintPhotos()` alone: that is where the strip is BUILT, and this repo has
+ * already paid for putting a teardown where the thing is built rather than
+ * where the change passes — the lobby game's loop ran all night on a detached
+ * canvas for exactly that reason.
+ *
+ * It also answers the host's kill switch. `photosOn {on:false}` empties
+ * `s.photos`, the strip vanished and the polaroid stayed up in 9 of 9 samples
+ * over 17 seconds: the one control for *"take that down"* could not reach it.
+ */
+function stopBigPhotos() {
+  bigQueue.length = 0;
+  if (bigTimer) { clearTimeout(bigTimer); bigTimer = null; }
+  bigShowing = false;
+  document.getElementById('photoBig')?.remove();
 }
 
 /**
@@ -413,10 +494,15 @@ function paintJoinCorner(s) {
  */
 const PHOTO_PHASES = new Set(['lobby', 'round_board', 'final', 'won', 'finished']);
 
+/** Whether a photograph may be on this screen at all, right now. */
+function photosAllowed(s) {
+  return (s.photos || []).length > 0 && PHOTO_PHASES.has(s.phase);
+}
+
 function paintPhotos(s) {
   const items = s.photos || [];
   let strip = document.getElementById('photoStrip');
-  const wanted = items.length > 0 && PHOTO_PHASES.has(s.phase);
+  const wanted = photosAllowed(s);
 
   // The first paint of this page is not thirty new photos arriving at once.
   // Opening the big screen an hour in — or a projector reconnecting after the

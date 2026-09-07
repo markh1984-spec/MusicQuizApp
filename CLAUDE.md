@@ -365,6 +365,18 @@ close the stream and leave the keep-alive timer running, which reopened the
 old stream under the old id forty seconds later. Every rejoin left another one
 behind, all of them claiming to be someone the server no longer had.
 
+**AND `boot()` MUST CHECK THE JOIN GATE'S 202 LIKE THE OTHER TWO DO.**
+Reopening a held phone did `saveMe({ waiting: true, … })` — **over its stored
+id, token and team name** — then opened a stream on an id the server never
+issued. A bare join box with the name gone reads as being thrown out, which is
+this rule exactly.
+
+**AND AN ANSWER THAT DID NOT SEND PUTS THE BUTTONS BACK — `paintUnlocked()`.**
+The catch's comment said the buttons come back on the next update; nothing did
+that, `updateScreen()` only ever PAINTING a choice. One dropped POST cost that
+team the whole question **and told them they had answered it**. A `.picked`
+tick is left alone on a multi round, so one tap re-sends.
+
 ### 6. Bingo cards cannot be regenerated
 The card is built server-side on join and stored against the player. There is
 **no endpoint that issues a new card** and no card-generating code on the
@@ -398,12 +410,21 @@ state, so correcting a price on a venue's slide changes the projector without
 taking it down and putting it back. The host's mic line (`say`) is host-view
 only, like a round 3 cue.
 
+**AND THE THIRD FLAG IS THE PHOTOS SLIDE, WHICH ONLY CLEARED ONE WAY** — so
+the room looked at the photographs while the host's button said the scores were
+up, and pressing it did nothing.
+
 **AND A CARD KEY IS A FINGERPRINT OF WHAT IT DRAWS, NEVER ONE FIELD OF IT.**
-The lookup did its half and the projector refused to redraw: `ad:${heading}`
-meant a corrected price reached the wire and never the wall, and two of a
-venue's slides sharing a heading did not switch — with the break rotation
-keyed on `breakAdverts.length`, which is not identity either. A key is STABLE
-on purpose, so naming one field lets everything else change unseen.
+A key is STABLE on purpose, so naming one field — or nothing at all — lets
+everything else change unseen. Four sightings, all silent, all with the PAYLOAD
+correct: `ad:${heading}`; the break rotation on `breakAdverts.length`;
+`q:round:question`, so **a question corrected mid-quiz never reached the room**
+and a moved ANSWER lit the new index against the old options, against rule 11;
+and `final` with no `update` at all — **a score fixed in front of the room
+announced the wrong team in gold at 13vh** while the voucher went to the
+engine's winner. **`view.question` is the static half**, the clock and the
+reveal banner being siblings, so this cannot rebuild a card mid-answer.
+`reaches-the-wall.mjs` drives all of it.
 
 ### 10. "Pick them all" tells the room HOW MANY, never which
 A `multi` question shows six options with 2–3 correct. The screen and the phone
@@ -506,7 +527,7 @@ opening a second file.
 - **Filters are pixel maths, not `ctx.filter`**
 - **"Filters" means PROPS, and the colour grading is GONE** — positions are a **fraction** of the canvas, never pixels.
 - **THE PHOTO CAN BE MIRRORED, and it is a BUTTON rather than a detection**
-- **THE PHONE MUST NOT SAY "look up" WHILE A QUESTION IS ON** — `PHOTO_PHASES` in `screen.js`: photos at the lobby, a round board and the end only, because twenty seconds and four options wants the whole screen.
+- **THE PHONE MUST NOT SAY "look up" WHILE A QUESTION IS ON** — `PHOTO_PHASES` in `screen.js`: photos at the lobby, a round board and the end only, because twenty seconds and four options wants the whole screen. **AND A BIG PHOTO COMES DOWN THE MOMENT THE PHASE HAS NO ROOM FOR IT — `stopBigPhotos()` in `draw()`.** The queue chained `setTimeout`s nothing could reach, so photos posted at a round board went on landing through the next question, and the host's kill switch could not take them down. `pointer-events: none` means `elementFromPoint()` reports the options visible, so only the render finds it. **In `draw()`, never in `paintPhotos()`**, which is where the strip is BUILT.
 - **A VENUE'S LOGO GOES ON THE WINNER'S VOUCHER, and nowhere else** — **THE WORDS STAY THE PRIZE**, in text underneath. **Never an image with the prize written inside it.** **NOT on the projector, and that is BYTES rather than secrecy.**
 - **The room is told what it is playing for**
 - **SECOND AND THIRD ARE A PODIUM, not a caption** — **and the podium is the TOP THREE. Do not put a fourth back.**
@@ -1584,12 +1605,10 @@ right of the pack ONCE LOADED."*
   asserts ONE face moved** — pressing the FIRST dial passed with the fault in,
   the first pack having one round: **a guard aimed at whatever happens to be
   first is measuring the shelf, not the row.**
-- **THE TILE'S SIZE DECIDED THE SHAPE, MEASURED FIRST**: 179 x 76, ticks 22px
-  bottom-left, **58px clear** in the corner on a four-round pack. That is ONE
-  44px control and never two — so the dial is the PHONES and the big screen
-  became a night-level picker. **The plan on disk is unchanged**; the picker
-  writes one `screen` to every gap that has one, and `pub-unchanged` still
-  says IDENTICAL.
+- **THE TILE'S SIZE DECIDED THE SHAPE, MEASURED FIRST**: 179 x 76 with 58px
+  clear in the corner. That is ONE 44px control and never two — so the dial is
+  the PHONES and the big screen became a night-level picker. **The plan on disk
+  is unchanged.**
 - **A DIAL IS SAFE HERE because every state is a real answer** — no invalid
   position to spin past — **and the order is a SCALE**: photos, game, both,
   nothing. A dial whose steps are not on a scale has to be memorised.
@@ -1599,49 +1618,40 @@ right of the pack ONCE LOADED."*
 - **DOORS KEEPS A DIAL because it is the one gap with no tile** — it happens
   before the first pack. Same control, word beside it, phone-only because the
   join code owns the lobby's screen.
-- **THE ERA WORD MOVED 52px LEFT.** *A pack wears its own subject* put it in
-  that corner deliberately, so this is two rules colliding: **the control wins
-  and the decoration moves**, shifted rather than dropped.
-- **A LOST `import` DREW A BAR WITH NO DIALS AND EVERY CHECK PASSED** — a
-  scripted header rewrite ate `import { esc, node }`. Four swallowed
-  `ReferenceError`s, `node --check` happy, 1,516 tests green. The same fault
-  that shipped a broken Launch. **`test/imports-present.test.js`** now asserts
+- **THE ERA WORD MOVED 52px LEFT** — two rules colliding, and **the control
+  wins and the decoration moves**, shifted rather than dropped.
+- **A LOST `import` DREW A BAR WITH NO DIALS AND EVERY CHECK PASSED** — four
+  swallowed `ReferenceError`s, `node --check` happy, 1,516 tests green, the same
+  fault that shipped a broken Launch. **`test/imports-present.test.js`** asserts
   every module imports the shared helpers it calls.
 - **A TILE IS NOT A PART** — several quiz packs are welded into ONE quiz, so
   mapping a tile to a part gave tile 1 every gap in the night and tile 2 no
-  dial at all. `gapsOfPack()` reads the part's `order`, where the gap after
-  round *i* belongs to whichever pack contributed it.
-- **THE SLOT NUMBER GOES WHEN A PACK LANDS IN IT** — it overlapped the title by
-  18 x 8px, and on a full slot the ORDER is already visible from position. It
-  stays on an EMPTY slot, where it is the whole label.
-- **THE TILE IS 90px BECAUSE 30 + 44 DOES NOT FIT IN 76** — measured overlap
-  28 x 12. Moving the × left puts "remove this" where the eye lands first and
-  moving the dial undoes what was asked for, so the tile grew. **On a phone
-  `is-pack` tiles keep that height; empty slots stay short.**
-- **THE ERA WORD IS GONE FROM A TONIGHT TILE.** Shifting it left of the dial
-  was tried and measured: it then overlapped the round ticks by 52 x 18. There
-  is no third place, so the decoration goes and the wash plus the coloured
-  edge carry the subject. It stays on the shelf CARD.
+  dial. `gapsOfPack()` reads the part's `order`.
+- **THE SLOT NUMBER GOES WHEN A PACK LANDS IN IT** — on a full slot the ORDER
+  is already visible from position. **It stays on an EMPTY slot**, where it is
+  the whole label.
+- **THE TILE IS 90px BECAUSE 30 + 44 DOES NOT FIT IN 76** — moving the × puts
+  "remove this" where the eye lands first and moving the dial undoes what was
+  asked for, so the tile grew. **On a phone `is-pack` tiles keep that height.**
+- **THE ERA WORD IS GONE FROM A TONIGHT TILE.** Left of the dial it overlapped
+  the round ticks by 52 x 18 and there is no third place, so the decoration goes
+  and the wash plus the coloured edge carry the subject. **It stays on the shelf
+  CARD.**
 - **`.lb-tiles:has(.lb-doors-slot)` OUT-SPECIFIED THE PHONE RULE** — a class
-  more specific than `.lb-tiles` beat the 560px layout, and 390 came out as
-  four 50px columns with the dial wider than its tile. The specificity trap
-  this file already records, wearing `:has()` instead of a `border` shorthand.
-- **DOORS IS A MINI SLOT AT THE HEAD OF THE ROW** — *"a little mini pack slot
-  at the start of the packs"*. The gap before the first pack, drawn where it
-  happens; half width, no number, never a drop target. **The big screen is not
-  offered there**: the lobby's projector is the join code and nothing may dim
-  it, so that is a change to the protected surface rather than a control.
+  more specific than `.lb-tiles` beat the 560px layout, and 390 came out as four
+  50px columns. The specificity trap wearing `:has()`.
+- **DOORS IS A MINI SLOT AT THE HEAD OF THE ROW** — half width, no number,
+  never a drop target. **The big screen is not offered there**: the lobby's
+  projector is the join code and nothing may dim it.
 - **EVERY NIGHT SETTING IS ON ONE ROW, AND A BOX IS NEVER NARROWER THAN ITS
   OWN HEADING.** `justify-items: stretch` makes the BOX the wider one every
   time. **It does not undo *narrow shut, wide open***: the cell is still only as
   wide as the longer of the value and the word above it. Card and Prizes joined
-  that row, so the separate bingo row is GONE, and both needed `data-short`.
-  **The reason a control is off went into the control** (*"Add a bingo game"*),
-  because the caption went with the row.
+  that row, so the separate bingo row is GONE. **The reason a control is off
+  went into the control** (*"Add a bingo game"*).
 - **THE ROW SERVES ANY BINGO PACK IN TONIGHT, NOT ONLY A PICKED ONE** — it
   keyed off the PICKED tile, so with the quiz picked the app said to add a thing
-  already on screen. `bingoToSet()`: the picked pack when it is a bingo, else the
-  first in the order. **The three WRITES had to move with the read**, or the row
+  already on screen. **The three WRITES had to move with the read**, or the row
   shows one pack's card and saves it onto another.
 - **THE CARD'S DISPLAYED DEFAULT IS WRITTEN BACK WHERE IT IS DISPLAYED.** The
   bar read *"5x5 — 25 of 40 songs on a card"* and the launch sent
@@ -1667,30 +1677,27 @@ right of the pack ONCE LOADED."*
   does this mean? the . ?"* — which is the *clarity beats everything* test
   failing. The other three states are pictures; punctuation on a button reads
   as a control that failed to load.
-- **THE PACK LIFTS FROM ITS GRIP; A ROUND LIFTS FROM ITS OWN SQUARE.** A row's
-  tick carried NO drag handlers, so the browser walked up to the nearest
-  draggable ancestor and took the whole pack. **A `draggable` child is what
-  stops the walk.** The tile then refuses a `dragstart` that did not begin on
-  `.lb-tile-head` — the smallest drag handle there is, no flag to arm and
-  disarm, nothing left behind if a pointer is lost.
+- **THE PACK LIFTS FROM ITS GRIP; A ROUND LIFTS FROM ITS OWN SQUARE.** A
+  tick with no drag handlers lets the browser walk up to the nearest draggable
+  ancestor and take the whole pack; **a `draggable` child is what stops the
+  walk.** The tile refuses a `dragstart` that did not begin on `.lb-tile-head`
+  — the smallest drag handle there is, nothing to arm and disarm.
 - **A `dropEffect` THE SOURCE DID NOT ALLOW KILLS THE DROP SILENTLY.** A pack
-  card starts its drag `effectAllowed = 'copy'` and a round tick `'move'`; set
-  the wrong one and the browser treats the target as REFUSING, so **no `drop`
-  fires at all**. Hard-coding `'move'` in a handler serving both broke every
-  pack drop onto a slot while rounds kept working. **A synthesised `DragEvent`
-  does not enforce it** — `node scripts/drag-check.mjs` drives the real mouse,
-  and is the only thing that can see this or the `preventDefault` rule.
-- **THE SLOT YOU DROP ON IS THE SLOT IT GOES IN — for a whole PACK too.** The
-  slot lit up and accepted, then `addBingoSlot()` appended and ignored the index
-  it was handed. `at` is honoured only when that slot is genuinely EMPTY —
-  dropping onto a full tile appends rather than overwriting, because a slot you
-  can destroy by letting go over it is a hazard. **A drop that MISSES every
-  square means "the next free slot"**, which with holes is the first hole.
-- **A DESCRIPTOR IS NOT THE THING IT DESCRIBES.** *"Now I can't drag into
-  slot 2 as an empty slot"*: `packDrag` is `{ id, kind }` and the empty slot's
-  drop handed it on as the pack. With no `rounds`, `addQuizPackSlot()` gave
-  the row back unchanged — **the slot lit, the drop was taken, nothing
-  appeared.** A bingo slot needs only the id, so it read as quiz-only.
+  card allows `'copy'` and a round tick `'move'`; set the wrong one and the
+  browser treats the target as REFUSING, so **no `drop` fires at all**.
+  Hard-coding `'move'` in a handler serving both killed every pack drop while
+  rounds kept working. **A synthesised `DragEvent` does not enforce it** —
+  `drag-check.mjs` drives the real mouse and is the only thing that can see
+  this or the `preventDefault` rule.
+- **THE SLOT YOU DROP ON IS THE SLOT IT GOES IN — for a whole PACK too.** `at`
+  is honoured only when that slot is genuinely EMPTY: **a slot you can destroy
+  by letting go over it is a hazard**, so a drop onto a full tile appends. **A
+  drop that MISSES every square means "the next free slot"**, which with holes
+  is the first hole.
+- **A DESCRIPTOR IS NOT THE THING IT DESCRIBES.** `packDrag` is `{ id, kind }`
+  and the empty slot's drop handed it on as the pack: with no `rounds`,
+  `addQuizPackSlot()` gave the row back unchanged — **the slot lit, the drop was
+  taken, nothing appeared.**
 - **A KIND THAT DISAGREES WITH THE NIGHT'S OWN IS A MIXED NIGHT** — a quiz pack
   added to a bingo night went into `lbExtra`, whose ids `packOf()` resolves
   against `gameOf()` alone, and was never found again. **Nothing threw — the
@@ -1699,43 +1706,33 @@ right of the pack ONCE LOADED."*
   `render()` assembles the page OFF the document, so a later paint finds the
   PREVIOUS page's cards — **every tab change drew a shelf with no ghosting**.
 - **THE BREAK PLUMBING MOVED INTO `console-breaks.js`** rather than the line
-  budget being raised a fifth time — `breakPlumbing({ night, segmentsNow,
-  repaint })`, handed what it needs so the module stays a leaf. **Destructured
-  ABOVE every reader**: a `const` in its temporal dead zone throws when the
-  line RUNS, and the catch swallows it. **A moved body keeps the names of the
-  home it left** — this one still called `paintOrder()`; see *Checks*.
-- **A PACK TILE LIGHTS UP TOO — AND ONLY WHERE THE DROP WILL BE TAKEN.**
-  `moveRoundToSlot()` refuses a bingo game or a DIFFERENT pack, so a tile that
-  lit and then did nothing would be worse than one that never lit: it promised.
-  A refusal also STOPS the event, or it bubbles to the row and the round lands
-  somewhere the pointer never was. **The inset ring alone was invisible** next
-  to the picked tile's own outline in the same colour — it takes a wash and a
-  lift as well.
-- **A FILLED MIXED TILE HAS TWO WIRINGS AND THEY RACED.** `wireSlotDrag` and
-  `wireDropTarget` both set `drop-here`; the one registered LAST won, so a
-  bingo tile lit for a round it would refuse. **One handler decides**
-  (`takesRound()` in `wireDropTarget`) and the other stands down.
-- **AN EMPTY SLOT TAKES A ROUND AND LIGHTS UP WHILE YOU ARE OVER IT** — two
-  faults at once: no `dragover` of its own, so **nothing lit up** and an inert
-  square reads as one that refuses; and `orderEl`'s drop APPENDS, so a round let
-  go over slot 5 appeared in slot 2. `stopPropagation` on the slot's own
-  handlers makes its answer the one that counts.
+  budget being raised a fifth time — handed what it needs so the module stays a
+  leaf. **Destructured ABOVE every reader**: a `const` in its temporal dead zone
+  throws when the line RUNS and the catch swallows it. **A moved body keeps the
+  names of the home it left.**
+- **A PACK TILE LIGHTS UP TOO — AND ONLY WHERE THE DROP WILL BE TAKEN.** A
+  tile that lit and then did nothing would be worse than one that never lit: it
+  promised. A refusal also STOPS the event, or it bubbles to the row and the
+  round lands somewhere the pointer never was. **The inset ring alone was
+  invisible** beside the picked tile's own outline.
+- **A FILLED MIXED TILE HAS TWO WIRINGS AND THEY RACED.** The one registered
+  LAST won, so a bingo tile lit for a round it would refuse. **One handler
+  decides and the other stands down.**
+- **AN EMPTY SLOT TAKES A ROUND AND LIGHTS UP WHILE YOU ARE OVER IT** — it had
+  no `dragover` of its own, so **nothing lit up** and an inert square reads as
+  one that refuses; and `orderEl`'s drop APPENDS, so a round let go over slot 5
+  appeared in slot 2. `stopPropagation` makes the slot's own answer count.
 - **AND MY OWN TEST HAD MISSED IT** by dispatching `drop` directly — a browser
-  fires no `drop` unless `dragover` called `preventDefault()`. Measure
-  `defaultPrevented` on the dragover, not the outcome of a synthetic drop.
-- **A CHILD'S `dragend` BUBBLES TO THE TILE, and the tile's removes the pack.**
-  Dragging a round out emptied Tonight. `if (ev.target !== tile) return;` — and
-  the round's own drag travels the SHELF channel so `moveRoundToSlot()` MOVES it
-  rather than duplicating it.
-- **A ROUND IS A ROUNDED SQUARE AT 28px, AND ITS HOVER LIFTS.** *"Square shaped
-  with round edges… I need to see when mousing over them."* `--r-field` only
-  reads as a square on a box with sides — at 22px it is nearly a circle. The
-  old hover was `filter: brightness(1.25)`, which on a faint 22px dot is a
-  change you cannot find. **A four-round pack wraps to two rows and that is
-  fine** — the grid stretches every tile to the tallest, so none ends up out of
-  line.
-
-Full reasoning: **[`docs/console/launch-bar.md`](docs/console/launch-bar.md)**.
+  fires no `drop` unless `dragover` called `preventDefault()`. **Measure
+  `defaultPrevented` on the dragover**, not the outcome of a synthetic drop.
+- **A CHILD'S `dragend` BUBBLES TO THE TILE, and the tile's removes the
+  pack** — dragging a round out emptied Tonight. The round's own drag travels
+  the SHELF channel so `moveRoundToSlot()` MOVES it rather than duplicating.
+- **A ROUND IS A ROUNDED SQUARE AT 28px, AND ITS HOVER LIFTS.** *"Square
+  shaped with round edges… I need to see when mousing over them."* `--r-field`
+  only reads as a square on a box with sides — at 22px it is nearly a circle —
+  and the old `filter: brightness(1.25)` hover is a change you cannot find on a
+  faint dot. **A four-round pack wraps to two rows and that is fine.**
 
 ### FIVE DOORS: CONSOLE · WORKSHOP · POST GIG · COMMUNITY · MY ACCOUNT
 
@@ -3817,6 +3814,8 @@ node scripts/pages-scroll.mjs           # can a person actually scroll each page
 node scripts/final-fits.mjs             # is the last slide of the night all on screen?
 node scripts/advert-on-the-wall.mjs     # does a corrected slide reach the projector?
 node scripts/bar-reaches-the-room.mjs   # does the launch bar's card reach the room?
+node scripts/reaches-the-wall.mjs       # does a correction reach the projector?
+node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 ```
 
 **The rules these commands run on, and each was learned expensively — the full

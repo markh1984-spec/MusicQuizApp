@@ -66,6 +66,13 @@ export function freePort() {
  * Returns `{ base, key, stop }`. Prefer `withApp()` below, which cannot forget
  * to call `stop`.
  */
+/** One of the shipped pack folders, copied where a check may safely write it. */
+function catalogueCopy(dir, name) {
+  const to = path.join(dir, name);
+  fs.cpSync(path.join(ROOT, name), to, { recursive: true });
+  return to;
+}
+
 export async function startApp({ key = 'live-app-key', seed, env = {} } = {}) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'live-app-'));
   const seeded = seed ? seed(data) : undefined;
@@ -82,6 +89,19 @@ export async function startApp({ key = 'live-app-key', seed, env = {} } = {}) {
         // Never let a spawned app default to the repo's own adverts folder — a
         // real, git-tracked directory a check would write fixtures into.
         ADVERT_DIR: path.join(data, 'adverts'),
+        /*
+         * AND THE CATALOGUE IS A COPY, for the same reason one step further
+         * on. `QUIZ_DIR`/`BINGO_DIR` default to the repository's own
+         * `quizzes/` and `bingo/` — the packs the app SHIPS, tracked in git —
+         * so any check that SAVES a pack edits them in the working tree. One
+         * already did: verifying that a create cannot land on an existing pack
+         * meant taking the refusal out for a single run, and that run replaced
+         * `1980s-pop-music.json` with a one-question stub. **A guard that can
+         * damage the thing it guards is one nobody should have to remember to
+         * be careful around.** 240KB, thrown away with the directory.
+         */
+        QUIZ_DIR: catalogueCopy(data, 'quizzes'),
+        BINGO_DIR: catalogueCopy(data, 'bingo'),
         HOST_KEY: key,
         ...env,
       },
