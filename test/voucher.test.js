@@ -512,3 +512,113 @@ test('a tie for first is still paid in full on a one-winner night', () => {
   assert.equal(Object.keys(engine.state.vouchers).length, 2, 'a tied winner went unpaid');
   for (const v of Object.values(engine.state.vouchers)) assert.equal(v.place, 1);
 });
+
+/*
+ * A PRIZE THAT IS NO LONGER OWED IS TAKEN BACK, as long as nobody has spent it.
+ *
+ * `issueVouchers()` only ever topped UP — it skipped anybody already holding
+ * one and minted for anybody newly entitled, and never asked whether the board
+ * still agreed with what it had handed out. Back, Back, *Ask again* and a
+ * replayed final is four presses, all of them ordinary.
+ */
+test('REPLAYING A QUESTION AFTER THE FINAL DOES NOT LEAVE A BEATEN TEAM HOLDING THE PRIZE', () => {
+  const { engine, plays } = withGame();
+  engine.state.rewards = ['A free drink'];
+  const rob = plays('Rob', 500);
+  const sue = plays('Sue', 100);
+
+  engine.finish();
+  const first = Object.values(engine.state.vouchers);
+  assert.equal(first.length, 1);
+  assert.equal(first[0].name, 'Rob');
+
+  // The host replays the last question and it goes the other way.
+  engine.state.players[rob.id].score = 100;
+  engine.state.players[sue.id].score = 500;
+  engine.forgetBoard();
+  engine.issueVouchers();
+
+  const now = Object.values(engine.state.vouchers);
+  assert.equal(now.length, 1, 'two live top-prize codes on a night with one winner');
+  assert.equal(now[0].name, 'Sue');
+});
+
+test('…but a prize already taken at the bar is left alone, because the drink has gone', () => {
+  const { engine, plays } = withGame();
+  engine.state.rewards = ['A free drink'];
+  const rob = plays('Rob', 500);
+  const sue = plays('Sue', 100);
+  engine.finish();
+  const [code] = Object.keys(engine.state.vouchers);
+  engine.redeemVoucher(code, { by: 'scan' });
+
+  engine.state.players[rob.id].score = 100;
+  engine.state.players[sue.id].score = 500;
+  engine.forgetBoard();
+  engine.issueVouchers();
+
+  assert.ok(engine.state.vouchers[code], 'a spent voucher is a record, not a promise');
+  assert.equal(Object.values(engine.state.vouchers).length, 2);
+});
+
+test('RESET SCORES HANDS THE NEXT GAME A CLEAN LEDGER, without destroying a prize somebody holds', () => {
+  const { engine, plays } = withGame();
+  engine.state.rewards = ['A free drink'];
+  const rob = plays('Rob', 500);
+  plays('Sue', 100);
+  engine.finish();
+  const gameOne = Object.keys(engine.state.vouchers);
+  assert.equal(gameOne.length, 1);
+  engine.state.luckyDip = { id: 'x', name: 'Somebody', outOf: 4, drawnAt: 1 };
+
+  engine.resetScores();
+  assert.equal(engine.state.luckyDip, null, 'the draw never ran again for the second game');
+  assert.equal(engine.state.vouchers[gameOne[0]].carried, true,
+    "night one's code is still live at the bar — it just stops being about this board");
+
+  // The same person wins again: the old check said "already paid" and gave
+  // the second game's winner nothing.
+  engine.state.players[rob.id].score = 400;
+  engine.forgetBoard();
+  engine.issueVouchers();
+  const fresh = Object.values(engine.state.vouchers).filter((v) => !v.carried);
+  assert.equal(fresh.length, 1, "the second game's winner got nothing");
+  assert.equal(fresh[0].name, 'Rob');
+});
+
+test('STOPPING AT A ROUND INTRO STILL RUNS THE DRAW', () => {
+  /*
+   * TWO ROUNDS, deliberately: a one-round quiz never reaches a second round
+   * intro, so the same test written against the shared fixture would walk
+   * straight to the final and assert nothing. The pointer sitting on a
+   * question nobody has been asked is the whole fault.
+   */
+  const twoRounds = {
+    ...QUIZ,
+    rounds: [
+      QUIZ.rounds[0],
+      { id: 'r2', type: 'text', title: 'Round Two', questions: [
+        { id: 'q2', prompt: 'Another?', options: ['a', 'b', 'c', 'd'], correctIndex: 0 },
+      ] },
+    ],
+  };
+  let at = Date.parse('2026-08-14T21:00:00.000Z');
+  const engine = new Engine({ quiz: twoRounds, now: () => at, random: () => 0 });
+  engine.state.rewards = ['A free drink', 'A bag of crisps', 'A packet of nuts'];
+  const ids = ['A', 'B', 'C', 'D', 'E', 'F'].map((n) => engine.join({ name: n }));
+
+  engine.start();
+  while (engine.state.phase !== PHASES.QUESTION) engine.next();
+  ids.forEach((p, i) => engine.answer({ playerId: p.id, optionIndex: i < 3 ? 0 : 1 }));
+  at += 1000;
+  engine.next(); // -> REVEAL
+  engine.next(); // -> ROUND_BOARD
+  engine.next(); // -> ROUND_INTRO of round two
+  assert.equal(engine.state.phase, PHASES.ROUND_INTRO, 'the fixture must reach a second round intro');
+
+  // The room is thinning out and the host presses Stop.
+  engine.finish();
+  assert.ok(engine.state.luckyDip,
+    'answeredTheLastQuestion() read the pointer, which at a round intro is a question nobody was asked');
+  assert.equal(engine.state.luckyDip.outOf >= 2, true, 'two in the hat, minimum');
+});

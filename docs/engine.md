@@ -824,3 +824,114 @@ which is this panel's own fault wearing a different hat.
 **The fastest finger's `faceKey` deliberately stays the individual's.** The
 slide is a photograph of the person who was quickest, and a team has no face of
 its own — so the NAME comes off the board and the FACE off the phone.
+
+---
+
+# Four ways a night's scores and prizes came apart
+
+All four are ordinary presses on the path a gig actually takes, none of them
+throws, and every one was found in the September 2026 sweep.
+
+## Back kept the points of the question it was leaving
+
+`skipQuestion()` and `redoQuestion()` both call `clearQuestionScores()` and
+filter the history. `back()` did neither — and Back from a live question goes
+to the PREVIOUS question's reveal, from which Next comes straight back to the
+question you just left.
+
+So: one over-press of Next, then the button the host is told is safe. The two
+tables that got in fast kept their points AND the first-correct bonus for a
+question the room never played; on the replay their phones answered
+`already_answered`, so they sat out while everybody else played for a hundred
+points less.
+
+The three are one act seen from three directions. Back was the one that did not
+do it.
+
+## Replaying after the final left beaten teams holding live prizes
+
+`issueVouchers()` only ever topped UP: it skipped anybody already holding one
+and minted for anybody newly entitled, and never asked whether the board still
+agreed with what it had handed out.
+
+Back, Back, *Ask again* and a replayed final is four presses, all ordinary —
+and it left three live top-prize codes on a night with two winners, one of them
+held by a team the room had watched come last.
+
+`withdrawVouchersNoLongerOwed()` runs before each issue. Three things it does
+not touch:
+
+- **a redeemed voucher.** The drink is behind the bar; the record of it is the
+  honest thing to keep, and the host's panel still shows it as spent.
+- **a `draw` voucher.** `drawLuckyDip()` decides once, in the state, precisely
+  so a room cannot be told two different names.
+- **a `carried` voucher.** It was won earlier tonight, in another part or
+  another game, and this board has nothing to say about it.
+
+## Reset scores kept the whole prize ledger
+
+Two shorter quizzes for one room is the case the `winners` setting was built
+for, and Reset scores is how you get there. It cleared the answers, the history
+and the scores — and kept `luckyDip` set, so the draw never ran again, and kept
+every game-one voucher in the "already paid" set, so the second game's genuine
+winner got nothing while night one's first-place code was still live at the bar.
+
+The codes are marked `carried`, never deleted: somebody won that drink. It is
+the same flag a part boundary uses and it means the same thing — *won earlier
+tonight, so this board has nothing to say about it.*
+
+## Stopping at a round intro cancelled the draw
+
+`answeredTheLastQuestion()` read `answersFor()` with no arguments, which is the
+CURRENT round and question. At a round intro that is a question nobody has been
+asked, so the answer map is empty, nobody is eligible, and the draw silently
+did not happen.
+
+Stopping early is exactly the case the draw exists for: the room is thinning
+out. It reads the last entry in `history` now — the most recent question the
+room genuinely played, which on an ordinary ending is the current pointer
+anyway.
+
+---
+
+# A team's seats are settled at a boundary, and a phone may not mint one
+
+## `makeTeam()` refused after it had already written
+
+`session.run('team')` made the team and then joined it, and only the JOIN knew
+about random mode. So on a random-teams night a phone with its own token got
+`{ ok: false, reason: 'random_teams' }` back **while the team it named was
+already in the state** — arbitrary, unfiltered text on the projector, which is
+the one screen this app has deliberately never filtered.
+
+Worse: an injected team has size 0, so `dealInto()` puts the next honest joiner
+straight into it, and the room ends up sitting under a name nobody chose.
+
+`dealt: true` is the app's own way in — `dealRandomTeam()` is the app making a
+team, not a phone naming one.
+
+## And there was no ceiling at all
+
+Measured against a running server: **1,200 teams created in 1.3 seconds** from
+one phone at the lobby, taking every SSE payload from 0.7KB to 85KB and
+flushing state to disk on each one — at exactly the moment sixty people are
+joining.
+
+`MAX_TEAMS` is forty rather than `RANDOM_TEAM_MAX`. Six is a DESIGN number for
+what the app deals itself; this is a SAFETY number, and on an assigned night
+the count is a fact about the pub — fifteen tables is an ordinary Friday and
+capping at six would refuse a real room.
+
+## A team could still be changed at three moments where the answer was known
+
+The rule was `QUESTION && !closed`, which left the seconds after the clock runs
+out, the whole of the REVEAL, and the FINAL.
+
+All three are the same exploit and it needs no cleverness: **scores are
+AVERAGED**, so a table that sheds its weakest phone at the reveal raises its own
+average and overtakes its rival with no question asked. At the final it
+reorders a podium the room has already watched.
+
+`TEAM_CHANGE_PHASES` is the lobby, the rules, a round intro and a round board —
+the moments the room is milling about anyway, which is when somebody actually
+moves tables, and every one of them a point at which nothing is half-scored.

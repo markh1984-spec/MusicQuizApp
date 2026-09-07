@@ -70,6 +70,26 @@ export const RANDOM_TEAM_TARGET = 4;
 export const RANDOM_TEAM_MAX = RANDOM_TEAM_NAMES.length;
 
 /**
+ * THE MOST TEAMS A NIGHT MAY HAVE AT ALL — the ceiling on the `assigned` mode,
+ * where the room names its own tables.
+ *
+ * `RANDOM_TEAM_MAX` above is a DESIGN number: six, because six rows is a
+ * readable board when the app is dealing. This is a SAFETY number, and it is
+ * deliberately much larger, because on an assigned night the count is a fact
+ * about the pub — fifteen tables is an ordinary Friday and capping at six
+ * would refuse a real room.
+ *
+ * It exists because `makeTeam()` had no cap at all: measured against a running
+ * server, **1,200 teams created in 1.3 seconds** from one phone at the lobby,
+ * taking every SSE payload from 0.7KB to 85KB and flushing state to disk on
+ * each one — at exactly the moment sixty people are joining.
+ *
+ * Forty is past any pub and nowhere near a flood. A constant with a note,
+ * like the two above it.
+ */
+export const MAX_TEAMS = 40;
+
+/**
  * WHERE THE NEXT PHONE GOES — an existing team to join, or a new one to make.
  *
  * **The teams GROW WITH THE ROOM rather than being fixed at launch**, which

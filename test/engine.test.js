@@ -2075,3 +2075,63 @@ test('the host\'s seconds replace the pack default, and a round\'s own beats bot
   zero.state.questionSeconds = 0;
   assert.equal(zero.questionSeconds(0), 20, '0 is the blank field, not a zero-second question');
 });
+
+/*
+ * BACK WIPES THE QUESTION IT IS LEAVING, exactly as Skip and Ask again do.
+ *
+ * `skipQuestion()` and `redoQuestion()` both call `clearQuestionScores()`;
+ * `back()` did not. One over-press of Next, then the button the host is told
+ * is safe, and the fastest tables kept their points AND the first-correct
+ * bonus for a question the room never played — while on the replay their
+ * phones answered `already_answered`, so they sat out while everybody else
+ * played for a hundred points less.
+ */
+test('BACK FROM A QUESTION WIPES THE POINTS IT HAS ALREADY AWARDED', () => {
+  const { engine, advance } = makeEngine();
+  const rob = engine.join({ name: 'Rob' });
+  const sue = engine.join({ name: 'Sue' });
+  engine.start();
+  while (engine.state.phase !== PHASES.QUESTION) engine.next();
+
+  // Question one, played properly.
+  engine.answer({ playerId: rob.id, optionIndex: 1 });
+  advance(2000);
+  engine.next(); // -> REVEAL
+  const afterOne = engine.state.players[rob.id].score;
+  assert.ok(afterOne > 0);
+
+  // The host presses Next once too often, and two tables get in fast.
+  engine.next(); // -> QUESTION two
+  assert.equal(engine.state.questionIndex, 1);
+  engine.answer({ playerId: rob.id, optionIndex: 2 });
+  engine.answer({ playerId: sue.id, optionIndex: 2 });
+  assert.ok(engine.state.players[rob.id].score > afterOne, 'they scored on question two');
+
+  engine.back();
+  assert.equal(engine.state.phase, PHASES.REVEAL);
+  assert.equal(engine.state.questionIndex, 0);
+  assert.equal(engine.state.players[rob.id].score, afterOne,
+    'points for a question the room is about to be asked again');
+  assert.equal(engine.state.answers[engine.answerKey(0, 1)], undefined,
+    "…and their answers, or the replay tells them they have already answered");
+
+  // And the replay is a real question for everybody.
+  engine.next(); // -> QUESTION two again
+  assert.equal(engine.state.questionIndex, 1);
+  assert.equal(engine.answer({ playerId: sue.id, optionIndex: 2 }).ok, true,
+    'Sue was locked out of a question she had never been asked');
+});
+
+test('…and back from the FIRST question of a round wipes it too', () => {
+  const { engine } = makeEngine();
+  const rob = engine.join({ name: 'Rob' });
+  engine.start();
+  while (engine.state.phase !== PHASES.QUESTION) engine.next();
+  engine.answer({ playerId: rob.id, optionIndex: 1 });
+  assert.ok(engine.state.players[rob.id].score > 0);
+
+  engine.back();
+  assert.equal(engine.state.phase, PHASES.ROUND_INTRO);
+  assert.equal(engine.state.players[rob.id].score, 0);
+  assert.equal(engine.state.answers[engine.answerKey(0, 0)], undefined);
+});

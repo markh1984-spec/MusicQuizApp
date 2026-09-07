@@ -913,11 +913,10 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
 - **THE CONSOLE'S TOPBAR IS A GRID ITEM, AND A GRID ITEM DEFAULTS TO
   `min-width: auto` TOO.** `.topbar` sits in `.wrap`, which is `overflow-x:
   hidden`, so a bar that will not shrink below its max-content is **CLIPPED
-  with no scrollbar to reach it** — 1128px at ~960px, the tier rungs off the
-  screen. `min-width: 0` on the BAR is what makes the existing `min-width: 0`
-  on `#whoami` and `#runningNow` do anything; **the rule was applied one level
-  too deep**. Third sighting of `min-width: auto` here. **A clipped overflow is
-  worse than a scrolling one**: nothing throws and the control is unreachable.
+  with no scrollbar to reach it**. `min-width: 0` on the BAR is what makes the
+  existing `min-width: 0` on its children do anything; **the rule was applied
+  one level too deep**. **A clipped overflow is worse than a scrolling one**:
+  nothing throws and the control is unreachable.
 - **…AND CONSTRAINING IT MOVED THE OVERFLOW ONTO THE MENU.** `.topnav` is
   `flex: 1 1 auto` with a deliberately invisible `overflow-x`, so once the bar
   could shrink the MENU gave way — 376px of the 519px it needs at 1000px, and
@@ -925,16 +924,14 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   does not exist.** **A fix that relieves pressure has to be followed to
   wherever the pressure went.**
 - **THE DIET HAS NO UPPER BOUND, BECAUSE `.console .wrap` CAPS THE BAR AT
-  1180px.** `@media (max-width: 1179px)` measures the WINDOW, but the bar is
-  ~1148px at every window width there is, so the diet switched OFF exactly
-  where it was still needed and the owner's header wrapped to two rows at every
-  desktop size. **A media query on the window is the wrong tool the moment a
-  CONTAINER caps the thing you are protecting.**
+  1180px.** `@media (max-width: 1179px)` measures the WINDOW, so the diet
+  switched OFF exactly where it was still needed. **A media query on the window
+  is the wrong tool the moment a CONTAINER caps the thing you are
+  protecting.**
 - **AND `#runningNow` IS WHY NOTHING SAW IT: `aNightIsOn()` IS FALSE FOR AN
-  EMPTY LOBBY.** `console-frame.mjs` launched a quiz and let nobody join, so it
-  measured a bar **230px narrower than the one the host drives**. **A guard
-  that sets a night up but never lets anybody in is measuring a console nobody
-  uses** — it joins two phones now and asserts the line is there first.
+  EMPTY LOBBY**, so the guard measured a bar **230px narrower than the one the
+  host drives**. **A guard that sets a night up but never lets anybody in is
+  measuring a console nobody uses.**
 - **WHAT IS PLAYING NOW IS WORDED IN ONE PLACE — `nowPlaying()`.** There were
   THREE. **The SHORT form is a different job, not an abbreviation**: the bar
   says *something is on and how many are in* from any door, and the TITLE stays
@@ -942,11 +939,10 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   thing in that bar that summarises something else on screen.
 - **THE BAR GOES ON A DIET BELOW 1180px; WRAPPING IS ONLY THE FALLBACK.** Two
   rows read as a second bar, and under the fixed frame every row the header
-  takes comes off the tab column. So the **wordmark goes and the mark stays**,
-  plus tighter gaps, padding and door chips. **Scoped with `:has(.hat-switch)`
-  to the OWNER's bar** — putting an ordinary quizmaster's wordmark on a diet
-  for a problem they do not have is how a fix for one account lands on
-  everybody.
+  takes comes off the tab column. So the **wordmark goes and the mark stays**.
+  **Scoped with `:has(.hat-switch)` to the OWNER's bar** — putting an ordinary
+  quizmaster's wordmark on a diet for a problem they do not have is how a fix
+  for one account lands on everybody.
 - **AND NOTHING RESTATES `overflow` AFTER `.console .wrap`'S PAIR.** A trailing
   `overflow: hidden` wiped the `overflow-y: auto` five lines above it, so the
   frame CLIPPED instead of scrolling — 1500x900 with five packs in Tonight:
@@ -957,14 +953,11 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   inside ONE declaration block. `console-frame.mjs` fills Tonight and turns a
   REAL wheel now — a programmatic scroll succeeds on a clipped box.
 - **THE FIXED FRAME NEEDS A MINIMUM HEIGHT, AND THAT IS THE SAME ARGUMENT AS
-  THE WIDTH.** The frame is off under 900px because the header would be most of
-  a phone screen — a statement about ROOM, and height was never asked. On a
-  476px-tall window `.consolecols` was handed **zero height** inside a `.wrap`
-  that is `overflow: hidden`, and the tab column and the whole pack shelf sat
-  592px down a 515px frame. **LETTING THE BAY SHRINK INSTEAD WAS TRIED AND IS
-  WORSE**: the Console's bay IS the launch bar, so the doorhead shrank, the bar
-  did not, and it **painted over the tab column**. **The numbers said fixed and
-  the render said broken**, which is this file's oldest trap and why the
+  THE WIDTH.** On a 476px-tall window `.consolecols` was handed **zero height**
+  and the tab column sat 592px down a 515px frame. **LETTING THE BAY SHRINK
+  INSTEAD WAS TRIED AND IS WORSE**: the Console's bay IS the launch bar, so the
+  doorhead shrank, the bar did not, and it **painted over the tab column**.
+  **The numbers said fixed and the render said broken**, which is why the
   screenshot is the check.
 - **AND THE FRAME'S MINIMUM HEIGHT IS TWO NUMBERS, BECAUSE THE DOORHEAD IS TWO
   HEIGHTS** — 573px at 1150px and up, 636-690px below it. It is
@@ -974,23 +967,19 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   keeps it at 960x760 where it does not. **A 720p laptop scrolls now and that
   is correct.**
 - **AND THE EQUAL-BAY RULE ONLY EXISTS BECAUSE OF THE FRAME**, so
-  `community-bay.mjs` checks it only where the frame is on: a bay that changes
-  height moves the tab column, which is a fact about a PINNED page. **Both
-  scripts carry the frame's two numbers; if they move, they move together** —
-  a guard holding a stale threshold reports the app broken when it is the check
-  that is out of date.
+  `community-bay.mjs` checks it only where the frame is on. **Both scripts
+  carry the frame's two numbers; if they move, they move together** — a guard
+  holding a stale threshold reports the app broken when it is the check that is
+  out of date.
 - **TWO COLUMNS IS A WIDTH DECISION; THE PINNED FRAME IS A HEIGHT ONE.** In one
-  media query, gating it on height took the SIDEBAR away too and put a wall of
-  tab between the pack cards and the drop slots. **THE DRAG IS WHAT THE LAYOUT
-  IS FOR**, so the 190px rail holds at every height and only the pinning goes.
-  **A media query is two decisions the moment it names two axes** — split it,
-  or a fix on one axis silently removes something that was never about it.
+  media query, gating it on height took the SIDEBAR away too. **THE DRAG IS
+  WHAT THE LAYOUT IS FOR**, so the 190px rail holds at every height and only the
+  pinning goes. **A media query is two decisions the moment it names two
+  axes.**
 - **`main` IS A FLEX COLUMN — never give it a row template.** Its
   `auto minmax(0,1fr)` grid assumed exactly two children, so ANY banner above
-  the doorhead pushed it into the `1fr` row — STRETCHED, ~160px of nothing —
-  and dropped the columns into an implicit row, quietly turning the fixed frame
-  back into a scrolling page. Flex takes any number of banners; only
-  `.consolecols` grows.
+  the doorhead quietly turned the fixed frame back into a scrolling page. Flex
+  takes any number of banners; only `.consolecols` grows.
 - **THE SHELF IS SIX ACROSS, BY DECISION — it mirrors the six bays above it.**
   What made the 146px poster hold its content was never width: the meta's
   two-line clamp, dropping the "· N rounds" that duplicated the round squares,
@@ -1208,12 +1197,9 @@ board), `src/arcade.js` (the scores, shared by both engines),
 - **AND THE QUIET LAUNCH SENDS THE WHOLE NIGHT — `nightOpts()`.** Tapping a
   pack put it on the projector with FIVE of the twelve fields Launch sends, so
   the default look ran, Game sound Off was ignored and "at random" dealt
-  nobody — with the live line asserting the console and the projector agreed.
-  **Fixed once for `lobbyGame` alone** (*"still only allowing maze mouth"*),
-  which left the other seven, so **the SHAPE changed rather than the list: one
-  `nightOpts()`, spread into all three launches**, with a test that
-  fails if a fourth caller writes its own. **Its comment claimed it sent "no
-  venue" while the code had sent one all along.**
+  nobody. **Fixed once for `lobbyGame` alone**, which left the other seven, so
+  **the SHAPE changed rather than the list: one `nightOpts()`, spread into all
+  three launches**, with a test that fails if a fourth caller writes its own.
 - **ONE ROW EITHER WAY, AND THE CHOICE IS ONE TAP INSIDE IT.** Three phone
   layouts were rendered at 390px first: a row per game is **423px of menu** and
   pushes *Send a photo* off the bottom, which breaks *don't disincentivise
@@ -1291,13 +1277,11 @@ board), `src/arcade.js` (the scores, shared by both engines),
   best-not-latest rule and the same refusal outside the lobby, called by both
   engines. Two copies is two rules, and the day one is fixed is the day a bingo
   lobby accepts a score a quiz lobby refuses.
-- **RALLY RUNS ON A FIXED TIMESTEP, NEVER A FRAME DELTA**, and that is the same
-  fairness argument as the seed rather than a performance one: advanced by
-  `dt`, a 120Hz phone and a tired 30Hz one play measurably different games, so
-  two people on one board would be comparing handsets. `tick()` advances
-  exactly one `TICK_MS` and the canvas accumulates real time into whole ticks —
-  **capped**, or a phone that was face down on a table for two minutes wakes up
-  and spends the whole gap at once, losing every life before it repaints.
+- **RALLY RUNS ON A FIXED TIMESTEP, NEVER A FRAME DELTA** — the same fairness
+  argument as the seed: advanced by `dt`, a 120Hz phone and a tired 30Hz one
+  play measurably different games. `tick()` advances exactly one `TICK_MS` and
+  the canvas accumulates real time into whole ticks — **capped**, or a phone
+  face down for two minutes wakes and spends the whole gap at once.
 - **EVERY PHONE PLAYS THE SAME GAME**, seeded from `state.gameSeed`, set at
   launch and living in the state — or the scoreboard compares two different
   games and means nothing.
@@ -1551,20 +1535,19 @@ Reported off a screenshot: *"starting to look a bit messy — can we utilise
 space where possible."* Four placements and one real bug:
 
 - **A CONTROL SITS WITH WHAT IT ACTS ON.** *Stop* sat at the far right of a
-  1900px bar and read as a control over the whole panel. It is **Unlaunch** now,
+  1900px bar and read as a control over the whole panel. It is **Unlaunch**,
   10px from the sentence naming what it stops.
 - **KEEPING A NIGHT IS A NIGHT-LEVEL QUESTION, so it moved into the head**
   beside the venue, which is where the other three live. **The label has to
   outrank the adjacency**: a show never keeps the venue, so "Save" alone next
   to a venue picker would say the opposite of what it does — the words stay
   *"for another night"*.
-- **THE REASON A CONTROL IS OFF GOES ON THE CONTROL.** *"Nothing in Tonight
-  to keep yet"* was a sentence about the app's own state floating beside a
-  greyed button. The button says **"Add a pack to save this night"**, the
-  shape Launch already uses.
+- **THE REASON A CONTROL IS OFF GOES ON THE CONTROL.** *"Nothing in Tonight to
+  keep yet"* floated beside a greyed button; the button says **"Add a pack to
+  save this night"**, the shape Launch already uses.
 - **A BIGGER TARGET IS NOT THE SAME AS A HITTABLE ONE.** The tile's × grew to
-  30px and the pack NAME painted over it — half the button silently did
-  nothing. It needs `z-index` AND `padding-right` on the title.
+  30px and the pack NAME painted over it. It needs `z-index` AND
+  `padding-right` on the title.
 - **EVERY DRAG NEEDS ITS TAP, and a shelf round dot never had one** — it
   carried `mousedown`, `dragstart` and `dragend` and **no `click` at all**, so
   the first thing anybody tries did nothing and a touchscreen had no way in at
@@ -2286,6 +2269,47 @@ the prizes."*
   phones over real HTTP instead.
 
 Full reasoning, with the measurements: **[`docs/bingo.md`](docs/bingo.md)**.
+
+### FOUR WAYS A NIGHT'S SCORES AND PRIZES CAME APART
+
+All four are ordinary presses, none of them throws, and each is on the path a
+gig actually takes.
+
+- **BACK WIPES THE QUESTION IT IS LEAVING**, exactly as `Skip` and `Ask again`
+  wipe theirs — one act seen from three directions, and Back was the one that
+  did not do it. Two tables kept their points AND the first-correct bonus for a
+  question the room never played, and on the replay their phones answered
+  `already_answered` while everybody else played for a hundred points less.
+- **A PRIZE NO LONGER OWED IS TAKEN BACK — unless it has been SPENT.**
+  `issueVouchers()` only ever topped up, so four ordinary presses left **three
+  live top-prize codes on a night with two winners**. **A redeemed one stays**;
+  so does a `draw` or `carried` one.
+- **RESET SCORES HANDS THE NEXT GAME A CLEAN LEDGER, and destroys nothing.** It
+  kept `luckyDip`, so **the draw never ran again**, and kept game one's
+  vouchers in the "already paid" set, so the second game's winner got nothing.
+  **Marked `carried`, never deleted** — somebody won that drink.
+- **AND THE DRAW READS THE LAST QUESTION PLAYED, not the pointer.** Stopping at
+  a round intro — exactly when a room is thinning out, which is what the draw
+  is FOR — left it reading a question nobody had been asked.
+
+### A TEAM'S SEATS ARE SETTLED AT A BOUNDARY, AND A PHONE MAY NOT MINT ONE
+
+- **`makeTeam()` REFUSES BEFORE IT WRITES.** The caller made the team and then
+  joined it, and only the JOIN knew about random mode — so a phone was refused
+  **while the team it named was already in the state**: arbitrary unfiltered
+  text on the projector, which is the one screen this app never filters. An
+  injected team has size 0, so `dealInto()` puts the next honest joiner into
+  it. `dealt: true` is the app's own way in.
+- **AND THERE IS A CEILING — `MAX_TEAMS`.** There was none: **1,200 teams in
+  1.3 seconds** from one phone at the lobby. **Forty, not `RANDOM_TEAM_MAX`** —
+  six is a DESIGN number for what the app deals; this is a SAFETY number, and
+  fifteen tables is an ordinary Friday.
+- **A TEAM MAY ONLY CHANGE AT A BOUNDARY — `TEAM_CHANGE_PHASES`.** The rule was
+  `QUESTION && !closed`, leaving the seconds after the clock runs out, the whole
+  REVEAL and the FINAL open. **Scores are AVERAGED**, so a table that sheds its
+  weakest phone at the reveal overtakes its rival with no question asked.
+
+Full reasoning for both: **[`docs/engine.md`](docs/engine.md)**.
 
 ### A TEAM NIGHT IS ONE ENTITY PER BOARD ROW, EVERYWHERE — `boardIdFor()`
 
@@ -3344,17 +3368,14 @@ just don't want to think, you want to get in and go and know it will work."*
   `paintLive()` prints what is actually on the projector in gold when it
   differs from what the bar is set to.
 - **A LOADED PACK IS NOT A NIGHT — `state.launched`, and Unlaunch is what it
-  was for.** A room ALWAYS has a game built: `boot()` falls back to the first
-  pack it can find so the projector is never blank. So the live line named a
-  quiz on a console nobody had touched, and `resetAll()` builds another lobby
-  around the SAME pack — *"unlaunching doesn't actually unlaunch anything"*,
-  reported in those words. It cleared the room; there was nothing on screen to
-  show for it. `false` in both `freshState()`s, `true` in
-  `session.launch()` alone. **Written EXPLICITLY, so ABSENT can mean
-  launched** — a state on disk from before the field existed is there because
-  somebody launched it, and a redeploy mid-quiz must not report an idle
-  projector. **Not `launchedSinceBoot`**, beside it, which answers a
-  different question in MEMORY for the stranded-phone count.
+  was for.** A room ALWAYS has a game built, so the live line named a quiz on a
+  console nobody had touched and `resetAll()` built another lobby around the
+  SAME pack — *"unlaunching doesn't actually unlaunch anything"*. `false` in
+  both `freshState()`s, `true` in `session.launch()` alone. **Written
+  EXPLICITLY, so ABSENT can mean launched** — a state on disk from before the
+  field existed is there because somebody launched it, and a redeploy mid-quiz
+  must not report an idle projector. **Not `launchedSinceBoot`**, which answers
+  a different question in MEMORY.
 - **Picking a pack puts it on the big screen when nothing would be lost.** THE
   SERVER decides which — the launch call without `replace` answers 409 when
   `session.inProgress()`. A 409 is SILENT here. A re-render is not somebody
@@ -3370,18 +3391,16 @@ just don't want to think, you want to get in and go and know it will work."*
   Tuesday under last Thursday's pub.
 - **Whose night it is, RANKED**: a date you typed, then whose usual night, then
   where you played last. **Two claims are NAMED, never left blank**
-  (`clashTonight()`), in gold — a decision only the human can make.
+  (`clashTonight()`) — a decision only the human can make.
 - **It folds to a thin line that still says what it is set to**, in
   `localStorage`; one row, no wrap, the middle ellipsised, the whole row the
   target. **The heading does not move when it folds** — a three-cell grid and a
   fold that says HIDE and SHOW at a fixed width.
-- **THE PACK CARDS NO LONGER LAUNCH; TONIGHT IS THE ONLY WAY IN** — *"this
-  whole expandable section is pointless now."* Every field on it was a decision
-  about TONIGHT, which Tonight owns. **The guarantee was never a Launch on
-  every card, it was that launching is one predictable move away.** A card
-  keeps what is true of the PACK — Read, Rename, Delete, Pictures — behind the
-  Workshop door, and **on the Console a tap puts it in Tonight**, same path as
-  a drop, no caret, because there is nothing to open.
+- **THE PACK CARDS NO LONGER LAUNCH; TONIGHT IS THE ONLY WAY IN.** **The
+  guarantee was never a Launch on every card, it was that launching is one
+  predictable move away.** A card keeps what is true of the PACK — Read,
+  Rename, Delete, Pictures — behind the Workshop door, and **on the Console a
+  tap puts it in Tonight**, same path as a drop.
 - **A CONTROL NEVER APPEARS OUT OF NOTHING.** Launch goes hollow saying what it
   wants; *Keep this as a show* goes disabled. Both were built appearing and
   disappearing and both were reported as clunky in the same words: a control
@@ -3396,53 +3415,46 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 / `showsSection()` in `console-shows.js`. *"We're frankensteining nights instead of
 having a nights section."*
 
-- **A SHOW IS `items` — A LIST of what is played, in order.** It held one game
-  for one commit and that was wrong: *"say you want to swap out the music bingo
-  after, you need to be able to do that independent of removing the venue or
-  other rounds."* **The prizes, look and lobby game stay on the SHOW**, which
-  is what makes a swap unable to touch them.
-- **THE VENUE IS NEVER SAVED, AND NEVER RESTORED** — *"there's no way you'd
-  want to run the same quiz at the same venue again."* A show is a TEMPLATE,
-  not a record; the prizes and the voucher follow the venue, so a stale one
-  is somebody refused a drink. `tonightAsShow()` does not store it and
-  `applyShow()` does not read it — **both halves**, or an old show still
-  drags a pub in. Do not put it back.
-- **`itemsOf()` IN `show-parts.js` IS THE ONE READER**, server and browser. The
-  one-game shape reads as a list of one: **there is no migration step and there
+- **A SHOW IS `items` — A LIST of what is played, in order.** **The prizes,
+  look and lobby game stay on the SHOW**, which is what makes swapping one part
+  out unable to touch them.
+- **THE VENUE IS NEVER SAVED, AND NEVER RESTORED.** A show is a TEMPLATE, not
+  a record; the prizes and the voucher follow the venue, so a stale one is
+  somebody refused a drink. `tonightAsShow()` does not store it and
+  `applyShow()` does not read it — **both halves**, or an old show still drags
+  a pub in. Do not put it back.
+- **`itemsOf()` IN `show-parts.js` IS THE ONE READER**, server and browser; the
+  one-game shape reads as a list of one. **There is no migration step and there
   must not be one** — a rewrite over everybody's file is a one-shot script on a
   disk wiped every deploy.
 - **IT IS THE LAUNCH PAYLOAD WITH A NAME ON IT** — `tonightAsShow()` reads the
   SAME state the launch reads, or a show plays something other than what was on
-  the bar when it was saved.
-- **THE BAR PLAYS ONE PART AND SAYS WHAT FOLLOWS** (`paintThen()`), because
-  `session.launch()` builds one game. **The next part LOADS, never launches** —
-  only the person on the mic knows when the quiz is done. **Picking a pack by
-  hand clears `showRunning`**, or the bar describes a night nobody is running.
-- **IT STORES REFERENCES AND NEVER COPIES** — rule 11. Tested.
+  the bar.
+- **THE BAR PLAYS ONE PART AND SAYS WHAT FOLLOWS** (`paintThen()`). **The next
+  part LOADS, never launches** — only the person on the mic knows when the quiz
+  is done. **Picking a pack by hand clears `showRunning`**, or the bar describes
+  a night nobody is running.
+- **IT STORES REFERENCES AND NEVER COPIES** — rule 11.
 - **IT IS NOT A GATE AND MUST NEVER BECOME ONE.** The launch re-checks the
   tier, every pack and the lobby game.
 - **CALLED A SHOW BECAUSE "NIGHT" IS TAKEN TWICE** — Calendar's are bookings,
-  Gigs' are the archive. *Set list* and *running order* name the activity and
-  carry neither the venue nor the prizes.
-- **THE ORDER IS REBUILT INTO `lbExtra` AND `lbOff`, never held a third way.**
-  **A BROKEN SHOW IS NAMED ON THE CARD, DAYS EARLY** — every part.
+  Gigs' are the archive.
+- **THE ORDER IS REBUILT INTO `lbExtra` AND `lbOff`, never held a third way**,
+  and **a BROKEN SHOW IS NAMED ON THE CARD, DAYS EARLY** — every part.
 - **A BINGO PART CARRIES ITS OWN CARD AND PRIZE COUNT**, beside the show's own
-  pair rather than instead of it: on a mixed night `setPickedBingo()` writes
-  them to the SLOT, so the show-level pair is one nothing writes and a 3x3
-  interlude came back as the pack's own 4x4. **The part's own beats
-  the show's and the show's is the fallback**, so every one-game night and
-  every older show reads as it did. `normaliseItem()` had dropped both —
-  **the whitelist trap, for the fifth time.**
+  pair rather than instead of it. **The part's own beats the show's and the
+  show's is the fallback**, so every one-game night and every older show reads
+  as it did. `normaliseItem()` had dropped both — **the whitelist trap, for the
+  fifth time.**
 - **DROPPING ONE IN FROM ANOTHER DOOR GOES TO THE CONSOLE DOOR — `goToDoor()`.**
-  Tonight is only built on the CONSOLE door, so tapping a show on the Workshop
-  shelf set `showWanted` and re-rendered a page with nothing that reads it:
-  **nothing threw and nothing moved**, and the drag had no target.
-  **`history.replaceState` and a re-render, never a door chip's
-  `location.href`** — a reload throws `showWanted` away.
+  Tonight is only built on the CONSOLE door, so a show tapped on the Workshop
+  shelf re-rendered a page with nothing that reads it: **nothing threw and
+  nothing moved**. **`history.replaceState` and a re-render, never a door
+  chip's `location.href`** — a reload throws `showWanted` away.
 - **KEEPING A NIGHT IS ON TONIGHT'S SETTINGS; WHAT IT PLAYS IS EDITED ON THE
   CARD, WORKSHOP ONLY** — no second composer to disagree with the launch.
 - **DROPPING ONE IN NEVER LAUNCHES**, and there is a TAP as well as a drag,
-  because HTML5 drag never fires on touch. Reasoning:
+  because HTML5 drag never fires on touch.
   **[`docs/console.md`](docs/console.md)**.
 
 ### QUIZ → BINGO → QUIZ, ONE RUNNING SCORE — a saved show, or dragged straight onto Tonight

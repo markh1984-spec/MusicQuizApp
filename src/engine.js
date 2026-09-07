@@ -30,7 +30,7 @@ import * as chat from './chat.js';
 import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
 import { breakNow, offersGame, offersPhotos, showsScores, showsAdverts } from '../public/assets/break-parts.js';
-import { dealInto } from './teams.js';
+import { dealInto, MAX_TEAMS } from './teams.js';
 // For faceKey — a player's public handle, derived one way from their id.
 import { createHash } from 'node:crypto';
 
@@ -62,6 +62,12 @@ export function winnersOf(state = {}) {
   const n = Math.floor(Number(state.winners));
   return Number.isFinite(n) && n >= 1 && n <= MAX_WINNERS ? n : DEFAULT_WINNERS;
 }
+
+/**
+ * WHEN A PHONE MAY CHANGE TEAM — see `joinTeam()`. A boundary, never a moment
+ * where a question is half-scored.
+ */
+export const TEAM_CHANGE_PHASES = new Set(['lobby', 'rules', 'round_intro', 'round_board']);
 
 export const PHASES = {
   LOBBY: 'lobby',
@@ -576,7 +582,7 @@ export class Engine {
   dealRandomTeam(player) {
     const decision = dealInto(this.teamList(), this.random);
     if (decision.join) { player.teamId = decision.join; return; }
-    const made = this.makeTeam(decision.create);
+    const made = this.makeTeam(decision.create, { dealt: true });
     if (made.ok) player.teamId = made.id;
   }
 
@@ -892,12 +898,37 @@ export class Engine {
    * control characters out, 28 characters, no word filtering. It goes on the
    * projector, and the rule about that has not changed.
    */
-  makeTeam(name) {
+  makeTeam(name, { dealt = false } = {}) {
     // Not on a night that is not a team night. Without this a phone could
     // write teams into the state of an ordinary quiz — harmless on the board,
     // which ignores them, and still the kind of thing that turns up in an
     // archive months later with nobody able to account for it.
     if (!this.state.teamPlay) return { ok: false, reason: 'not_team_play' };
+    /*
+     * AND THE REFUSALS BELONG HERE, NOT IN THE CALLER — the caller's came too
+     * late and the team was already written.
+     *
+     * `session.run('team')` did `makeTeam()` and then `joinTeam()`, and only
+     * the second one knew about random mode. So on a random-teams night a
+     * phone with its own token got `{ ok: false, reason: 'random_teams' }`
+     * back **while the team it named was already in the state** — arbitrary,
+     * unfiltered text on the projector, which is the one place this app has
+     * deliberately never filtered. Worse, an injected team has size 0, so
+     * `dealInto()` puts the next honest joiner straight into it.
+     *
+     * `dealt` is the internal way in: `dealRandomTeam()` is the app making a
+     * team, not a phone naming one.
+     */
+    if (!dealt && this.state.teamMode === 'random') return { ok: false, reason: 'random_teams' };
+    /*
+     * AND THERE IS A CEILING. There was none at all: 1,200 teams in 1.3
+     * seconds from one phone at the lobby, every SSE payload from 0.7KB to
+     * 85KB, and a flush to disk on each one — at the exact moment sixty
+     * people are joining. See `MAX_TEAMS`.
+     */
+    if (Object.keys(this.state.teams || {}).length >= MAX_TEAMS) {
+      return { ok: false, reason: 'too_many_teams' };
+    }
     const clean = String(name || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 28);
     if (!clean) return { ok: false, reason: 'no_name' };
     this.state.teams = this.state.teams || {};
@@ -927,14 +958,23 @@ export class Engine {
     if (!player) return { ok: false, reason: 'no_player' };
     if (teamId && !this.state.teams?.[teamId]) return { ok: false, reason: 'no_team' };
     /*
-     * NOT MID-QUESTION.
+     * NOT WHILE A QUESTION IS IN PLAY, AND NOT AT THE FINAL.
      *
-     * Otherwise somebody watches the tally, sees which team is doing well and
-     * hops into it before the reveal — or worse, leaves a team just before it
-     * scores badly. A team is who you were sitting with, so it is settled
-     * between questions.
+     * The original rule was `QUESTION && !closed`, which left three moments
+     * open where the answer is already known: the seconds after the clock runs
+     * out, the whole of the REVEAL, and the final scores.
+     *
+     * All three are the same exploit, and it needs no cleverness — **scores
+     * are AVERAGED**, so a table that sheds its weakest phone at the reveal
+     * raises its own average and overtakes its rival with no question asked.
+     * At the FINAL it reorders the podium after the room has watched it.
+     *
+     * So a team is settled at a BOUNDARY: the lobby, the rules, a round intro
+     * or a round board. Those are the moments the room is milling about
+     * anyway, which is when somebody actually moves tables — and every one of
+     * them is a point at which nothing is half-scored.
      */
-    if (this.state.phase === PHASES.QUESTION && !this.state.question?.closed) {
+    if (!TEAM_CHANGE_PHASES.has(this.state.phase)) {
       return { ok: false, reason: 'mid_question' };
     }
     player.teamId = teamId || null;
@@ -1452,6 +1492,7 @@ export class Engine {
     const rewards = this.rewardList();
     if (!rewards.length) return;
     if (!s.vouchers) s.vouchers = {};
+    this.withdrawVouchersNoLongerOwed();
     /*
      * THIS PART'S VOUCHERS ONLY — a `carried` one was won earlier tonight.
      *
@@ -1516,6 +1557,43 @@ export class Engine {
         reinstated: 0,
         history: [],
       };
+    }
+  }
+
+  /**
+   * TAKE BACK A PRIZE THAT IS NO LONGER OWED — as long as nobody has spent it.
+   *
+   * `issueVouchers()` only ever topped UP: it skipped anybody already holding
+   * one and minted for anybody newly entitled, and never looked at whether the
+   * board still agreed with what it had already handed out. So Back, Back,
+   * *Ask again* and a replayed final — four presses, all of them ordinary —
+   * left **three live top-prize codes on a night with two winners**, one of
+   * them held by a team the room had watched come last.
+   *
+   * A code that was never scanned and was never actually won should not scan.
+   * **One that HAS been redeemed is left alone**: the drink is behind the bar
+   * and the record of it is the honest thing to keep, so the host's panel
+   * still shows it as spent rather than pretending it never happened.
+   *
+   * A `draw` voucher is untouched — `drawLuckyDip()` decides once, in the
+   * state, precisely so a room cannot be told two different names. So is a
+   * `carried` one: it was won earlier tonight, in another part, and this
+   * board has nothing to say about it.
+   */
+  withdrawVouchersNoLongerOwed() {
+    const s = this.state;
+    const rewards = this.rewardList();
+    const owed = new Map();
+    for (const row of this.leaderboard()) {
+      if (row.position > winnersOf(s)) continue;
+      if (!(row.score > 0)) continue;
+      if (!rewards[row.position - 1]) continue;
+      owed.set(row.id, row.position);
+    }
+    for (const [code, v] of Object.entries(s.vouchers || {})) {
+      if (v.draw || v.carried || v.redeemedAt) continue;
+      if (owed.get(v.winnerId) === v.place) continue;
+      delete s.vouchers[code];
     }
   }
 
@@ -1633,7 +1711,23 @@ export class Engine {
    */
   answeredTheLastQuestion() {
     const found = new Set();
-    for (const playerId of Object.keys(this.answersFor() || {})) {
+    /*
+     * THE LAST QUESTION ACTUALLY PLAYED, not wherever the pointer happens to
+     * be. `answersFor()` with no arguments reads the CURRENT round and
+     * question — which for a night stopped at a round intro is a question
+     * nobody has been asked, so the answer map is empty, nobody is eligible
+     * and **the draw silently does not happen**. Stopping early is exactly the
+     * case the draw is for: the room is thinning out.
+     *
+     * `history` is appended at each reveal and re-appended on a replay, so its
+     * last entry is the most recent question the room genuinely played. On an
+     * ordinary ending it IS the current pointer, so nothing changes.
+     */
+    const played = (this.state.history || [])[(this.state.history || []).length - 1];
+    const answers = played
+      ? this.answersFor(played.roundIndex, played.questionIndex)
+      : this.answersFor();
+    for (const playerId of Object.keys(answers || {})) {
       found.add(this.boardIdFor(playerId));
     }
     return found;
@@ -1761,6 +1855,28 @@ export class Engine {
         // often on the previous reveal. So go back to that reveal, with its
         // scores and its fastest finger intact, rather than anywhere clever.
         if (s.questionIndex > 0) {
+          /*
+           * AND THE QUESTION BEING LEFT IS WIPED, exactly as `Skip` and `Ask
+           * again` wipe theirs.
+           *
+           * This is a question the room is going to be asked AGAIN — Next from
+           * that reveal comes straight back to it — so anything already banked
+           * on it is points for a question that has not been played yet. One
+           * over-press of Next, then the button the host is told is safe, and
+           * the fastest two tables kept their points AND the first-correct
+           * bonus for a question the room never saw; on the replay their
+           * phones answered `already_answered`, so they sat out while
+           * everybody else played for a hundred points less.
+           *
+           * `clearQuestionScores()` and the history filter are the same pair
+           * `skipQuestion()` and `redoQuestion()` use — the three are one act
+           * seen from three directions, and Back was the one that did not do
+           * it.
+           */
+          this.clearQuestionScores(s.roundIndex, s.questionIndex);
+          s.history = s.history.filter(
+            (h) => !(h.roundIndex === s.roundIndex && h.questionIndex === s.questionIndex),
+          );
           s.questionIndex--;
           s.phase = PHASES.REVEAL;
           const seconds = this.questionSeconds();
@@ -1769,6 +1885,12 @@ export class Engine {
           this.changed();
           return true;
         }
+        // The first question of a round, going back to its intro — same act,
+        // same wipe: Next brings this question straight back.
+        this.clearQuestionScores(s.roundIndex, s.questionIndex);
+        s.history = s.history.filter(
+          (h) => !(h.roundIndex === s.roundIndex && h.questionIndex === s.questionIndex),
+        );
         s.phase = PHASES.ROUND_INTRO;
         s.question = null;
         this.changed();
@@ -1885,6 +2007,24 @@ export class Engine {
   resetScores() {
     this.state.answers = {};
     this.state.history = [];
+    /*
+     * A SECOND GAME FOR ONE ROOM, WHICH IS WHAT THIS BUTTON IS FOR — so the
+     * prize ledger has to stop belonging to it.
+     *
+     * It kept everything: `luckyDip` was still set, so **the draw never ran
+     * again**; and every voucher from game one sat in the `already` set, so
+     * the genuine runner-up of game two got nothing while night one's
+     * first-place code was still live at the bar.
+     *
+     * The codes are NOT destroyed — somebody won that drink and is holding it.
+     * They are marked `carried`, which is the same flag a part boundary uses
+     * and means exactly the same thing here: *won earlier tonight, so this
+     * board has nothing to say about it.* The lookup, the redeem, the host's
+     * panel and the archive all still see them; only the "have I already paid
+     * this row" check does not.
+     */
+    for (const v of Object.values(this.state.vouchers || {})) v.carried = true;
+    this.state.luckyDip = null;
     for (const p of this.playerList()) {
       p.score = 0;
       p.correctCount = 0;

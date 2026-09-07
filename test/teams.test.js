@@ -11,7 +11,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  RANDOM_TEAM_NAMES, RANDOM_TEAM_TARGET, RANDOM_TEAM_MAX, dealInto,
+  RANDOM_TEAM_NAMES, RANDOM_TEAM_TARGET, RANDOM_TEAM_MAX, MAX_TEAMS, dealInto,
 } from '../src/teams.js';
 import { Engine } from '../src/engine.js';
 
@@ -296,4 +296,83 @@ test('THE HOST IS TOLD WHO THE ROOM KNOWS — the fastest finger, whoPicked and 
   assert.notEqual(host.fastest.faceKey, engine.playerView(a.id).you.key,
     "the board's key is the team's; the fastest finger's is the person who was quickest");
   assert.ok(b.id);
+});
+
+/*
+ * `makeTeam()` HAD NO GUARDS, AND THE CALLER'S CAME TOO LATE.
+ *
+ * `session.run('team')` made the team and then joined it, and only the JOIN
+ * knew about random mode — so the phone got `{ok:false, reason:'random_teams'}`
+ * back while the team it named was already written.
+ */
+test('A PHONE CANNOT NAME A TEAM ON A RANDOM NIGHT — and the refusal comes before the write', () => {
+  const engine = randomTeams();
+  engine.join({ name: 'Rob' });                      // one dealt team exists
+  const before = Object.keys(engine.state.teams).length;
+
+  const made = engine.makeTeam('Anything At All');
+  assert.equal(made.ok, false);
+  assert.equal(made.reason, 'random_teams');
+  assert.equal(Object.keys(engine.state.teams).length, before,
+    'arbitrary unfiltered text reached the projector, on the one screen this app never filters');
+  // And an injected team has size 0, so `dealInto()` would put the next honest
+  // joiner straight into it.
+});
+
+test('and there is a ceiling on how many teams a night may have', () => {
+  const engine = engineOn({ teamPlay: true, teamMode: 'assigned' });
+  for (let i = 0; i < MAX_TEAMS; i += 1) {
+    assert.equal(engine.makeTeam(`Table ${i}`).ok, true, `team ${i} should be allowed`);
+  }
+  const over = engine.makeTeam('One too many');
+  assert.equal(over.ok, false);
+  assert.equal(over.reason, 'too_many_teams');
+  // Measured with no cap: 1,200 teams in 1.3 seconds from one phone, every SSE
+  // payload from 0.7KB to 85KB, a flush to disk on each — at the lobby.
+  assert.equal(Object.keys(engine.state.teams).length, MAX_TEAMS);
+});
+
+test('and the app can still deal itself a team on a random night', () => {
+  const engine = randomTeams();
+  const rob = engine.join({ name: 'Rob' });
+  assert.ok(engine.state.players[rob.id].teamId, 'the dealer must not be refused by its own guard');
+});
+
+/*
+ * A TEAM IS SETTLED AT A BOUNDARY — the old rule left three moments open.
+ *
+ * Scores are AVERAGED, so a table that sheds its weakest phone at the reveal
+ * raises its own average and overtakes its rival with no question asked.
+ */
+test('A PHONE CANNOT CHANGE TEAM ONCE A QUESTION IS IN PLAY', () => {
+  const engine = engineOn({ teamPlay: true, teamMode: 'assigned' });
+  const rob = engine.join({ name: 'Rob' });
+  const made = engine.makeTeam('The Bears');
+  assert.equal(engine.joinTeam(rob.id, made.id).ok, true, 'the lobby is a boundary');
+
+  toQuestion(engine);
+  assert.equal(engine.joinTeam(rob.id, null).reason, 'mid_question');
+  engine.state.question.closed = true;
+  assert.equal(engine.joinTeam(rob.id, null).reason, 'mid_question',
+    'the clock running out is not the question being over');
+
+  engine.next();                                     // -> REVEAL
+  assert.equal(engine.state.phase, 'reveal');
+  assert.equal(engine.joinTeam(rob.id, null).reason, 'mid_question',
+    'the reveal is exactly when the outcome is known and the average can be gamed');
+
+  while (engine.state.phase !== 'round_board' && engine.state.phase !== 'final') engine.next();
+  if (engine.state.phase === 'round_board') {
+    assert.equal(engine.joinTeam(rob.id, null).ok, true, 'a round board IS a boundary');
+  }
+});
+
+test('…and not at the final either, which would reorder a podium the room has watched', () => {
+  const engine = engineOn({ teamPlay: true, teamMode: 'assigned' });
+  const rob = engine.join({ name: 'Rob' });
+  const made = engine.makeTeam('The Bears');
+  engine.joinTeam(rob.id, made.id);
+  engine.finish();
+  assert.equal(engine.state.phase, 'final');
+  assert.equal(engine.joinTeam(rob.id, null).reason, 'mid_question');
 });
