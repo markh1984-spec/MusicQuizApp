@@ -747,7 +747,27 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * A future session trimming this file should take the prose and keep the
  * prohibitions, which is the rule the header already sets.
  */
-const BUDGET = 241_000;
+/*
+ * RAISED TO 242,000 ON 7 SEPTEMBER 2026, for the two guards that were repaired
+ * after the September sweep — and this is the shape of raise the header
+ * allows, because both entries are about the PROTECTED PATH:
+ *
+ * - **`pub-unchanged.mjs` only ever ran `engine.js`.** The guard this file
+ *   names as the one to run before a gig week could not see `viewFor()` in
+ *   `server.js` or `session.js` at all: deleting the join code from every
+ *   payload said IDENTICAL, and so did making the app unable to start. A
+ *   session that does not know that will quote a pass that means nothing,
+ *   which has already happened twice for other reasons.
+ * - **`console-controls.mjs`, because nothing here had ever pressed a
+ *   control.** Five at once, including a rename that DELETED a prepared night.
+ *
+ * PAID FOR FIRST, as the rule asks — about 700 bytes of restatement came out
+ * in the same pass (four bullets in Checks, the min-width note, the lobby-game
+ * foreground argument that was made twice) and both new entries were cut to
+ * their rule plus a pointer at the script's own header. The remaining growth
+ * is genuine and this comment is the diff saying so.
+ */
+const BUDGET = 242_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

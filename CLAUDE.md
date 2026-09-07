@@ -2995,26 +2995,24 @@ breaking one costs a Monday rather than an evening.
 **THE TWO GUARDS COVER EXACTLY THAT PATH, and both should run before anything
 lands on a gig day:**
 
-- **`node scripts/pub-unchanged.mjs <commit> --ignore <new fields>`** — the
-  engine half. Every payload a projector and a phone receive, at every phase of
-  every pack, against a commit you trust.
+- **`node scripts/pub-unchanged.mjs <commit> --ignore <new fields>`** — every
+  payload a projector and a phone receive, at every phase of every pack,
+  against a commit you trust, plus one night over HTTP on both apps.
 - **Press Launch in a real browser** and check a game is actually running
   afterwards — for a quiz AND for a bingo pack, which take different fields.
   The engine is rarely the hazard; **the console's launch form is**, and no
   unit test presses a button.
 
-The second one is the one that gets skipped, and it is the one that would stop
-a night. A `node --check` passing means the file parses, not that Launch still
-launches.
+The second gets skipped, and it is the one that would stop a night. A
+`node --check` passing means the file parses, not that Launch still launches.
 
 **AND ON 15 AUGUST 2026 IT WAS SKIPPED, AND LAUNCH WENT TO THE LIVE APP
 BROKEN FOR EVERY GAME.** A function was called in `server.js` and never
-imported. `node --check` was happy, because a missing import is a
-ReferenceError at the moment the line runs rather than a syntax error. **1,150
-tests passed**, because every one of them either calls `session.launch()`
-directly or reads `server.js` as TEXT — **nothing in this repo had ever
-executed the file.** It was found by a browser agent clicking the button, which
-is precisely what the paragraph above says to do and what had not been done.
+imported — a ReferenceError when the line runs, so `node --check` was happy.
+**1,150 tests passed**, because every one of them either calls
+`session.launch()` directly or reads `server.js` as TEXT: **nothing here had
+ever executed the file.** Found by a browser agent clicking the button, which
+is what the paragraph above says to do and what had not been done.
 
 `test/launch-route.test.js` is that advice with an assertion on it: the real
 server on its own port, a real launch, a projector with a quiz on it after.
@@ -3846,10 +3844,14 @@ account is in [`docs/checks.md`](docs/checks.md):**
   against the branch you are merging into, not `HEAD`** — on a clean checkout
   `HEAD` IS the working tree, so it can only print IDENTICAL. Quoted as a pass
   twice while proving nothing.
-- **When it says IDENTICAL, ask what it did not compare.** Four separate faults
+- **When it says IDENTICAL, ask what it did not compare.** Five separate faults
   in that one script each made it answer confidently about something it was not
-  looking at — all four in `docs/checks.md`. **A guard that quietly tests
-  nothing is worse than no guard, because it is believed.**
+  looking at — in `docs/checks.md`. **A guard that quietly tests nothing is
+  worse than no guard, because it is believed.** The fifth was the biggest: it
+  only ever ran `engine.js`, so `viewFor()` in `server.js` (the join code, the
+  brand, the photo wall) and the whole of `session.js` were outside it —
+  deleting `view.joinCode` said IDENTICAL, and so did making `session.js`
+  unimportable. **It starts both apps and drives a night over HTTP now.**
 - **A SYNTHESISED `DragEvent` IS NOT A DRAG.** The browser's own preconditions
   are where this bar keeps breaking: no `drop` fires unless `dragover` called
   `preventDefault()`, and none fires if `dropEffect` is one the source's

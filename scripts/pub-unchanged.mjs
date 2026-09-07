@@ -9,9 +9,31 @@
  * `npm test` says the tests still pass. This says something stronger and more
  * useful: that the actual BYTES a projector and a phone receive, at every
  * phase of every pack in the library, are the same as they were at some commit
- * you trust. It runs both versions of the engine side by side on one injected
- * clock, with the same teams answering the same options at the same seconds,
- * and deep-compares every view.
+ * you trust.
+ *
+ * IT IS TWO HALVES, and for a long time it was only the first:
+ *
+ *  1. **THE ENGINE.** Both versions of `engine.js` side by side on one
+ *     injected clock, the same teams answering the same options at the same
+ *     seconds, every view deep-compared. Every phase of every pack.
+ *  2. **THE WIRE.** Both versions of the whole APP started for real and driven
+ *     through one night over HTTP, so what is compared is what leaves the
+ *     socket. **The first half cannot see `viewFor()` in `server.js` — the
+ *     join code, the brand, the colours, the photo wall, `joinsWaiting`,
+ *     `mayAdvert` — and cannot see `session.js` at all.** Measured: deleting
+ *     `view.joinCode` from every payload left this saying IDENTICAL, and so
+ *     did making `session.js` throw on import, so the app could not start.
+ *     Both are caught now, and each was put back to check.
+ *
+ * One pack on the wire rather than all twelve, deliberately: the first half
+ * already walks every phase of every pack, and the layer this half exists for
+ * is the same layer whichever pack is loaded. Shallow, because a guard that
+ * takes five minutes is a guard nobody runs on a gig day.
+ *
+ * It drives the HOUSE room, on the host key, so the join code it compares is
+ * the empty one — the house room has no code by design. What is being checked
+ * there is that the FIELD is still built and still reaches all three roles;
+ * its value is minted per server and normalised either way.
  *
  *   node scripts/pub-unchanged.mjs                 # against the last commit
  *   node scripts/pub-unchanged.mjs v1.2 --ignore online,teams
@@ -24,7 +46,7 @@
  * It makes a temporary git worktree and removes it afterwards.
  */
 
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { readFileSync, readdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -44,6 +66,18 @@ const ignore = new Set(ignoreAt === -1 ? [] : (args[ignoreAt + 1] || '').split('
  */
 const ref = args.filter((a, i) => (ignoreAt === -1 ? true : i !== ignoreAt && i !== ignoreAt + 1))[0] || 'HEAD~1';
 
+/*
+ * DECLARED UP HERE, ABOVE THE BLOCK THAT USES THEM.
+ *
+ * Function declarations hoist and a `const` does not — so with these sitting
+ * beside the wire helpers at the foot of the file, `startApp()` reached a
+ * `KEY` in its temporal dead zone and threw AFTER the engine half had already
+ * printed IDENTICAL. This repo has a note about exactly that shape; it costs
+ * nothing to obey it and a confusing five minutes not to.
+ */
+const KEY = 'pub-unchanged-key';
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
 const here = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 const git = (...a) => execFileSync('git', a, { cwd: here, encoding: 'utf8' }).trim();
 
@@ -54,8 +88,8 @@ try {
   console.log(`Comparing against ${ref} (${git('rev-parse', '--short', ref)})`);
   if (ignore.size) console.log(`Allowing new top-level fields: ${[...ignore].join(', ')}`);
 
-  const { Engine: Old } = await import(join(work, 'src/engine.js'));
-  const { Engine: New } = await import(join(here, 'src/engine.js'));
+  const { Engine: Old, faceKey: oldFaceKey } = await import(join(work, 'src/engine.js'));
+  const { Engine: New, faceKey: newFaceKey } = await import(join(here, 'src/engine.js'));
 
   const dir = join(here, 'quizzes');
   const packs = readdirSync(dir).filter((f) => f.endsWith('.json'));
@@ -219,6 +253,53 @@ try {
     }
     console.log(`\n${diffs.length} differing payloads. A pub night has CHANGED.`);
   }
+
+  /*
+   * ---- AND THE OTHER HALF: WHAT THE SERVER ACTUALLY PUTS ON THE WIRE
+   *
+   * **Everything above imports `engine.js` and compares its views. That is not
+   * what a projector receives**, and this script's own header claimed it was —
+   * "the actual BYTES a projector and a phone receive". Between the engine and
+   * the wire sits `viewFor()` in `server.js`, which adds the JOIN CODE, the
+   * brand, the two colours, the photo wall, `joinsWaiting`, `mayAdvert` and
+   * more; and underneath sits `session.js`, which decides which engine is even
+   * running. None of it was compared.
+   *
+   * Measured: deleting `view.joinCode` from every payload left this script
+   * saying IDENTICAL. So did making `session.js` throw on import, so the app
+   * could not start at all. On the guard this repo names as the one to run
+   * before a gig week.
+   *
+   * So the two servers are started for real and driven through the same night
+   * over HTTP. It is deliberately ONE pack rather than all of them: the walk
+   * above already covers every phase of every pack at the engine level, and
+   * what this half is for is the layer between the engine and the socket,
+   * which is the same layer for every pack. Shallow, like `launch-route.test`,
+   * because a guard that takes five minutes is a guard nobody runs on a gig
+   * day.
+   *
+   * WHAT IS NORMALISED, and why each one has to be: a join code is minted per
+   * server, player ids and tokens are random per join, `gameSeed` is random
+   * per launch, and any epoch timestamp differs by whatever the two runs took.
+   * Everything else is compared exactly.
+   */
+  const wire = await compareOnTheWire({ here, work, ref, oldFaceKey, newFaceKey });
+  checks += wire.checks;
+  if (wire.diffs.length) {
+    failed = 1;
+    console.log('\nAND ON THE WIRE — what the server itself sends');
+    for (const d of wire.diffs.slice(0, 6)) {
+      console.log(`\nDIFF  ${d.where} [${d.role}]`);
+      for (const path of wherever(d.was, d.now).slice(0, 8)) {
+        console.log(`  ${path}`);
+        console.log(`    was ${short(at(d.was, path))}`);
+        console.log(`    now ${short(at(d.now, path))}`);
+      }
+    }
+    console.log(`\n${wire.diffs.length} differing payloads off the real server.`);
+  } else if (!diffs.length) {
+    console.log(`…and ${wire.checks} of them off the two real servers, join code included.`);
+  }
 } finally {
   try { git('worktree', 'remove', '--force', work); } catch { /* best effort */ }
   rmSync(work, { recursive: true, force: true });
@@ -264,4 +345,201 @@ function at(payload, path) {
 function short(v) {
   const said = JSON.stringify(v);
   return said === undefined ? '(absent)' : said.length > 120 ? said.slice(0, 120) + '…' : said;
+}
+
+// ------------------------------------------------ the wire, not the engine
+
+
+/** One running app: its own port, its own data dir, torn down by `stop()`. */
+async function startApp(root, port) {
+  const data = mkdtempSync(join(tmpdir(), 'pub-wire-'));
+  const child = spawn(process.execPath, ['server.js'], {
+    cwd: root,
+    env: {
+      ...process.env,
+      PORT: String(port),
+      DATA_DIR: data,
+      // Never let a spawned app default to the repo's own adverts folder —
+      // `offers.test.js` learned that by writing fixtures into it once.
+      ADVERT_DIR: join(data, 'adverts'),
+      HOST_KEY: KEY,
+    },
+    stdio: 'ignore',
+  });
+  const base = `http://127.0.0.1:${port}`;
+  /*
+   * AND IT HAS TO SAY SO WHEN THE APP WILL NOT START.
+   *
+   * The first version just looped and then made requests, so a tree whose
+   * `server.js` throws on import — a missing import, a bad `session.js`, a
+   * syntax error in anything it pulls in — came out as a wall of
+   * `ECONNREFUSED` from whichever fetch happened first. That is a guard
+   * failing for the right reason and reporting the wrong one, which is most of
+   * the way to being ignored.
+   */
+  let up = false;
+  for (let i = 0; i < 120 && !up; i += 1) {
+    try { await fetch(base); up = true; } catch { await wait(100); }
+  }
+  if (!up) {
+    child.kill('SIGKILL');
+    rmSync(data, { recursive: true, force: true });
+    throw new Error(`the app in ${root} never started — it cannot serve a pub night at all`);
+  }
+  return {
+    base,
+    stop() { child.kill('SIGKILL'); rmSync(data, { recursive: true, force: true }); },
+    async get(path) { return (await fetch(`${base}${path}`)).json(); },
+    async host(action, body = {}) {
+      const res = await fetch(`${base}/api/host/${action}?key=${KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Host-Key': KEY },
+        body: JSON.stringify(body),
+      });
+      return { status: res.status, body: await res.json().catch(() => ({})) };
+    },
+  };
+}
+
+/**
+ * Everything that is random per run, replaced by a name.
+ *
+ * Nothing here is a value a phone reads for its MEANING — a join code is
+ * whatever this server minted, a player id is whatever this join produced —
+ * so pinning them would only ever report noise. Everything else is compared
+ * exactly, which is the point.
+ */
+function steady(value, swaps) {
+  const said = JSON.stringify(value);
+  if (said === undefined) return said;
+  let out = said;
+  for (const [from, to] of swaps) {
+    if (!from) continue;
+    out = out.split(from).join(to);
+  }
+  // Any epoch millisecond — deadlines, `askedAt`, `startedAt`. Two runs are
+  // never the same millisecond and nothing here means anything to a phone
+  // except as a clock.
+  out = out.replace(/(?<![\d."])1[7-9]\d{11}(?![\d"])/g, '"<TIME>"');
+  // The lobby game's seed is minted per launch and is meant to be different
+  // every night — that is the whole point of it. What matters is that it is
+  // THERE and in the right payloads, which the key comparison still checks.
+  out = out.replace(/"gameSeed":\s*\d+/g, '"gameSeed":"<SEED>"');
+  return out;
+}
+
+/** Drive one app through a night, returning every payload it sent. */
+async function driveNight(app, packId, faceKey) {
+  const seen = [];
+  const launched = await app.host('launch', { game: 'quiz', packId });
+  if (launched.status !== 200) throw new Error(`launch answered ${launched.status}`);
+
+  const code = (await app.get('/api/state?role=host&key=' + KEY)).joinCode || '';
+  const players = [];
+  for (const name of ['The Quizzly Bears', 'Les Quizerables', 'Norfolk & Chance']) {
+    const res = await fetch(`${app.base}/api/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, joinCode: code }),
+    });
+    players.push(await res.json());
+  }
+
+  const snap = async (where) => {
+    seen.push({ where, role: 'screen', view: await app.get(`/api/state?role=screen&g=${code}`) });
+    seen.push({ where, role: 'host', view: await app.get(`/api/state?role=host&key=${KEY}`) });
+    for (const [i, p] of players.entries()) {
+      seen.push({
+        where,
+        role: `player:${i}`,
+        view: await app.get(`/api/state?role=player&g=${code}&playerId=${encodeURIComponent(p.id || '')}`),
+      });
+    }
+  };
+
+  await snap('lobby');
+  await app.host('start');
+  await snap('start');
+  for (let step = 0; step < 40; step += 1) {
+    const before = await app.get(`/api/state?role=host&key=${KEY}`);
+    if (before.phase === 'final') break;
+    await app.host('next');
+    const now = await app.get(`/api/state?role=host&key=${KEY}`);
+    await snap(`${now.phase} r${now.roundIndex}q${now.questionIndex}`);
+  }
+
+  /*
+   * THE FACE KEY IS DERIVED, NOT READ BACK — the join reply does not carry
+   * one, and it is the handle every board and the photo wall use. Computed
+   * with each tree's OWN `faceKey()`, so the two are named `<K0>` and `<K0>`
+   * even if the derivation itself is what changed. If it HAS changed that is
+   * a real difference and it will show up as the projector's board naming
+   * different people, which is the thing worth catching.
+   */
+  const swaps = [
+    [code, '<CODE>'],
+    ...players.flatMap((p, i) => [
+      [p.id, `<P${i}>`],
+      [p.token, `<T${i}>`],
+      [faceKey ? faceKey(p.id) : '', `<K${i}>`],
+    ]),
+  ].filter(([from]) => from);
+  return { seen, swaps };
+}
+
+/**
+ * The same night on both versions of the app, compared payload by payload.
+ *
+ * The pack is the FIRST in `quizzes/` by name so two runs pick the same one,
+ * and both apps are given the same one by id rather than each choosing.
+ */
+async function compareOnTheWire({ here, work, ref, oldFaceKey, newFaceKey }) {
+  const dir = join(here, 'quizzes');
+  const packId = readdirSync(dir).filter((f) => f.endsWith('.json')).sort()[0].replace(/\.json$/, '');
+  console.log(`\nOn the wire: launching "${packId}" on ${ref} and on this working tree`);
+
+  const port = 4870 + (process.pid % 40);
+  const out = { checks: 0, diffs: [] };
+  /*
+   * BOTH STARTS INSIDE THE `try`, or the first one leaks when the second
+   * throws — which is precisely the case this is for: a working tree whose app
+   * will not boot. A guard that leaves a server and a temp directory behind
+   * every time it catches something is a guard that poisons its own next run,
+   * the fault `save-a-night.mjs` spent eight hours proving.
+   */
+  let older = null;
+  let newer = null;
+  try {
+    older = await startApp(work, port);
+    newer = await startApp(here, port + 1);
+    const a = await driveNight(older, packId, oldFaceKey);
+    const b = await driveNight(newer, packId, newFaceKey);
+    const n = Math.min(a.seen.length, b.seen.length);
+    if (a.seen.length !== b.seen.length) {
+      out.diffs.push({
+        where: 'the walk itself', role: 'both',
+        was: { payloads: a.seen.length }, now: { payloads: b.seen.length },
+      });
+    }
+    for (let i = 0; i < n; i += 1) {
+      const was = a.seen[i];
+      const now = b.seen[i];
+      out.checks += 1;
+      const x = steady(was.view, a.swaps);
+      const y = steady(now.view, b.swaps);
+      // The ignore list works here too, and on the same terms: top-level only.
+      const trim = (text) => {
+        const o = JSON.parse(text);
+        for (const k of ignore) delete o[k];
+        return JSON.stringify(o);
+      };
+      if (trim(x) !== trim(y)) {
+        out.diffs.push({ where: was.where, role: was.role, was: JSON.parse(trim(x)), now: JSON.parse(trim(y)) });
+      }
+    }
+  } finally {
+    older?.stop();
+    newer?.stop();
+  }
+  return out;
 }
