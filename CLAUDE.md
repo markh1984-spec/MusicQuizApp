@@ -2087,12 +2087,9 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
   price. Validated against `TIERS`.
 - **`accounts.create()` DROPS WHAT IT DOES NOT DESTRUCTURE, SILENTLY.**
 - **A 113th TEST FILE MADE THE SUITE FLAKY — a different test each run**, each
-  passing alone: one process per file at CPU concurrency, and the
-  server-spawning tests began contending. **Attribute a flake by stashing
-  INCLUDING UNTRACKED FILES**, or the control runs your new tests against
-  stashed-out source and proves nothing. Folded into an existing file. **A flaky
-  suite is worse than a slow one**: slow gets skipped, flaky teaches you to
-  ignore red.
+  passing alone. **Attribute a flake by stashing INCLUDING UNTRACKED FILES**, or
+  the control proves nothing. **A flaky suite is worse than a slow one**: slow
+  gets skipped, flaky teaches you to ignore red.
 
 - **A fact is on ACCOUNT, a switch is on SETTINGS, a price is in the SHOP** —
   or Settings becomes a bin.
@@ -2101,6 +2098,27 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
   shelf**, which put a till at the bottom of a working page.
 - **HELP KEEPS ITS OWN TAB, NO `needs`, LAST**, and the door is ungated: it is
   where you go when what is wrong is your subscription.
+
+### WHAT IT COSTS TO RUN IS THE AI *PLUS* THE HOSTING
+
+`hostingPence` in `src/spend.js`, `PUT /api/owner/hosting`, `hostingPanel()` on
+the owner's Money tab, which compared revenue against the AI bill ALONE — so
+*"more than is coming in"* flattered itself by the hosting fee, worst in a
+quiet month, when the AI is cheap and the server is not.
+
+- **TYPED, NOT FETCHED**, and **NOT A LEDGER ROW** — the ledger records what a
+  JOB cost, so folding hosting in lands it in *what the money went on* and in
+  the per-pack average, which would then move when a server is resized.
+- **NAMED IN THE TOTAL** — a total silently absorbing a number you set months
+  ago is one you stop trusting.
+- **`restore()` NAMES IT — the whitelist trap for the FOURTH time.** It runs at
+  boot, so on the free tier a field in `contents()` but not `restore()` is
+  written, read back, dropped and saved as dropped, every deploy, in silence.
+  A figure on disk WINS over the backup.
+- **ABSENT WHEN UNSET**, like the budget: an older ledger is byte-identical.
+- **The owner's Money tab, NOT My account**, which every quizmaster sees.
+
+Full reasoning: **[`docs/business.md`](docs/business.md)**.
 
 ### THE RUNGS ON A SUBSCRIBER'S ACCOUNT SELL; THEY MUST NEVER GRANT
 
@@ -2142,24 +2160,21 @@ for each."* One winner draws no podium and issues one voucher.
   to add on a gig day.
 - **A STATE OR A SHOW WRITTEN BEFORE THIS EXISTED READS AS THREE**, never as
   zero: a redeploy mid-season must not change what a running night pays out.
-- **NOBODY SCORED IS NOT EVERYBODY WON.** `rankPlayers()` gives equal scores
-  the same position, correctly — so an all-zero board is EVERYBODY at position
-  1, and paying by position handed **a first-place voucher with its own live
-  code to every phone in the room**, which the bar then honours. Three ways in:
-  the wrong pack and Stop early, the projector never connected, and any
-  breakout-only night, whose rounds score nothing by design. **A row scoring
-  zero is skipped** — a FLOOR, so it can only ever issue fewer.
+- **NOBODY SCORED IS NOT EVERYBODY WON.** Equal scores share a position, so an
+  all-zero board is EVERYBODY at position 1 — and paying by position handed **a
+  first-place voucher with a live code to every phone in the room**, which the
+  bar honours. Three ways in: the wrong pack and Stop early, the projector
+  never connecting, and any breakout-only night. **A row scoring zero is
+  skipped** — a FLOOR, so it can only issue fewer.
 - **A TIE FOR FIRST IS STILL PAID IN FULL** — the cap is on POSITION, not on
   how many rows have been paid, so two teams the room watched finish level
   both get the prize.
 - **`doLaunch()`/`doLaunchOrder()` IN `console-packs.js` DESTRUCTURE A
-  WHITELIST, AND A FIELD MISSING FROM IT IS DROPPED IN SILENCE.** `winners`
-  was wired through the bar, `night`, both payload builders, the route,
-  `session.launch()` and the show — and still arrived as null, because it was
-  not named there. Nothing threw and the night simply paid three places. The
-  same trap as `accounts.create()` and `shows.js`'s own whitelist, which this
-  one change hit BOTH of. **Prove a new launch field by reading the request
-  body out of a real browser, not by reading the diff.**
+  WHITELIST, AND A FIELD MISSING FROM IT IS DROPPED IN SILENCE.** `winners` was
+  wired through the bar, `night`, both payload builders, the route,
+  `session.launch()` and the show — and still arrived null, unnamed there.
+  Nothing threw; the night paid three places. **Prove a new launch field by
+  reading the request body out of a real browser, not the diff.**
 
 ### A PRIZE TYPED IN LATE STILL REACHES THE WINNER — and the card shape says how many
 
@@ -2167,11 +2182,10 @@ for each."* One winner draws no podium and issues one voucher.
 `prizeWarning()` in `console-tonight.js`. Off a live night: *"my quiz and
 bingo winners on thursday didn't receive a QR code"*.
 
-- **PRIZES ARE READ OFF THE VENUE RECORD AT LAUNCH AND NOWHERE ELSE.** A night
-  with no venue picked mints no voucher and the winner's phone is simply blank
-  at the end, which reads as the app being broken. **The warning names the
-  CONSEQUENCE and draws with no venue too**: it began `if (!name) return null`,
-  switched off in precisely the case it was for.
+- **PRIZES ARE READ OFF THE VENUE RECORD AT LAUNCH AND NOWHERE ELSE.** No
+  venue mints no voucher and the winner's phone is blank, which reads as the
+  app being broken. **The warning names the CONSEQUENCE and draws with no venue
+  too**: it began `if (!name) return null`, switched off in the case it was for.
 - **SO PRESSING *Prizes* AFTERWARDS PAYS ANYBODY ALREADY OWED.** Both engines
   said the change "takes effect for the NEXT prize onwards", which was true and
   was the bug: the obvious thing a host does about a blank phone did nothing at
@@ -2203,8 +2217,8 @@ bingo winners on thursday didn't receive a QR code"*.
 music bingo prizes yesterday… it looks really bad on me if one guy wins all
 the prizes."*
 
-- **IT IS THE SHAPE OF THE GAME, NOT LUCK.** The best card wins the line and is
-  then nearest to two lines and nearest to the house, so **whoever takes the
+- **IT IS THE SHAPE OF THE GAME, NOT LUCK.** The best card wins the line, is
+  then nearest to two lines and nearest to the house — so **whoever takes the
   first prize is the favourite for every prize after it.**
 - **THE CLAIM IS STILL RIGHT AND IS RECORDED AS RIGHT** — no false call, no
   telling-off, so the control view has THREE outcomes rather than two. **AND NO
@@ -2213,10 +2227,9 @@ the prizes."*
   wording is about the PRIZE, never about the person.**
 - **THE CARDS CANNOT DO THIS ON THEIR OWN, and that was asked for twice.** A
   card is dealt at JOIN and who wins is decided by **the order the host plays
-  the tracks in**, which the app never sees; the stages are NESTED, so the
-  first winner already holds part of every prize after it. The measurements and
-  the two alternatives that were offered are in `docs/bingo.md` — **read them
-  before re-proposing dealing as the fix.**
+  the tracks in**, which the app never sees. The measurements and the two
+  alternatives offered are in `docs/bingo.md` — **read them before re-proposing
+  dealing as the fix.**
 - **IT LIFTS THE MOMENT EVERYBODY HAS ONE.** **The test is "is anybody left
   without", never a count of prizes**, so it holds at any room size.
 - **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert.
@@ -2233,9 +2246,9 @@ the prizes."*
 - **AND THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE.**
   `hasMarkedPattern()` asked for one line whatever the prize needed, so on the
   5x5/five-prize settings every 40-track pack ships with, **every phone lit up
-  the moment one line landed** — 223.9 false calls a round at sixty players,
-  each recorded against the player who made it. It is `evaluate()`'s shape on
-  MARKS; **the two may not disagree about what the prize IS.**
+  the moment one line landed** — 223.9 false calls a round at sixty players.
+  It is `evaluate()`'s shape on MARKS; **the two may not disagree about what
+  the prize IS.**
 - **AND A VOUCHER SURVIVES A PART BOUNDARY — `carried` in
   `startOrderSegment()`.** *Continue to the quiz* built a fresh engine and
   destroyed them: 200 from `/api/voucher` before the press, **404 after** — the
@@ -2249,11 +2262,10 @@ the prizes."*
   the way the quiz's *Stop* is — but its confirm names what filing on the bingo
   alone leaves out.
 - **AND THE ROUND CAN STALL, SO THE CONTROL VIEW SAYS SO — `view.stalled`.**
-  If the only people who have completed the card already hold a prize, nobody
-  can claim this stage and the round waits for a card that may never land: the
-  end-of-night card silently shows one prize where two were set up. **The rule
-  is NOT lifted** — that is the rig running backwards, and the host already has
-  *Play on*, *New round* and *Finish*. What was missing is being told.
+  If everyone who has completed the card already holds a prize, nobody can
+  claim this stage and the round waits for a card that may never land. **The
+  rule is NOT lifted** — the host already has *Play on*, *New round* and
+  *Finish*. What was missing is being told.
 - **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS — it reads `quizzes/`
   only.** IDENTICAL on a bingo change is the guard answering confidently about
   something it is not looking at. `node scripts/bingo-prizes.mjs` drives three
@@ -2267,18 +2279,17 @@ All four are ordinary presses, none of them throws, and each is on the path a
 gig actually takes.
 
 - **BACK WIPES THE QUESTION IT IS LEAVING**, exactly as `Skip` and `Ask again`
-  wipe theirs — one act seen from three directions, and Back was the one that
-  did not do it. Two tables kept their points AND the first-correct bonus for a
-  question the room never played, and on the replay their phones answered
-  `already_answered` while everybody else played for a hundred points less.
+  do — one act from three directions, and Back was the one that did not. Two
+  tables kept points AND the bonus for a question never played, then answered
+  `already_answered` on the replay while everybody else played for less.
 - **A PRIZE NO LONGER OWED IS TAKEN BACK — unless it has been SPENT.**
-  `issueVouchers()` only ever topped up, so four ordinary presses left **three
-  live top-prize codes on a night with two winners**. **A redeemed one stays**;
-  so does a `draw` or `carried` one.
+  `issueVouchers()` only topped up, so four ordinary presses left **three live
+  top-prize codes on a night with two winners**. **A redeemed, `draw` or
+  `carried` one stays.**
 - **RESET SCORES HANDS THE NEXT GAME A CLEAN LEDGER, and destroys nothing.** It
   kept `luckyDip`, so **the draw never ran again**, and kept game one's
-  vouchers in the "already paid" set, so the second game's winner got nothing.
-  **Marked `carried`, never deleted** — somebody won that drink.
+  vouchers in the paid set, so game two's winner got nothing. **Marked
+  `carried`, never deleted** — somebody won that drink.
 - **AND THE DRAW READS THE LAST QUESTION PLAYED, not the pointer.** Stopping at
   a round intro — exactly when a room is thinning out, which is what the draw
   is FOR — left it reading a question nobody had been asked.
@@ -3217,10 +3228,9 @@ Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 `src/import-intro.js`, `POST /api/import/intro`, `introImportPanel()` on the
 Workshop door. An intro question holds the song TWICE — `cue.title`, which
-plays, and the correct option, which the room is marked against — and
-**nothing compared them**: validation only asked that a cue existed, so
-"Duality" could play against a board marking "Psychosocial" right, with a
-self-consistent playlist and nothing thrown.
+plays, and the option the room is marked against — and **nothing compared
+them**: validation only asked that a cue existed, so "Duality" could play
+against a board marking "Psychosocial" right, and nothing threw.
 
 - **THE ALIGNMENT IS STRUCTURAL, NOT CHECKED** — both are written from ONE
   Spotify track and never typed, so there is no state in which they differ.
@@ -3234,28 +3244,24 @@ self-consistent playlist and nothing thrown.
   never an answer key. **`claudeAsker()` returns null with no key** rather than
   throwing, and **the decoys then come from the playlist, SAID OUT LOUD**
   (`fellBack`): that is a different round to read through.
-- **A DECOY THAT IS THE ANSWER IS DROPPED, HOWEVER SPELT** — `sameSong()` sees
-  through a remaster suffix, a feature credit and punctuation, and only ever
-  REJECTS. Short questions are topped up: one may never reach the room with two
-  options.
+- **A DECOY THAT IS THE ANSWER IS DROPPED, HOWEVER SPELT** — `sameSong()` only
+  ever REJECTS. Short questions are topped up: one may never reach the room
+  with two options.
 - **`from` IS ALWAYS `0:00`, NEVER GUESSED**, and **an id that exists is
   REFUSED** — importing twice lands on one file and `reloadPackEverywhere()`
   would push the replacement into a running game.
-- **IT MAKES A ONE-ROUND PACK**, which Tonight already bursts into one tile —
-  so no new composing UI and no second answer to "what is being played
-  tonight".
-- **THE SPOTIFY HALF IS INJECTED** (`readPlaylist`/`configured`), like
-  `recueQuiz`'s lookup: **an ES module namespace is READ-ONLY**, so a test
-  cannot stub the import — the first version did and threw before reaching an
-  assertion.
+- **IT MAKES A ONE-ROUND PACK**, which Tonight already bursts into a tile — no
+  new composing UI, no second answer to "what is being played tonight".
+- **THE SPOTIFY HALF IS INJECTED** (`readPlaylist`/`configured`): **an ES
+  module namespace is READ-ONLY**, so a test cannot stub the import — the first
+  version did and threw before any assertion.
 - **AND THE GENERATED PATH GETS THE SAME GUARANTEE — THE CUE WINS.**
-  `buildIntroPlaylist` resolved the CUE against Spotify and left the option as
-  Claude typed it, so a generated round had the identical fault. It now
-  compares them with `sameSong()` and rewrites the option to the cue on a REAL
-  disagreement, **saying which**. **Only a real one**: this string is on the
-  PROJECTOR, and canonicalising every option puts *"Duality - 2008 Remaster"*
-  six feet wide in front of a room. The checking pass prints `ANSWER >` above
-  `plays:` and **is never asked to compare them** — noticing is luck.
+  `buildIntroPlaylist` resolved the CUE and left the option as Claude typed it.
+  It compares them with `sameSong()` now and rewrites the option to the cue on
+  a REAL disagreement, **saying which**. **Only a real one**: this string is on
+  the PROJECTOR, and canonicalising every option puts *"Duality - 2008
+  Remaster"* six feet wide in front of a room. The checking pass prints
+  `ANSWER >` above `plays:` and **is never asked to compare them**.
 
 Full reasoning: **[`docs/generation.md`](docs/generation.md)**.
 

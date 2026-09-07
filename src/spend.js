@@ -183,6 +183,7 @@ export class Spend {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     this.rows = this.load();
     this.budgetPence = this.loadBudget();
+    this.hostingPence = this.loadHosting();
   }
 
   load() {
@@ -210,10 +211,46 @@ export class Spend {
     }
   }
 
+  /**
+   * WHAT THE HOSTING COSTS, WHICH IS THE COST THE MONEY TAB WAS MISSING.
+   *
+   * The tab prints *"spent this month — more than is coming in"* by comparing
+   * subscriptions against the AI bill, and the AI bill is not the whole bill:
+   * Render is a real monthly cost and it was simply absent. So the one figure
+   * the page exists to give — am I underwater — was flattering itself by
+   * exactly the hosting fee.
+   *
+   * **Typed, not fetched.** It is one number that changes about twice a year;
+   * an API key and a live lookup for a constant is a moving part with nothing
+   * to buy. Its own field rather than a row in the ledger, because the ledger
+   * records what a JOB cost and this is not a job — folding it in would put it
+   * in "what the money went on" and in the per-pack average, where it would be
+   * arithmetic nobody asked for.
+   */
+  loadHosting() {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(this.filePath, 'utf8'));
+      return tidyBudget(parsed.hostingPence);
+    } catch {
+      return 0;
+    }
+  }
+
   contents() {
-    // `budgetPence` only when it is set, so a ledger with no budget on it is
-    // byte-for-byte the file this wrote before budgets existed.
-    return { rows: this.rows, ...(this.budgetPence ? { budgetPence: this.budgetPence } : {}) };
+    // Each only when it is SET, so a ledger with neither on it is byte-for-byte
+    // the file this wrote before either existed.
+    return {
+      rows: this.rows,
+      ...(this.budgetPence ? { budgetPence: this.budgetPence } : {}),
+      ...(this.hostingPence ? { hostingPence: this.hostingPence } : {}),
+    };
+  }
+
+  /** Same shape as `setBudget`, and it stops nothing either. */
+  setHosting(pence) {
+    this.hostingPence = tidyBudget(pence);
+    this.save();
+    return this.hostingPence;
   }
 
   save() {
@@ -292,11 +329,20 @@ export class Spend {
     }
     if (!parsed || !Array.isArray(parsed.rows)) return { ok: false, reason: 'nothing_in_it' };
     this.rows = parsed.rows;
-    // A budget already set here WINS. The restore runs at boot, so in practice
-    // there is none — but "the disk is ahead of the backup" is the rule
-    // everywhere else in this app, and a budget quietly reverting to last
-    // week's number is exactly the kind of thing nobody would think to check.
+    /*
+     * A figure already set here WINS. The restore runs at boot, so in practice
+     * there is none — but "the disk is ahead of the backup" is the rule
+     * everywhere else in this app, and one quietly reverting to last week's
+     * number is exactly the kind of thing nobody would think to check.
+     *
+     * **AND BOTH ARE NAMED.** This is the whitelist trap `Accounts.restore()`
+     * has already been bitten by: a field the restore does not mention is
+     * dropped and then SAVED as dropped, on a free tier where the disk is
+     * empty after every deploy. Adding a field to `contents()` without adding
+     * it here loses it on the next boot, silently, and nothing 403s.
+     */
     if (!this.budgetPence) this.budgetPence = tidyBudget(parsed.budgetPence);
+    if (!this.hostingPence) this.hostingPence = tidyBudget(parsed.hostingPence);
     this.save();
     return { ok: true, rows: this.rows.length };
   }
@@ -411,6 +457,10 @@ export class Spend {
       claude: round(claude),
       image: round(image),
       rows: recent.length,
+      // The fixed monthly cost, so the page can answer "what does running this
+      // actually cost" rather than "what did the AI cost", which is the
+      // smaller and less useful of the two questions.
+      hosting: this.hostingPence,
       // How much of the web was read. Worth its own number rather than being
       // folded into the Claude total: it is the one line that grows with how
       // TOPICAL the writing is rather than with how much of it there is.

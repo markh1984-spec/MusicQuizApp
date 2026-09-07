@@ -6524,6 +6524,21 @@ async function handleWrite(req, res, url, route) {
     return sendJson(res, 200, { ok: true, budget: spend.budgetState() }), true;
   }
 
+  /*
+   * What the hosting costs a month — the cost the Money tab was leaving out.
+   *
+   * Same shape as the budget above it, on the same already-gated prefix, and
+   * backed up the same way: the figure lives in the ledger file, which on a
+   * free tier is gone after every deploy unless it is pushed.
+   */
+  if (route === '/api/owner/hosting' && req.method === 'PUT') {
+    if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
+    const body = await readJson(req);
+    const pence = spend.setHosting(body.pence);
+    backUpSpend();
+    return sendJson(res, 200, { ok: true, hosting: pence }), true;
+  }
+
   if (route.startsWith('/api/owner/accounts/') && route.endsWith('/password') && req.method === 'POST') {
     if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
     const id = decodeURIComponent(route.slice('/api/owner/accounts/'.length, -'/password'.length));

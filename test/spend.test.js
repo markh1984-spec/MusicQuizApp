@@ -377,3 +377,70 @@ test('a row with no label still appears rather than vanishing', () => {
   assert.equal(jobs[0].what, 'something else');
   assert.equal(jobs[0].pence, total);
 });
+
+/* ---- what the hosting costs ------------------------------------------- */
+
+/**
+ * The Money tab asked "am I underwater" by comparing subscriptions against the
+ * AI bill alone. Hosting is a real monthly cost and was simply absent, so the
+ * one figure the page exists for was flattering itself by exactly the hosting
+ * fee — most visibly in a quiet month for generation, when the AI bill is
+ * small and the server costs the same as ever.
+ */
+test('the hosting figure is kept, reported, and survives a restore', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spend-hosting-'));
+  const file = path.join(dir, 'spend.json');
+
+  const ledger = new Spend(file);
+  assert.equal(ledger.summary().hosting, 0, 'nothing set is nothing, not undefined');
+
+  ledger.setHosting(700);
+  assert.equal(ledger.summary().hosting, 700);
+
+  // Read back off disk by a fresh instance — the figure lives in the ledger
+  // file beside the budget, so a restart has to find it.
+  assert.equal(new Spend(file).summary().hosting, 700);
+
+  /*
+   * AND IT SURVIVES `restore()`, WHICH IS THE TRAP.
+   *
+   * `Accounts.restore()` dropped `tiers` and then SAVED the loss — a field the
+   * restore does not name is gone, and restore runs at boot, which on a free
+   * tier is every deploy. A hosting figure quietly reverting to zero would
+   * make the running total wrong again with nothing said.
+   */
+  const backup = fs.readFileSync(file, 'utf8');
+  const fresh = new Spend(path.join(dir, 'restored.json'));
+  assert.equal(fresh.restore(backup).ok, true);
+  assert.equal(fresh.summary().hosting, 700, 'restore must carry it, or the boot loses it');
+
+  // A figure already on disk WINS over the backup, like the budget.
+  const ahead = new Spend(path.join(dir, 'ahead.json'));
+  ahead.setHosting(2500);
+  ahead.rows = [];
+  ahead.restore(backup);
+  assert.equal(ahead.hostingPence, 2500, 'the disk is ahead of the backup');
+
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('a ledger with no hosting set is byte-for-byte the file written before it existed', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spend-hosting-'));
+  const file = path.join(dir, 'spend.json');
+  const ledger = new Spend(file);
+  ledger.record({ kind: 'claude', what: 'wrote a round', model: 'claude-sonnet-5', tokensIn: 10, tokensOut: 10 });
+  const written = JSON.parse(fs.readFileSync(file, 'utf8'));
+  assert.equal('hostingPence' in written, false, 'absent when unset, so nothing older changes');
+  assert.equal('budgetPence' in written, false);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('a silly hosting figure is refused the same way a silly budget is', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'spend-hosting-'));
+  const ledger = new Spend(path.join(dir, 'spend.json'));
+  ledger.setHosting(-500);
+  assert.equal(ledger.hostingPence, 0, 'never negative');
+  ledger.setHosting('nonsense');
+  assert.equal(ledger.hostingPence, 0, 'never NaN — that would draw as an empty total');
+  fs.rmSync(dir, { recursive: true, force: true });
+});

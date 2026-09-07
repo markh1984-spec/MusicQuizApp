@@ -614,8 +614,20 @@ function moneyTab() {
    * NOT arriving, which is the useful half of knowing about them. */
   const lost = lapsed.reduce((n, a) => n + (findTier(tierFor(a)).pence || 0), 0);
 
-  const spend = overview.spend || { total: 0, claude: 0, image: 0, months: [], packs: [], perPack: 0, rows: 0 };
+  const spend = overview.spend || { total: 0, claude: 0, image: 0, months: [], packs: [], perPack: 0, rows: 0, hosting: 0 };
   const thisMonth = spend.months[0];
+  /*
+   * WHAT THIS MONTH ACTUALLY COSTS — the AI bill PLUS the hosting.
+   *
+   * The "more than is coming in" flag below compared subscriptions against the
+   * AI alone, and the AI is not the whole bill: hosting is a real monthly cost
+   * and it was simply absent. So the one question this page exists to answer —
+   * am I underwater — was flattering itself by exactly the hosting fee, every
+   * month, and most visibly in the months where the AI bill is small.
+   */
+  const aiThisMonth = thisMonth ? thisMonth.pence : 0;
+  const outThisMonth = aiThisMonth + (spend.hosting || 0);
+  const under = outThisMonth > monthly;
 
   const parts = [];
 
@@ -623,7 +635,7 @@ function moneyTab() {
     <div class="game-section">
       <div class="game-head"><div>
         <h2>Money</h2>
-        <div class="tiny">What is coming in, and what the AI is costing you.</div>
+        <div class="tiny">What is coming in, and what it costs to run.</div>
       </div></div>
       <div class="own-figures">
         <div class="own-fig">
@@ -634,9 +646,14 @@ function moneyTab() {
           <b>${esc(money(spend.total))}</b>
           <span>spent on AI in the last year</span>
         </div>
-        <div class="own-fig ${thisMonth && thisMonth.pence > monthly ? 'bad' : ''}">
-          <b>${esc(money(thisMonth ? thisMonth.pence : 0))}</b>
-          <span>spent this month${thisMonth && thisMonth.pence > monthly ? ' — more than is coming in' : ''}</span>
+        <div class="own-fig ${under ? 'bad' : ''}">
+          <b>${esc(money(outThisMonth))}</b>
+          <span>going out this month${spend.hosting
+            // NAMED rather than folded away. A total that silently includes a
+            // number you set months ago is one you stop trusting the first
+            // time it does not match your card statement.
+            ? ` — ${esc(money(aiThisMonth))} AI, ${esc(money(spend.hosting))} hosting`
+            : ''}${under ? ' · more than is coming in' : ''}</span>
         </div>
         <div class="own-fig">
           <b>${esc(money(spend.perPack))}</b>
@@ -679,6 +696,9 @@ function moneyTab() {
     </div>`));
 
   parts.push(budgetPanel(spend.budget || { state: 'none', spent: 0, budget: 0 }, monthly));
+  // Beside the ceiling rather than in the figures, because it is a thing you
+  // SET rather than a thing that happened — same as the budget above it.
+  parts.push(hostingPanel(spend.hosting || 0, monthly, aiThisMonth));
 
   if (spend.months.length) {
     parts.push(node(`
@@ -767,6 +787,61 @@ function moneyTab() {
  * budget alerts see the pictures and nothing else; Anthropic's see the writing
  * and nothing else. Neither can tell you what a pack cost.
  */
+/**
+ * WHAT THE HOSTING COSTS, WHICH IS THE OTHER HALF OF "WHAT DOES THIS COST".
+ *
+ * The AI bill is variable and interesting and had four figures on this page;
+ * the hosting is fixed and boring and had none, so the running total was the
+ * AI's alone. That is not a rounding error — in a quiet month for generation
+ * it is most of the bill, and "more than is coming in" was answering with a
+ * number that left it out.
+ *
+ * **TYPED, NOT FETCHED.** One figure that changes about twice a year. A live
+ * lookup would need an API key and a supplier's billing endpoint for a
+ * constant, which is a moving part with nothing to buy.
+ *
+ * **It is deliberately NOT a ledger row.** The ledger records what a JOB cost,
+ * and hosting is not a job — putting it in would land it in "what the money
+ * went on" and inside the per-pack average, which would be arithmetic nobody
+ * asked for and a per-pack figure that changes when you resize a server.
+ */
+function hostingPanel(pence, monthly, aiThisMonth) {
+  const out = (pence || 0) + (aiThisMonth || 0);
+  const el = node(`
+    <div class="panel">
+      <h3>What the hosting costs</h3>
+      <div class="tiny">Your monthly bill for the server, added to the figures above so
+        "going out this month" is the whole of it rather than just the AI. Set it to
+        nothing if you are not paying for hosting.</div>
+      ${pence ? `<div class="tiny" style="margin-top:8px">
+        ${esc(money(pence))} hosting + ${esc(money(aiThisMonth))} AI = <b>${esc(money(out))}</b> this month${monthly
+          ? `, against ${esc(money(monthly))} coming in`
+          : ''}.</div>` : ''}
+      <div class="budget-set">
+        <label class="tiny">A month <input type="number" class="hosting-input" min="0" step="1"
+          value="${pence ? (pence / 100).toFixed(2).replace(/\.00$/, '') : ''}" placeholder="none"></label>
+        <button class="btn small hosting-save">Save</button>
+        <span class="tiny hosting-said"></span>
+      </div>
+    </div>`);
+
+  const input = el.querySelector('.hosting-input');
+  const said = el.querySelector('.hosting-said');
+  el.querySelector('.hosting-save').addEventListener('click', async () => {
+    said.textContent = '';
+    try {
+      const pounds = input.value.trim();
+      const asked = pounds === '' ? 0 : Math.round(Number(pounds) * 100);
+      if (!Number.isFinite(asked) || asked < 0) throw new Error('That is not an amount');
+      await api('/api/owner/hosting', { method: 'PUT', body: JSON.stringify({ pence: asked }) });
+      await load();
+    } catch (err) {
+      said.textContent = err.message;
+    }
+  });
+  return el;
+}
+
 function budgetPanel(state, monthly) {
   const set = state.state !== 'none';
   const pct = Math.min(1, state.pct || 0);

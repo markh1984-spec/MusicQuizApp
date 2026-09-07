@@ -274,6 +274,77 @@ account that has paid nothing, which is precisely the shape the join-flood rule
 exists for: **hold it at a stated number rather than discovering it on an
 invoice.** The note is in `featuresFor()`, beside the grant.
 
+### What it costs to run is the AI plus the hosting — 7 September 2026
+
+Asked for in one line — *"can I have a Render cost section in my personal
+account"* — and it turned out to be a correction rather than an addition.
+
+The Money tab already printed four figures, one of which was **"spent this
+month — more than is coming in"**, comparing subscription revenue against the
+AI bill. The AI bill is not the whole bill. Hosting is a real fixed monthly
+cost and it was simply absent from the page, so the single question the tab
+exists to answer — *am I underwater* — was flattering itself by exactly the
+hosting fee. Worst in a quiet month for generation, which is precisely the
+month you would look at it and relax.
+
+So the figure is not decoration beside the others. It changes what the others
+mean.
+
+#### Typed, not fetched
+
+One number that moves about twice a year. A live lookup would need an API key
+and a supplier's billing endpoint, which is a moving part maintained forever to
+avoid retyping a constant. The same reasoning that keeps the twelve-week league
+season a constant with a note on it.
+
+#### Deliberately not a ledger row
+
+The ledger records what a JOB cost — a round written, a portrait drawn, a month
+of news read. Hosting is not a job. Folding it in as a row would put it in
+*what the money went on*, where it would sit beside "checked a batch" as though
+it were a thing that happened, and inside the **per-pack average**, which would
+then change every time the server was resized. Its own field, read by the
+summary, added at the point of display.
+
+#### Named in the total, never folded away
+
+The figure reads *"£12 going out this month — £5 AI, £7 hosting"*. A total that
+silently absorbs a number you set months ago is one you stop trusting the first
+time it fails to match a card statement, and then the page has cost you
+something rather than told you something.
+
+#### `restore()` names it, which is the whitelist trap for the fourth time
+
+`Accounts.restore()` dropped `tiers` and then saved the loss. `shows.js` dropped
+`questionSeconds`. `doLaunch()` dropped `winners`. `normaliseItem()` dropped a
+bingo part's card and prize count. Every one of them is a function that
+destructures a whitelist and silently loses whatever it does not name.
+
+`Spend.restore()` is the same shape, and it runs **at boot** — which on the free
+tier is after every deploy. A `hostingPence` added to `contents()` but not to
+`restore()` would be written to the backup, read back at the next deploy,
+dropped, and then saved as dropped. Nothing throws, nothing 403s, and the
+running total quietly goes back to being wrong.
+
+A figure already on disk wins over the backup, same as the budget: the disk is
+ahead of the backup everywhere else in this app.
+
+#### The owner's Money tab, not My account
+
+The request said "my personal account", and the right home is the other one. A
+hosting bill is what running the *business* costs — it belongs with the
+subscription revenue and the AI ledger, all of which are owner-only. My account
+is the page every quizmaster has, where a Render fee is meaningless and would
+be owner concerns leaking into subscriber UI.
+
+#### And the check was on the wrong page first
+
+The browser guard drove `/owner?key=…` and measured a sign-in form: `/owner`
+resolves from the account **cookie**, and the host key gets you the console and
+not this page. Same class of mistake as measuring an idle console or the
+Console door's missing generator slot — the harness was somewhere the feature
+does not live, and reported that as the feature being broken.
+
 ### THE RUNGS ON A SUBSCRIBER'S ACCOUNT — they sell, and they must never grant
 
 Asked for on 3 September 2026, pointing at the owner's own hat switch: *"I've
