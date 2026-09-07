@@ -9,13 +9,11 @@
  */
 
 import test from 'node:test';
+import { withServer as live } from './helpers/live-server.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { Offers, offerPath } from '../src/offers.js';
@@ -140,33 +138,7 @@ test('a scan after midnight counts on the night it happened, not the next day', 
  * code, scan its public offer page, and read the count back off the same
  * route the editor uses to open a set.
  */
-async function withServer(run) {
-  const dir = mkdtempSync(join(tmpdir(), 'offers-route-'));
-  const port = 4990 + (process.pid % 90);
-  const child = spawn(process.execPath, ['server.js'], {
-    cwd: ROOT,
-    /*
-     * ADVERT_DIR EXPLICITLY, or the house room's adverts default to
-     * `<repo>/adverts` — a real, git-tracked folder — and this test would
-     * write its fixture packs straight into it. Found by doing exactly that
-     * once; the fix is never to let a test process default to a live path.
-     */
-    env: { ...process.env, PORT: String(port), DATA_DIR: dir, ADVERT_DIR: join(dir, 'adverts'), HOST_KEY: 'offers-test-key' },
-    stdio: 'ignore',
-  });
-  const base = `http://127.0.0.1:${port}`;
-  try {
-    let up = false;
-    for (let i = 0; i < 100 && !up; i++) {
-      try { await fetch(`${base}/api/quizzes?key=offers-test-key`); up = true; } catch { await new Promise((r) => setTimeout(r, 100)); }
-    }
-    assert.ok(up, 'the server never came up');
-    await run(base);
-  } finally {
-    child.kill('SIGKILL');
-    rmSync(dir, { recursive: true, force: true });
-  }
-}
+const withServer = (run) => live(run, { hostKey: 'offers-test-key' });
 
 test('a saved code, scanned twice, reads back on the same route that opened the set', async () => {
   await withServer(async (base) => {

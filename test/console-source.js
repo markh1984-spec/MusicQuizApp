@@ -30,3 +30,26 @@ export function consoleFiles() {
 export function consoleSource() {
   return consoleFiles().map((f) => f.src).join('\n');
 }
+
+/**
+ * THE SAME TEXT WITH THE PROSE TAKEN OUT — and a grep that skips this is a
+ * grep that goes green the better a file is documented.
+ *
+ * Every check in this repo that asks "does anything still call X" is a text
+ * search, and this codebase writes a paragraph above every decision. So the
+ * NAME of the thing is nearly always in a comment somewhere near the call —
+ * which means commenting the call out leaves the search satisfied. Measured:
+ * commenting out the only caller of `tierRow()` kept "and something actually
+ * draws it" green, and the whole subscriber upsell would have disappeared in
+ * silence.
+ *
+ * Strings are deliberately left alone: a route named in a fetch is a real use.
+ */
+export const withoutComments = (src) => src
+  .replace(/\/\*[\s\S]*?\*\//g, ' ')
+  .replace(/^\s*\/\/.*$/gm, ' ');
+
+/** Every console file, as code with the comments stripped. */
+export function consoleCode() {
+  return consoleFiles().map(({ name, src }) => ({ name, src: withoutComments(src) }));
+}

@@ -152,10 +152,15 @@ test('SOMETHING ACTUALLY CALLS THE PUBLISH ROUTE', async () => {
    * not a broken caller, it was the total absence of one.
    */
   const { readFileSync, readdirSync } = await import('node:fs');
+  const { withoutComments } = await import('./console-source.js');
   const dir = join(ROOT, 'public', 'assets');
+  // COMMENTS STRIPPED FIRST. The route's name is written out in the paragraph
+  // explaining why the control exists, so a search over the raw file stays
+  // green when the caller is commented out — a check that gets stronger the
+  // worse a file is documented is the wrong way round.
   const callers = readdirSync(dir)
     .filter((f) => f.endsWith('.js'))
-    .filter((f) => readFileSync(join(dir, f), 'utf8').includes('/api/past-gigs/publish'));
+    .filter((f) => withoutComments(readFileSync(join(dir, f), 'utf8')).includes('/api/past-gigs/publish'));
   assert.ok(callers.length, 'nothing in the browser can put a night on the gallery');
 });
 

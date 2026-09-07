@@ -4,10 +4,28 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { Accounts } from '../src/accounts.js';
+import { withServer as live } from './helpers/live-server.mjs';
+
 import { OWNER_ONLY, changesTheLibrary } from '../src/gates.js';
-import { consoleSource } from './console-source.js';
+import { consoleSource, withoutComments } from './console-source.js';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+/**
+ * `server.js` AS CODE, WITH THE PROSE TAKEN OUT.
+ *
+ * Every check below this line is a text search over that file, and this
+ * codebase writes a paragraph above every gate — so the words `FEATURES.X` are
+ * almost always sitting in a comment a few lines from the call that uses them.
+ * Measured: deleting the entitlement gate on `/api/past-gigs` and leaving
+ * behind a comment containing the words left this file 22 of 22 green.
+ *
+ * Reading the code alone does not make a grep into evidence — see the live
+ * section at the foot of this file for that — but it does stop the one failure
+ * mode where a check goes green the moment somebody explains what they removed.
+ */
+const serverCode = () => withoutComments(fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8'));
 
 /*
  * These come straight out of a safety sweep: signing in as a quizmaster and
@@ -88,7 +106,7 @@ test('nothing outside the library is caught by accident', () => {
  * seasonal shapes. A wrong gate here is a bank detail, not a papercut.
  */
 test('nothing on the Invoices tab is gated on the library', () => {
-  const lines = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8').split('\n');
+  const lines = serverCode().split('\n');
   const offenders = [];
   lines.forEach((line, i) => {
     if (!/route\b.*['"`]\/api\/invoices/.test(line)) return;
@@ -165,7 +183,7 @@ test('advert writes are a quizmaster’s, not the owner’s', () => {
  * to the broad quiz check, where the owner gets a 403 that talks about quizzes.
  */
 test('server.js gates advert writes on ADVERTS explicitly', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverCode();
   assert.match(server, /advertRoute[\s\S]{0,200}FEATURES\.ADVERTS/,
     'advert writes have no explicit gate — they will fall into the broad quiz check');
 });
@@ -184,7 +202,7 @@ test('server.js gates advert writes on ADVERTS explicitly', () => {
  * the ordering is what gets pinned.
  */
 test('the suggestion box answers before the broad quiz gate', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverCode();
   const gate = server.indexOf('const changesLibrary = changesTheLibrary(');
   assert.ok(gate > 0, 'the broad gate has moved — re-read this test');
 
@@ -217,7 +235,7 @@ test('suggestions are not treated as a pack write', () => {
  * gigs and a quizmaster is refused their own history.
  */
 test('the past-gigs routes ask for PAST_GIGS, not for the invoicing add-on', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverCode();
   for (const route of ["'/api/past-gigs'", "'/api/past-gigs/'", "'/past-photo/'"]) {
     const at = server.indexOf(route);
     assert.ok(at > 0, `${route} has moved or gone`);
@@ -227,7 +245,7 @@ test('the past-gigs routes ask for PAST_GIGS, not for the invoicing add-on', () 
 });
 
 test('the owner photo tab is gated on PHOTO_EXPORT and nothing else', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverCode();
   for (const route of ["'/api/owner/photos'", "'/api/owner/photos/'"]) {
     const at = server.indexOf(route);
     assert.ok(at > 0, `${route} has moved or gone`);
@@ -252,7 +270,7 @@ test('the owner photo routes are owner-only by path, so they skip the broad quiz
  * flat path it has always used, so nothing Mark already has moves.
  */
 test('a photo is filed under its own room', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverCode();
   const at = server.indexOf('async function fileAway(');
   assert.ok(at > 0, 'fileAway has moved');
   assert.match(server.slice(at, at + 900), /photoFolder\(room\.id\)/,
@@ -289,7 +307,7 @@ test('the room code is on the library payload, not only on a running game', () =
   // Before a launch there is no `running`, and the console still has to know
   // which room it is — the host opens the big screen five minutes early, which
   // is precisely when nothing is running yet.
-  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const src = serverCode();
   const library = src.slice(src.indexOf('running: {') - 2000, src.indexOf('running: {'));
   assert.match(library, /joinCode: roomForHost\(req, url\)\.code/,
     'the room code rides on `running` only, so it vanishes before a launch');
@@ -383,11 +401,107 @@ test('the shop tab is gated on buying packs, not on writing the catalogue', () =
 });
 
 test('the bare domain goes by WHO IS ASKING, and is never cached', () => {
-  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const src = serverCode();
   const at = src.indexOf("if (route === '/') {");
   assert.ok(at > 0, 'the root route still exists');
   const block = src.slice(at, src.indexOf('\n  }', at));
   assert.ok(block.includes('whoIs('), 'it asks who is asking');
   assert.ok(/no-store/.test(block), 'and says not to cache the answer');
   assert.ok(!/Location: '\/screen'/.test(block), 'and no longer sends everybody to the projector');
+});
+
+/*
+ * ---- AND THE SAME REFUSALS, FIRED
+ *
+ * **Everything above is a text search over `server.js`.** Reading it as CODE
+ * rather than as code-plus-prose closes the worst failure — a check that goes
+ * green because somebody explained what they deleted — but it still only ever
+ * asserts that a line is written. It cannot tell you the request is refused.
+ *
+ * These few make the request. The one they exist for is the catalogue: a
+ * signed-in quizmaster could once overwrite any pack in the library with a
+ * single POST, and the sweep that found it left the Madonna pack titled
+ * "ROBOROB WAS HERE". That is the shape of thing a regex can never see.
+ */
+const LIVE_KEY = 'gates-live-key';
+
+const withServer = (run) => live(run, {
+  hostKey: LIVE_KEY,
+  seed(dir) {
+    const accounts = new Accounts(path.join(dir, 'accounts.json'));
+    accounts.create({
+      email: 'owner@x.com', password: 'a-long-owner-password', name: 'Mark', role: 'owner', status: 'active',
+    });
+    accounts.create({
+      email: 'rob@x.com', password: 'a-long-rob-password', name: 'Rob', role: 'quizmaster',
+      tier: 'gold', status: 'active',
+    });
+    accounts.save();
+  },
+});
+
+async function cookieFor(base, email, password) {
+  const res = await fetch(`${base}/api/sign-in`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  assert.equal(res.status, 200, `could not sign ${email} in`);
+  return (res.headers.get('set-cookie') || '').split(';')[0];
+}
+
+test('a signed-in quizmaster cannot write the catalogue, asked over HTTP', async () => {
+  await withServer(async (base) => {
+    const rob = await cookieFor(base, 'rob@x.com', 'a-long-rob-password');
+    // The id in the BODY — the shape that slipped past `startsWith` once.
+    for (const [route, body] of [
+      ['/api/quiz', { id: 'madonna', title: 'ROBOROB WAS HERE', rounds: [] }],
+      ['/api/bingo', { id: 'disco-funk', title: 'ROBOROB WAS HERE', tracks: [] }],
+    ]) {
+      const res = await fetch(`${base}${route}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: rob },
+        body: JSON.stringify(body),
+      });
+      assert.equal(res.status, 403, `${route} let a quizmaster write the catalogue`);
+    }
+  });
+});
+
+test('an owner-only route refuses a quizmaster, asked over HTTP', async () => {
+  await withServer(async (base) => {
+    const rob = await cookieFor(base, 'rob@x.com', 'a-long-rob-password');
+    for (const route of ['/api/owner/accounts', '/api/reports']) {
+      const res = await fetch(`${base}${route}`, { headers: { Cookie: rob } });
+      assert.ok(res.status === 403 || res.status === 404,
+        `${route} answered ${res.status} to a quizmaster`);
+    }
+  });
+});
+
+test('checking a pack is open to both, and neither can save one they may not', async () => {
+  await withServer(async (base) => {
+    // `CHECKS_ONLY`: the pack is in the body, no room is read, nothing is
+    // written — so this is behind "signed in" and no feature, which is what
+    // makes it work for the OWNER, who holds no quiz features at all.
+    for (const [email, password] of [['owner@x.com', 'a-long-owner-password'], ['rob@x.com', 'a-long-rob-password']]) {
+      const who = await cookieFor(base, email, password);
+      const res = await fetch(`${base}/api/quiz/__validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: who },
+        body: JSON.stringify({ id: 'x', title: '', rounds: [] }),
+      });
+      assert.equal(res.status, 200, `${email} cannot check a pack`);
+      const out = await res.json();
+      assert.ok(Array.isArray(out.problems) && out.problems.length > 0,
+        `${email} was told an empty pack is fine`);
+    }
+    // And signed out it is refused, because that IS the whole gate.
+    const anon = await fetch(`${base}/api/quiz/__validate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'x', title: '', rounds: [] }),
+    });
+    assert.equal(anon.status, 401, 'checking a pack is open to a stranger');
+  });
 });

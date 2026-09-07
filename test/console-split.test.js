@@ -44,10 +44,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { consoleFiles } from './console-source.js';
+import { consoleFiles, withoutComments } from './console-source.js';
 
 /** Comments mention names without using them; strings are left alone. */
-const noComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
+const noComments = withoutComments;
 
 test('no console module assigns to a name it imports', () => {
   for (const { name, src } of consoleFiles()) {
@@ -428,7 +428,15 @@ test('and something actually draws it', () => {
    * with no handle. A component nobody renders is the same fault, and it draws
    * perfectly in isolation.
    */
-  const drawn = consoleFiles().filter(({ name, src }) => name !== 'console-tiers.js' && src.includes('tierRow('));
+  /*
+   * **WITHOUT THE COMMENTS, and that was the bug in this test.** Two checks
+   * above it in this same file strip them first, for exactly this reason —
+   * and this one did not, so commenting out the only caller of `tierRow()`
+   * left it green while the whole subscriber upsell vanished. Verified by
+   * doing it.
+   */
+  const drawn = consoleFiles()
+    .filter(({ name, src }) => name !== 'console-tiers.js' && noComments(src).includes('tierRow('));
   assert.ok(drawn.length >= 1, 'nothing in the console calls tierRow() — the row is never drawn');
 });
 

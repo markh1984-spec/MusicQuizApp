@@ -19,9 +19,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
 
 import { Accounts } from '../src/accounts.js';
+import { withServer as live } from './helpers/live-server.mjs';
 import { consoleSource } from './console-source.js';
 
 function book(now = () => 1_000_000) {
@@ -346,47 +346,7 @@ test('nothing a subscriber does in their OWN account is ever written down', () =
  * hand somebody, and that is the payload, the refusal and the shutting of the
  * door.
  */
-function withServer(run) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'support-live-'));
-  /*
-   * THE BOOK IS WRITTEN BEFORE THE SERVER STARTS, and that is not a detail.
-   *
-   * `Accounts` reads its file once at boot and holds it in memory, so seeding
-   * after the spawn produced a server that had never heard of either account:
-   * every sign-in answered 401 and the test failed on its own scaffolding
-   * rather than on anything it was asking about.
-   */
-  const seeded = seed(dir);
-  // Its own band of ports: `offers.test.js` takes 4990-5079 by the same trick,
-  // and two files spawning servers on one port is a flake that looks like a
-  // bug in the app.
-  const port = 5120 + (process.pid % 60);
-  const child = spawn(process.execPath, ['server.js'], {
-    cwd: new URL('..', import.meta.url).pathname,
-    env: {
-      ...process.env,
-      PORT: String(port),
-      DATA_DIR: dir,
-      ADVERT_DIR: path.join(dir, 'adverts'),
-      HOST_KEY: 'support-live-key',
-    },
-    stdio: 'ignore',
-  });
-  const base = `http://127.0.0.1:${port}`;
-  return (async () => {
-    try {
-      let up = false;
-      for (let i = 0; i < 100 && !up; i += 1) {
-        try { await fetch(base); up = true; } catch { await new Promise((r) => setTimeout(r, 100)); }
-      }
-      assert.ok(up, 'the server never came up');
-      await run(base, seeded);
-    } finally {
-      child.kill('SIGKILL');
-      fs.rmSync(dir, { recursive: true, force: true });
-    }
-  })();
-}
+const withServer = (run) => live(run, { hostKey: 'support-live-key', seed });
 
 /** Sign in for real and return the session cookie. */
 async function signIn(base, email, password) {

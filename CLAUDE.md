@@ -3831,15 +3831,14 @@ account is in [`docs/checks.md`](docs/checks.md):**
   quizmaster, with the suite green. `browser-parses.test.js` closes it.
 - **PUT A FINGER ON IT — `console-frame.mjs`.** Three bugs in one week were one
   bug: a control in the DOM, with a size, passing every test, not on the
-  screen. **`elementFromPoint()` at a control's middle sees clipped,
-  off-screen and painted-over at once** — *in the document*, *has a size* and
-  *can be pressed* are three questions, and the gap has bitten five times. **It may only scroll what a FINGER could** — `auto`/`scroll`,
-  never `hidden` (that is the clipping fault reported as fine), never `body`
-  (its overflow propagates to the viewport). **It launches a quiz and puts a
-  banner up**: an idle bar is narrower than the one that broke, and the owner
-  account it needs removed both banners the container used to raise, so the
-  `main`-layout check silently skipped itself. Six sizes, each on a threshold
-  in `style.css`; verified by reintroducing four real faults.
+  screen. **`elementFromPoint()` at a control's middle sees clipped, off-screen
+  and painted-over at once** — *in the document*, *has a size* and *can be
+  pressed* are three questions, and the gap has bitten five times. **It may
+  only scroll what a FINGER could** — `auto`/`scroll`, never `hidden` (the
+  clipping fault reported as fine), never `body` (its overflow propagates to
+  the viewport). **It launches a quiz and puts a banner up**: an idle bar is
+  narrower than the one that broke. Six sizes, each on a threshold in
+  `style.css`; verified by reintroducing four real faults.
 - **`pub-unchanged.mjs` is the one to run before a gig week**, and **compare
   against the branch you are merging into, not `HEAD`** — on a clean checkout
   `HEAD` IS the working tree, so it can only print IDENTICAL. Quoted as a pass
@@ -3861,6 +3860,17 @@ account is in [`docs/checks.md`](docs/checks.md):**
 - **A TEST THAT NEVER RUNS THE ARTEFACT PROVES NOTHING ABOUT IT.** Reading
   `server.js` as a string to check a route exists is how a broken Launch reached
   the live app, 1,150 tests green.
+- **A GREP WITH THE COMMENTS LEFT IN GOES GREEN THE BETTER A FILE IS
+  DOCUMENTED.** Deleting the `/api/past-gigs` gate and leaving a comment saying
+  `FEATURES.PAST_GIGS` kept `gates.test.js` 22/22; commenting out the only
+  caller of `tierRow()` kept console-split green while the subscriber upsell
+  vanished. Every does-anything-call-this search goes through
+  `withoutComments()` now, and the claims that matter are FIRED too.
+- **A TEST THAT SPAWNS A SERVER TAKES A FREE PORT, NEVER ONE FROM ITS PID.**
+  Three files spawn one and a fixed port made the suite flaky again — two runs
+  in three, a different file each time, all passing alone.
+  `test/helpers/live-server.mjs` asks the OS for a port and seeds the accounts
+  book BEFORE the spawn: `Accounts` reads its file once at boot.
 - **A CONTROL THAT REPORTS SUCCESS IT DID NOT HAVE is this repo's commonest
   fault, and `console-controls.mjs` presses one.** Five at once, all green
   under `node --check`, 1,684 tests and every browser guard — including a
