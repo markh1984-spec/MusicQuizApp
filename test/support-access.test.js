@@ -19,6 +19,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 
 import { Accounts } from '../src/accounts.js';
 import { consoleSource } from './console-source.js';
@@ -323,4 +324,185 @@ test('nothing a subscriber does in their OWN account is ever written down', () =
   assert.ok(firstNote > bailsAt,
     'something is written to the log before the guard has established this is a support session — '
     + 'a subscriber working in their own account would appear in the log kept for the owner');
+});
+
+/*
+ * ---- AND NOW THE SAME PROMISES, ASKED OVER HTTP
+ *
+ * **Everything above this line is a regex over `server.js`.** That is worth
+ * having — a rule you can read is a rule somebody can keep — but it is not
+ * evidence, and the sweep of September 2026 proved it in the worst way: driven
+ * for real, an acting session's `GET /api/me` returned the account's **password
+ * hash, salt and scrypt parameters**, with all 99 of these tests green.
+ *
+ * The cause was one line. Every ordinary request resolves through
+ * `accounts.fromToken()`, which strips those fields; the hat branch used
+ * `accounts.find()`, which hands back the stored record, and spread it whole.
+ * No regex over this file could ever have seen that, because the file says
+ * exactly what it is supposed to say.
+ *
+ * So these few make the request. They are deliberately a handful rather than a
+ * conversion of all 99: what has to be DRIVEN is what a wrong answer would
+ * hand somebody, and that is the payload, the refusal and the shutting of the
+ * door.
+ */
+function withServer(run) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'support-live-'));
+  /*
+   * THE BOOK IS WRITTEN BEFORE THE SERVER STARTS, and that is not a detail.
+   *
+   * `Accounts` reads its file once at boot and holds it in memory, so seeding
+   * after the spawn produced a server that had never heard of either account:
+   * every sign-in answered 401 and the test failed on its own scaffolding
+   * rather than on anything it was asking about.
+   */
+  const seeded = seed(dir);
+  // Its own band of ports: `offers.test.js` takes 4990-5079 by the same trick,
+  // and two files spawning servers on one port is a flake that looks like a
+  // bug in the app.
+  const port = 5120 + (process.pid % 60);
+  const child = spawn(process.execPath, ['server.js'], {
+    cwd: new URL('..', import.meta.url).pathname,
+    env: {
+      ...process.env,
+      PORT: String(port),
+      DATA_DIR: dir,
+      ADVERT_DIR: path.join(dir, 'adverts'),
+      HOST_KEY: 'support-live-key',
+    },
+    stdio: 'ignore',
+  });
+  const base = `http://127.0.0.1:${port}`;
+  return (async () => {
+    try {
+      let up = false;
+      for (let i = 0; i < 100 && !up; i += 1) {
+        try { await fetch(base); up = true; } catch { await new Promise((r) => setTimeout(r, 100)); }
+      }
+      assert.ok(up, 'the server never came up');
+      await run(base, seeded);
+    } finally {
+      child.kill('SIGKILL');
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  })();
+}
+
+/** Sign in for real and return the session cookie. */
+async function signIn(base, email, password) {
+  const res = await fetch(`${base}/api/sign-in`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  assert.equal(res.status, 200, `could not sign ${email} in`);
+  return (res.headers.get('set-cookie') || '').split(';')[0];
+}
+
+/** Two real accounts, written to the book the server is about to read. */
+function seed(dir) {
+  const accounts = new Accounts(path.join(dir, 'accounts.json'));
+  accounts.create({
+    email: 'owner@x.com', password: 'a-long-owner-password', name: 'Mark', role: 'owner', status: 'active',
+  });
+  const rob = accounts.create({
+    email: 'rob@x.com', password: 'a-long-rob-password', name: 'Rob', role: 'quizmaster',
+    tier: 'gold', status: 'active',
+  });
+  accounts.save();
+  return { rob };
+}
+
+/** The fields `safe()` exists to remove, found on an object. */
+const SECRETS = ['hash', 'salt', 'scrypt', 'calendarKey', 'reset'];
+const leaked = (account) => SECRETS.filter((k) => account && account[k] !== undefined);
+
+test('an owner wearing their own hat is never handed a password hash', async () => {
+  await withServer(async (base) => {
+    const owner = await signIn(base, 'owner@x.com', 'a-long-owner-password');
+    const on = await fetch(`${base}/api/owner/act-as`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: owner },
+      body: JSON.stringify({ on: true }),
+    });
+    assert.equal(on.status, 200);
+    const acting = (on.headers.get('set-cookie') || '').split(';')[0];
+
+    const me = await (await fetch(`${base}/api/me`, { headers: { Cookie: `${owner}; ${acting}` } })).json();
+    assert.equal(me.signedIn, true);
+    assert.deepEqual(leaked(me.account), [],
+      'wearing a hat handed back the fields safe() exists to strip');
+  });
+});
+
+test('an owner inside somebody else’s account is never handed their password hash', async () => {
+  await withServer(async (base, { rob }) => {
+    const robCookie = await signIn(base, 'rob@x.com', 'a-long-rob-password');
+    // Rob opens the door himself. That is the only way it opens.
+    const opened = await fetch(`${base}/api/me/support`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Cookie: robCookie },
+      // `open`, not `on` — the field the route reads. Sending the wrong name
+      // falls to the else branch, which OPENS it, so a test written the other
+      // way round would have "closed" the door and then found it open.
+      body: JSON.stringify({ open: true }),
+    });
+    assert.equal(opened.status, 200, await opened.text());
+
+    const owner = await signIn(base, 'owner@x.com', 'a-long-owner-password');
+    const on = await fetch(`${base}/api/owner/act-as`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: owner },
+      body: JSON.stringify({ on: true, accountId: rob.id }),
+    });
+    assert.equal(on.status, 200, await on.text());
+    const acting = (on.headers.get('set-cookie') || '').split(';')[0];
+
+    const me = await (await fetch(`${base}/api/me`, { headers: { Cookie: `${owner}; ${acting}` } })).json();
+    assert.equal(me.account.email, 'rob@x.com', 'the hat did not go on');
+    assert.deepEqual(leaked(me.account), [],
+      'support access handed the subscriber’s own password hash to the owner');
+  });
+});
+
+test('the door has to be open, and closing it ends the session on the next request', async () => {
+  await withServer(async (base, { rob }) => {
+    const owner = await signIn(base, 'owner@x.com', 'a-long-owner-password');
+
+    // Shut: refused, and the refusal says whose decision it is.
+    const shut = await fetch(`${base}/api/owner/act-as`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: owner },
+      body: JSON.stringify({ on: true, accountId: rob.id }),
+    });
+    assert.equal(shut.status, 403);
+
+    // Open, in, then Rob shuts it again while the owner is still holding the
+    // cookie — the check is on EVERY request, so the very next one is theirs
+    // again rather than an hour later.
+    const robCookie = await signIn(base, 'rob@x.com', 'a-long-rob-password');
+    await fetch(`${base}/api/me/support`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Cookie: robCookie },
+      body: JSON.stringify({ open: true }),
+    });
+    const on = await fetch(`${base}/api/owner/act-as`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: owner },
+      body: JSON.stringify({ on: true, accountId: rob.id }),
+    });
+    assert.equal(on.status, 200);
+    const acting = (on.headers.get('set-cookie') || '').split(';')[0];
+    const inside = await (await fetch(`${base}/api/me`, { headers: { Cookie: `${owner}; ${acting}` } })).json();
+    assert.equal(inside.account.email, 'rob@x.com');
+
+    await fetch(`${base}/api/me/support`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Cookie: robCookie },
+      body: JSON.stringify({ open: false }),
+    });
+    const after = await (await fetch(`${base}/api/me`, { headers: { Cookie: `${owner}; ${acting}` } })).json();
+    assert.equal(after.account.email, 'owner@x.com',
+      'the same cookie still reached inside after the door was shut');
+  });
 });

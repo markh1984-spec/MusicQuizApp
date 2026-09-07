@@ -60,7 +60,7 @@ import { invoicePdf, invoiceFilename } from './src/invoice-pdf.js';
 import { toSvg } from './src/qrcode.js';
 import { LOOKS } from './public/assets/looks.js';
 import { cueOffsetMs } from './public/assets/cue.js';
-import { Accounts } from './src/accounts.js';
+import { Accounts, safe } from './src/accounts.js';
 import { Reports } from './src/reports.js';
 import { randomBytes } from 'node:crypto';
 import { Rooms, HOUSE, GALLERY_NONE, tidyCode } from './src/rooms.js';
@@ -484,7 +484,28 @@ function whoIs(req, url) {
   // so this can never become a way into somebody else's night.
   const actingId = cookie(req, ACTING_COOKIE);
   if (actingId && account.role === 'owner') {
-    const hat = accounts.find(actingId);
+    /*
+     * `safe()`, BECAUSE `find()` HANDS BACK THE STORED RECORD AND `fromToken()`
+     * DOES NOT — and this branch was the one place that used the first.
+     *
+     * Every ordinary request comes through `fromToken()`, which strips the
+     * password hash, the salt, the scrypt parameters, the calendar key and any
+     * live reset token before anything downstream sees them. Wearing a hat
+     * went round it: `{ ...hat }` spread the raw account into `whoIs()`, so
+     * `GET /api/me` — which spreads the account straight into its reply —
+     * handed back **hash, salt and scrypt**. Reproduced end to end over HTTP.
+     *
+     * The support case is the bad one: an owner inside a subscriber's account
+     * with the door open was being given that subscriber's password hash to
+     * take away. `test/support-access.test.js` is 99 regexes over this file
+     * and could not see it, which is the whole reason a guard has to make the
+     * request.
+     *
+     * Nothing downstream wants those fields. The calendar key already has to
+     * be re-read from the book by `/api/calendar/link`, precisely because
+     * `fromToken()` has always stripped it.
+     */
+    const hat = safe(accounts.find(actingId));
     /*
      * Two quite different ways to be inside a quizmaster account, and they are
      * deliberately not the same rule.
