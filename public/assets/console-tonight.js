@@ -1358,11 +1358,57 @@ export function launchBar() {
    * said *Let them choose* — twice reported as *"still only allowing maze
    * mouth"*, both times on a night nobody had pressed Launch on.
    */
+  /**
+   * WHAT THIS EVENING IS SET TO — the night-level half of a launch, in ONE
+   * place because it was written out in three and one of them was short.
+   *
+   * The quiet launch (`switchIfFree`, below) sent five fields where the real
+   * one sends twelve: set Appearance, Playing, Game sound and Winners, then
+   * tap a pack in, and the projector ran a Halloween night on the default
+   * look, sixty phones ignored a Game sound of Off, and "dealt at random"
+   * dealt nobody — with the live line under the bar asserting that the
+   * console and the projector agreed. The `lobbyGame` half of exactly this is
+   * already recorded as fixed in CLAUDE.md; that fix went on one field.
+   *
+   * The two `doLaunch`/`doLaunchOrder` calls read this too, so a field added
+   * to a night has one place to be added and cannot reach two launches out of
+   * three.
+   */
+  function nightOpts() {
+    return {
+      look: night.look,
+      questionSeconds: night.questionSeconds,
+      lobbyGame: night.lobbyGame,
+      lobbySound: night.lobbySound,
+      // ONE source for whether tonight is online — the switch in the head.
+      online: lbOnline,
+      teamPlay: night.playing !== 'solo',
+      teamMode: night.playing === 'random' ? 'random' : 'assigned',
+      winners: night.winners,
+      // ONE source for where tonight is — the picker at the top. Two controls
+      // for one field is how a night gets filed under last week's pub.
+      venue: venueNow(),
+    };
+  }
+
   async function switchIfFree(pack, kind) {
     try {
-      await postJson('/api/host/launch',
-        { game: kind, packId: pack.id, venue: venueNow(), online: lbOnline, lobbyGame: night.lobbyGame },
-        { 'X-Host-Key': hostKey });
+      await postJson('/api/host/launch', {
+        game: kind,
+        packId: pack.id,
+        ...nightOpts(),
+        // The picked pack's own two, which only mean anything on a bingo
+        // pack and are ignored on a quiz.
+        shape: night.shape,
+        prizes: night.prizes,
+        /*
+         * ALWAYS SENT, like the real launch: the server reads a MISSING
+         * `breakPlan` as "clear it", so leaving it out of a quiet launch and
+         * in the loud one would make the two mean different things. An
+         * ordinary night's plan is `{}` either way.
+         */
+        breakPlan: night.breaks || {},
+      }, { 'X-Host-Key': hostKey });
       /*
        * It went up. Ask the SERVER what is running rather than assuming it
        * worked — the line under this box exists precisely because the console
@@ -1500,15 +1546,7 @@ export function launchBar() {
         || (lbSlots && !simplePack ? segmentsFromSlots(lbSlots) : null);
       if (segments) {
         await doLaunchOrder(segments, {
-          look: night.look,
-          questionSeconds: night.questionSeconds,
-          lobbyGame: night.lobbyGame,
-          lobbySound: night.lobbySound,
-          online: lbOnline,
-          teamPlay: night.playing !== 'solo',
-          teamMode: night.playing === 'random' ? 'random' : 'assigned',
-          winners: night.winners,
-          venue: venueNow(),
+          ...nightOpts(),
           /*
            * PRUNED AGAINST THE SEGMENTS BEING SENT, not against whatever the
            * strip last drew. They are the same list in practice; sending a
@@ -1527,26 +1565,12 @@ export function launchBar() {
       const launchKind = simplePack ? 'quiz' : kind;
       await doLaunch(launchKind, launchPack.id, {
         // FROM `night`, not from the DOM — see the note where it is declared.
-        // The controls are on this same bar now, but reading the one shared
-        // object rather than five live selects is still the simpler contract,
-        // and it is what survives a saved show restoring these fields directly
+        // Reading the one shared object rather than a dozen live selects is
+        // what survives a saved show restoring these fields directly
         // (`loadShow()`) without a DOM element to read them back off.
+        ...nightOpts(),
         shape: night.shape,
         prizes: night.prizes,
-        look: night.look,
-        questionSeconds: night.questionSeconds,
-        lobbyGame: night.lobbyGame,
-        lobbySound: night.lobbySound,
-        // ONE source for whether tonight is online — the switch in the head,
-        // which is the only place it can be set now.
-        online: lbOnline,
-        teamPlay: night.playing !== 'solo',
-        teamMode: night.playing === 'random' ? 'random' : 'assigned',
-        winners: night.winners,
-        // ONE source for where tonight is — the picker at the top, which is
-        // the only place it can be set now. Two controls for one field is how
-        // a night gets filed under the pub you were at last week.
-        venue: venueNow(),
         // Empty unless a second pack has actually been dropped in — see
         // `lbExtra`. An ordinary night sends nothing at all and takes exactly
         // the route it always did.
@@ -2064,6 +2088,19 @@ export function launchBar() {
     const count = Math.min(Number(has) || starts, found.plans.length);
     prizePick.value = String(count);
     setPickedBingo(picked, { prizes: count });
+    /*
+     * AND THE FACE HAS TO BE REPAINTED, or the popover is a skin over a select
+     * that has changed underneath it.
+     *
+     * This function rewrites `prizePick.innerHTML` and sets `.value`, and
+     * neither fires an event — the exact rule `console-pick.js` states. It is
+     * called from the SHAPE's change handler, which is outside
+     * `paintSettings()`, so the one `refreshPicks()` in this file never ran
+     * for it: after switching the card, the Prizes face showed the old count
+     * and its ghost menu still listed the old options. Pressing one that had
+     * gone blanked the control and launched `prizes: 0`.
+     */
+    refreshPicks(el);
   }
   shapePick?.addEventListener('change', () => {
     /*

@@ -370,7 +370,31 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * headed "Waiting in the lobby". The first of those had a comment claiming the
  * opposite was true, which is why the replacement has to say what changed.
  */
-const BUDGET = { 'console-tonight.js': 4140, 'console.js': 2000, 'console-packs.js': 1830 };
+/*
+ * `console-tonight.js` GOES TO 4200 ON 7 SEPTEMBER 2026, for a run of fixes
+ * out of the September sweep that all landed in this one file — and each is
+ * the kind that only stays fixed if the reasoning is written beside it:
+ *
+ * - **Secs per Q showed one number and launched another.** The clamp went
+ *   into the night and never back into the field. The note says why it is on
+ *   `change` and not on `input`, because the obvious version turns "12" into
+ *   "52".
+ * - **"In the gaps" only wrote the gaps that existed when it was pressed**, so
+ *   a pack added afterwards silently stopped the venue's adverts half way
+ *   through the night. The writer MOVED to `console-breaks.js` rather than
+ *   growing this file, which is where the last of this plumbing went too.
+ * - **Changing the Card shape left the Prizes face stale**, because
+ *   `paintPrizes()` rewrites a select from outside `paintSettings()` and the
+ *   one `refreshPicks()` in the file never ran for it.
+ *
+ * PAID FOR FIRST, as the rule asks: a twenty-six line comment on the Tonight
+ * row was saying "the unit is a PACK, not a round" — written when a square
+ * stood for a whole pack, left standing when packs began bursting into a tile
+ * per round, and describing info squares that had moved to the settings row
+ * before that. A comment claiming the opposite of the code is not something
+ * to keep paying for.
+ */
+const BUDGET = { 'console-tonight.js': 4200, 'console.js': 2000, 'console-packs.js': 1830 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

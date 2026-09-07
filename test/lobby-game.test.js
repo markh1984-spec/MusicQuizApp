@@ -414,26 +414,52 @@ test('A SCORE SAYS WHICH GAME IT WAS SET ON, and an unknown id is dropped', () =
   assert.equal('game' in row, false);
 });
 
-test('THE QUIET LAUNCH CARRIES THE CHOICE — tapping a pack is a launch too', () => {
+test('THE QUIET LAUNCH CARRIES THE WHOLE NIGHT — tapping a pack is a launch too', () => {
   /*
    * Tapping a pack card puts it straight on the projector through
    * `switchIfFree()`, and that call sent the venue and whether the night is
-   * online but NOT the lobby game — so a night tapped up got the DEFAULT while
-   * the bar above it said "Let them choose". Reported twice as "still only
-   * allowing maze mouth", both times on a night nobody had pressed Launch on.
+   * online but NOTHING ELSE — so a night tapped up got the DEFAULT lobby game
+   * while the bar above it said "Let them choose". Reported twice as "still
+   * only allowing maze mouth", both times on a night nobody had pressed
+   * Launch on.
+   *
+   * THAT FIX WENT ON ONE FIELD AND THE HOLE STAYED OPEN FOR THE OTHER SEVEN.
+   * Set Appearance, Playing, Game sound and Winners and then tap a pack in,
+   * and the projector ran a Halloween night on the default look, sixty phones
+   * ignored a Game sound of Off, and "dealt at random" dealt nobody — with the
+   * live line under the bar asserting the console and the projector agreed.
+   * So what is pinned now is the SHAPE that cannot go wrong a third time: one
+   * `nightOpts()`, spread into every launch, rather than a list of fields to
+   * remember to copy.
    *
    * A source check rather than a behavioural one because the gesture lives in
    * a browser module with no server behind it here; `scripts/console-frame.mjs`
-   * and the tap harness drive the real thing. What this pins is that the field
-   * cannot quietly fall back out of that one request body again.
+   * and the tap harness drive the real thing.
    */
   const src = readFileSync(new URL('../public/assets/console-tonight.js', import.meta.url), 'utf8')
     // Comments stripped first: this repo has already had a guard go green
     // because it matched the note explaining the fix rather than the code.
     .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-  const body = src.slice(src.indexOf('async function switchIfFree'));
-  const call = body.slice(0, body.indexOf('}'));
-  assert.match(call, /lobbyGame: night\.lobbyGame/,
-    'switchIfFree must send the night\'s chosen lobby game, or tapping a pack '
-    + 'hands the room a different game from the one the console names');
+
+  // WHAT A NIGHT IS SET TO, in the one place all three launches read.
+  const decl = src.slice(src.indexOf('function nightOpts'));
+  const opts = decl.slice(0, decl.indexOf('};'));
+  for (const field of ['look', 'questionSeconds', 'lobbyGame', 'lobbySound',
+    'online', 'teamPlay', 'teamMode', 'winners', 'venue']) {
+    assert.match(opts, new RegExp(`\\b${field}:`),
+      `nightOpts() must carry ${field}, or a setting on the bar is a setting `
+      + 'the projector never hears about');
+  }
+
+  // AND ALL THREE LAUNCHES MUST READ IT — the quiet one by name, because that
+  // is the one that was short.
+  const quiet = src.slice(src.indexOf('async function switchIfFree'));
+  const call = quiet.slice(0, quiet.indexOf("{ 'X-Host-Key'"));
+  assert.match(call, /\.\.\.nightOpts\(\)/,
+    'switchIfFree must send the whole night, or tapping a pack hands the room '
+    + 'something other than what the console names');
+  assert.equal((src.match(/\.\.\.nightOpts\(\)/g) || []).length, 3,
+    'the quiet launch, doLaunch and doLaunchOrder all send a night, so all '
+    + 'three spread nightOpts() — a fourth caller writing its own list is how '
+    + 'this came back the first time');
 });
