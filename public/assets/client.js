@@ -460,6 +460,45 @@ export function node(markup) {
  * store, so this stays usable from either host.js's own closure or
  * host-bingo.js's — neither of which shares state with the other.
  */
+/**
+ * RULE 4'S OWN CONTROL — "288 phones waiting to join, let them in".
+ *
+ * **It lives here because BOTH engines need it and neither may import the
+ * other's page module.** `joinQueue()` was a private function in `host.js`, so
+ * a bingo night computed `joinsWaiting`, delivered it in every payload, and
+ * drew **nothing** — 80 held phones confirmed, no number, no button, while
+ * every one of those phones read *"The host is letting everybody in"*. Rule 4
+ * says a flood is HELD at the door and the host decides; on bingo the door had
+ * no handle.
+ *
+ * **The NUMBER is the whole point**: eighteen is a room, three hundred is
+ * somebody messing about, and that judgement needs a human for about a second.
+ * So it is not automated and it is not hidden — it sits above the player list,
+ * where you are already looking while a room fills up.
+ *
+ * Nobody is ever refused. If this is never tapped the phones keep asking, and a
+ * genuine room gets in as the burst dies down.
+ *
+ * @param {object} s    the control view's state
+ * @param {function} act  the page's own `act()` — passed in, so this file
+ *   stays free of either page's identity and boot code.
+ * @returns {Node|null}  null when nobody is waiting, so the panel does not
+ *   exist rather than sitting there saying nothing.
+ */
+export function joinQueuePanel(s, act) {
+  const waiting = s.joinsWaiting || 0;
+  if (!waiting) return null;
+  const el = node(`
+    <div class="panel joinq">
+      <h3>${waiting} phone${waiting === 1 ? '' : 's'} waiting to join</h3>
+      <div class="tiny">A lot at once. If that looks like your room, let them in — if it looks like
+        somebody messing about, leave it and they never reach the scoreboard.</div>
+      <button class="go" id="letThemIn">Let them in</button>
+    </div>`);
+  el.querySelector('#letThemIn').addEventListener('click', () => act('letThemIn'));
+  return el;
+}
+
 export function rewardsEditorPopover(s, act) {
   /*
    * ONE AT A TIME, AND THE REASON IS THAT THEY STACK INVISIBLY.

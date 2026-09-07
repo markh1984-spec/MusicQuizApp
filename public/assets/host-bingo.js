@@ -6,7 +6,7 @@
  * a record is playing.
  */
 
-import { esc, node, rewardsEditorPopover } from './client.js';
+import { esc, node, rewardsEditorPopover, joinQueuePanel } from './client.js';
 
 let filter = '';
 
@@ -15,7 +15,7 @@ export function bingoPanels(s, act) {
 
   if (s.win) panels.push(winPanel(s, act));
   panels.push(callerPanel(s, act));
-  panels.push(playersPanel(s));
+  panels.push(playersPanel(s, act));
   if (s.claims && s.claims.length) panels.push(claimsPanel(s));
 
   return panels;
@@ -166,9 +166,23 @@ function callerPanel(s, act) {
   return el;
 }
 
-function playersPanel(s) {
+/*
+ * RULE 4 EXISTS ON A BINGO NIGHT TOO, AND IT USED TO DRAW NOTHING.
+ *
+ * `joinsWaiting` is computed by `session.joins` and delivered in every payload
+ * whichever game is running — 80 held phones confirmed — and this panel never
+ * looked at it. So the door was held, every held phone read *"The host is
+ * letting everybody in"*, and the host had no number and no button: rule 4
+ * without its one control.
+ *
+ * The panel is shared with the quiz rather than copied, which is also what
+ * keeps its wording and its reasoning in one place.
+ */
+function playersPanel(s, act) {
   const closest = (s.players || []).slice(0, 12);
-  return node(`
+  const el = node(`
+    <div>
+    <div class="joinq-slot"></div>
     <div class="panel">
       <h3>${s.onesAway} one square away — closest first</h3>
       <div class="plist">
@@ -180,7 +194,11 @@ function playersPanel(s) {
             <span class="sc ${p.away === 1 ? 'hot' : ''}">${p.away === 0 ? '✓' : p.away}</span>
           </div>`).join('') || '<div class="tiny">Nobody has joined yet.</div>'}
       </div>
+    </div>
     </div>`);
+  const queue = joinQueuePanel(s, act);
+  if (queue) el.querySelector('.joinq-slot').replaceWith(queue);
+  return el;
 }
 
 function claimsPanel(s) {

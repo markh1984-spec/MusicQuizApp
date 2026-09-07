@@ -332,6 +332,30 @@ export class BingoGame {
   }
 
   /**
+   * EVERYBODY WHO HAS JOINED AND THEN DONE NOTHING AT ALL — the quiz's own
+   * tidy-up, on the engine that did not have it.
+   *
+   * `session.run('removeIdle')` calls `this.engine.removeIdlePlayers()` for
+   * either game, so on a bingo night `POST /api/host/removeIdle` was a **500,
+   * `this.engine.removeIdlePlayers is not a function`**. It matters here for
+   * the same reason it matters on a quiz, and more: it is rule 4's other
+   * remedy — the way a room gets cleaned up if a flood ever does get past the
+   * door — and the panel offering it is shared between the two engines now.
+   *
+   * **"Done nothing" is MARKED NOTHING, which is bingo's own version of
+   * "answered nothing".** Deliberately not "not connected recently": a phone
+   * that locks its screen is still somebody sitting at a table, and throwing
+   * them out would be the removal rule broken from the other side. A player
+   * who has marked even one square is left alone.
+   */
+  removeIdlePlayers() {
+    const idle = this.playerList().filter((p) => !(p.marks || []).some(Boolean));
+    for (const p of idle) this.removePlayer(p.id);
+    if (idle.length) this.changed();
+    return { ok: true, removed: idle.length };
+  }
+
+  /**
    * A SCORE FROM RALLY, the lobby game a bingo night gets.
    *
    * The rules are `src/arcade.js` and are shared with the quiz engine, on

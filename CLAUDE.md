@@ -310,41 +310,44 @@ gains nothing and nobody legitimate is ever turned away.
 ### 4. A flood is HELD at the door, never refused
 
 `src/joins.js`. The join code is on the projector and read out on the mic, so
-everybody in the room has it — and joining is an ordinary web request, so
-anybody bored can fire a few hundred from a phone browser. Measured against a
-running server: **300 joins landed in half a second.**
+everybody in the room has it, and joining is an ordinary web request. Measured
+against a running server: **300 joins landed in half a second.**
 
 Over the threshold, new phones are asked to wait rather than turned away, and
 the host's board says **"288 phones waiting to join — Let them in"**. One tap
-lets the lot through and holds the door open for a minute.
+lets the lot through and holds the door open.
 
-**The NUMBER is what tells the host which it is.** Eighteen is a room; two
-hundred and eighty-eight is somebody messing about. That judgement takes a
-human a second, which is why it is not automated.
+**The NUMBER is what tells the host which it is.** Eighteen is a room; 288 is
+somebody messing about. That judgement takes a human a second, which is why it
+is not automated.
+
+**AND IT EXISTS ON A BINGO NIGHT TOO — `joinQueuePanel()` in `client.js`.** The
+count was delivered in every payload and **nothing drew it**: no number, no
+button, while every held phone read *"The host is letting everybody in"*. The
+other remedy threw — `removeIdle` is one dispatch for both engines and
+`bingo.js` had no `removeIdlePlayers()`, so it was a **500**. **The panel is
+SHARED, never copied**, in `client.js` because a page module may not be
+imported by another page.
 
 **A PHONE THAT CAN PROVE WHO IT IS NEVER QUEUES.** Only joins that would create
-a NEW player are counted; a rejoin carries a token (rule 3), so it is provably
-somebody already in the game. That matters because a redeploy, a restart on a
-host with no disk or a wifi blip sends the whole room back at once — two
-hundred reconnects in a few seconds looks exactly like a flood, and holding
-them would be a self-inflicted outage mid-quiz.
+a NEW player are counted; a rejoin carries a token (rule 3). A redeploy or a
+wifi blip sends the whole room back at once — two hundred reconnects in a few
+seconds looks exactly like a flood, and holding them would be a self-inflicted
+outage mid-quiz.
 
-**The threshold errs LOOSE, and the asymmetry is the whole reason.** The first
-version was tight, on the theory that a wrong guess costs one tap. It does not:
-too tight and a real room gets a "just a moment" screen while the host is on a
-mic and not looking at their phone, which is the show stopping and this app's
-fault. Too loose and some junk teams reach the scoreboard — which no player
-sees, and which "remove the ones who answered nothing" clears in one tap. One
-of those is a gig going wrong and the other is tidying up.
+**The threshold errs LOOSE, and the asymmetry is the whole reason.** Too tight
+and a real room gets a "just a moment" screen while the host is on a mic and
+not looking at their phone, which is the show stopping and this app's fault.
+Too loose and some junk teams reach the scoreboard — which no player sees, and
+which "remove the ones who answered nothing" clears in one tap.
 
-The gap makes that free: a pub peaks at two to six joins a second (people have
-to find the camera and type a name), two hundred people online clicking a link
-is five to ten, and a script does six hundred. The threshold is twelve.
+The gap makes that free: a pub peaks at two to six joins a second, two hundred
+people online clicking a link is five to ten, and a script does six hundred.
+The threshold is twelve.
 
 **Per-IP limiting is the obvious answer and it is wrong**: a pub puts the whole
-room behind one router, so it refuses the actual customers first. An office
-does the same online. One rule that holds in both modes beats two that each
-work in one.
+room behind one router, so it refuses the actual customers first. One rule that
+holds in both modes beats two that each work in one.
 
 ### 5. Only a real removal throws a phone out
 
@@ -2339,8 +2342,8 @@ throwing.
   finger, `whoPicked` and `wanderedNow` named handsets under a board of teams.
   **The handset is KEPT beside the team, not folded away** — the tally counts
   PICKS, so deduplicating would leave the names disagreeing with the number
-  above them. **The fastest finger's `faceKey` stays the INDIVIDUAL'S**: the
-  slide is a photograph of whoever was quickest, and a team has no face.
+  above them. **The fastest finger's `faceKey` stays the INDIVIDUAL'S**: a team
+  has no face.
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 

@@ -1269,3 +1269,29 @@ test('THE BINGO SCREEN AND PLAYER PAYLOADS NEVER CARRY A PLAYER ID', () => {
   assert.ok(JSON.stringify(game.hostView()).includes(alice.id),
     'the control view lost the ids it needs to remove a phone');
 });
+
+/*
+ * RULE 4'S OTHER REMEDY EXISTED ON ONE ENGINE ONLY.
+ *
+ * `session.run('removeIdle')` calls `this.engine.removeIdlePlayers()` for
+ * either game, so on a bingo night `POST /api/host/removeIdle` answered a
+ * **500 — `this.engine.removeIdlePlayers is not a function`**. It is the way a
+ * room gets tidied up if a flood ever gets past the door, and the panel
+ * offering it is shared between the two engines.
+ */
+test('A BINGO NIGHT CAN TIDY UP THE PHONES THAT DID NOTHING', () => {
+  const game = new BingoGame({ pack: makePack(), now: () => Date.parse('2026-09-04T21:00:00.000Z') });
+  const keen = game.join({ name: 'Keen' });
+  game.join({ name: 'Idle One' });
+  game.join({ name: 'Idle Two' });
+  game.start();
+  game.call(game.state.players[keen.id].card[0]);
+  game.mark({ playerId: keen.id, index: 0, marked: true });
+
+  const out = game.removeIdlePlayers();
+  assert.equal(out.ok, true);
+  assert.equal(out.removed, 2, 'a phone that has marked nothing is the one to tidy away');
+  assert.equal(game.playerList().length, 1);
+  assert.equal(game.playerList()[0].name, 'Keen',
+    'anybody who has marked even one square is left alone — a locked screen is still somebody at a table');
+});

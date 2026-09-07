@@ -12,7 +12,7 @@
 
 import {
   esc, node, ServerClock, Live, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights,
-  rewardsEditorPopover,
+  rewardsEditorPopover, joinQueuePanel,
 } from './client.js';
 import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
@@ -765,35 +765,22 @@ function wanderMark(p) {
   return `<span class="wandered-count" title="Left the app during ${n} questions">away x${n}</span>`;
 }
 
-/**
+/*
  * "18 phones waiting to join — Let them in."
  *
- * A lot of NEW phones arrived at once and the door is being held. **The NUMBER
- * is the whole point**: eighteen is a room, three hundred is somebody messing
- * about, and that judgement needs a human for about a second. So it is not
- * automated and it is not hidden — it sits above the player list, where you
- * are already looking while a room fills up.
- *
- * Nobody is ever refused. If this is never tapped the phones simply keep
- * asking, and a genuine room gets in as the burst dies down.
+ * **The panel itself is `joinQueuePanel()` in `client.js` now.** It was a
+ * private function here, and rule 4's only control therefore did not exist on
+ * a bingo night: the count was computed and delivered in every payload and
+ * nothing drew it, while every held phone read *"The host is letting everybody
+ * in"*. A page module may not be imported by another page, so shared code goes
+ * to `client.js`, which has no page and no boot code of its own.
  */
-function joinQueue(s) {
-  const waiting = s.joinsWaiting || 0;
-  if (!waiting) return '';
-  return `
-    <div class="panel joinq">
-      <h3>${waiting} phone${waiting === 1 ? '' : 's'} waiting to join</h3>
-      <div class="tiny">A lot at once. If that looks like your room, let them in — if it looks like
-        somebody messing about, leave it and they never reach the scoreboard.</div>
-      <button class="go" id="letThemIn">Let them in</button>
-    </div>`;
-}
 
 function playersPanel(s) {
   const idle = (s.players || []).filter((p) => !p.answeredCount).length;
   const el = node(`
     <div>
-    ${joinQueue(s)}
+    <div class="joinq-slot"></div>
     <div class="panel">
       <h3>Playing — tap a name to fix a score or remove</h3>
       <div class="plist">
@@ -816,7 +803,8 @@ function playersPanel(s) {
     </div>
   `);
 
-  el.querySelector('#letThemIn')?.addEventListener('click', () => act('letThemIn'));
+  const queue = joinQueuePanel(s, act);
+  if (queue) el.querySelector('.joinq-slot').replaceWith(queue);
   el.querySelector('#removeIdle')?.addEventListener('click', async () => {
     if (confirm(`Remove ${idle} who have answered nothing? Anybody who has answered is left alone.`)) {
       await act('removeIdle');
