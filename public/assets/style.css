@@ -3160,7 +3160,17 @@ body.screen { cursor: none; overflow: hidden; }
        Nothing runs off the bottom of a fixed frame, so it would only ever be
        dead space the content could have used. */
     padding-bottom: 0;
-    overflow: hidden;
+    /* AND NOTHING RESTATES `overflow` AFTER THOSE TWO. A trailing
+       `overflow: hidden` sat here and wiped both of them — the essay above is
+       the fix that was written for "the sub menu is still missing from the
+       console", reported twice, and it had never once been in effect.
+       Measured at 1500x900 with five packs in Tonight: 161px of overflow,
+       Music Bingo, Prepare a night and Venues all off the bottom, six of six
+       pack cards gone, and a real wheel moving nothing. FOURTH sighting of
+       shorthand-beats-longhand, this time inside ONE declaration block — and
+       `padding-bottom: 0` sitting between the pair and the line that killed
+       them is the tell that the new rules were inserted ABOVE the old one
+       rather than replacing it. */
   }
   /*
    * A COLUMN, NOT A TWO-ROW GRID — because the grid assumed exactly two

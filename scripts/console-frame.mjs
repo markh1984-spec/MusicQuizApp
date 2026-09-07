@@ -265,8 +265,18 @@ try {
   for (const [label, width, height] of SIZES) {
     const page = await browser.newPage({ viewport: { width, height } });
     const errors = [];
+    /*
+     * A 409 FROM THE QUIET LAUNCH IS NOT AN ERROR — it is the documented
+     * answer. Tapping a pack card puts it straight on the projector, and the
+     * launch route refuses with 409 when a game is already in progress; the
+     * console swallows that on purpose (*"a 409 is SILENT here"*). The browser
+     * still logs the failed request, and this script taps five packs into
+     * Tonight to put the frame under real pressure, so it would otherwise
+     * report a fault every run for behaviour this repo chose.
+     */
+    const noise = (text) => /\b409\b/.test(text) && /Conflict|Failed to load resource/i.test(text);
     page.on('pageerror', (e) => errors.push(String(e.message)));
-    page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+    page.on('console', (m) => { if (m.type() === 'error' && !noise(m.text())) errors.push(m.text()); });
 
     /*
      * THE FRAME'S OWN RULE, KEPT IN STEP WITH `style.css`. It is two numbers
@@ -520,6 +530,56 @@ try {
     if (framed) {
       check(`${label}: the page itself does not scroll`, frame.scrolls <= 0, `${frame.scrolls}px`);
       check(`${label}: the columns have room left`, frame.cols > 140, `${frame.cols}px`);
+      /*
+       * AND WHEN THE FRAME GENUINELY CANNOT FIT ITS CONTENT, A REAL WHEEL
+       * MOVES IT.
+       *
+       * `.console .wrap` ended its block with a trailing `overflow: hidden`
+       * that wiped the `overflow-y: auto` five lines above it, so the frame
+       * CLIPPED instead of scrolling — measured at 1500x900 with five packs in
+       * Tonight: 161px of overflow, three tabs and all six pack cards off the
+       * bottom, and a wheel moving nothing. That is the fault reported twice
+       * as *"the sub menu is still missing from the console"*, and the fix
+       * written for it had never once been in effect.
+       *
+       * **A REAL WHEEL, never `scrollTo`** — a programmatic scroll succeeds on
+       * a clipped box and reads back the number you set, which is how a check
+       * written that way reports a scrolling frame while a finger does
+       * nothing. `pages-scroll.mjs` records the same lesson.
+       */
+      /*
+       * TONIGHT IS FILLED FIRST, or this measures a console nobody drives.
+       * One pack in the row is 41px of overflow at 1500x900 and none at all
+       * on a taller window — the reported fault was FIVE packs and 161px.
+       * A guard that sets a night up but never loads it is the empty-lobby
+       * lesson this script already carries, one row further down.
+       */
+      for (let i = 0; i < 5; i += 1) {
+        await page.evaluate(() => document.querySelector('.pack-card[data-pack]:not(.in-tonight)')?.click());
+        await page.waitForTimeout(250);
+      }
+      await page.waitForTimeout(400);
+      const over = await page.evaluate(() => {
+        const w = document.querySelector('.console .wrap');
+        return w ? Math.round(w.scrollHeight - w.clientHeight) : 0;
+      });
+      if (over > 2) {
+        await page.mouse.move(Math.round(width / 2), Math.round(height * 0.7));
+        await page.mouse.wheel(0, 600);
+        await page.waitForTimeout(300);
+        const moved = await page.evaluate(() => {
+          const w = document.querySelector('.console .wrap');
+          return w ? Math.round(w.scrollTop) : 0;
+        });
+        check(`${label}: a frame that cannot fit its content SCROLLS`, moved > 0,
+          `${over}px over, wheel moved ${moved}px`);
+        // And with the row full, every tab is still something a finger reaches.
+        const tabsNow = await page.evaluate(REACH, '.tabbar .tab');
+        check(`${label}: and every tab is still reachable with Tonight full`,
+          unreachable(tabsNow).length === 0, say(tabsNow));
+        await page.mouse.wheel(0, -600);
+        await page.waitForTimeout(200);
+      }
     } else {
       /*
        * AND UNDER THE THRESHOLD IT MUST BE ABLE TO. The frame is off below

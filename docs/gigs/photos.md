@@ -1203,3 +1203,36 @@ asserts it is served; the pin test hides both its photographs with rulings
 instead of relying on the marker. **The projector is untouched** and the test
 saying so is unchanged: this was always a VIEW, never a refusal, and it still
 is — only the default flipped.
+
+---
+
+## Sending it is the consent — the per-photo opt-out that shipped for a day
+
+A *"Keep mine off the website"* tick sat on the phone's camera sheet for one
+day and was taken out again on the host's own reasoning:
+
+> *"if they upload it to the screen it's allowed on the gallery — can't be
+> remembering which photos I can and can't publish, I simply shouldn't have
+> access to photos if there's no consent behind them in the first place."*
+
+**He is right on both halves, and they are two separate arguments.**
+
+The first is the Monday one. A flag the quizmaster has to respect is a rule he
+has to REMEMBER — on a Monday, about a photograph he did not take, sixty of
+which arrived from a room he was on a microphone in front of. That is exactly
+the admin load `CLAUDE.md` exists to refuse, and it is the shape that rots
+quietly: nothing throws when somebody forgets, the photograph simply goes
+public against a stranger's wishes months later.
+
+The second is the stronger one. **A photograph nobody consented to should not
+be in the app at all, rather than in it wearing a label.** A per-photo opt-out
+is a design that admits the app is holding pictures it has no right to and then
+asks a human to police them. The honest answer is that pressing *send* IS the
+consent — which is also what the decision *photo uploads auto-publish* has said
+since the day photographs were built, and what the phone's own sheet says while
+somebody is choosing whether to press it.
+
+**So do not rebuild a sender-side switch.** The gate that exists is the publish
+control drawn UNDER the photographs — nobody publishes a night without having
+just looked at what is in it — and the lamp per photo is the QUIZMASTER'S own
+judgement, not the sender's second thoughts.

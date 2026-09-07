@@ -24,6 +24,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { Rooms, HOUSE } from '../src/rooms.js';
+import { withServer as live, } from './helpers/live-server.mjs';
 import { config as appConfig } from '../src/config.js';
 import { saveAdvertPack, listAdvertPacks } from '../src/adverts.js';
 import { archiveResults, listArchive } from '../src/library.js';
@@ -236,4 +237,47 @@ test('join codes are kept, and restored before anybody scans anything', () => {
   assert.ok(boot > 0);
   assert.ok(server.indexOf('rooms.restoreCodes(', boot) > 0 && server.indexOf('rooms.restoreCodes(', boot) < boot + 4000,
     'the join codes are no longer restored at boot');
+});
+
+/*
+ * ---- AN UNRECOGNISED JOIN CODE IS REFUSED, NEVER SWAPPED FOR THE HOUSE ROOM
+ *
+ * `roomForPhone()` was `rooms.byCode(code) || rooms.get(HOUSE)`, so
+ * `/play?g=ZZZZ` said "You're in" under the owner's branding, `POST /api/join`
+ * returned a real id and token, the player appeared in the OWNER'S room, and
+ * `/api/state?role=screen&g=ZZZZ` served the owner's loaded quiz to anybody
+ * who asked. Nothing 404'd and nothing logged.
+ *
+ * It has a real trigger rather than only a typed URL: the join-code backup
+ * raced, so a printed QR could stop resolving after a deploy — and then every
+ * phone in the room joined the owner's game and was told it was in.
+ *
+ * Over HTTP, because what is being fixed is what the ROUTE does. `rooms.get()`
+ * already refuses the same shape for room ids.
+ */
+const LIVE_KEY = 'rooms-live-key';
+
+test('AN UNRECOGNISED JOIN CODE IS REFUSED, not handed the owner\'s room', async () => {
+  await live(async (base) => {
+    const joined = await fetch(`${base}/api/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Somebody', joinCode: 'ZZZZ' }),
+    });
+    assert.equal(joined.status, 400, 'a junk code put a player in the house room');
+
+    const screen = await fetch(`${base}/api/state?role=screen&g=ZZZZ`);
+    assert.equal(screen.status, 400, 'a junk code served somebody else\'s projector');
+
+    // AND NO CODE AT ALL IS STILL THE HOUSE ROOM — that is the owner's own
+    // projector and every bookmark and printed card made before rooms existed.
+    const house = await fetch(`${base}/api/state?role=screen`);
+    assert.equal(house.status, 200, 'a bare /api/state stopped working');
+    const bare = await fetch(`${base}/api/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Somebody' }),
+    });
+    assert.equal(bare.status, 200, 'joining the house room with no code stopped working');
+  }, { hostKey: LIVE_KEY });
 });

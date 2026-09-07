@@ -30,7 +30,7 @@ import { findSlide, listAdvertPacks, loadAdvertPack } from './adverts.js';
 import { cleanPlan } from '../public/assets/break-parts.js';
 import { readPack, listOwn } from './own-packs.js';
 import { cleanComeBack } from './comeback.js';
-import { composeQuiz } from './running-order.js';
+import { composeQuiz, isComposed } from './running-order.js';
 // Shared with the browser, so the list of looks cannot drift between the server
 // deciding one and the screens drawing it.
 import { LOOKS, DEFAULT_LOOK } from '../public/assets/looks.js';
@@ -285,7 +285,40 @@ export class Session {
     const kind = saved && LAUNCHERS[saved.kind] ? saved.kind : 'quiz';
     const packId = saved ? saved.packId || saved.quizId : null;
 
-    const pack = this.pickPack(kind, packId);
+    /*
+     * A COMPOSED NIGHT IS REBUILT FROM ITS OWN ORDER — it used to be
+     * architecturally unrecoverable.
+     *
+     * Every night launched from a saved show, and every night where one round
+     * was unticked or two packs were mixed, is composed: `pack.id` is the
+     * reserved `~tonight`, which is not a file. `pickPack()` could not load it,
+     * `packMatches` came out false, and `boot()` threw the whole saved state
+     * away — scores, team names, the lot — while the projector came back
+     * reading "No quiz loaded". The first reconnecting phone then wrote
+     * `packId: 'empty'` over `state.json` within seconds, so it could not be
+     * rescued by hand either.
+     *
+     * **On Render every push is a restart**, so a docs change pushed mid-quiz
+     * ended a show night. That is rule 7 failing on the most-composed nights
+     * this app has.
+     *
+     * The order is on the state now (see `launch()`), so it recomposes through
+     * the SAME loader — own-first, one file per catalogue pack, rule 11
+     * untouched. A running order already carried `runningOrder`/`orderPos` and
+     * needed no new field; this is the ordinary composed night, which had
+     * none.
+     */
+    let pack = null;
+    if (kind === 'quiz' && isComposed(packId) && Array.isArray(saved.order) && saved.order.length) {
+      try {
+        pack = composeQuiz(saved.order, (id) => LAUNCHERS.quiz.load(this.config, id, this.paths));
+      } catch (err) {
+        // A pack in the order has been deleted since. Say so and fall through
+        // to the ordinary pick, which still leaves the projector playable.
+        console.error(`[session] could not rebuild tonight's running order: ${err.message}`);
+      }
+    }
+    if (!pack) pack = this.pickPack(kind, packId);
     // A saved state only makes sense against the pack it was recorded for.
     const packMatches = saved && (saved.packId || saved.quizId) === pack.id && (saved.kind || 'quiz') === kind;
     const state = packMatches ? saved : null;
@@ -349,6 +382,30 @@ export class Session {
       return launcher.load(this.config, id, this.paths);
     } catch (err) {
       console.error(`[session] could not load ${kind} "${id}": ${err.message}`);
+      /*
+       * AND THE FALLBACK THIS FILE HAS ALWAYS DOCUMENTED ACTUALLY HAPPENS.
+       *
+       * *"`boot()` always builds a game so the projector is never blank"* is
+       * written three times in this file and was not true: an id that would
+       * not load went straight to `launcher.empty`, so deleting the pack a
+       * night was running on left the projector reading "No quiz loaded" with
+       * a shelf full of packs it could have used.
+       *
+       * A DIFFERENT pack, and one with something IN it — retrying the id that
+       * just threw is the same failure twice, and falling back to an empty
+       * pack is `launcher.empty` wearing a name. The listing already carries
+       * the count for both games (`questionCount`, `trackCount`), so this
+       * needs no knowledge of either.
+       */
+      for (const other of available) {
+        if (other.id === id) continue;
+        if ((other.questionCount ?? other.trackCount ?? 1) <= 0) continue;
+        try {
+          const fallback = launcher.load(this.config, other.id, this.paths);
+          console.warn(`[session] falling back to ${kind} "${other.id}" so the projector is not blank`);
+          return fallback;
+        } catch { /* try the next one */ }
+      }
       return launcher.empty;
     }
   }
@@ -663,6 +720,15 @@ export class Session {
       Object.assign(normalised, shapeFields(shape));
     }
     this.build(kind, normalised, null);
+    /*
+     * AND TONIGHT'S OWN ORDER GOES ON THE STATE, so a restart can rebuild it.
+     *
+     * The composed pack lives in memory and its id is not a file, so without
+     * this a restart had nothing to recompose from and threw the whole night
+     * away — see `boot()`. Written only when there IS one, so an ordinary
+     * single-pack night's state file is byte-for-byte what it was.
+     */
+    if (order && order.length && kind === 'quiz') this.engine.state.order = order;
     /*
      * SOMEBODY PRESSED LAUNCH. Every other path that builds an engine —
      * `boot()`, `resetAll()` — leaves `freshState()`'s `false` alone, which is

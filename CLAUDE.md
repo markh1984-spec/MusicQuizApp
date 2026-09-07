@@ -393,6 +393,25 @@ low-stakes things are debounced.
 Bingo marks are deliberately immediate: a lost quiz answer is recoverable with
 Redo, but nobody can re-tap ten songs they heard half an hour ago.
 
+**AND A COMPOSED NIGHT CARRIES ITS OWN ORDER — `state.order`, written at
+launch.** Every night from a saved show, and every night with a round unticked
+or two packs mixed, has `pack.id === '~tonight'`, which is not a file: so
+`boot()` judged the saved state to belong to another pack and threw the whole
+night away — scores, team names, the lot — while the projector read "No quiz
+loaded", and the first reconnecting phone wrote `packId: 'empty'` over
+`state.json` within seconds. **The order was never on disk, so it was
+architecturally unrecoverable.** On Render every push is a restart, so a docs
+change mid-quiz ended a show night. It recomposes through the SAME loader, so
+rule 11 is untouched.
+
+**AND `boot()`'S DOCUMENTED FALLBACK NOW HAPPENS.** *"always builds a game so
+the projector is never blank"* is written three times in `session.js` and was
+not true: an id that would not load went straight to `launcher.empty`, so
+deleting the pack a night was running on left the projector blank beside a
+shelf full of packs. **A DIFFERENT pack, and one with something IN it** —
+retrying the id that just threw is the same failure twice, and an empty pack
+is `launcher.empty` wearing a name.
+
 ### 8. Phones never show the question text
 Only the options. Keeps the room looking up, makes googling harder.
 
@@ -929,6 +948,15 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   to the OWNER's bar** — putting an ordinary quizmaster's wordmark on a diet
   for a problem they do not have is how a fix for one account lands on
   everybody.
+- **AND NOTHING RESTATES `overflow` AFTER `.console .wrap`'S PAIR.** A trailing
+  `overflow: hidden` wiped the `overflow-y: auto` five lines above it, so the
+  frame CLIPPED instead of scrolling — 1500x900 with five packs in Tonight:
+  161px of overflow, three tabs and all six pack cards off the bottom, and a
+  real wheel moving nothing. **That is the fault reported twice as "the sub
+  menu is still missing from the console", and the fix written for it had never
+  once been in effect.** FOURTH sighting of shorthand-beats-longhand, this time
+  inside ONE declaration block. `console-frame.mjs` fills Tonight and turns a
+  REAL wheel now — a programmatic scroll succeeds on a clipped box.
 - **THE FIXED FRAME NEEDS A MINIMUM HEIGHT, AND THAT IS THE SAME ARGUMENT AS
   THE WIDTH.** The frame is off under 900px because the header would be most of
   a phone screen — a statement about ROOM, and height was never asked. On a
@@ -995,6 +1023,21 @@ key.
   room now instead of minting a room, a join code and a backup push per junk
   string — `rooms.get()` never evicts and `codeFor()` persists, so an open URL
   was a memory leak and a GitHub-quota leak at once.
+- **AND A JOIN CODE IS REFUSED THE SAME WAY — `roomForPhone()`.** It was
+  `rooms.byCode(code) || rooms.get(HOUSE)`, so `/play?g=ZZZZ` said *"You're
+  in"* under the owner's branding, `POST /api/join` returned a real id and
+  token, the player appeared in the OWNER'S room, and
+  `/api/state?role=screen&g=ZZZZ` served the owner's loaded quiz to anybody. **The trigger is real**: the join-code backup raced, so a printed
+  QR could stop resolving after a deploy, and the whole room then joined the
+  owner's game and was told it was in. **NO CODE AT ALL is still the house
+  room** — the owner's own projector, and every card printed before rooms
+  existed.
+- **AND THE CODE BOOK IS WRITTEN ONE AT A TIME, NEWEST BOOK WINS.** One page
+  load fired N concurrent unawaited PUTs of the same file, each carrying the
+  snapshot taken when it was queued: **four of six quizmasters' printed QR
+  codes changed across a restart.** Coalescing to the latest is safe precisely
+  because each is the WHOLE book. **A failure is said out loud** — a silent one
+  is a printed QR found dead by a room in front of a projector.
 - **`galleryAsked` AND `galleryTarget` ARE TWO VALUES.** One is *was a gallery
   named* (which stands the owner's preview shortcut down); the other is *which
   room that resolves to*. Folding them hands the shortcut back on a junk `?q=`.
@@ -2580,146 +2623,106 @@ costs. Both split off at the 100,000-byte cap.
   otherwise.**
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 - **THE CAMERA GATE IS GONE — every photograph is on the gallery unless a
-  human switches it off** (`showsByDefault()`). It needed EXIF proving a camera
-  took it and **failed on EVERY photograph of a real night**: a whole night at
-  zero is a check that cannot succeed on the handsets in the room. It filtered
-  everything, and the index drops a published night with nothing showing, so
-  the gallery was empty and silent. **The gate that replaces it was already
-  there: the publish control is drawn UNDER the photographs.** `isCameraFile()`
-  survives as a NOTE on the lamp, never a gate. **THE CLEARING RULE IN
-  `/api/gallery-photo/` HAD THE OLD DEFAULT WRITTEN OUT A SECOND TIME** — flip
-  one and pressing a lamp RED clears the ruling and the new default puts the
-  photo straight back ON, silently. One function, asked by both. **Four pinned
-  tests were REVERSED, not weakened**, and **the projector is untouched**
+  human switches it off** (`showsByDefault()`). The EXIF check failed on EVERY
+  photograph of a real night, and the index drops a published night with
+  nothing showing, so the gallery was empty and silent. `isCameraFile()`
+  survives as a NOTE on the lamp, **never a gate**. **THE DEFAULT IS WRITTEN
+  OUT ONCE** — a second copy in `/api/gallery-photo/` made a RED lamp put the
+  photo straight back on. **The projector is untouched**
 - **A LAMP PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH** —
   *"green for on and red for off, no text needed but it must be clickable."*
-  **NO WORDS, and eighteen of them is the argument**: a label repeated across a
-  grid becomes furniture. **FILLED, which is not a break of
-  outlined-never-filled** — a lamp, not a button that destroys, and with no
-  text the fill IS the message. **So `title` and `aria-label` are
-  load-bearing**, the 18px dot gets a 44px hit area, and `.cphoto`'s own open
-  must ignore a press on it. **It REPLACED the grey "Screen only" badge** — two
-  badges saying overlapping things is a label collision. **`showsOnGallery()`
-  is the ONE decision and all FOUR readers ask it**. **A ruling that only
-  restates the DEFAULT is CLEARED, not stored**
-- **SENDING IT IS THE CONSENT. THERE IS NO PER-PHOTO OPT-OUT AND ONE WAS
-  BUILT AND REMOVED.** A *"Keep mine off the website"* tick shipped for a day
-  and was taken out on the host's own reasoning: *"if they upload it to the
-  screen it's allowed on the gallery — can't be remembering which photos I can
-  and can't publish, I simply shouldn't have access to photos if there's no
-  consent behind them in the first place."* **He is right on both halves.** A
-  flag the quizmaster has to respect is a rule he has to REMEMBER, on a Monday,
-  about a photograph he did not take — exactly the Monday-load this file exists
-  to refuse; and a photograph nobody consented to should not be in the app at
-  all rather than in it wearing a label. The consent is the ACT of pressing
-  send, which is also what *photo uploads auto-publish* has always said.
-  **Do not rebuild a sender-side switch.** The gate that exists is the publish
-  control drawn UNDER the photographs, and the lamp is the quizmaster's own.
-- **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** The night
-  list counted on the filename while the page asked the ruling too. **AND WITH
-  THE FAULT PUT BACK THE GUARD STILL PASSED: it had matched the COMMENT
+  **NO WORDS**, so `title` and `aria-label` are load-bearing and the 18px dot
+  gets a 44px hit area. **FILLED, which is not a break of
+  outlined-never-filled** — a lamp, not a button that destroys.
+  **`showsOnGallery()` is the ONE decision and all FOUR readers ask it.** **A
+  ruling that only restates the DEFAULT is CLEARED, not stored**
+- **SENDING IT IS THE CONSENT. THERE IS NO PER-PHOTO OPT-OUT AND ONE WAS BUILT
+  AND REMOVED** — *"I simply shouldn't have access to photos if there's no
+  consent behind them in the first place."* A flag the quizmaster has to
+  respect is a rule he has to REMEMBER, on a Monday, about a photograph he did
+  not take. **Do not rebuild a sender-side switch.** The gate that exists is
+  the publish control drawn UNDER the photographs, and the lamp is the
+  quizmaster's own.
+- **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** **AND
+  WITH THE FAULT PUT BACK THE GUARD STILL PASSED: it matched the COMMENT
   explaining the fix.** A source check strips comments first, or it goes green
   the better a file is documented
-- **IT FLIPS NOW AND SAVES LATER.** The colour is the local truth and `saved`
-  is the server's, so a failed write puts the lamp BACK and says why on the
-  count line — never an `alert` for something that happened in the background,
-  never a silent revert. **It settles before it sends** (600ms), and every
-  gallery write goes through the one promise chain above
-- **THE PUBLISH LAMP ASKS FIRST, AND THE QUESTION NAMES THE NIGHT** — *"so its
-  clear what they're about to do."* The browser's own `confirm()`, like the
-  other twelve here: **a second kind of dialog is the label collision wearing a
-  dialog**, so it reads OK/Cancel, not Yes/No. **It says the CONSEQUENCE**,
-  which a coloured P cannot. **AND SAYING NO MUST CHANGE NOTHING** — a confirm
-  in front of a press that happens anyway teaches that the question is a
-  formality, and it is the half that rots unseen, so the guard answers NO
-  before yes
+- **IT FLIPS NOW AND SAVES LATER.** A failed write puts the lamp BACK and says
+  why on the count line — never an `alert` for something that happened in the
+  background, never a silent revert. **It settles before it sends** (600ms)
+- **THE PUBLISH LAMP ASKS FIRST, AND THE QUESTION NAMES THE NIGHT** — the
+  browser's own `confirm()`, like the other twelve here: **a second kind of
+  dialog is the label collision wearing a dialog**, so it reads OK/Cancel, not
+  Yes/No. **It says the CONSEQUENCE**, which a coloured P cannot. **AND SAYING
+  NO MUST CHANGE NOTHING** — the guard answers NO before yes
 - **A ROW READS ITS STATE WHEN BUILT, AND THIS RAIL IS NEVER REBUILT** — the
-  press must ask AGAIN (`upNow()`), never close over `up`. It did, so every
-  press after the first re-sent *publish*, against *"another click unpublishes
-  it"*. **The FIRST press was right, which is why only pressing twice sees it**
-- **THE PIN IS A DRAWING PIN, NEVER A MAP PIN** — a map pin says *location*.
-  Cap bar, filled body, stroked needle: all-stroke smudges at 18px, all-filled
-  is a blob
+  press must ask AGAIN (`upNow()`), never close over `up`, or every press after
+  the first re-sends *publish*. **The FIRST press was right, which is why only
+  pressing twice sees it**
+- **THE PIN IS A DRAWING PIN, NEVER A MAP PIN**: a map pin says *location*
 - **THE LAST SLIDE POINTS AT THE PHOTOGRAPHS, AND THE ADDRESS EXISTS BEFORE
-  THEY DO** — `galleryPath()` in `slugs.js` (one builder, both sides);
-  `state.photoLink` resolved at LAUNCH like `comeBack`. **DERIVED, not stored,
-  is what makes it work**: publishing happens afterwards, so the code sixty
+  THEY DO** — `galleryPath()` in `slugs.js`, one builder, both sides.
+  **DERIVED, not stored**: publishing happens afterwards, so the code sixty
   people photograph at eleven opens a real gallery on Tuesday.
 - **A SLIDE OF ITS OWN, BECAUSE THE FINAL WAS ALREADY CLIPPING.** **The band's
   QR is 86px at 720p**, hopeless as the only thing on a slide; 34vh here. **A
   flag at the FINAL only** (rule 9), refused with no address, never on a phone.
 - **AND THE FINAL FITS NOW, IN TWO PARTS — `.endband` AND `fitWinner()`.**
-  `.winner` centres in a fixed card with overflow hidden, so anything too tall
-  was cut at BOTH ends — 142px each way at 720p, unreported. **The draw and the
-  comeback go SIDE BY SIDE**; **`fitWinner()` shrinks to fit as a backstop**,
-  and **it measures the CHILDREN, not `scrollHeight`**, which clamps to the
-  container and under-reports exactly when the content is too tall.
-  **`final-fits.mjs`** checks the QR **actually paints**, not that it is
+  **The draw and the comeback go SIDE BY SIDE**; **`fitWinner()` shrinks to fit
+  as a backstop**, and **it measures the CHILDREN, not `scrollHeight`**, which
+  clamps to the container and under-reports exactly when the content is too
+  tall. **`final-fits.mjs`** checks the QR **actually paints**, not that it is
   placed
-- **`view.photos` WAS ALREADY TAKEN, AND IT COST THE BUTTON** — `server.js`
-  sets it to the room's own photographs, host AND screen, AFTER the engine
-  builds the view. The field existed, held somebody else's data, the control
-  was never drawn, nothing threw. **Found by pressing it in a real browser.**
+- **`view.photos` WAS ALREADY TAKEN, AND IT COST THE BUTTON** — the field
+  existed, held somebody else's data, the control was never drawn, nothing
+  threw. **Found by pressing it in a real browser.**
 - **A PHONE THAT SCANS EARLY IS TOLD "not up yet", AND THE WORDING IS THE ONLY
   CHANGE** — the server still answers ONE 404 for every refusal, so a night
   that never happened reads identically to a real unpublished one. **A
-  `pending` state was turned down for exactly that**: it leaks which dates
-  exist
+  `pending` state leaks which dates exist and was turned down for that**
 - **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — the INDEX
-  drops a night whose whole set is held back, so such a night publishes,
-  answers 200 on its own address, and is invisible on the way in. **A number
-  right about the wrong question is how a working app looks broken.** Silent
-  when they all show
+  drops a night whose whole set is held back. **A number right about the wrong
+  question is how a working app looks broken.** Silent when they all show
 - **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE HAS TO SAY
   SO LOUDLY** — *"on my phone it's showing nothing but on my laptop it's
   showing two"*, both right: `whoIs()` reads a COOKIE. **THE PREVIEW STAYS** —
   do not level the page for everybody. A panel, full ink, **not red** (nothing
-  has gone wrong), naming how many and where the switch is. **AND `live` HAD
-  BEEN IN THE PAYLOAD PER NIGHT SINCE DAY ONE WITH NO CARD DRAWING IT** — a
-  banner says how many, only a card says WHICH (*"Only you"*)
+  has gone wrong). **A banner says how many, only a card says WHICH**
+  (*"Only you"*)
 - **AND `?as=visitor` STANDS THE PREVIEW DOWN, so the check is possible at
-  all** — the browser a quizmaster checks in is the one signed into the
-  console. **ON THE SERVER**: a browser-side filter proves the page can hide a
+  all.** **ON THE SERVER**: a browser-side filter proves the page can hide a
   draft, not that the server refuses one. **IT ONLY EVER SUBTRACTS, which is
   why it needs no gate** — nothing in this app grants a permission from a query
   string. **It rides on every request and link**, or the next page in is the
-  preview again. **PRESENT AND INERT**, because *"is it really up?"* is asked
-  when everything LOOKS fine
+  preview again. **PRESENT AND INERT**
 - **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — **the pub's own
   row is `The table`, INSIDE the fold, never the heading**: a heading that both
   folds and picks is one control doing two jobs. **A night row is the DATE and
-  nothing else.** `evenings` rides in the payload capped at `NIGHT_ROWS` **and
-  carries the POINTS**, so the browser needs no second copy of the ladder. **A
-  board with no `position` scores nobody**, and it fails quietly
-- **`node()` KEEPS THE FIRST ELEMENT AND DROPS THE REST, SILENTLY.** A grep
-  cannot find these (nested template literals), so `node()` `console.error`s
-  when it drops one.
+  nothing else.** `evenings` **carries the POINTS**, so the browser needs no
+  second copy of the ladder. **A board with no `position` scores nobody**
+- **`node()` KEEPS THE FIRST ELEMENT AND DROPS THE REST, SILENTLY** — a grep
+  cannot find these, so `node()` `console.error`s when it drops one.
 - **A VENUE HAS ITS OWN ADDRESS** — `/station-tap-wokingham/gallery/20-august`,
-  from `public/assets/slugs.js`, shared by the server and the page: two
+  from `public/assets/slugs.js`, **shared by the server and the page**: two
   implementations of one slug is a link that works in the browser and 404s on
-  the server. **DERIVED, never stored**, so a rename cannot leave a stale
-  address that lies. **A ONE-SEGMENT PREFIX AT THE ROOT IS A CATCH-ALL AND THE
-  FIRST VERSION ATE `/api/gallery`** — two segments, `RESERVED` refuses the
-  first, and `test/slugs.test.js` walks `server.js` for every literal top-level
-  route. **An address is not a key**: the league switch and the published list
-  still decide whether that venue has a page
-- **A LEAGUE IS A THING YOU RUN, AND IT IS OFF UNTIL SOMEBODY SAYS SO** —
-  *"it might be misleading if this app just had that as standard even in venues
-  that don't have a quiz league."* **The table is ARITHMETIC; a league is a
-  DECISION** — printing one in the report of a pub that never mentioned a
-  league is the app asserting something about somebody else's night. **It gates
-  what LEAVES and nothing the quizmaster sees**. **Switching it off takes the
-  public page down with it**, or the app disagrees with itself in public. **The
+  the server. **DERIVED, never stored.** **A ONE-SEGMENT PREFIX AT THE ROOT IS
+  A CATCH-ALL AND THE FIRST VERSION ATE `/api/gallery`** — two segments,
+  `RESERVED` refuses the first, and `test/slugs.test.js` walks `server.js` for
+  every literal top-level route. **An address is not a key**
+- **A LEAGUE IS A THING YOU RUN, AND IT IS OFF UNTIL SOMEBODY SAYS SO.** **The
+  table is ARITHMETIC; a league is a DECISION** — printing one in the report of
+  a pub that never mentioned a league is the app asserting something about
+  somebody else's night. **It gates what LEAVES and nothing the quizmaster
+  sees.** **Switching it off takes the public page down with it.** **The
   controls under it are ABSENT, not greyed** — the one deliberate exception to
-  *present and inert*: it is a question that does not arise. **The report asks
-  under BOTH venue keys** (`leagueRunsAt()`)
-- **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — sixty phones point at each
-  other and none at the ROOM, which is the shot that sells the night.
-  `POST /api/past-photo/<night>`, **filed against the night in the URL and
-  never against today** — the live store dates a picture by the clock, so a
-  Friday upload files a Thursday quiz under Friday. **A POST written beside
-  GETs is the 404 this repo already shipped once**, so the test asserts against
-  the 404, not the 400
+  *present and inert*. **The report asks under BOTH venue keys**
+  (`leagueRunsAt()`)
+- **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — `POST
+  /api/past-photo/<night>`, **filed against the night in the URL and never
+  against today**: the live store dates a picture by the clock, so a Friday
+  upload files a Thursday quiz under Friday. **A POST written beside GETs is
+  the 404 this repo already shipped once**, so the test asserts against the
+  404, not the 400
 - **A picture is keyed on the MUSICIAN and the STYLE, and nothing else.**
   Never on the question's `imagePrompt` — those are written by Claude, so two
   quizzes wanting Madonna would produce two keys and two bills, and the host

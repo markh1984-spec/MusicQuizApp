@@ -398,6 +398,79 @@ test('a plain launch() clears any running order left over from a previous night'
   }
 });
 
+test('A COMPOSED NIGHT SURVIVES A RESTART — scores, teams and all', () => {
+  /*
+   * Every night launched from a saved show, and every night where one round
+   * was unticked or two packs were mixed, is COMPOSED: `pack.id` is the
+   * reserved `~tonight`, which is not a file. `pickPack()` could not load it,
+   * the saved state was judged to belong to a different pack, and `boot()`
+   * threw the lot away — scores, team names, everything — while the projector
+   * came back reading "No quiz loaded". The order was never on disk, so the
+   * night was architecturally unrecoverable; the first reconnecting phone then
+   * wrote `packId: 'empty'` over `state.json` within seconds.
+   *
+   * On Render every push is a restart, so a docs change pushed mid-quiz ended
+   * a show night.
+   */
+  const it = withFileSession();
+  try {
+    it.session.launch('quiz', 'quiz-a', {
+      order: [{ packId: 'quiz-a', round: 0 }, { packId: 'quiz-b', round: 0 }],
+    });
+    const player = it.session.engine.join({ name: 'Quizteam Aguilera' });
+    it.session.engine.state.players[player.id].score = 420;
+    assert.equal(it.session.pack.id, '~tonight', 'this night is not composed');
+
+    const saved = JSON.parse(JSON.stringify(it.session.engine.state));
+    assert.ok(Array.isArray(saved.order) && saved.order.length,
+      'the order has to be ON THE STATE or there is nothing to rebuild from');
+
+    const store2 = { load: () => saved, save: () => {}, flush: () => {}, write: () => {} };
+    const restarted = new Session({
+      config: { dataDir: it.dir, quizDir: it.dir, bingoDir: it.dir, advertDir: it.dir },
+      store: store2,
+      onPush: () => {},
+      now: () => Date.now(),
+    });
+    restarted.boot();
+
+    assert.equal(restarted.pack.id, '~tonight', 'the composed pack was not rebuilt');
+    assert.equal(restarted.pack.rounds.length, 2, 'the rounds came back short');
+    assert.equal(restarted.restoredOnBoot, true, 'the night was thrown away');
+    const back = restarted.engine.state.players[player.id];
+    assert.ok(back, 'the team is gone');
+    assert.equal(back.score, 420, 'the score is gone');
+    assert.equal(back.name, 'Quizteam Aguilera');
+  } finally {
+    it.done();
+  }
+});
+
+test('AND AN ORDINARY NIGHT WHOSE PACK HAS BEEN DELETED STILL COMES UP PLAYABLE', () => {
+  /*
+   * *"`boot()` always builds a game so the projector is never blank"* is
+   * written three times in `session.js` and was not true: an id that would not
+   * load went straight to `launcher.empty`, so the projector read "No quiz
+   * loaded" with a shelf full of packs it could have used.
+   */
+  const it = withFileSession();
+  try {
+    const saved = { kind: 'quiz', packId: 'a-pack-that-has-been-deleted', players: {}, phase: 'lobby' };
+    const store2 = { load: () => saved, save: () => {}, flush: () => {}, write: () => {} };
+    const restarted = new Session({
+      config: { dataDir: it.dir, quizDir: it.dir, bingoDir: it.dir, advertDir: it.dir },
+      store: store2,
+      onPush: () => {},
+      now: () => Date.now(),
+    });
+    restarted.boot();
+    assert.notEqual(restarted.pack.id, 'empty', 'the projector came back blank');
+    assert.ok((restarted.pack.rounds || []).length > 0, 'the fallback pack has nothing in it');
+  } finally {
+    it.done();
+  }
+});
+
 test('a restart mid running-order restores the plan from the state, not from memory', () => {
   const it = withFileSession();
   try {

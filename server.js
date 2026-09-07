@@ -138,7 +138,7 @@ const rooms = new Rooms({
   onArchive: (room) => { backUpArchive(room).catch(() => {}); },
   // A join code has been minted. Keep it, or a quizmaster's printed QR sends a
   // room to a game that does not exist after the next deploy.
-  onCodes: (serialised) => { backUpCodes(serialised).catch(() => {}); },
+  onCodes: (serialised) => backUpCodesSoon(serialised),
 });
 rooms.get(HOUSE);
 
@@ -952,10 +952,37 @@ function galleryRoomFor(req, url) {
   return id === HOUSE ? publicRoomId() : id;
 }
 
+/**
+ * WHICH ROOM A PHONE IS TALKING TO — and a code that does not resolve is
+ * REFUSED, never quietly swapped for the house room.
+ *
+ * `rooms.byCode(code) || rooms.get(HOUSE)` meant `/play?g=ZZZZ` said *"You're
+ * in"* under the owner's branding, `POST /api/join` returned a real id and
+ * token, and the player appeared in the OWNER'S room —
+ * `/api/state?role=screen&g=ZZZZ` then served the owner's loaded quiz to
+ * anybody who asked. Nothing 404'd and nothing logged.
+ *
+ * It has a real trigger, not just a typed URL: join codes lived in
+ * `data/room-codes.json` and their backup raced, so a code could change across
+ * a deploy — and then every phone scanning a subscriber's PRINTED QR joined
+ * the owner's game and was told it was in.
+ *
+ * **`rooms.get()` already refuses exactly this for room ids**, with a note
+ * saying a house fallback is *"the same fault wearing a friendlier face"*. A
+ * `badRequest` is the shape the one top-level catch answers with a 400, so
+ * every caller is covered without twelve of them learning to handle a null.
+ *
+ * **NO CODE AT ALL still means the house room** — that is the owner's own
+ * projector and every bookmark and printed card made before rooms existed.
+ */
 function roomForPhone(req, url, body = null) {
   const code = tidyCode((body && body.joinCode) || url.searchParams.get('g') || '');
   if (!code) return rooms.get(HOUSE);
-  return rooms.byCode(code) || rooms.get(HOUSE);
+  const room = rooms.byCode(code);
+  if (room) return room;
+  const err = new Error('That code is not a game here.');
+  err.badRequest = true;
+  throw err;
 }
 
 const BOOTSTRAP = {
@@ -3635,6 +3662,43 @@ async function ensureAdvertsRestored(room) {
  * The private repo rather than the packs one: this is a mapping the OWNER
  * administers, like the accounts book it is keyed by, not somebody's own work.
  */
+/*
+ * ONE WRITE AT A TIME, AND THE NEWEST BOOK WINS.
+ *
+ * `saveCodes()` fires this on every mint, so one page load of the Subscribers
+ * tab sent N concurrent unawaited PUTs of the same file — each carrying the
+ * snapshot taken when IT was queued, each racing the others' shas, and every
+ * failure swallowed by `.catch(() => {})`. Reproduced against a sha-conflict
+ * stub: six codes minted, two backed up, and after a wipe-and-restart **four
+ * of six quizmasters' printed QR codes had changed.**
+ *
+ * Queued, so two writes cannot conflict; and only the LATEST snapshot is sent,
+ * which is safe precisely because each one is the WHOLE book — a later
+ * snapshot contains every code an earlier one had. That is the half a plain
+ * queue would get wrong.
+ *
+ * And a failure is said out loud. A silent one here is a printed QR that stops
+ * working after a deploy, found by a room standing in front of a projector.
+ */
+let codesWriting = Promise.resolve();
+let codesPending = null;
+function backUpCodesSoon(serialised) {
+  codesPending = serialised;
+  codesWriting = codesWriting.then(async () => {
+    if (codesPending === null) return;
+    const body = codesPending;
+    codesPending = null;
+    const result = await backUpCodes(body);
+    // Quiet where there is no private repo to write to — that is a dev box or
+    // a fresh deploy, not a lost code. Loud for everything else.
+    if (!privateRepoConfigured()) return;
+    if (!result || result.ok === false) {
+      console.warn('[rooms] join codes were NOT backed up:', (result && result.error) || 'unknown');
+    }
+  }, () => {});
+  return codesWriting;
+}
+
 async function backUpCodes(serialised) {
   if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
   try {
