@@ -1967,17 +1967,26 @@ moves the tab column and everything below it.
 
 - **THE VALUE IS THE LAUNCH BAR'S OWN OPEN PANEL HEIGHT, MEASURED** — the panel,
   not the doorhead round it. Two values: the bar's row wraps below 1150px.
+- **AND THE RULE IS ABOUT THE BAY, NOT THE DOORHEAD.** With a night running the
+  Console's doorhead is **573px and the other three 386**, because it carries a
+  SECOND panel — the running one. **Every BAY is 362px on every door**, so the
+  rule holds. **DO NOT RAISE `--bay-h` TO 549 TO EVEN THEM UP**: it spends
+  187px of tab column on three doors PERMANENTLY, idle included, leaving
+  **234px against the frame's own 200px floor**. **Nor put the running panel on
+  the other doors** — `nowPlaying()`'s short form already answers that.
+- **AND THE GUARD MEASURED IT IDLE, so both sides read 386 and it agreed with
+  itself** — **a guard that sets a night up but never lets anybody in is
+  measuring a console nobody uses**, twice now. It launches a quiz and lets two
+  phones in, compares `.panel.bench` against `.panel.launchbar`, and **names the
+  Console's two panels** so a third is looked at.
 - **THE BAR ITSELF IS NOT GIVEN THE HEIGHT.** It is the REFERENCE, it folds to
   a line on purpose, and clipping the one panel on the protected launch path to
-  a number in a stylesheet is not a trade worth making. `community-bay.mjs`
-  asserts the two agree, so the bar growing fails a check rather than silently
-  making every other door the wrong size.
-- **BELOW 900px THERE IS NO RULE**, because there is no fixed frame — and the
-  launch bar is 745px on a phone, which as a floor would be a screen of empty
-  panel on every door.
-- **A FIXED BOX IS WHAT LETS THE CONTENT STOP WORRYING.** A wall of any size
-  and a league of any length SCROLL INSIDE IT, so nothing needs a row cap or an
-  "and N more" line.
+  a stylesheet number is not a trade worth making. `community-bay.mjs` asserts
+  the two agree, so the bar growing fails a check instead.
+- **BELOW 900px THERE IS NO RULE**, there being no frame — and the bar is 745px
+  on a phone, which as a floor is a screen of empty panel per door.
+- **A FIXED BOX IS WHAT LETS THE CONTENT STOP WORRYING** — anything SCROLLS
+  INSIDE IT, so nothing needs a row cap or an "and N more" line.
 
 ### EVERY BAY IS A RAIL AND WHAT IT PICKED — `console-bay.js`
 
@@ -1991,11 +2000,9 @@ with photographs).
   bar — the protected surface, and the REFERENCE every other bay is sized
   against. It is not a list of things to look at, it is the one thing you came
   to do. **Do not give it a rail.**
-- **ONE DEFINITION, because each door had already invented its own.** A pack
-  tile you drag onto, a night you drag up, a venue you scroll to find: three
-  answers to one question, which is the label collision this file keeps
-  recording. The rail is the TAB COLUMN one region higher — same 190px, same
-  stack, same lit left edge.
+- **ONE DEFINITION, because each door had already invented its own** — three
+  answers to one question. The rail is the TAB COLUMN one region higher: same
+  190px, same stack, same lit left edge.
 - **A RAIL PICKS; IT NEVER ACTS — with ONE lamp as the stated exception.**
   Nothing in it deletes or launches. **The Photos rail's P publishes a night in
   one press**, and **the reason the rule existed is kept by the lamp also
@@ -2010,23 +2017,18 @@ with photographs).
   named as being below** — the rail is the night you are thinking about; the tab
   body is the archive.
 - **WHAT IS REMEMBERED WINS, ALWAYS — the first build had it the other way and
-  the control was DEAD.** It FORCED a group open whenever it held the picked
-  row, so pressing its heading set the flag, re-rendered and the override put
-  it straight back: it neither collapsed nor expanded, and nothing threw. **A
+  the control was DEAD.** Forcing a group open whenever it held the picked row
+  meant pressing its heading put it straight back, and nothing threw. **A
   control that does nothing when pressed is worse than the problem it was
-  avoiding**, so `holdsPicked` is a DEFAULT and the case it guarded is answered
-  by SHOWING. **The folds live in a module Map keyed by rail AND group** — the
-  bay is rebuilt on every push, and "The Crown" is a group on two doors.
+  avoiding**, so `holdsPicked` is a DEFAULT. **The folds live in a module Map
+  keyed by rail AND group** — the bay is rebuilt on every push.
 - **NO `title` ANYWHERE IN THE RAIL — the names WRAP to two lines instead.** A
-  native tooltip is an unstyled box that lands over the rows beneath it. The
-  heading drops a rung in size too: level with the rows, the two read as one
-  undivided list.
+  native tooltip is an unstyled box landing over the rows beneath it. The
+  heading drops a rung too, or the two read as one undivided list.
 - **`.bay-rail > * { flex: 0 0 auto }` IS LOAD-BEARING.** A flex column shrinks
-  its children when the content overflows, and the rail always overflows — it
-  scrolls. The rows survived on `min-height: 44px`; the pub headings had no
-  floor and rendered at **2px with their text in the DOM**, so a perfectly
-  compartmentalised rail drew as one undivided list and nothing threw. Found by
-  measuring `getClientRects()`, not by counting elements.
+  its children and the rail always overflows. The rows survived on
+  `min-height: 44px`; the pub headings had no floor and rendered at **2px with
+  their text in the DOM**. Found by measuring `getClientRects()`.
 - **THE DRAGS SURVIVED because they were on the PANEL, not on a slot inside
   it** — and each empty state keeps its drop zone.
 
@@ -2072,12 +2074,9 @@ up there too."*
   table and the Photos tab draws no photographs.
 - **THE SAFEGUARDS SURVIVED THE MOVE, and that was the thing to check.** Nobody
   publishes a night or a table without having just looked at it — kept by
-  drawing the button UNDER the thing. In a fixed frame the bay is on screen
-  while the button is pressed, so it still is. The publish control is drawn
-  ONLY for the night that is showing; a button on a row nobody has opened
-  breaks it.
-- **ONE PRESS PUTS IT IN THE BAY, THE NEXT TAKES IT OUT** — and *"when you
-  click into a photo another click should go back again"*: wall → one night →
+  drawing the button UNDER the thing, and **drawn ONLY for the night that is
+  showing**: a button on a row nobody has opened breaks it.
+- **ONE PRESS PUTS IT IN THE BAY, THE NEXT TAKES IT OUT** — wall → one night →
   one picture, each step reversed by pressing the same thing.
 - **A PICTURE IS AN OVERLAY, NOT A REPLACEMENT — which keeps the wall's
   place.** *"It seems to reload the entire gallery at the top"*: nothing
@@ -2090,14 +2089,13 @@ up there too."*
   the published flag together, so the control is BUILT in the bay and HUNG in
   the tab body — safe because `render()` evaluates the doorhead before the tab
   body.
-- **THE WALL IS FETCHED ONCE PER PAGE LOAD AND STOPS ASKING** — it walks the
-  newest until eighteen are in hand, never past `WALL_NIGHTS`. Held in a module
-  binding: the bay is rebuilt on every push, at a lobby every join.
+- **THE WALL IS FETCHED ONCE PER PAGE LOAD AND STOPS ASKING** — newest first
+  until eighteen, never past `WALL_NIGHTS`. In a module binding: the bay is
+  rebuilt on every push, at a lobby every join.
 - **`node scripts/community-bay.mjs` IS THE GUARD, and it measures GEOMETRY** —
-  every door's bay against the launch bar's, that each rail's headings are not
-  squashed, whether the page scrolls, that no control is in the bay and no
-  table or photo is at the bottom, and that pressing a rail button, a night and
-  a picture each change what is drawn. Nothing in `npm test` sees any of it.
+  every door's bay against the launch bar's, squashed rail headings, whether the
+  page scrolls, controls in the bay, and that pressing a rail button, a night
+  and a picture each change what is drawn. `npm test` sees none of it.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 

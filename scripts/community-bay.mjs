@@ -124,6 +124,35 @@ function seedArchive(dir) {
  */
 const { base: BASE, stop } = await startApp({ key: KEY, seed: seedArchive });
 
+/*
+ * A NIGHT IS RUNNING BEFORE ANYTHING IS MEASURED, and that is not decoration.
+ *
+ * This script used to measure its reference on an IDLE console and compare it
+ * against doors that were also idle — so both sides read 386px, everything
+ * agreed, and the one state where the doors genuinely differ was invisible.
+ * That is `console-frame.mjs`'s own expensive lesson, which the note above
+ * `#runningNow` in that file spells out: **a guard that sets a night up but
+ * never lets anybody in is measuring a console nobody uses.** Two phones,
+ * because `aNightIsOn()` is false for an empty lobby and the running panel is
+ * what makes the Console's doorhead the odd one out.
+ */
+const packId = fs.readdirSync('quizzes').filter((f) => f.endsWith('.json'))[0].replace(/\.json$/, '');
+await fetch(`${BASE}/api/host/launch`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', 'X-Host-Key': KEY },
+  body: JSON.stringify({ game: 'quiz', packId, replace: true }),
+});
+const joinCode = ((await (await fetch(`${BASE}/api/library`, {
+  headers: { 'X-Host-Key': KEY },
+})).json()).running || {}).joinCode || '';
+for (const name of ['Mick', 'Rita']) {
+  await fetch(`${BASE}/api/join${joinCode ? `?g=${joinCode}` : ''}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  });
+}
+
 
 /* ---- a stand-in for the private photo repository ---------------------- */
 
@@ -250,19 +279,52 @@ try {
     });
 
     /*
-     * THE LAUNCH BAR IS THE REFERENCE, so it is measured rather than assumed.
-     * If it grows, this fails and `--bay-h` gets updated deliberately — which
-     * is the only way "every bay is the launch bay's size" stays true rather
-     * than being a sentence in a stylesheet.
+     * THE LAUNCH BAR'S OWN PANEL IS THE REFERENCE, not the doorhead round it.
+     *
+     * That distinction is the rule, settled on 7 September 2026 after this was
+     * measured with a night actually running: every door's bay is the same
+     * 362px, and the CONSOLE's doorhead is 187px taller than the rest because
+     * it carries a SECOND panel — the running one — while a game is on. The
+     * bays match; the Console has extra content the other three do not have,
+     * and the topbar's own live line is the deliberate short form for them.
+     *
+     * Comparing DOORHEADS would therefore fail on every gig night for a
+     * difference that is correct, and the fix for it — raising `--bay-h` to
+     * 549 — spends 187px of the tab column permanently on three doors, idle
+     * included, leaving 234px against the frame's own 200px floor.
+     *
+     * If the bar's panel grows, this fails and `--bay-h` gets updated
+     * deliberately — which is the only way "every bay is the launch bay's
+     * size" stays true rather than being a sentence in a stylesheet.
      */
     await page.goto(`${BASE}/console?key=${KEY}&door=console&tab=quiz`, { waitUntil: 'load' });
     await page.addStyleTag({ content: '.backup-warn, main > .panel.warn { display: none !important; }' });
     await page.waitForTimeout(1800);
-    const bayH = await page.evaluate(() => {
-      const d = document.querySelector('.doorhead');
-      return d ? Math.round(d.getBoundingClientRect().height) : 0;
+    const ref = await page.evaluate(() => {
+      const head = document.querySelector('.doorhead');
+      const bar = document.querySelector('.doorhead > .panel.launchbar');
+      return {
+        bar: bar ? Math.round(bar.getBoundingClientRect().height) : 0,
+        head: head ? Math.round(head.getBoundingClientRect().height) : 0,
+        // Every panel the Console's doorhead carries, so a THIRD one arriving
+        // is a change somebody has to look at rather than a number that drifts.
+        panels: [...(head ? head.children : [])]
+          .filter((c) => c.classList.contains('panel'))
+          .map((c) => `${c.className.replace(/\s+/g, '.')}:${Math.round(c.getBoundingClientRect().height)}`),
+        live: ((document.querySelector('#runningNow') || {}).textContent || '').trim(),
+      };
     });
+    const bayH = ref.bar;
     console.log(`\n${label} ${width}x${height} — the launch bay is ${bayH}px tall`);
+    console.log(`   console doorhead ${ref.head}px: ${ref.panels.join('  ')}   live "${ref.live}"`);
+    check(`${label}: a night is actually running`, /\d/.test(ref.live), `topbar says "${ref.live}"`);
+    if (framed) {
+      // The Console's doorhead is the bar plus the running panel and nothing
+      // else. Named rather than counted, or a fourth panel lands unnoticed.
+      check(`${label}: the console's doorhead is the bar plus the running panel`,
+        ref.panels.length === 2 && ref.panels[0].includes('launchbar') && ref.panels[1].includes('running'),
+        ref.panels.join(' + '));
+    }
 
     const frame = () => page.evaluate(() => {
       const head = document.querySelector('.doorhead');
@@ -272,6 +334,11 @@ try {
       const wall = document.querySelector('.community-wall');
       return {
         doorhead: head ? Math.round(head.getBoundingClientRect().height) : 0,
+        // THE BAY, not the doorhead round it — see the reference above.
+        bench: (() => {
+          const b = document.querySelector('.doorhead > .panel.bench');
+          return b ? Math.round(b.getBoundingClientRect().height) : 0;
+        })(),
         colsHeight: cols ? Math.round(cols.getBoundingClientRect().height) : 0,
         // Every tab still reachable is the thing a crushed frame takes away.
         tabsFit: bar ? bar.scrollHeight <= bar.clientHeight + 1 : false,
@@ -308,7 +375,7 @@ try {
       if (framed) {
         check(`${label}/${tab}: the page itself does not scroll`, f.pageScrolls <= 0, `${f.pageScrolls}px`);
         check(`${label}/${tab}: the tab column still fits`, f.tabsFit && f.colsHeight > 140, `${f.colsHeight}px left for the columns`);
-        check(`${label}/${tab}: the bay is the launch bay's height`, f.doorhead === bayH, `${f.doorhead}px, launch bar is ${bayH}px`);
+        check(`${label}/${tab}: the bay is the launch bay's height`, f.bench === bayH, `bay ${f.bench}px, launch bar ${bayH}px (doorhead ${f.doorhead}px)`);
       }
       check(`${label}/${tab}: nothing overflows sideways`, f.pageOverflow <= 0, `${f.pageOverflow}px`);
       check(`${label}/${tab}: no control in the bay`, f.bayControls === 0, `${f.bayControls}`);
@@ -386,6 +453,12 @@ try {
         await page.waitForTimeout(1500);
         const m = await page.evaluate(() => ({
           h: Math.round(document.querySelector('.doorhead').getBoundingClientRect().height),
+          // THE BAY, not the doorhead — the Console carries a running panel
+          // beside its bar and these three do not. See the reference above.
+          bay: (() => {
+            const b = document.querySelector('.doorhead > .panel.bench');
+            return b ? Math.round(b.getBoundingClientRect().height) : 0;
+          })(),
           // A RAIL ON EVERY DOOR BUT THE CONSOLE — its bay is the launch bar,
           // which is the reference and is not a list of things to look at.
           rail: document.querySelectorAll('.doorhead .bay-pick').length,
@@ -400,7 +473,7 @@ try {
           squashed: [...document.querySelectorAll('.doorhead .bay-rail-group')]
             .filter((g) => g.getBoundingClientRect().height < 12).length,
         }));
-        check(`${label}: the ${door} bay is the launch bay's height`, m.h === bayH, `${m.h}px vs ${bayH}px`);
+        check(`${label}: the ${door} bay is the launch bay's height`, m.bay === bayH, `bay ${m.bay}px vs launch bar ${bayH}px (doorhead ${m.h}px)`);
         check(`${label}: ${door} has a rail`, m.rail > 0, `${m.rail} rows`);
         /*
          * A GROUP FOLDS AND UNFOLDS. Nothing in this repo presses a control,
@@ -813,7 +886,12 @@ try {
     check(`${label}: you can add your own photos to the night`, mine === 1, `${mine}`);
     check(`${label}: and the control is big enough to press`, hittable >= 36, `${hittable}px`);
     if (framed) {
-      const h = await page.evaluate(() => Math.round(document.querySelector('.doorhead').getBoundingClientRect().height));
+      // The BAY, not the doorhead — see the reference. This door carries no
+      // running panel, so the two differ only by the doorhead's own margin.
+      const h = await page.evaluate(() => {
+        const b = document.querySelector('.doorhead > .panel.bench');
+        return b ? Math.round(b.getBoundingClientRect().height) : 0;
+      });
       check(`${label}: an open night does not change the bay's height`, h === bayH, `${h}px vs ${bayH}px`);
     }
     await page.locator('.doorhead .cphoto').first().click();

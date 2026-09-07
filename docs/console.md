@@ -877,6 +877,67 @@ every other door matches it. That is what keeps this a rule rather than a
 sentence: if the bar grows, a check fails and the token is updated
 deliberately, rather than every other door quietly being the wrong size.
 
+### The rule is about the BAY, not the doorhead — 7 September 2026
+
+Measured with a night actually running, which is the state nothing had looked
+at. At 1150px and up:
+
+| Door | Idle | Quiz running, two phones in |
+|---|---|---|
+| Console | 386px | **573px** |
+| Workshop | 386px | 386px |
+| Post gig | 386px | 386px |
+| Community | 386px | 386px |
+
+The bays are all 362px on every door, at both. What grows is the Console's
+**doorhead**, because on a gig night it carries a second panel under the launch
+bar: the running one, 163px. So the rule holds and the Console simply has
+content the other three do not — press Workshop mid-night and the tab column
+moves up 187px, handing back that much tab body.
+
+**The jump is a flat 187px at every size**, that being the running panel's own
+height, so it does not scale with the window. What scales is the share of the
+screen it represents: 19% of a 1000px-tall laptop, 21% of a 900px one.
+
+Three ways out were measured and two were rejected:
+
+- **Raise `--bay-h` to 549 so every doorhead is 573.** Rendered: it puts 187px
+  of empty panel under *On the bench* on Workshop, Post gig and Community, and
+  it is there **permanently, idle included** — the tab column drops from 421px
+  to 234px on a 900px laptop. The frame's own floor is 200px, so that spends all
+  but 34px of the headroom the fixed layout has, for a difference that only
+  exists while a game is on. Turned down.
+- **Put the running panel on every door.** Already decided against, under
+  another name: `nowPlaying()`'s SHORT form in the topbar exists precisely so
+  the panel does not have to be — *the bar says something is on and how many are
+  in from any door, and the TITLE stays in the panel.* Building this would undo
+  that.
+- **Sit the running panel beside the bar rather than under it.** Would keep the
+  doorheads level at no idle cost, and it reshapes the protected launch path at
+  1150px for a cosmetic gain. Not taken; noted here if it is ever wanted.
+
+So the written rule narrows to the BAY. What that costs is that "the top of the
+page never changes shape" is now true of every door press EXCEPT Console↔
+elsewhere while a night is on — which is the one press where the extra 187px of
+tab body is worth having.
+
+### And the guard had been measuring an idle console
+
+`community-bay.mjs` took its reference from the Console door with nothing
+running and compared it against doors that were also idle, so both sides read
+386px and it agreed with itself. That is `console-frame.mjs`'s own expensive
+lesson arriving a second time — **a guard that sets a night up but never lets
+anybody in is measuring a console nobody uses** — and here it was worse, because
+the guard had never launched anything at all.
+
+It now launches a quiz and puts two phones in before anything is measured
+(`aNightIsOn()` is false for an empty lobby), takes its reference from
+`.doorhead > .panel.launchbar` rather than the doorhead, compares each door's
+`.doorhead > .panel.bench` against it, and **names the Console's two panels** —
+`launchbar` then `running`, in that order — so a third one arriving is something
+a person looks at rather than a number that drifts. Verified by moving
+`--bay-h` 18px and watching seven checks fail.
+
 ### Below 900px there is no rule, and that is not an exception
 
 There is no fixed frame below 900px — the page scrolls, exactly as it always
