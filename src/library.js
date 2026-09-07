@@ -431,11 +431,6 @@ export function listArchive(dir, { boards = false } = {}) {
     .sort((a, b) => (b.archivedAt || 0) - (a.archivedAt || 0));
 }
 
-export function loadArchived(dir, id) {
-  return JSON.parse(fs.readFileSync(path.join(dir, safePackFile(id)), 'utf8'));
-}
-
-
 /**
  * Every venue this room has run a night at, most recent first.
  *

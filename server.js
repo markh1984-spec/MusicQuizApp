@@ -29,7 +29,7 @@ import { Session } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { recueQuiz } from './src/recue.js';
 import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, defaultPrizes, stagePlan, stageLabel } from './src/bingo.js';
-import { fullLibrary, listArchive, venuesUsed, rewardsUsed, rewardsByVenue, loadArchived, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
+import { fullLibrary, listArchive, venuesUsed, rewardsUsed, rewardsByVenue, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists, roundPlan, TOPICAL_ROUNDS, TOPICAL_DAYS, topicalNaming } from './src/generate-quiz.js';
 import { portraitPath } from './src/portraits.js';
@@ -2343,22 +2343,6 @@ async function handleGet(req, res, url, route) {
     return sendJson(res, 200, invoiceState(room.invoices)), true;
   }
 
-  if (route.startsWith('/api/archive/')) {
-    // Past gigs, not invoicing. It asked for the invoicing add-on because that
-    // is where the tab used to live; a record of somebody's own nights has
-    // nothing to do with whether they bill for them.
-    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
-    const id = decodeURIComponent(route.slice('/api/archive/'.length));
-    try {
-      return sendJson(res, 200, loadArchived(roomForHost(req, url).paths.archive, id)), true;
-    } catch {
-      // Never `err.message`: on a miss that is an ENOENT carrying the server's
-      // absolute path, which names the directory layout and the room id it just
-      // looked in. The same fault this codebase has already recorded twice.
-      return sendJson(res, 404, { error: 'No night saved under that name.' }), true;
-    }
-  }
-
   /*
    * PAST GIGS — the nights, the packs and the pictures, in one list.
    *
@@ -3269,10 +3253,6 @@ async function handleGet(req, res, url, route) {
     }), true;
   }
 
-  if (route === '/api/results.json') {
-    if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
-    return sendJson(res, 200, roomForHost(req, url).session.results()), true;
-  }
   if (route === '/api/results.csv') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const { session } = roomForHost(req, url);

@@ -722,7 +722,7 @@ over the calendar.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
-### THE CONSOLE IS TWELVE FILES, AND THE STATE MODULE IS WHY IT WORKS
+### THE CONSOLE IS ONE FILE PER DOOR OR TAB, AND THE STATE MODULE IS WHY IT WORKS
 
 `console.js` was 11,222 lines. It is now a shell plus a module per door or tab,
 moved **by line number** — the same mechanical transform as the `CLAUDE.md`
@@ -745,10 +745,12 @@ split, so not one body changed.
   `browser-parses.test.js` passes them. `test/console-split.test.js` is the
   guard: no module assigns to a name it imports, the state module stays a leaf,
   and no module grows back. Verified by breaking each one.
-- **ANYTHING READING THE CONSOLE AS TEXT READS ALL TWELVE** —
+- **ANYTHING READING THE CONSOLE AS TEXT READS THEM ALL** —
   `test/console-source.js`. Five checks were pointed at the one file; three
   failed loudly, which was luck. A grep aimed at the wrong file proves nothing,
-  which is this repo's oldest lesson wearing another hat.
+  which is this repo's oldest lesson wearing another hat. **The rule is named
+  rather than counted, because a COUNT goes stale silently** — it was written
+  as "twelve" in three places and the console had become twenty-one.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 

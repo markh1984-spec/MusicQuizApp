@@ -13,7 +13,7 @@ import {
 import { ANY_LOBBY_GAME } from './lobby-games.js';
 import { packTitle, shelfFor } from './console-shows.js';
 import {
-  addBingoSlot, addQuizPackSlot, isMixed, moveRoundToSlot, segmentsFromSlots, simpleNight,
+  addBingoSlot, addQuizPackSlot, moveRoundToSlot, segmentsFromSlots, simpleNight,
   slotsFromSimple,
 } from './console-tonight-mix.js';
 import { renderSlots } from './console-tonight-mix-ui.js';

@@ -218,7 +218,7 @@ test('suggestions are not treated as a pack write', () => {
  */
 test('the past-gigs routes ask for PAST_GIGS, not for the invoicing add-on', () => {
   const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
-  for (const route of ["'/api/past-gigs'", "'/api/past-gigs/'", "'/past-photo/'", "'/api/archive/'"]) {
+  for (const route of ["'/api/past-gigs'", "'/api/past-gigs/'", "'/past-photo/'"]) {
     const at = server.indexOf(route);
     assert.ok(at > 0, `${route} has moved or gone`);
     assert.match(server.slice(at, at + 400), /FEATURES\.PAST_GIGS/,

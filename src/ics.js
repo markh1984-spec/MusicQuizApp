@@ -47,17 +47,45 @@
 
 import crypto from 'node:crypto';
 
-/** Wrapped at 75 octets, which the format demands and some parsers enforce. */
+/**
+ * Wrapped at 75 OCTETS, which the format demands and some parsers enforce.
+ *
+ * **AND OCTETS ARE NOT `String.length`, which is where this was wrong twice
+ * over.** JavaScript counts UTF-16 code units, so a venue name with an accent
+ * or an emoji in it made lines that were inside the limit by this function's
+ * arithmetic and over it on the wire — a pub called "Café Nero 🎤" ran to 79
+ * octets on a line this said was 75.
+ *
+ * The second half is worse than being over: `slice()` cuts by code unit, so a
+ * fold landing in the middle of an emoji SPLITS THE SURROGATE PAIR, and each
+ * half arrives in somebody's calendar as a replacement character. Walking the
+ * string with `for…of` iterates whole code points, so a character is never
+ * cut in half wherever the fold lands.
+ *
+ * The budget drops to 74 after the first line because every continuation
+ * carries a leading space, and that space is one of the 75.
+ */
+const OCTETS = new TextEncoder();
+
 function fold(line) {
-  if (line.length <= 75) return line;
-  const parts = [line.slice(0, 75)];
-  let rest = line.slice(75);
-  while (rest.length > 74) {
-    parts.push(' ' + rest.slice(0, 74));
-    rest = rest.slice(74);
+  if (OCTETS.encode(line).length <= 75) return line;
+  const parts = [];
+  let part = '';
+  let used = 0;
+  let budget = 75;
+  for (const ch of line) {
+    const n = OCTETS.encode(ch).length;
+    if (used + n > budget) {
+      parts.push(part);
+      part = '';
+      used = 0;
+      budget = 74;
+    }
+    part += ch;
+    used += n;
   }
-  if (rest) parts.push(' ' + rest);
-  return parts.join('\r\n');
+  if (part) parts.push(part);
+  return parts.map((p, i) => (i ? ' ' + p : p)).join('\r\n');
 }
 
 /**

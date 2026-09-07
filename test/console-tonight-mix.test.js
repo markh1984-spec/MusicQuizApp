@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 
 import {
   slotsFromSimple, placedRounds, moveRoundToSlot, addQuizPackSlot, addBingoSlot,
-  removeSlot, swapSlots, segmentsFromSlots, isMixed, homeSlotIndex, toggleRoundOff, offRoundsFor,
+  removeSlot, swapSlots, segmentsFromSlots, homeSlotIndex, toggleRoundOff, offRoundsFor,
   simpleNight,
 } from '../public/assets/console-tonight-mix.js';
 
@@ -186,13 +186,6 @@ test('segmentsFromSlots: consecutive quiz slots merge into ONE segment — a run
 test('segmentsFromSlots: null slots are simply skipped', () => {
   const slots = [null, { kind: 'quiz', packId: 'a', rounds: [0] }, null];
   assert.deepEqual(segmentsFromSlots(slots), [{ kind: 'quiz', order: [{ packId: 'a', round: 0 }] }]);
-});
-
-test('isMixed: false for the ordinary case, true the moment a pack is split or bingo joins', () => {
-  assert.equal(isMixed([{ kind: 'quiz', packId: 'a', rounds: [0, 1, 2] }]), false);
-  assert.equal(isMixed([{ kind: 'quiz', packId: 'a', rounds: [0, 1] }, { kind: 'quiz', packId: 'b', rounds: [0] }]), false);
-  assert.equal(isMixed([{ kind: 'quiz', packId: 'a', rounds: [0] }, { kind: 'quiz', packId: 'a', rounds: [2] }]), true);
-  assert.equal(isMixed([{ kind: 'bingo', packId: 'disco', shape: null, prizes: 2 }]), true);
 });
 
 test('homeSlotIndex: the FIRST slot naming a pack, -1 if it has none', () => {

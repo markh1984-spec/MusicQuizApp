@@ -324,15 +324,20 @@ export function offRoundsFor(slots, packId, roundCount) {
   return Array.from({ length: roundCount }, (_, i) => i).filter((i) => !placed.has(`${packId}:${i}`));
 }
 
-/** Whether the slots are genuinely a mixed night — a bingo slot anywhere, or a pack split across more than one slot. Used to decide `doLaunchOrder()` vs the ordinary single-pack/simple-order launch. */
-export function isMixed(slots) {
-  if (slots.some((s) => s && s.kind === 'bingo')) return true;
-  const seen = new Set();
-  for (const slot of slots) {
-    if (!slot || slot.kind !== 'quiz') continue;
-    if (seen.has(slot.packId)) return true;
-    seen.add(slot.packId);
-  }
-  return false;
-}
+/*
+ * `isMixed()` USED TO BE HERE AND IT HAD BECOME A LIE TWICE OVER.
+ *
+ * Its comment said it decided `doLaunchOrder()` against the ordinary launch.
+ * Nothing called it — `console-tonight.js` imported the name and never used
+ * it — and `simpleNight()` above is what actually makes that decision.
+ *
+ * And it had stopped being true of the row it read. It answered "mixed" the
+ * moment one pack appeared in more than one slot, which was right when a pack
+ * arrived as a single tile; since a pack BURSTS into a tile per round, every
+ * ordinary three-round quiz is one pack across three slots, so it answered
+ * true for every night there is. Had anything still been calling it, every
+ * gig would have gone down the running-order route.
+ *
+ * The pinned test went with it: it asserted a shape the row stopped building.
+ */
 

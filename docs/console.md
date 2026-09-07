@@ -128,7 +128,7 @@ purpose, and the reasoning would have gone in the bin with the entry.
   editing on, and it is the same reasoning that keeps the venue and the online
   switch off the device: a fact about one evening is not a setting.
 
-## THE CONSOLE IS TWELVE FILES — how it was split, and the two faults it found
+## THE CONSOLE IS ONE FILE PER DOOR OR TAB — how it was split, and the two faults it found
 
 `console.js` reached **11,222 lines**, and the cost was not readability: it was
 that opening the console at all spent most of a session's context before any
@@ -143,7 +143,7 @@ file. **Nothing reads the content, so nothing can quietly reword it** — a
 half way and paraphrase a function. The plan asserts it tiles exactly: every
 line of the original is claimed by exactly one destination, and the total is
 checked against the file length. Content preservation was then proved by
-sorting every line of the twelve files against every line of the original — the
+sorting every line of the new files against every line of the original — the
 **only** differences are the module headers, the setter calls, and the import
 and `export` lines.
 
@@ -245,7 +245,7 @@ module assigns to a name it imports, `console-state.js` imports nothing, and no
 module grows back past its budget. Each was verified by breaking it and watching
 it fail. `test/console-source.js` is the other half — five checks in the suite
 grep the console as TEXT and were all pointed at the single file; they read all
-twelve now, because a grep aimed at the wrong file proves nothing.
+all of them now, because a grep aimed at the wrong file proves nothing.
 
 **The next seam is `launchBar()`, which is 1,700 lines on its own** and most of
 why `console-tonight.js` is still the big module. That one is a real split

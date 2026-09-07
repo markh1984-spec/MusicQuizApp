@@ -1,5 +1,5 @@
 /**
- * THE CONSOLE IS TWELVE FILES NOW, so anything that reads it as TEXT has to
+ * THE CONSOLE IS ONE FILE PER DOOR OR TAB, so anything that reads it as TEXT has to
  * read all of them.
  *
  * `console.js` was 11,100 lines and was split by line number on 16 August

@@ -1487,8 +1487,16 @@ body.host::after { display: none; }
   border-bottom: 2px solid var(--hot);
   color: var(--ink);
 }
-.host .panel button.minor.danger, .host .panel a.minor.danger { border-bottom-color: var(--bad);
+.host .panel button.minor.danger, .host .panel a.minor.danger {
+  /* `border-color` FIRST and `border-bottom-color` after it — the shorthand
+     overwrites all four sides, so written the other way round it wiped the
+     full-strength red edge and left the four red buttons on the control view
+     a fifth as loud as the identical ones in the console. Same trap as the
+     pack tile's border and the one `.danger` rule at the foot of this sheet;
+     third sighting. `.console button.minor.danger` twelve hundred lines below
+     has always had this order — they read identically now. */
   color: var(--bad); border-color: rgba(255, 77, 94, 0.4);
+  border-bottom-color: var(--bad);
 }
 .host .panel button.minor:disabled { opacity: 0.6; cursor: default; }
 /* Back, as an arrow. It keeps a WHOLE CELL rather than being shrunk to fit
@@ -3531,7 +3539,7 @@ button.pack-title:hover::after { opacity: 1; }
 .pv-cleared { margin-top: 9px; }
 .pv-cleared-toggle {
   cursor: pointer; font: inherit; font-size: var(--fs-mini);
-  padding: 0; border: 0; background: none; color: var(--dim);
+  padding: 0; border: 0; background: none; color: var(--ink-dim);
   text-decoration: underline; text-underline-offset: 3px;
 }
 .pv-cleared-toggle:hover { color: var(--ink); }
@@ -6608,7 +6616,7 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .plist + .tidy, button.tidy { margin-top: 10px; width: 100%; }
 
 .pack-card .fresh { color: #ffc85a; }
-.pack-card .fresh.gone { color: var(--muted); }
+.pack-card .fresh.gone { color: var(--ink-dim); }
 .pack-card.stale { opacity: 0.72; }
 .pack-card.stale:hover { opacity: 1; }
 

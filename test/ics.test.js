@@ -123,3 +123,33 @@ test('long lines are folded, which some parsers enforce', () => {
   // …and a folded line continues with a single leading space.
   assert.match(out, /\r\n [^\s]/);
 });
+
+/*
+ * AND FOLDING IS BY OCTET, NEVER BY `String.length`.
+ *
+ * The old `fold()` counted UTF-16 code units and cut with `slice()`, so a
+ * venue name carrying an accent or an emoji produced lines it believed were
+ * 75 long and the wire saw as 79 — and a cut landing inside a surrogate pair
+ * put two lone halves into somebody's calendar, which every reader on earth
+ * renders as replacement characters.
+ *
+ * The test is written in octets and code points for that reason: measured the
+ * old way, the string below passes.
+ */
+test('a line is folded by OCTETS, and never in the middle of a character', () => {
+  const bytes = (s) => new TextEncoder().encode(s).length;
+  const out = one([{
+    date: '2026-08-20',
+    venue: 'Café Nero 🎤 ' + 'Ünïcøde 🎶 '.repeat(9) + 'Arms',
+    note: 'Piñata night 🎉 ' + 'très très '.repeat(8),
+  }]);
+
+  for (const line of out.split('\r\n')) {
+    assert.ok(bytes(line) <= 75, `a line came out ${bytes(line)} octets long`);
+  }
+  // No lone surrogate anywhere — that is what a split emoji leaves behind.
+  assert.equal(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(out), false,
+    'a character was cut in half by the fold');
+  // And unfolding puts the name back exactly as it was typed.
+  assert.match(out.replace(/\r\n /g, ''), /SUMMARY:Café Nero 🎤 /);
+});

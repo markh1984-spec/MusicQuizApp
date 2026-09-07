@@ -1,5 +1,5 @@
 /**
- * THE CONSOLE IS TWELVE FILES, AND THESE ARE THE THREE THINGS THAT KEEPS IT.
+ * THE CONSOLE IS ONE FILE PER DOOR OR TAB, AND THESE ARE THE THREE THINGS THAT KEEP IT.
  *
  * `console.js` was 11,222 lines on 16 August 2026 and was split by line number
  * into a shell plus eleven modules — one per door or tab. The split itself was
