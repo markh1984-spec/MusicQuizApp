@@ -1213,7 +1213,23 @@ function leagueToggle(key, venue, on) {
         // would send somebody hunting through the app for a fault that is in
         // an environment variable.
         if (!res.ok) throw new Error(out.error || 'Could not change that.');
-        paint(!live);
+        /*
+         * THE HELD LIST IS UPDATED FROM THE SERVER'S ANSWER, exactly as
+         * `runningToggle()` twelve lines above does it — and this one only
+         * repainted itself.
+         *
+         * `published` is fetched once and held for the whole page, so a local
+         * repaint looked right for exactly one paint: the next render read the
+         * stale list, saw the venue absent, and drew "Put this table up" under
+         * a table that was already up. Pressing it republished. There was no
+         * way to take one down at all without reloading the console.
+         *
+         * The answer carries the venue list that was actually written, so the
+         * page repaints from what happened rather than from what was asked
+         * for.
+         */
+        published = { ...published, venues: out.venues || [] };
+        renderKeepingPlace();
       } catch (err) {
         btn.disabled = false;
         wrap.appendChild(node(`<div class="tiny" style="color:var(--bad)">${esc(err.message)}</div>`));

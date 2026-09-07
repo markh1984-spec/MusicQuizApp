@@ -755,6 +755,29 @@ const OWNER_FEATURES = [
   FEATURES.LEAGUE,
 ];
 
+/**
+ * WHAT IS NOT FOR SALE — and it is a SHORTER list than what an owner holds.
+ *
+ * `OWNER_FEATURES` answers *what may an owner do*. It was also being used to
+ * answer *what should never be dangled at a subscriber*, and the two are not
+ * the same set: the owner holds Library, Past gigs and the League because they
+ * run nights of their own, and all three are rungs on the ladder that a
+ * quizmaster buys.
+ *
+ * Folding them together meant a Bronze account was never shown the locked
+ * **Quiz league** tab at all — filtered out of `missing[]` as though it were
+ * the pack generator. A door that vanishes sells nothing, which is the rule
+ * the Adverts tab beside it follows correctly.
+ *
+ * These five are the owner's business and no tier can reach them: writing the
+ * catalogue, generating a pack, drawing its pictures, the subscriber list and
+ * the photo export.
+ */
+const NOT_FOR_SALE = [
+  FEATURES.GENERATE, FEATURES.ARTWORK, FEATURES.CATALOGUE, FEATURES.SUBSCRIBERS,
+  FEATURES.PHOTO_EXPORT,
+];
+
 export const ROLES = ['owner', 'quizmaster'];
 
 /**
@@ -1032,7 +1055,7 @@ export function whyNot(account, feature) {
   if (needs && !switchedOn(account, feature)) {
     return `${(FEATURE_META[feature] || {}).label || 'That'} is turned off on your account. Turn it back on under My Account.`;
   }
-  if (OWNER_FEATURES.includes(feature)) {
+  if (NOT_FOR_SALE.includes(feature)) {
     // The generator is the one people ask about, so it says why rather than
     // just no: the packs are written by the owner and sold, and that is the
     // whole arrangement.
@@ -1087,8 +1110,9 @@ export function entitlements(account) {
     // might buy; something invisible is a thing you never knew existed.
     missing: Object.values(FEATURES)
       .filter((f) => !on.includes(f))
-      // Owner features are not for sale, so they are not offered.
-      .filter((f) => !OWNER_FEATURES.includes(f))
+      // What is not for sale is not offered — and that is a shorter list than
+      // what an owner holds. See NOT_FOR_SALE.
+      .filter((f) => !NOT_FOR_SALE.includes(f))
       .map((f) => ({ feature: f, why: whyNot(account, f) })),
   };
 }

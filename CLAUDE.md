@@ -748,9 +748,9 @@ split, so not one body changed.
 - **ANYTHING READING THE CONSOLE AS TEXT READS THEM ALL** —
   `test/console-source.js`. Five checks were pointed at the one file; three
   failed loudly, which was luck. A grep aimed at the wrong file proves nothing,
-  which is this repo's oldest lesson wearing another hat. **The rule is named
-  rather than counted, because a COUNT goes stale silently** — it was written
-  as "twelve" in three places and the console had become twenty-one.
+  which is this repo's oldest lesson wearing another hat. **Named rather than
+  counted: a COUNT goes stale silently** — three places said twelve when there
+  were twenty-one.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -882,10 +882,10 @@ they say next.
   on the BAR is what makes the existing `min-width: 0` on `#whoami` and
   `#runningNow` do anything. **The rule was applied one level too deep**, and
   the projector's own topbar has had `.screen .topbar > *` since a long pack
-  name stacked it to four lines. **This is the third sighting of
-  `min-width: auto` in this file** — `.option`, the `minmax(0, 1fr)` content
-  column, and now this. **A clipped overflow is worse than a scrolling one**:
-  nothing throws, nothing looks broken, and the control is simply unreachable.
+  name stacked it to four lines. Third sighting of `min-width: auto` here —
+  `.option`, the `minmax(0, 1fr)` content column, and this. **A clipped
+  overflow is worse than a scrolling one**: nothing throws and the control is
+  simply unreachable.
 - **…AND CONSTRAINING IT MOVED THE OVERFLOW ONTO THE MENU.** The next
   screenshot came back *"what happened to the other menu?"* with the Community
   chip cut down the middle: `.topnav` is `flex: 1 1 auto` with a deliberately
@@ -1209,10 +1209,9 @@ board), `src/arcade.js` (the scores, shared by both engines),
   built, on his own decision. **It prices consent**: *sending it is the
   consent*, and a photo goes on the projector and by default on a public
   gallery, so making the game conditional turns a free choice into a toll.
-  **And it undercuts what the game is FOR** — a phone with a game on it stays
-  in the foreground, so gating it puts fewer phones there at exactly the moment
-  the join gate is busiest. `avatar.js` already draws everyone a face; a photo
-  never was mandatory.
+  **And it undercuts what the game is FOR** — gating it puts fewer phones in the
+  foreground at exactly the moment the join gate is busiest. `avatar.js` already
+  draws everyone a face; a photo never was mandatory.
 - **THE BOARD SAYS WHICH GAME EACH SCORE WAS ON — `state.arcadeGame`, a map
   BESIDE the scores.** With the room choosing, five scores can be five
   different sports, so a bare list would invent a ranking nobody played. **A
@@ -3820,6 +3819,7 @@ node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break the pub ni
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
 node scripts/community-bay.mjs          # does the Community bay still fit the frame?
 node scripts/console-frame.mjs          # is every control on the Console door reachable?
+node scripts/console-controls.mjs       # and does pressing one do what it says?
 node scripts/pages-scroll.mjs           # can a person actually scroll each page?
 node scripts/final-fits.mjs             # is the last slide of the night all on screen?
 ```
@@ -3827,16 +3827,15 @@ node scripts/final-fits.mjs             # is the last slide of the night all on 
 **The rules these commands run on, and each was learned expensively — the full
 account is in [`docs/checks.md`](docs/checks.md):**
 
-- **`node --check` every browser file you edit.** Nothing in this repo executed
+- **`node --check` every browser file you edit.** Nothing here executed
   `public/` for two years; a stray backtick in an HTML comment made
-  `console.js` a syntax error and `/console` did not load AT ALL, for every
-  quizmaster, with the full suite green. `browser-parses.test.js` closes it.
+  `console.js` a syntax error and `/console` did not load at all, for every
+  quizmaster, with the suite green. `browser-parses.test.js` closes it.
 - **PUT A FINGER ON IT — `console-frame.mjs`.** Three bugs in one week were one
   bug: a control in the DOM, with a size, passing every test, not on the
   screen. **`elementFromPoint()` at a control's middle sees clipped,
   off-screen and painted-over at once** — *in the document*, *has a size* and
-  *can be pressed* are three questions, and this repo has been bitten by the
-  gap five times. **It may only scroll what a FINGER could** — `auto`/`scroll`,
+  *can be pressed* are three questions, and the gap has bitten five times. **It may only scroll what a FINGER could** — `auto`/`scroll`,
   never `hidden` (that is the clipping fault reported as fine), never `body`
   (its overflow propagates to the viewport). **It launches a quiz and puts a
   banner up**: an idle bar is narrower than the one that broke, and the owner
@@ -3844,9 +3843,9 @@ account is in [`docs/checks.md`](docs/checks.md):**
   `main`-layout check silently skipped itself. Six sizes, each on a threshold
   in `style.css`; verified by reintroducing four real faults.
 - **`pub-unchanged.mjs` is the one to run before a gig week**, and **compare
-  against the branch you are merging into, not `HEAD`** — on a committed clean
-  checkout `HEAD` IS the working tree, so it can only ever print IDENTICAL. It
-  has been quoted as a pass twice while proving nothing.
+  against the branch you are merging into, not `HEAD`** — on a clean checkout
+  `HEAD` IS the working tree, so it can only print IDENTICAL. Quoted as a pass
+  twice while proving nothing.
 - **When it says IDENTICAL, ask what it did not compare.** Four separate faults
   in that one script each made it answer confidently about something it was not
   looking at — all four in `docs/checks.md`. **A guard that quietly tests
@@ -3858,13 +3857,17 @@ account is in [`docs/checks.md`](docs/checks.md):**
   from them passes while every pack drop is dead. `scripts/drag-check.mjs`
   drives the real mouse; run it after touching a drag handler.
 - **A TEST THAT NEVER RUNS THE ARTEFACT PROVES NOTHING ABOUT IT.** Reading
-  `server.js` as a string to check a route exists is how a broken Launch
-  reached the live app with 1,150 tests passing.
-- **NOTHING IN THIS REPO PRESSED A CONTROL, and a dead one draws perfectly.**
+  `server.js` as a string to check a route exists is how a broken Launch reached
+  the live app, 1,150 tests green.
+- **A CONTROL THAT REPORTS SUCCESS IT DID NOT HAVE is this repo's commonest
+  fault, and `console-controls.mjs` presses one.** Five at once, all green
+  under `node --check`, 1,684 tests and every browser guard — including a
+  rename that DELETED the night. **It makes its own accounts rather than
+  driving the host key**, which saves neither a colour nor a preference.
+- **NOTHING HERE PRESSED A CONTROL, and a dead one draws perfectly.**
   A gap dial died twice in a week — a lost `import`, then a moved body calling
-  the bar's `paintOrder()` from a module without one. Both are a
-  `ReferenceError` on the PRESS, eaten by the click handler's catch, so every
-  check passed. **`drag-check.mjs` presses the dial TWICE** — once proves the
+  the bar's `paintOrder()` from a module without one. Both a `ReferenceError`
+  on the PRESS, eaten by the click handler's catch, so every check passed. **`drag-check.mjs` presses the dial TWICE** — once proves the
   handler runs, twice proves it steps rather than initialises — and
   `imports-present.test.js` forbids any module but the bar naming a `paint*`.
   **A general "every call resolves" test was thrown away**: it cannot see

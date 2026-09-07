@@ -87,7 +87,7 @@ import { Spend, spendRecorder, imagePrices } from './src/spend.js';
 // the moment it is spent rather than only once the pack lands.
 import { themeSlug } from './src/theme.js';
 import { draftReply, briefFor, mostlyMine } from './src/reply-draft.js';
-import { OWNER_ONLY, changesTheLibrary } from './src/gates.js';
+import { CHECKS_ONLY, OWNER_ONLY, changesTheLibrary } from './src/gates.js';
 import { listOwn, readPack, saveOwn, deleteOwn, isOwnPack, inCatalogue, countOwn, backupPath, MAX_OWN } from './src/own-packs.js';
 import { brandFor } from './src/branding.js';
 // Picture bytes, held briefly so the fiftieth person to open one night does not
@@ -5859,9 +5859,24 @@ async function handleWrite(req, res, url, route) {
     if (!allowed(req, res, url, FEATURES.ADVERTS, { live: true })) return true;
   }
 
+  /*
+   * CHECKING A PACK IS BEHIND "SIGNED IN" AND NOTHING ELSE — see CHECKS_ONLY.
+   *
+   * It validates whatever arrived in the body: no room, no disk, no library.
+   * Left to the broad quiz gate it was refused for the OWNER, who holds no
+   * quiz features and writes every pack in the catalogue — so the one control
+   * whose job is "is this pack fit to sell" was switched off for the only
+   * account that sells any.
+   */
+  const checkRoute = CHECKS_ONLY.includes(route);
+  if (checkRoute && !whoIs(req, url)) {
+    return sendJson(res, 401, { error: 'Sign in first', signIn: '/login' }), true;
+  }
+
   // The owner has no quiz features by design, so anything they alone may do has
   // to skip the broad gate below — the third time that has caught something.
-  if (!changesLibrary && !advertRoute && !OWNER_ONLY.some((prefix) => route.startsWith(prefix))) {
+  if (!changesLibrary && !advertRoute && !checkRoute
+      && !OWNER_ONLY.some((prefix) => route.startsWith(prefix))) {
     if (!allowed(req, res, url, FEATURES.QUIZ, { live: true })) return true;
   }
 

@@ -20,6 +20,24 @@
 export const OWNER_ONLY = ['/api/generate/', '/api/owner/', '/api/reports/'];
 
 /**
+ * CHECKS A PACK AGAINST THE RULES AND SAVES NOTHING — so it is behind
+ * "signed in" and no feature at all.
+ *
+ * `changesTheLibrary()` already excluded these two, and that was only half the
+ * job: falling out of the CATALOGUE gate dropped them into the broad quiz gate
+ * below it, which an OWNER does not hold — so the Check button in the editor
+ * answered 403 for the one account that writes every pack in the catalogue.
+ * The exclusion was asserted in `gates.test.js` and the consequence had never
+ * been fired, which is this repo's own lesson about a guard that greps.
+ *
+ * There is nothing to gate. The pack comes in the request BODY, nothing is
+ * read off disk, no room is resolved, and the answer is a list of problems
+ * with the thing the caller just sent. A quizmaster checking their own pack
+ * and an owner checking a catalogue one want exactly the same reply.
+ */
+export const CHECKS_ONLY = ['/api/quiz/__validate', '/api/bingo/__validate'];
+
+/**
  * Does this request WRITE to the shared pack library?
  *
  * Reading the library is `FEATURES.LIBRARY`, which every quizmaster has — they
@@ -58,7 +76,7 @@ export const OWNER_ONLY = ['/api/generate/', '/api/owner/', '/api/reports/'];
 export function changesTheLibrary(route, method) {
   if (method !== 'PUT' && method !== 'DELETE' && method !== 'POST') return false;
   // Both of these check a pasted pack against the rules and save nothing.
-  if (route === '/api/quiz/__validate' || route === '/api/bingo/__validate') return false;
+  if (CHECKS_ONLY.includes(route)) return false;
   const pack = (base) => route === base || route.startsWith(`${base}/`);
   return pack('/api/quiz') || pack('/api/bingo')
     || pack('/api/import') || pack('/api/playlist') || pack('/api/history');

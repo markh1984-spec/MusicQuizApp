@@ -341,7 +341,16 @@ async function check() {
       headers: { 'Content-Type': 'application/json', 'X-Host-Key': hostKey },
       body: JSON.stringify(quiz),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    /*
+     * `res.ok` FIRST — without it, ANY failed response read as a clean pack.
+     *
+     * A 403, a 401 after a deploy, a 500: none of them carries `problems`, so
+     * the list came back empty and the one control whose job is "is this pack
+     * fit to sell" flashed **All good** at a pack it had never looked at.
+     * `save()` one function above has always got this right.
+     */
+    if (!res.ok) throw new Error(data.error || `The check could not run (${res.status}).`);
     problems = data.problems || [];
     problems.checked = true;
     render();

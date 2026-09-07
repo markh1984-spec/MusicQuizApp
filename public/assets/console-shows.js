@@ -284,11 +284,28 @@ export function showsSection() {
            * A rename is a save under a NEW id, so the old one has to go — the
            * id comes from the name, which is what keeps a show findable by
            * what it is called rather than by when it was made.
+           *
+           * **AND THE DELETE ONLY HAPPENS IF THE ID ACTUALLY MOVED.** Two
+           * different names can make one id: "Friday Night" and "Friday
+           * night" both slug to `friday-night`, so the save REPLACED the show
+           * and the delete then threw the replacement away — the packs, the
+           * running order, the ticks, the prizes, the look, the lobby game
+           * and the break plan, gone, with no confirm and both calls
+           * answering 200.
+           *
+           * The comparison is on what the SERVER sent back, never on a slug
+           * worked out here: `showId()` lives in `src/shows.js` and a second
+           * implementation in a browser is the fault `slugs.js` exists to
+           * prevent. The save reply carries the show it wrote; if its id is
+           * the one we already had, there is nothing to tidy up.
            */
-          await postJson('/api/shows', { ...show, id: undefined, name: name.trim() }, { 'X-Host-Key': hostKey });
-          await fetch(keyed(`/api/shows/${encodeURIComponent(show.id)}`), {
-            method: 'DELETE', headers: { 'X-Host-Key': hostKey },
-          });
+          const saved = await postJson('/api/shows', { ...show, id: undefined, name: name.trim() }, { 'X-Host-Key': hostKey });
+          const newId = (saved && saved.show && saved.show.id) || '';
+          if (newId && newId !== show.id) {
+            await fetch(keyed(`/api/shows/${encodeURIComponent(show.id)}`), {
+              method: 'DELETE', headers: { 'X-Host-Key': hostKey },
+            });
+          }
           await load();
           render();
         } catch (err) {

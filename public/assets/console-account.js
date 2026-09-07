@@ -99,8 +99,20 @@ function roomPanel() {
  */
 function switchPanel() {
   const off = new Set(((library.prefs || {}).featuresOff) || []);
+  /*
+   * WHAT THE TIER INCLUDES (`entitled`), NEVER WHAT IS CURRENTLY ON (`can`).
+   *
+   * `can()` is the tier's features MINUS what is switched off here, so a
+   * feature turned off lost its own row and could never be turned back on —
+   * under copy promising "switch it back on whenever you like". Worse:
+   * `saveFeaturesOff()` builds its list from the switches ON THE PAGE, so with
+   * that row gone the next tap posted a list without it and switched the first
+   * feature back on. `switchedOff()` in `console.js` reads `entitled` for the
+   * same reason.
+   */
+  const entitled = new Set(((me && me.entitlements && me.entitlements.entitled) || []));
   const rows = SWITCHABLE
-    .filter((f) => can(f))
+    .filter((f) => entitled.has(f))
     .map((f) => ({ id: f, ...(FEATURE_META[f] || { label: f, blurb: '' }) }));
 
   if (!rows.length) {
@@ -1389,7 +1401,17 @@ function schemePanel() {
   // The host key has no account to save a colour against, so it is told that
   // rather than shown a picker that quietly does nothing.
   if (!list.length) return [];
-  const mine = library.scheme || list[0].id;
+  /*
+   * WHICH ONE IS ON, ASKED EACH TIME RATHER THAN CLOSED OVER.
+   *
+   * This panel saves on the tap and does not re-render, so a `const` read when
+   * it was built goes stale the moment somebody picks a second colour — and
+   * the guard below then refused the one they STARTED on. On the one control
+   * whose job is trying colours, the first swatch was dead until a reload.
+   * Same rule as the gallery's publish lamp: ask again, never close over it.
+   */
+  const nowOn = () => library.scheme || list[0].id;
+  const mine = nowOn();
   const keyOnly = Boolean(hostKey) && !me;
 
   const el = node(`
@@ -1412,7 +1434,8 @@ function schemePanel() {
   for (const button of el.querySelectorAll('.scheme-swatch')) {
     button.addEventListener('click', async () => {
       const wanted = button.dataset.scheme;
-      if (wanted === mine) return;
+      const before = nowOn();
+      if (wanted === before) return;
       // Repaint before the round trip. It is a colour: if the save fails we put
       // it back, and waiting on the network to see a colour feels broken.
       paintScheme(wanted);
@@ -1429,7 +1452,9 @@ function schemePanel() {
         if (!res.ok) throw new Error(data.error || 'Could not save that');
         library.scheme = data.scheme;
       } catch (err) {
-        paintScheme(mine);
+        // Back to whatever was on when this press started, not to whatever was
+        // on when the page was drawn.
+        paintScheme(before);
         render();
         alert(err.message);
       }

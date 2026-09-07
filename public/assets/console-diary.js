@@ -5,7 +5,7 @@ import { invoiceApi } from './console-invoices.js';
 import { venueBox, venueFrom, wireVenue } from './console-packs.js';
 import { book, library, setPendingInvoice } from './console-state.js';
 import { night } from './console-tonight.js';
-import { TAB_STORE, can, hostKey, keyed, renderKeepingPlace } from './console.js';
+import { can, goToTab, hostKey, keyed } from './console.js';
 import { nightKey, tonight, upcoming } from './diary.js';
 import { FEATURES } from './plans.js';
 
@@ -566,27 +566,6 @@ function billFor(venue, date) {
     description: 'Music quiz night',
   });
   goToTab('invoices');
-}
-
-/**
- * Move to another tab from inside a panel.
- *
- * The remembered tab is what `currentTab()` reads — **unless there is a
- * `?tab=` in the address bar, which wins**. A link that landed somebody here
- * would otherwise drag them straight back the moment the page redrew, so the
- * URL is moved along with the memory when it is carrying one.
- */
-function goToTab(id) {
-  localStorage.setItem(TAB_STORE, id);
-  const url = new URL(location.href);
-  if (url.searchParams.get('tab')) {
-    url.searchParams.set('tab', id);
-    history.replaceState(null, '', url.toString());
-  }
-  // The same landing as pressing the tab yourself, because that is what this
-  // is — arriving somewhere different depending on how you got there is how a
-  // page stops feeling like one place.
-  renderKeepingPlace();
 }
 
 /** "20:00" as somebody says it out loud. */

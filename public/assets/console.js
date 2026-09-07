@@ -1202,6 +1202,31 @@ const doorsOf = (tab) => (Array.isArray(tab.doors) && tab.doors.length ? tab.doo
 
 export const TAB_STORE = 'musicquiz.consoletab';
 
+/**
+ * GO TO A TAB — and MOVE THE `?tab=` ALONG IF THERE IS ONE.
+ *
+ * `currentTab()` reads the query string FIRST, so a page that arrived on a
+ * `?tab=` link is pinned to it: remembering a different tab changes nothing,
+ * because the query wins on the very next read. Every tab button on that door
+ * then does nothing at all when pressed, silently — and the app puts him there
+ * itself, from six `goTo()` links including "add one on the Venues tab" on the
+ * Console door.
+ *
+ * The hazard was written up over `goToTab()` in `console-diary.js`, which
+ * worked around it correctly for the two links it owns. The TAB BAR never got
+ * the same fix, so the note existed and the bug did too. One exported
+ * function now, called by both — the second copy is where it went wrong.
+ */
+export function goToTab(id) {
+  localStorage.setItem(TAB_STORE, id);
+  const url = new URL(location.href);
+  if (url.searchParams.get('tab')) {
+    url.searchParams.set('tab', id);
+    history.replaceState(null, '', url.toString());
+  }
+  renderKeepingPlace();
+}
+
 /** Logo and name, top left, linking home — as any website does. */
 function paintBrand(name) {
   const slot = document.getElementById('brandSlot');
@@ -1640,10 +1665,7 @@ function tabBar(active) {
       <button class="tab ${tab.id === active ? 'on' : ''}" role="tab" data-tab="${tab.id}">
         ${esc(tab.label)}${count ? `<span class="tabcount ${urgent ? 'late' : ''}">${count}</span>` : ''}
       </button>`);
-    button.addEventListener('click', () => {
-      localStorage.setItem(TAB_STORE, tab.id);
-      renderKeepingPlace();
-    });
+    button.addEventListener('click', () => goToTab(tab.id));
     bar.appendChild(button);
   }
   return bar;
