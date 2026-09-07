@@ -134,3 +134,30 @@ test('heardHere is total — no index, no venue, no pack, all answer 0', () => {
   assert.equal(heardHere({}, '', 'eighties'), 0);
   assert.equal(heardHere({}, 'the crown', ''), 0);
 });
+
+/*
+ * A QUIZ PLAYED INSIDE A RUNNING ORDER IS NOT "NEVER PLAYED HERE".
+ *
+ * A composed part's `id` is the reserved `~tonight`, which matches no pack on
+ * any shelf — so every quiz pack played inside a running order filed under a
+ * placeholder and came back as **never played** the following week, at the
+ * venue that had just heard it. `composeQuiz()` already returns `sources`;
+ * `describeOrderParts()` used to throw them away.
+ */
+test('A COMPOSED PART NAMES THE PACKS IT WAS BUILT FROM', () => {
+  const index = indexOf([{
+    at: NOW - DAY,
+    packId: '~tonight',
+    kind: 'quiz',
+    venue: 'The Crown',
+    parts: [
+      { kind: 'quiz', id: '~tonight', title: 'Tonight', sources: [{ packId: 'eighties', title: '80s' }] },
+      { kind: 'bingo', id: 'disco-funk', title: 'Disco' },
+    ],
+  }]);
+  assert.ok(heardHere(index, 'the crown', 'eighties') > 0,
+    'the room heard the 80s quiz last week and the shelf said it never had');
+  assert.ok(heardHere(index, 'the crown', 'disco-funk') > 0, 'the bingo still counts too');
+  assert.equal(heardHere(index, 'the station tap', 'eighties'), 0,
+    'and it is still per venue — the other pub has not heard it');
+});

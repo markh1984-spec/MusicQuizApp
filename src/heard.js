@@ -139,6 +139,19 @@ function packsIn(night) {
     if (game.packId) ids.add(String(game.packId));
     for (const part of game.parts || []) {
       if (part && part.id) ids.add(String(part.id));
+      /*
+       * AND THE PACKS A COMPOSED PART WAS BUILT FROM.
+       *
+       * A composed quiz's `id` is the reserved `~tonight`, which matches
+       * nothing on any shelf — so a pack played inside a running order was
+       * invisible here and came back as "Never played here" the following
+       * week, at a venue that had just heard it. `sources` is what
+       * `composeQuiz()` already knew and `describeOrderParts()` used to throw
+       * away.
+       */
+      for (const src of (part && part.sources) || []) {
+        if (src && src.packId) ids.add(String(src.packId));
+      }
     }
   }
   return ids;

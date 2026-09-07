@@ -115,6 +115,18 @@ function normaliseSegments(segments) {
  * launch, so re-reading it here is the same trick `boot()` uses to restore a
  * running order after a restart: the state already has the answer.
  */
+/**
+ * The same list with one id moved to the front — used so a part's chooser
+ * opens on the default for the game being played rather than on whatever led
+ * the previous part's menu.
+ */
+function leadWith(ids, first) {
+  const list = (ids || []).slice();
+  const at = list.indexOf(first);
+  if (at <= 0) return list;
+  return [first, ...list.slice(0, at), ...list.slice(at + 1)];
+}
+
 function nightWideOpts(state) {
   return {
     venue: state.venue,
@@ -129,17 +141,18 @@ function nightWideOpts(state) {
     look: state.look,
     questionSeconds: state.questionSeconds,
     /*
-     * NOT `lobbyGame` — deliberately left out. "THE DEFAULT FOLLOWS THE
-     * GAME: Maze Mouth before a quiz, Rally before a bingo" is a rule with
-     * no stated exception for a running order, and `state.lobbyGame` holds
-     * whatever the PREVIOUS part's launch already RESOLVED it to — which
-     * `lobbyGameFor()` cannot tell apart from an explicit choice, because it
-     * only ever sees an id, never why it was chosen. Carrying it forward
-     * turned "the host asked for nothing in particular" into "the host
-     * asked for Maze Mouth", permanently, the moment a quiz part handed it
-     * to a bingo one — found live: a bingo interlude showed Maze Mouth
-     * instead of Rally. Leaving it out lets every part re-resolve to its
-     * own kind's default, exactly as an ordinary launch does.
+     * NOT `state.lobbyGame` — see `lobbyGame` below, which carries the
+     * REQUEST instead.
+     *
+     * "THE DEFAULT FOLLOWS THE GAME: Maze Mouth before a quiz, Rally before a
+     * bingo" is a rule with no stated exception for a running order, and
+     * `state.lobbyGame` holds whatever the PREVIOUS part's launch RESOLVED it
+     * to — which `lobbyGameFor()` cannot tell apart from an explicit choice,
+     * because it only ever sees an id, never why it was chosen. Carrying THAT
+     * forward turned "the host asked for nothing in particular" into "the host
+     * asked for Maze Mouth", permanently, the moment a quiz part handed it to
+     * a bingo one — found live: a bingo interlude showed Maze Mouth instead of
+     * Rally.
      */
     lobbySound: state.lobbySound,
     /*
@@ -153,6 +166,13 @@ function nightWideOpts(state) {
      * part one: the bingo interlude offered one game and no chooser.
      */
     lobbyGames: state.lobbyGames,
+    /*
+     * AND THE HOST'S REQUEST, not the resolution — see `lobbyGameWanted` in
+     * `launch()`. Empty carries "nobody said" and each part falls to its own
+     * default, which is what the note above `lobbyGame` is protecting; a real
+     * pin is an explicit choice and has to survive the whole night.
+     */
+    lobbyGame: state.lobbyGameWanted || '',
     /*
      * HOW MANY PLACES THE NIGHT PAYS — and it is night-wide by definition.
      *
@@ -538,7 +558,7 @@ export class Session {
         // for the whole night, restored on a restart the same way as
         // `orderPos`, so this is correct however the night ends.
         const withParts = this.runningOrder
-          ? { ...results, parts: this.describeOrderParts(this.runningOrder) }
+          ? { ...results, parts: this.describeOrderParts(this.runningOrder), ...this.scoresOfTheNight(results) }
           : results;
         const record = archiveResults(this.archiveDir, withParts, this.now());
         /*
@@ -842,6 +862,23 @@ export class Session {
      */
     this.engine.state.lobbyGame = lobbyGameFor(kind, lobbyGame).id;
     /*
+     * AND WHAT THE HOST ACTUALLY ASKED FOR, kept beside what it resolved to.
+     *
+     * `nightWideOpts()` deliberately does not carry `lobbyGame`, because a
+     * RESOLVED id cannot be told apart from a choice and carrying it turns
+     * "the host asked for nothing in particular" into a permanent override.
+     * That is right — and it meant the opposite loss: a Gold account that
+     * PINNED Quick Draw for a corporate booking got Maze Mouth from part two
+     * onward, while the launch bar still said Quick Draw.
+     *
+     * The REQUEST has neither problem. Empty means "nobody said" and resolves
+     * to each part's own default; a real id is an explicit pin and survives
+     * the whole night. **Spread in only when there is one**, so an ordinary
+     * night's state file is what it always was.
+     */
+    if (lobbyGame) this.engine.state.lobbyGameWanted = String(lobbyGame);
+    else delete this.engine.state.lobbyGameWanted;
+    /*
      * AND THE LIST THE ROOM MAY CHOOSE FROM, when the quizmaster left it open.
      *
      * **`null` rather than an empty array when there is no choice**, because
@@ -854,8 +891,17 @@ export class Session {
      * it. A list of one is a pinned game wearing a list, so it is dropped —
      * the phone should draw the plain card, not a menu with one thing on it.
      */
+    /*
+     * AND THE KIND'S OWN DEFAULT LEADS THE LIST.
+     *
+     * The chooser opens on the first entry, and the list is carried across a
+     * part boundary unchanged — so a bingo interlude's box opened on Maze
+     * Mouth, the QUIZ's default, against *"Maze Mouth before a quiz, Rally
+     * before the bingo"*. Rotated rather than re-ordered, so the rest of the
+     * menu keeps the order the room saw a moment ago.
+     */
     this.engine.state.lobbyGames = Array.isArray(lobbyGames) && lobbyGames.length > 1
-      ? lobbyGames.slice()
+      ? leadWith(lobbyGames, lobbyGameFor(kind, '').id)
       : null;
     /*
      * WHETHER THE PHONES MAY MAKE A NOISE TONIGHT.
@@ -1126,7 +1172,16 @@ export class Session {
       }]));
     }
     const scores = this.carriedScores;
-    const carry = this.engine.playerList().map((p) => ({
+    /*
+     * `everyone()`, NOT `playerList()` — organisers hold a phone too.
+     *
+     * `playerList()` filters organisers out by design: they are in nobody's
+     * scoreboard, tally or fastest finger. Building the carry from it dropped
+     * them at every boundary, so the client's own contact was handed a fresh
+     * join as an ordinary contestant — landing on the leaderboard and on the
+     * projector, and losing the back channel in the middle of an event.
+     */
+    const carry = this.engine.everyone().map((p) => ({
       id: p.id,
       token: p.token,
       name: p.name,
@@ -1141,9 +1196,28 @@ export class Session {
        * voucher went to a person rather than to the table that won it.
        */
       teamId: p.teamId || '',
+      // And whether they are one, or the seed puts them back as a player.
+      organiser: Boolean(p.organiser),
       ...(scores && scores[p.id] ? scores[p.id] : {}),
     }));
     const prevState = this.engine.state;
+    /*
+     * AND THE QUIZ'S OWN RESULTS ARE KEPT, because the ARCHIVE reads the LAST
+     * part's engine and a night can end on the bingo.
+     *
+     * *"Quiz, then finish with the bingo while they drink up"* is an ordinary
+     * evening. `bingo.results()` has no positions and no scores — its
+     * leaderboard is who was closest — so the filed night had neither, the
+     * league table came back `[]` (it drops anything whose `kind` is bingo),
+     * the report had no podium and the quiz's vouchers were never issued. The
+     * identical night with the bingo in the MIDDLE files perfectly.
+     *
+     * Snapshotted at the boundary rather than rebuilt at the end: by then the
+     * quiz engine is gone. Only when a QUIZ part is the one ending, so a
+     * bingo-then-bingo night stores nothing; and carried forward through every
+     * later part in `startOrderSegment()`.
+     */
+    if (this.kind === 'quiz') prevState.quizSoFar = this.engine.results();
     return this.startOrderSegment(list, this.orderPos + 1, opts, carry, scores,
       prevState.teams || null, prevState);
   }
@@ -1164,6 +1238,47 @@ export class Session {
    * identity from Past gigs entirely the moment the bingo interlude replaced
    * it as `this.engine`.
    */
+  /**
+   * WHOSE SCORES ARE THE NIGHT'S — the quiz's, on any running order that had
+   * one, whichever part happened to end last.
+   *
+   * The archive reads `this.engine.results()`, which is the LAST part's
+   * engine. On *"quiz, then finish with the bingo while they drink up"* —
+   * which is an ordinary evening — that engine has no positions and no
+   * scores, so the filed night had neither: the league came back `[]` because
+   * it drops anything whose `kind` is bingo, the report had no podium, and
+   * nothing about the quiz reached Past gigs. The identical night with the
+   * bingo in the MIDDLE files perfectly, which is the tell.
+   *
+   * So the night is filed as the QUIZ it was, with the bingo named in `parts`
+   * alongside it. **`kind` moves with the board**, or `league.js` would have a
+   * record holding a quiz's scores and refusing to read them.
+   *
+   * Returns nothing at all when there is nothing to correct — an ordinary
+   * night, a quiz-last running order, or a bingo-only one — so those records
+   * are byte-for-byte what they were.
+   */
+  scoresOfTheNight(results) {
+    const quiz = this.engine.state.quizSoFar;
+    if (!quiz || results.kind === 'quiz') return {};
+    return {
+      kind: 'quiz',
+      leaderboard: quiz.leaderboard,
+      questions: quiz.questions,
+      // The bingo's own facts stay: `vouchers` carry both games' prizes (see
+      // `startOrderSegment`), and `called` is the track list of the part that
+      // finished, which is a true thing about the evening either way.
+    };
+  }
+
+  /**
+   * Is there another part of tonight still queued? The one answer, asked by
+   * the quiz's `finish` and by anything else that would end the evening.
+   */
+  moreToCome() {
+    return Boolean(this.runningOrder && this.orderPos < this.runningOrder.length - 1);
+  }
+
   describeOrderParts(list) {
     return (list || []).map((seg) => {
       try {
@@ -1172,7 +1287,23 @@ export class Session {
           return { kind: 'bingo', id: pack.id, title: pack.title };
         }
         const pack = composeQuiz(seg.order, (id) => LAUNCHERS.quiz.load(this.config, id, this.paths));
-        return { kind: 'quiz', id: pack.id, title: pack.title };
+        /*
+         * AND THE PACKS IT WAS BUILT FROM — `sources`, which `composeQuiz()`
+         * already returns and this threw away.
+         *
+         * A composed part's `id` is the reserved `~tonight`, which matches no
+         * pack on any shelf. So every quiz pack played inside a running order
+         * filed under a placeholder and read as **"Never played here"** the
+         * following week — the app confidently telling him a room has not
+         * heard something it heard last Thursday, which is the one thing the
+         * per-venue ranking exists to get right.
+         */
+        return {
+          kind: 'quiz',
+          id: pack.id,
+          title: pack.title,
+          ...(pack.sources && pack.sources.length ? { sources: pack.sources } : {}),
+        };
       } catch {
         // A pack deleted since this part was played — named as missing
         // rather than dropped silently, the same choice `composeQuiz` itself
@@ -1219,6 +1350,27 @@ export class Session {
      */
     if (!this.engine.state.archivedAs && prevState && prevState.archivedAs) {
       this.engine.state.archivedAs = prevState.archivedAs;
+    }
+    // The quiz's own results, so a night that ends on the bingo still files
+    // its scores — see `advanceOrder()`. It survives any number of later
+    // parts, because only a QUIZ part ever replaces it.
+    if (prevState && prevState.quizSoFar) this.engine.state.quizSoFar = prevState.quizSoFar;
+    /*
+     * AND WHO THE HOST THREW OUT — `state.removed`, which is rule 5's whole
+     * mechanism.
+     *
+     * A fresh engine starts with an empty list, so the phone the host removed
+     * was told `rejoin` rather than `kicked` at the next boundary, and
+     * `silentRejoin()` put it straight back with the same name and, on a bingo
+     * part, a live card. Removing a team is the ONE thing a host can do about
+     * a name that cannot go on a projector, and pressing Continue undid it.
+     *
+     * `rejoin` versus `kicked` is exactly the distinction rule 5 exists to
+     * preserve, and it is decided by this list rather than by the player being
+     * absent — which at a part boundary EVERYBODY is.
+     */
+    if (prevState && Array.isArray(prevState.removed) && prevState.removed.length) {
+      this.engine.state.removed = [...prevState.removed];
     }
     /*
      * AND EVERY VOUCHER ALREADY IN SOMEBODY'S HAND COMES WITH IT.
@@ -1295,6 +1447,9 @@ export class Session {
        */
       if (rec.teamId && this.engine.state.teams?.[rec.teamId]) p.teamId = rec.teamId;
       else if (!rec.teamId) delete p.teamId;
+      // Put back after `join()`, like the token: an organiser is in nobody's
+      // scoreboard and `join()` has just made them an ordinary contestant.
+      if (rec.organiser) p.organiser = true;
       if (this.kind === 'quiz' && typeof rec.score === 'number') {
         p.score = rec.score;
         p.correctCount = rec.correctCount || 0;
@@ -1460,10 +1615,26 @@ export class Session {
       makeTeam: () => this.engine.makeTeam(String(body.name || '')),
       adjustScore: () => this.engine.adjustScore(String(body.playerId), Number(body.delta)),
       resetScores: () => this.engine.resetScores(),
-      // Stop here and show the winner. Bingo has always had this; the quiz
-      // did not, which left no way to end a night early except pressing
-      // onwards through every remaining question.
-      finish: () => this.engine.finish(),
+      /*
+       * STOP HERE AND SHOW THE WINNER — but never while another part is
+       * queued, and the SERVER is what enforces that.
+       *
+       * `host.js` has said *"the server refuses it as well (`moreToCome()` in
+       * session.js)"* since running orders were built. There was no such
+       * function. **A comment that claims the opposite is where the next bug
+       * hides**, and this one was load-bearing: any stale or backgrounded
+       * control view still draws *Stop the quiz*, and the server took it —
+       * night filed two hours early, a real voucher to whoever led after round
+       * one, and the order stranded on FINAL with two parts still queued.
+       *
+       * The quiz's confirm promises *"Back undoes it"*, and Back undoes the
+       * phase, not an archive or a code in somebody's hand. **Bingo's `Finish`
+       * is deliberately NOT guarded** — it is the stated escape hatch, and its
+       * confirm names what it costs instead.
+       */
+      finish: () => (this.moreToCome()
+        ? { ok: false, reason: 'more_to_come' }
+        : this.engine.finish()),
     } : {
       start: () => this.engine.start(),
       call: () => this.engine.call(String(body.trackId)),

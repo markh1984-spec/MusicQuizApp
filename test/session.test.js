@@ -17,6 +17,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { Session } from '../src/session.js';
+import { listArchive } from '../src/library.js';
 
 const START = 1_700_000_000_000;
 
@@ -254,6 +255,46 @@ test('quiz -> bingo -> quiz: the same team keeps its identity and its score acro
   }
 });
 
+/*
+ * A NIGHT THAT ENDS ON THE BINGO IS STILL A QUIZ NIGHT.
+ *
+ * *"Quiz, then finish with the bingo while they drink up"* is an ordinary
+ * evening — and the archive reads the LAST part's engine, which for bingo has
+ * no positions and no scores. So the filed leaderboard had neither, the league
+ * table came back `[]` (it drops anything whose `kind` is bingo), the report
+ * had no podium, and the quiz's vouchers were never issued. The identical
+ * night with the bingo in the MIDDLE files perfectly, which is the tell.
+ */
+test('A RUNNING ORDER THAT ENDS ON THE BINGO STILL FILES THE QUIZ\'S SCORES', () => {
+  const it = withFileSession();
+  try {
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a' },
+    ], { venue: 'The Guard Dog', rewards: ['A free drink'] });
+
+    const player = it.session.engine.join({ name: 'Rob' });
+    it.session.engine.state.players[player.id].score = 640;
+    it.session.engine.forgetBoard();
+
+    it.session.advanceOrder();
+    assert.equal(it.session.kind, 'bingo');
+    assert.ok(it.session.engine.state.quizSoFar, "the quiz's own results have to survive the boundary");
+
+    it.session.engine.finish();
+    const filed = listArchive(join(it.dir, 'archive'), { boards: true })[0];
+    assert.ok(filed, 'the night was not filed at all');
+    assert.equal(filed.kind, 'quiz',
+      "league.js drops anything whose kind is bingo, so a quiz's scores filed under bingo are invisible");
+    assert.equal((filed.leaderboard || [])[0].name, 'Rob');
+    assert.equal((filed.leaderboard || [])[0].score, 640, 'the board had no scores on it at all');
+    assert.equal((filed.leaderboard || [])[0].position, 1, 'and no positions, so the league scored nobody');
+    assert.equal((filed.parts || []).length, 2, 'and the bingo is still named as part of the evening');
+  } finally {
+    it.done();
+  }
+});
+
 test('the lobby game re-resolves to each part\'s OWN default, rather than carrying the last part\'s across a kind switch', () => {
   // Found live: a bingo interlude showed Maze Mouth (the QUIZ default)
   // instead of Rally, because the quiz part's RESOLVED choice was carried
@@ -271,6 +312,42 @@ test('the lobby game re-resolves to each part\'s OWN default, rather than carryi
     it.session.advanceOrder();
     assert.equal(it.session.kind, 'bingo');
     assert.equal(it.session.engine.state.lobbyGame, 'rally', 'the bingo part should default to Rally, not inherit the quiz part\'s Maze Mouth');
+  } finally {
+    it.done();
+  }
+});
+
+test('A PINNED LOBBY GAME SURVIVES THE WHOLE NIGHT, and an open list leads with each part\'s own default', () => {
+  const it = withFileSession();
+  try {
+    // A Gold booking: Quick Draw pinned for the corporate crowd.
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a' },
+    ], { lobbyGame: 'quickdraw' });
+    assert.equal(it.session.engine.state.lobbyGame, 'quickdraw');
+
+    it.session.advanceOrder();
+    assert.equal(it.session.engine.state.lobbyGame, 'quickdraw',
+      'the pin was lost from part two onward while the launch bar still said Quick Draw');
+  } finally {
+    it.done();
+  }
+});
+
+test('…and "let them choose" opens on the game the part is FOR', () => {
+  const it = withFileSession();
+  try {
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a' },
+    ], { lobbyGames: ['maze', 'rally', 'tailback'] });
+    assert.equal(it.session.engine.state.lobbyGames[0], 'maze', 'Maze Mouth before a quiz');
+
+    it.session.advanceOrder();
+    assert.equal(it.session.engine.state.lobbyGames[0], 'rally', 'and Rally before the bingo');
+    assert.deepEqual([...it.session.engine.state.lobbyGames].sort(), ['maze', 'rally', 'tailback'],
+      'rotated, not re-ordered — the rest of the menu keeps the order the room just saw');
   } finally {
     it.done();
   }
@@ -331,10 +408,19 @@ test('archiving a running-order night records every part, not just the last', ()
     assert.equal(archived.length, 1);
     const { parts } = archived[0];
     assert.ok(Array.isArray(parts), 'the archived record has no parts at all');
+    /*
+     * AND EACH QUIZ PART NAMES THE PACKS IT WAS BUILT FROM — `sources`.
+     *
+     * A composed part's `id` is the reserved `~tonight`, which matches no pack
+     * on any shelf, so without this every quiz played inside a running order
+     * read as **"Never played here"** the following week at the venue that had
+     * just heard it. `composeQuiz()` already knew; `describeOrderParts()` threw
+     * it away.
+     */
     assert.deepEqual(parts, [
-      { kind: 'quiz', id: '~tonight', title: 'Quiz quiz-a' },
+      { kind: 'quiz', id: '~tonight', title: 'Quiz quiz-a', sources: [{ packId: 'quiz-a', title: 'Quiz quiz-a' }] },
       { kind: 'bingo', id: 'bingo-a', title: 'Bingo bingo-a' },
-      { kind: 'quiz', id: '~tonight', title: 'Quiz quiz-b' },
+      { kind: 'quiz', id: '~tonight', title: 'Quiz quiz-b', sources: [{ packId: 'quiz-b', title: 'Quiz quiz-b' }] },
     ]);
     // And the same list is what a quizmaster's Past gigs page would actually
     // read back off disk, not just what stayed in memory this run.
@@ -388,6 +474,85 @@ test('a running-order part whose pack was deleted mid-evening is named as missin
     assert.equal(archived.length, 1);
     assert.deepEqual(archived[0].parts[0], { kind: 'quiz', id: null, title: null });
     assert.deepEqual(archived[0].parts[1], { kind: 'bingo', id: 'bingo-a', title: 'Bingo bingo-a' });
+  } finally {
+    it.done();
+  }
+});
+
+/*
+ * WHAT ELSE HAS TO SURVIVE A PART BOUNDARY — all three found by driving the
+ * boundary rather than by reading it.
+ */
+test('A PHONE THE HOST REMOVED DOES NOT WALK BACK IN AT A PART BOUNDARY', () => {
+  const it = withFileSession();
+  try {
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a' },
+    ]);
+    const keep = it.session.engine.join({ name: 'Quizteama Aguilera' });
+    const gone = it.session.engine.join({ name: 'Something Unrepeatable' });
+    it.session.engine.removePlayer(gone.id);
+    assert.deepEqual(it.session.engine.state.removed, [gone.id]);
+
+    it.session.advanceOrder();
+    assert.deepEqual(it.session.engine.state.removed, [gone.id],
+      'a fresh engine starts with an empty list, so the phone was told to REJOIN rather than that it was kicked');
+    assert.ok(it.session.engine.state.players[keep.id], 'and everybody else is still here');
+    assert.equal(Boolean(it.session.engine.state.players[gone.id]), false);
+    // Removing a team is the one thing a host can do about a name that cannot
+    // go on a projector; pressing Continue used to undo it, with a live card.
+    assert.equal(it.session.engine.playerView(gone.id).kicked, true);
+  } finally {
+    it.done();
+  }
+});
+
+test('AND AN ORGANISER IS STILL AN ORGANISER ON THE OTHER SIDE', () => {
+  const it = withFileSession();
+  try {
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'quiz', order: [{ packId: 'quiz-b', round: 0 }] },
+    ]);
+    const client = it.session.engine.join({ name: 'The client' });
+    it.session.engine.setOrganiser(client.id, true);
+    assert.equal(it.session.engine.playerList().length, 0, 'organisers are in nobody\'s scoreboard');
+
+    it.session.advanceOrder();
+    const after = it.session.engine.state.players[client.id];
+    assert.ok(after, 'the carry was built from playerList(), which filters organisers OUT — so they were dropped');
+    assert.equal(after.organiser, true,
+      'they rejoined as an ordinary contestant: onto the leaderboard, onto the projector, back channel gone');
+    assert.equal(it.session.engine.playerList().length, 0);
+  } finally {
+    it.done();
+  }
+});
+
+test('AND THE SERVER REFUSES "finish" WHILE ANOTHER PART IS QUEUED', () => {
+  const it = withFileSession();
+  try {
+    const archived = [];
+    it.session.onArchive = (record) => archived.push(record);
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'quiz', order: [{ packId: 'quiz-b', round: 0 }] },
+    ], { rewards: ['A free drink'] });
+    const { id } = it.session.engine.join({ name: 'Rob' });
+    playQuizSegmentToRoundBoard(it.session, id);
+
+    // `host.js` has claimed since running orders were built that the server
+    // refuses this. It did not: any stale control view still draws "Stop the
+    // quiz", and the night was filed two hours early with a real voucher.
+    const said = it.session.run('finish', {});
+    assert.equal(said.ok, false);
+    assert.equal(said.reason, 'more_to_come');
+    assert.equal(archived.length, 0, 'the evening was filed with two parts still queued');
+    assert.notEqual(it.session.engine.state.phase, 'final');
+
+    it.session.advanceOrder();
+    assert.equal(it.session.run('finish', {}), true, 'and on the LAST part it works as it always did');
   } finally {
     it.done();
   }

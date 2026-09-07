@@ -401,6 +401,22 @@ export class BingoGame {
     return Object.values(this.state.players);
   }
 
+  /**
+   * Everybody holding a phone — the same name the quiz engine uses, so a part
+   * boundary can carry the roster without asking which game it came from.
+   *
+   * Bingo has no organiser concept of its own (there is no scoreboard to keep
+   * somebody off), so the two lists are the same here. It exists because
+   * `advanceOrder()` builds its carry from `everyone()`: `playerList()` on the
+   * QUIZ filters organisers out by design, and building the carry from that
+   * dropped the client's own contact at every boundary — rejoined as an
+   * ordinary contestant, on the leaderboard and on the projector, with the
+   * back channel gone mid-event.
+   */
+  everyone() {
+    return Object.values(this.state.players);
+  }
+
   // ------------------------------------------------------------------ the go
 
   start() {

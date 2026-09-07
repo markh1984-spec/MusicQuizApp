@@ -1051,28 +1051,52 @@ on sending `{ id, name }` for months.
   assertion, verified by putting the fault back. Same argument `src/arcade.js`
   exists for: two copies of one rule is one rule that gets fixed once.
 
-### WHAT A PART BOUNDARY CARRIES — `nightWideOpts()`
+### WHAT A PART BOUNDARY CARRIES — `nightWideOpts()`, and nine things it did not
 
-A running order builds a FRESH engine per part, so anything night-wide has to be
-handed over explicitly. Three were not, and each failed silently:
+A running order builds a FRESH engine per part, so anything night-wide has to
+be handed over explicitly. Every one of these failed silently.
 
 - **`winners`** — vouchers are only issued by the LAST part, the one that never
-  received it, so the picker was 100% inert on every running order. Asked for one
-  winner, three drinks went out.
+  received it, so the picker was 100% inert: asked for one winner, three drinks
+  went out.
 - **`lobbyGames`** — *"Let them choose"* switched itself off after part one.
-  **This is not the same as `lobbyGame`, which must still NOT carry**: that one
-  is a RESOLVED id indistinguishable from a choice; this one IS the choice.
 - **THE TEAMS, AND THE MAP GOES ON BEFORE ANYBODY IS SEEDED.** `join()` deals a
-  random-mode player the moment it is called, so seeding first re-deals the whole
-  room — a fresh deal, which `teams.js` forbids. A team night became an
-  individual one mid-evening with every phone drawing a picker against an empty
-  list.
-- **`archivedAs` CARRIES TOO, so an evening files ONCE.** Bingo's *Finish* is a
-  deliberate escape hatch and stays one; what was wrong is that the flag stopping
-  a second archive lived on a state the boundary throws away. Two rows in Past
-  gigs, two headcounts, two league contributions, for one night. **The quiz's
-  "Stop the quiz" is not drawn while another part is queued** — its confirm
-  promises Back undoes it, and Back does not undo an archive or a voucher.
+  random-mode player the moment it is called, so seeding first re-deals the
+  room — which `teams.js` forbids.
+- **`archivedAs`, so an evening files ONCE.** The flag stopping a second
+  archive lived on a state the boundary throws away: two rows in Past gigs and
+  two league contributions, for one night.
+- **THE VOUCHERS, MARKED `carried`** — see the bingo section above.
+- **THE QUIZ'S OWN RESULTS — `state.quizSoFar`, so a night that ENDS ON THE
+  BINGO still files its scores.** The archive reads the LAST part's engine, and
+  `bingo.results()` has no positions and no scores — so `league.js` dropped the
+  night for having `kind: 'bingo'` and the report had no podium. **The night is
+  filed as the QUIZ it was, with the bingo named in `parts`**: `kind` moves
+  with the board, or the league holds a quiz's scores and refuses to read
+  them.
+- **`state.removed`, which IS rule 5.** A fresh engine starts with an empty
+  list, so the phone the host threw out was told `rejoin` rather than `kicked`
+  and walked back in with the same name and a live card.
+- **THE ORGANISERS — `everyone()`, never `playerList()`**, which filters them
+  out by design. The client's own contact rejoined as a contestant: on the
+  leaderboard, on the projector, back channel gone mid-event. **Put back after
+  `join()`, like the token.**
+- **THE HOST'S REQUEST, NEVER THE RESOLUTION — `lobbyGameWanted`.**
+  `state.lobbyGame` is a resolved id indistinguishable from a choice, so
+  carrying THAT turns "no preference" into a permanent override; leaving it out
+  lost a PINNED game from part two while the bar still named it. **And the list
+  is ROTATED so the kind's own default leads** — a bingo interlude's chooser
+  opened on Maze Mouth, the quiz's default.
+- **AND A COMPOSED PART NAMES ITS `sources`.** `~tonight` matches no pack on any
+  shelf, so every quiz played inside a running order read as **"Never played
+  here"** at the venue that had just heard it.
+
+**AND `moreToCome()` EXISTS NOW.** `host.js` had said *"the server refuses it
+as well"* since running orders were built and there was no such function — **a
+comment that claims the opposite is where the next bug hides.** Any stale
+control view still draws *Stop the quiz*: night filed two hours early, a real
+voucher to whoever led after round one. **Bingo's `Finish` is deliberately NOT
+guarded** — it is the stated escape hatch and its confirm names what it costs.
 
 ### EVERY READER AND WRITER OF `leagues-published.json` USES `galleryRoomFor`
 
@@ -3464,24 +3488,18 @@ having a nights section."*
 
 `Session.launchRunningOrder()`/`advanceOrder()` in `src/session.js`. **NO
 `engine.js` OR `bingo.js` CHANGES.** The boundary between parts is the pause
-every night already has — a composed quiz's own `ROUND_BOARD` after its last
-round, bingo's own `WON` — so the control view offers **"Continue to the
-bingo/quiz"** there instead of next/finish, and an intermediate part simply
-never reaches FINAL/FINISHED: never archived, quiz prizes never issued early.
-**Roster carries via a real `join()` on the fresh engine** (a bingo player
-gets a real card, a quiz player real fields), with the TOKEN patched on
-afterwards — `join()` always mints a fresh one, which would silently strand
-the phone's own stored token — and the SCORE patched in for a quiz part only,
-held in `this.carriedScores` across a bingo interlude that has no score field
-of its own. **THE LOBBY GAME MUST NOT CARRY FORWARD** — found live: it must
-re-resolve per part, or a resolved default from part one becomes a permanent
-override the moment a kind changes. Every pack in every part is loaded before
-ANY of them launches, or a deleted pack in part three throws in front of the
-room hours later. Two ways in: a saved SHOW's "Add a bingo game"/"Add a quiz"
-editor, or — the Tonight row itself, since 20 August 2026 — a bingo pack
-dragged straight in and a round dot dragged OUT of its pack into its own
-slot (`console-tonight-mix.js`/`-ui.js`; `lbSlots`, `null` on every ordinary
-night). Reasoning: **[`docs/console.md`](docs/console.md)**.
+every night already has — a composed quiz's own `ROUND_BOARD`, bingo's own
+`WON` — so the control view offers **"Continue to the bingo/quiz"** there, and
+an intermediate part never reaches FINAL/FINISHED: never archived, quiz prizes
+never issued early. **Roster carries via a real `join()` on the fresh engine**,
+with the TOKEN patched on afterwards — `join()` mints a fresh one, which would
+strand the phone's own — and the SCORE patched in for a quiz part only, held in
+`this.carriedScores` across a bingo interlude that has no score field. Every
+pack in every part is loaded before ANY of them launches, or a deleted pack in
+part three throws in front of the room hours later. Two ways in: a saved
+SHOW's editor, or the Tonight row itself (`console-tonight-mix.js`/`-ui.js`;
+`lbSlots`, `null` on every ordinary night).
+**[`docs/console.md`](docs/console.md)**.
 
 ### A PACK ARRIVES AS ITS ROUNDS — one tile each, and the launch collapses back
 
@@ -3492,37 +3510,31 @@ slots."*
 
 - **NOTHING IS COPIED, WHICH IS WHY THIS WAS CHEAP.** A slot has always held
   `packId` plus round INDEXES, so a burst tile still points at the one file on
-  disk — rule 11 needed no new thought, and *"losing the pack"* is only about
-  how a night is PLAYED. The pack is still the unit on the shelf.
+  disk — rule 11 needed no new thought. The pack is still the unit on the
+  shelf.
 - **THE ROW CHANGED AND THE NIGHT DID NOT** — `segmentsFromSlots()` merges
   consecutive quiz slots into ONE segment, so three tiles compile to exactly
-  what one tile compiled to. A hole between them does not split it either.
-  There is a test asserting the two are `deepEqual`.
+  what one tile compiled to; a hole does not split it either. Tested
+  `deepEqual`.
 - **AND `simpleNight()` IS WHAT KEEPS EVERY GIG OFF THE RUNNING-ORDER ROUTE.**
-  Bursting means `lbSlots` exists on every quiz night rather than only a
-  rearranged one — and `lbSlots` alone used to be enough to send the night down
-  `/api/host/launchOrder`. That would have moved the protected path for every
-  booking in exchange for a change to the LAYOUT. So the row bursts and the
-  launch collapses: one pack, rounds ascending, nothing else — and the ordinary
-  call goes out with no `order` at all, **verified by reading the request body
-  out of a real browser**, which is the rule `winners` taught. **ASCENDING is
-  the whole test**: the ordinary launch plays a pack in the PACK'S order, so
-  rounds reordered is a night it cannot express and rightly keeps the segments.
-- **THE ROW GROWS A WHOLE ROW AT A TIME**, six then twelve, capped at eighteen.
-  Two of his rules pull opposite ways here — *"I need 6 regardless of what's in
-  the bay"* against *as little clutter as possible* — and filling out to the
-  next multiple of six honours both. **The grid is already six columns, so the
-  second row needed no CSS at all.**
+  `lbSlots` alone used to be enough to send a night down
+  `/api/host/launchOrder`, which after bursting would have moved the protected
+  path for every booking in exchange for a change to the LAYOUT. The row bursts
+  and the launch collapses: one pack, rounds ascending, nothing else, with no
+  `order` at all — **verified by reading the request body out of a real
+  browser**. **ASCENDING is the whole test**: rounds reordered is a night the
+  ordinary launch cannot express and rightly keeps the segments.
+- **THE ROW GROWS A WHOLE ROW AT A TIME**, six then twelve, capped at eighteen
+  — *"I need 6 regardless of what's in the bay"* against *as little clutter as
+  possible*, and filling out to the next multiple of six honours both.
 - **A TILE NAMES THE ROUND, WITH THE PACK UNDER IT** — a row of tiles all
-  reading "1980s Pop" says nothing about the order of the evening, which is the
-  one thing the row is for. **The "Round One — " is trimmed off**, like
-  `shortTitle()` trims a trailing "Quiz": left whole, three tiles read "Round
-  One —…", "Round Two —…" with the distinguishing half clipped, measured at the
-  real 167px tile. **And the sub is dropped when it only repeats the name.**
-- **MOVING A ROUND IS MOVING ITS TILE NOW** — with one round to a tile there
-  are no dots to lift, and the tile's own grip is the handle. `drag-check.mjs`
-  was rewritten to that gesture and to COUNTING tiles, because a pack's round
-  count is a fact about a JSON file that a drag check has no business pinning.
+  reading "1980s Pop" says nothing about the order of the evening. **The "Round
+  One — " is trimmed off**: left whole, three tiles read "Round One —…", "Round
+  Two —…" with the distinguishing half clipped at the real 167px tile. **And
+  the sub is dropped when it only repeats the name.**
+- **MOVING A ROUND IS MOVING ITS TILE NOW** — the tile's own grip is the
+  handle. `drag-check.mjs` COUNTS tiles rather than pinning a pack's round
+  count, which is a fact about a JSON file.
 
 ### A PACK WEARS ITS OWN SUBJECT
 
@@ -3645,37 +3657,32 @@ needs to be factored in."* Nothing new is collected; the archive has held the
 venue and the pack of every filed night for months and nothing joined them.
 
 - **A GLOBAL "last played" ANSWERS THE WRONG QUESTION.** It says *have I run
-  this lately*, which is a fact about the diary. The shelf is for *will this
-  room have heard it*, which is a fact about one venue — so the 80s quiz run
-  at The Crown on Tuesday is completely fresh at The Station Tap on Thursday,
-  and the old ranking buried it at both.
+  this lately*, a fact about the diary. The shelf is for *will this room have
+  heard it*, a fact about one venue — so the 80s quiz run at The Crown on
+  Tuesday is fresh at The Station Tap on Thursday, and the old ranking buried
+  it at both.
 - **NEVER PLAYED HERE READS AS NEVER PLAYED, FULL STOP** — 0, not the global
   date, or the feature does nothing.
-- **WITH NO VENUE CHOSEN IT FALLS BACK TO THE GLOBAL DATE.** Nothing is known
-  about where tonight is, so the old question is the best one left — and that
-  night behaves exactly as it always did.
+- **WITH NO VENUE CHOSEN IT FALLS BACK TO THE GLOBAL DATE** — nothing is known
+  about where tonight is, so that night behaves exactly as it always did.
 - **A NIGHT IS FILED UNDER ITS ID *AND* ITS NAME, and the reader asks under
-  both.** This is the split `venueHeadcounts()` was already bitten by: a venue
-  picked off the book lands under `id:xyz` and the same pub typed freehand
-  under `the crown`. Every night from before venue ids is in the second group.
-  **The reconciling has to be the READER's job** — nothing on a hand-typed
-  night says which book entry it meant, and only the Venues book joins the two.
-- **THE ORDER AND ITS EXPLANATION COME FROM ONE PLACE.** `whyFresh()` says
-  "Never played here" where it ranked on "here"; `playedLine()` LEADS with the
-  local answer and lets the count follow, because *"Played 4 times"* over a
-  card at the FRONT of the shelf reads as a bug. **The two halves must never
-  contradict**: "Never played · here 2 days ago" is a sentence this app should
-  not be able to print.
+  both** — a venue picked off the book lands under `id:xyz` and the same pub
+  typed freehand under `the crown`. **The reconciling has to be the READER's
+  job**: nothing on a hand-typed night says which book entry it meant.
+- **THE ORDER AND ITS EXPLANATION COME FROM ONE PLACE.** `playedLine()` LEADS
+  with the local answer and lets the count follow, because *"Played 4 times"*
+  over a card at the FRONT of the shelf reads as a bug. **The two halves must
+  never contradict**: "Never played · here 2 days ago" is a sentence this app
+  should not be able to print.
 - **CHANGING THE VENUE RE-RENDERS THE SHELF.** `chooseVenue()` repainted the
-  bar alone, which left a grid ordered for the pub before it — silently, with
+  bar alone, leaving a grid ordered for the pub before it — silently, with
   every card real and nothing thrown.
 - **The arithmetic is on the SERVER and the venue question is in the BROWSER.**
   `src/heard.js` takes what `mergeGigs()` returns — same input as the
-  headcounts, so the 6am roll-over and "a quiz and the bingo after it are one
-  night" come free — and rides with the library rather than being fetched per
-  venue change, because the shelf re-ranks on every one of them.
-- **A MIXED NIGHT COUNTS EVERY PART**, not just the one whose ending reached
-  the archive, or a bingo interlude reads as never played here for ever.
+  headcounts — and rides with the library rather than being fetched per venue
+  change, because the shelf re-ranks on every one.
+- **A MIXED NIGHT COUNTS EVERY PART**, or a bingo interlude reads as never
+  played here for ever.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
