@@ -156,7 +156,12 @@ function draw(next) {
     document.title = `${state.brand} — Big Screen`;
   }
   quizTitleEl.textContent = state.quizTitle || state.title || 'Music Quiz';
-  playerPillEl.textContent = `${state.playerCount} playing`;
+  /*
+   * PEOPLE, NOT BOARD ROWS. `playerCount` is the number of rows on the
+   * leaderboard, which on a team night is the number of TABLES — so a room of
+   * sixty was told "6 playing". `phoneCount` rides only when the two differ.
+   */
+  playerPillEl.textContent = `${state.phoneCount ?? state.playerCount} playing`;
 
   // Which game is running decides which set of cards to draw from. Everything
   // else on this page — the connection, the clock, the swap animation — is
@@ -1068,7 +1073,9 @@ function updateQuestion(s) {
   // Answers-in counter, which builds tension without giving anything away.
   const counter = document.getElementById('answeredCount');
   if (counter) {
-    counter.textContent = revealing ? '' : `${s.answeredCount || 0} of ${s.playerCount} answered`;
+    // BOTH HALVES COUNT PHONES. `answeredCount` always did and `playerCount`
+    // never has, so a team night read "60 of 6 answered", six feet wide.
+    counter.textContent = revealing ? '' : `${s.answeredCount || 0} of ${s.phoneCount ?? s.playerCount} answered`;
   }
 
   // The picture gives itself away over the life of the question, so early

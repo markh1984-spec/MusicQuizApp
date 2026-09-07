@@ -936,11 +936,10 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   that sets a night up but never lets anybody in is measuring a console nobody
   uses** — it joins two phones now and asserts the line is there first.
 - **WHAT IS PLAYING NOW IS WORDED IN ONE PLACE — `nowPlaying()`.** There were
-  THREE, one fact and three sentences. **The SHORT form is a different job, not
-  an abbreviation**: the bar says *something is on and how many are in* from
-  any door, and the TITLE stays in the panel. **Under 1050px the live line
-  stands down** — it is the only thing in that bar that summarises something
-  else on screen, so it is the only thing that may go.
+  THREE. **The SHORT form is a different job, not an abbreviation**: the bar
+  says *something is on and how many are in* from any door, and the TITLE stays
+  in the panel. **Under 1050px the live line stands down** — it is the only
+  thing in that bar that summarises something else on screen.
 - **THE BAR GOES ON A DIET BELOW 1180px; WRAPPING IS ONLY THE FALLBACK.** Two
   rows read as a second bar, and under the fixed frame every row the header
   takes comes off the tab column. So the **wordmark goes and the mark stays**,
@@ -1248,22 +1247,17 @@ board), `src/arcade.js` (the scores, shared by both engines),
   yet, where refusing the launch costs the night. **The phone honours
   `s.lobbyGame` and re-checks nothing**, or the console and the room disagree.
 - **THE TIER GATES HOW MANY GAMES, NOT WHETHER THERE IS ONE.** Bronze holds the
-  two that ship and they are also the two defaults; higher tiers hold what is
-  added after. **THESE ARE THE ONLY THING IN THE APP GATED BY TIER RANK RATHER
-  THAN A `FEATURES` FLAG, so they ask `tierInUse()` and never `tierFor()`** —
-  a comped account and a live trial hold every FEATURE while `tier` still reads
-  `bronze`, which is what it is paid for. Reported as *"still only allowing me
-  to play maze mouth even when main account is gold"*: the owner's own
-  quizmaster account is comped, fifteen features out of fifteen, and the picker
-  locked three of the five games while the launch route — which DROPS a game
-  above the tier rather than refusing the night — silently swapped it for the
-  default every time. **Nothing threw and the console agreed with the room,
-  because both were wrong the same way.** A tier PREVIEW still downgrades:
-  `whoIs()` clears `comped` when it applies one, precisely so this cannot win
-  it back. **Do not sell the game itself away from the bottom tier** — a
-  phone with a game on it stays in the FOREGROUND, so sixty connections do not
-  all come back at the moment the join gate is busiest. That is a RELIABILITY
-  feature dressed as a toy. **Locked games are SHOWN, not filtered out.**
+  two that ship and they are also the two defaults. **THESE ARE THE ONLY THING
+  IN THE APP GATED BY TIER RANK RATHER THAN A `FEATURES` FLAG, so they ask
+  `tierInUse()` and never `tierFor()`** — a comped account and a live trial
+  hold every FEATURE while `tier` still reads `bronze`. Reported as *"still
+  only allowing me to play maze mouth even when main account is gold"*:
+  **nothing threw and the console agreed with the room, because both were wrong
+  the same way.** A tier PREVIEW still downgrades. **Do not sell the game itself
+  away from the bottom tier** — a phone with a game on it stays in the
+  FOREGROUND, so sixty connections do not all come back at the moment the join
+  gate is busiest: a RELIABILITY feature dressed as a toy. **Locked games are
+  SHOWN, not filtered out.**
 - **THEY ARE CALLED MAZE MOUTH, RALLY, TAILBACK, QUICK DRAW AND PILE UP.** The names,
   mazes and characters of the things the first three resemble are Namco's and
   Atari's, and this app is SOLD — a legal line, not a taste one. Say whatever
@@ -1368,11 +1362,10 @@ board), `src/arcade.js` (the scores, shared by both engines),
 - **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — `lobby-board.js`, one
   file for both projectors, inside the white QR panel and UNDER the code, which
   nothing in this app may dim. **It was computed and never drawn for as long as
-  the feature existed**: both engines put it in the payload, there was a test
-  asserting the payload had it, this file said it was on screen, and no
-  projector ever read the field — while the phone's own button promised *"Top
-  scores go on the big screen"*. **A test that the payload is right proves
-  nothing about whether anybody drew it.**
+  the feature existed** — a test asserted the payload had it and no projector
+  ever read the field, while the phone promised *"Top scores go on the big
+  screen"*. **A test that the payload is right proves nothing about whether
+  anybody drew it.**
 
 Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
@@ -1498,14 +1491,14 @@ people play as a team and other nights it's just more fun to be random."*
   (a readable board). Constants with a note, not settings.
 - **A TEAM OF ONE IS NOT UNFAIR, which is why the lopsided moment is allowed.**
   Scores are AVERAGED, so a lone player is on the same scale as a four. Without
-  averaging this dealing would need a shuffle at kick-off, and a shuffle would
-  break the rule above it.
+  averaging, the dealing would need a shuffle at kick-off — which breaks the
+  rule above it.
 - **A DEALT TEAM CANNOT BE SWAPPED** — `joinTeam` refuses outright in random
   mode. The phone draws no picker, and the first thing two friends would do is
   find each other again.
-- **THE LABELS NAME THE CHOICE, NOT THE MECHANISM.** They read *"One phone
-  each"* and *"Teams — several phones, scores averaged"*, which describes the
-  engine; from the player's side the question is who you are playing WITH.
+- **THE LABELS NAME THE CHOICE, NOT THE MECHANISM** — *"One phone each"* and
+  *"Teams — several phones, scores averaged"*: from the player's side the
+  question is who you are playing WITH.
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
@@ -1830,48 +1823,39 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   PAYS NOTHING BELOW SEVENTH**: it used to floor at 1, and keeping that too
   would pay one point twice under two names. Eighth is still worth exactly 1,
   as the attendance point. A fortnight away costs 2 rather than 20.
-- **A TEAM'S BEST SIX NIGHTS COUNT — a running total is not the league.**
-  *"So there's incentive to come every week but also doesn't make it pointless
-  to come if you had to miss 1-2 weeks."* A cumulative table punishes absence
-  ABSOLUTELY, so the team works out the season is gone and stops coming — the
-  retention argument running backwards. **AND A PLAIN AVERAGE BREAKS THE OTHER
-  HALF, which is why it was offered and not taken**: mean points per night puts
-  a team that played ONCE AND WON above one that won five of ten. **SUMMED, NOT
-  DIVIDED**: dividing by a fixed six changes no position, and dividing by
-  nights PLAYED is the average again. `COUNTING_NIGHTS = 6` is a constant with
-  a note, like the season.
+- **A TEAM'S BEST SIX NIGHTS COUNT — a running total is not the league.** A
+  cumulative table punishes absence ABSOLUTELY, so the team works out the season
+  is gone and stops coming — the retention argument running backwards. **AND A
+  PLAIN AVERAGE BREAKS THE OTHER HALF, which is why it was offered and not
+  taken**: mean points per night puts a team that played ONCE AND WON above one
+  that won five of ten. **SUMMED, NOT DIVIDED.** `COUNTING_NIGHTS = 6` is a
+  constant with a note, like the season.
 - **A NAME IS FILTERED AT THE DOOR, NEVER IN THE ROOM** — `clean-names.js`,
   off a live table with a racial slur ninth in it. The projector, the phones
-  and the console are UNCHANGED and `cleanTeamName()` is untouched; only the
-  public page and the report mask anything. **ON THE SERVER, so the word never
-  reaches the wire.** **MASKED, NEVER DROPPED** ("Name hidden"): dropping the
-  row moves everybody up a place and lies about the season — a VIEW, like the
-  two-screens rule. **IT ERRS STRICT** — a false positive hides one name and
-  the console says so; a false negative is a slur under his brand in public.
-  **WHOLE WORDS FOR ORDINARY PROFANITY**, or it eats Scunthorpe; the SLUR list
-  is matched AGAIN with the spaces stripped, which catches `n i g g a` —
-  **never do that pass on the ordinary list.** **THE CONSOLE SHOWS THE REAL
-  NAME AND MARKS IT**, or a name vanishes off a published table with no way to
-  tell which.
-- **AND A HUMAN OVERRULES THE LIST, IN BOTH DIRECTIONS** — *"we're erring on
-  the side of caution but I can override it."* **BOTH directions, because it is
-  wrong both ways**: it hides "The Pen Is Mightier" and publishes a spoonerism
-  it cannot see. Keyed by `teamKey()`, so a ruling follows the team all season.
-  **A RULING THAT ONLY RESTATES THE FILTER IS CLEARED, NOT STORED**, or a later
-  change to the word list silently cannot reach that name. **ONE CONTROL PER
-  TABLE, FOLDED**, never a button per row — the clutter rule exactly. **THE
-  ROW'S KEY TRAVELS WITH THE ROW**, so the browser needs no second copy of
-  `teamKey()` and the library stays free of the GitHub read.
+  and the console are UNCHANGED; only the public page and the report mask
+  anything. **ON THE SERVER, so the word never reaches the wire.** **MASKED,
+  NEVER DROPPED** ("Name hidden"): dropping the row moves everybody up a place
+  and lies about the season. **IT ERRS STRICT** — a false positive hides one
+  name and the console says so; a false negative is a slur under his brand in
+  public. **WHOLE WORDS FOR ORDINARY PROFANITY**, or it eats Scunthorpe; the
+  SLUR list is matched AGAIN with the spaces stripped, which catches
+  `n i g g a` — **never do that pass on the ordinary list.** **THE CONSOLE
+  SHOWS THE REAL NAME AND MARKS IT**, or a name vanishes off a published table
+  with no way to tell which.
+- **AND A HUMAN OVERRULES THE LIST, IN BOTH DIRECTIONS** — it hides "The Pen
+  Is Mightier" and publishes a spoonerism it cannot see. Keyed by `teamKey()`,
+  so a ruling follows the team all season. **A RULING THAT ONLY RESTATES THE
+  FILTER IS CLEARED, NOT STORED**, or a later change to the word list silently
+  cannot reach that name. **ONE CONTROL PER TABLE, FOLDED**, never a button per
+  row. **THE ROW'S KEY TRAVELS WITH THE ROW**, so the browser needs no second
+  copy of `teamKey()`.
 - **ONE ROOM FOR THE WHOLE PHOTO STORY — `galleryRoomFor()`.** Photos are filed
   per room and the gallery reads the OWNER'S OWN QUIZMASTER ROOM, never
-  `HOUSE`; reading the wrong one showed a full night as an empty page. The
-  console did exactly that on the write side: it read
-  and wrote through `roomForHost()` (HOUSE for the owner and the host key) while
-  the gallery reads the owner's own quizmaster room: a night could be published
-  into a folder the page never looks at, be told it worked, and read back as
-  *"Not published"*. **The hazard was written down above `galleryRoomId()` and
-  left** — which is how a noted hazard becomes a bug report. No change for an
-  ordinary quizmaster: their room id is never HOUSE.
+  `HOUSE`. The console wrote through `roomForHost()` instead, so a night could
+  be published into a folder the page never looks at, be told it worked, and
+  read back as *"Not published"*. **The hazard was written down above
+  `galleryRoomId()` and left** — which is how a noted hazard becomes a bug
+  report. No change for an ordinary quizmaster: their room id is never HOUSE.
 - **THE PRIVATE REPO IS TESTABLE NOW** — `test/helpers/photo-repo-stub.mjs` via
   `node --import`: real server, fixture network. **Publishing lived behind a
   token the suite must never need, so nothing had ever run it.** The loop test
@@ -1883,19 +1867,16 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   **AND THE BROWSER'S QUEUE CANNOT COVER IT**: the press that overlaps a
   publish is the one it has not started. Order it where the FILE is
 - **A READ THAT FAILED IS NOT AN EMPTY FOLDER — `tryGetFile()` /
-  `tryListDir()`.** `getFile()` answers `null` and `listDir()` `[]` for a 404,
-  a 403, a 500 and a dropped connection alike — right for ninety callers,
-  **data loss for the four that LATCH**: every `ensure*Restored` added to its
-  Set BEFORE the await, so one 403 after a deploy marked a room restored with
-  nothing restored (league empty, Past gigs zero nights) for the process's
-  lifetime, backup intact, nothing logged. **A 404 is an ANSWER;
-  anything else is a failure to LOOK.** `restoreOnce()` latches on the way OUT
-  and holds an in-flight promise per room. **ONE IMPLEMENTATION** —
-  `getFile`/`listDir` delegate, ninety call sites unchanged. **The photo cache
-  had the same shape and REMEMBERED it**: one 403 on the first visit gave
-  everybody after it an empty page, and the index drops a night with nothing
-  showing, so it vanished rather than looking thin. A failed listing is not
-  cached; **no TTL, which would still serve the wrong answer for its
+  `tryListDir()`.** `getFile()` answers `null` and `listDir()` `[]` for a 404, a
+  403, a 500 and a dropped connection alike — right for ninety callers, **data
+  loss for the four that LATCH**: every `ensure*Restored` added to its Set
+  BEFORE the await, so one 403 after a deploy marked a room restored with
+  nothing restored for the process's lifetime, backup intact, nothing logged.
+  **A 404 is an ANSWER; anything else is a failure to LOOK.** `restoreOnce()`
+  latches on the way OUT and holds an in-flight promise per room. **ONE
+  IMPLEMENTATION** — `getFile`/`listDir` delegate, ninety call sites unchanged.
+  **The photo cache had the same shape and REMEMBERED it.** A failed listing is
+  not cached; **no TTL, which would still serve the wrong answer for its
   length.**
 - **A READ-BACK SHA CAN BE STALE — `GitHub 409` reached a live console.** The
   Contents API is served from a replica, so a `GET` moments after a 200 `PUT`
@@ -1929,8 +1910,7 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   is a public page per quizmaster. One thing for both would serve neither.
   - **A REPORT SAYS WHAT THE ROOM SAW THAT NIGHT, not what is true today** —
     `leagueAfter()` winds the night list AND the season window back to that
-    evening; a snapshot that has moved on is not evidence. One function, one
-    clock argument, many questions.
+    evening; a snapshot that has moved on is not evidence.
   - **A PUBLIC PAGE IS A PUBLISH, PER VENUE, FAILING CLOSED** —
     `league-publish.js`, the gallery's shape exactly, in the private repo
     because `data/` is wiped on every deploy. **NAMES AND POINTS, NEVER
@@ -1938,11 +1918,11 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
     next one added is a photograph on a public page.
   - **THE NEXT QUIZ DATE IS THE LOUDEST THING UNDER THE TABLE** — a team lying
     fourth wants to know when it can do something about it. It writes itself
-    from the venue's usual night, like the comeback slide.
+    from the venue's usual night.
   - **AN ASYNC PAINT LOOKS WHERE THE THING IS, NOT WHERE IT WAS MADE.** The
     publish control queried the `DocumentFragment` it was built in, which
-    `render()` had already emptied into the page — two tables drew with no
-    control on them and nothing threw.
+    `render()` had already emptied into the page — no control drew, nothing
+    threw.
 
 ### EVERY DOOR'S BAY IS THE LAUNCH BAY'S SIZE
 
@@ -1965,8 +1945,7 @@ moves the tab column and everything below it.
   panel on every door.
 - **A FIXED BOX IS WHAT LETS THE CONTENT STOP WORRYING.** A wall of any size
   and a league of any length SCROLL INSIDE IT, so nothing needs a row cap or an
-  "and N more" line — which is the opposite of the answer `.night-strip` needed
-  when the bay sized to its content.
+  "and N more" line.
 
 ### EVERY BAY IS A RAIL AND WHAT IT PICKED — `console-bay.js`
 
@@ -1989,18 +1968,15 @@ with photographs).
   Nothing in it deletes or launches. **The Photos rail's P publishes a night in
   one press**, and **the reason the rule existed is kept by the lamp also
   PICKING** — the photographs land in the bay as it goes public, so nobody
-  publishes strangers' faces unseen. **Opt-in per item**, so no other rail grows
-  one, and **the tab body's panel GOES**: two controls for one job is the
-  collision. **The night's address is in the bay HEAD, from one
-  `galleryAddress()`** — two copies of a URL is how a link works in one place
-  and 404s in the other — and **it says which kind it is**, *see it* versus
-  *preview*, because an owner can open a draft.
-- **COMPARTMENTALISED BY PUB, AND THE PUB FOLDS** — *"can this section be
-  collapsible?"* **Group by the pub FIRST, then order within it**: printing the
-  venue whenever it changed in date order drew "The Crown" twice with another
-  pub between, which reads as two pubs of one name. **FOUR TO A GROUP, the rest
-  named as being below** — the rail is the night you are thinking about; the
-  tab body is the archive.
+  publishes strangers' faces unseen. **Opt-in per item**, and **the tab body's
+  panel GOES**: two controls for one job is the collision. **The night's address
+  is in the bay HEAD, from one `galleryAddress()`**, and **it says which kind it
+  is** — *see it* versus *preview*, because an owner can open a draft.
+- **COMPARTMENTALISED BY PUB, AND THE PUB FOLDS.** **Group by the pub FIRST,
+  then order within it**: printing the venue whenever it changed in date order
+  drew "The Crown" twice with another pub between. **FOUR TO A GROUP, the rest
+  named as being below** — the rail is the night you are thinking about; the tab
+  body is the archive.
 - **WHAT IS REMEMBERED WINS, ALWAYS — the first build had it the other way and
   the control was DEAD.** It FORCED a group open whenever it held the picked
   row, so pressing its heading set the flag, re-rendered and the override put
@@ -2012,9 +1988,9 @@ with photographs).
   Map keyed by rail AND group** — the bay is rebuilt on every push, and "The
   Crown" is a group on two doors.
 - **NO `title` ANYWHERE IN THE RAIL — the names WRAP to two lines instead.** A
-  native tooltip is an unstyled box that lands over the rows beneath it, and it
-  was only there because the name was ellipsised. The heading drops a rung in
-  size too: level with the rows, the two read as one undivided list.
+  native tooltip is an unstyled box that lands over the rows beneath it. The
+  heading drops a rung in size too: level with the rows, the two read as one
+  undivided list.
 - **`.bay-rail > * { flex: 0 0 auto }` IS LOAD-BEARING.** A flex column shrinks
   its children when the content overflows, and the rail always overflows — it
   scrolls. The rows survived on `min-height: 44px`; the pub headings had no
@@ -2022,8 +1998,7 @@ with photographs).
   compartmentalised rail drew as one undivided list and nothing threw. Found by
   measuring `getClientRects()`, not by counting elements.
 - **THE DRAGS SURVIVED because they were on the PANEL, not on a slot inside
-  it** — and each empty state keeps its drop zone, since an empty rail still
-  has to say what the panel is for.
+  it** — and each empty state keeps its drop zone.
 
 ### ONE PUB IS ONE LEAGUE — the id key and the typed name are the same room
 
@@ -2311,6 +2286,39 @@ the prizes."*
   phones over real HTTP instead.
 
 Full reasoning, with the measurements: **[`docs/bingo.md`](docs/bingo.md)**.
+
+### A TEAM NIGHT IS ONE ENTITY PER BOARD ROW, EVERYWHERE — `boardIdFor()`
+
+It was threaded through the phone's POSITION and nothing else, so one cause had
+six symptoms, all live for the whole of any team night and none of them
+throwing.
+
+- **`playerCount` IS BOARD ROWS AND `answeredCount` IS PHONES, AND THEY WERE
+  PRINTED IN ONE SENTENCE** — *"60 of 6 answered"*, six feet wide in a dark
+  pub, beside a pill saying *"6 playing"* to a room of sixty. **`phoneCount` is
+  a SECOND field, spread in only when the two differ**, so an ordinary night's
+  payload is byte-for-byte what it was.
+- **A PHONE'S OWN HEADER IS ITS TEAM'S ROW — score, key, name and position in
+  one unit.** It read **1,390** while the projector said **695**, and `you.key`
+  never matched a board row, so `play.js`'s fallback drew **every phone its own
+  team twice**. **AND THE TEAM'S SCORE IS FROZEN FOR THE LENGTH OF A QUESTION
+  TOO**: an average built from live scores moves the instant a team-mate
+  answers, which is the `scoreBefore` leak arriving through the average.
+- **THE HOST'S PLAYING PANEL LISTS PHONES, because that is what its controls
+  act on.** Built from `leaderboard()`, every row carried a `team:` id and
+  `adjustScore`/`renamePlayer`/`removePlayer` answered `{ok:false}` **in
+  silence**. Same line gave every team an **"off" badge all night**, no team a
+  **tick**, and an idle count of **0** where the button would have removed
+  nine. **The ordinary night's rows are untouched, with a test pinning the
+  field list.**
+- **AND THE HOST IS TOLD WHO THE ROOM KNOWS — `whoIsThat()`.** The fastest
+  finger, `whoPicked` and `wanderedNow` named handsets under a board of teams.
+  **The handset is KEPT beside the team, not folded away** — the tally counts
+  PICKS, so deduplicating would leave the names disagreeing with the number
+  above them. **The fastest finger's `faceKey` stays the INDIVIDUAL'S**: the
+  slide is a photograph of whoever was quickest, and a team has no face.
+
+Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### A PAGE SCROLLS. THE PROJECTOR IS THE ONE THAT DOES NOT
 
@@ -3879,9 +3887,9 @@ account is in [`docs/checks.md`](docs/checks.md):**
   accounts book BEFORE the spawn — `Accounts` reads it once.
 - **A CONTROL THAT REPORTS SUCCESS IT DID NOT HAVE is this repo's commonest
   fault, and `console-controls.mjs` presses one.** Five at once, all green
-  under `node --check`, 1,684 tests and every browser guard — including a
-  rename that DELETED the night. **It makes its own accounts rather than
-  driving the host key**, which saves neither a colour nor a preference.
+  under `node --check` and every browser guard — including a rename that
+  DELETED the night. **It makes its own accounts rather than driving the host
+  key**, which saves neither a colour nor a preference.
 - **NOTHING HERE PRESSED A CONTROL, and a dead one draws perfectly.**
   A gap dial died twice in a week — a lost `import`, then a moved body calling
   the bar's `paintOrder()` from a module without one. Both a `ReferenceError`

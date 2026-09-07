@@ -738,13 +738,34 @@ export class Engine {
     return { ok: true };
   }
 
+  /**
+   * How the HOST should refer to somebody out loud.
+   *
+   * On a team night the room knows TEAM names — the projector's board is teams
+   * and nothing anywhere says "Dave's iPhone". So every host-only list that
+   * names people said somebody the room had never heard of, on a microphone.
+   *
+   * The phone's own name stays after it, because these lists are also how the
+   * host finds a particular handset ("the one at the back that keeps
+   * wandering off"), and because the COUNTS beside them are per-phone: the
+   * option tally counts picks, so folding four phones into one team would
+   * leave the names disagreeing with the number above them, which is the fault
+   * this panel exists to fix wearing a different hat.
+   *
+   * Unchanged on an ordinary night, where there is one name to give.
+   */
+  whoIsThat(player) {
+    const team = this.state.teamPlay && player.teamId && (this.state.teams || {})[player.teamId];
+    return team ? `${team.name} · ${player.name}` : player.name;
+  }
+
   /** Who left the app during the question now on screen. Host view only. */
   wanderedNow() {
     const forQuestion = (this.state.wandered || {})[this.answerKey()] || {};
     return Object.keys(forQuestion)
       .map((id) => this.state.players[id])
       .filter(Boolean)
-      .map((p) => p.name);
+      .map((p) => this.whoIsThat(p));
   }
 
   /**
@@ -1000,9 +1021,87 @@ export class Engine {
     return at ?? this.positionOf(player.id);
   }
 
-  /** How many are playing. Free once the board is built. */
+  /**
+   * WHAT ONE PHONE IS TOLD ABOUT ITSELF — and on a team night that is the
+   * TEAM'S row, not the handset's.
+   *
+   * It used to be a mixture: `score` was the individual's raw total while
+   * `position` and `playerCount` beside it were the team's, and `key` was
+   * `faceKey(playerId)` where every board row is keyed on
+   * `faceKey('team:…')`. Measured on a live team night: the phone's header
+   * read **1,390** while the projector said **695** for the same table, and
+   * the mini board drew *"1 Quizzly Bears 695"* and then, from `play.js`'s
+   * "you are not on this board" fallback, *"1 Daves iPhone 1,390"* — every
+   * phone listing its own team twice, all night. The docstring above
+   * `boardIdFor()` names this exact fault as the one it exists to fix.
+   *
+   * **AND THE TEAM'S SCORE IS FROZEN FOR THE LENGTH OF A QUESTION TOO.** A
+   * team average built from live scores moves the instant a team-mate answers
+   * correctly — which is `scoreBefore`'s leak, arriving through the average
+   * instead of through the total. Summing `scoreToShow()` is what closes it,
+   * and the rounding matches `teamScores()` so the phone and the projector
+   * cannot disagree by a point.
+   */
+  youView(player) {
+    const boardId = this.boardIdFor(player.id);
+    const row = boardId === player.id
+      ? null
+      : this.leaderboard().find((r) => r.id === boardId);
+    return {
+      id: player.id,
+      // Their own public handle — the BOARD's, so the phone can find its own
+      // row on a board that carries keys rather than ids.
+      key: faceKey(boardId),
+      name: row ? row.name : player.name,
+      // Their total as it stood BEFORE this question, while the clock is
+      // running — see `scoreBefore` in `answer()`. Their real total
+      // everywhere else, including the moment the reveal lands.
+      score: row ? this.teamScoreToShow(row) : this.scoreToShow(player),
+      /*
+       * `correctCount` IS DELIBERATELY NOT HERE, and it was a leak.
+       *
+       * The score and the position either side of it are held at what they
+       * were before this question — that is the whole point of
+       * `scoreToShow()`. `correctCount` sat between them reading LIVE, so a
+       * phone that tapped the right answer could count its own ticks going up
+       * several seconds before the projector said anything, and so could the
+       * next table. Nothing in the app ever drew it.
+       */
+      position: this.positionToShow(player),
+      playerCount: this.playerCount(),
+    };
+  }
+
+  /** A team's total as it stood before this question — see `youView()`. */
+  teamScoreToShow(row) {
+    const members = this.playerList().filter((p) => this.boardIdFor(p.id) === row.id);
+    if (!members.length) return row.score;
+    const total = members.reduce((n, p) => n + this.scoreToShow(p), 0);
+    // Rounded exactly as `teamScores()` rounds, or the phone and the board
+    // disagree by a point on the reveal.
+    return Math.round(total / members.length);
+  }
+
+  /** How many ROWS are on the board. Free once the board is built. */
   playerCount() {
     return this.leaderboard().length;
+  }
+
+  /**
+   * How many PHONES are in the room — which on a team night is a different
+   * number from the one above, and they were being printed in one sentence.
+   *
+   * `answeredCount` has always counted phones. `playerCount` counts board
+   * rows. So the projector said **"60 of 6 answered"**, six feet wide, in a
+   * dark pub, for the whole of any team night — and the pill beside it said
+   * "6 playing" to a room of sixty people.
+   *
+   * Two numbers about two different things, which is why the answer is a
+   * second field rather than changing what the first one means: `playerCount`
+   * pairs with the LEADERBOARD and is right there.
+   */
+  phoneCount() {
+    return this.playerList().length;
   }
 
   forgetBoard() {
@@ -2032,11 +2131,21 @@ export class Engine {
     }
     if (!best) return null;
     const p = this.state.players[best.playerId];
+    /*
+     * THE NAME IS THE ONE ON THE BOARD; THE FACE IS THE ONE THAT ANSWERED.
+     *
+     * On a team night the projector's board is teams, so naming the handset
+     * put somebody the room had never heard of under the board that names
+     * everybody it has. The `faceKey` deliberately stays the INDIVIDUAL'S —
+     * the photo is of the person who was quickest, which is the whole point of
+     * the slide, and a team has no face of its own.
+     */
+    const row = p ? this.leaderboard().find((r) => r.id === this.boardIdFor(p.id)) : null;
     return {
       // Safe anywhere. The real id rides along only for the host.
       faceKey: faceKey(best.playerId),
       ...(withId ? { playerId: best.playerId } : {}),
-      name: p ? p.name : 'Unknown',
+      name: row ? row.name : (p ? p.name : 'Unknown'),
       seconds: best.responseSeconds,
       points: best.points,
     };
@@ -2069,6 +2178,15 @@ export class Engine {
       roundTitle: round ? round.title : '',
       roundType: round ? round.type : null,
       playerCount: this.playerCount(),
+      /*
+       * AND HOW MANY PHONES, when that is a different number.
+       *
+       * Spread in only on a team night, so an ordinary night's payload is
+       * byte-for-byte what it was and `pub-unchanged` still says IDENTICAL
+       * with no `--ignore` — the same discipline as `winners` and the
+       * countdown.
+       */
+      ...(this.phoneCount() === this.playerCount() ? {} : { phoneCount: this.phoneCount() }),
       ...this.startsExtra(),
     };
   }
@@ -2503,7 +2621,7 @@ export class Engine {
         ? a.optionIndexes
         : [a.optionIndex];
       for (const i of picks) {
-        if (byOption[i]) byOption[i].push({ name: player.name, correct: Boolean(a.correct) });
+        if (byOption[i]) byOption[i].push({ name: this.whoIsThat(player), correct: Boolean(a.correct) });
       }
     }
 
@@ -2513,7 +2631,7 @@ export class Engine {
       // wrong answers on a mic.
       missing: this.playerList()
         .filter((p) => !answered.has(p.id))
-        .map((p) => p.name),
+        .map((p) => this.whoIsThat(p)),
     };
   }
 
@@ -2592,31 +2710,7 @@ export class Engine {
         teams: this.teamList(),
         yourTeam: player?.teamId || null,
       } : {}),
-      you: player
-        ? {
-            id: player.id,
-            // Their own public handle, so the phone can find its own row on a
-            // board that now carries keys rather than ids.
-            key: faceKey(player.id),
-            name: player.name,
-            // Their total as it stood BEFORE this question, while the clock is
-            // running — see `scoreBefore` in `answer()`. Their real total
-            // everywhere else, including the moment the reveal lands.
-            score: this.scoreToShow(player),
-            /*
-             * `correctCount` IS DELIBERATELY NOT HERE, and it was a leak.
-             *
-             * The score and the position two lines either side of it are held
-             * at what they were before this question — that is the whole point
-             * of `scoreToShow()`. `correctCount` sat between them reading LIVE,
-             * so a phone that tapped the right answer could count its own ticks
-             * going up several seconds before the projector said anything, and
-             * so could the next table. Nothing in the app ever drew it.
-             */
-            position: this.positionToShow(player),
-            playerCount: this.playerCount(),
-          }
-        : null,
+      you: player ? this.youView(player) : null,
     };
     if (!player) {
       // Two very different things used to land here. Telling them apart is the
@@ -3022,16 +3116,7 @@ export class Engine {
     const upcoming = this.peekNext();
     view.upcoming = upcoming;
 
-    view.players = this.leaderboard().map((p) => ({
-      id: p.id,
-      name: p.name,
-      score: p.score,
-      position: p.position,
-      answeredCount: p.answeredCount,
-      connected: p.connected,
-      wanderedCount: p.wanderedCount || 0,
-      answeredThisQuestion: Boolean(this.answersFor()[p.id]),
-    }));
+    view.players = this.hostPlayerRows();
 
     /*
      * `canStart`, `msRemaining`, `rounds`, `correctCount`, `joinedDuringQuiz`
@@ -3051,6 +3136,63 @@ export class Engine {
      * list, draw one — do not restore a field nobody asked for.
      */
     return view;
+  }
+
+  /**
+   * THE HOST'S PLAYING PANEL LISTS PHONES, and on a team night that is the
+   * only thing it can list.
+   *
+   * It was built from `leaderboard()`, so on a team night every row carried a
+   * `team:…` id — and every control on it was dead. `adjustScore`,
+   * `renamePlayer` and `removePlayer` all look an id up in `state.players`,
+   * find nothing, and answer `{ ok: false }` in silence; the menu closes
+   * either way, so the host believes it worked. Four more symptoms came from
+   * the same line:
+   *
+   *   - `connected` is not built by `teamScores()`, so **every team wore an
+   *     "off" badge all night** — the one signal for "has that table dropped
+   *     off my wifi", inverted, permanently.
+   *   - `answersFor()` is keyed by PLAYER id, so `answeredThisQuestion` asked
+   *     for a key that can never be there: **no team ever got a tick.**
+   *   - the panel's idle count is `!answeredCount` over these rows while
+   *     `removeIdle` removes PHONES — 12 phones in 3 teams with 3 answered
+   *     came out as 0 idle and drew no button, while the call behind it would
+   *     have removed 9.
+   *   - and `wanderedCount` was undefined on every row.
+   *
+   * So the rows are the handsets, ordered by their TEAM'S standing and
+   * carrying the team's name beside their own — which is also what the host
+   * needs to see, since the thing this panel does is manage phones.
+   *
+   * **The ordinary night's rows are untouched**, deliberately: same fields,
+   * same order, same objects.
+   */
+  hostPlayerRows() {
+    const board = this.leaderboard();
+    const row = (p, position) => ({
+      id: p.id,
+      name: p.name,
+      score: p.score,
+      position,
+      answeredCount: p.answeredCount,
+      connected: p.connected,
+      wanderedCount: p.wanderedCount || 0,
+      answeredThisQuestion: Boolean(this.answersFor()[p.id]),
+    });
+    if (!this.state.teamPlay) return board.map((p) => row(p, p.position));
+
+    const placeOf = new Map(board.map((r) => [r.id, r.position]));
+    const teams = this.state.teams || {};
+    return this.playerList()
+      .map((p) => ({
+        ...row(p, placeOf.get(this.boardIdFor(p.id)) ?? null),
+        // The name the room knows, so the host can find a table by what is on
+        // the projector rather than by what somebody typed into a handset.
+        team: (teams[p.teamId] || {}).name || '',
+      }))
+      .sort((a, b) => (a.position ?? 99) - (b.position ?? 99)
+        || a.team.localeCompare(b.team)
+        || a.name.localeCompare(b.name));
   }
 
   /** The question after this one, for the host's read-ahead panel. */

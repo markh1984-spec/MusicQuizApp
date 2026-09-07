@@ -735,3 +735,92 @@ The last link was proved the same way: the same night launched twice against a
 real server, once with one winner and once with three, counting `.winner
 .runner` elements on the projector. One winner drew none; three drew two and
 sent no `winners` field at all.
+
+---
+
+# A team night was one cause with six symptoms — `boardIdFor()`
+
+Found in the September 2026 sweep by two verifiers independently, both driving
+real browsers. Every one of these was live for the whole of any team night, and
+none of them throws: the app draws perfectly and says the wrong thing.
+
+`boardIdFor()` maps a player to the row they appear on — their team's, if they
+are on one. It was threaded through the phone's POSITION and nothing else.
+
+## "60 of 6 answered", six feet wide
+
+`answeredCount` has always counted phones. `playerCount` counts board ROWS. The
+projector printed them in one sentence, and the pill beside it said *"6
+playing"* to a room of sixty people.
+
+The fix is a second field rather than a change to what the first one means:
+`playerCount` pairs with the leaderboard and is right there. `phoneCount` is
+spread into the payload only when the two differ, so an ordinary night's
+payload is byte-for-byte what it was.
+
+## The phone and the projector disagreed about the score
+
+`you.score` was the individual's raw total while `you.position` and
+`you.playerCount` beside it were the team's, and `you.key` was
+`faceKey(playerId)` where every board row is keyed on `faceKey('team:…')`.
+
+Measured on a live team night: the phone's header read **1,390** while the
+projector said **695** for the same table — and because the key never matched,
+`play.js`'s "you are not on this board" fallback appended a second row, so the
+mini board drew *"1 Quizzly Bears 695"* and then *"1 Daves iPhone 1,390"*.
+Every phone listed its own team twice, all night.
+
+The docstring above `boardIdFor()` names this exact fault as the one it exists
+to fix.
+
+**And the team's score has to be frozen for the length of a question too.** An
+average built from live scores moves the instant a team-mate answers correctly
+— which is the `scoreBefore` leak arriving through the average instead of
+through the total. `teamScoreToShow()` sums `scoreToShow()` and rounds exactly
+as `teamScores()` rounds, or the phone and the projector disagree by a point on
+the reveal.
+
+## Every control in the host's Playing panel was dead
+
+`hostView().players` was built from `leaderboard()`, so on a team night every
+row carried a `team:…` id. `adjustScore`, `renamePlayer` and `removePlayer` all
+look an id up in `state.players`, find nothing, and answer `{ ok: false }` — in
+silence, with the menu closing either way, so the host believes it worked.
+
+Four more symptoms came off the same line:
+
+- `teamScores()` builds no `connected`, so **every team wore an "off" badge all
+  night** — the one signal for *has that table dropped off my wifi*, inverted,
+  permanently.
+- `answersFor()` is keyed by player id, so `answeredThisQuestion` asked for a
+  key that can never be there: **no team ever got a tick.**
+- the panel's idle count is `!answeredCount` over these rows while `removeIdle`
+  removes PHONES — 12 phones in 3 teams with 3 answered came out as **0 idle**
+  and drew no button, while the call behind it would have removed 9.
+- `wanderedCount` was undefined on every row.
+
+**The rows are handsets now**, ordered by their team's standing and carrying
+the team's name beside their own. That is also what the panel is FOR: rename,
+remove and adjust a score are all things you do to a phone. The ordinary
+night's rows are untouched — same fields, same order — and there is a test
+pinning the field list, because a field on a view is a promise something draws
+it.
+
+## The host was naming people the room had never heard of
+
+The fastest finger, `whoPicked()` and `wanderedNow()` all named handsets, under
+a projector board that names teams. So the mic line was about somebody nobody
+in the room could identify.
+
+`whoIsThat()` is the one answer: the team's name, then the handset's, on a team
+night; the handset's alone otherwise.
+
+**The handset is kept rather than folded away**, and the reason is arithmetic:
+the option tally counts PICKS, and the panel exists so that *"the counts said
+four got it wrong, this says which four"*. Deduplicating four phones into one
+team would leave the names disagreeing with the number printed above them,
+which is this panel's own fault wearing a different hat.
+
+**The fastest finger's `faceKey` deliberately stays the individual's.** The
+slide is a photograph of the person who was quickest, and a team has no face of
+its own — so the NAME comes off the board and the FACE off the phone.

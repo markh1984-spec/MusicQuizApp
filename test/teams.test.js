@@ -172,3 +172,128 @@ test('a night restored from before this existed reads as assigned', () => {
   assert.equal(engine.playerView(player.id).teamMode, 'assigned');
   assert.equal(engine.joinTeam(player.id, null).ok, true, 'and the picker still works');
 });
+
+/** Drive an engine to the first question, whatever the phase ladder is. */
+function toQuestion(engine) {
+  for (let i = 0; i < 6 && engine.state.phase !== 'question'; i += 1) engine.next();
+  assert.equal(engine.state.phase, 'question', 'the walk to a question has changed');
+}
+
+/*
+ * ONE CAUSE, SIX SYMPTOMS — `boardIdFor()` was threaded through the phone's
+ * POSITION and nothing else.
+ *
+ * Every one of these was live for the whole of any team night, and none of
+ * them throws: the app draws perfectly and says the wrong thing.
+ */
+
+test('THE PROJECTOR COUNTS PHONES IN BOTH HALVES OF "N of M answered"', () => {
+  const engine = randomTeams();
+  const phones = ['A', 'B', 'C', 'D', 'E'].map((n) => engine.join({ name: n }));
+  toQuestion(engine);
+  engine.answer({ playerId: phones[0].id, optionIndex: 1 });
+
+  const screen = engine.screenView();
+  assert.equal(screen.phoneCount, 5, 'five handsets are in the room');
+  assert.ok(screen.playerCount < 5, 'and they are on fewer board rows than that');
+  assert.equal(screen.answeredCount, 1);
+  // `answeredCount` has always counted phones. Printed beside `playerCount` it
+  // said "60 of 6 answered", six feet wide, in a dark pub.
+});
+
+test('…and an ordinary night sends no `phoneCount` at all', () => {
+  const engine = engineOn();
+  engine.join({ name: 'Rob' });
+  assert.equal('phoneCount' in engine.screenView(), false,
+    'a solo night must send the payload it always sent — pub-unchanged says IDENTICAL');
+});
+
+test("A PHONE'S OWN HEADER IS ITS TEAM'S ROW — score, key and position in one unit", () => {
+  const engine = randomTeams();
+  const a = engine.join({ name: 'Daves iPhone' });
+  const b = engine.join({ name: 'Sues Android' });
+  assert.equal(engine.state.players[a.id].teamId, engine.state.players[b.id].teamId);
+  engine.state.players[a.id].score = 1390;
+  engine.state.players[b.id].score = 0;
+
+  const you = engine.playerView(a.id).you;
+  const row = engine.leaderboard()[0];
+  assert.equal(you.score, row.score, 'the header read 1,390 while the projector said 695');
+  assert.equal(you.name, row.name, 'and it named the handset, not the table');
+  // The board a phone is SENT, which is where `key` is minted.
+  const shown = engine.screenView().leaderboard[0];
+  assert.equal(you.key, shown.key,
+    'the mini board matches on `key`, so a mismatch drew every phone its own team TWICE');
+});
+
+test('and a team score is frozen for the length of a question, like an individual one', () => {
+  const engine = randomTeams();
+  const a = engine.join({ name: 'A' });
+  const b = engine.join({ name: 'B' });
+  toQuestion(engine);
+
+  const before = engine.playerView(a.id).you.score;
+  engine.answer({ playerId: b.id, optionIndex: 1 });          // B is right
+  assert.equal(engine.playerView(a.id).you.score, before,
+    "a team average built from LIVE scores tells A that B got it, seconds before the reveal");
+  engine.next();                                               // -> REVEAL
+  assert.ok(engine.playerView(a.id).you.score > before, 'and the reveal is when it moves');
+});
+
+test("THE HOST'S PLAYING PANEL LISTS PHONES, so its controls have something to act on", () => {
+  const engine = randomTeams();
+  const a = engine.join({ name: 'Dave' });
+  const b = engine.join({ name: 'Sue' });
+  toQuestion(engine);
+  engine.answer({ playerId: a.id, optionIndex: 1 });
+
+  const rows = engine.hostView().players;
+  assert.equal(rows.length, 2, 'two handsets, not one team row');
+  for (const row of rows) {
+    assert.ok(engine.state.players[row.id],
+      'a `team:` id here means adjustScore, renamePlayer and removePlayer all answer ok:false in silence');
+    assert.equal(row.connected, true, 'teamScores() builds no `connected`, so every team wore an "off" badge');
+    assert.ok(row.team, 'and the row names the table, which is what the room knows');
+  }
+  assert.equal(rows.find((r) => r.id === a.id).answeredThisQuestion, true,
+    'answers are keyed by PLAYER, so a team id could never get a tick');
+  assert.equal(rows.find((r) => r.id === b.id).answeredThisQuestion, false);
+  // The panel's idle count is `!answeredCount` over these rows, and `removeIdle`
+  // removes phones — they have to be counting the same things.
+  assert.equal(rows.filter((r) => !r.answeredCount).length, 1);
+});
+
+test('…and an ordinary night gets exactly the rows it always got', () => {
+  const engine = engineOn();
+  const rob = engine.join({ name: 'Rob' });
+  engine.state.players[rob.id].score = 100;
+  const [row] = engine.hostView().players;
+  assert.deepEqual(Object.keys(row).sort(), [
+    'answeredCount', 'answeredThisQuestion', 'connected', 'id', 'name',
+    'position', 'score', 'wanderedCount',
+  ], 'no new field on a solo night — a field on a view is a promise something draws it');
+});
+
+test('THE HOST IS TOLD WHO THE ROOM KNOWS — the fastest finger, whoPicked and who wandered', () => {
+  const engine = randomTeams();
+  const a = engine.join({ name: 'Daves iPhone' });
+  const b = engine.join({ name: 'Sues Android' });
+  toQuestion(engine);
+  engine.answer({ playerId: a.id, optionIndex: 1 });           // correct
+
+  const teamName = engine.leaderboard()[0].name;
+  const host = engine.hostView();
+  assert.equal(host.fastest.name, teamName,
+    'the projector names the fastest finger under a board of teams — naming a handset names a stranger');
+  assert.ok(host.whoPicked.options[1][0].name.startsWith(teamName),
+    'and the mic line has to lead with the name on the wall');
+  assert.ok(host.whoPicked.options[1][0].name.includes('Daves iPhone'),
+    'with the handset kept, because the counts beside it are per phone');
+  assert.ok(host.whoPicked.missing[0].startsWith(teamName));
+  assert.equal(host.whoPicked.missing.length, 1, 'one phone let it go by');
+  // The face stays the individual's: the slide is a photograph of the person
+  // who was quickest, and a team has no face of its own.
+  assert.notEqual(host.fastest.faceKey, engine.playerView(a.id).you.key,
+    "the board's key is the team's; the fastest finger's is the person who was quickest");
+  assert.ok(b.id);
+});

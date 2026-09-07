@@ -628,7 +628,7 @@ function questionPanel(s) {
       ${q.note ? `<div class="tiny" style="margin-top:10px">Note: ${esc(q.note)}</div>` : ''}
       ${q.answerNote ? `<div class="tiny" style="margin-top:6px">${esc(q.answerNote)}</div>` : ''}
       <div class="tiny" style="margin-top:10px">
-        ${s.answeredCount || 0} of ${s.playerCount} answered${s.fastest ? ` — fastest ${esc(s.fastest.name)} at ${s.fastest.seconds.toFixed(1)}s` : ''}
+        ${s.answeredCount || 0} of ${s.phoneCount ?? s.playerCount} answered${s.fastest ? ` — fastest ${esc(s.fastest.name)} at ${s.fastest.seconds.toFixed(1)}s` : ''}
       </div>
       <button class="report-q" type="button">Something wrong with this one?</button>
     </div>
@@ -798,9 +798,9 @@ function playersPanel(s) {
       <h3>Playing — tap a name to fix a score or remove</h3>
       <div class="plist">
         ${(s.players || []).map((p) => `
-          <div class="prow" data-id="${esc(p.id)}">
+          <div class="prow" data-id="${esc(p.id)}" data-name="${esc(p.name)}">
             <span class="pos">${p.position}</span>
-            <span class="nm">${esc(p.name)}</span>
+            <span class="nm">${esc(p.name)}${p.team ? `<span class="ptm">${esc(p.team)}</span>` : ''}</span>
             ${p.answeredThisQuestion ? '<span class="tick">✓</span>' : ''}
             ${p.connected ? '' : '<span class="off">off</span>'}
             ${wanderMark(p)}
@@ -826,7 +826,12 @@ function playersPanel(s) {
   el.querySelectorAll('[data-act="menu"]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const row = btn.closest('.prow');
-      openPlayerMenu(row.dataset.id, row.querySelector('.nm').textContent);
+      /*
+       * THE NAME OFF THE ROW'S OWN ATTRIBUTE, not off `.nm`'s text. On a team
+       * night that span also carries the team, so reading it back gave the
+       * menu a heading of two names run together.
+       */
+      openPlayerMenu(row.dataset.id, row.dataset.name);
     });
   });
   return el;

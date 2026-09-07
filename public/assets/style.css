@@ -1535,6 +1535,10 @@ body.host::after { display: none; }
 .prow .sc { margin-left: auto; font-weight: 900; font-variant-numeric: tabular-nums; }
 .prow .tick { color: var(--good); font-weight: 900; }
 .prow .off { color: var(--bad); font-size: var(--fs-tag); }
+/* The team a phone is sitting with, on a team night — the name the ROOM knows,
+   under the name somebody typed into a handset. Dim and small: the row is
+   still about the phone, this is only how to find it in a pub. */
+.prow .ptm { display: block; font-weight: 600; font-size: var(--fs-tag); color: var(--ink-dim); }
 /* A note, not an accusation — so it is gold rather than red. Red beside a name
    reads as "this one is cheating" and the app does not know that; it knows the
    phone went dark, which a call coming in also does. */
