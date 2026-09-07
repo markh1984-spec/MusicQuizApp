@@ -393,6 +393,30 @@ body::after {
 }
 .lobby ol { list-style: none; padding: 0; margin: 0; }
 
+/*
+ * THE JOIN PANEL IS CAPPED BY THE SCREEN'S HEIGHT, not only by its column.
+ *
+ * A QR code is square and this panel is `width: 100%` of a grid column, so on
+ * a WIDE, SHORT projector the column is generous and the panel grows taller
+ * than the screen. Measured on the lobby with nothing else changed: at 21:9
+ * (2560x1080) the typed-URL fallback is **26px off the bottom**, and at 3:1
+ * (2160x720) the CODE ITSELF is **166px off** — on a page that deliberately
+ * does not scroll, so there is no way to reach it. The room can neither scan
+ * nor type.
+ *
+ * 21:9 is an ordinary pub projector and 32:9 monitors exist; this is not an
+ * exotic size. **The rules slide's identical panel was capped all along**
+ * (`min(44vw, 66vh)`), which is why that one fits everywhere — so this is the
+ * answer the app already had, applied to the screen it was missing from.
+ *
+ * `min(100%, …)` so nothing changes at any ordinary ratio: the column is still
+ * the limit at 16:9 (495px against a 72vh cap of 518) and at 4:3 (396px), and
+ * the height only becomes the limit once it is genuinely the smaller of the
+ * two. **72vh rather than something rounder** — the panel runs about its own
+ * width plus 4vh of padding, gap and typed URL, and it starts a little way
+ * down the column, so 72 is the largest number that still clears the bottom at
+ * 3:1 with the arcade board in it. Measured, not chosen.
+ */
 .qr-panel {
   background: #fff;
   border-radius: var(--r-card);
@@ -401,6 +425,7 @@ body::after {
   display: grid;
   justify-items: center;
   gap: 1.2vh;
+  max-width: min(100%, 72vh);
 }
 .qr-panel svg, .qr-panel img { width: 100%; height: auto; display: block; }
 .qr-panel .url {
@@ -6256,9 +6281,49 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    right of a 390px screen: the whole console scrolled sideways, on the one
    account that has these controls at all. Same padding as the halves, and the
    media rule above gives both the same font, so they draw the same height. */
+/*
+ * THE HAT SLOT MUST BE ABLE TO SHRINK, AND ON `/host` IT COULD NOT.
+ *
+ * `#hatSlot` is a bare `<span>`, so it is a flex item with the default
+ * `min-width: auto` — the third sighting of that in this file, and the second
+ * on this bar. The owner's three-position switch is 351px wide, the control
+ * view's top row is 346, and because the span refused to give ground the
+ * whole row simply grew: measured with the owner's own cookie and key,
+ * **`/host` scrolled sideways 161px at 390, 191 at 360 and 231 at 320** — his
+ * actual bookmark — with a menu chip 169px off the side of the screen.
+ *
+ * `/console` was the same fault one size smaller: 53px off at 320 and 13 at
+ * 360, where `console-frame.mjs`'s narrowest phone is 390 and saw nothing.
+ *
+ * **Only the OWNER has any of this** — `/api/me` sends `tiers: []` to a real
+ * quizmaster, so `hatSwitch()` returns null and neither page has a switch to
+ * find room for.
+ */
+#hatSlot { min-width: 0; display: inline-flex; }
+
 @media (max-width: 560px) {
   .hat-switch .hat-half { padding: 6px 10px; font-size: var(--fs-tag); }
   .tier-preview .tier-half { min-width: 24px; padding: 6px 6px; }
+  /*
+   * AND THE SWITCH ITSELF GIVES GROUND ON THE NARROWEST PHONES.
+   *
+   * Even on the diet the owner's three-position switch is 351px, which does
+   * not fit a 320 or 360 screen however much room the row makes for it —
+   * `.hat-switch` is `white-space: nowrap` (so the halves cannot break) and
+   * carried the default `min-width: auto` (so it could not shrink either).
+   * A LABEL losing its tail is the thing this bar can afford; a door off the
+   * side of the screen is not, and the halves stay whole down to 390.
+   */
+  .hat-switch { min-width: 0; max-width: 100%; }
+  .hat-switch .hat-half { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  /*
+   * AND ON A PHONE THE SWITCH TAKES ITS OWN LINE rather than squeezing the
+   * menu off the side. The control view's header is not the working surface —
+   * the actions bar is fixed at the bottom — so a second row up here costs
+   * nothing, where a door nobody can reach costs the page.
+   */
+  .host .bar .bar-top { flex-wrap: wrap; }
+  .host .bar-top #hatSlot { flex: 1 1 100%; }
 }
 
 /* The record of what the owner did while inside somebody's account. Small and
@@ -7500,6 +7565,33 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    symbol with nothing saying which gap it belongs to — every other one is
    sitting on the pack it acts on, and this one is not. */
 .lb-doors-word { color: var(--ink-dim); font-weight: 800; white-space: nowrap; }
+
+/*
+ * THREE ACROSS ON A TABLET, AND BOTH GRIDS MOVE TOGETHER.
+ *
+ * Six across needs 6 x 118 + 5 x 12 = 768px INSIDE the panel, and a shut pack
+ * card has `aspect-ratio: 1 / 1` with `min-height: 118px` — which propagates
+ * to a minimum WIDTH, because a square cannot be 118 tall and 80 wide. So
+ * between 561 and ~780px the six tracks are narrower than the cards standing
+ * in them: **measured at 561, the cards overlap by 28px and the console
+ * scrolls sideways by 24.** An iPad in portrait is 768.
+ *
+ * **This is not the six-across decision being dropped.** That rule is about a
+ * shelf wide enough to honour it, and here six is not honourable — the cards
+ * physically overlap. The pair moves TOGETHER, exactly as it already does at
+ * 560, because the shelf mirrors the bays and a mirror that only half-changes
+ * is worse than either.
+ *
+ * `console-frame.mjs` never looked between 561 and 900, which is why nothing
+ * saw it: its phone size is 390 and its next one up is 960.
+ */
+@media (min-width: 561px) and (max-width: 779px) {
+  .lb-tiles, .pack-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* Told twice, for the specificity reason spelled out in the phone band
+     below: `:has()` is a more specific selector than the bare class. */
+  .lb-tiles:has(.lb-doors-slot) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
 @media (max-width: 560px) {
   /* Shorter still on a phone, where they are a summary rather than a target. */
   /* TWO ACROSS ON A PHONE, not one. `auto-fit` at 160px only fits a single

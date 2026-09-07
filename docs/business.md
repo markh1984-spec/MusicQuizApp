@@ -372,6 +372,30 @@ of your trial"*. Which rung is YOURS stays the one you are billed for, from
 `included`; the trial is said in words rather than smuggled into the lit state,
 so nothing has to guess later what somebody is actually paying for.
 
+#### The rungs are 30 x 34 with 5px between them, and height is the free dimension
+
+*"The clickable part of the G/S/B needs to increase, it's hard to click."*
+Measured first at **24 x 22 with a 2px gap**, so a slightly-off press previewed
+the wrong tier — on the owner's own topbar, where the control changes what the
+whole console is showing him.
+
+**Not the 44px touch floor, and that is the interesting half.** The topbar has
+45px inside its padding, so growing DOWN is free; four 44px rungs cost 68px the
+bar does not have, and would put the owner's topbar on two rows at every width
+there is. A mouse on a laptop is what presses this — the rule that a target is
+44px is about a thumb, and there is no thumb here.
+
+**The hat switch beside it went to 34px too**, or the secondary control is
+taller than the primary one inside it.
+
+**AND THE 560px DIET HAS TO TAKE BOTH DOWN TOGETHER.** The diet was already
+shrinking the switch's halves and the rungs had been left out of it, so a phone
+drew 34px of rung inside a 24px pill and the owner's bar ran 5px off a 390px
+screen: the whole console scrolled sideways, on the one account that has these
+controls at all. Found by `console-frame.mjs` on its first real run, which is
+exactly what that script is for — a control with a size, in the document,
+off the side of the screen.
+
 #### `.tier-row` was already taken, and it won silently
 
 `owner.js`'s feature-mover owns that class, and its rule sits 3,300 lines lower

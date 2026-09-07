@@ -915,11 +915,10 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
 
 - **THE CONSOLE'S TOPBAR IS A GRID ITEM, AND A GRID ITEM DEFAULTS TO
   `min-width: auto` TOO.** `.topbar` sits in `.wrap`, which is `overflow-x:
-  hidden`, so a bar that will not shrink below its max-content is **CLIPPED
-  with no scrollbar to reach it**. `min-width: 0` on the BAR is what makes the
-  existing `min-width: 0` on its children do anything; **the rule was applied
-  one level too deep**. **A clipped overflow is worse than a scrolling one**:
-  nothing throws and the control is unreachable.
+  hidden`, so a bar that will not shrink is **CLIPPED with no scrollbar to
+  reach it**; **the rule was applied one level too deep**. **A clipped overflow
+  is worse than a scrolling one**: nothing throws and the control is
+  unreachable.
 - **…AND CONSTRAINING IT MOVED THE OVERFLOW ONTO THE MENU.** `.topnav` is
   `flex: 1 1 auto` with a deliberately invisible `overflow-x`, so once the bar
   could shrink the MENU gave way — 376px of the 519px it needs at 1000px, and
@@ -927,14 +926,13 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   does not exist.** **A fix that relieves pressure has to be followed to
   wherever the pressure went.**
 - **THE DIET HAS NO UPPER BOUND, BECAUSE `.console .wrap` CAPS THE BAR AT
-  1180px.** `@media (max-width: 1179px)` measures the WINDOW, so the diet
-  switched OFF exactly where it was still needed. **A media query on the window
-  is the wrong tool the moment a CONTAINER caps the thing you are
-  protecting.**
+  1180px.** `@media (max-width: 1179px)` measures the WINDOW, so it switched
+  OFF where it was still needed. **A media query on the window is the wrong
+  tool the moment a CONTAINER caps the thing you are protecting.**
 - **AND `#runningNow` IS WHY NOTHING SAW IT: `aNightIsOn()` IS FALSE FOR AN
-  EMPTY LOBBY**, so the guard measured a bar **230px narrower than the one the
-  host drives**. **A guard that sets a night up but never lets anybody in is
-  measuring a console nobody uses.**
+  EMPTY LOBBY**, so the guard measured a bar **230px narrower than the host's**.
+  **A guard that sets a night up but never lets anybody in is measuring a
+  console nobody uses.**
 - **WHAT IS PLAYING NOW IS WORDED IN ONE PLACE — `nowPlaying()`.** There were
   THREE. **The SHORT form is a different job, not an abbreviation**: the bar
   says *something is on and how many are in* from any door, and the TITLE stays
@@ -971,27 +969,52 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   is correct.**
 - **AND THE EQUAL-BAY RULE ONLY EXISTS BECAUSE OF THE FRAME**, so
   `community-bay.mjs` checks it only where the frame is on. **Both scripts
-  carry the frame's two numbers; if they move, they move together** — a guard
-  holding a stale threshold reports the app broken when it is the check that is
-  out of date.
-- **TWO COLUMNS IS A WIDTH DECISION; THE PINNED FRAME IS A HEIGHT ONE.** In one
-  media query, gating it on height took the SIDEBAR away too. **THE DRAG IS
-  WHAT THE LAYOUT IS FOR**, so the 190px rail holds at every height and only the
+  carry the frame's two numbers; if they move, they move together.**
+- **TWO COLUMNS IS A WIDTH DECISION; THE PINNED FRAME IS A HEIGHT ONE.** Gating
+  it on height in one media query took the SIDEBAR away too. **THE DRAG IS WHAT
+  THE LAYOUT IS FOR**, so the 190px rail holds at every height and only the
   pinning goes. **A media query is two decisions the moment it names two
   axes.**
 - **`main` IS A FLEX COLUMN — never give it a row template.** Its
-  `auto minmax(0,1fr)` grid assumed exactly two children, so ANY banner above
-  the doorhead quietly turned the fixed frame back into a scrolling page. Flex
-  takes any number of banners; only `.consolecols` grows.
+  `auto minmax(0,1fr)` grid assumed two children, so ANY banner above the
+  doorhead quietly turned the fixed frame back into a scrolling page.
 - **THE SHELF IS SIX ACROSS, BY DECISION — it mirrors the six bays above it.**
   What made the 146px poster hold its content was never width: the meta's
   two-line clamp, dropping the "· N rounds" that duplicated the round squares,
-  and the title getting back 44px a stale pin-clearance rule stole. **Do not
-  "fix" a squeezed card by dropping a column.**
+  and 44px a stale pin-clearance rule stole. **Do not "fix" a squeezed card by
+  dropping a column** — where six genuinely cannot be honoured, both grids move
+  together (see below).
 - **THE FINISH LAYER at the foot of `style.css` owns selection, caret,
   `:focus-visible` and the card hover** — one named block, so the next control
-  gets finished there rather than growing scattered rules. `::selection` follows
-  `--hot` (rgba fallback first); reduced-motion keeps the border, drops the lift.
+  gets finished there rather than growing scattered rules.
+
+### THREE THINGS THAT DID NOT FIT, AND THE SIZES NOBODY MEASURED
+
+Every one lived in a band no guard looked at.
+
+- **THE LOBBY'S JOIN PANEL IS CAPPED BY THE SCREEN'S HEIGHT** — `min(100%,
+  72vh)`. A QR code is square and the panel is `width: 100%` of a grid column,
+  so on a WIDE, SHORT projector it grew taller than the screen: at 3:1 **the
+  code itself was 166px off**, on a page that deliberately does not scroll.
+  **The rules slide's identical panel was capped all along.** **72vh is
+  measured, not chosen** — 16:9 and 4:3 are pixel-identical to before.
+- **THREE ACROSS BETWEEN 561 AND 779px, AND BOTH GRIDS MOVE TOGETHER.** Six
+  across needs 768px inside the panel, and a shut pack card is a square with a
+  118px floor — **`aspect-ratio` plus `min-height` propagates to a minimum
+  WIDTH**. At 561 the cards **overlapped by 28px and the console scrolled
+  sideways by 24**; an iPad in portrait is 768. **This is not six-across being
+  dropped** — that rule is about a shelf wide enough to honour it.
+- **`#hatSlot` IS A BARE `<span>`, SO IT HAD `min-width: auto`** — third
+  sighting on this bar. The owner's switch is 351px, the control view's top row
+  346, and because the span would not give ground the row grew: **`/host`
+  scrolled sideways 161px at 390, 191 at 360 and 231 at 320**, his actual
+  bookmark, with a menu chip off the side. `/console` was the same fault one
+  size smaller. **The switch itself shrinks below 560 too** — a label losing its
+  tail is what this bar can afford; a door off the screen is not.
+- **AND `console-frame.mjs` NOW LOOKS AT 768 AND 320.** Its sizes ran 390 then
+  960, so the 561-899 band and every phone under 390 were unmeasured — where
+  two of these three lived. **Its one-row rule moved from 431px to 900px**: a
+  second header row costs the PINNED layout, which does not exist below 900.
 
 ### A ROOM ID IS A PATH, AND `?q=` NAMES AN ACCOUNT OR NOBODY
 
@@ -2122,44 +2145,25 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
 ### THE RUNGS ON A SUBSCRIBER'S ACCOUNT SELL; THEY MUST NEVER GRANT
 
-`console-tiers.js`, on My account.
-Bronze / Silver / Gold, yours lit in its metal, the ones above locked; pressing
-one opens a card naming what that rung holds. Asked for off the owner's own hat
-switch — *"if they're only paying for bronze then silver and gold should be
-greyed out, and maybe a tooltip should come out trying to sell it."*
+`console-tiers.js`, on My account. Bronze / Silver / Gold, yours lit in its
+metal, the ones above locked; pressing one opens a card naming what it holds.
 
 - **IT IS SHAPED LIKE THE OWNER'S AND IS THE OPPOSITE OF IT.** `tierPreview()`
-  in `client.js` DOWNGRADES a comped account through `/api/owner/act-as`. This
-  one only sells: **pressing Gold on a Bronze account must stay inert**, or
-  Gold is free. The owner sees both, so his keeps INITIALS and this spells
-  WORDS — which is also what makes it readable, rendered first: a locked `S`
-  at half opacity is a grey dot to somebody who has never seen the control.
-- **A LOCKED RUNG IS PRESSABLE** — `disabled` greys it and swallows the press,
-  and the sell is the point. It keeps its metal, dimmed.
-- **NOT A NATIVE `title`** — unstyled, lands over what is beneath it, dead on a
-  touchscreen. A card, outside-click close, one document listener for all rows.
-- **THE OWNER'S OWN RUNGS ARE 30 x 34 WITH 5px BETWEEN THEM, AND HEIGHT IS THE
-  FREE DIMENSION.** *"The clickable part of the G/S/B needs to increase, it's
-  hard to click."* Measured first at **24 x 22 with a 2px gap**, so a
-  slightly-off press previewed the wrong tier. **Not the 44px touch floor, deliberately** —
-  the topbar has 45px inside its padding, so growing DOWN is free, while four
-  44px rungs cost 68px the bar does not have and would put the owner's topbar
-  on two rows at every width there is. A mouse on a laptop presses this. **The
-  hat switch beside it went to 34px too**, or the secondary control is taller
-  than the primary one inside it. **AND THE 560px DIET HAS TO TAKE BOTH DOWN
-  TOGETHER** — it was already shrinking the halves and the rungs were left out
-  of it, so a phone drew 34px of rung inside a 24px pill and the owner's bar
-  ran 5px off a 390px screen: the whole console scrolled sideways, on the one
-  account that has these controls at all. Found by `console-frame.mjs` on its
-  first real run, which is what the script is for.
+  DOWNGRADES; this one only sells, so **pressing Gold on a Bronze account must
+  stay inert**, or Gold is free. The owner sees both, so his keeps INITIALS and
+  this spells WORDS.
+- **A LOCKED RUNG IS PRESSABLE** — `disabled` swallows the press and the sell
+  is the point. **NOT A NATIVE `title`**: a card, outside-click close, one
+  document listener for all rows.
+- **THE OWNER'S OWN RUNGS ARE 30 x 34 WITH 5px BETWEEN THEM**, the hat switch
+  beside them 34px, and **the 560px diet must take BOTH down together** — it
+  shrank the switch and not the rungs, and the owner's bar ran off a 390px
+  screen. **Not the 44px touch floor, deliberately**: a mouse presses this.
 - **BUILT FROM `ladderFor()`, never written out**, and **`NOT_BUILT` says "not
-  yet"**: a rung listing something that does not exist is one nobody trusts.
-- **NO SUBSCRIBE BUTTON UNTIL THERE IS A PROCESSOR** — *"Get in touch to move
-  up"*, the expired trial's own wording. A dead button is worse than a
-  sentence.
-- **`.tier-row` WAS ALREADY `owner.js`'S**, styled 3,300 lines lower and so
-  winning at equal specificity: the card floated beside the pills and wrapped
-  mid-sentence at 390px, silently. It is `.rung-row`.
+  yet"**. **NO SUBSCRIBE BUTTON UNTIL THERE IS A PROCESSOR** — a dead button is
+  worse than a sentence.
+- **`.tier-row` WAS ALREADY `owner.js`'S** and won at equal specificity from
+  3,300 lines lower, silently. It is `.rung-row`.
 
 Full reasoning: **[`docs/business.md`](docs/business.md)**.
 

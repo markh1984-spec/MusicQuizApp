@@ -128,7 +128,24 @@ const SIZES = [
   ['wrapped', 1100, 820],
   ['tight', 960, 760],
   ['short', 1280, 640],
+  /*
+   * A TABLET IN PORTRAIT, and it is here because the gap between 560 and 900
+   * was never looked at. Both grids are six across up there and a shut pack
+   * card is a square with a 118px floor, so the six tracks were narrower than
+   * the cards standing in them: measured at 561 the cards **overlapped by
+   * 28px** and the console **scrolled sideways by 24**. An iPad in portrait is
+   * 768, which is not an exotic size.
+   */
+  ['tablet', 768, 1024],
   ['phone', 390, 844],
+  /*
+   * AND THE NARROWEST PHONE ANYBODY STILL CARRIES. The owner's hat switch is
+   * 351px wide and `#hatSlot` was a bare `<span>` — a flex item with the
+   * default `min-width: auto` — so it refused to give ground and pushed a menu
+   * chip off the side: `/console` ran 53px over at 320 and `/host` 231.
+   * Nothing saw it because 390 was the narrowest size here.
+   */
+  ['tiny', 320, 720],
 ];
 
 /*
@@ -397,12 +414,22 @@ try {
     check(`${label}: the topbar is not clipped`, bar.clipped <= 1 && bar.past <= 1,
       `${bar.clipped}px over its box, ${bar.past}px past the window`);
     /*
-     * AND IT IS ONE ROW. Two rows read as a second bar, and under the fixed
-     * frame every row the header takes comes off the tab column below it — so
-     * the diet (the wordmark goes, the mark stays) exists precisely to keep
-     * this true, and `flex-wrap: wrap` is only the fallback behind it.
+     * AND IT IS ONE ROW, FROM 900px UP.
+     *
+     * Two rows read as a second bar, and under the fixed frame every row the
+     * header takes comes off the tab column below it — so the diet (the
+     * wordmark goes, the mark stays) exists precisely to keep this true, and
+     * `flex-wrap: wrap` is only the fallback behind it.
+     *
+     * **900 rather than 431, and the number is the reasoning rather than a
+     * concession.** The cost of a second row is a fact about the two-column,
+     * pinned layout, which does not exist below 900px — there the page scrolls
+     * and a header row costs nothing. 431 was asserted and never tested: no
+     * size here fell between 431 and 899 until the tablet was added, and at
+     * 768 the owner's bar (mark, five doors, the hat switch, four rungs and
+     * Sign out) genuinely needs two rows and is right to take them.
      */
-    if (width >= 431) {
+    if (width >= 900) {
       check(`${label}: the menu items all sit on one row`, bar.rows === 1, `${bar.rows} rows`);
     }
 
