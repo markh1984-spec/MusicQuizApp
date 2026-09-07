@@ -18,6 +18,25 @@ decision from the host first.
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
 
+### 0. DECIDE WHAT GETS FIXED OFF THE SWEEPS — the list is written, nothing is actioned
+
+**Blocked on the host, which is why it is above everything else.** Two passes on
+5-7 September 2026 found roughly 160 faults between them; **none has been
+actioned** except the dead Save button, which was fixed and verified at his
+request. The worked list — file:line, how each was reproduced, what it costs in
+a pub, and the fix suggested but not applied — is
+**[`docs/sweeps-september-2026.md`](docs/sweeps-september-2026.md)**.
+
+**It is a menu, not a to-do list.** Fifty findings sit on the protected surface
+and those outrank the rest; a fair number of the others are things this codebase
+decided deliberately. The host picks.
+
+**AND THE FILE'S OWN WORKING NOTE IS THE PART TO READ FIRST.** Fixing forty
+findings in one fast sitting closed about twenty and introduced ten, in three
+shapes worth knowing before starting: fixing the symptom rather than the
+neighbour, fixing one path and missing the parallel one, and believing the diff
+instead of the screen. **One fix, one check that fails first, one push.**
+
 ### 1. PLAY FOUR LOBBY GAMES ON A REAL PHONE — the only thing left on them
 
 **Nothing else here is blocked on the host; this is.** Rally, Tailback, Quick
