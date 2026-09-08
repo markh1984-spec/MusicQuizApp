@@ -933,10 +933,17 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   THREE. **The SHORT form is a different job, not an abbreviation**, and
   **under 1050px the live line stands down** — the only thing in that bar that
   summarises something else on screen.
-- **THE BAR GOES ON A DIET BELOW 1180px; WRAPPING IS ONLY THE FALLBACK** —
-  two rows read as a second bar, so the **wordmark goes and the mark stays**.
-  **Scoped with `:has(.hat-switch)` to the OWNER's bar**: a fix for one account
-  must not land on everybody.
+- **THE BAR GOES ON A DIET; WRAPPING IS ONLY THE FALLBACK** — two rows read as
+  a second bar. **Scoped with `:has(.hat-switch)` to the OWNER's bar**: a fix
+  for one account must not land on everybody. **AND WHAT IT TAKES IS THE
+  PRODUCT NAME, NEVER THE POSSESSIVE.** It hid `.brand-name` — the whole
+  stacked wordmark — so the ONE bar this rule reaches is the one account that
+  lost its own name off its own console, which is that feature running
+  backwards; reported as the name having *"disappeared"*. **The mark carries
+  the product and the word carries WHOSE**: 40px against the stack's 81.
+  **Restoring the whole stack was RENDERED and is dead** — at 1000px it drops
+  `#hatSlot` and Sign out onto a second row, which is the account controls,
+  the other half of what the diet protects.
 - **AND NOTHING RESTATES `overflow` AFTER `.console .wrap`'S PAIR.** A trailing
   `overflow: hidden` wiped the `overflow-y: auto` five lines above it, so the
   frame CLIPPED instead of scrolling: 161px of overflow at 1500x900, and a real
@@ -1763,7 +1770,7 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   room asked for" is a QUEUE — Yes keeps it, No bins it — so it MOVED off the
   Music Quiz tab rather than being copied**, leaving a link that shows only
   when something waits.
-- **A NIGHT'S PHOTOS ARE FETCHED WHEN THE NIGHT IS OPENED**, never up front.
+- **A night's photos are fetched when the night is OPENED**, never up front.
 - **`asksPanel({ whenEmpty })` — the same panel answers two pages.** Drawing
   NOTHING was right above the quiz generator and wrong on a tab whose whole job
   is the list. One optional argument, so the triage keeps one definition.
@@ -1795,13 +1802,12 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   FILTER IS CLEARED, NOT STORED**, or a later change to the word list silently
   cannot reach that name. **ONE CONTROL PER TABLE, FOLDED.** **THE ROW'S KEY
   TRAVELS WITH THE ROW.**
-- **ONE ROOM FOR THE WHOLE PHOTO STORY — `galleryRoomFor()`.** Photos are filed
-  per room and the gallery reads the OWNER'S OWN QUIZMASTER ROOM, never
-  `HOUSE`. The console wrote through `roomForHost()` instead, so a night could
-  be published into a folder the page never looks at, be told it worked, and
-  read back as *"Not published"*. **The hazard was written down above
-  `galleryRoomId()` and left** — which is how a noted hazard becomes a bug
-  report. No change for an ordinary quizmaster: their room id is never HOUSE.
+- **ONE ROOM FOR THE WHOLE PHOTO STORY — `galleryRoomFor()`.** The gallery
+  reads the OWNER'S OWN QUIZMASTER ROOM, never `HOUSE`; the console wrote
+  through `roomForHost()`, so a night could be published into a folder the page
+  never looks at, be told it worked, and read back as *"Not published"*. **The
+  hazard was written down above `galleryRoomId()` and left** — which is how a
+  noted hazard becomes a bug report.
 - **THE PRIVATE REPO IS TESTABLE NOW** — `photo-repo-stub.mjs`: real server,
   fixture network. **Publishing lived behind a token the suite must never need,
   so nothing had ever run it.**
@@ -1811,53 +1817,49 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   night**. **THE BROWSER'S QUEUE CANNOT COVER IT**: the press that overlaps a
   publish is the one it has not started. Order it where the FILE is
 - **A READ THAT FAILED IS NOT AN EMPTY FOLDER — `tryGetFile()` /
-  `tryListDir()`.** `getFile()`/`listDir()` answer `null`/`[]` for a 404, a
-  403, a 500 and a dropped connection alike — right for ninety callers, **data
-  loss for the four that LATCH**: one 403 after a deploy marked a room restored
-  with nothing restored, backup intact, nothing logged. **A 404 is an ANSWER;
+  `tryListDir()`.** `getFile()`/`listDir()` answer `null`/`[]` for a 404, a 403,
+  a 500 and a dropped connection alike — right for ninety callers, **data loss
+  for the four that LATCH**: one 403 after a deploy marked a room restored with
+  nothing restored, backup intact, nothing logged. **A 404 is an ANSWER;
   anything else is a failure to LOOK.** `restoreOnce()` latches on the way OUT.
-  **ONE IMPLEMENTATION** — the plain pair delegate, ninety call sites
-  unchanged. A failed listing is not cached; **no TTL, which would still serve
-  the wrong answer for its length.**
+  **ONE IMPLEMENTATION** — the plain pair delegate. A failed listing is not
+  cached; **no TTL, which would still serve the wrong answer for its length.**
 - **A READ-BACK SHA CAN BE STALE — `GitHub 409` reached a live console.** The
   Contents API is served from a replica, so a `GET` after a 200 `PUT` can hand
   back the version before it. **The sha a `PUT` HANDS BACK cannot be served
   stale**, so `putFile()` remembers it. **It is a CACHE, so it must be able to
-  be wrong**: forgotten, re-read PAST the caches, retried once, said in WORDS
+  be wrong**: forgotten, re-read past the caches, retried once, said in WORDS
 - **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT, GROUPED BY PUB** —
   `coverPhotos()`. **Pins lead, the rest is a SPREAD**, seeded off the date.
-  **BUILT FROM THE SAME FILTERED LIST THE NIGHT'S PAGE SHOWS**, so a pin cannot
-  advertise a photograph that page refuses. **A pin is a PREFERENCE; the lamp
-  is the GATE.**
+  **BUILT FROM THE SAME FILTERED LIST THE NIGHT'S PAGE SHOWS.** **A pin is a
+  PREFERENCE; the lamp is the GATE.**
 - **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor.** **Nothing
   deciding who may see a photo is cached with it**; **the browser window is NOT
   lengthened past a day** — taking a photo down is a promise a cache cannot
   reach.
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
-  nights, rulings, pins. The third is when it gets forgotten; a test walks them.
+  nights, rulings, pins. A test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
-  **decided on the SERVER** — only it has the archive. **An end of the run is
-  an ABSENT link, not a dead one**: the one place *present and inert* does not
-  apply, that rule being about a page driven weekly rather than one a stranger
-  sees once.
+  **decided on the SERVER**. **An end of the run is an ABSENT link, not a dead
+  one**: the one place *present and inert* does not apply, that rule being
+  about a page driven weekly rather than one a stranger sees once.
 - **THE LEAGUE IS EXPORTED TO TWO AUDIENCES AND THEY WANTED DIFFERENT THINGS**
   — the landlord wants EVIDENCE, so the season table joined the post-night
   report he already receives; the teams want the table on a WALL, so `/league`
   is a public page per quizmaster. One thing for both would serve neither.
   - **A REPORT SAYS WHAT THE ROOM SAW THAT NIGHT, not what is true today** —
-    `leagueAfter()` winds the night list AND the season window back to that
-    evening; a snapshot that has moved on is not evidence.
+    `leagueAfter()` winds the night list AND the season window back; a snapshot
+    that has moved on is not evidence.
   - **A PUBLIC PAGE IS A PUBLISH, PER VENUE, FAILING CLOSED** —
     `league-publish.js`, the gallery's shape exactly, in the private repo
     because `data/` is wiped on every deploy. **NAMES AND POINTS, NEVER
     FACES**: the fields are named on the way out rather than spread, or the
     next one added is a photograph on a public page.
   - **THE NEXT QUIZ DATE IS THE LOUDEST THING UNDER THE TABLE** — a team lying
-    fourth wants to know when it can do something about it. It writes itself
-    from the venue's usual night.
+    fourth wants to know when it can do something about it.
   - **AN ASYNC PAINT LOOKS WHERE THE THING IS, NOT WHERE IT WAS MADE.** The
     publish control queried the `DocumentFragment` it was built in, which
-    `render()` had already emptied into the page — no control drew, nothing
+    `render()` had already emptied into the page — nothing drew, nothing
     threw.
 
 ### EVERY DOOR'S BAY IS THE LAUNCH BAY'S SIZE
@@ -1902,8 +1904,7 @@ with photographs).
 
 - **THE CONSOLE DOOR IS THE EXCEPTION, DELIBERATELY.** Its bay is the launch
   bar — the protected surface, and the REFERENCE every other bay is sized
-  against. It is not a list of things to look at, it is the one thing you came
-  to do. **Do not give it a rail.**
+  against. **Do not give it a rail.**
 - **ONE DEFINITION, because each door had already invented its own** — three
   answers to one question. The rail is the TAB COLUMN one region higher: same
   190px, same stack, same lit left edge.
@@ -1916,17 +1917,16 @@ with photographs).
   versus *preview*, an owner being able to open a draft.
 - **COMPARTMENTALISED BY PUB, AND THE PUB FOLDS.** **Group by the pub FIRST,
   then order within it**, or "The Crown" prints twice with another pub between.
-  **FOUR TO A GROUP, the rest named as below** — the rail is the night you are
-  thinking about; the tab body is the archive.
+  **FOUR TO A GROUP** — the rail is the night you are thinking about; the tab
+  body is the archive.
 - **WHAT IS REMEMBERED WINS, ALWAYS — the first build had it the other way and
   the control was DEAD.** Forcing a group open whenever it held the picked row
-  meant pressing its heading put it straight back, and nothing threw. **A
-  control that does nothing when pressed is worse than the problem it was
-  avoiding**, so `holdsPicked` is a DEFAULT. **The folds live in a module Map
-  keyed by rail AND group** — the bay is rebuilt on every push.
+  meant pressing its heading put it straight back. **A control that does
+  nothing when pressed is worse than the problem it was avoiding**, so
+  `holdsPicked` is a DEFAULT. **The folds live in a module Map keyed by rail
+  AND group** — the bay is rebuilt on every push.
 - **NO `title` ANYWHERE IN THE RAIL — the names WRAP to two lines instead.** A
-  native tooltip is an unstyled box landing over the rows beneath it. The
-  heading drops a rung too, or the two read as one undivided list.
+  native tooltip is an unstyled box landing over the rows beneath it.
 - **`.bay-rail > * { flex: 0 0 auto }` IS LOAD-BEARING.** A flex column shrinks
   its children and the rail always overflows. The rows survived on
   `min-height: 44px`; the pub headings had no floor and rendered at **2px with
@@ -1972,8 +1972,8 @@ up there too."*
   the thing at the bottom to reveal it at the top."* The league tab draws no
   table and the Photos tab draws no photographs.
 - **THE SAFEGUARDS SURVIVED THE MOVE.** Nobody publishes a night or a table
-  without having just looked at it — the button is UNDER the thing, and **drawn
-  ONLY for the night showing**: one on an unopened row breaks it.
+  without having just looked at it — the button is UNDER the thing, **drawn
+  ONLY for the night showing**.
 - **ONE PRESS PUTS IT IN THE BAY, THE NEXT TAKES IT OUT** — wall → one night →
   one picture, each step reversed by pressing the same thing.
 - **A PICTURE IS AN OVERLAY, NOT A REPLACEMENT — which keeps the wall's

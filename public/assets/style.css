@@ -8137,9 +8137,35 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * the thing you are protecting.** Reported as *"the menu at the top is fucked
  * AGAIN"*, and it is the same fault as the first time wearing a threshold: the
  * bar cannot shrink and nothing was telling it to. */
+/* AND WHAT THE DIET TAKES IS THE PRODUCT NAME, NEVER THE POSSESSIVE.
+ *
+ * The first version hid `.brand-name`, which is the whole stacked wordmark —
+ * so the one account that lost its own name off its own console was the
+ * OWNER's, because `:has(.hat-switch)` is his bar alone. The possessive exists
+ * to put a quizmaster's name on their app; deleting it from the one bar this
+ * rule reaches is the feature running backwards, and it was reported as the
+ * name having "disappeared".
+ *
+ * SO THE MARK CARRIES THE PRODUCT AND THE WORD CARRIES WHOSE. The drawn
+ * question-in-a-microphone already says which app this is, and it is 40px
+ * where the stack is 81 — measured at 1000px, which is where the bar is
+ * tightest, `#runningNow` having already stood down.
+ *
+ * RESTORING THE WHOLE STACK WAS RENDERED AND IS DEAD. At 1000px it does not
+ * push a door off the bar — it drops `#hatSlot`, the switch and the tier
+ * rungs, onto a second row 54px down, taking Sign out with it. That is the
+ * two-row header this diet exists to prevent, and the account controls are the
+ * other half of what it is protecting.
+ *
+ * A wordmark with no possessive in it still goes, and loses nothing: it says
+ * only what the mark beside it already said. */
 @media (min-width: 431px) {
   .console .topbar:has(.hat-switch) { gap: 10px; padding-left: 14px; padding-right: 14px; }
-  .console .topbar:has(.hat-switch) .brand-name { display: none; }
+  .console .topbar:has(.hat-switch) .brand-name:not(.stacked) { display: none; }
+  .console .topbar:has(.hat-switch) .brand-name.stacked .brand-app { display: none; }
+  /* The nesting margin sits the possessive INTO the product name; with nothing
+     underneath to nest into it only clips the tail of a descender. */
+  .console .topbar:has(.hat-switch) .brand-name.stacked .brand-who { margin-bottom: 0; }
   .console .topbar:has(.hat-switch) .topnav { gap: 5px; }
   .console .topbar:has(.hat-switch) .topnav a { padding: 8px 10px; }
   .console .topbar:has(.hat-switch) .hat-switch .hat-half { padding: 10px 10px; }
