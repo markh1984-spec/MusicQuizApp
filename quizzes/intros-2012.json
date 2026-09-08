@@ -77,7 +77,9 @@
             "title": "We Are Young",
             "artist": "fun.",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:5rgy6ghBq1eRApCkeUdJXf",
+            "spotifyUrl": "https://open.spotify.com/track/5rgy6ghBq1eRApCkeUdJXf"
           }
         },
         {
@@ -111,7 +113,9 @@
             "title": "Stronger (What Doesn't Kill You)",
             "artist": "Kelly Clarkson",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:1nInOsHbtotAmEOQhtvnzP",
+            "spotifyUrl": "https://open.spotify.com/track/1nInOsHbtotAmEOQhtvnzP"
           }
         },
         {
@@ -128,7 +132,9 @@
             "title": "Ho Hey",
             "artist": "The Lumineers",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:0DwClY2t9YAWHBROMIgrXb",
+            "spotifyUrl": "https://open.spotify.com/track/0DwClY2t9YAWHBROMIgrXb"
           }
         },
         {
@@ -145,7 +151,9 @@
             "title": "Wild Ones",
             "artist": "Flo Rida",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:1NpW5kyvO4XrNJ3rnfcNy3",
+            "spotifyUrl": "https://open.spotify.com/track/1NpW5kyvO4XrNJ3rnfcNy3"
           }
         },
         {
@@ -162,7 +170,9 @@
             "title": "Feel the Love",
             "artist": "Rudimental",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:0k73nWaD6RPx2sHFEkGPcn",
+            "spotifyUrl": "https://open.spotify.com/track/0k73nWaD6RPx2sHFEkGPcn"
           }
         },
         {
@@ -179,7 +189,9 @@
             "title": "Skyfall",
             "artist": "Adele",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:6VObnIkLVruX4UVyxWhlqm",
+            "spotifyUrl": "https://open.spotify.com/track/6VObnIkLVruX4UVyxWhlqm"
           }
         }
       ]

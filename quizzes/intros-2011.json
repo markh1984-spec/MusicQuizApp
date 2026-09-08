@@ -60,7 +60,9 @@
             "title": "Pumped Up Kicks",
             "artist": "Foster the People",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:7w87IxuO7BDcJ3YUqCyMTT",
+            "spotifyUrl": "https://open.spotify.com/track/7w87IxuO7BDcJ3YUqCyMTT"
           }
         },
         {
@@ -111,7 +113,9 @@
             "title": "Titanium",
             "artist": "David Guetta",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:2dOTkLZFbpNXrhc24CnTFd",
+            "spotifyUrl": "https://open.spotify.com/track/2dOTkLZFbpNXrhc24CnTFd"
           }
         },
         {
@@ -128,7 +132,9 @@
             "title": "Give Me Everything",
             "artist": "Pitbull",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:5XZ72GmBONwRGYltKlg1jv",
+            "spotifyUrl": "https://open.spotify.com/track/5XZ72GmBONwRGYltKlg1jv"
           }
         },
         {
@@ -145,7 +151,9 @@
             "title": "What Makes You Beautiful",
             "artist": "One Direction",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:4cluDES4hQEUhmXj6TXkSo",
+            "spotifyUrl": "https://open.spotify.com/track/4cluDES4hQEUhmXj6TXkSo"
           }
         },
         {
@@ -162,7 +170,9 @@
             "title": "Lonely Boy",
             "artist": "The Black Keys",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:5G1sTBGbZT5o4PNRc75RKI",
+            "spotifyUrl": "https://open.spotify.com/track/5G1sTBGbZT5o4PNRc75RKI"
           }
         },
         {
@@ -179,7 +189,9 @@
             "title": "Skinny Love",
             "artist": "Birdy",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:6k8kLJFmWkHaTbSLUhJ3H0",
+            "spotifyUrl": "https://open.spotify.com/track/6k8kLJFmWkHaTbSLUhJ3H0"
           }
         }
       ]

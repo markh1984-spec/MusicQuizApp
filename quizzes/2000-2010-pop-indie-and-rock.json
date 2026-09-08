@@ -431,7 +431,9 @@
             "title": "I Bet You Look Good on the Dancefloor",
             "artist": "Arctic Monkeys",
             "from": "0:00",
-            "hint": "let the opening riff run about five seconds"
+            "hint": "let the opening riff run about five seconds",
+            "spotifyUri": "spotify:track:3DQVgcqaP3iSMbaKsd57l5",
+            "spotifyUrl": "https://open.spotify.com/track/3DQVgcqaP3iSMbaKsd57l5"
           }
         },
         {
@@ -449,7 +451,9 @@
             "title": "Take Me Out",
             "artist": "Franz Ferdinand",
             "from": "0:00",
-            "hint": "the clean guitar intro, about six seconds"
+            "hint": "the clean guitar intro, about six seconds",
+            "spotifyUri": "spotify:track:20I8RduZC2PWMWTDCZuuAN",
+            "spotifyUrl": "https://open.spotify.com/track/20I8RduZC2PWMWTDCZuuAN"
           }
         },
         {
@@ -485,7 +489,9 @@
             "title": "I Predict a Riot",
             "artist": "Kaiser Chiefs",
             "from": "0:00",
-            "hint": "the intro riff, about five seconds"
+            "hint": "the intro riff, about five seconds",
+            "spotifyUri": "spotify:track:0lqciaIBAkfgtKezpD15KE",
+            "spotifyUrl": "https://open.spotify.com/track/0lqciaIBAkfgtKezpD15KE"
           }
         },
         {
@@ -503,7 +509,9 @@
             "title": "Supermassive Black Hole",
             "artist": "Muse",
             "from": "0:00",
-            "hint": "the falsetto and the fuzz bass, about six seconds"
+            "hint": "the falsetto and the fuzz bass, about six seconds",
+            "spotifyUri": "spotify:track:3lPr8ghNDBLc2uZovNyLs9",
+            "spotifyUrl": "https://open.spotify.com/track/3lPr8ghNDBLc2uZovNyLs9"
           }
         },
         {
@@ -521,7 +529,9 @@
             "title": "Seven Nation Army",
             "artist": "The White Stripes",
             "from": "0:00",
-            "hint": "the bass riff alone, about five seconds"
+            "hint": "the bass riff alone, about five seconds",
+            "spotifyUri": "spotify:track:3dPQuX8Gs42Y7b454ybpMR",
+            "spotifyUrl": "https://open.spotify.com/track/3dPQuX8Gs42Y7b454ybpMR"
           }
         },
         {
@@ -539,7 +549,9 @@
             "title": "Feel Good Inc.",
             "artist": "Gorillaz",
             "from": "0:00",
-            "hint": "the laugh and the bassline, about six seconds"
+            "hint": "the laugh and the bassline, about six seconds",
+            "spotifyUri": "spotify:track:0d28khcov6AiegSCpG5TuT",
+            "spotifyUrl": "https://open.spotify.com/track/0d28khcov6AiegSCpG5TuT"
           }
         },
         {
@@ -593,7 +605,9 @@
             "title": "Sex on Fire",
             "artist": "Kings of Leon",
             "from": "0:00",
-            "hint": "the opening guitar, about five seconds"
+            "hint": "the opening guitar, about five seconds",
+            "spotifyUri": "spotify:track:5A1FmxbYVRZKy4nc16MAue",
+            "spotifyUrl": "https://open.spotify.com/track/5A1FmxbYVRZKy4nc16MAue"
           }
         }
       ]

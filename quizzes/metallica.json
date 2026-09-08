@@ -501,7 +501,9 @@
             "title": "Master of Puppets",
             "artist": "Metallica",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:799XxzSlWNYkuWJxUbuGnF",
+            "spotifyUrl": "https://open.spotify.com/track/799XxzSlWNYkuWJxUbuGnF"
           }
         },
         {

@@ -301,7 +301,9 @@
             "title": "Hips Don't Lie",
             "artist": "Shakira",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:3d0WouFnFmr0K3kjeza3fF",
+            "spotifyUrl": "https://open.spotify.com/track/3d0WouFnFmr0K3kjeza3fF"
           }
         },
         {
@@ -319,7 +321,9 @@
             "title": "Bleeding Love",
             "artist": "Leona Lewis",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:6LtPIXlIzPOTF8vTecYjRe",
+            "spotifyUrl": "https://open.spotify.com/track/6LtPIXlIzPOTF8vTecYjRe"
           }
         },
         {
@@ -409,7 +413,9 @@
             "title": "Sex on Fire",
             "artist": "Kings of Leon",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:5A1FmxbYVRZKy4nc16MAue",
+            "spotifyUrl": "https://open.spotify.com/track/5A1FmxbYVRZKy4nc16MAue"
           }
         },
         {
@@ -445,7 +451,9 @@
             "title": "American Boy",
             "artist": "Estelle",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:6etwirSInfuJrSOlogS6Sh",
+            "spotifyUrl": "https://open.spotify.com/track/6etwirSInfuJrSOlogS6Sh"
           }
         }
       ]

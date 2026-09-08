@@ -539,7 +539,9 @@
             "title": "Cheap Thrills",
             "artist": "Sia",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:3S4px9f4lceWdKf0gWciFu",
+            "spotifyUrl": "https://open.spotify.com/track/3S4px9f4lceWdKf0gWciFu"
           }
         },
         {
@@ -593,7 +595,9 @@
             "title": "Dance Monkey",
             "artist": "Tones and I",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:2XU0oxnq2qxCpomAAuJY8K",
+            "spotifyUrl": "https://open.spotify.com/track/2XU0oxnq2qxCpomAAuJY8K"
           }
         },
         {
@@ -665,7 +669,9 @@
             "title": "Padam Padam",
             "artist": "Kylie Minogue",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:44MuEHdlociG8KjhPhOVw5",
+            "spotifyUrl": "https://open.spotify.com/track/44MuEHdlociG8KjhPhOVw5"
           }
         },
         {
@@ -683,7 +689,9 @@
             "title": "greedy",
             "artist": "Tate McRae",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:6wCv0m87EJ6kYGUi5c0kbG",
+            "spotifyUrl": "https://open.spotify.com/track/6wCv0m87EJ6kYGUi5c0kbG"
           }
         },
         {
@@ -701,7 +709,9 @@
             "title": "APT.",
             "artist": "ROSÉ",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:5vNRhkKd0yEAg8suGBpjeY",
+            "spotifyUrl": "https://open.spotify.com/track/5vNRhkKd0yEAg8suGBpjeY"
           }
         }
       ]

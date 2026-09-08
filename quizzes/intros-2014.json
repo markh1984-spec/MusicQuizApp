@@ -26,7 +26,9 @@
             "title": "Happy",
             "artist": "Pharrell Williams",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:60nZcImufyMA1MKQY3dcCH",
+            "spotifyUrl": "https://open.spotify.com/track/60nZcImufyMA1MKQY3dcCH"
           }
         },
         {
@@ -43,7 +45,9 @@
             "title": "Rather Be",
             "artist": "Clean Bandit",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:0TVV2gFROJaB3kIZyCUvIY",
+            "spotifyUrl": "https://open.spotify.com/track/0TVV2gFROJaB3kIZyCUvIY"
           }
         },
         {
@@ -60,7 +64,9 @@
             "title": "Uptown Funk",
             "artist": "Mark Ronson",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:32OlwWuMpZ6b0aN2RZOeMS",
+            "spotifyUrl": "https://open.spotify.com/track/32OlwWuMpZ6b0aN2RZOeMS"
           }
         },
         {
@@ -77,7 +83,9 @@
             "title": "All About That Bass",
             "artist": "Meghan Trainor",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:5jE48hhRu8E6zBDPRSkEq7",
+            "spotifyUrl": "https://open.spotify.com/track/5jE48hhRu8E6zBDPRSkEq7"
           }
         },
         {
@@ -145,7 +153,9 @@
             "title": "Budapest",
             "artist": "George Ezra",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:2ixsaeFioXJmMgkkbd4uj1",
+            "spotifyUrl": "https://open.spotify.com/track/2ixsaeFioXJmMgkkbd4uj1"
           }
         },
         {
@@ -162,7 +172,9 @@
             "title": "Waves",
             "artist": "Mr. Probz",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:3s8GJ1A9ujxsKcLaJ2wY7Q",
+            "spotifyUrl": "https://open.spotify.com/track/3s8GJ1A9ujxsKcLaJ2wY7Q"
           }
         },
         {
@@ -179,7 +191,9 @@
             "title": "Rude",
             "artist": "MAGIC!",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:18n3RlT0UNcy2yHImHy8IT",
+            "spotifyUrl": "https://open.spotify.com/track/18n3RlT0UNcy2yHImHy8IT"
           }
         }
       ]

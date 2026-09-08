@@ -26,7 +26,9 @@
             "title": "Get Lucky",
             "artist": "Daft Punk",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:69kOkLUCkxIZYexIgSG8rq",
+            "spotifyUrl": "https://open.spotify.com/track/69kOkLUCkxIZYexIgSG8rq"
           }
         },
         {
@@ -128,7 +130,9 @@
             "title": "Thrift Shop",
             "artist": "Macklemore & Ryan Lewis",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:37rKwjBHaZurlyPYy3Nqvz",
+            "spotifyUrl": "https://open.spotify.com/track/37rKwjBHaZurlyPYy3Nqvz"
           }
         },
         {
@@ -145,7 +149,9 @@
             "title": "Let Her Go",
             "artist": "Passenger",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:5rEvuW4YhwobKwGL1HPrXA",
+            "spotifyUrl": "https://open.spotify.com/track/5rEvuW4YhwobKwGL1HPrXA"
           }
         },
         {

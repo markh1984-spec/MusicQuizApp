@@ -43,7 +43,9 @@
             "title": "Fire",
             "artist": "Kasabian",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:0Ln5tJyLX5qusquBOtq7wf",
+            "spotifyUrl": "https://open.spotify.com/track/0Ln5tJyLX5qusquBOtq7wf"
           }
         },
         {
@@ -77,7 +79,9 @@
             "title": "Beat Again",
             "artist": "JLS",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:426vBhxw4upEf11BqBBgs0",
+            "spotifyUrl": "https://open.spotify.com/track/426vBhxw4upEf11BqBBgs0"
           }
         },
         {
@@ -111,7 +115,9 @@
             "title": "Uprising",
             "artist": "Muse",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:4VqPOruhp5EdPBeR92t6lQ",
+            "spotifyUrl": "https://open.spotify.com/track/4VqPOruhp5EdPBeR92t6lQ"
           }
         },
         {
@@ -128,7 +134,9 @@
             "title": "Sweet Disposition",
             "artist": "The Temper Trap",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:1jUkHIMc7UaJQuzWe5Iop2",
+            "spotifyUrl": "https://open.spotify.com/track/1jUkHIMc7UaJQuzWe5Iop2"
           }
         },
         {

@@ -426,7 +426,9 @@
             "title": "Material Girl",
             "artist": "Madonna",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:7bkyXSi4GtVfD7itZRUR3e",
+            "spotifyUrl": "https://open.spotify.com/track/7bkyXSi4GtVfD7itZRUR3e"
           }
         },
         {
@@ -444,7 +446,9 @@
             "title": "Holiday",
             "artist": "Madonna",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:3ibAzRj9JnowdoLkyllk3n",
+            "spotifyUrl": "https://open.spotify.com/track/3ibAzRj9JnowdoLkyllk3n"
           }
         },
         {
@@ -462,7 +466,9 @@
             "title": "La Isla Bonita",
             "artist": "Madonna",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:6r8k1vznHrzlEKYxL4dZEe",
+            "spotifyUrl": "https://open.spotify.com/track/6r8k1vznHrzlEKYxL4dZEe"
           }
         },
         {
@@ -480,7 +486,9 @@
             "title": "Express Yourself",
             "artist": "Madonna",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:3szW87j0gVLQmpulz4P8Rf",
+            "spotifyUrl": "https://open.spotify.com/track/3szW87j0gVLQmpulz4P8Rf"
           }
         },
         {
@@ -498,7 +506,9 @@
             "title": "Borderline",
             "artist": "Madonna",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:4SuabhTNPBTBFjfOjhvRNQ",
+            "spotifyUrl": "https://open.spotify.com/track/4SuabhTNPBTBFjfOjhvRNQ"
           }
         },
         {
@@ -516,7 +526,9 @@
             "title": "Crazy for You",
             "artist": "Madonna",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:6iABG3ruJ1ArrulilbVhai",
+            "spotifyUrl": "https://open.spotify.com/track/6iABG3ruJ1ArrulilbVhai"
           }
         },
         {
@@ -534,7 +546,9 @@
             "title": "Justify My Love",
             "artist": "Madonna",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:6NBGabiAuQklrfkufcOqlN",
+            "spotifyUrl": "https://open.spotify.com/track/6NBGabiAuQklrfkufcOqlN"
           }
         },
         {
@@ -552,7 +566,9 @@
             "title": "4 Minutes",
             "artist": "Madonna",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:1dDNz8h95Gsu0W4QdxVVln",
+            "spotifyUrl": "https://open.spotify.com/track/1dDNz8h95Gsu0W4QdxVVln"
           }
         },
         {
@@ -570,7 +586,9 @@
             "title": "Lucky Star",
             "artist": "Madonna",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:2hWI9GNr3kBrxZ7Mphho4Q",
+            "spotifyUrl": "https://open.spotify.com/track/2hWI9GNr3kBrxZ7Mphho4Q"
           }
         },
         {
@@ -588,7 +606,9 @@
             "title": "Take a Bow",
             "artist": "Madonna",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:5oqukcHWfqq7HGjyKwLX1y",
+            "spotifyUrl": "https://open.spotify.com/track/5oqukcHWfqq7HGjyKwLX1y"
           }
         }
       ]

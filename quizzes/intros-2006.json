@@ -26,7 +26,9 @@
             "title": "Crazy",
             "artist": "Gnarls Barkley",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:1vxw6aYJls2oq3gW0DujAo",
+            "spotifyUrl": "https://open.spotify.com/track/1vxw6aYJls2oq3gW0DujAo"
           }
         },
         {
@@ -60,7 +62,9 @@
             "title": "Smile",
             "artist": "Lily Allen",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:79z9QkhHePTFsSeVw9uyj0",
+            "spotifyUrl": "https://open.spotify.com/track/79z9QkhHePTFsSeVw9uyj0"
           }
         },
         {
@@ -94,7 +98,9 @@
             "title": "SexyBack",
             "artist": "Justin Timberlake",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:0O45fw2L5vsWpdsOdXwNAR",
+            "spotifyUrl": "https://open.spotify.com/track/0O45fw2L5vsWpdsOdXwNAR"
           }
         },
         {
@@ -128,7 +134,9 @@
             "title": "Dani California",
             "artist": "Red Hot Chili Peppers",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:10Nmj3JCNoMeBQ87uw5j8k",
+            "spotifyUrl": "https://open.spotify.com/track/10Nmj3JCNoMeBQ87uw5j8k"
           }
         },
         {
@@ -145,7 +153,9 @@
             "title": "Hips Don't Lie",
             "artist": "Shakira",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:3d0WouFnFmr0K3kjeza3fF",
+            "spotifyUrl": "https://open.spotify.com/track/3d0WouFnFmr0K3kjeza3fF"
           }
         },
         {

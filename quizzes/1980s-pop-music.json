@@ -421,7 +421,9 @@
             "title": "Billie Jean",
             "artist": "Michael Jackson",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:7J1uxwnxfQLu4APicE5Rnj",
+            "spotifyUrl": "https://open.spotify.com/track/7J1uxwnxfQLu4APicE5Rnj"
           }
         },
         {
@@ -457,7 +459,9 @@
             "title": "Girls Just Want to Have Fun",
             "artist": "Cyndi Lauper",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:4y1LsJpmMti1PfRQV9AWWe",
+            "spotifyUrl": "https://open.spotify.com/track/4y1LsJpmMti1PfRQV9AWWe"
           }
         },
         {
@@ -475,7 +479,9 @@
             "title": "The Final Countdown",
             "artist": "Europe",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:3MrRksHupTVEQ7YbA0FsZK",
+            "spotifyUrl": "https://open.spotify.com/track/3MrRksHupTVEQ7YbA0FsZK"
           }
         },
         {
@@ -493,7 +499,9 @@
             "title": "Africa",
             "artist": "TOTO",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:2374M0fQpWi3dLnB54qaLX",
+            "spotifyUrl": "https://open.spotify.com/track/2374M0fQpWi3dLnB54qaLX"
           }
         },
         {
@@ -511,7 +519,9 @@
             "title": "Don't Stop Believin'",
             "artist": "Journey",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:77NNZQSqzLNqh2A9JhLRkg",
+            "spotifyUrl": "https://open.spotify.com/track/77NNZQSqzLNqh2A9JhLRkg"
           }
         },
         {
@@ -529,7 +539,9 @@
             "title": "Blue Monday",
             "artist": "New Order",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:6hHc7Pks7wtBIW8Z6A0iFq",
+            "spotifyUrl": "https://open.spotify.com/track/6hHc7Pks7wtBIW8Z6A0iFq"
           }
         },
         {
@@ -547,7 +559,9 @@
             "title": "Walk Like an Egyptian",
             "artist": "The Bangles",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:3plZG4ZdlqxIIZUSfieVO7",
+            "spotifyUrl": "https://open.spotify.com/track/3plZG4ZdlqxIIZUSfieVO7"
           }
         },
         {
@@ -565,7 +579,9 @@
             "title": "Careless Whisper",
             "artist": "George Michael",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:6KsgCYcZKPcBRDNGhiZWRR",
+            "spotifyUrl": "https://open.spotify.com/track/6KsgCYcZKPcBRDNGhiZWRR"
           }
         },
         {
@@ -583,7 +599,9 @@
             "title": "Uptown Girl",
             "artist": "Billy Joel",
             "from": "0:00",
-            "hint": "let the intro run about five seconds"
+            "hint": "let the intro run about five seconds",
+            "spotifyUri": "spotify:track:5zA8vzDGqPl2AzZkEYQGKh",
+            "spotifyUrl": "https://open.spotify.com/track/5zA8vzDGqPl2AzZkEYQGKh"
           }
         }
       ]

@@ -26,7 +26,9 @@
             "title": "Flowers",
             "artist": "Miley Cyrus",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:7DSAEUvxU8FajXtRloy8M0",
+            "spotifyUrl": "https://open.spotify.com/track/7DSAEUvxU8FajXtRloy8M0"
           }
         },
         {
@@ -60,7 +62,9 @@
             "title": "Miracle",
             "artist": "Calvin Harris",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:5eTaQYBE1yrActixMAeLcZ",
+            "spotifyUrl": "https://open.spotify.com/track/5eTaQYBE1yrActixMAeLcZ"
           }
         },
         {
@@ -77,7 +81,9 @@
             "title": "Boy's a Liar Pt. 2",
             "artist": "PinkPantheress",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:6AQbmUe0Qwf5PZnt4HmTXv",
+            "spotifyUrl": "https://open.spotify.com/track/6AQbmUe0Qwf5PZnt4HmTXv"
           }
         },
         {
@@ -111,7 +117,9 @@
             "title": "Dance the Night",
             "artist": "Dua Lipa",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:11C4y2Yz1XbHmaQwO06s9f",
+            "spotifyUrl": "https://open.spotify.com/track/11C4y2Yz1XbHmaQwO06s9f"
           }
         },
         {
@@ -128,7 +136,9 @@
             "title": "Paint the Town Red",
             "artist": "Doja Cat",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:7DlZH8EiVDgQXNoj3dnyZC",
+            "spotifyUrl": "https://open.spotify.com/track/7DlZH8EiVDgQXNoj3dnyZC"
           }
         },
         {
@@ -179,7 +189,9 @@
             "title": "Escapism",
             "artist": "RAYE",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:5mHdCZtVyb4DcJw8799hZp",
+            "spotifyUrl": "https://open.spotify.com/track/5mHdCZtVyb4DcJw8799hZp"
           }
         }
       ]

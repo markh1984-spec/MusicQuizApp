@@ -26,7 +26,9 @@
             "title": "Rolling in the Deep",
             "artist": "Adele",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:4OSBTYWVwsQhGLF9NHvIbR",
+            "spotifyUrl": "https://open.spotify.com/track/4OSBTYWVwsQhGLF9NHvIbR"
           }
         },
         {
@@ -43,7 +45,9 @@
             "title": "Airplanes",
             "artist": "B.o.B",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:6lV2MSQmRIkycDScNtrBXO",
+            "spotifyUrl": "https://open.spotify.com/track/6lV2MSQmRIkycDScNtrBXO"
           }
         },
         {
@@ -60,7 +64,9 @@
             "title": "Pass Out",
             "artist": "Tinie Tempah",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:2cY7WSxFIsZQaoDNJe7Fz3",
+            "spotifyUrl": "https://open.spotify.com/track/2cY7WSxFIsZQaoDNJe7Fz3"
           }
         },
         {
@@ -128,7 +134,9 @@
             "title": "Forget You",
             "artist": "CeeLo Green",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:6zKMARmU2Ue50cucKnIUR6",
+            "spotifyUrl": "https://open.spotify.com/track/6zKMARmU2Ue50cucKnIUR6"
           }
         },
         {
@@ -145,7 +153,9 @@
             "title": "Tik Tok",
             "artist": "Kesha",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:0HPD5WQqrq7wPWR7P7Dw1i",
+            "spotifyUrl": "https://open.spotify.com/track/0HPD5WQqrq7wPWR7P7Dw1i"
           }
         },
         {
@@ -162,7 +172,9 @@
             "title": "Barbra Streisand",
             "artist": "Duck Sauce",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:1tQCOdjHZAv7wlKaV54QsQ",
+            "spotifyUrl": "https://open.spotify.com/track/1tQCOdjHZAv7wlKaV54QsQ"
           }
         },
         {
@@ -179,7 +191,9 @@
             "title": "Grenade",
             "artist": "Bruno Mars",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:4lLtanYk6tkMvooU0tWzG8",
+            "spotifyUrl": "https://open.spotify.com/track/4lLtanYk6tkMvooU0tWzG8"
           }
         }
       ]

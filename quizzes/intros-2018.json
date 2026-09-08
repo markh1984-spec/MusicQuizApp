@@ -43,7 +43,9 @@
             "title": "This Is Me",
             "artist": "Keala Settle",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:45aBsnKRWUzhwbcqOJLwfe",
+            "spotifyUrl": "https://open.spotify.com/track/45aBsnKRWUzhwbcqOJLwfe"
           }
         },
         {
@@ -60,7 +62,9 @@
             "title": "Solo",
             "artist": "Clean Bandit",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:6kPJZM97LwdG9QIsT7khp6",
+            "spotifyUrl": "https://open.spotify.com/track/6kPJZM97LwdG9QIsT7khp6"
           }
         },
         {
@@ -111,7 +115,9 @@
             "title": "One Kiss",
             "artist": "Calvin Harris",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:7ef4DlsgrMEH11cDZd32M6",
+            "spotifyUrl": "https://open.spotify.com/track/7ef4DlsgrMEH11cDZd32M6"
           }
         },
         {
@@ -145,7 +151,9 @@
             "title": "High Hopes",
             "artist": "Panic! At the Disco",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:1rqqCSm0Qe4I9rUvWncaom",
+            "spotifyUrl": "https://open.spotify.com/track/1rqqCSm0Qe4I9rUvWncaom"
           }
         },
         {
@@ -162,7 +170,9 @@
             "title": "Shotgun",
             "artist": "George Ezra",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:4ofwffwvvnbSkrMSCKQDaC",
+            "spotifyUrl": "https://open.spotify.com/track/4ofwffwvvnbSkrMSCKQDaC"
           }
         },
         {

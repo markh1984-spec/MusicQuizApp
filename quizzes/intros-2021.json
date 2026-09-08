@@ -60,7 +60,9 @@
             "title": "Montero (Call Me by Your Name)",
             "artist": "Lil Nas X",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:67BtfxlNbhBmCDR2L2l8qd",
+            "spotifyUrl": "https://open.spotify.com/track/67BtfxlNbhBmCDR2L2l8qd"
           }
         },
         {
@@ -77,7 +79,9 @@
             "title": "Leave the Door Open",
             "artist": "Silk Sonic",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:4pryE6cN2gFL1FVF5fYINl",
+            "spotifyUrl": "https://open.spotify.com/track/4pryE6cN2gFL1FVF5fYINl"
           }
         },
         {
@@ -94,7 +98,9 @@
             "title": "Kiss Me More",
             "artist": "Doja Cat",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:47362Yh7VtOwx9jSpNssds",
+            "spotifyUrl": "https://open.spotify.com/track/47362Yh7VtOwx9jSpNssds"
           }
         },
         {
@@ -111,7 +117,9 @@
             "title": "Bad Habits",
             "artist": "Ed Sheeran",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:3rmo8F54jFF8OgYsqTxm5d",
+            "spotifyUrl": "https://open.spotify.com/track/3rmo8F54jFF8OgYsqTxm5d"
           }
         },
         {
@@ -162,7 +170,9 @@
             "title": "Beggin'",
             "artist": "Maneskin",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:3Wrjm47oTz2sjIgck11l5e",
+            "spotifyUrl": "https://open.spotify.com/track/3Wrjm47oTz2sjIgck11l5e"
           }
         },
         {
@@ -179,7 +189,9 @@
             "title": "Body",
             "artist": "Russ Millions",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:3CVb6hkMrlF7eHhXi5B3PZ",
+            "spotifyUrl": "https://open.spotify.com/track/3CVb6hkMrlF7eHhXi5B3PZ"
           }
         }
       ]

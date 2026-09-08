@@ -43,7 +43,9 @@
             "title": "Beautiful Things",
             "artist": "Benson Boone",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:3xkHsmpQCBMytMJNiDf3Ii",
+            "spotifyUrl": "https://open.spotify.com/track/3xkHsmpQCBMytMJNiDf3Ii"
           }
         },
         {
@@ -60,7 +62,9 @@
             "title": "Texas Hold 'Em",
             "artist": "Beyonce",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:7wLShogStyDeZvL0a6daN5",
+            "spotifyUrl": "https://open.spotify.com/track/7wLShogStyDeZvL0a6daN5"
           }
         },
         {
@@ -77,7 +81,9 @@
             "title": "Stumblin' In",
             "artist": "CYRIL",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:0h3Xy4V4apMraB5NuM8U7Z",
+            "spotifyUrl": "https://open.spotify.com/track/0h3Xy4V4apMraB5NuM8U7Z"
           }
         },
         {
@@ -94,7 +100,9 @@
             "title": "Houdini",
             "artist": "Dua Lipa",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:6D8y7Bck8h11byRY88Pt2z",
+            "spotifyUrl": "https://open.spotify.com/track/6D8y7Bck8h11byRY88Pt2z"
           }
         },
         {

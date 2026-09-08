@@ -26,7 +26,9 @@
             "title": "Shape of You",
             "artist": "Ed Sheeran",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:7qiZfU4dY1lWllzX7mPBI3",
+            "spotifyUrl": "https://open.spotify.com/track/7qiZfU4dY1lWllzX7mPBI3"
           }
         },
         {
@@ -60,7 +62,9 @@
             "title": "Havana",
             "artist": "Camila Cabello",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:1rfofaqEpACxVEHIZBJe6W",
+            "spotifyUrl": "https://open.spotify.com/track/1rfofaqEpACxVEHIZBJe6W"
           }
         },
         {
@@ -77,7 +81,9 @@
             "title": "New Rules",
             "artist": "Dua Lipa",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:4LihUZcWy0B6lGLqcJ8u9B",
+            "spotifyUrl": "https://open.spotify.com/track/4LihUZcWy0B6lGLqcJ8u9B"
           }
         },
         {
@@ -111,7 +117,9 @@
             "title": "Symphony",
             "artist": "Clean Bandit",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:1x5sYLZiu9r5E43kMlt9f8",
+            "spotifyUrl": "https://open.spotify.com/track/1x5sYLZiu9r5E43kMlt9f8"
           }
         },
         {
@@ -145,7 +153,9 @@
             "title": "Feel It Still",
             "artist": "Portugal. The Man",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:6QgjcU0zLnzq5OrUoSZ3OK",
+            "spotifyUrl": "https://open.spotify.com/track/6QgjcU0zLnzq5OrUoSZ3OK"
           }
         },
         {
@@ -179,7 +189,9 @@
             "title": "Attention",
             "artist": "Charlie Puth",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:5cF0dROlMOK5uNZtivgu50",
+            "spotifyUrl": "https://open.spotify.com/track/5cF0dROlMOK5uNZtivgu50"
           }
         }
       ]

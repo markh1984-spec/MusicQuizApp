@@ -26,7 +26,9 @@
             "title": "APT.",
             "artist": "ROSE",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:5vNRhkKd0yEAg8suGBpjeY",
+            "spotifyUrl": "https://open.spotify.com/track/5vNRhkKd0yEAg8suGBpjeY"
           }
         },
         {
@@ -111,7 +113,9 @@
             "title": "Ordinary",
             "artist": "Alex Warren",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:6qqrTXSdwiJaq8SO0X2lSe",
+            "spotifyUrl": "https://open.spotify.com/track/6qqrTXSdwiJaq8SO0X2lSe"
           }
         },
         {
@@ -128,7 +132,9 @@
             "title": "Azizam",
             "artist": "Ed Sheeran",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:0sCvjs8IVBhxXVhg7jQemt",
+            "spotifyUrl": "https://open.spotify.com/track/0sCvjs8IVBhxXVhg7jQemt"
           }
         },
         {

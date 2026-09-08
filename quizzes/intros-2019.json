@@ -26,7 +26,9 @@
             "title": "Old Town Road",
             "artist": "Lil Nas X",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:0F7FA14euOIX8KcbEturGH",
+            "spotifyUrl": "https://open.spotify.com/track/0F7FA14euOIX8KcbEturGH"
           }
         },
         {
@@ -94,7 +96,9 @@
             "title": "Dance Monkey",
             "artist": "Tones and I",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:2XU0oxnq2qxCpomAAuJY8K",
+            "spotifyUrl": "https://open.spotify.com/track/2XU0oxnq2qxCpomAAuJY8K"
           }
         },
         {
@@ -128,7 +132,9 @@
             "title": "Giant",
             "artist": "Calvin Harris",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:5itOtNx0WxtJmi1TQ3RuRd",
+            "spotifyUrl": "https://open.spotify.com/track/5itOtNx0WxtJmi1TQ3RuRd"
           }
         },
         {
@@ -145,7 +151,9 @@
             "title": "Beautiful People",
             "artist": "Ed Sheeran",
             "from": "0:00",
-            "hint": ""
+            "hint": "",
+            "spotifyUri": "spotify:track:4evmHXcjt3bTUHD1cvny97",
+            "spotifyUrl": "https://open.spotify.com/track/4evmHXcjt3bTUHD1cvny97"
           }
         },
         {
