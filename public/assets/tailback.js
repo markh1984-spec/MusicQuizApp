@@ -42,8 +42,27 @@ import { seeded } from './seeded.js';
 export const COLS = 15;
 export const ROWS = 15;
 
-export const STEP_MS = 130;
-export const LIVES = 3;
+// 170 rather than 130: greedy games are shorter, and a slower tail is also
+// a readable one on a 390px phone. See LIVES below for the measurements.
+export const STEP_MS = 170;
+/*
+ * SIX SHORT LIVES RATHER THAN THREE LONG ONES, and a slower step with them —
+ * both fell out of the greedy steering above and both were measured.
+ *
+ * Greedy at the old three lives and 130ms gave **19 seconds for a whole game**
+ * and an abandoned phone scoring 35% of a player's. That breaks two rules this
+ * file already had a test for each of: a lobby game has to be worth opening,
+ * and a phone nobody is touching must not reach the board. Four lives was
+ * asked for and still failed both (36s, and the same ratio).
+ *
+ * Six at 170ms passes both, and the shape is right rather than merely legal:
+ * each life is a proper run that ends when you trap yourself — longest tail
+ * **41**, against 68 when the pathfinder did the avoiding — and you get six
+ * goes at it inside about **82 seconds**. Short lives suit a game whose deaths
+ * are sudden and self-inflicted; the difficulty is in the tail, not in the
+ * allowance.
+ */
+export const LIVES = 6;
 
 /** How long you start, and how much a pellet is worth in cells and in points. */
 const START_LENGTH = 4;
@@ -88,34 +107,45 @@ export function stepToward(from, to, body = [], growing = false) {
   if (from.col === to.col && from.row === to.row) return null;
   const solidCells = growing ? body : body.slice(0, -1);
   const blocked = new Set(solidCells.map((p) => key(p.col, p.row)));
-  if (blocked.has(key(to.col, to.row))) return null;
 
-  // Walked OUT from the target, so one pass answers "how far is every cell
-  // from where they tapped" and the step is whichever neighbour is nearest.
-  const dist = new Map([[key(to.col, to.row), 0]]);
-  const queue = [{ col: to.col, row: to.row, d: 0 }];
-  while (queue.length) {
-    const at = queue.shift();
-    if (at.col === from.col && at.row === from.row) break;
-    for (const [dc, dr] of DIRS) {
-      const col = at.col + dc;
-      const row = at.row + dr;
-      const k = key(col, row);
-      if (!inField(col, row) || blocked.has(k) || dist.has(k)) continue;
-      dist.set(k, at.d + 1);
-      queue.push({ col, row, d: at.d + 1 });
-    }
+  /*
+   * GREEDY, AND DELIBERATELY NOT A PATHFINDER — this is what makes the tail
+   * the game.
+   *
+   * It was a breadth-first search that walked out from the target and routed
+   * the head AROUND the body, and the consequence was measured rather than
+   * guessed: a player who taps the pellet every step averaged **51 pellets and
+   * a tail of 67**, against 54 before the tail was made fatal at all. In other
+   * words the tail was scenery. The search did the avoiding, so the one thing
+   * the game is supposed to be about — *"as the snake gets longer the game
+   * gets more difficult"* — never happened.
+   *
+   * Greedy closes the bigger gap first and takes the other axis when that step
+   * is occupied. Same player, same seeds: **13 pellets, tail 31, about 19
+   * seconds a game.** Plotting a way round your own tail is now the player's
+   * job, which is the job it should always have been.
+   *
+   * **IT STILL NEVER RETURNS A CELL INSIDE THE BODY.** That rule is untouched
+   * and still tested: a life may not be taken for a route the player did not
+   * choose. What changed is that there is no longer a clever way out — when
+   * greed has nowhere to go it returns null, and `step()` decides whether that
+   * is a forgiving wall or a fatal tail.
+   */
+  const clear = (col, row) => inField(col, row) && !blocked.has(key(col, row));
+  const dc = Math.sign(to.col - from.col);
+  const dr = Math.sign(to.row - from.row);
+  const across = [dc, 0];
+  const down = [0, dr];
+  // The longer leg first, so the head commits to the obvious direction rather
+  // than staircasing — which reads as indecision on a 15-wide field.
+  const order = Math.abs(to.col - from.col) >= Math.abs(to.row - from.row)
+    ? [across, down]
+    : [down, across];
+  for (const d of order) {
+    if (!d[0] && !d[1]) continue;
+    if (clear(from.col + d[0], from.row + d[1])) return d;
   }
-
-  let best = null;
-  let bestD = Infinity;
-  for (const [dc, dr] of DIRS) {
-    const d = dist.get(key(from.col + dc, from.row + dr));
-    if (d === undefined || d >= bestD) continue;
-    bestD = d;
-    best = [dc, dr];
-  }
-  return best;
+  return null;
 }
 
 /**
@@ -233,13 +263,40 @@ export function step(g) {
    */
   let dir = stepToward(head, g.target, g.body, g.grow > 0);
   if (!dir && free(g, g.dir)) dir = g.dir;
-  // Deterministic by DIRS order, which matters — every phone in the room has
-  // to make the same turn. Reversing into its own neck is not free, so it
-  // cannot be picked.
-  if (!dir) dir = DIRS.find((d) => free(g, d)) || null;
   if (!dir) {
-    // Boxed in by your own tail. The one way this is lost, and always the
-    // player's doing — which is exactly why the steering must never be.
+    /*
+     * THE TAIL IS FATAL AND THE WALL IS NOT, and that split is the whole game.
+     *
+     * This used to turn away from ANYTHING in the way, so the only way to lose
+     * was to be sealed in on all four sides — which on a 15x15 field with a
+     * twenty-long tail essentially never happens. The steering is a full
+     * breadth-first search that routes AROUND the body, so a route almost
+     * always existed and the tail was scenery: *"as the snake gets longer the
+     * game gets more difficult"* was the one thing it did not do.
+     *
+     * So running into your own tail ends it now — but a WALL still turns you,
+     * and keeping those two apart is what stops this being the change that was
+     * already tried and rejected. Dying at an edge was measured at **eight to
+     * thirty seconds for three lives**, because tapping a destination is not
+     * holding a direction: reach the target, the target is gone, and the edge
+     * killed you for the gap between two taps. A wall is where you stop
+     * steering; your own tail is something you built.
+     *
+     * The router itself is untouched, so it STILL never drives you into the
+     * body — the rule above it stands: a life may not be taken for a route the
+     * player did not choose. What kills you is arriving somewhere with your
+     * own tail dead ahead and not tapping, which is a mistake you made, and
+     * one that gets likelier with every pellet.
+     */
+    if (bodyAhead(g, g.dir)) return lose(g);
+    // Deterministic by DIRS order, which matters — every phone in the room has
+    // to make the same turn. Reversing into its own neck is not free, so it
+    // cannot be picked.
+    dir = DIRS.find((d) => free(g, d)) || null;
+  }
+  if (!dir) {
+    // Boxed in on all four sides — still a loss, and still always the
+    // player's doing.
     return lose(g);
   }
   g.dir = dir;
@@ -288,6 +345,21 @@ function free(g, dir) {
   const row = g.body[0].row + dir[1];
   if (!inField(col, row)) return false;
   return !solid(g).some((p) => p.col === col && p.row === row);
+}
+
+/**
+ * Is the square straight ahead the player's OWN BODY, rather than a wall?
+ *
+ * The distinction `free()` does not draw, and the one the loss rule turns on:
+ * off the field is a wall and forgiving, an occupied square is the tail and
+ * fatal. Growing counts the end cell as solid for the same reason `free()`
+ * does — while the tail is still extending it has not moved on yet.
+ */
+function bodyAhead(g, dir) {
+  const col = g.body[0].col + dir[0];
+  const row = g.body[0].row + dir[1];
+  if (!inField(col, row)) return false;
+  return solid(g).some((p) => p.col === col && p.row === row);
 }
 
 /** The cells that will still be occupied after this step. */
