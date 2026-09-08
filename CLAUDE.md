@@ -946,9 +946,16 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   so above the cap the window says nothing and at it the window is the bar.
   **Below it the product name gives way and the possessive stays** (40px
   against the stack's 81). **A wordmark with no possessive in it still goes**,
-  saying only what the mark already said. **It wraps at 820 rather than 760,
-  and that is affordable BECAUSE THERE IS NO FRAME BELOW 900** — the two-row
-  cost this diet exists for is tab-column height, which does not exist there.
+  saying only what the mark already said. **BELOW THE CAP THE BAR WRAPS AT
+  960 AND THE WORDMARK IS NOT WHY** — `#hatSlot` drops, and it does that at
+  the same width with the possessive as without it. **KEEP THE GATE AT THE
+  CONTAINER'S NUMBER**: hand-picking one from a sweep is strictly worse, and
+  the switch measures 310px or 387px depending on whether a host KEY is in
+  use, which moves any bisected threshold by ~77px.
+- **AND `setViewportSize()` IN A LOOP IS NON-DETERMINISTIC HERE** — the same
+  sweep read the wrap at 1090 then 960, a real recalculation race against
+  `:has()`. **Navigate fresh per width and poll twice 250ms apart until two
+  readings agree**, or the threshold is whatever the timing gave you.
 - **AND NOTHING RESTATES `overflow` AFTER `.console .wrap`'S PAIR.** A trailing
   `overflow: hidden` wiped the `overflow-y: auto` five lines above it, so the
   frame CLIPPED instead of scrolling: 161px of overflow at 1500x900, and a real
@@ -1506,11 +1513,9 @@ What was there and where it went:
   **The shapes still differ** — the radius encodes what a control IS, and
   flattening that would undo the GUI rules.
 - **A DESTRUCTIVE BUTTON KEEPS THE FACE AND THE 2px EDGE.** The one global
-  `.danger` rule uses the `border` SHORTHAND, which overwrote all four sides
-  and left Unlaunch and Delete structurally different objects from the buttons
-  beside them — **the shorthand-beats-longhand trap, hit inside the rule that
-  calls itself "the one rule"**. Outlined-never-filled is about FILL and is
-  untouched.
+  `.danger` rule uses the `border` SHORTHAND, which overwrote all four sides —
+  **the shorthand-beats-longhand trap, hit inside the rule that calls itself
+  "the one rule"**. Outlined-never-filled is about FILL and is untouched.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -1870,28 +1875,26 @@ Workshop and Post gig, and whatever the data came to on Community — so the top
 of the page changed shape on every door press, and under a fixed frame that
 moves the tab column and everything below it.
 
-- **THE VALUE IS THE LAUNCH BAR'S OWN OPEN PANEL HEIGHT, MEASURED** — the panel,
-  not the doorhead round it. Two values: the bar's row wraps below 1150px.
+- **THE VALUE IS THE LAUNCH BAR'S OWN OPEN PANEL HEIGHT, MEASURED** — the
+  panel, not the doorhead. Two values: the row wraps below 1150px.
 - **AND THE RULE IS ABOUT THE BAY, NOT THE DOORHEAD.** With a night running the
   Console's doorhead is **573px and the other three 386**, because it carries a
-  SECOND panel — the running one. **Every BAY is 362px on every door**, so the
-  rule holds. **DO NOT RAISE `--bay-h` TO 549 TO EVEN THEM UP**: it spends
-  187px of tab column on three doors PERMANENTLY, idle included, leaving
-  **234px against the frame's own 200px floor**. **Nor put the running panel on
-  the other doors** — `nowPlaying()`'s short form already answers that.
+  SECOND panel. **Every BAY is 362px on every door**, so the rule holds. **DO
+  NOT RAISE `--bay-h` TO 549 TO EVEN THEM UP**: it spends 187px of tab column
+  on three doors PERMANENTLY, leaving **234px against the frame's own 200px
+  floor**. **Nor put the running panel on the other doors.**
 - **AND THE GUARD MEASURED IT IDLE, so both sides read 386 and it agreed with
-  itself** — **a guard that sets a night up but never lets anybody in is
-  measuring a console nobody uses**, twice now. It launches a quiz and lets two
-  phones in, compares `.panel.bench` against `.panel.launchbar`, and **names the
-  Console's two panels** so a third is looked at.
+  itself.** It launches a quiz and lets two phones in, compares `.panel.bench`
+  against `.panel.launchbar`, and **names the Console's two panels** so a third
+  is looked at.
 - **THE BAR ITSELF IS NOT GIVEN THE HEIGHT.** It is the REFERENCE, it folds to
   a line on purpose, and clipping the one panel on the protected launch path to
   a stylesheet number is not a trade worth making. `community-bay.mjs` asserts
-  the two agree, so the bar growing fails a check instead.
-- **BELOW 900px THERE IS NO RULE**, there being no frame — and the bar is 745px
-  on a phone, which as a floor is a screen of empty panel per door.
-- **A FIXED BOX IS WHAT LETS THE CONTENT STOP WORRYING** — anything SCROLLS
-  INSIDE IT, so nothing needs a row cap or an "and N more" line.
+  the two agree.
+- **BELOW 900px THERE IS NO RULE**, there being no frame — the bar is 745px on
+  a phone, which as a floor is a screen of empty panel per door.
+- **A FIXED BOX LETS THE CONTENT STOP WORRYING** — anything SCROLLS INSIDE IT,
+  so nothing needs a row cap or an "and N more".
 
 ### EVERY BAY IS A RAIL AND WHAT IT PICKED — `console-bay.js`
 
