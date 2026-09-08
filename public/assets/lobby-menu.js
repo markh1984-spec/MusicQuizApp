@@ -44,7 +44,7 @@ const LOADERS = {
   rally: () => import('./lobby-rally.js'),
   tailback: () => import('./lobby-tailback.js'),
   quickdraw: () => import('./lobby-quickdraw.js'),
-  pileup: () => import('./lobby-pileup.js'),
+  lastorders: () => import('./lobby-lastorders.js'),
 };
 
 /**
@@ -267,7 +267,7 @@ export function wireArcade(el, s, postScore) {
         // EVERY PHONE PLAYING THIS GAME PLAYS THE SAME ONE — the seed comes
         // off the game state. It is shared across all of them on purpose:
         // each game derives its own layout from it, so one seed still means
-        // two people who chose Pile Up are stacking the same crates.
+        // two people who chose Last Orders face the same wave.
         seed: s.gameSeed,
         // Banked at each life lost as well as at the end: a game interrupted
         // by the night starting never reaches game over, and by then the phase

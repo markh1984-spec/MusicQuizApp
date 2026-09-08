@@ -91,14 +91,14 @@ export const LOBBY_GAMES = [
     canvas: { w: 600, h: 900, klass: 'tall' },
   },
   {
-    id: 'pileup',
-    // A symbol so the console can say which game in a word — a stack of boxes.
-    icon: '📦',
-    name: 'Pile Up',
-    how: 'Tap to drop the crate',
-    blurb: 'stack the crates',
+    id: 'lastorders',
+    // A symbol so the console can say which game in a word — a pint.
+    icon: '🍺',
+    name: 'Last Orders',
+    how: 'Tap where you want the glass',
+    blurb: 'clear the bar before they reach it',
     tier: 'gold',
-    // 2:3 — a tower is vertical, and this is a phone held upright.
+    // 2:3 — a formation coming DOWN wants height, on a phone held upright.
     canvas: { w: 600, h: 900, klass: 'tall' },
   },
 ];

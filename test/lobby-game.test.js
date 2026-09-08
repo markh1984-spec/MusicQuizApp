@@ -399,14 +399,14 @@ test('A SCORE SAYS WHICH GAME IT WAS SET ON, and an unknown id is dropped', () =
   // seed matter. Once anybody can pick, five scores can be five different
   // sports — so the row has to say which, or the projector is inventing a
   // ranking nobody played.
-  e.arcadeScore(id, 900, 'pileup');
-  assert.equal(e.arcadeBoard()[0].game, 'pileup');
+  e.arcadeScore(id, 900, 'lastorders');
+  assert.equal(e.arcadeBoard()[0].game, 'lastorders');
   // A LABEL, NEVER A PERMISSION — nothing is granted by it, so a phone sending
   // rubbish loses the icon rather than the score, and the row draws exactly as
   // a pre-choice score does.
   e.arcadeScore(id, 4000, 'not-a-game');
   assert.equal(e.arcadeBoard()[0].score, 4000);
-  assert.equal(e.arcadeBoard()[0].game, 'pileup');
+  assert.equal(e.arcadeBoard()[0].game, 'lastorders');
   // And a score banked with no game named leaves the row the two fields it
   // has always had — which is what every score before this existed is.
   const other = e.join('Rita');

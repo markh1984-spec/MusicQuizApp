@@ -66,7 +66,7 @@ const GAMES = [
   { id: 'rally', name: 'Rally', tier: 'bronze' },
   { id: 'tailback', name: 'Tailback', tier: 'silver' },
   { id: 'quickdraw', name: 'Quick Draw', tier: 'gold' },
-  { id: 'pileup', name: 'Pile Up', tier: 'gold' },
+  { id: 'lastorders', name: 'Last Orders', tier: 'gold' },
 ];
 
 let failures = 0;
