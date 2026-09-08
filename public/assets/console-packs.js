@@ -180,13 +180,6 @@ function pinnedArranger(kind, packs) {
   return el;
 }
 
-/*
- * WHICH KIND'S SINGLE-ROUND SHELF IS OPEN. Module state rather than
- * `localStorage`: a fold you open to fetch one thing, not a preference — and
- * the shelf is rebuilt on every state push, so it lives outside the render.
- */
-const roundsOpen = {};
-
 /**
  * @param kind  the GAME kind — 'quiz' or 'bingo'. What a pack IS: its card,
  *   its edge colour, its drag payload. Two tabs can share one.
@@ -259,14 +252,7 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit', slot 
       </div>`}
       <div class="pin-arranger-slot"></div>
       <div class="pack-grid ${dense ? 'dense' : ''}"></div>
-      <!-- A ROUND IS NOT A NIGHT: its own shelf, hidden when there are none. -->
-      <div class="rounds-shelf" hidden>
-        <div class="row rounds-head">
-          <h3 class="rounds-title"></h3>
-          <button class="minor rounds-fold" type="button"></button>
-        </div>
-        <div class="pack-grid rounds-grid ${dense ? 'dense' : ''}"></div>
-      </div>
+
       <!-- THE SHOP IS NOT HERE ANY MORE. It is its own tab behind My account
            - see shopSection(). A shop under the shelf put something to spend
            money on at the bottom of the page somebody opens to work, and it
@@ -386,14 +372,13 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit', slot 
      * so it stays reachable. **Bingo is unaffected by construction**: a bingo
      * pack has no rounds at all. See `docs/console.md`.
      */
-    const wholes = all.filter((p) => (p.rounds || []).length !== 1);
-    const singles = all.filter((p) => (p.rounds || []).length === 1);
-    // A SHELF THAT IS ENTIRELY SINGLE ROUNDS IS NOT SPLIT — that is the Music
-    // Intros tab, where a one-round pack is the point rather than the crowd,
-    // and splitting would fold the whole tab away behind its own heading.
-    const split = wholes.length > 0 && singles.length > 0;
-    const yours = split ? wholes : all;
-    const rounds = split ? singles : [];
+    /*
+     * NO SPLIT HERE ANY MORE — the TAB does it. A single-round pack lives on
+     * Music Rounds and a night lives on Music Quiz, so a second mechanism
+     * inside one shelf would be two answers to one question. It existed for an
+     * hour, between noticing the crowding and having somewhere to put them.
+     */
+    const yours = all;
 
     if (!yours.length) {
       grid.appendChild(node(`<div class="tiny">None of the ones you have match “${esc(queryFor())}”.</div>`));
@@ -465,28 +450,6 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit', slot 
     }
     for (const pack of shown) grid.appendChild(packCard(kind, pack));
 
-    /*
-     * THE ROUNDS, UNDER THEIR OWN HEADING AND FOLDED BY DEFAULT — the common
-     * job here is *find tonight's quiz and press Launch*, and twenty-four
-     * cards under the six is a wall you scroll past. **The count is IN the
-     * heading**, so what is folded away is stated rather than hidden.
-     */
-    const shelfEl = el.querySelector('.rounds-shelf');
-    if (shelfEl) {
-      const roundsGrid = shelfEl.querySelector('.rounds-grid');
-      const titleEl = shelfEl.querySelector('.rounds-title');
-      const foldEl = shelfEl.querySelector('.rounds-fold');
-      shelfEl.hidden = rounds.length === 0;
-      if (rounds.length) {
-        const open = roundsOpen[slot] === true;
-        titleEl.textContent = `Single rounds · ${rounds.length}`;
-        foldEl.textContent = open ? 'Hide' : 'Show';
-        roundsGrid.hidden = !open;
-        roundsGrid.textContent = '';
-        if (open) for (const pack of rounds) roundsGrid.appendChild(packCard(kind, pack));
-        foldEl.onclick = () => { roundsOpen[slot] = !open; paint(); };
-      }
-    }
   };
 
   // Redrawn in place rather than through render(), so the box keeps focus and

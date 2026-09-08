@@ -18,7 +18,7 @@ import {
 import { gigsSection } from './console-gigs.js';
 import { invoicesSection } from './console-invoices.js';
 import { gameSection, preview } from './console-packs.js';
-import { isIntroPack } from './pack-look.js';
+import { isOneRound } from './pack-look.js';
 import { showsSection } from './console-shows.js';
 import { NIGHT_BENCH_STORE, bench, lastDone, library, me, setAccountsExist, setLastDone, setLibrary, setMe, setNightBench } from './console-state.js';
 import { aNightIsOn, dragging, launchBar, night, nowPlaying, putNightOnBench, runningPanel, wantPackFromUrl } from './console-tonight.js';
@@ -754,7 +754,7 @@ export const TABS = [
      * first, so twenty brand-new intro packs took all six and pushed every
      * actual quiz off the shelf the Console launches from.
      */
-    packs: () => library.quizzes.filter((p) => !isIntroPack(p)),
+    packs: () => library.quizzes.filter((p) => !isOneRound(p)),
     // Generating is the owner's, on the owner's bill. A quizmaster buys packs
     // — and writes their own, which is a different library and a different
     // panel rather than a cheaper generator.
@@ -798,33 +798,38 @@ export const TABS = [
   },
   {
     /*
-     * MUSIC INTROS — its own room, asked for directly: *"the pack can live as
+     * MUSIC ROUNDS — its own room, asked for directly: *"the pack can live as
      * a specific thing that people buy and then be broken up into individual
      * rounds for moving them onto and off of the console."*
      *
      * **THE TAB IS THE PRODUCT AND THE ROUND IS THE UNIT**, which is this
      * file's own vocabulary finally reaching the shelf: a quiz is a product, a
-     * round is part of one. You buy an intro pack here; Tonight bursts it into
-     * a tile per round when you drag it in, which needed no work because a
-     * slot has always held a pack id plus round indexes.
+     * round is part of one. You buy a round here; Tonight bursts a pack into a
+     * tile per round when you drag one in, which needed no work because a slot
+     * has always held a pack id plus round indexes.
      *
-     * **`kind` IS STILL 'quiz'.** These ARE quizzes — one intro round each —
-     * so the card, the green edge and the drag payload must all say quiz or
-     * the pack becomes unresolvable the moment it lands in Tonight. The TAB is
-     * `intros`; the GAME is not.
+     * **NAMED FOR THE SHAPE, NOT THE TYPE.** It was *Music Intros* for an hour
+     * and that was the wrong axis: intro is one round type among several, so a
+     * tab named after it invites a Pictures tab and a GK tab next. A pack is
+     * the thing that CONTAINS types; this holds the ones that contain exactly
+     * one, whatever it happens to be.
      *
-     * **NO GENERATOR.** Intro packs are made by importing a playlist, which is
-     * a Workshop panel of its own — a second way in here would be two controls
-     * for one job.
+     * **`kind` IS STILL 'quiz'.** These ARE quizzes — one round each — so the
+     * card, the green edge and the drag payload must all say quiz or the pack
+     * becomes unresolvable the moment it lands in Tonight. The TAB is
+     * `rounds`; the GAME is not.
+     *
+     * **NO GENERATOR.** A round is made by importing a playlist or writing one
+     * in the editor, both of which have a way in already.
      */
-    id: 'intros',
+    id: 'rounds',
     kind: 'quiz',
     doors: ['console', 'workshop'],
     needs: FEATURES.LIBRARY,
-    label: 'Music Intros',
-    blurb: 'One round of intros — drop it into any night.',
+    label: 'Music Rounds',
+    blurb: 'One round each — drop them into any night.',
     editLabel: 'Pack editor',
-    packs: () => library.quizzes.filter(isIntroPack),
+    packs: () => library.quizzes.filter(isOneRound),
   },
   {
     id: 'bingo',

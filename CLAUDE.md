@@ -3230,27 +3230,25 @@ against a board marking "Psychosocial" right, and nothing threw.
 
 - **THE ALIGNMENT IS STRUCTURAL, NOT CHECKED** — both are written from ONE
   Spotify track and never typed, so there is no state in which they differ.
-  **Do not add a second place the song is typed.** It is the fault `recue.js`
-  could not reach: that one fixes the wrong RECORDING, this the wrong SONG.
+  **Do not add a second place the song is typed.** `recue.js` fixes the wrong
+  RECORDING; this is the wrong SONG.
 - **THE PLAYLIST IS READ, NEVER CREATED** — `round.spotifyPlaylist` is the one
   you already have. A second built from the round is the two-copies-that-drift
-  problem on purpose. Rule 11 in miniature.
-- **CLAUDE ONLY EVER WRITES THE WRONG ANSWERS**, in ONE call for the round, the
-  right one being off Spotify before it is asked — so a bad reply costs a decoy,
-  never an answer key. **`claudeAsker()` returns null with no key** rather than
-  throwing, and **the decoys then come from the playlist, SAID OUT LOUD**
-  (`fellBack`): that is a different round to read through.
+  problem on purpose.
+- **CLAUDE ONLY EVER WRITES THE WRONG ANSWERS**, in ONE call, the right one
+  being off Spotify before it is asked — so a bad reply costs a decoy, never an
+  answer key. **`claudeAsker()` returns null with no key** rather than throwing,
+  and **the decoys then come from the playlist, SAID OUT LOUD** (`fellBack`).
 - **A DECOY THAT IS THE ANSWER IS DROPPED, HOWEVER SPELT** — `sameSong()` only
   ever REJECTS. Short questions are topped up: one may never reach the room
   with two options.
 - **`from` IS ALWAYS `0:00`, NEVER GUESSED**, and **an id that exists is
   REFUSED** — importing twice lands on one file and `reloadPackEverywhere()`
-  would push the replacement into a running game.
-- **IT MAKES A ONE-ROUND PACK**, which Tonight already bursts into a tile — no
-  new composing UI, no second answer to "what is being played tonight".
+  pushes the replacement into a running game.
+- **IT MAKES A ONE-ROUND PACK**, which lives on Music Rounds and which
+  Tonight bursts into a tile — no new composing UI.
 - **THE SPOTIFY HALF IS INJECTED** (`readPlaylist`/`configured`): **an ES
-  module namespace is READ-ONLY**, so a test cannot stub the import — the first
-  version did and threw before any assertion.
+  module namespace is READ-ONLY**, so a test cannot stub the import.
 - **AND THE GENERATED PATH GETS THE SAME GUARANTEE — THE CUE WINS.**
   `buildIntroPlaylist` resolved the CUE and left the option as Claude typed it.
   It compares them with `sameSong()` now and rewrites the option to the cue on
@@ -3542,32 +3540,36 @@ slots."*
 - **MOVING A ROUND IS MOVING ITS TILE NOW** — the tile's own grip is the
   handle. `drag-check.mjs` COUNTS tiles rather than pinning a round count.
 
-### MUSIC INTROS IS ITS OWN TAB, AND A ROUND TICK WEARS A GLYPH
+### MUSIC ROUNDS IS ITS OWN TAB, AND A ROUND TICK WEARS A GLYPH
 
-`isIntroPack()` / `roundGlyph()` in `pack-look.js`, the `intros` entry in
-`TABS`. *"The pack can live as a specific thing that people buy and then be
-broken up into individual rounds."*
+`isOneRound()` / `roundGlyph()` in `pack-look.js`, the `rounds` entry in
+`TABS`. *"The pack can live as a thing people buy and then be broken up into
+individual rounds."*
 
-- **THE TAB IS THE PRODUCT; THE ROUND IS THE UNIT.** Twenty one-round intro
+- **THE TAB IS THE PRODUCT; THE ROUND IS THE UNIT.** Twenty-four one-round
   packs on the quiz shelf did real damage: **only SIX show and they are RANKED
   never-played first**, so they took all six and pushed every actual quiz off
   the shelf the Console launches from.
 - **A TAB ID IS NOT A GAME KIND, and conflating them is silent.** `kind`
   builds the card, the edge colour and the `{id, kind}` a drag carries, which
-  `packOf()` resolves against `gameOf()` — a tab id of `intros` in there
+  `packOf()` resolves against `gameOf()` — a tab id of `rounds` in there
   resolves to NOTHING, state consistent and the reader lost. So `TABS` carries
-  `kind: 'quiz'` and `gameSection()` takes a separate `slot` for the search box
-  and the fold, which belong to the TAB.
-- **DERIVED, NEVER DECLARED** — mirroring `isBreakoutPack()`. **EVERY round,
-  not one**: a quiz with an intro round in the middle is a quiz.
-- **A SHELF THAT IS ALL SINGLE ROUNDS IS NOT SPLIT**, or the Intros tab folds
-  itself away.
+  `kind: 'quiz'` and `gameSection()` takes a separate `slot` for the search
+  box, which belongs to the TAB.
+- **THE AXIS IS ROUND COUNT, NOT ROUND TYPE**, and the first build got it
+  wrong: it asked whether every round was an INTRO, which invites a Pictures
+  tab next. *A pack is the thing that CONTAINS types.* Measured: of eight
+  multi-round quizzes SEVEN mix types and one is four text rounds, so a
+  single-TYPE rule pulls a whole quiz onto the wrong shelf. Derived, never
+  declared, like `isBreakoutPack()`.
+- **THE TAB DOES THE SPLIT, SO THE SHELF DOES NOT** — a fold inside one grid
+  was two answers to one question.
 - **THE ROUND TYPE IS A GLYPH, NEVER A COLOUR.** Asked for as a colour code and
   **rendered before it was argued**: `.lb-rd.on` is green and `.off` is red
   because a tick is a SWITCH carrying *is this round played tonight*, and a
   five-colour code makes the switched-off round unfindable. **Green, pink and
   purple are each already spoken for.** **The word rides in `title` and
-  `aria-label`**: a picture with no name needs explaining.
+  `aria-label`.**
 
 ### A PACK WEARS ITS OWN SUBJECT
 

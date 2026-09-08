@@ -156,18 +156,26 @@ export function roundGlyph(type, n) {
 }
 
 /**
- * A pack IS an intro pack when every round in it is an intro round — derived
- * from its own shape, never declared, exactly as `isBreakoutPack()` above is.
- * A flag would be a thing somebody has to remember to set on a file they wrote
- * by hand, and this app already knows the answer.
+ * A pack is ONE ROUND, which makes it a component rather than a night.
  *
- * **EVERY round, not "one round of type intro".** A twenty-question intro pack
- * split across two rounds is still an intro pack; a quiz with an intro round
- * in the middle of it is emphatically not, and lives with the quizzes.
+ * **THE AXIS IS ROUND COUNT, NOT ROUND TYPE, and the first version got that
+ * wrong.** It asked whether every round was an intro — which reads fine while
+ * the only single-round packs are intros, and stops being true the moment
+ * there is a picture round or a general-knowledge one on its own. *"The packs
+ * are the things that contain every other round type — GK, image and intros
+ * for now, but perhaps more going forwards."* A pack IS the container; a
+ * single round is what you take out of one.
+ *
+ * Measured against the real library, which is what settled it: of eight
+ * multi-round quizzes SEVEN mix their types and one is four text rounds — so
+ * a single-TYPE rule would have pulled a whole quiz out onto the wrong shelf,
+ * while a single-ROUND rule separates the eight nights from the twenty-four
+ * components exactly.
+ *
+ * Derived, never declared, like `isBreakoutPack()` above.
  */
-export function isIntroPack(pack) {
-  const rounds = (pack && pack.rounds) || [];
-  return rounds.length > 0 && rounds.every((r) => r.type === 'intro');
+export function isOneRound(pack) {
+  return ((pack && pack.rounds) || []).length === 1;
 }
 
 const KIND_EDGE_FALLBACK = 'rgba(255, 255, 255, 0.35)';

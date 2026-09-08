@@ -10692,19 +10692,6 @@ input, textarea, [contenteditable] { caret-color: var(--hot); }
   .lg-review-state { grid-column: 1 / -1; }
 }
 
-/* ---- A ROUND IS NOT A NIGHT: the single-round shelf under the six -------- */
-/* Its own heading and a fold, so twenty-four one-round packs cannot push the
-   quizzes off the six the Console shows. See gameSection() for why. */
-.rounds-shelf { margin-top: 18px; }
-.rounds-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.rounds-title { font-size: var(--fs-head); margin: 0; color: var(--ink); }
-.rounds-grid { margin-top: 4px; }
 
 /* A round tick carrying its TYPE as a glyph. The colour still means on/off —
    see roundGlyph() for why the type may not have it. */
