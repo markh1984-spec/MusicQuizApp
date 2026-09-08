@@ -965,6 +965,44 @@ function galleryRoomFor(req, url) {
 }
 
 /**
+ * EVERY ROOM THIS ACCOUNT'S NIGHTS ARE FILED IN — and for almost everybody
+ * that is exactly one.
+ *
+ * **A NIGHT'S VENUE COMES OFF THE ARCHIVE AND ITS PHOTOGRAPHS COME OFF THE
+ * REPOSITORY, AND FOR THE OWNER THOSE WERE TWO DIFFERENT ROOMS.** `/api/past-
+ * gigs` joins them BY DATE: the archive from `roomForHost()` — HOUSE for the
+ * owner and the host key — and the photo folders from `galleryRoomFor()`,
+ * which for those two identities is the owner's own QUIZMASTER room. So a
+ * night hosted under the quizmaster hat filed its archive in one room and its
+ * pictures in the other, the join found no record for that date, and the
+ * night came out with **no pub on it** — reported as *"all of these were
+ * taken at the same venue but the last ones have no venue attached"*.
+ *
+ * Nothing threw, and every row was real. It is the third sighting of **a read
+ * and a write that disagree about the room**, which this codebase already
+ * records for `leagues-published.json` and for the gallery publish control.
+ *
+ * **THE ARCHIVES ARE UNIONED, NEVER SWAPPED.** Picking one room instead would
+ * move his whole history to whichever hat he happened not to be wearing; both
+ * of these are his, and the split is a fact about nights already on disk that
+ * no migration is going to tidy — this file's own standing rule.
+ *
+ * **THE PHOTO FOLDERS ARE DELIBERATELY NOT UNIONED WITH THEM.** The per-night
+ * read, the lamps, the pins and the published flag are all ONE room by design,
+ * so listing a night whose pictures the opener cannot fetch would put a row on
+ * the rail that opens empty — a worse answer than the row not being there.
+ *
+ * **AN ORDINARY QUIZMASTER IS UNTOUCHED**: their room id is their account id,
+ * never HOUSE, so the two resolve to the same room and this returns the one it
+ * always did.
+ */
+function gigRoomsFor(req, url) {
+  const here = roomForHost(req, url);
+  const galleryId = galleryRoomFor(req, url);
+  return galleryId === here.id ? [here] : [here, rooms.get(galleryId)];
+}
+
+/**
  * WHICH ROOM A PHONE IS TALKING TO — and a code that does not resolve is
  * REFUSED, never quietly swapped for the house room.
  *
@@ -2437,13 +2475,19 @@ async function handleGet(req, res, url, route) {
    */
   if (route === '/api/past-gigs') {
     if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
-    const gigRoom = roomForHost(req, url);
-    await ensureArchiveRestored(gigRoom);
+    const gigRooms = gigRoomsFor(req, url);
+    const gigRoom = gigRooms[0];
+    // Both, when there are two — see `gigRoomsFor()`. The backup has to be
+    // back before either archive is read, or a night reads as unfiled.
+    for (const room of gigRooms) await ensureArchiveRestored(room);
     // The gallery's room, like every other photo read — see `galleryRoomFor()`.
     const folders = photosRepoConfigured()
       ? await listDirs(photoFolder(galleryRoomFor(req, url)), 'photos')
       : [];
-    const nights = mergeGigs(listArchive(gigRoom.paths.archive), folders.map((f) => f.name));
+    const nights = mergeGigs(
+      gigRooms.flatMap((room) => listArchive(room.paths.archive)),
+      folders.map((f) => f.name),
+    );
     /*
      * WHICH OF THEM HAVE NOT BEEN BILLED.
      *
@@ -2500,10 +2544,16 @@ async function handleGet(req, res, url, route) {
     if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
     const night = decodeURIComponent(route.slice('/api/past-gigs/'.length, -'/report.pdf'.length));
     if (!isNightFolder(night)) return sendJson(res, 404, { error: 'No night with that date.' }), true;
-    const gigRoom = roomForHost(req, url);
-    await ensureArchiveRestored(gigRoom);
+    const gigRooms = gigRoomsFor(req, url);
+    const gigRoom = gigRooms[0];
+    for (const room of gigRooms) await ensureArchiveRestored(room);
     const folders = photosRepoConfigured() ? await listDirs(photoFolder(galleryRoomFor(req, url)), 'photos') : [];
-    const nights = mergeGigs(listArchive(gigRoom.paths.archive, { boards: true }), folders.map((f) => f.name));
+    // The same union the listing uses, or the report of a night hosted under
+    // the other hat has no venue, no podium and no headcount on it.
+    const nights = mergeGigs(
+      gigRooms.flatMap((room) => listArchive(room.paths.archive, { boards: true })),
+      folders.map((f) => f.name),
+    );
     const entry = nights.find((n) => n.night === night);
     if (!entry) return sendJson(res, 404, { error: 'No night with that date.' }), true;
     const photoFiles = photosRepoConfigured()

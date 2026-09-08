@@ -267,6 +267,36 @@ let photoNightsAsking = false;
  * The pubs keep DATE order — the one you played at last is first, like every
  * other list of venues in this app — and the nights inside each keep theirs.
  */
+/**
+ * WHY A NIGHT HAS NO PUB ON IT — because FOUR different things put a row into
+ * "No venue on these" and every one of them drew the same silent row.
+ *
+ * The host asked *"all of these were taken at the same venue but the last ones
+ * have no venue attached?"*, and the honest answer was that the rail could not
+ * tell him: a cross-room join miss, a night that never reached its final
+ * scores, a launch with no venue picked and two venues on one date were
+ * indistinguishable. The first is fixed at the route (`gigRoomsFor()`); the
+ * other three are real states a host can act on, so the row says which.
+ *
+ * **"No results saved" IS POST GIG'S OWN WORDING**, not a second phrase for
+ * one fact — `gigRowMarkup()` has printed it against an unfiled night for as
+ * long as that door has existed.
+ *
+ * Silent whenever there is a venue, which is almost always.
+ */
+function whyNoVenue(night) {
+  if (night.venue) return '';
+  // Two games at genuinely different venues: `mergeGigs()` blanks the venue
+  // rather than misattribute the evening to whichever was typed first.
+  if (night.venueMixed) return 'Two venues';
+  // Nothing was ever filed for this date, so there is no record to carry a
+  // venue — the night was stopped early, or it restarted before the end.
+  if (!(night.games || []).length) return 'No results saved';
+  // It was filed, and no venue was chosen when it launched. The bar
+  // deliberately does not remember one between nights.
+  return 'No venue set';
+}
+
 function photoRail() {
   const rows = [{ key: '', name: 'The wall', note: 'The newest pictures' }];
   const byPub = new Map();
@@ -293,7 +323,7 @@ function photoRail() {
         key: night.night,
         group: pub.name,
         name: readable(night.night),
-        note: night.venueMixed ? 'Two venues' : '',
+        note: whyNoVenue(night),
         lamp: {
           on: up,
           said: up

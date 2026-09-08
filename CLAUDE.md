@@ -759,10 +759,6 @@ a record you SHOW somebody, the other is a list you ACT on.** Those are read
 at different moments, by a different half of the brain, and a tab that does
 both is a tab you scroll past looking for the half you wanted.
 
-**This replaced a weaker reason of mine** — "the evening runs left to right,
-so booked comes before run" — which is true and orders the tabs correctly but
-predicts nothing. His version is a rule; mine was an observation.
-
 **Invoices stays its own tab and is the honest edge case**: billing is
 past-facing like evidence, chasing is organisation. It is separate for a third
 reason already recorded above — on a Monday it is a destination you want to
@@ -971,7 +967,7 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
 - **AND THE FRAME'S MINIMUM HEIGHT IS TWO NUMBERS, BECAUSE THE DOORHEAD IS
   TWO HEIGHTS. Do not collapse it to one**: one either takes the frame off a
   1500x900 laptop that fits it, or keeps it at 960x760 where it does not.
-- **AND THE EQUAL-BAY RULE ONLY EXISTS BECAUSE OF THE FRAME**, so
+- **THE EQUAL-BAY RULE ONLY EXISTS BECAUSE OF THE FRAME**, so
   `community-bay.mjs` checks it only where the frame is on. **Both scripts
   carry the frame's two numbers; they move together.**
 - **TWO COLUMNS IS A WIDTH DECISION; THE PINNED FRAME IS A HEIGHT ONE.** Gating
@@ -1004,15 +1000,14 @@ Every one lived in a band no guard looked at.
   WIDTH**. At 561 the cards **overlapped by 28px**. **This is not six-across
   being dropped** — that rule is about a shelf wide enough to honour it.
 - **`#hatSlot` IS A BARE `<span>`, SO IT HAD `min-width: auto`** — third
-  sighting on this bar. Because the span would not give ground the row grew:
+  sighting on this bar. The span would not give ground, so the row grew:
   **`/host` scrolled sideways 161px at 390 and 231 at 320**, his actual
-  bookmark, with a menu chip off the side. **The switch itself shrinks below
-  560 too** — a label losing its tail is what this bar can afford; a door off
-  the screen is not.
+  bookmark. **The switch itself shrinks below 560 too** — a label losing its
+  tail is what this bar can afford; a door off the screen is not.
 - **AND `console-frame.mjs` NOW LOOKS AT 768 AND 320** — its sizes ran 390
-  then 960, so the 561-899 band and every phone under 390 were unmeasured.
-  **Its one-row rule moved from 431px to 900px**: a second header row costs the
-  PINNED layout, which does not exist below 900.
+  then 960, leaving the 561-899 band unmeasured. **Its one-row rule moved from
+  431px to 900px**: a second header row costs the PINNED layout, which does not
+  exist below 900.
 
 ### A ROOM ID IS A PATH, AND `?q=` NAMES AN ACCOUNT OR NOBODY
 
@@ -1135,6 +1130,20 @@ guarded** — it is the stated escape hatch and its confirm names what it costs.
   podium raw three lines above a masked season table, in one document. The filter
   is `publicName()` at the ROUTE, so it keeps one definition and the PDF stays a
   layout.
+- **AND THE THIRD SIGHTING IS PAST GIGS' OWN JOIN — `gigRoomsFor()`.** It
+  joins the archive from `roomForHost()` to photo folders from
+  `galleryRoomFor()`, TWO ROOMS for the owner and the host key: a night hosted
+  under one hat and photographed under the other found no record for its date
+  and came out **with no pub on it**. **The archives are UNIONED, never
+  swapped** — both are his, and picking one moves his history. **The photo
+  folders are deliberately NOT unioned**: the per-night read, the lamps, the
+  pins and the published flag are ONE room, so a listed night the opener cannot
+  fill is a row that lies. **The guard is on the SHAPE**, and **skips the five
+  calls passing `[]`** or it needs an exceptions list.
+- **AND FOUR THINGS PUT A ROW IN "No venue on these", ALL SILENT —
+  `whyNoVenue()`.** That miss, a night that never reached its final scores, no
+  venue picked, and two venues on one date. **"No results saved" is Post gig's
+  own wording**, not a second phrase for one fact.
 
 ### ONE PUB IS ONE PUB — `sameVenue()` in `past-gigs.js`
 
@@ -1238,36 +1247,34 @@ board), `src/arcade.js` (the scores, shared by both engines),
   ROUTE against `tierInUse`**; **the phone honours the list and re-checks
   nothing**. **`null` rather than `[]`, SPREAD in only when it exists**, so
   `pub-unchanged` still says IDENTICAL. **A list of ONE is dropped**, so an
-  UNLAUNCHED room offers one game and no chooser — what a bare `/play` with no
-  join code lands in, and it reads exactly like the feature being broken.
-- **AND THE QUIET LAUNCH SENDS THE WHOLE NIGHT — `nightOpts()`.** Tapping a
-  pack sent FIVE of Launch's twelve fields. **One `nightOpts()`, spread into
-  all three launches**, with a test that fails if a fourth writes its own.
+  UNLAUNCHED room offers one game and no chooser — which reads exactly like the
+  feature being broken.
+- **THE QUIET LAUNCH SENDS THE WHOLE NIGHT — `nightOpts()`.** Tapping a pack
+  sent FIVE of Launch's twelve fields. **One `nightOpts()`, spread into all
+  three launches**, with a test that fails if a fourth writes its own.
 - **ONE ROW EITHER WAY, AND THE CHOICE IS ONE TAP INSIDE IT.** A row per game
-  is **423px of menu** at 390px and pushes *Send a photo* off the bottom. **The
-  box opens on the CHOOSER and nothing runs yet** — auto-starting spends
-  somebody's opening seconds. **Switching calls `stopArcade()` first and
-  RESHAPES the canvas**, or a loop banks under the wrong game.
+  is **423px of menu** at 390px. **The box opens on the CHOOSER and nothing
+  runs yet** — auto-starting spends somebody's opening seconds. **Switching
+  calls `stopArcade()` first and RESHAPES the canvas**, or a loop banks under
+  the wrong game.
 - **NO PHOTO GATE, AND ONE WAS PROPOSED AND TURNED DOWN** — **it prices
-  consent**, and *sending it is the consent*.
+  consent**; *sending it is the consent*.
 - **THE BOARD SAYS WHICH GAME EACH SCORE WAS ON — `state.arcadeGame`, a map
   BESIDE the scores.** **Never folded into `state.arcade`** — that is
-  `{id: number}` in every state file there is. **The id is a LABEL, never a
-  permission.**
-- **QUICK DRAW'S OUTLAW RAISES ITS GUN, AND THAT NEEDED NO RULE CHANGE.**
-  Every pop already carries `downAt`, so *how close is this one to shooting me*
-  was information the schedule held and the canvas never drew. **It changes
-  what the game IS**: without it the winning move is to tap the instant
-  anything appears.
+  `{id: number}` in every state file there is. **The id is a LABEL.**
+- **QUICK DRAW'S OUTLAW RAISES ITS GUN.** Every pop already carries `downAt`,
+  so *how close is this one to shooting me* was information the schedule held
+  and the canvas never drew. **It changes what the game IS**: without it the
+  winning move is to tap the instant anything appears.
 - **THE DEFAULT FOLLOWS THE GAME, NOT THE ACCOUNT: Maze Mouth before a quiz,
   Rally before the bingo.** A remembered preference is wrong on half the nights
-  of anybody who runs both.
+  of anybody running both.
 - **WHICH GAME IS A DECISION ABOUT TONIGHT**, so it goes where the look and
   the card shape go — chosen on the launch bar, written into `state.lobbyGame`
-  at launch, restored after a crash. **THE TIER IS CHECKED AT THE ROUTE, never
-  in the console**, and a game above the tier is **dropped in favour of the
-  default rather than refused**: losing a choice costs a game nobody has seen,
-  where refusing the launch costs the night.
+  at launch. **THE TIER IS CHECKED AT THE ROUTE, never in the console**, and a
+  game above the tier is **dropped in favour of the default rather than
+  refused**: losing a choice costs a game nobody has seen, refusing the launch
+  costs the night.
 - **THE TIER GATES HOW MANY GAMES, NOT WHETHER THERE IS ONE.** **THE ONLY
   THING GATED BY TIER RANK RATHER THAN A `FEATURES` FLAG, so they ask
   `tierInUse()` and never `tierFor()`** — a comped account holds every FEATURE
@@ -1275,24 +1282,21 @@ board), `src/arcade.js` (the scores, shared by both engines),
   agreed with the room, both wrong the same way.** **Do not sell the game
   itself away from the bottom tier** — a phone with a game on it stays in the
   FOREGROUND, so sixty connections do not all return when the join gate is
-  busiest: a RELIABILITY feature dressed as a toy. **Locked games are SHOWN.**
+  busiest. **Locked games are SHOWN.**
 - **THEY ARE CALLED MAZE MOUTH, RALLY, TAILBACK, QUICK DRAW AND LAST ORDERS.**
   The names and characters the first three resemble are Namco's and Atari's,
-  and this app is SOLD — a legal line, not a taste one. Say what you like on a
-  mic; do not print it. **An unnamed game keeps inviting the wrong name**,
-  which is why the later ones were named before they were written.
+  and this app is SOLD — a legal line, not a taste one. **An unnamed game keeps
+  inviting the wrong name**, which is why the later ones were named first.
 - **PILE UP IS DELETED, AND TETRIS IS STILL THE REASON.** Asked to be "more
   like Tetris, with three-sided blocks", the answer was no twice: **the shapes
   were not the only thing held protectable in *Tetris Holding v. Xio*** — the
-  well and the piece behaviour went with them, the holder enforces hard, and
-  this app is SOLD; **and triangles do not tile a square grid**, so it fails
-  *clarity beats everything* on a 390px phone. **Do not rebuild it.**
+  well and the piece behaviour went with them, and this app is SOLD; **and
+  triangles do not tile a square grid**. **Do not rebuild it.**
 - **LAST ORDERS REPLACED IT, and its legal line is a DIFFERENT one.** Taito
   owns the NAME and the specific sprites, **not** a formation descending on a
   defender — a whole genre. So: **not called Space Invaders, no
   crab/squid/octopus, no 5x11, no saucer, no bunkers**, with a test on the
-  words. **Tap-to-destination and it fires itself** — a fire button plus
-  movement is the control panel this folder does not have, and auto-fire makes
+  words. **Tap-to-destination and it fires itself** — auto-fire makes
   POSITIONING the game rather than a second Quick Draw. **Reaching the bar ends
   it outright.**
 - **THREE WAYS A GAME IS MADE THE SAME ON EVERY PHONE, and a new one must use
@@ -1303,59 +1307,54 @@ board), `src/arcade.js` (the scores, shared by both engines),
   none of them and is always wrong here.** A REACTION game makes input latency
   part of the score, so its windows stay generous.
 - **ONE SCOREBOARD FOR BOTH, in `src/arcade.js`** — the same clamp, the
-  best-not-latest rule and the refusal outside the lobby, called by both
-  engines. Two copies is two rules, and one gets fixed.
+  best-not-latest rule and the refusal outside the lobby. Two copies is two
+  rules, and one gets fixed.
 - **RALLY RUNS ON A FIXED TIMESTEP, NEVER A FRAME DELTA** — advanced by `dt` a
   120Hz phone and a 30Hz one play different games. **Capped**, or a phone face
-  down for two minutes spends the gap at once.
-- **EVERY PHONE PLAYS THE SAME GAME**, seeded from `state.gameSeed` at launch
-  — or the scoreboard compares two different games.
+  down for two minutes spends the gap in one frame.
+- **EVERY PHONE PLAYS THE SAME GAME**, seeded from `state.gameSeed` at launch,
+  or the scoreboard compares two different games.
 - **IT CANNOT REACH A QUIZ**, tested each half: the seed is in the phone's
-  payload at the LOBBY only, and a score is refused at any other phase.
+  payload at the LOBBY only, and a score refused at any other phase.
 - **Behind a button, below the photo card** — *"don't want to disincentivise
-  photo uploads"*. Imported only when the button is pressed.
+  photo uploads"*. Imported only when pressed.
 - **No control panel: you tap and it walks there.** A swipe has to be READ and
   a misread one costs a life. `touch-action: none` is load-bearing. **A fire
-  button plus movement is a control panel too** — see Last Orders.
-- **AND ON THE KEYS, A TURN PRESSED EARLY IS REMEMBERED** — `turnFrom()`: a
-  HEADING plus a buffered WANT, and **a wall stops you facing it and never
-  picks a direction for you**. **The rule lives in `maze.js`, not the canvas
-  file.**
+  button plus movement is a control panel too.**
+- **A TURN PRESSED EARLY IS REMEMBERED** — `turnFrom()`: a HEADING plus a
+  buffered WANT, and **a wall stops you facing it and never picks a direction
+  for you**. **The rule lives in `maze.js`, not the canvas file.**
 - **TAILBACK'S TAIL IS FATAL AND ITS WALLS ARE NOT, and that split is the
-  whole game.** The steering was a breadth-first search routing AROUND the
-  body, so the tail was scenery: a pellet-chaser averaged **54 pellets, tail
-  68**. `stepToward()` is GREEDY now — **it still never returns a cell inside
-  the body**, so a life is never taken for a route the player did not choose.
-  **A wall turns you** (dying at walls measured 8-30 seconds for three lives),
-  **your own tail kills you**. **Six lives at 170ms, not the four asked for** —
-  four failed the two rules this game tests: worth opening, and an idle phone
-  cannot reach the board.
+  whole game.** The steering was a search routing AROUND the body, so the tail
+  was scenery. `stepToward()` is GREEDY now — **it still never returns a cell
+  inside the body**, so a life is never taken for a route the player did not
+  choose. **A wall turns you, your own tail kills you.** **Six lives at 170ms,
+  not the four asked for** — four failed the two rules this game tests: worth
+  opening, and an idle phone cannot reach the board.
 - **THE BIG SCREEN IS ONLY PROMISED WHERE THE BOARD DRAWS.** Generalising to
   *a break that offers a game* moved the guards and not the phone's line, so a
-  mid-night break told sixty people *"Top scores go on the big screen"*.
+  break told sixty people *"Top scores go on the big screen"*.
 - **ONE POST LEAVES A PHONE, at game over and at each life lost** — never a
-  stream of positions, the lobby being when sixty people are joining. Banking
-  per life puts the people who played LONGEST on the board.
+  stream of positions. Banking per life puts the people who played LONGEST on
+  the board.
 - **THE GAME IS STOPPED IN `buildScreen()`, ON EVERY REBUILD.** Torn down
-  inside `wireArcade` it survived the quiz starting — a detached canvas looping
-  all night. **A teardown belongs where every phase change passes.**
+  inside `wireArcade` it survived the quiz starting. **A teardown belongs where
+  every phase change passes.**
 - **Each moment has a primary: the game before the quiz, photos between the
-  rounds.** The camera button stands down in the lobby.
+  rounds.** The camera button stands down at the lobby.
 - **MAZE MOUTH'S DEATH IS A GULP** — **NOT the unfurl-and-spin**, which is
   Namco's and this app is sold. **NOTHING MOVES while it runs**; **the score is
-  banked at the CATCH**, or a game the quiz interrupts loses the life it just
-  paid for.
+  banked at the CATCH**, or a game the quiz interrupts loses that life.
 - **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER.**
   `lobby-sound.js` — Web Audio, no files. **The HOST can switch it off**
   (`state.lobbySound`); **the host's switch wins and does not wipe the phone's
   own**. **Every noise is tied to something the player DID**, and it never
-  carries information, a pub phone being on silent. The toggle is UNDER the
-  canvas, or a near-miss tap is a shot.
+  carries information, a pub phone being on silent.
 - **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — `lobby-board.js`, one
   file for both, inside the white QR panel and UNDER the code, which nothing
   may dim. **It was computed and never drawn for as long as the feature
-  existed.** **A test that the payload is right proves nothing about whether
-  anybody drew it.**
+  existed**, and **a test that the payload is right proves nothing about
+  whether anybody drew it.**
 
 Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
@@ -1772,8 +1771,8 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
 - **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** The headcount is a
   summary, so it sits on three pages from one server-side figure. **"What the
   room asked for" is a QUEUE — Yes keeps it, No bins it — so it MOVED off the
-  Music Quiz tab rather than being copied**, leaving a link that shows only
-  when something waits.
+  Music Quiz tab rather than being copied**, leaving a link that shows only when
+  something waits.
 - **A night's photos are fetched when the night is OPENED**, never up front.
 - **`asksPanel({ whenEmpty })` — the same panel answers two pages.** Drawing
   NOTHING was right above the quiz generator and wrong on a tab whose whole job

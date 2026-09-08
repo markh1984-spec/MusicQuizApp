@@ -350,3 +350,75 @@ test('sameVenue folds an id and a typed name into one pub', () => {
   assert.equal(sameVenue({ venue: '' }, typed), false);
   assert.equal(sameVenue(null, typed), false);
 });
+
+/**
+ * THE OWNER'S NIGHTS ARE FILED IN TWO ROOMS, AND THE LISTING HAS TO READ BOTH.
+ *
+ * `/api/past-gigs` joins archive records to photo folders BY DATE. The archive
+ * came from `roomForHost()` — HOUSE for the owner and the host key — and the
+ * folders from `galleryRoomFor()`, which for those two identities is the
+ * owner's own quizmaster room. A night hosted under one hat and photographed
+ * under the other found no record for its date and came out with no pub on it.
+ *
+ * The union is asserted here, on `mergeGigs` itself, and the guard below is
+ * pointed at the ROUTE — because the fault was never in the merge, it was in
+ * only ever handing it one room's records.
+ */
+test('records from two rooms merge onto one night, and the venue survives', () => {
+  const at = Date.parse('2026-08-20T21:00:00Z');
+  const house = [{
+    id: 'h1', kind: 'quiz', title: '80s', archivedAt: at,
+    playerCount: 31, venue: 'The Station Tap, Wokingham', venueId: 'v1',
+  }];
+  const gallery = [];
+  const [night] = mergeGigs([...house, ...gallery], ['2026-08-20']);
+  assert.equal(night.venue, 'The Station Tap, Wokingham');
+  assert.equal(night.hasPhotos, true);
+  assert.equal(night.games.length, 1);
+});
+
+/**
+ * AND A PHOTO-ONLY NIGHT SAYS SO WITH AN EMPTY VENUE, which is what the rail
+ * reads to explain itself. The neighbouring test pins `games` and `hasPhotos`
+ * and left this unstated — and it is the field the whole symptom is about.
+ */
+test('a night with photographs and no archive record has no venue', () => {
+  const [night] = mergeGigs([], ['2026-08-20']);
+  assert.equal(night.venue, '');
+  assert.equal(night.venueId, '');
+  assert.equal(night.venueMixed, false);
+  assert.deepEqual(night.games, []);
+});
+
+/**
+ * THE PATTERN, NOT THE SYMPTOM. A route that reads ONE room's archive and
+ * joins it to the gallery room's photographs is the bug, whoever writes it
+ * next — so the guard forbids the shape rather than pinning the two call
+ * sites that had it.
+ */
+test('no past-gigs route joins one room\'s archive to another room\'s photos', () => {
+  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+
+  /*
+   * ONLY THE CALLS THAT ACTUALLY JOIN. Five other `mergeGigs` calls hand it
+   * `[]` for the folders — they read the archive and nothing else, so the
+   * two-room split cannot reach them. Forbidding the shape outright caught
+   * those and would have made this a test with an exceptions list, which this
+   * repo's own rule says has stopped being a test.
+   */
+  const joins = [];
+  for (let at = src.indexOf('mergeGigs('); at !== -1; at = src.indexOf('mergeGigs(', at + 1)) {
+    const call = src.slice(at, at + 260);
+    if (call.includes('folders')) joins.push(call);
+  }
+  assert.ok(joins.length >= 2, `expected the listing and the report to join photos, found ${joins.length}`);
+  for (const call of joins) {
+    assert.ok(
+      call.includes('gigRooms'),
+      'a night list joining photos to an archive must read EVERY room this account files in — see gigRoomsFor()',
+    );
+  }
+  assert.ok(src.includes('function gigRoomsFor('), 'gigRoomsFor() is what supplies them');
+});
