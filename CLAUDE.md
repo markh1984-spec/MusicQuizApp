@@ -924,26 +924,31 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
 - **THE DIET HAS NO UPPER BOUND, BECAUSE `.console .wrap` CAPS THE BAR AT
   1180px.** `@media (max-width: 1179px)` measures the WINDOW, so it switched
   OFF where it was still needed. **A media query on the window is the wrong
-  tool the moment a CONTAINER caps the thing you are protecting.**
+  tool the moment a CONTAINER caps what you are protecting.**
 - **AND `#runningNow` IS WHY NOTHING SAW IT: `aNightIsOn()` IS FALSE FOR AN
   EMPTY LOBBY**, so the guard measured a bar **230px narrower than the host's**.
   **A guard that sets a night up but never lets anybody in is measuring a
-  console nobody uses.**
+  console nobody uses**, **a harness whose injected hat switch comes out 25px
+  instead of 310 included.**
 - **WHAT IS PLAYING NOW IS WORDED IN ONE PLACE — `nowPlaying()`.** There were
   THREE. **The SHORT form is a different job, not an abbreviation**, and
   **under 1050px the live line stands down** — the only thing in that bar that
   summarises something else on screen.
 - **THE BAR GOES ON A DIET; WRAPPING IS ONLY THE FALLBACK** — two rows read as
   a second bar. **Scoped with `:has(.hat-switch)` to the OWNER's bar**: a fix
-  for one account must not land on everybody. **AND WHAT IT TAKES IS THE
-  PRODUCT NAME, NEVER THE POSSESSIVE.** It hid `.brand-name` — the whole
-  stacked wordmark — so the ONE bar this rule reaches is the one account that
-  lost its own name off its own console, which is that feature running
-  backwards; reported as the name having *"disappeared"*. **The mark carries
-  the product and the word carries WHOSE**: 40px against the stack's 81.
-  **Restoring the whole stack was RENDERED and is dead** — at 1000px it drops
-  `#hatSlot` and Sign out onto a second row, which is the account controls,
-  the other half of what the diet protects.
+  for one account must not land on everybody. **AND IT NEVER TAKES THE
+  POSSESSIVE.** It hid `.brand-name` — the whole stacked wordmark — so the ONE
+  bar this rule reaches is the one account that lost its own name off its own
+  console; reported as the name having *"disappeared"*. **THE WHOLE WORDMARK
+  SHOWS AT 1180px AND UP** — *"the whole point is to have [QM's]
+  Quizporium"* — **and that number is the CONTAINER's, which is what makes a
+  media query right here**: `.console .wrap` caps the bar at a constant ~1148px,
+  so above the cap the window says nothing and at it the window is the bar.
+  **Below it the product name gives way and the possessive stays** (40px
+  against the stack's 81). **A wordmark with no possessive in it still goes**,
+  saying only what the mark already said. **It wraps at 820 rather than 760,
+  and that is affordable BECAUSE THERE IS NO FRAME BELOW 900** — the two-row
+  cost this diet exists for is tab-column height, which does not exist there.
 - **AND NOTHING RESTATES `overflow` AFTER `.console .wrap`'S PAIR.** A trailing
   `overflow: hidden` wiped the `overflow-y: auto` five lines above it, so the
   frame CLIPPED instead of scrolling: 161px of overflow at 1500x900, and a real
@@ -969,13 +974,13 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   axes.**
 - **`main` IS A FLEX COLUMN — never give it a row template.** Its
   `auto minmax(0,1fr)` grid assumed two children, so ANY banner above the
-  doorhead quietly turned the fixed frame back into a scrolling page.
+  doorhead turned the fixed frame back into a scrolling page.
 - **THE SHELF IS SIX ACROSS, BY DECISION — it mirrors the six bays above it.**
   **Do not "fix" a squeezed card by dropping a column** — where six genuinely
   cannot be honoured, both grids move together (see below).
 - **THE FINISH LAYER at the foot of `style.css` owns selection, caret,
   `:focus-visible` and the card hover** — one named block, so the next control
-  gets finished there rather than growing scattered rules.
+  is finished there rather than growing scattered rules.
 
 ### THREE THINGS THAT DID NOT FIT, AND THE SIZES NOBODY MEASURED
 
@@ -1477,9 +1482,8 @@ Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 premium."* Nothing sits between the running order and Launch now, by rule.
 What was there and where it went:
 
-- **The break strip moved ABOVE the tiles.** It describes the gaps between
-  them either way, and above it does not stand between the order and the one
-  filled gradient on the panel.
+- **The break strip moved ABOVE the tiles.** It describes the gaps either way,
+  and above it does not stand between the order and Launch.
 - **The pack settings row only exists when it HOLDS a control** — a bingo pack
   picked. Every quiz night carried a labelled row above Launch containing one
   caption and nothing else. That is not the present-and-inert rule being
@@ -1487,24 +1491,20 @@ What was there and where it went:
   and Prizes already do not exist for a quiz pack.
 - **The four-fact info line is gone, and the host was right about why** —
   *"this is all venue settings stuff that can be done in the workshop?"* The
-  venue name duplicated the picker, *one-off* is `usualNight` on the venue
-  record, and *start when you like* is the app reporting a blank diary field.
-  **The prizes were the real exception** — read at launch onto the winner's
-  voucher — so what survives is the WARNING only: a venue with no prize on it,
-  said in the head, silent whenever there is nothing wrong.
-- **DOORS, THE LIVE LINE AND UNLAUNCH ALL LIVE IN THE HEAD.** Asked for
-  directly. `p0:lobby` is the one break that belongs up there and that is what
-  makes the split coherent rather than merely tidier: it is the gap BEFORE the
-  night starts, so it is a fact about the evening like the venue. Every other
-  break — including a later part's own lobby — happens inside the running
-  order and stays beside it. **The setter still opens in the strip**, so a
-  break is edited in one place wherever its chip was tapped.
-- **ONE HEIGHT FOR EVERY CONTROL IN THAT ROW — 44px, the touch floor.** The
-  head held four heights before. **44 because it is the FLOOR, not because it
-  is the biggest**: levelling down would have broken the one control a
-  touch-target audit had already fixed. **The shapes still differ** — a field
-  for actions, a pill for the switch and the fold — because the radius encodes
-  what a control IS, and flattening that would undo the GUI rules.
+  venue name duplicated the picker and *start when you like* was the app
+  reporting a blank diary field. **The prizes were the real exception** — read
+  at launch onto the winner's voucher — so what survives is the WARNING only,
+  silent whenever there is nothing wrong.
+- **DOORS, THE LIVE LINE AND UNLAUNCH ALL LIVE IN THE HEAD.** `p0:lobby` is
+  the one break that belongs up there: it is the gap BEFORE the night starts,
+  so it is a fact about the evening like the venue. Every other break —
+  including a later part's own lobby — stays beside the running order. **The
+  setter still opens in the strip**, so a break is edited in one place.
+- **ONE HEIGHT FOR EVERY CONTROL IN THAT ROW — 44px, the touch floor.** **44
+  because it is the FLOOR, not because it is the biggest**: levelling down
+  would have broken the one control a touch-target audit had already fixed.
+  **The shapes still differ** — the radius encodes what a control IS, and
+  flattening that would undo the GUI rules.
 - **A DESTRUCTIVE BUTTON KEEPS THE FACE AND THE 2px EDGE.** The one global
   `.danger` rule uses the `border` SHORTHAND, which overwrote all four sides
   and left Unlaunch and Delete structurally different objects from the buttons
@@ -1521,25 +1521,24 @@ space where possible."* Four placements and one real bug:
 
 - **A CONTROL SITS WITH WHAT IT ACTS ON.** *Stop* sat at the far right of a
   1900px bar and read as a control over the whole panel. It is **Unlaunch**,
-  10px from the sentence naming what it stops.
+  beside the sentence naming what it stops.
 - **KEEPING A NIGHT IS A NIGHT-LEVEL QUESTION, so it moved into the head**
-  beside the venue, which is where the other three live. **The label has to
-  outrank the adjacency**: a show never keeps the venue, so "Save" alone next
-  to a venue picker would say the opposite of what it does — the words stay
-  *"for another night"*.
+  beside the venue. **The label has to outrank the adjacency**: a show never
+  keeps the venue, so "Save" alone next to a venue picker would say the
+  opposite of what it does — the words stay *"for another night"*.
 - **THE REASON A CONTROL IS OFF GOES ON THE CONTROL.** *"Nothing in Tonight to
   keep yet"* floated beside a greyed button; the button says **"Add a pack to
-  save this night"**, the shape Launch already uses.
+  save this night"**.
 - **A BIGGER TARGET IS NOT THE SAME AS A HITTABLE ONE.** The tile's × grew to
-  30px and the pack NAME painted over it. It needs `z-index` AND
-  `padding-right` on the title.
+  30px and the pack NAME painted over it: `z-index` AND `padding-right` on the
+  title.
 - **EVERY DRAG NEEDS ITS TAP, and a shelf round dot never had one** — it
   carried `mousedown`, `dragstart` and `dragend` and **no `click` at all**, so
-  the first thing anybody tries did nothing and a touchscreen had no way in at
-  all. `addRoundToTonight()` is that tap, through the drop's own path.
+  the first thing anybody tries did nothing and a touchscreen had no way in.
+  `addRoundToTonight()` is that tap, through the drop's own path.
 - **FIVE SETTINGS ON ONE ROW ABOVE 1150px, LABELS ABOVE THEIR CONTROLS.** Side
-  by side at a fifth of the bar, two of the five labels wrapped and three did
-  not — five cells of five different shapes, which was most of the mess.
+  by side, two of the five labels wrapped and three did not — five cells of
+  five different shapes, which was most of the mess.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 

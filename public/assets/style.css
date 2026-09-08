@@ -8162,6 +8162,8 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 @media (min-width: 431px) {
   .console .topbar:has(.hat-switch) { gap: 10px; padding-left: 14px; padding-right: 14px; }
   .console .topbar:has(.hat-switch) .brand-name:not(.stacked) { display: none; }
+  /* Below the cap the bar tracks the window, so the product name gives way and
+     the possessive stays. See the block under this one for where it comes back. */
   .console .topbar:has(.hat-switch) .brand-name.stacked .brand-app { display: none; }
   /* The nesting margin sits the possessive INTO the product name; with nothing
      underneath to nest into it only clips the tail of a descender. */
@@ -8169,6 +8171,31 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   .console .topbar:has(.hat-switch) .topnav { gap: 5px; }
   .console .topbar:has(.hat-switch) .topnav a { padding: 8px 10px; }
   .console .topbar:has(.hat-switch) .hat-switch .hat-half { padding: 10px 10px; }
+}
+/* AND THE WHOLE WORDMARK IS BACK WHERE THE BAR IS AT ITS FULL WIDTH.
+ *
+ * *"The whole point is to have [QM's] Quizporium"* — the possessive alone is
+ * half a brand, so "Mark's" over "Quizporium" is what this shows wherever it
+ * fits, and the diet only takes the product name where the bar runs out.
+ *
+ * **1180px IS THE CONTAINER'S NUMBER, NOT THE WINDOW'S, WHICH IS WHY A MEDIA
+ * QUERY IS THE RIGHT TOOL HERE.** `.console .wrap` caps at 1180px, so at that
+ * width and above the bar is a CONSTANT ~1148px — a 1900px laptop gets exactly
+ * the same bar as a 1200px one, and the full stack was measured on one row
+ * there with every door still hit-testable. Below it the window and the bar
+ * move together, which is the one region where asking the window is asking
+ * about the bar. That is the same fact the note above uses to say a max-width
+ * query was wrong: wrong for switching the diet OFF above the cap, right for
+ * switching this ON at it.
+ *
+ * ONLY THESE TWO DECLARATIONS. The `.topnav` and `.hat-half` rules above are
+ * the diet proper and stay in the 431px block — a scripted edit moved them in
+ * here, which left the menu's own padding on a diet only above 1180px, exactly
+ * backwards. The brace count still balanced and `style-structure` still passed;
+ * measuring the bar is what found it. */
+@media (min-width: 1180px) {
+  .console .topbar:has(.hat-switch) .brand-name.stacked .brand-app { display: block; }
+  .console .topbar:has(.hat-switch) .brand-name.stacked .brand-who { margin-bottom: -0.04em; }
 }
 /* AND UNDER ~1050px THE LIVE LINE STANDS DOWN, because the diet alone is not
    enough: the mark, five doors, the hat, four rungs and Sign out come to more
