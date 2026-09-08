@@ -10549,6 +10549,16 @@ body.landing {
 .bay-head b { font-size: var(--fs-head); }
 .bay-body { flex: 1 1 auto; min-height: 0; margin-top: 8px; }
 
+/* A NIGHT BEING DRAGGED TO ANOTHER PUB, and the heading that will take it.
+   The heading is the only thing that lights, and only where the drop will
+   actually be taken — a target that lights and then does nothing promises a
+   change it is not going to make. */
+.bay-pick.is-dragging { opacity: 0.45; }
+.bay-rail-group.drop-on {
+  border-color: var(--hot);
+  background: color-mix(in srgb, var(--hot) 18%, transparent);
+}
+
 /* THE NIGHT SHOWING IN THE BAY, marked in the list — the same held hover the
    Post gig bench uses for the row it has on the bench. Its one control sits
    under it, which is where every control that ACTS lives on this door. */
@@ -10559,6 +10569,14 @@ body.landing {
    because a bare `<input type="file">` cannot be styled and would be the one
    flat grey box in the app. Ordinary role — outlined, no fill — since adding a
    photograph is not the loudest thing on this page; publishing is. */
+/* WHERE A PAST NIGHT WAS. A label, a dropdown and one line — the *Choose*
+   role, so a quiet field and no gradient at all. `min-width: 0` on the select
+   for the reason every other one in this file carries it: a dropdown will not
+   go below the width of its longest option, and a pub name with a town on it
+   is long. It wraps to two lines under 560px rather than squeezing the box. */
+.night-venue { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; font-size: var(--fs-note); color: var(--ink-dim); font-weight: 800; }
+.night-venue-pick { flex: 0 1 auto; min-width: 0; max-width: 100%; }
+.night-venue-said { color: var(--ink-dim); flex: 1 1 140px; }
 .mine-add { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
 .mine-pick { cursor: pointer; }
 .mine-pick.is-busy { opacity: 0.6; pointer-events: none; }

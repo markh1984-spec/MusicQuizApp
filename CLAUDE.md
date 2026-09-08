@@ -3753,6 +3753,28 @@ test that the route works proves nothing about whether anybody can reach it.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
+### WHERE A PAST NIGHT WAS IS SAID AFTERWARDS — `console-night-venue.js`
+
+**A venue is the one fact a host can still supply**; everything else in a filed
+night is what the app watched, and letting a human edit that makes the evidence
+worth less. **Both ways in live in ONE module** — a night dragged under a pub's
+heading in the rail, and a picker under the photographs, because HTML5 drag
+never fires on touch AND the rail only draws pubs that already have
+photographed nights.
+
+- **IT PATCHES EVERY RECORD FOR THAT DATE, ACROSS BOTH `gigRoomsFor()` ROOMS** —
+  one date can hold a quiz and the bingo after it, and naming one of them folds
+  the evening straight back to `venueMixed`.
+- **A NIGHT WITH NOTHING FILED GETS A `kind: 'note'`, AND A NOTE IS NOT A
+  GAME** — `mergeGigs()` skips it, so no phantom nought-player quiz reaches the
+  headcounts, the league or *heard here*, and *"No results saved"* stays true of
+  a night that genuinely has none.
+- **"No venue on these" IS A CARD LIKE ANY OTHER** — it was left out of the
+  auto-open, so the night somebody opened in order to SAY where it was kept its
+  controls folded away.
+- **A ROW WITH NO GROUP IS NOT DRAGGABLE** — *The wall* belongs to no pub, so
+  dragging it would light a heading that then did nothing.
+
 ### A prize taken at the bar has to reach the filed night
 
 `updateArchivedNight()` in `src/library.js`, and `state.archivedAs`. A night is
@@ -3853,15 +3875,12 @@ Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### How many questions of each type
 
-`roundPlan()` in `src/generate-quiz.js`. `rounds` is a list of `{ type, count }`
-— or bare type names, which take the fallback — so "fifteen general knowledge,
-five pictures and ten first-letter" is one call. It used to be one number
-applied to every round, which is not the shape of a quiz night.
-
-The console has a count next to each round's tickbox. Unticking greys the
-number rather than hiding it, so what you typed is still there when you tick it
-back on. `roundPlan` is also the whitelist and the clamp, in one place, so a
-typo is dropped rather than quietly becoming a round of general knowledge.
+`roundPlan()` in `src/generate-quiz.js` — `rounds` is a list of
+`{ type, count }`, so "fifteen general knowledge, five pictures and ten
+first-letter" is one call. **It is also the whitelist and the clamp, in ONE
+place**, so a typo is dropped rather than quietly becoming a round of general
+knowledge. **Unticking a round GREYS its count rather than hiding it**, so what
+you typed is still there when you tick it back on.
 
 ---
 

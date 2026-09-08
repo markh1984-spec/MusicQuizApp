@@ -43,7 +43,7 @@ import {
 import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.js';
 import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
-import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig, venueKeyOf, sameVenue } from './src/past-gigs.js';
+import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig, venueKeyOf, sameVenue, setNightVenue, noteNightVenue } from './src/past-gigs.js';
 import { venueHeadcounts, nightHeadcount } from './src/headcounts.js';
 import { playedByVenue } from './src/heard.js';
 import { nightReportPdf, nightReportFilename } from './src/report-pdf.js';
@@ -4977,6 +4977,48 @@ async function handleWrite(req, res, url, route) {
     } catch (err) {
       return sendJson(res, 404, { error: err.message }), true;
     }
+  }
+
+  /*
+   * WHERE A PAST NIGHT WAS — set afterwards, when nobody typed it at launch.
+   *
+   * Behind PAST_GIGS and scoped to WHO YOU ARE, like every other route on this
+   * door: there is no room parameter, so this can only ever name a pub on your
+   * own night.
+   *
+   * **IT WRITES INTO BOTH OF `gigRoomsFor()`'S ROOMS**, for the reason that
+   * function exists — the owner's nights are filed under one hat and
+   * photographed under the other, so a route that patched only the room it
+   * happens to resolve to would report success and leave the night in exactly
+   * the state it was reported in. A read and a write that disagree about the
+   * room is invisible, which is this app's own most expensive lesson.
+   */
+  if (route === '/api/past-gigs/venue' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
+    const body = await readJson(req);
+    const night = String(body.night || '');
+    const venue = String(body.venue || '').trim();
+    const venueId = String(body.venueId || '').trim();
+    if (!isNightFolder(night)) return sendJson(res, 400, { error: 'That is not a night.' }), true;
+    if (!venue) return sendJson(res, 400, { error: 'Name the venue.' }), true;
+    const venueRooms = gigRoomsFor(req, url);
+    // The backup has to be back before the archive is read, or a night that is
+    // simply not on this disk yet gets a NOTE filed over the top of the record
+    // it already has.
+    for (const room of venueRooms) await ensureArchiveRestored(room);
+    let changed = 0;
+    for (const room of venueRooms) changed += setNightVenue(room.paths.archive, night, { venue, venueId }).changed;
+    // Nothing filed for that date at all — see `noteNightVenue()`.
+    const noted = changed ? null : noteNightVenue(venueRooms[0].paths.archive, night, { venue, venueId });
+    if (!changed && !noted) return sendJson(res, 400, { error: 'Could not save that.' }), true;
+    /*
+     * AND THE BACKUP, AWAITED — unlike the one when a night ends. Nobody is
+     * watching a projector here, and the whole value of the change is that it
+     * survives the next deploy: `data/` is wiped on every one, so an
+     * unbacked-up patch is a change that undoes itself within the week.
+     */
+    for (const room of venueRooms) await backUpArchive(room);
+    return sendJson(res, 200, { ok: true, changed: changed || 1, noted: Boolean(noted) }), true;
   }
 
   if (route === '/api/past-gigs/publish' && req.method === 'POST') {

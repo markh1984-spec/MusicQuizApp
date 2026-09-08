@@ -28,7 +28,7 @@
  * feature whose whole point is "this is my work" is exactly wrong.
  */
 
-import { HOUSE_ROOM } from './library.js';
+import { HOUSE_ROOM, listArchive, updateArchivedNight, archiveResults } from './library.js';
 
 /** Where this room's photos are filed in the private photo repository. */
 export function photoFolder(roomId) {
@@ -122,6 +122,18 @@ export function mergeGigs(archived = [], photoNights = []) {
         entry.venueId = '';
       }
     }
+    /*
+     * A VENUE NOTE IS NOT A GAME — see `setNightVenue()` below.
+     *
+     * It exists to carry a venue for a night nothing was ever filed for, so
+     * the block above has already taken the one field it holds. Counting it
+     * as a game would put a phantom nought-player quiz into the headcounts,
+     * a board with nobody on it into the league, and a pack that does not
+     * exist into "has this room heard this before?" — and Post gig's own
+     * *"No results saved"* would stop being true of a night that genuinely
+     * has none.
+     */
+    if (record.kind === 'note') continue;
     entry.games.push({
       id: record.id,
       kind: record.kind || 'quiz',
@@ -246,4 +258,77 @@ export function sameVenue(a, b) {
   const nameA = String(a.venue || '').trim().toLowerCase();
   const nameB = String(b.venue || '').trim().toLowerCase();
   return Boolean(nameA) && nameA === nameB;
+}
+
+/**
+ * SET THE VENUE ON A NIGHT THAT HAS ALREADY BEEN RUN.
+ *
+ * ---
+ *
+ * Asked for on 8 September 2026, off a Community rail with a batch of
+ * photographs sitting under *"No venue on these"*: *"all of these were taken
+ * at the same venue but the last ones have no venue attached?"*, and then
+ * *"let me set the venue on a past night"*.
+ *
+ * **A VENUE IS A FACT ABOUT THE EVENING, AND IT IS THE ONE FACT A HOST CAN
+ * STILL SUPPLY AFTERWARDS.** Everything else in a filed night — who played,
+ * what they scored, which prizes went out — is the app's own record of
+ * something it watched, and letting a human edit that would make the evidence
+ * a quizmaster shows a venue worth less. Where it happened is different: the
+ * app only ever knew it because somebody typed it at launch, so somebody
+ * typing it the next morning is the same fact arriving late rather than
+ * history being rewritten.
+ *
+ * **IT PATCHES EVERY RECORD FOR THAT DATE, not one.** A night is addressed by
+ * its date everywhere in this app, and one date can hold a quiz and the bingo
+ * after it as two records — so setting the venue on one of them would give the
+ * evening two answers and `mergeGigs()` would fold it to `venueMixed`, which
+ * is the state this control exists to get out of.
+ *
+ * @param {string} dir    the room's archive folder
+ * @param {string} night  the date, as the photo folders and `nightOfGig()` say it
+ * @returns {{ ok: boolean, changed: number }}
+ */
+export function setNightVenue(dir, night, { venue = '', venueId = '' } = {}) {
+  if (!isNightFolder(night)) return { ok: false, changed: 0 };
+  const patch = { venue: String(venue || '').trim(), venueId: String(venueId || '').trim() };
+  let changed = 0;
+  for (const record of listArchive(dir)) {
+    // `nightOfGig()`, never the first ten characters of the timestamp — a quiz
+    // that finished at half past midnight belongs to the night before, and the
+    // photographs beside it are already filed that way.
+    if (nightOfGig(record.archivedAt) !== night) continue;
+    if (updateArchivedNight(dir, record.id, patch)) changed++;
+  }
+  return { ok: true, changed };
+}
+
+/**
+ * WHERE THE VENUE GOES WHEN THERE IS NO RECORD TO PUT IT ON.
+ *
+ * A night can have photographs and nothing filed at all — the quiz was stopped
+ * before the final scores, or the server restarted mid-evening — and that is
+ * one of the four states `whyNoVenue()` names on the rail. Those nights are
+ * the ones most likely to need this control, so refusing them would leave the
+ * feature useless in exactly the case that asked for it.
+ *
+ * So it files a NOTE: a record carrying the venue and nothing else, which
+ * `mergeGigs()` deliberately does not count as a game. The night still reads
+ * *"No results saved"*, because it still has none — it just knows which pub it
+ * was at now.
+ *
+ * **NINE IN THE EVENING, UTC.** `archiveResults()` derives the filename and
+ * `nightOfGig()` the night from this timestamp, and both have the 6am
+ * roll-over in them; midnight would land the note on the night before.
+ */
+export function noteNightVenue(dir, night, { venue = '', venueId = '' } = {}) {
+  if (!isNightFolder(night)) return null;
+  return archiveResults(dir, {
+    kind: 'note',
+    packId: 'venue',
+    quizTitle: 'Where this night was',
+    venue: String(venue || '').trim(),
+    venueId: String(venueId || '').trim(),
+    leaderboard: [],
+  }, Date.parse(`${night}T21:00:00Z`));
 }

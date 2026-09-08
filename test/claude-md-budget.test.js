@@ -766,8 +766,23 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * foreground argument that was made twice) and both new entries were cut to
  * their rule plus a pointer at the script's own header. The remaining growth
  * is genuine and this comment is the diff saying so.
+ *
+ * ---
+ *
+ * RAISED TO 243,000 ON 8 SEPTEMBER 2026, for saying where a past night was —
+ * the drag onto a pub's heading, the picker under the photographs, and the
+ * three traps underneath them: every record for the date rather than one, a
+ * venue note that is not a game, and the "No venue on these" card that was
+ * left out of the auto-open.
+ *
+ * PAID FOR FIRST, again: *"How many questions of each type"* was two
+ * paragraphs of narrative about what `roundPlan()` replaced, and is now the
+ * one prohibition it actually carries — it is the whitelist and the clamp, in
+ * one place. That covers about half of it; the rest is a 1,000-byte rule for
+ * a feature with a module, a route and both ways into it, and this comment is
+ * the diff saying so.
  */
-const BUDGET = 242_000;
+const BUDGET = 243_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

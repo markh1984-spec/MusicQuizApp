@@ -69,6 +69,17 @@ const GROUP_CAP = 4;
 const openGroups = new Map();
 
 /**
+ * WHICH ROW IS IN THE AIR — a module binding, not the drag's own payload.
+ *
+ * A drop target has to decide whether to light up during `dragover`, and
+ * `dataTransfer.getData()` is deliberately empty until the drop itself in
+ * every browser — a drag over a page must not be able to read what it is
+ * carrying. So the rail remembers, and the `drop` still reads the payload as
+ * well, because a drag that began somewhere else has to be ignored.
+ */
+let dragged = '';
+
+/**
  * One rail.
  *
  * @param {object}   o
@@ -81,10 +92,11 @@ const openGroups = new Map();
  * @param {string} [o.railId]  which rail this is, for remembering its folds
  * @param {string} [o.more]    the line under a group that has more than it shows
  * @param {Function} [o.onFold]  redraw, after a group is opened or shut
+ * @param {object} [o.drag]    `{ onDrop(groupName, key) }` — see below
  */
 export function bayRail({
   items = [], picked = '', onPick = () => {}, empty = '', railId = '', more = '',
-  onFold = () => {},
+  onFold = () => {}, drag = null,
 }) {
   const rail = node('<div class="bay-rail" role="tablist"></div>');
   if (!items.length) {
@@ -123,6 +135,39 @@ export function bayRail({
         ${item.note ? `<span class="tiny bay-pick-note">${esc(item.note)}</span>` : ''}
       </button>`);
     btn.addEventListener('click', () => onPick(item.key));
+    /*
+     * A ROW CAN BE PICKED UP AND DROPPED ON A GROUP HEADING — opt-in, so no
+     * other rail gains a drag it has no meaning for.
+     *
+     * Asked for on 8 September 2026, about a batch of photographs filed with
+     * no pub on them: *"is it possible to just make the photo set draggable
+     * to a venue?"* The rail already draws every night under the pub it
+     * happened at, which makes dragging one under a different heading the
+     * most direct statement of "it was actually here" there is.
+     *
+     * **AND EVERY DRAG NEEDS ITS TAP.** HTML5 drag events never fire on
+     * touch, so this is the fast way and never the only way — the door that
+     * asks for it draws a picker under the night as well.
+     */
+    /*
+     * ONLY A ROW THAT IS IN A GROUP. The Photos rail's first row is *The
+     * wall*, which belongs to no pub and means "everything" — dragging it
+     * onto a heading would light a target that then does nothing, which this
+     * app's drag rules call worse than a target that never lights.
+     */
+    if (drag && item.key && item.group) {
+      btn.setAttribute('draggable', 'true');
+      btn.addEventListener('dragstart', (ev) => {
+        // `move`, and the drop sets the same — a `dropEffect` the source did
+        // not allow makes the browser treat the target as REFUSING, so no
+        // `drop` fires at all and nothing anywhere says why.
+        ev.dataTransfer.effectAllowed = 'move';
+        ev.dataTransfer.setData('text/plain', item.key);
+        dragged = item.key;
+        btn.classList.add('is-dragging');
+      });
+      btn.addEventListener('dragend', () => { dragged = ''; btn.classList.remove('is-dragging'); });
+    }
     if (item.lamp) {
       /*
        * A BUTTON INSIDE A BUTTON IS INVALID HTML, so the lamp is a SIBLING and
@@ -234,6 +279,31 @@ export function bayRail({
     // than reaching for one, so it stays a leaf that imports nothing but the
     // shared helpers. The same rule `breakPlumbing()` follows.
     head.addEventListener('click', () => { openGroups.set(key, !isOpen); onFold(); });
+    /*
+     * AND IT LIGHTS UP ONLY WHERE THE DROP WILL BE TAKEN. A heading that lit
+     * for its own rows would promise a change and then make none, which this
+     * app's own drag rules call worse than never lighting at all.
+     */
+    if (drag) {
+      const from = (k) => (items.find((i) => i.key === k) || {}).group || '';
+      const takes = () => Boolean(dragged) && from(dragged) !== group.name;
+      head.addEventListener('dragover', (ev) => {
+        if (!takes()) return;
+        // Without this the browser fires no `drop` at all — the precondition
+        // this repo has been caught by more than once.
+        ev.preventDefault();
+        ev.dataTransfer.dropEffect = 'move';
+        head.classList.add('drop-on');
+      });
+      head.addEventListener('dragleave', () => head.classList.remove('drop-on'));
+      head.addEventListener('drop', (ev) => {
+        ev.preventDefault();
+        head.classList.remove('drop-on');
+        const key = dragged || ev.dataTransfer.getData('text/plain');
+        dragged = '';
+        if (key && from(key) !== group.name) drag.onDrop(group.name, key);
+      });
+    }
     rail.appendChild(head);
     if (!isOpen) continue;
 

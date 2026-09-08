@@ -54,6 +54,7 @@ import { goTo, keyed, renderKeepingPlace } from './console.js';
 import { library, me } from './console-state.js';
 import { asksPanel, galleryAddress, groupByVenue, nightPhotos } from './console-gigs.js';
 import { bayColumns, bayHead, bayRail } from './console-bay.js';
+import { NO_VENUE, nightDroppedOnPub, venuePicker, whyNoVenue } from './console-night-venue.js';
 import { venueSlug } from './slugs.js';
 
 /** Every venue with a league running, best-supported first. */
@@ -267,36 +268,6 @@ let photoNightsAsking = false;
  * The pubs keep DATE order — the one you played at last is first, like every
  * other list of venues in this app — and the nights inside each keep theirs.
  */
-/**
- * WHY A NIGHT HAS NO PUB ON IT — because FOUR different things put a row into
- * "No venue on these" and every one of them drew the same silent row.
- *
- * The host asked *"all of these were taken at the same venue but the last ones
- * have no venue attached?"*, and the honest answer was that the rail could not
- * tell him: a cross-room join miss, a night that never reached its final
- * scores, a launch with no venue picked and two venues on one date were
- * indistinguishable. The first is fixed at the route (`gigRoomsFor()`); the
- * other three are real states a host can act on, so the row says which.
- *
- * **"No results saved" IS POST GIG'S OWN WORDING**, not a second phrase for
- * one fact — `gigRowMarkup()` has printed it against an unfiled night for as
- * long as that door has existed.
- *
- * Silent whenever there is a venue, which is almost always.
- */
-function whyNoVenue(night) {
-  if (night.venue) return '';
-  // Two games at genuinely different venues: `mergeGigs()` blanks the venue
-  // rather than misattribute the evening to whichever was typed first.
-  if (night.venueMixed) return 'Two venues';
-  // Nothing was ever filed for this date, so there is no record to carry a
-  // venue — the night was stopped early, or it restarted before the end.
-  if (!(night.games || []).length) return 'No results saved';
-  // It was filed, and no venue was chosen when it launched. The bar
-  // deliberately does not remember one between nights.
-  return 'No venue set';
-}
-
 function photoRail() {
   const rows = [{ key: '', name: 'The wall', note: 'The newest pictures' }];
   const byPub = new Map();
@@ -304,7 +275,7 @@ function photoRail() {
     // Keyed on the lowercase name for the same reason the league is: one pub
     // typed two ways is one pub. The FIRST spelling seen wins, which is the
     // most recent night's — `venuesUsed` and the headcounts already do that.
-    const name = night.venue || 'No venue on these';
+    const name = night.venue || NO_VENUE;
     const key = name.trim().toLowerCase();
     if (!byPub.has(key)) byPub.set(key, { name, nights: [] });
     byPub.get(key).nights.push(night);
@@ -553,6 +524,7 @@ function photoWall() {
 
   if (openNight) {
     nightControls = node('<div class="photo-night-controls"></div>');
+    nightControls.appendChild(venuePicker(openNight));
     nightControls.appendChild(myPhotos(openNight));
     nightPhotos(body, openNight, {
       wall: true,
@@ -604,6 +576,7 @@ function photoWall() {
   ]));
   return el;
 }
+
 
 /**
  * THE QUIZMASTER'S OWN PHOTOGRAPHS OF THE ROOM.
@@ -774,6 +747,22 @@ function rail(picked) {
       renderKeepingPlace();
     },
     empty: 'No photographs yet.',
+    /*
+     * DRAG A NIGHT UNDER THE PUB IT WAS ACTUALLY AT — *"is it possible to
+     * just make the photo set draggable to a venue?"*
+     *
+     * The heading a night is under IS its venue, so dropping it on another
+     * one is the whole statement. **The tap is `venuePicker()`**, under the
+     * photographs, and it is not a lesser path: only pubs that already have
+     * photographed nights appear as headings here, so a venue you have never
+     * photographed can only be reached that way.
+     */
+    drag: {
+      onDrop: (group, key) => nightDroppedOnPub(
+        (photoNights || []).find((n) => n.night === key), group,
+        (words) => { pubTrouble = words; },
+      ),
+    },
   });
   /*
    * A FAILED PUBLISH SAYS SO IN THE RAIL, under the row it happened on — never
@@ -1520,7 +1509,12 @@ export function photosSection() {
      * bay would be describing a night nothing on the page points at.
      */
     if (openNight) {
-      for (const entry of groups.venues) {
+      // **AND "No venue on these" IS A CARD LIKE ANY OTHER HERE.** It was left
+      // out, so the one night most likely to be open — the one somebody has
+      // opened in order to SAY where it was — was the one whose controls
+      // stayed folded away. Its key is the empty string, which `draw()` gives
+      // it too.
+      for (const entry of [...groups.venues, { key: '', nights: groups.unfiled }]) {
         if (entry.nights.some((n) => n.night === openNight.night)) open.add(entry.key);
       }
     }

@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { photoFolder, isNightFolder, nightOfGig, mergeGigs, safePhotoName, sameVenue } from '../src/past-gigs.js';
+import { photoFolder, isNightFolder, nightOfGig, mergeGigs, safePhotoName, sameVenue, setNightVenue, noteNightVenue } from '../src/past-gigs.js';
 import { archiveResults, serialiseArchive, restoreArchive, listArchive, HOUSE_ROOM } from '../src/library.js';
 import { nightOf } from '../src/photos.js';
 
@@ -421,4 +421,152 @@ test('no past-gigs route joins one room\'s archive to another room\'s photos', (
     );
   }
   assert.ok(src.includes('function gigRoomsFor('), 'gigRoomsFor() is what supplies them');
+});
+
+/*
+ * ---- WHERE A PAST NIGHT WAS -----------------------------------------------
+ *
+ * Asked for after a batch of photographs turned up under "No venue on these":
+ * *"let me set the venue on a past night"*. What these pin is the half that
+ * cannot be seen from a console — that it reaches EVERY record for the date,
+ * that it can carry an id, and that a night with nothing filed for it gets
+ * somewhere to keep the answer without gaining a game it never had.
+ */
+
+test('setting a venue reaches every game filed on that night, not just the first', () => {
+  const dir = tempDir();
+  const at = Date.parse('2026-09-03T21:00:00Z');
+  archiveResults(dir, { packId: 'eighties', leaderboard: [{ name: 'A' }] }, at);
+  archiveResults(dir, { packId: 'disco', kind: 'bingo', leaderboard: [{ name: 'A' }] }, at + 3_600_000);
+
+  const done = setNightVenue(dir, '2026-09-03', { venue: 'The Station Tap, Wokingham', venueId: 'v7' });
+  assert.equal(done.changed, 2);
+
+  const nights = mergeGigs(listArchive(dir), []);
+  assert.equal(nights.length, 1);
+  assert.equal(nights[0].venue, 'The Station Tap, Wokingham');
+  assert.equal(nights[0].venueId, 'v7');
+  // And it is no longer two venues on one date, which is one of the four
+  // reasons a row draws with no pub on it.
+  assert.equal(nights[0].venueMixed, false);
+});
+
+test('a night that finished after midnight is still the night the photographs are under', () => {
+  const dir = tempDir();
+  // Half past midnight: `nightOfGig()` files this under the 3rd, and the
+  // photo folder beside it is `2026-09-03` for the same reason.
+  archiveResults(dir, { packId: 'eighties' }, Date.parse('2026-09-04T00:30:00Z'));
+  assert.equal(setNightVenue(dir, '2026-09-03', { venue: 'The Crown' }).changed, 1);
+  assert.equal(listArchive(dir)[0].venue, 'The Crown');
+});
+
+test('a date that is not a date changes nothing', () => {
+  const dir = tempDir();
+  archiveResults(dir, { packId: 'eighties', venue: 'The Crown' }, Date.parse('2026-09-03T21:00:00Z'));
+  assert.equal(setNightVenue(dir, '../etc', { venue: 'Elsewhere' }).ok, false);
+  assert.equal(listArchive(dir)[0].venue, 'The Crown');
+});
+
+test('a night with nothing filed gets a NOTE, and the note is not a game', () => {
+  const dir = tempDir();
+  // Nothing archived at all — the quiz was stopped before the final scores, or
+  // the server restarted mid-evening. The photographs are still there.
+  assert.equal(setNightVenue(dir, '2026-09-05', { venue: 'The Station Tap' }).changed, 0);
+  noteNightVenue(dir, '2026-09-05', { venue: 'The Station Tap', venueId: 'v7' });
+
+  const nights = mergeGigs(listArchive(dir), ['2026-09-05']);
+  assert.equal(nights.length, 1);
+  assert.equal(nights[0].venue, 'The Station Tap');
+  assert.equal(nights[0].venueId, 'v7');
+  assert.equal(nights[0].hasPhotos, true);
+  // THE POINT: it carries the venue and nothing else. A phantom nought-player
+  // game here would land in the headcounts, the league and "has this room
+  // heard this before?", and Post gig's "No results saved" would stop being
+  // true of a night that genuinely has no results.
+  assert.deepEqual(nights[0].games, []);
+});
+
+test('a note never overwrites a real record — the patch runs first', () => {
+  const dir = tempDir();
+  archiveResults(dir, { packId: 'eighties', leaderboard: [{ name: 'A' }] }, Date.parse('2026-09-05T21:00:00Z'));
+  assert.equal(setNightVenue(dir, '2026-09-05', { venue: 'The Crown' }).changed, 1);
+  const nights = mergeGigs(listArchive(dir), []);
+  assert.equal(nights[0].games.length, 1);
+  assert.equal(nights[0].venue, 'The Crown');
+});
+
+/*
+ * ---- AND THE ROUTE ANSWERS A POST AT ALL ----------------------------------
+ *
+ * The same assertion the publish route beside it needed, for the same reason:
+ * a route written in `handleGet` is only ever reached by GET and HEAD, so a
+ * POST falls through to the generic 404 and the whole feature is dead code
+ * that reads as a working one. **A 404 is what is asserted against**, not the
+ * 200 — the difference between "the route refused that" and "there is no such
+ * route" is invisible to anything that does not make the request.
+ */
+test('the venue route answers a POST, and writes what it is sent', async () => {
+  const { withServer } = await import('./helpers/live-server.mjs');
+  await withServer(async (base, dir) => {
+    const res = await fetch(`${base}/api/past-gigs/venue?key=live-test-key`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ night: '2026-09-03', venue: 'The Station Tap, Wokingham', venueId: 'v7' }),
+    });
+    assert.notEqual(res.status, 404, 'the venue route is not reachable by POST');
+    const out = await res.json();
+    assert.equal(res.status, 200, `expected it to save, got ${JSON.stringify(out)}`);
+
+    const filed = listArchive(path.join(dir, 'archive'));
+    assert.equal(filed.length, 1);
+    assert.equal(filed[0].venue, 'The Station Tap, Wokingham');
+    assert.equal(filed[0].venueId, 'v7');
+  }, {
+    // BEFORE the server starts, into the house room's own archive — which is
+    // where the host key resolves, so this is the archive the route reads.
+    seed: (dir) => {
+      archiveResults(path.join(dir, 'archive'), { packId: 'eighties' },
+        Date.parse('2026-09-03T21:00:00Z'));
+      return dir;
+    },
+  });
+});
+
+test('a nameless venue is refused rather than blanking the night', async () => {
+  const { withServer } = await import('./helpers/live-server.mjs');
+  await withServer(async (base, dir) => {
+    const res = await fetch(`${base}/api/past-gigs/venue?key=live-test-key`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ night: '2026-09-03', venue: '  ' }),
+    });
+    assert.equal(res.status, 400);
+    assert.equal(listArchive(path.join(dir, 'archive'))[0].venue, 'The Crown');
+  }, {
+    seed: (dir) => {
+      archiveResults(path.join(dir, 'archive'), { packId: 'eighties', venue: 'The Crown' },
+        Date.parse('2026-09-03T21:00:00Z'));
+      return dir;
+    },
+  });
+});
+
+test('and something in the browser can actually reach it', async () => {
+  /*
+   * The publish route sat behind a perfect gate with no handle for as long as
+   * the gallery existed, and the lesson written down then is the one this
+   * asserts: **a test that the route works proves nothing about whether
+   * anybody can reach it.**
+   *
+   * Comments stripped first, or the paragraph explaining why the control
+   * exists keeps this green with the caller deleted — a check that gets
+   * stronger the better a file is documented is the wrong way round.
+   */
+  const { readdirSync, readFileSync } = await import('node:fs');
+  const { withoutComments } = await import('./console-source.js');
+  const dir = new URL('../public/assets/', import.meta.url).pathname;
+  const callers = readdirSync(dir)
+    .filter((f) => f.endsWith('.js'))
+    .filter((f) => withoutComments(readFileSync(path.join(dir, f), 'utf8')).includes('/api/past-gigs/venue'));
+  assert.ok(callers.length, 'nothing in the browser can say where a past night was');
 });
