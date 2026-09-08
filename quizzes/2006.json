@@ -1,0 +1,605 @@
+{
+  "id": "2006",
+  "title": "The 2006 Music Quiz",
+  "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-08T00:00:00.000Z",
+  "notes": "Written for a 2006 night, chart and R&B leaning. The picture round uses portraits already in the library. Read it through in the editor before the gig.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "text",
+      "title": "Round One \u2014 2006",
+      "blurb": "20 questions on the music of 2006",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which album was the fastest-selling debut in UK chart history when it arrived in January 2006?",
+          "options": [
+            "Whatever People Say I Am, That's What I'm Not",
+            "Employment",
+            "Silent Alarm",
+            "Alright, Still"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It shifted over 360,000 copies in its first week."
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which band's album 'Eyes Open' was the UK's best-selling album of 2006?",
+          "options": [
+            "Keane",
+            "Snow Patrol",
+            "Embrace",
+            "Athlete"
+          ],
+          "correctIndex": 1,
+          "answerNote": "'Eyes Open' outsold every other album in Britain that year."
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which duo spent nine weeks at UK number one in 2006?",
+          "options": [
+            "Gnarls Barkley",
+            "Outkast",
+            "The Black Eyed Peas",
+            "Rizzle Kicks"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Cee-Lo Green and Danger Mouse had the longest-running number one of the year."
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Who won the third series of The X Factor in December 2006?",
+          "options": [
+            "Shayne Ward",
+            "Alexandra Burke",
+            "Leona Lewis",
+            "Steve Brookstein"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Her winner's single went straight to number one for Christmas."
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which act won the Eurovision Song Contest in 2006?",
+          "options": [
+            "Lordi",
+            "Ruslana",
+            "Marija Serifovic",
+            "Sertab Erener"
+          ],
+          "correctIndex": 0,
+          "answerNote": "The Finnish monster-masked rock band won with 'Hard Rock Hallelujah'."
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which producer made Justin Timberlake's 2006 album 'FutureSex/LoveSounds'?",
+          "options": [
+            "Pharrell Williams",
+            "Timbaland",
+            "Rick Rubin",
+            "will.i.am"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Timbaland's fingerprints were all over the charts that year."
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Who reached number one in 2006 with 'I Wish I Was a Punk Rocker (With Flowers in My Hair)'?",
+          "options": [
+            "Amy Macdonald",
+            "Sandi Thom",
+            "Nerina Pallot",
+            "Kate Nash"
+          ],
+          "correctIndex": 1,
+          "answerNote": "She built her following broadcasting gigs from a basement flat in Tooting."
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Which reality TV contestant had a 2006 UK number one with 'It's Chico Time'?",
+          "options": [
+            "Chico",
+            "Andy Abraham",
+            "Journey South",
+            "Brenda Edwards"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Chico Slimani reached number one months after leaving The X Factor."
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which girl group released 'Overloaded: The Singles Collection' in 2006?",
+          "options": [
+            "Girls Aloud",
+            "Sugababes",
+            "All Saints",
+            "Atomic Kitten"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It was their first singles collection."
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Who had a 2006 hit with 'London Bridge'?",
+          "options": [
+            "Gwen Stefani",
+            "Fergie",
+            "Nelly",
+            "Ciara"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It was the lead single from her solo album 'The Dutchess'."
+        },
+        {
+          "id": "r1q11",
+          "prompt": "Which rapper released the 2006 album 'King'?",
+          "options": [
+            "Ludacris",
+            "T.I.",
+            "Young Jeezy",
+            "Rick Ross"
+          ],
+          "correctIndex": 1,
+          "answerNote": "'King' went to number one in America and 'What You Know' was its biggest single."
+        },
+        {
+          "id": "r1q12",
+          "prompt": "Which band released 'Welcome to the Black Parade' in 2006?",
+          "options": [
+            "Fall Out Boy",
+            "Panic! at the Disco",
+            "My Chemical Romance",
+            "Green Day"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The single went to number one in the UK that October."
+        },
+        {
+          "id": "r1q13",
+          "prompt": "Whose 2006 single was 'Kick, Push'?",
+          "options": [
+            "Lupe Fiasco",
+            "Common",
+            "Kanye West",
+            "Nas"
+          ],
+          "correctIndex": 0,
+          "answerNote": "The skateboarding love story came off his album 'Food & Liquor'."
+        },
+        {
+          "id": "r1q14",
+          "prompt": "Whose 2006 debut album was called 'Alright, Still'?",
+          "options": [
+            "Kate Nash",
+            "Lily Allen",
+            "Duffy",
+            "Adele"
+          ],
+          "correctIndex": 1,
+          "answerNote": "She had built an audience on MySpace before the album came out."
+        },
+        {
+          "id": "r1q15",
+          "prompt": "Which artist went to number one in February 2006 with 'Sorry'?",
+          "options": [
+            "Kylie Minogue",
+            "Madonna",
+            "Rachel Stevens",
+            "Sophie Ellis-Bextor"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It was the second single from 'Confessions on a Dance Floor'."
+        },
+        {
+          "id": "r1q16",
+          "prompt": "Which group took 'The Rose' to number one in November 2006?",
+          "options": [
+            "Boyzone",
+            "Westlife",
+            "Blue",
+            "Il Divo"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Their cover of the Bette Midler song was the last of their UK number ones."
+        },
+        {
+          "id": "r1q17",
+          "prompt": "Which band had two UK number ones in 2006, with 'Don't Stop Me Now' and 'Star Girl'?",
+          "options": [
+            "Busted",
+            "McFly",
+            "The Feeling",
+            "Scouting for Girls"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The first was a Queen cover recorded for Comic Relief."
+        },
+        {
+          "id": "r1q18",
+          "prompt": "Which band released the album 'Empire' in 2006?",
+          "options": [
+            "Kasabian",
+            "Hard-Fi",
+            "The Fratellis",
+            "Maximo Park"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It was their second album and went straight to number one."
+        },
+        {
+          "id": "r1q19",
+          "prompt": "Who won Best British Female Solo Artist at the 2006 Brit Awards?",
+          "options": [
+            "Kate Bush",
+            "KT Tunstall",
+            "Natasha Bedingfield",
+            "Shirley Bassey"
+          ],
+          "correctIndex": 1,
+          "answerNote": "'Eye to the Telescope' had been a slow-burning success through 2005."
+        },
+        {
+          "id": "r1q20",
+          "prompt": "Which group's 2006 single was 'Buttons'?",
+          "options": [
+            "Destiny's Child",
+            "The Pussycat Dolls",
+            "Girls Aloud",
+            "Danity Kane"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Snoop Dogg guested on the track, taken from their album 'PCD'."
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "image",
+      "title": "Round Two \u2014 Whose Face Is This?",
+      "reveal": "mix",
+      "blurb": "The picture pulls back as the clock runs down. Guess early, score more.",
+      "questions": [
+        {
+          "id": "r2q1",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Duffy",
+            "Amy Winehouse",
+            "Adele",
+            "Joss Stone"
+          ],
+          "correctIndex": 1,
+          "answerNote": "'Back to Black' came out in October 2006 and made her a star.",
+          "image": "portraits/amy-winehouse.png",
+          "imagePrompt": "A British female soul singer with a tall dark beehive hairdo, thick winged eyeliner, tattoos on her arms, 1960s-style retro dresses.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q2",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Carl Barat",
+            "Alex Turner",
+            "Tom Meighan",
+            "Ricky Wilson"
+          ],
+          "correctIndex": 1,
+          "answerNote": "His band's debut arrived in January 2006 and won that year's Mercury Prize.",
+          "image": "portraits/alex-turner.png",
+          "imagePrompt": "A young British indie musician in his early twenties, slicked back dark hair, sharp jawline, wearing a leather jacket, cool detached expression.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q3",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Julian Casablancas",
+            "Brandon Flowers",
+            "Matt Bellamy",
+            "Chris Martin"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The Killers released 'Sam's Town' in October 2006.",
+          "image": "portraits/brandon-flowers.png",
+          "imagePrompt": "An American rock singer with slicked dark hair, sharp cheekbones, eyeliner, wearing a smart tailored jacket, glam-indie look of the mid-2000s.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q4",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Thom Yorke",
+            "Chris Martin",
+            "Tom Chaplin",
+            "Guy Garvey"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Coldplay spent 2006 touring 'X&Y' around the world.",
+          "image": "portraits/chris-martin.png",
+          "imagePrompt": "A slim British male singer in his late twenties, floppy brown hair, wearing a plain t-shirt, known for earnest expressions and stadium rock performances in the 2000s.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q5",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Daniel Powter",
+            "James Blunt",
+            "Paolo Nutini",
+            "David Gray"
+          ],
+          "correctIndex": 1,
+          "answerNote": "He took Best British Male at the 2006 Brit Awards.",
+          "image": "portraits/james-blunt.png",
+          "imagePrompt": "A British male singer-songwriter with light brown wavy hair, boyish face, often photographed in a casual jacket, gentle earnest expression.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q6",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Corinne Bailey Rae",
+            "Joss Stone",
+            "Katie Melua",
+            "Beth Rowley"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The Devon soul singer was still only nineteen in 2006.",
+          "image": "portraits/joss-stone.png",
+          "imagePrompt": "A young British female soul singer with long blonde wavy hair, bare feet often shown on stage, warm expressive face, early 2000s bohemian style.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q7",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Brandon Boyd",
+            "Matt Bellamy",
+            "Justin Hawkins",
+            "Gary Lightbody"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Muse released 'Black Holes and Revelations' in July 2006.",
+          "image": "portraits/matt-bellamy.png",
+          "imagePrompt": "A British rock singer with tousled dark hair, intense stare, often seen with a guitar, dramatic stage presence, 2000s alternative rock era.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q8",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Johnny Borrell",
+            "Pete Doherty",
+            "Liam Gallagher",
+            "Richard Ashcroft"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Babyshambles and the tabloids kept him on the front pages all through 2006.",
+          "image": "portraits/pete-doherty.png",
+          "imagePrompt": "A dishevelled British indie musician with messy dark hair, a trilby hat, gaunt face, wearing a scruffy blazer, tabloid-famous look of the mid-2000s.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q9",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Gareth Gates",
+            "Will Young",
+            "Shayne Ward",
+            "Lemar"
+          ],
+          "correctIndex": 1,
+          "answerNote": "He won the very first series of Pop Idol back in 2002.",
+          "image": "portraits/will-young.png",
+          "imagePrompt": "A neat British male pop singer with short tidy brown hair, warm friendly smile, smart casual shirt, early 2000s talent show winner look.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q10",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Bryan Ferry",
+            "David Bowie",
+            "Mick Jagger",
+            "Iggy Pop"
+          ],
+          "correctIndex": 1,
+          "answerNote": "He gave what turned out to be his last live performance in November 2006, singing with Alicia Keys.",
+          "image": "portraits/david-bowie.png",
+          "imagePrompt": "A slim British rock legend with pale skin, distinctive mismatched eyes, sharp cheekbones and neatly styled hair, elegant and theatrical.",
+          "zoomFrom": 6
+        }
+      ]
+    },
+    {
+      "id": "r3",
+      "type": "intro",
+      "title": "Round Three \u2014 Name That Intro (2006)",
+      "blurb": "Ten seconds of the intro. Name the track.",
+      "questions": [
+        {
+          "id": "r3q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Pon de Replay",
+            "SOS",
+            "Unfaithful",
+            "Break It Off"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Her first American number one, built on a Soft Cell sample.",
+          "cue": {
+            "title": "SOS",
+            "artist": "Rihanna",
+            "from": "0:00",
+            "hint": "the drum and synth hook, about five seconds"
+          }
+        },
+        {
+          "id": "r3q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Sexy Love",
+            "Because of You",
+            "So Sick",
+            "Closer"
+          ],
+          "correctIndex": 2,
+          "answerNote": "A UK number one in March 2006 and his breakthrough as a singer.",
+          "cue": {
+            "title": "So Sick",
+            "artist": "Ne-Yo",
+            "from": "0:00",
+            "hint": "the soft keyboard opening, about five seconds"
+          }
+        },
+        {
+          "id": "r3q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Deja Vu",
+            "Ring the Alarm",
+            "Irreplaceable",
+            "Green Light"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Written with Ne-Yo, it spent ten weeks at number one in America.",
+          "cue": {
+            "title": "Irreplaceable",
+            "artist": "Beyonc\u00e9",
+            "from": "0:00",
+            "hint": "the acoustic guitar figure, about five seconds"
+          }
+        },
+        {
+          "id": "r3q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Promiscuous",
+            "Say It Right",
+            "Maneater",
+            "All Good Things"
+          ],
+          "correctIndex": 2,
+          "answerNote": "One of three huge singles from 'Loose', all produced by Timbaland.",
+          "cue": {
+            "title": "Maneater",
+            "artist": "Nelly Furtado",
+            "from": "0:00",
+            "hint": "the stomping drum intro, about five seconds"
+          }
+        },
+        {
+          "id": "r3q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Take Your Mama",
+            "Laura",
+            "I Don't Feel Like Dancin'",
+            "Filthy/Gorgeous"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Co-written with Elton John and four weeks at number one.",
+          "cue": {
+            "title": "I Don't Feel Like Dancin'",
+            "artist": "Scissor Sisters",
+            "from": "0:00",
+            "hint": "the disco guitar and beat, about five seconds"
+          }
+        },
+        {
+          "id": "r3q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Shine",
+            "Rule the World",
+            "Patience",
+            "Back for Good"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The comeback single, and their first number one in eleven years.",
+          "cue": {
+            "title": "Patience",
+            "artist": "Take That",
+            "from": "0:00",
+            "hint": "the gentle guitar opening, about five seconds"
+          }
+        },
+        {
+          "id": "r3q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Beautiful",
+            "Hurt",
+            "Ain't No Other Man",
+            "Candyman"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The brassy lead single from 'Back to Basics'.",
+          "cue": {
+            "title": "Ain't No Other Man",
+            "artist": "Christina Aguilera",
+            "from": "0:00",
+            "hint": "the horn stabs, about five seconds"
+          }
+        },
+        {
+          "id": "r3q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Grillz",
+            "Ridin'",
+            "Money Maker",
+            "Snap Yo Fingers"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It won a Grammy and was parodied by Weird Al as 'White & Nerdy'.",
+          "cue": {
+            "title": "Ridin'",
+            "artist": "Chamillionaire",
+            "from": "0:00",
+            "hint": "the sliding synth line, about five seconds"
+          }
+        },
+        {
+          "id": "r3q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Long Way 2 Go",
+            "Me & U",
+            "Promise",
+            "Ring the Alarm"
+          ],
+          "correctIndex": 1,
+          "answerNote": "A minimal, whispered R&B hit that came out of nowhere in 2006.",
+          "cue": {
+            "title": "Me & U",
+            "artist": "Cassie",
+            "from": "0:00",
+            "hint": "the sparse clicking beat, about five seconds"
+          }
+        },
+        {
+          "id": "r3q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Get Busy",
+            "We Be Burnin'",
+            "Temperature",
+            "Gimme the Light"
+          ],
+          "correctIndex": 2,
+          "answerNote": "From 'The Trinity', and one of the biggest dancehall crossovers of the decade.",
+          "cue": {
+            "title": "Temperature",
+            "artist": "Sean Paul",
+            "from": "0:00",
+            "hint": "the dancehall riddim, about five seconds"
+          }
+        }
+      ]
+    }
+  ]
+}
