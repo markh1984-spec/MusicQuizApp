@@ -12,7 +12,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { validateQuiz, normaliseQuiz, safeQuizFile, saveQuiz, loadQuiz, listQuizzes, reviewWarnings, setWarningChecked, answerLetter, answerLetterIndex, ALPHABET, revealMode, REVEAL_MODES, freshness } from '../src/quizzes.js';
+import { validateQuiz, normaliseQuiz, safeQuizFile, saveQuiz, loadQuiz, listQuizzes, reviewWarnings, setWarningChecked, answerLetter, answerLetterIndex, ALPHABET, revealMode, REVEAL_MODES, freshness, isStandardShape, shapeGaps,
+} from '../src/quizzes.js';
 
 function goodQuiz() {
   return {
@@ -900,4 +901,47 @@ test('the repeated-name flag can be ticked off and stays ticked', () => {
   quiz.rounds[0].questions.reverse();
   assert.equal(reviewWarnings(quiz).find((w) => w.kind === 'same-option').cleared, true,
     'reordering the round unticked a flag somebody had already read');
+});
+
+test('THE STANDARD SHAPE IS REPORTED, NEVER ENFORCED', () => {
+  /*
+   * Set by the host on 8 September 2026: a quiz pack is 20 general knowledge,
+   * 10 pictures and 10 intros. The thing worth pinning is that it does NOT
+   * block saving — `validateQuiz()` is for faults that would ruin a question
+   * in front of a room, and being half-written on a Monday is not one. A
+   * standard that refused to save a pack on the way to meeting it would be an
+   * obstacle to meeting it.
+   */
+  const short = { title: 'Half a night', rounds: [{ type: 'text', title: 'R1', questions: [] }] };
+  assert.equal(isStandardShape(short), false);
+  assert.deepEqual(
+    shapeGaps(short).map((g) => `${g.type} ${g.have}/${g.want}`),
+    ['text 0/20', 'image 0/10', 'intro 0/10'],
+  );
+
+  // AT LEAST, NOT EXACTLY: extra rounds and extra questions are a longer
+  // night, not a broken pack.
+  const q = (n) => Array.from({ length: n }, (_, i) => ({ id: `q${i}` }));
+  const generous = {
+    rounds: [
+      { type: 'text', questions: q(40) },
+      { type: 'image', questions: q(10) },
+      { type: 'intro', questions: q(10) },
+      { type: 'multi', questions: q(5) },
+    ],
+  };
+  assert.equal(isStandardShape(generous), true, 'a longer night is not a short one');
+
+  // COUNTED BY TYPE ACROSS THE PACK, because twenty general knowledge
+  // questions split into two rounds of ten is the same night — and half this
+  // library is written that way.
+  const split = {
+    rounds: [
+      { type: 'text', questions: q(10) },
+      { type: 'text', questions: q(10) },
+      { type: 'image', questions: q(10) },
+      { type: 'intro', questions: q(10) },
+    ],
+  };
+  assert.equal(isStandardShape(split), true, 'two rounds of ten is twenty');
 });

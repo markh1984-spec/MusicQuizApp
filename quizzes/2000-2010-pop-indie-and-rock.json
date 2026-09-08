@@ -1,7 +1,7 @@
 {
   "id": "2000-2010-pop-indie-and-rock",
   "title": "The 2000-2010 Pop, Indie and Rock Quiz",
-  "subtitle": "Two rounds. Twenty seconds a question. Fastest fingers win.",
+  "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-13T19:51:18.260Z",
   "notes": "Written by claude-sonnet-5 for \"2000-2010 pop, indie and rock\". NOT YET REVIEWED — read every question in the editor before the gig.",
@@ -408,6 +408,193 @@
           "answerNote": "Silent Alarm was Bloc Party's acclaimed debut album, released in early 2005.",
           "image": "portraits/bloc-party.png",
           "zoomFrom": 6
+        }
+      ]
+    },
+    {
+      "type": "intro",
+      "title": "Round Three — Name That Intro",
+      "blurb": "10 intros. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r3q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "When the Sun Goes Down",
+            "I Bet You Look Good on the Dancefloor",
+            "Fluorescent Adolescent",
+            "Mardy Bum"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Arctic Monkeys' debut single went straight in at number one in October 2005.",
+          "cue": {
+            "title": "I Bet You Look Good on the Dancefloor",
+            "artist": "Arctic Monkeys",
+            "from": "0:00",
+            "hint": "let the opening riff run about five seconds"
+          }
+        },
+        {
+          "id": "r3q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Take Me Out",
+            "Do You Want To",
+            "The Dark of the Matinée",
+            "Michael"
+          ],
+          "correctIndex": 0,
+          "answerNote": "The slow half kicks in after about a minute — the room only needs the first few seconds.",
+          "cue": {
+            "title": "Take Me Out",
+            "artist": "Franz Ferdinand",
+            "from": "0:00",
+            "hint": "the clean guitar intro, about six seconds"
+          }
+        },
+        {
+          "id": "r3q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Somebody Told Me",
+            "All These Things That I’ve Done",
+            "When You Were Young",
+            "Mr. Brightside"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Famous for refusing to leave the UK singles chart, years after its 2004 release.",
+          "cue": {
+            "title": "Mr. Brightside",
+            "artist": "The Killers",
+            "from": "0:00",
+            "hint": "the opening guitar figure, about five seconds"
+          }
+        },
+        {
+          "id": "r3q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Ruby",
+            "Oh My God",
+            "I Predict a Riot",
+            "Everyday I Love You Less and Less"
+          ],
+          "correctIndex": 2,
+          "answerNote": "From Employment, the Leeds band’s 2005 debut album.",
+          "cue": {
+            "title": "I Predict a Riot",
+            "artist": "Kaiser Chiefs",
+            "from": "0:00",
+            "hint": "the intro riff, about five seconds"
+          }
+        },
+        {
+          "id": "r3q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Knights of Cydonia",
+            "Supermassive Black Hole",
+            "Starlight",
+            "Time Is Running Out"
+          ],
+          "correctIndex": 1,
+          "answerNote": "From Black Holes and Revelations in 2006, later picked up by the Twilight soundtrack.",
+          "cue": {
+            "title": "Supermassive Black Hole",
+            "artist": "Muse",
+            "from": "0:00",
+            "hint": "the falsetto and the fuzz bass, about six seconds"
+          }
+        },
+        {
+          "id": "r3q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Seven Nation Army",
+            "Fell in Love with a Girl",
+            "Icky Thump",
+            "The Hardest Button to Button"
+          ],
+          "correctIndex": 0,
+          "answerNote": "The riff became a terrace chant across world football.",
+          "cue": {
+            "title": "Seven Nation Army",
+            "artist": "The White Stripes",
+            "from": "0:00",
+            "hint": "the bass riff alone, about five seconds"
+          }
+        },
+        {
+          "id": "r3q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Clint Eastwood",
+            "Dare",
+            "19-2000",
+            "Feel Good Inc."
+          ],
+          "correctIndex": 3,
+          "answerNote": "The laugh at the top belongs to De La Soul, who guest on the track.",
+          "cue": {
+            "title": "Feel Good Inc.",
+            "artist": "Gorillaz",
+            "from": "0:00",
+            "hint": "the laugh and the bassline, about six seconds"
+          }
+        },
+        {
+          "id": "r3q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Whistle for the Choir",
+            "Flathead",
+            "Chelsea Dagger",
+            "Henrietta"
+          ],
+          "correctIndex": 2,
+          "answerNote": "From Costello Music in 2006, and now a fixture at sporting grounds.",
+          "cue": {
+            "title": "Chelsea Dagger",
+            "artist": "The Fratellis",
+            "from": "0:00",
+            "hint": "the da-da-da intro, about four seconds"
+          }
+        },
+        {
+          "id": "r3q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Back to Black",
+            "Rehab",
+            "You Know I’m No Good",
+            "Valerie"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The lead single from Back to Black, which swept the 2008 Grammys.",
+          "cue": {
+            "title": "Rehab",
+            "artist": "Amy Winehouse",
+            "from": "0:00",
+            "hint": "the horns, about five seconds"
+          }
+        },
+        {
+          "id": "r3q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Sex on Fire",
+            "Use Somebody",
+            "Notion",
+            "Molly’s Chambers"
+          ],
+          "correctIndex": 0,
+          "answerNote": "From Only by the Night — the band’s first UK number one single.",
+          "cue": {
+            "title": "Sex on Fire",
+            "artist": "Kings of Leon",
+            "from": "0:00",
+            "hint": "the opening guitar, about five seconds"
+          }
         }
       ]
     }

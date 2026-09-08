@@ -1402,24 +1402,20 @@ move left `.lb-what` unclosed, and **the head row collapsed — the venue button
 Save and the mode switch drew on top of one another.**
 
 - **`node --check` PASSES BROKEN HTML.** A template literal holding it is a
-  perfectly good string, and the browser silently re-nests whatever it is
-  given: the page renders, it just renders wrong.
+  good string, and the browser silently re-nests it: the page renders wrong.
 - **A WHOLE-FILE TAG COUNT WAS TRIED AND TURNED DOWN.** This app builds markup
-  from concatenated fragments — a ternary contributing a `<div>` on one branch,
-  a helper returning a wrapper — so `console-venues.js` is nine divs "short"
-  and entirely correct. **A test needing a growing exceptions list has stopped
+  from concatenated fragments, so `console-venues.js` is nine divs "short" and
+  entirely correct. **A test needing a growing exceptions list has stopped
   being a test.** What is left is the launch bar's own template, checked
   precisely, and verified by reintroducing the fault.
 - **AND `console-markup.test.js` COUNTS THE WHOLE BUILDER, by matching its
-  braces.** It stopped at the first `querySelector` after the function's name —
-  21,151 of `launchBar()`'s 155,851 characters — so an unbalanced `<div>` past
-  that point passed all three markup guards. **A window drawn at "where the
-  template probably ends" moves every time somebody queries the DOM a little
-  earlier.**
+  braces.** It stopped at the first `querySelector` after the function's name,
+  so an unbalanced `<div>` past that point passed all three markup guards. **A
+  window drawn at "where the template probably ends" moves every time somebody
+  queries the DOM a little earlier.**
 - **`play.js` genuinely leaves two `<div>`s and a `<label>` open** in the
-  camera sheet. Harmless — the browser closes them at the fragment end — and
-  deliberately not fixed blind, because re-nesting a screen nobody reported a
-  problem with is how you cause the next fault.
+  camera sheet. Harmless, and deliberately not fixed blind: re-nesting a screen
+  nobody reported a problem with is how you cause the next fault.
 
 ### A STRAY BRACE IN THE STYLESHEET IS SILENT, AND IT REACHED A REAL CONSOLE
 
@@ -1428,24 +1424,19 @@ Tonight's six pack slots showing as ONE on a laptop, twice, with the markup
 and the JavaScript both correct and six `<button>`s in the DOM.
 
 - **A SCRIPTED EDIT WITH `s.index(needle)` AND NO START OFFSET DUPLICATES
-  TEXT.** It matched an earlier occurrence than intended, so
-  `s[:start] + new + s[end:]` with `end` BEFORE `start` copied everything
-  between them — including the closing brace of a `@media (max-width: 560px)`
-  block. **Always pass the start offset**, and check the brace balance after
-  any scripted CSS edit.
+  TEXT** — `end` before `start` copies everything between them, including a
+  `@media` block's closing brace. **Always pass the start offset**, and check
+  the brace balance after any scripted CSS edit.
 - **THE MEDIA QUERY THEN ENDED EARLY and its phone-only rule applied at every
-  width** — `.lb-drop ~ .lb-drop { display: none }`, which hides every empty
-  pack slot after the first. CSS throws nothing for this. It re-scopes
-  silently from the stray brace onwards.
-- **AND THE OLD BLOCK SURVIVED AFTER THE NEW ONE, so the old rules won.** A
-  duplicated region does not just add text; it puts a second copy LATER in the
-  cascade.
+  width** — hiding every empty pack slot after the first. CSS throws nothing;
+  it re-scopes silently from the stray brace onwards.
+- **AND THE OLD BLOCK SURVIVED AFTER THE NEW ONE, so the old rules won** — a
+  duplicated region puts a second copy LATER in the cascade.
 - **THE VERIFICATION FAILED IN THE MOST INSTRUCTIVE WAY: it counted `.lb-tile`
   ELEMENTS, which `display: none` elements still are.** **Measure
   `getClientRects()`, not `querySelectorAll().length`** — "it is in the
   document" and "somebody can see it" are different questions, and this repo
-  has now been bitten by it four times (the arcade board nobody drew, the
-  publish route nobody called, this, and a QR checked for position not paint).
+  has been bitten by it four times.
 - `browser-parses.test.js` catches a JS file that will not parse; nothing
   caught a stylesheet that parses fine and means something else. Now something
   does — brace balance, no nested `@media`, and the escaped rule named
@@ -3540,6 +3531,26 @@ slots."*
 - **MOVING A ROUND IS MOVING ITS TILE NOW** — the tile's own grip is the
   handle. `drag-check.mjs` COUNTS tiles rather than pinning a round count.
 
+### A QUIZ PACK IS 20 GK, 10 PICTURES, 10 INTROS — REPORTED, NEVER ENFORCED
+
+`STANDARD_ROUNDS` / `shapeGaps()` in `src/quizzes.js`, `node
+scripts/pack-shapes.mjs`. Set 8 September 2026: *"a quiz pack needs a GK round
+of 20 questions, a 10 question image round and a 10 question intros round."*
+
+- **A STANDARD, NOT A VALIDATION.** `validateQuiz()` blocks saving; this must
+  never — a pack half-written on a Monday is normal, and a rule refusing to
+  save one makes the standard an obstacle to reaching it.
+- **AT LEAST, NOT EXACTLY** — a `multi` or `alphabet` round on top is a longer
+  night. **Do not delete rounds to fit the shape.**
+- **COUNTED BY TYPE ACROSS THE PACK, not per round** — twenty GK in two rounds
+  of ten is the same night, and half the library is written that way.
+- **A ONE-ROUND PACK IS EXEMPT** — a component on Music Rounds; holding it to
+  the shape of a night is the round/product confusion again.
+- **AN INTRO CUE NEEDS ONLY A TITLE OR ARTIST** — no Spotify URI — so an intro
+  round is writable by hand and played off the DJ app. **A PICTURE QUESTION
+  NEEDS ITS `image` FILE**, so that round cannot be written ahead of the
+  artwork: it costs money and waits to be asked for.
+
 ### MUSIC ROUNDS IS ITS OWN TAB, AND A ROUND TICK WEARS A GLYPH
 
 `isOneRound()` / `roundGlyph()` in `pack-look.js`, the `rounds` entry in
@@ -3850,23 +3861,24 @@ typo is dropped rather than quietly becoming a round of general knowledge.
 ## Checks
 
 ```bash
-npm test        # 1,690 tests, no network, injected clocks — must stay green
+npm test        # no network, injected clocks — must stay green
 npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
-node scripts/shot-bingo.mjs            # bingo, incl. the card-reload check
-node scripts/bingo-prizes.mjs          # does a bingo prize reach the person who won it?
-node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break the pub night?
+node scripts/shot-bingo.mjs            # bingo, incl. card-reload
+node scripts/bingo-prizes.mjs          # does a bingo prize reach who won it?
+node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break a pub night?
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
 node scripts/community-bay.mjs          # does the Community bay still fit the frame?
-node scripts/console-frame.mjs          # is every control on the Console door reachable?
+node scripts/console-frame.mjs          # is every Console control reachable?
 node scripts/console-controls.mjs       # and does pressing one do what it says?
-node scripts/dead-controls.mjs --door console   # and is anything inert? (one door: 25min for all)
+node scripts/dead-controls.mjs --door console   # and is anything inert? (25min for all)
 node scripts/pages-scroll.mjs           # can a person actually scroll each page?
 node scripts/final-fits.mjs             # is the last slide of the night all on screen?
-node scripts/advert-on-the-wall.mjs     # does a corrected slide reach the projector?
-node scripts/bar-reaches-the-room.mjs   # does the launch bar's card reach the room?
+node scripts/advert-on-the-wall.mjs     # does a corrected slide reach the room?
+node scripts/bar-reaches-the-room.mjs   # does the bar's card reach the room?
 node scripts/reaches-the-wall.mjs       # does a correction reach the projector?
-node scripts/lobby-games-play.mjs       # do the five games actually draw, run and score?
+node scripts/lobby-games-play.mjs       # do the five games draw, run and score?
+node scripts/pack-shapes.mjs            # which quiz packs are short?
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 ```
 
@@ -3875,18 +3887,17 @@ account is in [`docs/checks.md`](docs/checks.md):**
 
 - **`node --check` every browser file you edit.** Nothing here executed
   `public/` for two years; a stray backtick in an HTML comment made
-  `console.js` a syntax error and `/console` did not load at all, for every
-  quizmaster, with the suite green. `browser-parses.test.js` closes it.
+  `console.js` a syntax error and `/console` did not load at all, with the
+  suite green. `browser-parses.test.js` closes it.
 - **PUT A FINGER ON IT — `console-frame.mjs`.** Three bugs in one week were one
   bug: a control in the DOM, with a size, passing every test, not on the
   screen. **`elementFromPoint()` at a control's middle sees clipped, off-screen
   and painted-over at once** — *in the document*, *has a size* and *can be
   pressed* are three questions, and the gap has bitten five times. **It may
-  only scroll what a FINGER could** — `auto`/`scroll`, never `hidden` (the
-  clipping fault reported as fine), never `body` (its overflow propagates to
-  the viewport). **It launches a quiz and puts a banner up**: an idle bar is
-  narrower than the one that broke. Six sizes, each on a threshold in
-  `style.css`; verified by reintroducing four real faults.
+  only scroll what a FINGER could** — `auto`/`scroll`, never `hidden`, never
+  `body` (its overflow propagates to the viewport). **It launches a quiz and
+  puts a banner up**: an idle bar is narrower than the one that broke. Six
+  sizes; verified by reintroducing four real faults.
 - **`pub-unchanged.mjs` is the one to run before a gig week**, and **compare
   against the branch you are merging into, not `HEAD`** — on a clean checkout
   `HEAD` IS the working tree, so it can only print IDENTICAL. Quoted as a pass
@@ -3895,10 +3906,9 @@ account is in [`docs/checks.md`](docs/checks.md):**
   in that one script each made it answer confidently about something it was not
   looking at — in `docs/checks.md`. **A guard that quietly tests nothing is
   worse than no guard, because it is believed.** The fifth was the biggest: it
-  only ever ran `engine.js`, so `viewFor()` in `server.js` (the join code, the
-  brand, the photo wall) and the whole of `session.js` were outside it —
-  deleting `view.joinCode` said IDENTICAL, and so did making `session.js`
-  unimportable. **It starts both apps and drives a night over HTTP now.**
+  only ever ran `engine.js`, so `viewFor()` in `server.js` and the whole of
+  `session.js` were outside it — deleting `view.joinCode` said IDENTICAL.
+  **It starts both apps and drives a night over HTTP now.**
 - **A SYNTHESISED `DragEvent` IS NOT A DRAG.** The browser's own preconditions
   are where this bar keeps breaking: no `drop` fires unless `dragover` called
   `preventDefault()`, and none fires if `dropEffect` is one the source's
@@ -3910,26 +3920,22 @@ account is in [`docs/checks.md`](docs/checks.md):**
   the live app, 1,150 tests green.
 - **A GREP WITH THE COMMENTS LEFT IN GOES GREEN THE BETTER A FILE IS
   DOCUMENTED.** Deleting the `/api/past-gigs` gate and leaving a comment saying
-  `FEATURES.PAST_GIGS` kept `gates.test.js` 22/22; commenting out the only
-  caller of `tierRow()` kept console-split green while the upsell vanished.
-  Every such search goes through `withoutComments()` now, and the claims that
-  matter are FIRED too.
+  `FEATURES.PAST_GIGS` kept `gates.test.js` 22/22. Every such search goes
+  through `withoutComments()` now, and the claims that matter are FIRED too.
 - **EVERY BROWSER GUARD STARTS THE APP THROUGH `scripts/helpers/live-app.mjs`,
-  AND FOUR COULD NOT EXIT WITHOUT IT.** Cleanup was on `process.on('exit')`
-  alone and a spawned child holds the loop open, so `gig-path.mjs` printed
-  *"The whole gig path works"* and hung for ever — 27 seconds of work, then an
-  infinite wait. `unref()` is the fix; the helper also asks the OS for the
-  port, because a guessed one fails to bind SILENTLY and every measurement is
-  then about somebody else's process.
-- **A TEST THAT SPAWNS A SERVER TAKES A FREE PORT TOO** — three files do, and a
-  fixed port made the suite flaky again: two runs in three, a different file
-  each time, all passing alone. `test/helpers/live-server.mjs` also seeds the
-  accounts book BEFORE the spawn — `Accounts` reads it once.
+  AND FOUR COULD NOT EXIT WITHOUT IT.** Cleanup on `process.on('exit')` alone
+  never fires while a spawned child holds the loop open, so `gig-path.mjs`
+  printed its result and hung for ever. `unref()` is the fix; the helper also
+  asks the OS for the port, because a guessed one fails to bind SILENTLY and
+  every measurement is then about somebody else's process.
+- **A TEST THAT SPAWNS A SERVER TAKES A FREE PORT TOO** — a fixed one made the
+  suite flaky, a different file each run, all passing alone.
+  `test/helpers/live-server.mjs` also seeds the accounts book BEFORE the
+  spawn — `Accounts` reads it once.
 - **A CONTROL THAT REPORTS SUCCESS IT DID NOT HAVE is this repo's commonest
   fault, and `console-controls.mjs` presses one.** Five at once, all green
-  under `node --check` and every browser guard — including a rename that
-  DELETED the night. **It makes its own accounts rather than driving the host
-  key**, which saves neither a colour nor a preference.
+  under every other guard — including a rename that DELETED the night. **It
+  makes its own accounts rather than driving the host key.**
 - **AND 94 UNIT TESTS ACROSS THE FIVE LOBBY GAMES HAD NEVER DRAWN A PIXEL** —
   `lobby-games-play.mjs`. **PAINTED AND MOVING ARE TWO QUESTIONS and a canvas
   answers neither by existing**: the pixels are sampled twice with input in
@@ -3937,21 +3943,19 @@ account is in [`docs/checks.md`](docs/checks.md):**
   is reached by SWITCHING to it**, the path that can leak a loop. **A list of
   ONE is dropped, so the launch must ask for `ANY_LOBBY_GAME`** — without it
   the box opens empty and the guard measures the wrong night.
-- **NOTHING HERE PRESSED A CONTROL, and a dead one draws perfectly.**
-  A gap dial died twice in a week — a lost `import`, then a moved body calling
-  the bar's `paintOrder()` from a module without one. Both a `ReferenceError`
-  on the PRESS, eaten by the click handler's catch, so every check passed. **`drag-check.mjs` presses the dial TWICE** — once proves the
-  handler runs, twice proves it steps rather than initialises — and
+- **NOTHING HERE PRESSED A CONTROL, and a dead one draws perfectly.** A gap
+  dial died twice in a week — a lost `import`, then a moved body calling the
+  bar's `paintOrder()` from a module without one. Both a `ReferenceError` on
+  the PRESS, eaten by the click handler's catch. **`drag-check.mjs` presses the
+  dial TWICE** — once proves the handler runs, twice proves it steps — and
   `imports-present.test.js` forbids any module but the bar naming a `paint*`.
   **A general "every call resolves" test was thrown away**: it cannot see
-  parameters or destructured callbacks, which is how a leaf is MEANT to be
-  handed these, so it found sixty falsehoods and one truth.
+  destructured callbacks, so it found sixty falsehoods and one truth.
 - **IMPORTING FROM A PAGE'S OWN MODULE RUNS THAT PAGE'S OWN BOOT CODE.**
-  `console-packs.js` importing three helpers from `editor.js` ran `editor.js`'s
-  top-level `#quizPick` listener on `/console`, where it does not exist — the
-  whole console hung on "Loading your library…", for every account, and
-  `node --check` saw nothing wrong. Shared code belongs in `client.js`, which
-  has no page and no boot code, never in a file with a page of its own.
+  `console-packs.js` importing helpers from `editor.js` ran its top-level
+  `#quizPick` listener on `/console`, where it does not exist — the console
+  hung on "Loading your library…" for every account, and `node --check` saw
+  nothing. Shared code belongs in `client.js`, which has no page of its own.
 
 Beyond the unit tests, these were run by hand and are worth repeating after
 anything structural: 60 phones with live SSE connections all answering at once;

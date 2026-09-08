@@ -610,6 +610,54 @@ export function setWarningChecked(quiz, questionId, warningId, checked = true) {
  * answer marked, duplicate options, a missing option. Returns a list of plain
  * English problems for the editor to show. These DO block saving.
  */
+/**
+ * WHAT A QUIZ PACK IS SUPPOSED TO CONTAIN — set by the host on 8 September
+ * 2026: *"a quiz pack needs to contain a GK round of 20 questions, a 10
+ * question image round and a 10 question intros round. That will see you right
+ * for a night."*
+ *
+ * **A STANDARD, NOT A VALIDATION.** `validateQuiz()` above lists the faults
+ * that would ruin a question in front of a room, and those BLOCK saving. This
+ * does not and must not: a pack half-written on a Monday is a normal state to
+ * be in, and a rule that refused to save one would make the standard an
+ * obstacle to reaching it. Being short is reported, never enforced.
+ *
+ * **AT LEAST, NOT EXACTLY.** A pack carrying a "pick them all" or a first
+ * letter round on top of these three is not wrong — it is a longer night, and
+ * whether to keep those is the host's call per pack rather than something a
+ * constant should quietly delete.
+ *
+ * Written as data rather than three numbers in a sentence so the console, the
+ * generator and the audit all read the same source. *"Until I change it"* —
+ * one edit here moves the standard everywhere.
+ */
+export const STANDARD_ROUNDS = [
+  { type: 'text', count: 20 },
+  { type: 'image', count: 10 },
+  { type: 'intro', count: 10 },
+];
+
+/**
+ * How far a pack is from the standard: one entry per shortfall, empty when it
+ * is there. Counts questions by TYPE across every round rather than per round,
+ * because twenty general knowledge questions split into two rounds of ten is
+ * the same night — and half this library is written that way.
+ */
+export function shapeGaps(quiz) {
+  const have = {};
+  for (const r of (quiz && quiz.rounds) || []) {
+    have[r.type] = (have[r.type] || 0) + ((r.questions || []).length);
+  }
+  return STANDARD_ROUNDS
+    .map(({ type, count }) => ({ type, have: have[type] || 0, want: count }))
+    .filter((g) => g.have < g.want);
+}
+
+/** Is this pack the full night the standard describes? */
+export function isStandardShape(quiz) {
+  return shapeGaps(quiz).length === 0;
+}
+
 export function validateQuiz(quiz) {
   const problems = [];
   if (!quiz || typeof quiz !== 'object') return ['That is not a quiz.'];
