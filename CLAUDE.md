@@ -914,17 +914,13 @@ they say next.
 Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
 
 - **THE CONSOLE'S TOPBAR IS A GRID ITEM, AND A GRID ITEM DEFAULTS TO
-  `min-width: auto` TOO.** `.topbar` sits in `.wrap`, which is `overflow-x:
-  hidden`, so a bar that will not shrink is **CLIPPED with no scrollbar to
-  reach it**; **the rule was applied one level too deep**. **A clipped overflow
-  is worse than a scrolling one**: nothing throws and the control is
-  unreachable.
-- **…AND CONSTRAINING IT MOVED THE OVERFLOW ONTO THE MENU.** `.topnav` is
-  `flex: 1 1 auto` with a deliberately invisible `overflow-x`, so once the bar
-  could shrink the MENU gave way — 376px of the 519px it needs at 1000px, and
-  **My account simply was not there**. **A door you cannot see is a door that
-  does not exist.** **A fix that relieves pressure has to be followed to
-  wherever the pressure went.**
+  `min-width: auto` TOO** — **the rule was applied one level too deep**, and
+  **a clipped overflow is worse than a scrolling one**: nothing throws and the
+  control is unreachable.
+- **…AND CONSTRAINING IT MOVED THE OVERFLOW ONTO THE MENU**, so **My account
+  simply was not there**. **A door you cannot see is a door that does not
+  exist**, and **a fix that relieves pressure has to be followed to wherever
+  the pressure went.**
 - **THE DIET HAS NO UPPER BOUND, BECAUSE `.console .wrap` CAPS THE BAR AT
   1180px.** `@media (max-width: 1179px)` measures the WINDOW, so it switched
   OFF where it was still needed. **A media query on the window is the wrong
@@ -934,49 +930,42 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   **A guard that sets a night up but never lets anybody in is measuring a
   console nobody uses.**
 - **WHAT IS PLAYING NOW IS WORDED IN ONE PLACE — `nowPlaying()`.** There were
-  THREE. **The SHORT form is a different job, not an abbreviation**: the bar
-  says *something is on and how many are in* from any door, and the TITLE stays
-  in the panel. **Under 1050px the live line stands down** — it is the only
-  thing in that bar that summarises something else on screen.
-- **THE BAR GOES ON A DIET BELOW 1180px; WRAPPING IS ONLY THE FALLBACK.** Two
-  rows read as a second bar, and under the fixed frame every row the header
-  takes comes off the tab column. So the **wordmark goes and the mark stays**.
-  **Scoped with `:has(.hat-switch)` to the OWNER's bar** — putting an ordinary
-  quizmaster's wordmark on a diet for a problem they do not have is how a fix
-  for one account lands on everybody.
+  THREE. **The SHORT form is a different job, not an abbreviation**, and
+  **under 1050px the live line stands down** — the only thing in that bar that
+  summarises something else on screen.
+- **THE BAR GOES ON A DIET BELOW 1180px; WRAPPING IS ONLY THE FALLBACK** —
+  two rows read as a second bar, so the **wordmark goes and the mark stays**.
+  **Scoped with `:has(.hat-switch)` to the OWNER's bar**: a fix for one account
+  must not land on everybody.
 - **AND NOTHING RESTATES `overflow` AFTER `.console .wrap`'S PAIR.** A trailing
   `overflow: hidden` wiped the `overflow-y: auto` five lines above it, so the
-  frame CLIPPED instead of scrolling — 1500x900 with five packs in Tonight:
-  161px of overflow, three tabs and all six pack cards off the bottom, and a
-  real wheel moving nothing. **That is the fault reported twice as "the sub
-  menu is still missing from the console", and the fix written for it had never
-  once been in effect.** FOURTH sighting of shorthand-beats-longhand, this time
-  inside ONE declaration block. `console-frame.mjs` fills Tonight and turns a
-  REAL wheel now — a programmatic scroll succeeds on a clipped box.
-- **THE FIXED FRAME NEEDS A MINIMUM HEIGHT, AND THAT IS THE SAME ARGUMENT AS
-  THE WIDTH.** **LETTING THE BAY SHRINK INSTEAD WAS TRIED AND IS WORSE**: the
-  doorhead shrank, the bar did not, and it **painted over the tab column**.
-  **The numbers said fixed and the render said broken**, which is why the
-  screenshot is the check.
+  frame CLIPPED instead of scrolling: 161px of overflow at 1500x900, and a real
+  wheel moving nothing. **That is the fault reported twice as "the sub menu is
+  still missing from the console", and the fix written for it had never once
+  been in effect.** FOURTH sighting of shorthand-beats-longhand, this time
+  inside ONE declaration block. `console-frame.mjs` turns a REAL wheel now — a
+  programmatic scroll succeeds on a clipped box.
+- **THE FIXED FRAME NEEDS A MINIMUM HEIGHT.** **LETTING THE BAY SHRINK INSTEAD
+  WAS TRIED AND IS WORSE**: it **painted over the tab column**. **The numbers
+  said fixed and the render said broken**, which is why the screenshot is the
+  check.
 - **AND THE FRAME'S MINIMUM HEIGHT IS TWO NUMBERS, BECAUSE THE DOORHEAD IS
-  TWO HEIGHTS.** **Do not collapse it to one**: one either takes the frame off
-  a 1500x900 laptop that fits it, or keeps it at 960x760 where it does not.
-  **A 720p laptop scrolls now and that is correct.**
+  TWO HEIGHTS. Do not collapse it to one**: one either takes the frame off a
+  1500x900 laptop that fits it, or keeps it at 960x760 where it does not.
 - **AND THE EQUAL-BAY RULE ONLY EXISTS BECAUSE OF THE FRAME**, so
   `community-bay.mjs` checks it only where the frame is on. **Both scripts
-  carry the frame's two numbers; if they move, they move together.**
+  carry the frame's two numbers; they move together.**
 - **TWO COLUMNS IS A WIDTH DECISION; THE PINNED FRAME IS A HEIGHT ONE.** Gating
-  it on height in one media query took the SIDEBAR away too. **THE DRAG IS WHAT
-  THE LAYOUT IS FOR**, so the 190px rail holds at every height and only the
+  it on height in one media query took the SIDEBAR away too, and **the drag is
+  what the layout is for** — the 190px rail holds at every height and only the
   pinning goes. **A media query is two decisions the moment it names two
   axes.**
 - **`main` IS A FLEX COLUMN — never give it a row template.** Its
   `auto minmax(0,1fr)` grid assumed two children, so ANY banner above the
   doorhead quietly turned the fixed frame back into a scrolling page.
 - **THE SHELF IS SIX ACROSS, BY DECISION — it mirrors the six bays above it.**
-  What made the 146px poster hold its content was never width. **Do not "fix" a
-  squeezed card by dropping a column** — where six genuinely cannot be
-  honoured, both grids move together (see below).
+  **Do not "fix" a squeezed card by dropping a column** — where six genuinely
+  cannot be honoured, both grids move together (see below).
 - **THE FINISH LAYER at the foot of `style.css` owns selection, caret,
   `:focus-visible` and the card hover** — one named block, so the next control
   gets finished there rather than growing scattered rules.
@@ -986,28 +975,25 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
 Every one lived in a band no guard looked at.
 
 - **THE LOBBY'S JOIN PANEL IS CAPPED BY THE SCREEN'S HEIGHT** — `min(100%,
-  72vh)`. A QR code is square and the panel is `width: 100%` of a grid column,
-  so on a WIDE, SHORT projector it grew taller than the screen: at 3:1 **the
-  code itself was 166px off**, on a page that deliberately does not scroll.
-  **The rules slide's identical panel was capped all along.** **72vh is
-  measured, not chosen** — 16:9 and 4:3 are pixel-identical to before.
+  72vh)`. A QR code is square, so on a WIDE, SHORT projector it grew taller
+  than the screen and **the code itself was 166px off**, on a page that
+  deliberately does not scroll. **72vh is measured, not chosen** — 16:9 and 4:3
+  are pixel-identical to before.
 - **THREE ACROSS BETWEEN 561 AND 779px, AND BOTH GRIDS MOVE TOGETHER.** Six
   across needs 768px inside the panel, and a shut pack card is a square with a
   118px floor — **`aspect-ratio` plus `min-height` propagates to a minimum
-  WIDTH**. At 561 the cards **overlapped by 28px and the console scrolled
-  sideways by 24**; an iPad in portrait is 768. **This is not six-across being
-  dropped** — that rule is about a shelf wide enough to honour it.
+  WIDTH**. At 561 the cards **overlapped by 28px**. **This is not six-across
+  being dropped** — that rule is about a shelf wide enough to honour it.
 - **`#hatSlot` IS A BARE `<span>`, SO IT HAD `min-width: auto`** — third
-  sighting on this bar. The owner's switch is 351px, the control view's top row
-  346, and because the span would not give ground the row grew: **`/host`
-  scrolled sideways 161px at 390, 191 at 360 and 231 at 320**, his actual
-  bookmark, with a menu chip off the side. `/console` was the same fault one
-  size smaller. **The switch itself shrinks below 560 too** — a label losing its
-  tail is what this bar can afford; a door off the screen is not.
-- **AND `console-frame.mjs` NOW LOOKS AT 768 AND 320.** Its sizes ran 390 then
-  960, so the 561-899 band and every phone under 390 were unmeasured — where
-  two of these three lived. **Its one-row rule moved from 431px to 900px**: a
-  second header row costs the PINNED layout, which does not exist below 900.
+  sighting on this bar. Because the span would not give ground the row grew:
+  **`/host` scrolled sideways 161px at 390 and 231 at 320**, his actual
+  bookmark, with a menu chip off the side. **The switch itself shrinks below
+  560 too** — a label losing its tail is what this bar can afford; a door off
+  the screen is not.
+- **AND `console-frame.mjs` NOW LOOKS AT 768 AND 320** — its sizes ran 390
+  then 960, so the 561-899 band and every phone under 390 were unmeasured.
+  **Its one-row rule moved from 431px to 900px**: a second header row costs the
+  PINNED layout, which does not exist below 900.
 
 ### A ROOM ID IS A PATH, AND `?q=` NAMES AN ACCOUNT OR NOBODY
 
@@ -1816,9 +1802,9 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   read back as *"Not published"*. **The hazard was written down above
   `galleryRoomId()` and left** — which is how a noted hazard becomes a bug
   report. No change for an ordinary quizmaster: their room id is never HOUSE.
-- **THE PRIVATE REPO IS TESTABLE NOW** — `photo-repo-stub.mjs` via
-  `node --import`: real server, fixture network. **Publishing lived behind a
-  token the suite must never need, so nothing had ever run it.**
+- **THE PRIVATE REPO IS TESTABLE NOW** — `photo-repo-stub.mjs`: real server,
+  fixture network. **Publishing lived behind a token the suite must never need,
+  so nothing had ever run it.**
 - **`published.json` HAS ONE WRITER AT A TIME, PER ROOM — `inOrder()` in
   `src/gallery.js`.** Two callers each read the file whole and write it back,
   so a lamp write begun before a publish finished **silently un-published the
@@ -3249,6 +3235,26 @@ against a board marking "Psychosocial" right, and nothing threw.
   `ANSWER >` above `plays:` and **is never asked to compare them**.
 
 Full reasoning: **[`docs/generation.md`](docs/generation.md)**.
+
+### EVERY INTRO CUE IN THE LIBRARY HAD NO `spotifyUri`, SO THE AUTO-PLAY HAD NEVER FIRED
+
+`scripts/recue-all.mjs`. `startIntroTrack()` returns early on a cue with no
+uri, so **270 cues across every catalogue pack put the question up and played
+silence** — nothing thrown, nothing logged. **IT WALKS THE PACKS THROUGH
+`recueQuiz()` — do not write a second "find the track"**, or the console and
+the room disagree about which record is playing. **Handed the version on disk
+as `previous`**, so it only ever fills GAPS. **RUN IT LOCALLY AND COMMIT** —
+`quizDir` is the repository's own folder, so a write on Render is gone at the
+next deploy. **The misses are NAMED**, for a human, before a gig.
+
+### THE PICTURES BUTTON SAYS HOW MUCH OF ROUND 2 IS DRAWN
+
+`pictureLabel()` in `console-packs.js`, off `art` from `imageStatus()`. The
+answer existed and cost a press per pack. **`imageDir` IS AN OPTIONAL ARGUMENT
+TO `listQuizzes()` AND THE LAUNCH PATH MUST NOT PASS ONE** — a stat per picture
+question is work on the protected surface bought for a badge on a shelf. **The
+reason a control is ON goes on the control**, so it is the existing button
+saying more rather than a second badge. **A placeholder counts as NOT drawn.**
 
 ### The breakout round — a laugh, not a question, and it scores nothing
 

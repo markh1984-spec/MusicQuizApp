@@ -945,3 +945,39 @@ test('THE STANDARD SHAPE IS REPORTED, NEVER ENFORCED', () => {
   };
   assert.equal(isStandardShape(split), true, 'two rounds of ten is twenty');
 });
+
+/**
+ * WHETHER ROUND 2 IS DRAWN YET, ON THE SHELF — and the launch path pays
+ * nothing for it.
+ *
+ * `session.js` resolves a pack through `listQuizzes()` too, so the stat per
+ * picture question is bought by the console's payload and by nothing else.
+ * The two halves are asserted together because leaving one out is the whole
+ * hazard: an `art` field that always appears is work on the protected
+ * surface, and one that never appears is a badge nobody can draw.
+ */
+test('listQuizzes reports the artwork state only when asked for it', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'art-'));
+  const imgs = fs.mkdtempSync(path.join(os.tmpdir(), 'imgs-'));
+  const pack = {
+    id: 'pics', title: 'Pics',
+    rounds: [{
+      title: 'Round Two', type: 'image',
+      questions: [
+        { id: 'a', prompt: 'Who?', options: ['Madonna', 'Prince', 'Cher', 'Sade'], correctIndex: 0, image: 'a.png' },
+        { id: 'b', prompt: 'Who?', options: ['Blondie', 'Prince', 'Cher', 'Sade'], correctIndex: 0, image: 'b.png' },
+      ],
+    }],
+  };
+  fs.writeFileSync(path.join(dir, 'pics.json'), JSON.stringify(pack));
+  fs.writeFileSync(path.join(imgs, 'a.png'), 'not really a png');
+
+  const [plain] = listQuizzes(dir);
+  assert.equal(plain.art, undefined, 'the launch path is not made to stat a folder');
+
+  const [asked] = listQuizzes(dir, { imageDir: imgs });
+  assert.deepEqual(asked.art, { total: 2, real: 1, placeholder: 0, missing: 1 });
+
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.rmSync(imgs, { recursive: true, force: true });
+});

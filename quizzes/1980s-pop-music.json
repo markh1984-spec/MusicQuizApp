@@ -1,7 +1,7 @@
 {
   "id": "1980s-pop-music",
   "title": "The 1980s Pop Music Quiz",
-  "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
+  "subtitle": "Five rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-05T21:58:57.830Z",
   "notes": "Rewritten for the Bronze starter set on 20 August 2026 — three rounds now, mixed round types. Read every question in the editor before the gig.",
@@ -135,9 +135,137 @@
       ]
     },
     {
+      "id": "r1b",
+      "type": "text",
+      "title": "Round Two — More 1980s Pop",
+      "blurb": "10 questions",
+      "questions": [
+        {
+          "id": "r1bq1",
+          "prompt": "Which 1979 record became the first music video ever played on MTV, when the channel launched in 1981?",
+          "options": [
+            "Video Killed the Radio Star",
+            "Tainted Love",
+            "Vienna",
+            "Message in a Bottle"
+          ],
+          "correctIndex": 0,
+          "answerNote": "The Buggles opened MTV on 1 August 1981."
+        },
+        {
+          "id": "r1bq2",
+          "prompt": "Which Dexys Midnight Runners single spent four weeks at UK number one in 1982?",
+          "options": [
+            "Geno",
+            "Come On Eileen",
+            "Jackie Wilson Said",
+            "Because of You"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It was the UK's best-selling single of 1982."
+        },
+        {
+          "id": "r1bq3",
+          "prompt": "George Michael and Andrew Ridgeley performed together under which name?",
+          "options": [
+            "Bros",
+            "Erasure",
+            "Wham!",
+            "Tears for Fears"
+          ],
+          "correctIndex": 2,
+          "answerNote": "They split in 1986 after a farewell concert at Wembley Stadium."
+        },
+        {
+          "id": "r1bq4",
+          "prompt": "Which 1987 Whitney Houston single topped the charts on both sides of the Atlantic?",
+          "options": [
+            "I Will Always Love You",
+            "One Moment in Time",
+            "Saving All My Love for You",
+            "I Wanna Dance with Somebody"
+          ],
+          "correctIndex": 3,
+          "answerNote": "It won her a Grammy for Best Female Pop Vocal Performance."
+        },
+        {
+          "id": "r1bq5",
+          "prompt": "Which 1985 Dire Straits album contained 'Money for Nothing' and 'Walk of Life'?",
+          "options": [
+            "Brothers in Arms",
+            "Love Over Gold",
+            "Making Movies",
+            "Communiqué"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It was one of the first albums recorded digitally and sold over thirty million copies."
+        },
+        {
+          "id": "r1bq6",
+          "prompt": "Which Australian soap opera did Kylie Minogue star in before her pop career?",
+          "options": [
+            "Home and Away",
+            "Prisoner",
+            "Neighbours",
+            "A Country Practice"
+          ],
+          "correctIndex": 2,
+          "answerNote": "She played mechanic Charlene, whose 1987 wedding drew twenty million UK viewers."
+        },
+        {
+          "id": "r1bq7",
+          "prompt": "Which duo released 'Sweet Dreams (Are Made of This)' in 1983?",
+          "options": [
+            "Soft Cell",
+            "Yazoo",
+            "Blancmange",
+            "Eurythmics"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Annie Lennox and Dave Stewart had previously played together in The Tourists."
+        },
+        {
+          "id": "r1bq8",
+          "prompt": "Which 1986 Bon Jovi album contained 'Livin' on a Prayer' and 'You Give Love a Bad Name'?",
+          "options": [
+            "7800° Fahrenheit",
+            "New Jersey",
+            "Slippery When Wet",
+            "Keep the Faith"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It was the best-selling album in the United States in 1987."
+        },
+        {
+          "id": "r1bq9",
+          "prompt": "Which band's 1982 album 'Rio' produced 'Hungry Like the Wolf' and 'Save a Prayer'?",
+          "options": [
+            "Spandau Ballet",
+            "Duran Duran",
+            "Japan",
+            "ABC"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The sleeve painting was by Patrick Nagel and the videos were shot in Sri Lanka."
+        },
+        {
+          "id": "r1bq10",
+          "prompt": "Berlin's 'Take My Breath Away' was the love theme from which 1986 film?",
+          "options": [
+            "Flashdance",
+            "Footloose",
+            "Top Gun",
+            "Dirty Dancing"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It won the Academy Award for Best Original Song."
+        }
+      ]
+    },
+    {
       "id": "r2",
       "type": "multi",
-      "title": "Round Two — Pick Them All",
+      "title": "Round Three — Pick Them All",
       "blurb": "More than one answer is right. Lock in every one of them.",
       "questions": [
         {
@@ -151,7 +279,11 @@
             "Never Gonna Give You Up",
             "Take On Me"
           ],
-          "correctIndexes": [0, 2, 4],
+          "correctIndexes": [
+            0,
+            2,
+            4
+          ],
           "answerNote": "Bohemian Rhapsody's UK number ones were 1975 and 1991. Livin' on a Prayer and Take On Me both stalled at number 2 and 4 in the UK."
         },
         {
@@ -165,7 +297,12 @@
             "Whitney Houston",
             "Dire Straits"
           ],
-          "correctIndexes": [0, 2, 4, 5],
+          "correctIndexes": [
+            0,
+            2,
+            4,
+            5
+          ],
           "answerNote": "Nirvana and Oasis are both 1990s acts."
         },
         {
@@ -179,7 +316,12 @@
             "Elton John",
             "U2"
           ],
-          "correctIndexes": [0, 2, 4, 5],
+          "correctIndexes": [
+            0,
+            2,
+            4,
+            5
+          ],
           "answerNote": "Neither Nirvana nor Oasis had formed yet in 1985."
         },
         {
@@ -193,7 +335,10 @@
             "Invincible",
             "Michael"
           ],
-          "correctIndexes": [0, 2],
+          "correctIndexes": [
+            0,
+            2
+          ],
           "answerNote": "Dangerous (1991), HIStory (1995), Invincible (2001) and Michael (2010) all came later."
         },
         {
@@ -207,7 +352,12 @@
             "Footloose",
             "Top Gun"
           ],
-          "correctIndexes": [0, 2, 4, 5],
+          "correctIndexes": [
+            0,
+            2,
+            4,
+            5
+          ],
           "answerNote": "Ghostbusters (Ray Parker Jr), Flashdance... What a Feeling (Irene Cara), Footloose (Kenny Loggins), Take My Breath Away (Berlin, from Top Gun)."
         }
       ]
@@ -215,7 +365,7 @@
     {
       "id": "r3",
       "type": "alphabet",
-      "title": "Round Three — First Letter",
+      "title": "Round Four — First Letter",
       "blurb": "Just the first letter of the answer. Spelling does not count.",
       "questions": [
         {
@@ -247,6 +397,194 @@
           "prompt": "Which 1983 Bonnie Tyler song contains the lyric 'turn around, bright eyes'?",
           "answer": "Total Eclipse of the Heart",
           "answerNote": "Written and produced by Jim Steinman."
+        }
+      ]
+    },
+    {
+      "id": "r4",
+      "type": "intro",
+      "title": "Round Five — Name That Intro",
+      "blurb": "10 intros. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r4q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Beat It",
+            "Billie Jean",
+            "Wanna Be Startin' Somethin'",
+            "Smooth Criminal"
+          ],
+          "correctIndex": 1,
+          "answerNote": "That bassline runs for nearly half a minute before the first word.",
+          "cue": {
+            "title": "Billie Jean",
+            "artist": "Michael Jackson",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Welcome to the Jungle",
+            "Paradise City",
+            "Sweet Child O' Mine",
+            "Patience"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Slash was reportedly warming up when he stumbled on the riff.",
+          "cue": {
+            "title": "Sweet Child O' Mine",
+            "artist": "Guns N' Roses",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Girls Just Want to Have Fun",
+            "Time After Time",
+            "True Colors",
+            "She Bop"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Cyndi Lauper's version was released in 1983; the song was written by Robert Hazard.",
+          "cue": {
+            "title": "Girls Just Want to Have Fun",
+            "artist": "Cyndi Lauper",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Eye of the Tiger",
+            "The Final Countdown",
+            "Jump",
+            "The Power of Love"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The keyboard fanfare was originally written as a concert intro tape.",
+          "cue": {
+            "title": "The Final Countdown",
+            "artist": "Europe",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Rosanna",
+            "Hold the Line",
+            "Africa",
+            "Georgy Porgy"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It gave Toto their only US number one, in February 1983.",
+          "cue": {
+            "title": "Africa",
+            "artist": "TOTO",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Any Way You Want It",
+            "Separate Ways",
+            "Open Arms",
+            "Don't Stop Believin'"
+          ],
+          "correctIndex": 3,
+          "answerNote": "The piano intro is one of the most recognised openings in rock.",
+          "cue": {
+            "title": "Don't Stop Believin'",
+            "artist": "Journey",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Bizarre Love Triangle",
+            "Blue Monday",
+            "True Faith",
+            "Temptation"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It remains the best-selling twelve-inch single of all time.",
+          "cue": {
+            "title": "Blue Monday",
+            "artist": "New Order",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Manic Monday",
+            "Eternal Flame",
+            "Walk Like an Egyptian",
+            "If She Knew What She Wants"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It was Billboard's number one single of 1987.",
+          "cue": {
+            "title": "Walk Like an Egyptian",
+            "artist": "The Bangles",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Faith",
+            "Freedom",
+            "Careless Whisper",
+            "A Different Corner"
+          ],
+          "correctIndex": 2,
+          "answerNote": "George Michael said he wrote the saxophone line as a teenager on a bus.",
+          "cue": {
+            "title": "Careless Whisper",
+            "artist": "George Michael",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "We Didn't Start the Fire",
+            "Uptown Girl",
+            "The Longest Time",
+            "Tell Her About It"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The video starred Christie Brinkley, whom Joel married in 1985.",
+          "cue": {
+            "title": "Uptown Girl",
+            "artist": "Billy Joel",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
         }
       ]
     }

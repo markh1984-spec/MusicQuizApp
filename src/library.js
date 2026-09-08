@@ -104,7 +104,7 @@ export function safePackFile(id) {
  *   works on a quiz somebody wrote themselves, and they carry `mine: true` so
  *   the console can mark them without a second kind of pack card.
  */
-export function fullLibrary({ quizDir, bingoDir, dataDir }, roomId = HOUSE_ROOM, own = null) {
+export function fullLibrary({ quizDir, bingoDir, dataDir, imageDir = '' }, roomId = HOUSE_ROOM, own = null) {
   const mine = statsFor(readStats(dataDir), roomId);
   const decorate = (item) => ({
     ...item,
@@ -114,7 +114,7 @@ export function fullLibrary({ quizDir, bingoDir, dataDir }, roomId = HOUSE_ROOM,
 
   return {
     quizzes: [
-      ...listQuizzes(quizDir).map((q) => decorate({ ...q, kind: 'quiz' })),
+      ...listQuizzes(quizDir, { imageDir }).map((q) => decorate({ ...q, kind: 'quiz' })),
       ...((own && own.quizzes) || []).map((q) => decorate({ ...q, kind: 'quiz' })),
     ],
     bingo: [

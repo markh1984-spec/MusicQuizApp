@@ -1,7 +1,7 @@
 {
   "id": "madonna",
   "title": "The Madonna Quiz",
-  "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
+  "subtitle": "Five rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-05T20:03:17.294Z",
   "notes": "Rewritten for the Bronze starter set on 20 August 2026 — three rounds now, mixed round types. Read every question in the editor before the gig.",
@@ -140,9 +140,137 @@
       ]
     },
     {
+      "id": "r1b",
+      "type": "text",
+      "title": "Round Two — More Madonna",
+      "blurb": "10 questions",
+      "questions": [
+        {
+          "id": "r1bq1",
+          "prompt": "Which 1984 album gave Madonna her first US number one album?",
+          "options": [
+            "Madonna",
+            "Like a Virgin",
+            "True Blue",
+            "Erotica"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Nile Rodgers of Chic produced it."
+        },
+        {
+          "id": "r1bq2",
+          "prompt": "Which 1986 album contained 'Papa Don't Preach' and 'Open Your Heart'?",
+          "options": [
+            "True Blue",
+            "Like a Prayer",
+            "Bedtime Stories",
+            "American Life"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It was the best-selling album of 1986 worldwide."
+        },
+        {
+          "id": "r1bq3",
+          "prompt": "What was the one-word title of Madonna's 1992 book of photographs?",
+          "options": [
+            "Erotica",
+            "Truth",
+            "Sex",
+            "Fever"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It came out in the same week as the album Erotica."
+        },
+        {
+          "id": "r1bq4",
+          "prompt": "Which British film director did Madonna marry in 2000?",
+          "options": [
+            "Danny Boyle",
+            "Guy Ritchie",
+            "Alan Parker",
+            "Sam Mendes"
+          ],
+          "correctIndex": 1,
+          "answerNote": "They divorced in 2008."
+        },
+        {
+          "id": "r1bq5",
+          "prompt": "Which 2000 album contained the singles 'Music' and 'Don't Tell Me'?",
+          "options": [
+            "Music",
+            "Ray of Light",
+            "American Life",
+            "Confessions on a Dance Floor"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Most of it was made with the French producer Mirwais."
+        },
+        {
+          "id": "r1bq6",
+          "prompt": "Madonna played a baseball player in which 1992 film?",
+          "options": [
+            "Desperately Seeking Susan",
+            "A League of Their Own",
+            "Dick Tracy",
+            "Who's That Girl"
+          ],
+          "correctIndex": 1,
+          "answerNote": "She played 'All the Way' Mae Mordabito alongside Geena Davis and Tom Hanks."
+        },
+        {
+          "id": "r1bq7",
+          "prompt": "Which 2019 Madonna album was built around a fictional alter ego?",
+          "options": [
+            "Rebel Heart",
+            "MDNA",
+            "Madame X",
+            "Hard Candy"
+          ],
+          "correctIndex": 2,
+          "answerNote": "She wrote much of it after moving to Lisbon."
+        },
+        {
+          "id": "r1bq8",
+          "prompt": "Madonna recorded the title theme for which 2002 James Bond film?",
+          "options": [
+            "The World Is Not Enough",
+            "Casino Royale",
+            "Quantum of Solace",
+            "Die Another Day"
+          ],
+          "correctIndex": 3,
+          "answerNote": "She also appeared in the film itself, as a fencing instructor."
+        },
+        {
+          "id": "r1bq9",
+          "prompt": "Which producer worked with Madonna on the album Ray of Light?",
+          "options": [
+            "Nile Rodgers",
+            "William Orbit",
+            "Timbaland",
+            "Stuart Price"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The record won four Grammy awards."
+        },
+        {
+          "id": "r1bq10",
+          "prompt": "Which US city did Madonna move to in 1978 to pursue dancing?",
+          "options": [
+            "Los Angeles",
+            "Chicago",
+            "New York",
+            "Detroit"
+          ],
+          "correctIndex": 2,
+          "answerNote": "She is said to have arrived with about thirty-five dollars."
+        }
+      ]
+    },
+    {
       "id": "r2",
       "type": "multi",
-      "title": "Round Two — Pick Them All",
+      "title": "Round Three — Pick Them All",
       "blurb": "More than one answer is right. Lock in every one of them.",
       "questions": [
         {
@@ -156,7 +284,11 @@
             "Confessions on a Dance Floor",
             "Rumours"
           ],
-          "correctIndexes": [0, 2, 4],
+          "correctIndexes": [
+            0,
+            2,
+            4
+          ],
           "answerNote": "Thriller is Michael Jackson, Purple Rain is Prince, Rumours is Fleetwood Mac."
         },
         {
@@ -170,7 +302,12 @@
             "Evita",
             "Dick Tracy"
           ],
-          "correctIndexes": [0, 2, 4, 5],
+          "correctIndexes": [
+            0,
+            2,
+            4,
+            5
+          ],
           "answerNote": "Grease starred Olivia Newton-John; Flashdance starred Jennifer Beals."
         },
         {
@@ -184,7 +321,12 @@
             "Sticky & Sweet Tour",
             "MDNA Tour"
           ],
-          "correctIndexes": [0, 2, 4, 5],
+          "correctIndexes": [
+            0,
+            2,
+            4,
+            5
+          ],
           "answerNote": "The Wall Tour was Pink Floyd/Roger Waters; Zoo TV was U2."
         },
         {
@@ -198,7 +340,11 @@
             "Nicki Minaj",
             "Sam Smith"
           ],
-          "correctIndexes": [0, 2, 4],
+          "correctIndexes": [
+            0,
+            2,
+            4
+          ],
           "answerNote": "'4 Minutes' (Timberlake), 'Me Against the Music' (Spears) and 'Bitch I'm Madonna' (Minaj)."
         },
         {
@@ -212,7 +358,11 @@
             "2010s",
             "2020s"
           ],
-          "correctIndexes": [1, 2, 3],
+          "correctIndexes": [
+            1,
+            2,
+            3
+          ],
           "answerNote": "80s: Into the Groove. 90s: Vogue, Like a Prayer. 2000s: Music, American Pie, Sorry."
         }
       ]
@@ -220,7 +370,7 @@
     {
       "id": "r3",
       "type": "alphabet",
-      "title": "Round Three — First Letter",
+      "title": "Round Four — First Letter",
       "blurb": "Just the first letter of the answer. Spelling does not count.",
       "questions": [
         {
@@ -252,6 +402,194 @@
           "prompt": "What is the title of Madonna's controversial 1989 song and video, featuring burning crosses, that cost her a Pepsi sponsorship deal?",
           "answer": "Like a Prayer",
           "answerNote": "Pepsi pulled the ad campaign within days of the video's release."
+        }
+      ]
+    },
+    {
+      "id": "r5i",
+      "type": "intro",
+      "title": "Round Five — Name That Intro",
+      "blurb": "10 intros. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r5iq1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Material Girl",
+            "Holiday",
+            "Cherish",
+            "Angel"
+          ],
+          "correctIndex": 0,
+          "answerNote": "The 1985 video pastiches Marilyn Monroe in Gentlemen Prefer Blondes.",
+          "cue": {
+            "title": "Material Girl",
+            "artist": "Madonna",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r5iq2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Lucky Star",
+            "Holiday",
+            "Borderline",
+            "Burning Up"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Her first international hit, from 1983.",
+          "cue": {
+            "title": "Holiday",
+            "artist": "Madonna",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r5iq3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Who's That Girl",
+            "Causing a Commotion",
+            "La Isla Bonita",
+            "Open Your Heart"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The last single from True Blue, and a UK number one in 1987.",
+          "cue": {
+            "title": "La Isla Bonita",
+            "artist": "Madonna",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r5iq4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Express Yourself",
+            "Cherish",
+            "Keep It Together",
+            "Oh Father"
+          ],
+          "correctIndex": 0,
+          "answerNote": "David Fincher directed the video, then the most expensive ever made.",
+          "cue": {
+            "title": "Express Yourself",
+            "artist": "Madonna",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r5iq5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Dress You Up",
+            "Borderline",
+            "Everybody",
+            "Physical Attraction"
+          ],
+          "correctIndex": 1,
+          "answerNote": "From her 1983 debut album, and her first US top ten.",
+          "cue": {
+            "title": "Borderline",
+            "artist": "Madonna",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r5iq6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Live to Tell",
+            "True Blue",
+            "Crazy for You",
+            "Papa Don't Preach"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Written for the 1985 film Vision Quest, it was her second US number one.",
+          "cue": {
+            "title": "Crazy for You",
+            "artist": "Madonna",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r5iq7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Erotica",
+            "Justify My Love",
+            "Rescue Me",
+            "Bad Girl"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Co-written with Lenny Kravitz; MTV refused to show the video.",
+          "cue": {
+            "title": "Justify My Love",
+            "artist": "Madonna",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r5iq8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Give It 2 Me",
+            "Sorry",
+            "4 Minutes",
+            "Jump"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The 2008 single paired her with Justin Timberlake and Timbaland.",
+          "cue": {
+            "title": "4 Minutes",
+            "artist": "Madonna",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r5iq9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Lucky Star",
+            "Into the Groove",
+            "Dress You Up",
+            "Like a Virgin"
+          ],
+          "correctIndex": 0,
+          "answerNote": "From the 1983 debut album, and the record that broke her in America.",
+          "cue": {
+            "title": "Lucky Star",
+            "artist": "Madonna",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r5iq10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Secret",
+            "Bedtime Story",
+            "Take a Bow",
+            "You'll See"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Written with Babyface, it spent seven weeks at US number one in 1995.",
+          "cue": {
+            "title": "Take a Bow",
+            "artist": "Madonna",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
         }
       ]
     }

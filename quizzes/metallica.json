@@ -1,7 +1,7 @@
 {
   "id": "metallica",
   "title": "The Metallica Quiz",
-  "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
+  "subtitle": "Four rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-06T10:43:27.763Z",
   "notes": "Written by claude-sonnet-5 for \"Metallica\". NOT YET REVIEWED — read every question in the editor before the gig.",
@@ -138,9 +138,137 @@
       ]
     },
     {
+      "id": "r1b",
+      "type": "text",
+      "title": "Round Two — More Metallica",
+      "blurb": "10 questions",
+      "questions": [
+        {
+          "id": "r1bq1",
+          "prompt": "In which city was Metallica formed in 1981?",
+          "options": [
+            "San Francisco",
+            "New York",
+            "Los Angeles",
+            "Seattle"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Lars Ulrich placed an advert in the Los Angeles paper The Recycler."
+        },
+        {
+          "id": "r1bq2",
+          "prompt": "Which 1988 album was Metallica's first with bassist Jason Newsted?",
+          "options": [
+            "Ride the Lightning",
+            "...And Justice for All",
+            "Kill 'Em All",
+            "Load"
+          ],
+          "correctIndex": 1,
+          "answerNote": "His bass is famously almost inaudible in the final mix."
+        },
+        {
+          "id": "r1bq3",
+          "prompt": "Which Metallica song's 1989 video used clips from the film Johnny Got His Gun?",
+          "options": [
+            "One",
+            "Blackened",
+            "Harvester of Sorrow",
+            "Dyers Eve"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It was the band's first ever promotional video."
+        },
+        {
+          "id": "r1bq4",
+          "prompt": "Which band did Dave Mustaine form after being thrown out of Metallica?",
+          "options": [
+            "Anthrax",
+            "Testament",
+            "Exodus",
+            "Megadeth"
+          ],
+          "correctIndex": 3,
+          "answerNote": "He formed it within weeks of being sent home from New York in 1983."
+        },
+        {
+          "id": "r1bq5",
+          "prompt": "Which 1996 album, with cover art by Andres Serrano, came with short haircuts?",
+          "options": [
+            "ReLoad",
+            "Load",
+            "Garage Inc.",
+            "St. Anger"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The change of image split the band's audience at the time."
+        },
+        {
+          "id": "r1bq6",
+          "prompt": "Which file-sharing service did Metallica sue in 2000?",
+          "options": [
+            "Kazaa",
+            "LimeWire",
+            "Napster",
+            "Grokster"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The case began after a demo of 'I Disappear' leaked before release."
+        },
+        {
+          "id": "r1bq7",
+          "prompt": "Which 2008 album was Metallica's first with producer Rick Rubin?",
+          "options": [
+            "Death Magnetic",
+            "Hardwired... to Self-Destruct",
+            "St. Anger",
+            "72 Seasons"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It was widely seen as a return to their thrash roots."
+        },
+        {
+          "id": "r1bq8",
+          "prompt": "Metallica's 2011 album 'Lulu' was a collaboration with which musician?",
+          "options": [
+            "Iggy Pop",
+            "David Bowie",
+            "Lou Reed",
+            "Ozzy Osbourne"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It grew out of a Rock and Roll Hall of Fame anniversary show."
+        },
+        {
+          "id": "r1bq9",
+          "prompt": "In 2013 Metallica became the first band to have played all seven continents, after a show on which one?",
+          "options": [
+            "Africa",
+            "Antarctica",
+            "South America",
+            "Australia"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The show was called Freeze 'Em All and the crowd listened on headphones."
+        },
+        {
+          "id": "r1bq10",
+          "prompt": "Which 2016 album contained 'Hardwired' and 'Moth into Flame'?",
+          "options": [
+            "72 Seasons",
+            "Death Magnetic",
+            "Hardwired... to Self-Destruct",
+            "St. Anger"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It was their first studio album in eight years."
+        }
+      ]
+    },
+    {
       "id": "r2",
       "type": "multi",
-      "title": "Round Two — Pick Them All",
+      "title": "Round Three — Pick Them All",
       "blurb": "More than one answer is right. Lock in every one of them.",
       "questions": [
         {
@@ -331,6 +459,194 @@
             1
           ],
           "answerNote": "This question asks about the earlier era - Burton and Newsted both played bass before Trujillo joined in 2003."
+        }
+      ]
+    },
+    {
+      "id": "r4i",
+      "type": "intro",
+      "title": "Round Four — Name That Intro",
+      "blurb": "10 intros. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r4iq1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Sad but True",
+            "Enter Sandman",
+            "Wherever I May Roam",
+            "Holier Than Thou"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The opening track of the 1991 Black Album, and their biggest hit.",
+          "cue": {
+            "title": "Enter Sandman",
+            "artist": "Metallica",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4iq2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Battery",
+            "Damage, Inc.",
+            "Master of Puppets",
+            "Welcome Home (Sanitarium)"
+          ],
+          "correctIndex": 2,
+          "answerNote": "A new generation found it through Stranger Things in 2022.",
+          "cue": {
+            "title": "Master of Puppets",
+            "artist": "Metallica",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4iq3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Fade to Black",
+            "Creeping Death",
+            "For Whom the Bell Tolls",
+            "Trapped Under Ice"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The title comes from the Hemingway novel; Cliff Burton opens it on bass.",
+          "cue": {
+            "title": "For Whom the Bell Tolls",
+            "artist": "Metallica",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4iq4",
+          "prompt": "Which track is this?",
+          "options": [
+            "The Unforgiven",
+            "Nothing Else Matters",
+            "Mama Said",
+            "Low Man's Lyric"
+          ],
+          "correctIndex": 1,
+          "answerNote": "James Hetfield wrote it on the phone to his girlfriend from the road.",
+          "cue": {
+            "title": "Nothing Else Matters",
+            "artist": "Metallica",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4iq5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Sad But True",
+            "The Struggle Within",
+            "Of Wolf and Man",
+            "Through the Never"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Tuned down a whole step, which is where the weight comes from.",
+          "cue": {
+            "title": "Sad But True",
+            "artist": "Metallica",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4iq6",
+          "prompt": "Which track is this?",
+          "options": [
+            "The God That Failed",
+            "Don't Tread on Me",
+            "My Friend of Misery",
+            "The Unforgiven"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Two sequels followed, on ReLoad and Death Magnetic.",
+          "cue": {
+            "title": "The Unforgiven",
+            "artist": "Metallica",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4iq7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Fuel",
+            "The Memory Remains",
+            "Devil's Dance",
+            "Better Than You"
+          ],
+          "correctIndex": 0,
+          "answerNote": "The opening track of ReLoad, from 1997.",
+          "cue": {
+            "title": "Fuel",
+            "artist": "Metallica",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4iq8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Whiskey in the Jar",
+            "Turn the Page",
+            "Wherever I May Roam",
+            "Until It Sleeps"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It opens on a twelve-string electric sitar.",
+          "cue": {
+            "title": "Wherever I May Roam",
+            "artist": "Metallica",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4iq9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Ride the Lightning",
+            "Creeping Death",
+            "Escape",
+            "The Call of Ktulu"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The 'Die! Die!' chant has been a live fixture for forty years.",
+          "cue": {
+            "title": "Creeping Death",
+            "artist": "Metallica",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r4iq10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Whiplash",
+            "Motorbreath",
+            "Jump in the Fire",
+            "Seek & Destroy"
+          ],
+          "correctIndex": 3,
+          "answerNote": "From the 1983 debut Kill 'Em All, and their traditional set closer.",
+          "cue": {
+            "title": "Seek & Destroy",
+            "artist": "Metallica",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
         }
       ]
     }

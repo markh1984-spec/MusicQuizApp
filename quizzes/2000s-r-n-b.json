@@ -1,7 +1,7 @@
 {
   "id": "2000s-r-n-b",
   "title": "The 2000s R'n'B Quiz",
-  "subtitle": "Two rounds. Twenty seconds a question. Fastest fingers win.",
+  "subtitle": "Four rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-13T19:36:13.804Z",
   "notes": "Written by claude-sonnet-5 for \"2000s R'n'B\". NOT YET REVIEWED — read every question in the editor before the gig.",
@@ -135,9 +135,137 @@
       ]
     },
     {
+      "id": "r1b",
+      "type": "text",
+      "title": "Round Two — More 2000s R'n'B",
+      "blurb": "10 questions",
+      "questions": [
+        {
+          "id": "r1bq1",
+          "prompt": "Which British singer's debut solo single 'Fill Me In' went to UK number one in 2000?",
+          "options": [
+            "Craig David",
+            "Lemar",
+            "Mark Morrison",
+            "Daniel Bedingfield"
+          ],
+          "correctIndex": 0,
+          "answerNote": "He had already featured on Artful Dodger's 'Re-Rewind' the year before."
+        },
+        {
+          "id": "r1bq2",
+          "prompt": "Which singer spent fourteen weeks at US number one in 2005 with 'We Belong Together'?",
+          "options": [
+            "Toni Braxton",
+            "Mariah Carey",
+            "Whitney Houston",
+            "Monica"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It marked her comeback with the album The Emancipation of Mimi."
+        },
+        {
+          "id": "r1bq3",
+          "prompt": "Which St. Louis artist had 2002 hits with 'Hot in Herre' and 'Dilemma'?",
+          "options": [
+            "Ludacris",
+            "Fabolous",
+            "Nelly",
+            "Chingy"
+          ],
+          "correctIndex": 2,
+          "answerNote": "'Dilemma' paired him with Kelly Rowland of Destiny's Child."
+        },
+        {
+          "id": "r1bq4",
+          "prompt": "Whose 2004 single 'Let Me Love You' spent nine weeks at US number one?",
+          "options": [
+            "Mario",
+            "Omarion",
+            "Bobby Valentino",
+            "Trey Songz"
+          ],
+          "correctIndex": 0,
+          "answerNote": "He was nineteen when it topped the chart."
+        },
+        {
+          "id": "r1bq5",
+          "prompt": "Which American singer had a 2003 hit with 'Milkshake'?",
+          "options": [
+            "Ashanti",
+            "Kelis",
+            "Amerie",
+            "Brandy"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It was produced by The Neptunes."
+        },
+        {
+          "id": "r1bq6",
+          "prompt": "What was the title of Beyoncé's 2003 debut solo album?",
+          "options": [
+            "B'Day",
+            "I Am... Sasha Fierce",
+            "Dangerously in Love",
+            "4"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It won her five Grammy awards in a single night."
+        },
+        {
+          "id": "r1bq7",
+          "prompt": "Which Jamaican artist had 2000s hits with 'Get Busy' and 'Temperature'?",
+          "options": [
+            "Shaggy",
+            "Elephant Man",
+            "Beenie Man",
+            "Sean Paul"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Both came off albums that crossed dancehall into the pop charts."
+        },
+        {
+          "id": "r1bq8",
+          "prompt": "Which British singer had 2003 hits with 'Superstar' and 'Thank You'?",
+          "options": [
+            "Jamelia",
+            "Alesha Dixon",
+            "Estelle",
+            "Beverley Knight"
+          ],
+          "correctIndex": 0,
+          "answerNote": "'Thank You' was written about leaving an abusive relationship."
+        },
+        {
+          "id": "r1bq9",
+          "prompt": "Which singer's 2005 hit '1 Thing' was built on a sample of The Meters?",
+          "options": [
+            "Ciara",
+            "Cassie",
+            "Amerie",
+            "Keyshia Cole"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It came from the soundtrack to the film Hitch."
+        },
+        {
+          "id": "r1bq10",
+          "prompt": "Which British singer, a Fame Academy runner-up, had hits with 'Dance (With U)' and '50/50'?",
+          "options": [
+            "Lemar",
+            "Craig David",
+            "Taio Cruz",
+            "Jay Sean"
+          ],
+          "correctIndex": 0,
+          "answerNote": "He won three MOBO awards in 2003."
+        }
+      ]
+    },
+    {
       "id": "r2",
       "type": "image",
-      "title": "Round Two — Whose Face Is This?",
+      "title": "Round Three — Whose Face Is This?",
       "blurb": "The picture pulls back as the clock runs down. Guess early, score more.",
       "questions": [
         {
@@ -289,6 +417,194 @@
           "image": "portraits/tlc.png",
           "imagePrompt": "Three Black women in colourful matching baggy outfits with bold accessories, varied hairstyles from braids to short cropped cuts, playful 90s/2000s girl-group energy.",
           "zoomFrom": 6
+        }
+      ]
+    },
+    {
+      "id": "r3i",
+      "type": "intro",
+      "title": "Round Four — Name That Intro",
+      "blurb": "10 intros. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r3iq1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Baby Boy",
+            "Crazy in Love",
+            "Naughty Girl",
+            "Me, Myself and I"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The horn hook is sampled from The Chi-Lites' 'Are You My Woman'.",
+          "cue": {
+            "title": "Crazy in Love",
+            "artist": "Beyoncé",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Ms. Jackson",
+            "Roses",
+            "Hey Ya!",
+            "The Way You Move"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It came from the Love Below half of Speakerboxxx/The Love Below.",
+          "cue": {
+            "title": "Hey Ya!",
+            "artist": "OutKast",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Work It",
+            "Get Ur Freak On",
+            "Lose Control",
+            "One Minute Man"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Timbaland built it around a tumbi riff.",
+          "cue": {
+            "title": "Get Ur Freak On",
+            "artist": "Missy Elliott",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Say It Right",
+            "Maneater",
+            "Promiscuous",
+            "I'm Like a Bird"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Her duet with Timbaland came from the 2006 album Loose.",
+          "cue": {
+            "title": "Promiscuous",
+            "artist": "Nelly Furtado",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Cry Me a River",
+            "SexyBack",
+            "My Love",
+            "Senorita"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The lead single from FutureSex/LoveSounds.",
+          "cue": {
+            "title": "SexyBack",
+            "artist": "Justin Timberlake",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Stronger",
+            "Touch the Sky",
+            "Gold Digger",
+            "Jesus Walks"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Jamie Foxx sings the Ray Charles hook.",
+          "cue": {
+            "title": "Gold Digger",
+            "artist": "Kanye West",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Rock the Boat",
+            "Try Again",
+            "More Than a Woman",
+            "We Need a Resolution"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It came from the soundtrack to Romeo Must Die.",
+          "cue": {
+            "title": "Try Again",
+            "artist": "Aaliyah",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Be Without You",
+            "No More Drama",
+            "Family Affair",
+            "Just Fine"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Produced by Dr. Dre, and her only US number one.",
+          "cue": {
+            "title": "Family Affair",
+            "artist": "Mary J. Blige",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq9",
+          "prompt": "Which track is this?",
+          "options": [
+            "SOS",
+            "Pon de Replay",
+            "Unfaithful",
+            "Don't Stop the Music"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Her debut single, released when she was seventeen.",
+          "cue": {
+            "title": "Pon de Replay",
+            "artist": "Rihanna",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Survivor",
+            "Independent Women Part I",
+            "Bootylicious",
+            "Jumpin', Jumpin'"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It samples Stevie Nicks' 'Edge of Seventeen' — she appears in the video.",
+          "cue": {
+            "title": "Bootylicious",
+            "artist": "Destiny's Child",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
         }
       ]
     }

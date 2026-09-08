@@ -1885,7 +1885,7 @@ async function handleGet(req, res, url, route) {
     // And their venue slides, which live in the packs repository under their
     // own room — the house's are in the main repo and arrive with the deploy.
     await ensureAdvertsRestored(libRoom);
-    const everything = fullLibrary(config, libRoom.id, listOwn(libRoom.paths));
+    const everything = fullLibrary(config, libRoom.id, listOwn(libRoom.paths, { imageDir: config.imageDir }));
     // The console sees the whole catalogue: theirs to play, the rest to buy.
     // Everything they do not hold comes back stripped — see withShop.
     const library = withShop(everything, whoIs(req, url));

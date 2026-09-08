@@ -3436,6 +3436,18 @@ body.screen { cursor: none; overflow: hidden; }
 .pack-actions > *:disabled { opacity: 0.5; cursor: default; }
 .pack-actions > *:disabled:hover { background: rgba(255, 255, 255, 0.08); }
 
+/* PICTURES STILL TO DRAW. The count is on the label; this is the glance, and
+   the colour is GREEN because the thing behind the button MAKES something —
+   the same meaning it carries everywhere else in this app. Not filled: the
+   button only opens a panel, and filled green is reserved for the press that
+   actually spends. `border-color` rather than the `border` shorthand, which
+   this sheet has been bitten by four times. */
+.pack-actions .pack-pics.wants {
+  border-color: var(--good);
+  background: rgba(47, 224, 122, 0.12);
+}
+.pack-actions .pack-pics.wants:hover { background: rgba(47, 224, 122, 0.22); }
+
 /* Delete is quiet until you go near it, so it is never mistaken for Launch in
    a hurry — and it only turns red under the cursor. */
 .pack-del { color: var(--ink-dim); background: rgba(255, 255, 255, 0.04) !important; }

@@ -135,11 +135,13 @@ export function readPack(kind, id, ctx) {
  * catalogue is — so the console can put both in one grid and mark which is
  * which, rather than growing a second kind of pack card.
  */
-export function listOwn(paths = {}) {
+export function listOwn(paths = {}, { imageDir = '' } = {}) {
   const quizDir = ownDir(paths, 'quiz');
   const bingoDir = ownDir(paths, 'bingo');
   return {
-    quizzes: quizDir ? listQuizzes(quizDir).map((q) => ({ ...q, kind: 'quiz', mine: true })) : [],
+    // `imageDir` only ever arrives from the console's own library call, so a
+    // pack resolved on the launch path still costs no stat — see listQuizzes.
+    quizzes: quizDir ? listQuizzes(quizDir, { imageDir }).map((q) => ({ ...q, kind: 'quiz', mine: true })) : [],
     bingo: bingoDir ? listBingoPacks(bingoDir).map((b) => ({ ...b, mine: true })) : [],
   };
 }

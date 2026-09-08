@@ -1,15 +1,271 @@
 {
   "id": "2000s-metal",
   "title": "The 2000s Metal Quiz",
-  "subtitle": "Two rounds. Twenty seconds a question. Fastest fingers win.",
+  "subtitle": "Four rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-10T02:30:59.891Z",
   "notes": "Rewritten for the Bronze starter set on 20 August 2026 — a second round added. Read every question in the editor before the gig.",
   "rounds": [
     {
+      "id": "r0a",
+      "type": "text",
+      "title": "Round One — 2000s Metal",
+      "blurb": "10 questions",
+      "questions": [
+        {
+          "id": "r0aq1",
+          "prompt": "Which band released the 2001 album 'Iowa', their first UK number one?",
+          "options": [
+            "Korn",
+            "Slipknot",
+            "Mudvayne",
+            "Static-X"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It was named after the band's home state."
+        },
+        {
+          "id": "r0aq2",
+          "prompt": "Which band's 2000 debut 'Hybrid Theory' became one of the best-selling debut albums of all time?",
+          "options": [
+            "Linkin Park",
+            "P.O.D.",
+            "Alien Ant Farm",
+            "Crazy Town"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It has sold more than twenty million copies worldwide."
+        },
+        {
+          "id": "r0aq3",
+          "prompt": "Which Californian band released 'Toxicity' in 2001?",
+          "options": [
+            "Deftones",
+            "Incubus",
+            "System of a Down",
+            "Coal Chamber"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It went to number one in America the week before 11 September 2001."
+        },
+        {
+          "id": "r0aq4",
+          "prompt": "Which band released the 2003 album 'St. Anger'?",
+          "options": [
+            "Megadeth",
+            "Anthrax",
+            "Slayer",
+            "Metallica"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Its snare drum sound is one of the most argued-about in metal."
+        },
+        {
+          "id": "r0aq5",
+          "prompt": "Which band's 2000 debut 'The Sickness' contained 'Down with the Sickness'?",
+          "options": [
+            "Disturbed",
+            "Godsmack",
+            "Sevendust",
+            "Drowning Pool"
+          ],
+          "correctIndex": 0,
+          "answerNote": "The Chicago band have since had five consecutive US number one albums."
+        },
+        {
+          "id": "r0aq6",
+          "prompt": "Which band's 2004 album 'Leviathan' was built around Moby-Dick?",
+          "options": [
+            "Lamb of God",
+            "Mastodon",
+            "Trivium",
+            "Shadows Fall"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The Atlanta band's sleeve art was by Paul Romano."
+        },
+        {
+          "id": "r0aq7",
+          "prompt": "Which band released 'City of Evil' in 2005?",
+          "options": [
+            "Bullet for My Valentine",
+            "Atreyu",
+            "Avenged Sevenfold",
+            "Bring Me the Horizon"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It was the album on which M. Shadows dropped screamed vocals for clean singing."
+        },
+        {
+          "id": "r0aq8",
+          "prompt": "Which Welsh band released their debut album 'The Poison' in 2005?",
+          "options": [
+            "Funeral for a Friend",
+            "Lostprophets",
+            "Bullet for My Valentine",
+            "Skindred"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The band formed in Bridgend in 1998."
+        },
+        {
+          "id": "r0aq9",
+          "prompt": "Which Massachusetts band released 'The End of Heartache' in 2004?",
+          "options": [
+            "Killswitch Engage",
+            "All That Remains",
+            "Unearth",
+            "Converge"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It was their first album with Howard Jones on vocals."
+        },
+        {
+          "id": "r0aq10",
+          "prompt": "Which Virginia band released 'Ashes of the Wake' in 2004?",
+          "options": [
+            "Chimaira",
+            "Machine Head",
+            "Lamb of God",
+            "DevilDriver"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Randy Blythe's band had previously recorded as Burn the Priest."
+        }
+      ]
+    },
+    {
+      "id": "r0b",
+      "type": "text",
+      "title": "Round Two — More 2000s Metal",
+      "blurb": "10 questions",
+      "questions": [
+        {
+          "id": "r0bq1",
+          "prompt": "Besides Slipknot, which band does Corey Taylor front?",
+          "options": [
+            "Stone Sour",
+            "Hellyeah",
+            "Damageplan",
+            "Adema"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Stone Sour actually predates Slipknot, forming in 1992."
+        },
+        {
+          "id": "r0bq2",
+          "prompt": "Which band did Chris Cornell front in the 1990s, before Audioslave?",
+          "options": [
+            "Alice in Chains",
+            "Stone Temple Pilots",
+            "Soundgarden",
+            "Pearl Jam"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Audioslave paired him with three quarters of Rage Against the Machine."
+        },
+        {
+          "id": "r0bq3",
+          "prompt": "How many members did Slipknot have through their 2000s masked line-up?",
+          "options": [
+            "Seven",
+            "Eight",
+            "Nine",
+            "Eleven"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Each wore a numbered boiler suit as well as a mask."
+        },
+        {
+          "id": "r0bq4",
+          "prompt": "Which Slipknot bassist died in 2010?",
+          "options": [
+            "Paul Gray",
+            "Joey Jordison",
+            "Chris Fehn",
+            "Sid Wilson"
+          ],
+          "correctIndex": 0,
+          "answerNote": "He was a founder member and wrote much of the band's early material."
+        },
+        {
+          "id": "r0bq5",
+          "prompt": "Which festival began at Donington Park in 2003, taking over from Monsters of Rock?",
+          "options": [
+            "Sonisphere",
+            "Bloodstock",
+            "Reading",
+            "Download"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Iron Maiden and Audioslave headlined the first one."
+        },
+        {
+          "id": "r0bq6",
+          "prompt": "Which side project did Linkin Park's Mike Shinoda form, releasing 'The Rising Tied' in 2005?",
+          "options": [
+            "Dead by Sunrise",
+            "Fort Minor",
+            "Julien-K",
+            "Zwan"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It leaned on hip hop rather than rock."
+        },
+        {
+          "id": "r0bq7",
+          "prompt": "Which former Pantera guitarist was shot dead on stage in 2004?",
+          "options": [
+            "Dimebag Darrell",
+            "Zakk Wylde",
+            "Jerry Cantrell",
+            "Mick Thomson"
+          ],
+          "correctIndex": 0,
+          "answerNote": "He was playing with his later band Damageplan in Columbus, Ohio."
+        },
+        {
+          "id": "r0bq8",
+          "prompt": "Which band's 2001 album 'Break the Cycle' contained 'It's Been Awhile'?",
+          "options": [
+            "Puddle of Mudd",
+            "Nickelback",
+            "Staind",
+            "Creed"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Aaron Lewis's band were signed after Fred Durst saw them live."
+        },
+        {
+          "id": "r0bq9",
+          "prompt": "Which vocalist fronted Linkin Park alongside Mike Shinoda?",
+          "options": [
+            "Chester Bennington",
+            "Jonathan Davis",
+            "Wayne Static",
+            "Jacoby Shaddix"
+          ],
+          "correctIndex": 0,
+          "answerNote": "He joined in 1999 after auditioning down the phone."
+        },
+        {
+          "id": "r0bq10",
+          "prompt": "Which touring festival, founded by Ozzy and Sharon Osbourne, ran through the 2000s?",
+          "options": [
+            "Warped Tour",
+            "Ozzfest",
+            "Mayhem Festival",
+            "Family Values Tour"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Black Sabbath headlined several of them."
+        }
+      ]
+    },
+    {
       "id": "r1",
       "type": "intro",
-      "title": "Round One — Name That Intro",
+      "title": "Round Three — Name That Intro",
       "blurb": "10 intros. You get the first few seconds and nothing else.",
       "questions": [
         {
@@ -217,7 +473,7 @@
     {
       "id": "r2",
       "type": "multi",
-      "title": "Round Two — Pick Them All",
+      "title": "Round Four — Pick Them All",
       "blurb": "More than one answer is right. Lock in every one of them.",
       "questions": [
         {
@@ -231,7 +487,12 @@
             "Limp Bizkit",
             "Papa Roach"
           ],
-          "correctIndexes": [0, 2, 4, 5],
+          "correctIndexes": [
+            0,
+            2,
+            4,
+            5
+          ],
           "answerNote": "Metallica are thrash metal; Iron Maiden are NWOBHM, both far older scenes."
         },
         {
@@ -245,7 +506,10 @@
             "Slipknot",
             "System of a Down"
           ],
-          "correctIndexes": [0, 2],
+          "correctIndexes": [
+            0,
+            2
+          ],
           "answerNote": "Bennington fronted Stone Temple Pilots from 2013 to 2015, alongside his own Linkin Park."
         },
         {
@@ -259,7 +523,11 @@
             "Feeder",
             "Slipknot"
           ],
-          "correctIndexes": [0, 2, 4],
+          "correctIndexes": [
+            0,
+            2,
+            4
+          ],
           "answerNote": "Bullet For My Valentine and Feeder are Welsh; Muse are from Devon."
         },
         {
@@ -273,7 +541,11 @@
             "Minutes to Midnight",
             "Vol. 3: The Subliminal Verses"
           ],
-          "correctIndexes": [0, 2, 4],
+          "correctIndexes": [
+            0,
+            2,
+            4
+          ],
           "answerNote": "Toxicity is System of a Down, Significant Other is Limp Bizkit, Vol. 3 is Slipknot."
         }
       ]

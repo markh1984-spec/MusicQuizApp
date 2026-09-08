@@ -12,6 +12,9 @@ import path from 'node:path';
 // Shared with the browser so the list of looks cannot drift between what a
 // pack is allowed to ask for and what the screens can draw.
 import { LOOKS } from '../public/assets/looks.js';
+// Only for the shelf badge below. `generate-images.js` imports `portraits.js`
+// and nothing else here, so there is no circle.
+import { imageStatus } from './generate-images.js';
 
 export const ROUND_TYPES = ['text', 'image', 'intro', 'multi', 'alphabet', 'breakout'];
 
@@ -143,7 +146,7 @@ export function searchBlob(bits, max = 3000) {
   return [...words].join(' ').slice(0, max);
 }
 
-export function listQuizzes(dir) {
+export function listQuizzes(dir, { imageDir = '' } = {}) {
   let files = [];
   try {
     files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
@@ -200,6 +203,24 @@ export function listQuizzes(dir) {
         playlist: (quiz.rounds || [])
           .map((r) => r.spotifyPlaylist && r.spotifyPlaylist.url)
           .find(Boolean) || '',
+        /*
+         * HOW MUCH OF ROUND 2 IS ACTUALLY DRAWN — asked for directly:
+         * *"a little button that tells me whether a quiz pack needs its
+         * picture round generated or not"*.
+         *
+         * The answer was already computable and cost a press to see: it lived
+         * behind the Pictures panel, which fetches `/api/images/<id>`. So a
+         * shelf of eight packs was eight presses to find the one with
+         * stand-ins still in it, which is the *ease of use* rule failing on
+         * the owner's own Monday.
+         *
+         * **ONLY WHEN AN `imageDir` IS PASSED, AND THE LAUNCH PATH DOES NOT
+         * PASS ONE.** `session.js` calls this to resolve a pack at launch;
+         * a stat per picture question there would be work on the protected
+         * surface bought for a badge on a shelf. The console's payload asks
+         * for it, and nothing else does.
+         */
+        ...(imageDir ? { art: imageStatus(quiz, imageDir) } : {}),
       });
     } catch (err) {
       out.push({ id: path.basename(file, '.json'), file, title: file, broken: err.message, rounds: [] });

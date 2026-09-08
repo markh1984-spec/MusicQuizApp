@@ -1,7 +1,7 @@
 {
   "id": "2000s-pop-rnb-and-chart",
   "title": "The 2000s Pop, R&B and Chart Quiz",
-  "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
+  "subtitle": "Four rounds. Twenty seconds a question. Fastest fingers win.",
   "questionSeconds": 20,
   "createdAt": "2026-08-06T20:29:36.883Z",
   "notes": "Rewritten for the Bronze starter set on 20 August 2026 — three rounds now, mixed round types. Read every question in the editor before the gig.",
@@ -137,7 +137,7 @@
     {
       "id": "r2",
       "type": "text",
-      "title": "Round Two — 2000s Pop, R&B and Chart",
+      "title": "Round Two — More 2000s Pop, R&B and Chart",
       "blurb": "10 more questions on 2000s pop, R&B and chart",
       "questions": [
         {
@@ -263,9 +263,197 @@
       ]
     },
     {
+      "id": "r3i",
+      "type": "intro",
+      "title": "Round Three — Name That Intro",
+      "blurb": "10 intros. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r3iq1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Somebody Told Me",
+            "Mr. Brightside",
+            "All These Things That I've Done",
+            "Human"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It has spent more weeks on the UK singles chart than any other record.",
+          "cue": {
+            "title": "Mr. Brightside",
+            "artist": "The Killers",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Whenever, Wherever",
+            "She Wolf",
+            "Hips Don't Lie",
+            "Underneath Your Clothes"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The horn part is lifted from Jerry Rivera's 'Amores Como El Nuestro'.",
+          "cue": {
+            "title": "Hips Don't Lie",
+            "artist": "Shakira",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Bleeding Love",
+            "Better in Time",
+            "Run",
+            "Happy"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Written by Ryan Tedder, it topped the charts in more than thirty countries.",
+          "cue": {
+            "title": "Bleeding Love",
+            "artist": "Leona Lewis",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Hot n Cold",
+            "Firework",
+            "Waking Up in Vegas",
+            "I Kissed a Girl"
+          ],
+          "correctIndex": 3,
+          "answerNote": "It gave Katy Perry her first UK number one, in 2008.",
+          "cue": {
+            "title": "I Kissed a Girl",
+            "artist": "Katy Perry",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Just Dance",
+            "Poker Face",
+            "Paparazzi",
+            "Bad Romance"
+          ],
+          "correctIndex": 1,
+          "answerNote": "From The Fame, and the biggest-selling single worldwide of 2009.",
+          "cue": {
+            "title": "Poker Face",
+            "artist": "Lady Gaga",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Run",
+            "Chasing Cars",
+            "Open Your Eyes",
+            "Shut Your Eyes"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Gary Lightbody has called it the purest song he has written.",
+          "cue": {
+            "title": "Chasing Cars",
+            "artist": "Snow Patrol",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Valerie",
+            "You Know I'm No Good",
+            "Rehab",
+            "Back to Black"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It won Amy Winehouse three Grammys in one night in 2008.",
+          "cue": {
+            "title": "Rehab",
+            "artist": "Amy Winehouse",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Use Somebody",
+            "Sex on Fire",
+            "Notion",
+            "Revelry"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It gave the band their first UK number one single, in 2008.",
+          "cue": {
+            "title": "Sex on Fire",
+            "artist": "Kings of Leon",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Warwick Avenue",
+            "Rain on Your Parade",
+            "Mercy",
+            "Stepping Stone"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Five weeks at UK number one for the Welsh singer in 2008.",
+          "cue": {
+            "title": "Mercy",
+            "artist": "Duffy",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        },
+        {
+          "id": "r3iq10",
+          "prompt": "Which track is this?",
+          "options": [
+            "1980",
+            "Come Over",
+            "American Boy",
+            "Freak"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The Kanye West collaboration won a Grammy for Best Rap/Sung Performance.",
+          "cue": {
+            "title": "American Boy",
+            "artist": "Estelle",
+            "from": "0:00",
+            "hint": "let the intro run about five seconds"
+          }
+        }
+      ]
+    },
+    {
       "id": "r3",
       "type": "alphabet",
-      "title": "Round Three — First Letter",
+      "title": "Round Four — First Letter",
       "blurb": "Just the first letter of the answer. Spelling does not count.",
       "questions": [
         {

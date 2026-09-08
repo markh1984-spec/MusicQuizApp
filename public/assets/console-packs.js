@@ -523,6 +523,37 @@ function hasPictureRound(pack) {
 }
 
 /**
+ * WHETHER ROUND 2 IS DRAWN YET, ON THE BUTTON — asked for directly: *"a little
+ * button that tells me whether a quiz pack needs its picture round generated
+ * or not"*.
+ *
+ * The answer existed and cost a press: it lives behind the Pictures panel,
+ * which fetches `/api/images/<id>` per pack. A shelf of eight was eight
+ * presses to find the one still on stand-ins, which is *the common job is the
+ * fast one* failing on the owner's own Monday.
+ *
+ * **THE REASON A CONTROL IS ON GOES ON THE CONTROL**, the same shape Launch
+ * already uses for the reason it is off — so this is the existing button
+ * saying more, never a second badge on the card. `pack.art` comes from
+ * `imageStatus()` on the server, which is the only side that can stat a
+ * folder; a placeholder counts as NOT drawn, because a stand-in is precisely
+ * the thing this is for finding.
+ */
+function pictureLabel(pack) {
+  const art = pack.art;
+  if (!art || !art.total) return { label: 'Pictures', title: 'Make the round 2 portraits' };
+  if (art.real >= art.total) {
+    return { label: 'Pictures', title: `All ${art.total} drawn. Open to redraw or change the style.` };
+  }
+  const left = art.total - art.real;
+  return {
+    label: `Pictures ${art.real}/${art.total}`,
+    title: `${left} still to draw${art.placeholder ? ` — ${art.placeholder} on a stand-in` : ''}`,
+    wants: true,
+  };
+}
+
+/**
  * Round 2 artwork, from the console.
  *
  * Two buttons rather than one, because they are not the same decision.
@@ -1433,7 +1464,10 @@ export function packActionsMarkup(kind, pack) {
       ${mine ? `<button class="pack-rename" ${pack.broken ? 'disabled' : ''} title="Change what it is called">Rename</button>` : ''}
       ${pack.playlist ? `<a class="pack-spotify" href="${esc(pack.playlist)}" target="_blank" rel="noopener" title="Open it in Spotify">Playlist</a>` : ''}
       ${ownPack ? '<button class="pack-save" title="Download it as a file you keep">Download</button>' : ''}
-      ${ownersJob && hasPictureRound(pack) ? '<button class="pack-pics" title="Make the round 2 portraits">Pictures</button>' : ''}
+      ${ownersJob && hasPictureRound(pack) ? (() => {
+        const pic = pictureLabel(pack);
+        return `<button class="pack-pics${pic.wants ? ' wants' : ''}" title="${esc(pic.title)}">${esc(pic.label)}</button>`;
+      })() : ''}
       ${ownersJob && hasIntroRound(pack) ? (pack.playlist
         // Once one exists, the green link beside this one is already called
         // Playlist — two buttons with the same word on one panel is a panel
