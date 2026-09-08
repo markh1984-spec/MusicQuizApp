@@ -10705,3 +10705,7 @@ input, textarea, [contenteditable] { caret-color: var(--hot); }
 }
 .rounds-title { font-size: var(--fs-head); margin: 0; color: var(--ink); }
 .rounds-grid { margin-top: 4px; }
+
+/* A round tick carrying its TYPE as a glyph. The colour still means on/off —
+   see roundGlyph() for why the type may not have it. */
+.lb-rd.has-glyph { font-size: 13px; line-height: 1; }

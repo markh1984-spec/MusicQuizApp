@@ -12,7 +12,7 @@ import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkT
 import { tonight } from './diary.js';
 import { lobbyGameChoices, lobbyGameFor, ANY_LOBBY_GAME } from './lobby-games.js';
 import { inSeason } from './looks.js';
-import { packLookAttrs, shortTitle, titleSize, isBreakoutPack } from './pack-look.js';
+import { packLookAttrs, shortTitle, titleSize, isBreakoutPack, roundGlyph, roundWord } from './pack-look.js';
 import { FEATURES, findTier } from './plans.js';
 
 /*
@@ -187,7 +187,15 @@ function pinnedArranger(kind, packs) {
  */
 const roundsOpen = {};
 
-export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
+/**
+ * @param kind  the GAME kind — 'quiz' or 'bingo'. What a pack IS: its card,
+ *   its edge colour, its drag payload. Two tabs can share one.
+ * @param slot  which TAB this is, for state belonging to the tab rather than
+ *   the game — the search box and the fold. Keyed by kind they would be shared
+ *   between two tabs of one game, so a search typed on one would silently
+ *   filter the other.
+ */
+export function gameSection(kind, title, blurb, packs, editLabel = 'Edit', slot = kind) {
   const door = doorNow();
   const dense = localStorage.getItem(DENSE_STORE) === '1';
   /*
@@ -200,7 +208,7 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
    * than one you did not want.
    */
   const searchable = door !== 'console';
-  const queryFor = () => (searchable ? (packQuery[kind] || '') : '');
+  const queryFor = () => (searchable ? (packQuery[slot] || '') : '');
   const query = queryFor();
   // Only the Workshop has the two jobs; the Console shelf is always the six.
   const mode = door === 'workshop' && canPin() ? packMode() : 'work';
@@ -251,8 +259,7 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
       </div>`}
       <div class="pin-arranger-slot"></div>
       <div class="pack-grid ${dense ? 'dense' : ''}"></div>
-      <!-- A ROUND IS NOT A NIGHT, so it gets its own shelf. Hidden when there
-           are none, which is every bingo tab. -->
+      <!-- A ROUND IS NOT A NIGHT: its own shelf, hidden when there are none. -->
       <div class="rounds-shelf" hidden>
         <div class="row rounds-head">
           <h3 class="rounds-title"></h3>
@@ -373,19 +380,20 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
     // Only what they can RUN. What is for sale is a room of its own now.
     const all = inOrder.filter((p) => !p.locked);
     /*
-     * A ROUND IS NOT A NIGHT, AND THE SHELF HAD STOPPED SAYING SO.
-     *
-     * The damage was never that the list got long: **only SIX are shown and
-     * they are RANKED, never-played first**, so twenty one-round intro packs
-     * took all six and pushed every actual quiz off the shelf somebody
-     * launches from. **Separated, not filtered** — a single round is something
-     * you drag INTO Tonight, so it stays reachable; it just must not compete
-     * with a night for the six. **Bingo is unaffected by construction**: a
-     * bingo pack has no rounds at all, so `length === 1` is false for every
-     * one. Full reasoning: `docs/console.md`.
+     * A ROUND IS NOT A NIGHT. **Only SIX are shown and they are RANKED,
+     * never-played first**, so single-round packs crowd the shelf somebody
+     * launches from. **Separated, not filtered** — you drag one INTO Tonight,
+     * so it stays reachable. **Bingo is unaffected by construction**: a bingo
+     * pack has no rounds at all. See `docs/console.md`.
      */
-    const yours = all.filter((p) => (p.rounds || []).length !== 1);
-    const rounds = all.filter((p) => (p.rounds || []).length === 1);
+    const wholes = all.filter((p) => (p.rounds || []).length !== 1);
+    const singles = all.filter((p) => (p.rounds || []).length === 1);
+    // A SHELF THAT IS ENTIRELY SINGLE ROUNDS IS NOT SPLIT — that is the Music
+    // Intros tab, where a one-round pack is the point rather than the crowd,
+    // and splitting would fold the whole tab away behind its own heading.
+    const split = wholes.length > 0 && singles.length > 0;
+    const yours = split ? wholes : all;
+    const rounds = split ? singles : [];
 
     if (!yours.length) {
       grid.appendChild(node(`<div class="tiny">None of the ones you have match “${esc(queryFor())}”.</div>`));
@@ -470,13 +478,13 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
       const foldEl = shelfEl.querySelector('.rounds-fold');
       shelfEl.hidden = rounds.length === 0;
       if (rounds.length) {
-        const open = roundsOpen[kind] === true;
+        const open = roundsOpen[slot] === true;
         titleEl.textContent = `Single rounds · ${rounds.length}`;
         foldEl.textContent = open ? 'Hide' : 'Show';
         roundsGrid.hidden = !open;
         roundsGrid.textContent = '';
         if (open) for (const pack of rounds) roundsGrid.appendChild(packCard(kind, pack));
-        foldEl.onclick = () => { roundsOpen[kind] = !open; paint(); };
+        foldEl.onclick = () => { roundsOpen[slot] = !open; paint(); };
       }
     }
   };
@@ -484,7 +492,7 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
   // Redrawn in place rather than through render(), so the box keeps focus and
   // the caret does not jump to the end after every letter.
   // Absent on the Console door — see the note on `searchable` above.
-  search?.addEventListener('input', () => { packQuery[kind] = search.value; paint(); });
+  search?.addEventListener('input', () => { packQuery[slot] = search.value; paint(); });
 
   /*
    * Switching job goes through `render()` rather than `paint()`, because it
@@ -1267,9 +1275,10 @@ export function packCard(kind, pack) {
       <div class="tiny">${esc(detail)} · ${esc(played)}</div>
       ${kind === 'quiz' && !pack.broken && roundCount ? `<div class="lb-rounds pack-rounds" title="Tap a round to put just that one in Tonight — or drag it there">
         ${(pack.rounds || []).map((r, i) => `
-        <button class="lb-rd on" type="button" draggable="true" data-round="${i}"
-          title="${esc(r.title || `Round ${i + 1}`)} — tap to put just this round in Tonight"
-          aria-label="${esc(r.title || `Round ${i + 1}`)}">${i + 1}</button>`).join('')}
+        <button class="lb-rd on has-glyph" type="button" draggable="true" data-round="${i}"
+          title="${esc(roundWord(r.type))} — ${esc(r.title || `Round ${i + 1}`)} — tap to put just this round in Tonight"
+          aria-label="Round ${i + 1}, ${esc(roundWord(r.type))}: ${esc(r.title || '')}"
+          >${roundGlyph(r.type, i + 1)}</button>`).join('')}
       </div>` : ''}
       ${freshLabel(pack) ? `<div class="tiny fresh ${freshness(pack).expired ? 'gone' : ''}">${esc(freshLabel(pack))}</div>` : ''}
       ${pack.broken ? `<div class="tiny" style="color:var(--bad)">Broken: ${esc(pack.broken)}</div>` : ''}

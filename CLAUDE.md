@@ -1101,8 +1101,8 @@ be handed over explicitly. Every one of these failed silently.
   lost a PINNED game from part two while the bar still named it. **And the list
   is ROTATED so the kind's own default leads** — a bingo interlude's chooser
   opened on Maze Mouth, the quiz's default.
-- **AND A COMPOSED PART NAMES ITS `sources`.** `~tonight` matches no pack on any
-  shelf, so every quiz played inside a running order read as **"Never played
+- **AND A COMPOSED PART NAMES ITS `sources`.** `~tonight` matches no pack on
+  any shelf, so a quiz played inside a running order read as **"Never played
   here"** at the venue that had just heard it.
 
 **AND `moreToCome()` EXISTS NOW.** `host.js` had said *"the server refuses it
@@ -1631,14 +1631,12 @@ right of the pack ONCE LOADED."*
 - **A DIAL IS SAFE HERE because every state is a real answer** — **and the
   order is a SCALE**: photos, game, both, nothing. A dial whose steps are not
   on a scale has to be memorised.
-- **THE LIT EDGE HAD TO BE MADE HONEST** — `cleanPlan()` now runs on the way
-  OUT of the dial too, or a gap cycled back to its default still claims it was
-  changed.
-- **DOORS KEEPS A DIAL because it is the one gap with no tile** — it happens
-  before the first pack. Same control, word beside it, phone-only because the
-  join code owns the lobby's screen.
-- **THE ERA WORD MOVED 52px LEFT** — two rules colliding, and **the control
-  wins and the decoration moves**, shifted rather than dropped.
+- **THE LIT EDGE HAD TO BE MADE HONEST** — `cleanPlan()` runs on the way OUT
+  of the dial too, or a gap cycled back to its default still claims a change.
+- **DOORS KEEPS A DIAL, the one gap with no tile.** Phone-only: the join code
+  owns the lobby's screen.
+- **THE ERA WORD MOVED 52px LEFT** — **the control wins and the decoration
+  moves.**
 - **A LOST `import` DREW A BAR WITH NO DIALS AND EVERY CHECK PASSED** — four
   swallowed `ReferenceError`s, `node --check` happy, 1,516 tests green, the same
   fault that shipped a broken Launch. **`test/imports-present.test.js`** asserts
@@ -1646,9 +1644,8 @@ right of the pack ONCE LOADED."*
 - **A TILE IS NOT A PART** — several quiz packs are welded into ONE quiz, so
   mapping a tile to a part gave tile 1 every gap in the night and tile 2 no
   dial. `gapsOfPack()` reads the part's `order`.
-- **THE SLOT NUMBER GOES WHEN A PACK LANDS IN IT** — on a full slot the ORDER
-  is already visible from position. **It stays on an EMPTY slot**, where it is
-  the whole label.
+- **THE SLOT NUMBER GOES WHEN A PACK LANDS IN IT**; **it stays on an EMPTY
+  slot**, where it is the whole label.
 - **THE TILE IS 90px BECAUSE 30 + 44 DOES NOT FIT IN 76** — moving the × puts
   "remove this" where the eye lands first, so the tile grew instead. **On a
   phone `is-pack` tiles keep that height.**
@@ -3525,31 +3522,52 @@ slots."*
 
 - **NOTHING IS COPIED, WHICH IS WHY THIS WAS CHEAP.** A slot has always held
   `packId` plus round INDEXES, so a burst tile still points at the one file on
-  disk — rule 11 needed no new thought. The pack is still the unit on the
-  shelf.
+  disk. The pack is still the unit on the shelf.
 - **THE ROW CHANGED AND THE NIGHT DID NOT** — `segmentsFromSlots()` merges
-  consecutive quiz slots into ONE segment, so three tiles compile to exactly
-  what one tile compiled to; a hole does not split it either. Tested
-  `deepEqual`.
+  consecutive quiz slots into ONE segment, so three tiles compile to what one
+  compiled to. Tested `deepEqual`.
 - **AND `simpleNight()` IS WHAT KEEPS EVERY GIG OFF THE RUNNING-ORDER ROUTE.**
-  `lbSlots` alone used to be enough to send a night down
-  `/api/host/launchOrder`, which after bursting would have moved the protected
-  path for every booking in exchange for a change to the LAYOUT. The row bursts
-  and the launch collapses: one pack, rounds ascending, nothing else, with no
-  `order` at all — **verified by reading the request body out of a real
-  browser**. **ASCENDING is the whole test**: rounds reordered is a night the
-  ordinary launch cannot express and rightly keeps the segments.
+  `lbSlots` alone used to send a night down `/api/host/launchOrder`, moving the
+  protected path for every booking in exchange for a LAYOUT change. The row
+  bursts and the launch collapses: one pack, rounds ascending, no `order` at
+  all — **verified by reading the request body out of a real browser**.
+  **ASCENDING is the whole test.**
 - **THE ROW GROWS A WHOLE ROW AT A TIME**, six then twelve, capped at eighteen
-  — *"I need 6 regardless of what's in the bay"* against *as little clutter as
-  possible*, and filling out to the next multiple of six honours both.
+  — filling out to the next multiple of six honours *"I need 6 regardless"* and
+  *as little clutter as possible* at once.
 - **A TILE NAMES THE ROUND, WITH THE PACK UNDER IT** — a row of tiles all
   reading "1980s Pop" says nothing about the order of the evening. **The "Round
-  One — " is trimmed off**: left whole, three tiles read "Round One —…", "Round
-  Two —…" with the distinguishing half clipped at the real 167px tile. **And
-  the sub is dropped when it only repeats the name.**
+  One — " is trimmed off**, or the distinguishing half is what gets clipped.
+  **And the sub is dropped when it only repeats the name.**
 - **MOVING A ROUND IS MOVING ITS TILE NOW** — the tile's own grip is the
-  handle. `drag-check.mjs` COUNTS tiles rather than pinning a pack's round
-  count, which is a fact about a JSON file.
+  handle. `drag-check.mjs` COUNTS tiles rather than pinning a round count.
+
+### MUSIC INTROS IS ITS OWN TAB, AND A ROUND TICK WEARS A GLYPH
+
+`isIntroPack()` / `roundGlyph()` in `pack-look.js`, the `intros` entry in
+`TABS`. *"The pack can live as a specific thing that people buy and then be
+broken up into individual rounds."*
+
+- **THE TAB IS THE PRODUCT; THE ROUND IS THE UNIT.** Twenty one-round intro
+  packs on the quiz shelf did real damage: **only SIX show and they are RANKED
+  never-played first**, so they took all six and pushed every actual quiz off
+  the shelf the Console launches from.
+- **A TAB ID IS NOT A GAME KIND, and conflating them is silent.** `kind`
+  builds the card, the edge colour and the `{id, kind}` a drag carries, which
+  `packOf()` resolves against `gameOf()` — a tab id of `intros` in there
+  resolves to NOTHING, state consistent and the reader lost. So `TABS` carries
+  `kind: 'quiz'` and `gameSection()` takes a separate `slot` for the search box
+  and the fold, which belong to the TAB.
+- **DERIVED, NEVER DECLARED** — mirroring `isBreakoutPack()`. **EVERY round,
+  not one**: a quiz with an intro round in the middle is a quiz.
+- **A SHELF THAT IS ALL SINGLE ROUNDS IS NOT SPLIT**, or the Intros tab folds
+  itself away.
+- **THE ROUND TYPE IS A GLYPH, NEVER A COLOUR.** Asked for as a colour code and
+  **rendered before it was argued**: `.lb-rd.on` is green and `.off` is red
+  because a tick is a SWITCH carrying *is this round played tonight*, and a
+  five-colour code makes the switched-off round unfindable. **Green, pink and
+  purple are each already spoken for.** **The word rides in `title` and
+  `aria-label`**: a picture with no name needs explaining.
 
 ### A PACK WEARS ITS OWN SUBJECT
 
@@ -3560,64 +3578,47 @@ half-built beside a dressed one. **The job is SCANNING**: find tonight's pack an
 Launch, and nine identical cards make that a reading task.
 
 - **It DERIVES, never stores** — nothing in a pack file.
-- **Genre beats decade beats nothing; seasonal beats both.** A decade-first
-  order gives every 2000s pack one colour, the failure this exists to avoid.
-  **"Pop" is deliberately not a subject** — nearly every pack here is one. **A
-  word only earns a place if it tells two packs APART.**
-- **Whole words only** — "rock" must not match "Rocky". Punctuation is stripped
-  so "R'n'B" and "RnB" are one thing, **which is also what splits them**, so
-  the spaced forms are listed too.
+- **Genre beats decade beats nothing; seasonal beats both.** **"Pop" is
+  deliberately not a subject** — nearly every pack here is one. **A word only
+  earns a place if it tells two packs APART.**
+- **Whole words only** — "rock" must not match "Rocky". Punctuation is
+  stripped so "R'n'B" and "RnB" are one thing, so the spaced forms are listed
+  too.
 
 - **A WASH, NEVER A FILL AND NEVER A BORDER**, capped low — which is why it can
-  coexist with gold/green/red meaning winning/good/destructive: a Christmas
-  pack IS red and green, and `broken` is a BORDER, so the two never speak in
-  the same place. There is a test on the alpha.
+  coexist with gold/green/red: a Christmas pack IS red and green, and `broken`
+  is a BORDER, so the two never speak in the same place. Test on the alpha.
 - **The same colours and the same trimmed name on the card and in the Tonight
-  slot**, from one function — a pack that changed appearance on being dragged
-  in undoes the reason the two match.
-- **The same pack is the same colour on every device and reload.** A shelf that
-  reshuffles is worse than one with no colour.
+  slot**, from one function. **The same pack is the same colour on every device
+  and reload** — a shelf that reshuffles is worse than one with no colour.
 - **THE EDGE IS THE KIND OF PACK; THE BACKGROUND IS THE ERA.** Two channels,
   two questions, one glance. Quiz green, bingo purple, **adding a kind is one
   line** in `KIND_EDGE`. **The Tonight tile takes its kind from the PACK, not
-  the tab** — Tonight holds both at once. **One collision, accepted
-  knowingly**: green already means good/paying. Teal is a one-line change if it
-  ever reads muddy.
+  the tab** — Tonight holds both at once, and two TABS can share one kind.
 - **A SHUT CARD IS A SQUARE POSTER — the era fills it, the name on a dark fade
-  at the bottom.** Chosen from four rendered at the real width.
-  **`aspect-ratio` is on `.shut` ALONE**, or the shape decides what an open
-  card may carry. **The fade is a `::before`, never a wrapper**, so no markup
-  differs between open and shut.
-- **THE DRAWN TITLE IS TRIMMED AND THE STORED ONE IS NOT** (`shortTitle()`) —
-  a leading "The", a trailing Quiz/Bingo; the card says the kind three times
-  already. **Nothing writes anything — SEARCH LOOKS INSIDE TITLES.**
-  **Falls back to the full title when the trim empties it.** Three sizes by
-  length, calibrated to the REAL 146px card: **a design measured against
-  invented content is measured against nothing**, and the first ones were —
-  they clipped two real names with an ellipsis.
+  at the bottom.** **`aspect-ratio` is on `.shut` ALONE**, or the shape decides
+  what an open card may carry. **The fade is a `::before`, never a wrapper.**
+- **THE DRAWN TITLE IS TRIMMED AND THE STORED ONE IS NOT** (`shortTitle()`).
+  **Nothing writes anything — SEARCH LOOKS INSIDE TITLES.** **Falls back to the
+  full title when the trim empties it.** Three sizes by length, calibrated to
+  the REAL 146px card: **a design measured against invented content is measured
+  against nothing**, and the first ones clipped two real names.
 - **THE ERA IN THE CORNER RAN THROUGH THE TITLES** — centred under a fade it
   cannot; the Tonight tile keeps the corner. **Only printed when short enough to
   read**, with a test on the length. Gradient text behind an `@supports` with a
-  SOLID colour first, or a browser without `background-clip` prints nothing. It
-  needed `position: relative` on `.pack-card` — the **Yours** badge had been
-  positioning against the wrong ancestor.
+  SOLID colour first. It needed `position: relative` on `.pack-card` — the
+  **Yours** badge had been positioning against the wrong ancestor.
 - **THE EDGE IS THE KIND AND THE WASH IS THE ERA; the difference in strength is
-  the job.** The wash must stay faint, which makes the hue hard to name; three
-  pixels with nothing over them says it outright. **On the bottom because an
-  ordinary button already carries the account colour there** — a stripe down
-  the LEFT was rendered beside it and turned down. **`:not(.broken)` is
-  load-bearing**: the tint rule comes later in the sheet and would overwrite
-  the red on a card with something wrong with it. **And the TILE needs
-  `.lb-tile.is-pack` named in its rule** — `.is-pack` sets the SHORTHAND
-  `border` three thousand lines further down at equal specificity, so it won
-  and reset all four sides. **A shorthand `border` lower in the sheet beats a
-  longhand `border-bottom` higher up at equal specificity — that is the trap,
-  and nothing throws.**
+  the job.** **On the bottom because an ordinary button already carries the
+  account colour there** — a stripe down the LEFT was rendered and turned down.
+  **`:not(.broken)` is load-bearing**: the tint rule comes later in the sheet
+  and would overwrite the red on a broken card. **And the TILE needs `.lb-tile.is-pack` named in its rule**: **a shorthand
+  `border` lower in the sheet beats a longhand `border-bottom` higher up at
+  equal specificity, and nothing throws.**
 - **CARTOON FIGURES WERE TRIED AND DO NOT READ — do not re-propose them
-  without new evidence.** At the real card size a whole person is a blob, and
-  two hats at 52px are the same hat. **And never a named person** — this app is
-  sold, and a decoration is a far weaker case for a likeness than a picture
-  round, where the musician IS the question.
+  without new evidence.** At the real card size a whole person is a blob.
+  **And never a named person** — this app is sold, and a decoration is a far
+  weaker case for a likeness than a picture round.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 

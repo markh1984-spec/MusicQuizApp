@@ -18,6 +18,7 @@ import {
 import { gigsSection } from './console-gigs.js';
 import { invoicesSection } from './console-invoices.js';
 import { gameSection, preview } from './console-packs.js';
+import { isIntroPack } from './pack-look.js';
 import { showsSection } from './console-shows.js';
 import { NIGHT_BENCH_STORE, bench, lastDone, library, me, setAccountsExist, setLastDone, setLibrary, setMe, setNightBench } from './console-state.js';
 import { aNightIsOn, dragging, launchBar, night, nowPlaying, putNightOnBench, runningPanel, wantPackFromUrl } from './console-tonight.js';
@@ -744,7 +745,16 @@ export const TABS = [
     // lists your WHOLE library, most of it Quizporium's. Two controls on one
     // screen, one word, two different sets.
     editLabel: 'Pack editor',
-    packs: () => library.quizzes,
+    /*
+     * WHOLE QUIZZES ONLY — the intros have a tab of their own.
+     *
+     * They are a product somebody buys rather than a night somebody plays, and
+     * twenty of them on this shelf did real damage rather than merely looking
+     * untidy: only SIX packs are shown here and they are RANKED never-played
+     * first, so twenty brand-new intro packs took all six and pushed every
+     * actual quiz off the shelf the Console launches from.
+     */
+    packs: () => library.quizzes.filter((p) => !isIntroPack(p)),
     // Generating is the owner's, on the owner's bill. A quizmaster buys packs
     // — and writes their own, which is a different library and a different
     // panel rather than a cheaper generator.
@@ -785,6 +795,36 @@ export const TABS = [
       if (can(FEATURES.OWN_PACKS) && !can(FEATURES.CATALOGUE)) wrap.appendChild(ownQuizPanel());
       return wrap;
     },
+  },
+  {
+    /*
+     * MUSIC INTROS — its own room, asked for directly: *"the pack can live as
+     * a specific thing that people buy and then be broken up into individual
+     * rounds for moving them onto and off of the console."*
+     *
+     * **THE TAB IS THE PRODUCT AND THE ROUND IS THE UNIT**, which is this
+     * file's own vocabulary finally reaching the shelf: a quiz is a product, a
+     * round is part of one. You buy an intro pack here; Tonight bursts it into
+     * a tile per round when you drag it in, which needed no work because a
+     * slot has always held a pack id plus round indexes.
+     *
+     * **`kind` IS STILL 'quiz'.** These ARE quizzes — one intro round each —
+     * so the card, the green edge and the drag payload must all say quiz or
+     * the pack becomes unresolvable the moment it lands in Tonight. The TAB is
+     * `intros`; the GAME is not.
+     *
+     * **NO GENERATOR.** Intro packs are made by importing a playlist, which is
+     * a Workshop panel of its own — a second way in here would be two controls
+     * for one job.
+     */
+    id: 'intros',
+    kind: 'quiz',
+    doors: ['console', 'workshop'],
+    needs: FEATURES.LIBRARY,
+    label: 'Music Intros',
+    blurb: 'One round of intros — drop it into any night.',
+    editLabel: 'Pack editor',
+    packs: () => library.quizzes.filter(isIntroPack),
   },
   {
     id: 'bingo',
@@ -1813,7 +1853,15 @@ function tabBody(active) {
   const workshop = doorNow() !== 'console';
   const writing = can(FEATURES.GENERATE) || can(FEATURES.CATALOGUE);
   if (workshop && tab.generator && writing) wrap.appendChild(tab.generator());
-  wrap.appendChild(gameSection(tab.id, tab.label, tab.blurb, tab.packs(), tab.editLabel));
+  /*
+   * THE GAME KIND AND THE TAB ARE TWO THINGS NOW, and conflating them is a
+   * silent fault rather than a crash. `kind` decides what a pack IS — its
+   * card, its green edge, and the `{ id, kind }` a drag carries into Tonight,
+   * which `packOf()` resolves against `gameOf()`. A tab id of 'intros' going
+   * in there would resolve to nothing: the state stays consistent and the
+   * READER cannot find the pack, which is a fault this repo has already had.
+   */
+  wrap.appendChild(gameSection(tab.kind || tab.id, tab.label, tab.blurb, tab.packs(), tab.editLabel, tab.id));
   if (workshop && tab.generator && !writing) wrap.appendChild(tab.generator());
   return wrap;
 }

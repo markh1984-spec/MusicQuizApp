@@ -105,6 +105,71 @@ export function isBreakoutPack(pack) {
  * one — a new game type would otherwise ship with a card that looks broken
  * until somebody remembers this file.
  */
+/**
+ * WHAT KIND OF ROUND THIS IS, AS A GLYPH — never as a colour.
+ *
+ * Asked for as a colour code per round type, and colour is the one channel
+ * this control cannot spare: `.lb-rd.on` is green and `.lb-rd.off` is red,
+ * because a round tick is a SWITCH and what it carries is *is this round being
+ * played tonight*. Rendered side by side, a five-colour type code makes the
+ * switched-off round unfindable — the label wins and the control loses.
+ *
+ * Green, pink and purple are also each spoken for already: green is on / good
+ * / the quiz kind, pink `--hot` is the default account gradient, and purple is
+ * the bingo kind in `KIND_EDGE` above. A round type is FIXED meaning for
+ * everybody, so it cannot borrow a colour that changes with somebody's scheme.
+ *
+ * A glyph collides with none of it, needs no legend, and survives both a
+ * colour scheme and a colourblind quizmaster.
+ */
+const ROUND_GLYPH = {
+  text: '\u{1F4AC}',      // speech bubble — general knowledge, asked and answered
+  image: '\u{1F5BC}\uFE0F', // a picture in a frame
+  intro: '\u{1F3B5}',     // a note — the track that plays
+  multi: '\u{2611}\uFE0F',  // a ticked box — pick them all
+  alphabet: '\u{1F524}',  // letter blocks — first letter only
+  breakout: '\u{1F3AD}',  // masks — the round that scores nothing
+};
+
+/*
+ * AND THE WORD IT STANDS FOR. A picture with no name is exactly the control
+ * that needs explaining, so the word rides in the `title` and `aria-label`
+ * wherever the glyph is drawn — one home for both, or they drift.
+ */
+const ROUND_WORD = {
+  text: 'General knowledge',
+  image: 'Pictures',
+  intro: 'Intros',
+  multi: 'Pick them all',
+  alphabet: 'First letter',
+  breakout: 'Bonus round',
+};
+
+/** What a round type is called, for a tooltip and a screen reader. */
+export function roundWord(type) {
+  return ROUND_WORD[String(type || '').toLowerCase()] || 'Round';
+}
+
+/** The glyph for a round type, or the round's number when it has none. */
+export function roundGlyph(type, n) {
+  return ROUND_GLYPH[String(type || '').toLowerCase()] || String(n);
+}
+
+/**
+ * A pack IS an intro pack when every round in it is an intro round — derived
+ * from its own shape, never declared, exactly as `isBreakoutPack()` above is.
+ * A flag would be a thing somebody has to remember to set on a file they wrote
+ * by hand, and this app already knows the answer.
+ *
+ * **EVERY round, not "one round of type intro".** A twenty-question intro pack
+ * split across two rounds is still an intro pack; a quiz with an intro round
+ * in the middle of it is emphatically not, and lives with the quizzes.
+ */
+export function isIntroPack(pack) {
+  const rounds = (pack && pack.rounds) || [];
+  return rounds.length > 0 && rounds.every((r) => r.type === 'intro');
+}
+
 const KIND_EDGE_FALLBACK = 'rgba(255, 255, 255, 0.35)';
 
 const EDGE_ALPHA = 0.85;
