@@ -38,6 +38,18 @@ import { library } from './console-state.js';
 export const NO_VENUE = 'No venue on these';
 
 /**
+ * AND WHAT THE PICKER SAYS WHEN THERE IS NO PUB ON A NIGHT — the SAME words
+ * `whyNoVenue()` prints under the row in the rail.
+ *
+ * It read *"Not said"*, which is two labels for one fact on one screen: the
+ * rail's note four inches away already called it *"No venue set"*. That is the
+ * rename this project's first rule asks for rather than an argument about
+ * which phrase is nicer — and here it is one constant, so they cannot drift
+ * apart again.
+ */
+const NO_VENUE_SET = 'No venue set';
+
+/**
  * WHY A NIGHT HAS NO PUB ON IT — because FOUR different things put a row into
  * "No venue on these" and every one of them drew the same silent row.
  *
@@ -64,7 +76,7 @@ export function whyNoVenue(night) {
   if (!(night.games || []).length) return 'No results saved';
   // It was filed, and no venue was chosen when it launched. The bar
   // deliberately does not remember one between nights.
-  return 'No venue set';
+  return NO_VENUE_SET;
 }
 
 /**
@@ -98,7 +110,7 @@ export function venuePicker(night) {
     <div class="night-venue">
       <label for="nightVenuePick">Where this was</label>
       <select id="nightVenuePick" class="night-venue-pick">
-        <option value="">${esc(here ? here : 'Not said')}</option>
+        <option value="">${esc(here || NO_VENUE_SET)}</option>
         ${choices
     .filter((v) => v.name.toLowerCase() !== here.toLowerCase())
     .map((v) => `<option value="${esc(v.id || v.name)}">${esc(v.name)}</option>`)
