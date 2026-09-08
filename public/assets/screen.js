@@ -911,6 +911,21 @@ function renderQuestion(s) {
  * because the host is reading this same screen for their cue.
  */
 function renderQuestionMedia(s, q) {
+  /*
+   * NO CAPTION MEANS NO ELEMENT, and this was on the projector for the life of
+   * the picture round.
+   *
+   * `.zoom-caption` carries a padding, a radius, a border and a 66% black
+   * fill, so an EMPTY one is not invisible — it is a 30 x 11px black pill sat
+   * on the bottom-left corner of the photograph, through the question and the
+   * reveal. `imageCaption` is spread into the payload as `|| ''` and **no pack
+   * in the library has ever set one**, so every picture question ever played
+   * drew it, six feet wide in a dark room.
+   *
+   * The element, not a `:empty` rule — *a field on a view is a promise that
+   * something draws it*, and the honest reading of an absent caption is that
+   * there is nothing to draw.
+   */
   if (s.roundType === 'image' && q.image) {
     const mode = q.reveal || 'zoom';
     return `
@@ -920,7 +935,7 @@ function renderQuestionMedia(s, q) {
                onerror="this.closest('.zoom-frame').classList.add('no-image')">
           ${mode === 'pixelate' ? '<canvas class="pix-canvas" id="pixCanvas"></canvas>' : ''}
           ${mode === 'tiles' ? tileGrid(s) : ''}
-          <div class="zoom-caption">${esc(q.imageCaption || '')}</div>
+          ${q.imageCaption ? `<div class="zoom-caption">${esc(q.imageCaption)}</div>` : ''}
           <div class="zoom-missing">Picture missing — read this one out</div>
         </div>
       </div>`;
