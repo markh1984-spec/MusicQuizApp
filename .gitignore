@@ -32,3 +32,13 @@ screenshots/
 # Isolated worktrees the Agent tool creates for parallel/mutating sub-agents.
 # Transient scaffolding, auto-removed once the agent finishes.
 .claude/worktrees/
+
+# Throwaway browser-driving scripts. The guards in scripts/ are committed and
+# named plainly; anything measuring something once is written to the repo root
+# as *.tmp.mjs, because a Playwright script has to sit beside
+# scripts/helpers/live-app.mjs to import it. They are deleted when the run
+# finishes — but a run that is still going, or one that was killed, leaves the
+# file behind, and then the only two ways out are committing scratch into the
+# repository or deleting a file something is still executing. Neither is a
+# choice anybody should have to make: name the pattern instead.
+*.tmp.mjs
