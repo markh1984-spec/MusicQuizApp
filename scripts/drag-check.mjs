@@ -116,7 +116,24 @@ try {
     .map((b) => b.textContent.trim()).join(' | '));
 
   console.log('\nTONIGHT — real browser drags\n');
-  await drag('.pack-card[data-pack]', '.lb-tiles');
+  /*
+   * FROM THE TITLE, NOT THE MIDDLE OF THE CARD — and that distinction is the
+   * whole of this check rather than a detail of it.
+   *
+   * `drag()` aims at the centre of whatever it is given, and on five of the
+   * six cards on the quiz shelf the centre of the card is a ROUND SQUARE:
+   * `elementFromPoint()` at the middle of "1980s Pop Music" returns
+   * `button.lb-rd`, round index 1. So this line was lifting ONE ROUND and
+   * then asserting that a whole pack had burst — it has been failing on a
+   * working app, which is the shape of guard this repo already has a rule
+   * about: *a guard aimed at whatever happens to be first is measuring the
+   * shelf, not the row.*
+   *
+   * The app is behaving exactly as CLAUDE.md says it should — *the pack lifts
+   * from its grip; a round lifts from its own square* — so what had to move
+   * is the aim. `.pack-title` is the pack's own grip and is on every card.
+   */
+  await drag('.pack-card[data-pack] .pack-title', '.lb-tiles');
   const afterOne = await packs();
   check('a pack card onto the row BURSTS into a tile per round', afterOne > 1, true);
   check('and each tile names its own round', /\| /.test(await names()), true);
@@ -128,7 +145,7 @@ try {
    * four"). Grabbing the first card again would test that refusal rather than
    * this drop.
    */
-  await drag('.pack-card[data-pack]:not(.in-tonight)', '.lb-tile.lb-drop, .lb-tile.mix-drop');
+  await drag('.pack-card[data-pack]:not(.in-tonight) .pack-title', '.lb-tile.lb-drop, .lb-tile.mix-drop');
   check('a second pack card onto an EMPTY SLOT adds its rounds too', await packs() > afterOne, true);
 
   /*

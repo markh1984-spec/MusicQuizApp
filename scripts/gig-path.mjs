@@ -129,11 +129,29 @@ try {
    * and where the press went nowhere until 4 September 2026 — so this check is
    * the bug report, kept.
    */
+  const which = await con.$eval('.pack-card[data-pack]', (n) => n.getAttribute('data-pack'));
   const box = await con.locator('.pack-card').first().boundingBox();
   await con.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await con.waitForTimeout(800);
   const inTonight = await con.$$eval('.lb-tile.is-pack', (ns) => ns.length);
-  check('tapping the middle of a pack card puts it in Tonight', inTonight > 0, `${inTonight} filled slots`);
+  /*
+   * THE WHOLE PACK, NOT "SOMETHING" — and `> 0` was why this passed on a
+   * night that had lost three of its four rounds.
+   *
+   * The round squares sit at the middle of a shut card, so the very spot this
+   * check aims at lifts ONE ROUND on most of the shelf rather than the pack.
+   * Driven live, a four-round pack tapped here played ten questions and went
+   * to the winner — and this guard said the gig path was fine, because one
+   * tile is more than none. A count is the difference between "a press did
+   * something" and "a press did what it says".
+   */
+  const wanted = await con.evaluate(async (id) => {
+    const r = await fetch('/api/library' + location.search);
+    const pack = ((await r.json()).quizzes || []).find((p) => p.id === id);
+    return pack && Array.isArray(pack.rounds) ? pack.rounds.length : 0;
+  }, which);
+  check('tapping the middle of a pack card puts the WHOLE pack in Tonight',
+    wanted > 0 && inTonight === wanted, `${inTonight} tiles for a ${wanted}-round pack`);
 
   const launch = await con.$eval('.lb-go', (n) => ({ off: n.disabled, text: n.textContent.trim() }));
   check('Launch is live and names what it will play', !launch.off && /launch/i.test(launch.text), launch.text);

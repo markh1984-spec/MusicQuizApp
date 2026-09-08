@@ -782,7 +782,22 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * a feature with a module, a route and both ways into it, and this comment is
  * the diff saying so.
  */
-const BUDGET = 243_000;
+/*
+ * ---
+ *
+ * RAISED TO 244,000 ON 8 SEPTEMBER 2026, testing a booked Thursday end to end.
+ * Three rules came out of it, and each is a guard that was lying: a night that
+ * asks the same thing twice (`pack-repeats.mjs`), a drag guard aiming at the
+ * middle of a pack card — which is a ROUND SQUARE, so it lifted one round and
+ * asserted a pack had burst — and an intro cue with no `spotifyUri` leaving
+ * the previous question's "did not start" notice on the host's screen.
+ *
+ * PAID FOR FIRST, again: the two Checks bullets about spawning the app on a
+ * free port were one rule written twice and are now one, and the lobby-games
+ * bullet came down to the prohibition it carries. That is about 900 bytes
+ * against roughly 1,900 added, and this comment is the diff saying so.
+ */
+const BUDGET = 244_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

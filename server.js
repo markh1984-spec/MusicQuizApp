@@ -260,7 +260,32 @@ const introPlayed = new Map();
 function startIntroTrack(room, view) {
   const cue = view && view.phase === 'question' && view.question && view.question.cue;
   const uri = cue && cue.spotifyUri;
-  if (!uri || !spotifyConfigured()) return;
+  if (!uri || !spotifyConfigured()) {
+    /*
+     * A QUESTION WE ARE NOT GOING TO PLAY STILL HAS TO CLEAR THE LAST ONE'S
+     * FAILURE NOTICE.
+     *
+     * `room.introPlay` is only ever written inside the `then()` below, so a
+     * question with no `spotifyUri` returned before it and left the previous
+     * question's notice standing. Every catalogue intro round has cues with no
+     * uri in it — three of ten on the pack booked for a real Thursday — so the
+     * host's panel could read *"Did not start on its own — tap below"* over a
+     * track that was never going to start, with the reason belonging to a
+     * different song and NO link underneath it to tap. He would go looking for
+     * a control that is not there while a room waits.
+     *
+     * Only on a question we have not already spoken about, or a genuine
+     * failure would be wiped off the screen of the very question it happened
+     * on by the next host action.
+     */
+    const here = view && view.phase === 'question'
+      ? `${room.id}:${view.roundIndex}:${view.questionIndex}` : '';
+    if (room.introPlay && here && introPlayed.get(room.id) !== here) {
+      room.introPlay = null;
+      pushState(room);
+    }
+    return;
+  }
 
   // Once per question. `run` is called for every host action, and a Back and a
   // Next landing on the same question must not start it over.

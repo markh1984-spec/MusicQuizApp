@@ -1828,30 +1828,14 @@ export function launchBar() {
       prizesRow.title = cardRow ? cardRow.title : '';
     }
     /*
-     * PRESENT AND GREYED, NEVER ABSENT — asked for on 24 August 2026:
-     * *"maybe just have a section for it pre-loaded and greyed out until a
-     * music bingo pack is added? same with the current quiz options?"*
-     *
-     * **This reverses a decision made a few days earlier and he is right to
-     * reverse it.** The row used to hide itself whenever a bingo pack was not
-     * picked, and the note here argued that was fine because "what is hidden
-     * is an empty box, not a control". That argument does not survive contact
-     * with this app's own rule: a control that comes and goes is a control you
-     * cannot learn the position of, and this bar is driven with a thumb in a
-     * dark pub. Launch and *Keep this as a show* were both fixed the same way,
-     * for the same reason, on the same panel.
-     *
-     * What made hiding it tempting was WHERE it was — directly above Launch,
-     * in the band that has to stay clear. That is now solved by the row
-     * sitting above the running order instead, so the reason to hide it has
-     * gone and the rule can simply apply.
-     *
-     * **THE QUIZ HALF, said plainly: a quiz pack has no pack-level settings
-     * today.** Its rounds are the ticks on its own tile and everything else
-     * about the night is the row above. So "the same for the quiz options"
-     * lands as: the row is always here, always says Card and Prizes, and tells
-     * you what it is waiting for rather than vanishing. A quiz-specific
-     * setting, if one is ever added, has a row to go in.
+     * PRESENT AND GREYED, NEVER ABSENT — *"maybe just have a section for it
+     * pre-loaded and greyed out until a music bingo pack is added?"* **Do not
+     * hide this row again**: a control that comes and goes is one you cannot
+     * learn the position of, driven with a thumb in a dark pub, and Launch and
+     * *Keep this as a show* were both fixed the same way on the same panel.
+     * It says what it is waiting for instead. **A quiz pack has no pack-level
+     * settings today** — its rounds are the ticks on its own tile — so the row
+     * is a place for one if it is ever added.
      */
     if (cardRow) cardRow.hidden = false;
     if (prizesRow) prizesRow.hidden = false;
@@ -2625,9 +2609,25 @@ export function launchBar() {
     const doors = doorsSlot();
     if (doors) row.prepend(doors);
     orderEl.replaceChildren(row);
+    /*
+     * THE BUTTON NAMES THE ROUNDS, AND BURSTING HAD TAKEN THAT AWAY. A PART is
+     * a segment — consecutive quiz slots merge — so a three-round night and a
+     * one-round night both read *"1 part"*. It is the only tell there can
+     * be for the mis-tap this bar invites: the round squares sit at the middle
+     * of a shut pack card, so a thumb aimed at the poster lifts ONE ROUND — a
+     * ten-question night that reaches the winner with nothing thrown. **Parts
+     * survive where a bingo game divides the evening.**
+     */
     const parts = segmentsFromSlots(lbSlots).length;
+    const placed = (lbSlots || []).filter(Boolean);
+    const rounds = placed.reduce((n, s2) => n + (s2.kind === 'quiz' ? (s2.rounds || []).length : 0), 0);
+    const games = placed.filter((slot) => slot.kind === 'bingo').length;
+    const says = [rounds ? `${rounds} round${rounds === 1 ? '' : 's'}` : '',
+      games ? `${games} bingo game${games === 1 ? '' : 's'}` : ''].filter(Boolean).join(' + ');
     goBtn.disabled = !parts;
-    goBtn.textContent = parts ? `Launch tonight — ${parts} part${parts === 1 ? '' : 's'}` : 'Drag a pack in to launch';
+    goBtn.textContent = parts
+      ? `Launch tonight — ${says || `${parts} part${parts === 1 ? '' : 's'}`}`
+      : 'Drag a pack in to launch';
     paintInTonight();
   }
 

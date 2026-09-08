@@ -3195,6 +3195,14 @@ becomes recognisable is the question's difficulty and must never be trimmed.**
   view prints the offset only when there IS one.
 - **DO NOT "fix" this by giving the intro round a longer clock** — a longer
   round is a round worth MORE points, which is the same fault deliberately.
+- **AND A QUESTION WITH NO `spotifyUri` MUST CLEAR THE LAST ONE'S FAILURE
+  NOTICE.** `room.introPlay` was only ever written inside the play's own
+  `then()`, so a cue with no uri returned before it and left the previous
+  question's words standing: *"Did not start on its own — tap below"* over a
+  track that was never going to start, the reason belonging to another song,
+  and NO link underneath to tap. Every catalogue intro round has uri-less cues
+  in it. **Only on a question not already spoken about**, or a real failure is
+  wiped off the screen of the question it happened on.
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
@@ -3905,6 +3913,7 @@ node scripts/bar-reaches-the-room.mjs   # does the bar's card reach the room?
 node scripts/reaches-the-wall.mjs       # does a correction reach the projector?
 node scripts/lobby-games-play.mjs       # do the five games draw, run and score?
 node scripts/pack-shapes.mjs            # which quiz packs are short?
+node scripts/pack-repeats.mjs           # does one night ask the same thing twice?
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 ```
 
@@ -3941,6 +3950,14 @@ account is in [`docs/checks.md`](docs/checks.md):**
   `effectAllowed` forbids. A dispatched event enforces neither, so a test built
   from them passes while every pack drop is dead. `scripts/drag-check.mjs`
   drives the real mouse; run it after touching a drag handler.
+- **THE MIDDLE OF A PACK CARD IS A ROUND SQUARE.** `drag-check.mjs` called the
+  launch bar broken on a working app: it drags from the CENTRE of
+  `.pack-card`, and on five of six cards `elementFromPoint()` there returns
+  `button.lb-rd` — so it lifted ONE ROUND and asserted a pack had burst. **Aim
+  at `.pack-title`.** The app is right (*a round lifts from its own square*)
+  but **the ergonomic half is real and NOT fixed**: a thumb on the poster gets
+  round two, so `gig-path.mjs` asserts the WHOLE pack lands and stays RED until
+  the cards move. **Launch names the ROUNDS**, which is the only tell there is.
 - **A TEST THAT NEVER RUNS THE ARTEFACT PROVES NOTHING ABOUT IT.** Reading
   `server.js` as a string to check a route exists is how a broken Launch reached
   the live app, 1,150 tests green.
@@ -3948,27 +3965,22 @@ account is in [`docs/checks.md`](docs/checks.md):**
   DOCUMENTED.** Deleting the `/api/past-gigs` gate and leaving a comment saying
   `FEATURES.PAST_GIGS` kept `gates.test.js` 22/22. Every such search goes
   through `withoutComments()` now, and the claims that matter are FIRED too.
-- **EVERY BROWSER GUARD STARTS THE APP THROUGH `scripts/helpers/live-app.mjs`,
-  AND FOUR COULD NOT EXIT WITHOUT IT.** Cleanup on `process.on('exit')` alone
-  never fires while a spawned child holds the loop open, so `gig-path.mjs`
-  printed its result and hung for ever. `unref()` is the fix; the helper also
-  asks the OS for the port, because a guessed one fails to bind SILENTLY and
-  every measurement is then about somebody else's process.
-- **A TEST THAT SPAWNS A SERVER TAKES A FREE PORT TOO** — a fixed one made the
-  suite flaky, a different file each run, all passing alone.
-  `test/helpers/live-server.mjs` also seeds the accounts book BEFORE the
-  spawn — `Accounts` reads it once.
+- **EVERY GUARD AND EVERY TEST THAT SPAWNS THE APP GOES THROUGH THE HELPERS —
+  `scripts/helpers/live-app.mjs`, `test/helpers/live-server.mjs`.** A guessed
+  port fails to bind SILENTLY, so every measurement is then about somebody
+  else's process — and a fixed one made the suite flaky, a different file each
+  run, all passing alone. `unref()` is why four guards could exit at all.
+  `live-server.mjs` seeds the accounts book BEFORE the spawn — `Accounts`
+  reads it once.
 - **A CONTROL THAT REPORTS SUCCESS IT DID NOT HAVE is this repo's commonest
   fault, and `console-controls.mjs` presses one.** Five at once, all green
   under every other guard — including a rename that DELETED the night. **It
   makes its own accounts rather than driving the host key.**
 - **AND 94 UNIT TESTS ACROSS THE FIVE LOBBY GAMES HAD NEVER DRAWN A PIXEL** —
   `lobby-games-play.mjs`. **PAINTED AND MOVING ARE TWO QUESTIONS and a canvas
-  answers neither by existing**: the pixels are sampled twice with input in
-  between, because a blank canvas and a FROZEN one look identical. **Each game
-  is reached by SWITCHING to it**, the path that can leak a loop. **A list of
-  ONE is dropped, so the launch must ask for `ANY_LOBBY_GAME`** — without it
-  the box opens empty and the guard measures the wrong night.
+  answers neither by existing**: sample the pixels twice with input between,
+  or a blank canvas and a FROZEN one look identical. **Reach each game by
+  SWITCHING to it**, the path that can leak a loop.
 - **NOTHING HERE PRESSED A CONTROL, and a dead one draws perfectly.** A gap
   dial died twice in a week — a lost `import`, then a moved body calling the
   bar's `paintOrder()` from a module without one. Both a `ReferenceError` on
