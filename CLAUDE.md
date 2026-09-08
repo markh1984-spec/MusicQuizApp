@@ -1228,14 +1228,13 @@ board), `src/arcade.js` (the scores, shared by both engines),
 `state.gameSeed`, `state.arcade`, `state.lobbyGame`.
 
 - **THE ROOM PICKS, AND THAT IS THE DEFAULT — `lobbyGamesFor()`,
-  `state.lobbyGames`.** **Let them choose** is selected, and **pinning one is
-  still there**. **`ANY_LOBBY_GAME` is a SENTINEL, never an empty string** —
-  empty already means *"nobody said"*, and reusing it turns every saved night
-  into an open choice. **Resolved at the LAUNCH ROUTE against `tierInUse`**;
-  **the phone honours the list and re-checks nothing**. **`null` rather than
-  `[]`, SPREAD in only when it exists**, so `pub-unchanged` still says
-  IDENTICAL. **A list of ONE is dropped.** **An unknown tier falls to the
-  bottom rung.**
+  `state.lobbyGames`.** **Let them choose** is selected, **pinning one is still
+  there**. **`ANY_LOBBY_GAME` is a SENTINEL, never an empty string** — empty
+  already means *"nobody said"*, and reusing it turns every saved night into an
+  open choice. **Resolved at the LAUNCH ROUTE against `tierInUse`**; **the
+  phone honours the list and re-checks nothing**. **`null` rather than `[]`,
+  SPREAD in only when it exists**, so `pub-unchanged` still says IDENTICAL. **A
+  list of ONE is dropped.** **An unknown tier falls to the bottom rung.**
 - **AND THE QUIET LAUNCH SENDS THE WHOLE NIGHT — `nightOpts()`.** Tapping a
   pack sent FIVE of Launch's twelve fields. **The SHAPE changed rather than the
   list: one `nightOpts()`, spread into all three launches**, with a test that
@@ -1245,16 +1244,14 @@ board), `src/arcade.js` (the scores, shared by both engines),
   box opens on the CHOOSER and nothing runs yet** — auto-starting spends
   somebody's opening seconds, and on a reaction game a life. **Switching calls
   `stopArcade()` first and RESHAPES the canvas**, or a loop banks under the
-  wrong game.
+  wrong game. `lobby-games-play.mjs` switches through all five.
 - **NO PHOTO GATE, AND ONE WAS PROPOSED AND TURNED DOWN.** **It prices
   consent** — *sending it is the consent* — **and it undercuts what the game is
-  FOR**, putting fewer phones in the foreground exactly when the join gate is
-  busiest.
+  FOR**, putting fewer phones in the foreground when the gate is busiest.
 - **THE BOARD SAYS WHICH GAME EACH SCORE WAS ON — `state.arcadeGame`, a map
   BESIDE the scores**, or a bare list invents a ranking nobody played. **Never
   folded into `state.arcade`** — that is `{id: number}` in every state file and
-  backup there is. **The id is a LABEL, never a permission.** **The icon draws
-  only on a MIXED board.**
+  backup there is. **The id is a LABEL, never a permission.**
 - **THE DEFAULT FOLLOWS THE GAME RATHER THAN THE ACCOUNT: Maze Mouth before a
   quiz, Rally before the bingo.** A remembered per-account preference is wrong
   on half the nights of anybody who runs both.
@@ -1266,77 +1263,69 @@ board), `src/arcade.js` (the scores, shared by both engines),
   yet, where refusing the launch costs the night. **The phone honours
   `s.lobbyGame` and re-checks nothing**, or the console and the room disagree.
 - **THE TIER GATES HOW MANY GAMES, NOT WHETHER THERE IS ONE.** **THE ONLY
-  THING IN THE APP GATED BY TIER RANK RATHER THAN A `FEATURES` FLAG, so they
-  ask `tierInUse()` and never `tierFor()`** — a comped account and a live trial
-  hold every FEATURE while `tier` still reads `bronze`, and **nothing threw
-  because the console agreed with the room, both wrong the same way.** A tier
-  PREVIEW still downgrades. **Do not sell the game itself away from the bottom
-  tier** — a phone with a game on it stays in the FOREGROUND, so sixty
-  connections do not all return when the join gate is busiest: a RELIABILITY
-  feature dressed as a toy. **Locked games are SHOWN, not filtered out.**
-- **THEY ARE CALLED MAZE MOUTH, RALLY, TAILBACK, QUICK DRAW AND PILE UP.** The names,
-  mazes and characters of the things the first three resemble are Namco's and
-  Atari's, and this app is SOLD — a legal line, not a taste one. Say whatever
-  you like on a mic; do not print it. **An unnamed game keeps inviting the
-  wrong name**, which is why the later ones were named before they were
-  written. (Quick Draw is the exception that proves it: a shooting gallery is
-  a fairground stall older than video games, so the honest name was also the
-  safe one.)
+  THING GATED BY TIER RANK RATHER THAN A `FEATURES` FLAG, so they ask
+  `tierInUse()` and never `tierFor()`** — a comped account holds every FEATURE
+  while `tier` still reads `bronze`, and **nothing threw because the console
+  agreed with the room, both wrong the same way.** A tier PREVIEW still
+  downgrades. **Do not sell the game itself away from the bottom tier** — a
+  phone with a game on it stays in the FOREGROUND, so sixty connections do not
+  all return when the join gate is busiest: a RELIABILITY feature dressed as a
+  toy. **Locked games are SHOWN, not filtered out.**
+- **THEY ARE CALLED MAZE MOUTH, RALLY, TAILBACK, QUICK DRAW AND PILE UP.** The
+  names, mazes and characters the first three resemble are Namco's and Atari's,
+  and this app is SOLD — a legal line, not a taste one. Say what you like on a
+  mic; do not print it. **An unnamed game keeps inviting the wrong name**,
+  which is why the later ones were named before they were written.
 - **AND ON PILE UP THE LEGAL LINE DECIDED THE GAME, NOT ONLY THE NAME.** A
-  crate STACKER, deliberately **not** the falling-blocks one — the tetromino
-  shapes, playfield and colouring were held protectable in *Tetris Holding v.
-  Xio* and this app is SOLD. **Do not "improve" it into one**: no rotation, no
-  shapes, no line clears, no well, and there is a test on the words. **A late
-  tap is a narrower crate rather than a lost life**, and **a lost life POPS THE
-  TOWER BACK DOWN** rather than balancing a wide crate on a sliver.
+  crate STACKER, deliberately **not** the falling-blocks one — those shapes and
+  the playfield were held protectable in *Tetris Holding v. Xio* and this app
+  is SOLD. **Do not "improve" it into one**: no rotation, no shapes, no line
+  clears, no well, and there is a test on the words. **A late tap is a narrower
+  crate rather than a lost life**, and **a lost life POPS THE TOWER BACK
+  DOWN.**
 - **THERE ARE THREE WAYS A GAME IS MADE THE SAME ON EVERY PHONE, and a new one
-  must use one of them:** a GRID with a fixed step (Maze Mouth, Tailback),
-  an ACCUMULATOR of whole ticks with the catch-up capped (Rally), or a
-  SCHEDULE where the state at time T is a pure function of the seed and T
-  (Quick Draw and Pile Up — the cleanest, because nothing accumulates so
-  nothing drifts).
-  **A frame delta is none of them and is always wrong here.** And note the one
-  limit that cannot be engineered away: a REACTION game makes input latency
-  part of the score, so its windows have to stay generous enough that eighty
+  must use one of them:** a GRID with a fixed step (Maze Mouth, Tailback), an
+  ACCUMULATOR of whole ticks with the catch-up capped (Rally), or a SCHEDULE
+  where the state at time T is a pure function of the seed and T (Quick Draw,
+  Pile Up — cleanest: nothing accumulates so nothing drifts). **A frame delta
+  is none of them and is always wrong here.** And a REACTION game makes input
+  latency part of the score, so its windows stay generous enough that eighty
   milliseconds of handset is noise.
 - **ONE SCOREBOARD FOR BOTH, in `src/arcade.js`** — the same clamp, the same
   best-not-latest rule and the same refusal outside the lobby, called by both
-  engines. Two copies is two rules, and the day one is fixed is the day a bingo
-  lobby accepts a score a quiz lobby refuses.
+  engines. Two copies is two rules, and one gets fixed.
 - **RALLY RUNS ON A FIXED TIMESTEP, NEVER A FRAME DELTA** — advanced by `dt` a
   120Hz phone and a 30Hz one play different games. `tick()` advances one
-  `TICK_MS` and the canvas accumulates real time into whole ticks — **capped**,
-  or a phone face down for two minutes spends the gap at once.
+  `TICK_MS`, the canvas accumulates whole ticks — **capped**, or a phone face
+  down for two minutes spends the gap at once.
 - **EVERY PHONE PLAYS THE SAME GAME**, seeded from `state.gameSeed`, set at
   launch and living in the state — or the scoreboard compares two different
-  games and means nothing.
-- **IT CANNOT REACH A QUIZ**, and there are tests for each half: the seed is in
-  the phone's payload at the LOBBY only, a score is refused at any other phase,
-  and the board is on the projector at the lobby only.
+  games.
+- **IT CANNOT REACH A QUIZ**, tested each half: the seed is in the phone's
+  payload at the LOBBY only, a score is refused at any other phase, and the
+  board is on the projector at the lobby only.
 - **Behind a button, below the photo card** — *"don't want to disincentivise
   photo uploads"*. The module is imported only when the button is pressed.
-- **No control panel: you tap and it walks there.** A swipe has to be READ and a
-  misread one costs a life. `touch-action: none` on the canvas is load-bearing.
+- **No control panel: you tap and it walks there.** A swipe has to be READ and
+  a misread one costs a life. `touch-action: none` is load-bearing.
 - **AND ON THE KEYS, A TURN PRESSED EARLY IS REMEMBERED** — `turnFrom()`. An
   arrow set a TARGET, so a turn pressed at a wall stopped the player DEAD in
   front of three chasers. A HEADING plus a buffered WANT; **a wall stops you
   facing it and never picks a direction for you**. **The rule lives in
-  `maze.js`, not the canvas file** — a decision testable without a clock
-  should be.
+  `maze.js`, not the canvas file.**
 - **THE BIG SCREEN IS ONLY PROMISED WHERE THE BOARD DRAWS.** The board is
-  lobby-only by decision; when the game was generalised to *a break that
-  offers a game* the three guards changed subject and the phone's line did
-  not, so a mid-night break told sixty people *"Top scores go on the big
-  screen"*. A break says how many games there are and nothing else.
+  lobby-only by decision; generalising the game to *a break that offers a game*
+  moved the guards and not the phone's line, so a mid-night break told sixty
+  people *"Top scores go on the big screen"*. A break says how many games there
+  are and nothing else.
 - **ONE POST LEAVES A PHONE, at game over and at each life lost.** Never a
-  stream of positions — the lobby is exactly when sixty people are joining.
-  Banking per life is what puts the people who played LONGEST on the board: a
-  game the night interrupts never reaches game over.
+  stream of positions — the lobby is when sixty people are joining. Banking per
+  life puts the people who played LONGEST on the board: a game the night
+  interrupts never reaches game over.
 - **THE GAME IS STOPPED IN `buildScreen()`, ON EVERY REBUILD.** Torn down
   inside `wireArcade` it survived the quiz starting — a detached canvas looping
   all night, swallowing the arrow keys, with a comment saying it could not
-  happen. **A teardown belongs where every phase change passes, not where the
-  thing being torn down is built.**
+  happen. **A teardown belongs where every phase change passes.**
 - **Each moment has a primary: the game before the quiz, photos between the
   rounds.** The floating camera button stands down in the lobby.
 - **MAZE MOUTH'S DEATH IS A GULP, AND IT IS THE ONLY DEATH THE GAME HAS** —
@@ -3870,6 +3859,7 @@ node scripts/final-fits.mjs             # is the last slide of the night all on 
 node scripts/advert-on-the-wall.mjs     # does a corrected slide reach the projector?
 node scripts/bar-reaches-the-room.mjs   # does the launch bar's card reach the room?
 node scripts/reaches-the-wall.mjs       # does a correction reach the projector?
+node scripts/lobby-games-play.mjs       # do the five games actually draw, run and score?
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 ```
 
@@ -3933,6 +3923,13 @@ account is in [`docs/checks.md`](docs/checks.md):**
   under `node --check` and every browser guard — including a rename that
   DELETED the night. **It makes its own accounts rather than driving the host
   key**, which saves neither a colour nor a preference.
+- **AND 94 UNIT TESTS ACROSS THE FIVE LOBBY GAMES HAD NEVER DRAWN A PIXEL** —
+  `lobby-games-play.mjs`. **PAINTED AND MOVING ARE TWO QUESTIONS and a canvas
+  answers neither by existing**: the pixels are sampled twice with input in
+  between, because a blank canvas and a FROZEN one look identical. **Each game
+  is reached by SWITCHING to it**, the path that can leak a loop. **A list of
+  ONE is dropped, so the launch must ask for `ANY_LOBBY_GAME`** — without it
+  the box opens empty and the guard measures the wrong night.
 - **NOTHING HERE PRESSED A CONTROL, and a dead one draws perfectly.**
   A gap dial died twice in a week — a lost `import`, then a moved body calling
   the bar's `paintOrder()` from a module without one. Both a `ReferenceError`
