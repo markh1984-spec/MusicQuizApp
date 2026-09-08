@@ -1236,3 +1236,126 @@ somebody is choosing whether to press it.
 control drawn UNDER the photographs — nobody publishes a night without having
 just looked at what is in it — and the lamp per photo is the QUIZMASTER'S own
 judgement, not the sender's second thoughts.
+
+---
+
+## A PHOTOGRAPH IS READ FROM MEMORY, THEN DISK, THEN GITHUB
+
+Added 8 September 2026, off a question that started as *"what's the issue with
+the photos"* and turned out to have a bigger answer than the photos.
+
+### The measurement
+
+Every photograph on the public gallery comes out of the private repository
+through GitHub's Contents API, which allows **5,000 calls an hour on a token —
+shared with the pack backups, the accounts book, the room codes and the league
+publishing**. A night of ninety-nine photographs is ninety-nine calls on a cold
+open, so roughly **fifty first-time visitors an hour before the gallery stops
+working**.
+
+`src/photo-cache.js` held the bytes in memory against exactly this, and the
+memory half is good. What it cannot do is survive a restart — and **every push
+is a deploy**, so the cache is empty at precisely the moment a gallery is most
+likely to be being read. It is also capped at 48MB deliberately, because the
+same 512MB box runs live quizzes and *reliability beats cleverness*.
+
+### THE PAID INSTANCE DID NOT GIVE HIM A DISK, AND THAT IS THE HEADLINE
+
+The host moved to a $7 Starter instance believing it fixed the wipe. It did
+not: **Render's filesystem is ephemeral on every instance type**, and only an
+attached persistent disk changes that. Starter bought *no sleep*. `data/` was
+still being wiped on every deploy, which is the premise behind crash recovery
+restoring from GitHub, the room-code book being pushed to a repository, the
+host key rotating, and this photo problem.
+
+So the disk is worth far more than the gallery. `config.dataDir` already reads
+`DATA_DIR` (`src/config.js:28`), so the state, the room codes, the invoices,
+the accounts and the archive all move onto a disk **with no code change at
+all** — one environment variable.
+
+### AND A DISK REMOVES ZERO-DOWNTIME DEPLOYS, WHICH IS THE TRADE
+
+Render stops the existing instance before starting the new one when a disk is
+attached, so a deploy is a few seconds of hard downtime rather than an
+overlap, and the service cannot scale past one instance.
+
+**Both are acceptable here, and the first is arguably an improvement.** Today's
+overlapping deploy hands over an instance with an EMPTY `data/` that has to
+restore from GitHub before it is any use — and *"one 403 after a deploy marked
+a room restored with nothing restored"* is a fault this repo has already had.
+A few seconds down with the state already on disk beats a live instance with
+no memory of the quiz. The single-instance limit costs nothing: this app holds
+SSE connections and in-memory game state, so it could never have scaled
+horizontally anyway.
+
+### IT IS A CACHE OF WHAT GITHUB HAS, NEVER A SECOND STORE
+
+The private repository stays the record. The disk tier only ever holds a copy
+of something already filed, which is what makes it safe to evict from without
+thinking: losing the disk costs speed and nothing else. `photoBytes()` reads
+memory, then disk, then GitHub, and writes back to both on a GitHub hit.
+
+**Nothing that decides who may see a photograph is cached with it** — the same
+rule the memory half already had. Whether a night is published and whether one
+picture is on the gallery are read per request, so a copy is simply never
+reached once it is switched off.
+
+### THE KEY MAPPING HAS TO BE INJECTIVE, AND THE FIRST ONE WAS NOT
+
+A cache key is a repository path and the file is flat, so the path has to
+become one name. The first version replaced `/` with `~`, which puts
+`photos/a/b/c.jpg` and `photos/a/b~c.jpg` on the **same file** — one
+photograph served in place of another, on a gallery of a pub full of people
+who would recognise both. `encodeURIComponent` escapes `/` and `%` so nothing
+can collide; a path past 200 characters is hashed instead, because silently
+truncating a name reintroduces exactly the collision.
+
+**`safePhotoName()` would probably have prevented it upstream, and that is not
+a reason to rely on it.** A guarantee held somewhere else is how this comes
+back the day somebody relaxes the other end. The test caught it on the second
+assertion.
+
+### A `..` MAY NOT WALK OUT OF THE CACHE
+
+`?q=..` once minted a shadow room over the projector's own crash-recovery file
+from two unauthenticated GETs, so a path built out of anything is checked
+rather than trusted here: absolute, empty, `.` and `..` segments are all
+refused and simply not cached. The test writes a sentinel file **outside** the
+cache folder and asserts it is untouched after a read, a write and a delete
+through five nasty keys — the outcome, not the guard.
+
+### THE CONTENTS API SENDS ZERO BYTES FOR A FILE OVER 1MB, AND CALLS IT 200
+
+Found while reading the above rather than from a report. GitHub only inlines a
+file up to 1MB; above that it answers **200** with the metadata intact and
+`content: ''`. That is a perfectly good string, so the `typeof` check passed
+and `Buffer.from('', 'base64')` handed back an **empty buffer as a success**:
+
+```
+typeof content === string : true
+body length             : 0
+=> returns { ok: true, body: <0 bytes> }
+```
+
+A broken photograph reported as `ok: true` — nothing logged, nothing retried,
+and no way for a caller to tell it from a real file.
+
+**`size` is what distinguishes it**: an empty body for a file the API itself
+says has bytes in it. The raw media type carries no ceiling, so `rawGet()`
+asks again properly rather than giving up, and a failure *there* is
+`ok: false` — a failure to LOOK, which is the distinction `tryGetFile()`
+exists for.
+
+**How likely it was:** both upload paths shrink client-side first — 1280px
+square from a phone (`drawFiltered` in `filters.js`), 1600px from the console
+(`shrink()` in `console-community.js`), both JPEG at 0.85 — which normally
+lands well under 1MB. But `MAX_BYTES` is 3MB, and a crowded pub is the densest
+thing you can hand a JPEG encoder. Verified by reintroducing the fault: two of
+the four assertions fail on a zero-length buffer.
+
+### What this does NOT fix
+
+**A deleted photograph still leaves the repository and not its git history.**
+That is unchanged, it is the one issue here with an ethical rather than an
+operational edge, and it is the whole reason to consider moving photographs to
+object storage (R2) one day. The rule stands: never imply otherwise.

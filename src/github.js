@@ -450,6 +450,30 @@ export async function getFile(filePath, which = 'app') {
  * of a read is two chances for one to be fixed and the other not, which is the
  * reason `src/arcade.js` exists.
  */
+/**
+ * THE SAME FILE, ASKED FOR AS BYTES — for the ones too big to inline.
+ *
+ * `application/vnd.github.raw` returns the file itself rather than a JSON
+ * envelope, and carries no 1MB ceiling. It is deliberately NOT the default:
+ * every other read in this app is a small JSON file, and the envelope's
+ * `size` is what makes the ceiling detectable in the first place.
+ */
+async function rawGet(filePath, which) {
+  try {
+    const { owner, name, branch } = settings(which);
+    const res = await api(
+      `/repos/${owner}/${name}/contents/${encodeURI(filePath)}?ref=${encodeURIComponent(branch)}`,
+      { headers: { Accept: 'application/vnd.github.raw' } },
+      which,
+    );
+    if (res.status === 404) return { ok: true, body: null };
+    if (!res.ok) return { ok: false, error: `GitHub ${res.status}` };
+    return { ok: true, body: Buffer.from(await res.arrayBuffer()) };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
 export async function tryGetFile(filePath, which = 'app') {
   if (!readyFor(which)) return { ok: true, body: null };
   try {
@@ -461,6 +485,22 @@ export async function tryGetFile(filePath, which = 'app') {
     if (!res.ok) return { ok: false, error: `GitHub ${res.status}` };
     const data = await res.json();
     if (!data || typeof data.content !== 'string') return { ok: true, body: null };
+    /*
+     * THE CONTENTS API ONLY INLINES A FILE UP TO 1MB, AND IT SAYS SO BY
+     * SENDING NOTHING RATHER THAN BY FAILING.
+     *
+     * Over that it answers 200 with the metadata intact and `content: ''`,
+     * which is a perfectly good string, so the check above passes and
+     * `Buffer.from('', 'base64')` hands back ZERO BYTES as a success. On the
+     * gallery that is a broken photograph with `ok: true` — nothing logged,
+     * nothing retried, and the caller has no way to tell it from a real file.
+     *
+     * `size` is what distinguishes it: an empty body for a file the API
+     * itself says has bytes in it. The raw media type has no 1MB limit, so
+     * the answer is to ask again properly rather than to give up — and a
+     * failure there is a failure to LOOK, which is what `ok: false` means.
+     */
+    if (!data.content && Number(data.size) > 0) return rawGet(filePath, which);
     return { ok: true, body: Buffer.from(data.content, 'base64') };
   } catch (err) {
     return { ok: false, error: err.message };

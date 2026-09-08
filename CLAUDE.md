@@ -954,19 +954,14 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   inside ONE declaration block. `console-frame.mjs` fills Tonight and turns a
   REAL wheel now — a programmatic scroll succeeds on a clipped box.
 - **THE FIXED FRAME NEEDS A MINIMUM HEIGHT, AND THAT IS THE SAME ARGUMENT AS
-  THE WIDTH.** On a 476px-tall window `.consolecols` was handed **zero height**
-  and the tab column sat 592px down a 515px frame. **LETTING THE BAY SHRINK
-  INSTEAD WAS TRIED AND IS WORSE**: the Console's bay IS the launch bar, so the
+  THE WIDTH.** **LETTING THE BAY SHRINK INSTEAD WAS TRIED AND IS WORSE**: the
   doorhead shrank, the bar did not, and it **painted over the tab column**.
   **The numbers said fixed and the render said broken**, which is why the
   screenshot is the check.
-- **AND THE FRAME'S MINIMUM HEIGHT IS TWO NUMBERS, BECAUSE THE DOORHEAD IS TWO
-  HEIGHTS** — 573px at 1150px and up, 636-690px below it. It is
-  `(min-width: 1150px) and (min-height: 850px), (min-width: 900px) and
-  (min-height: 965px)`, from the measurement. **Do not collapse it to one
-  number**: one either takes the frame off a 1500x900 laptop that fits it, or
-  keeps it at 960x760 where it does not. **A 720p laptop scrolls now and that
-  is correct.**
+- **AND THE FRAME'S MINIMUM HEIGHT IS TWO NUMBERS, BECAUSE THE DOORHEAD IS
+  TWO HEIGHTS.** **Do not collapse it to one**: one either takes the frame off
+  a 1500x900 laptop that fits it, or keeps it at 960x760 where it does not.
+  **A 720p laptop scrolls now and that is correct.**
 - **AND THE EQUAL-BAY RULE ONLY EXISTS BECAUSE OF THE FRAME**, so
   `community-bay.mjs` checks it only where the frame is on. **Both scripts
   carry the frame's two numbers; if they move, they move together.**
@@ -979,11 +974,9 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   `auto minmax(0,1fr)` grid assumed two children, so ANY banner above the
   doorhead quietly turned the fixed frame back into a scrolling page.
 - **THE SHELF IS SIX ACROSS, BY DECISION — it mirrors the six bays above it.**
-  What made the 146px poster hold its content was never width: the meta's
-  two-line clamp, dropping the "· N rounds" that duplicated the round squares,
-  and 44px a stale pin-clearance rule stole. **Do not "fix" a squeezed card by
-  dropping a column** — where six genuinely cannot be honoured, both grids move
-  together (see below).
+  What made the 146px poster hold its content was never width. **Do not "fix" a
+  squeezed card by dropping a column** — where six genuinely cannot be
+  honoured, both grids move together (see below).
 - **THE FINISH LAYER at the foot of `style.css` owns selection, caret,
   `:focus-visible` and the card hover** — one named block, so the next control
   gets finished there rather than growing scattered rules.
@@ -1037,15 +1030,13 @@ key.
   room now instead of minting a room, a join code and a backup push per junk
   string — `rooms.get()` never evicts and `codeFor()` persists, so an open URL
   was a memory leak and a GitHub-quota leak at once.
-- **AND A JOIN CODE IS REFUSED THE SAME WAY — `roomForPhone()`.** It was
-  `rooms.byCode(code) || rooms.get(HOUSE)`, so `/play?g=ZZZZ` said *"You're
-  in"* under the owner's branding, `POST /api/join` returned a real id and
-  token, the player appeared in the OWNER'S room, and
-  `/api/state?role=screen&g=ZZZZ` served the owner's loaded quiz to anybody. **The trigger is real**: the join-code backup raced, so a printed
-  QR could stop resolving after a deploy, and the whole room then joined the
-  owner's game and was told it was in. **NO CODE AT ALL is still the house
-  room** — the owner's own projector, and every card printed before rooms
-  existed.
+- **AND A JOIN CODE IS REFUSED THE SAME WAY — `roomForPhone()`.** It fell back
+  to HOUSE, so `/play?g=ZZZZ` said *"You're in"* under the owner's branding,
+  minted a real id and token in the OWNER'S room, and served his loaded quiz to
+  anybody on `?role=screen`. **The trigger is real**: the join-code backup
+  raced, so a printed QR could stop resolving after a deploy and the whole room
+  joined the owner's game. **NO CODE AT ALL is still the house room** — his own
+  projector, and every card printed before rooms existed.
 - **AND THE CODE BOOK IS WRITTEN ONE AT A TIME, NEWEST BOOK WINS.** One page
   load fired N concurrent unawaited PUTs of the same file, each carrying the
   snapshot taken when it was queued: **four of six quizmasters' printed QR
@@ -1265,10 +1256,8 @@ board), `src/arcade.js` (the scores, shared by both engines),
   backup there is. **The id is a LABEL, never a permission.** **The icon draws
   only on a MIXED board.**
 - **THE DEFAULT FOLLOWS THE GAME RATHER THAN THE ACCOUNT: Maze Mouth before a
-  quiz, Rally before the bingo.** A bingo night should have a character of its
-  own rather than being the quiz with different content in it, and a remembered
-  per-account preference would be wrong on half the nights of anybody who runs
-  both.
+  quiz, Rally before the bingo.** A remembered per-account preference is wrong
+  on half the nights of anybody who runs both.
 - **WHICH GAME IS A DECISION ABOUT TONIGHT**, so it goes where the look and the
   card shape go — chosen on the launch bar, written into `state.lobbyGame` at
   launch, restored after a crash. **THE TIER IS CHECKED AT THE ROUTE, never in
@@ -1328,13 +1317,12 @@ board), `src/arcade.js` (the scores, shared by both engines),
   photo uploads"*. The module is imported only when the button is pressed.
 - **No control panel: you tap and it walks there.** A swipe has to be READ and a
   misread one costs a life. `touch-action: none` on the canvas is load-bearing.
-- **AND ON THE KEYS, A TURN PRESSED EARLY IS REMEMBERED** — `turnFrom()` in
-  `maze.js`. An arrow set a TARGET, so with a wall that way the target was the
-  cell you stood on and **a turn pressed early stopped the player DEAD in front
-  of three chasers.** The keys drive a HEADING plus a buffered WANT expiring
-  after `TURN_BUFFER_STEPS`; **a wall stops you facing it and never picks a
-  direction for you**. **The rule lives in `maze.js`, not the canvas file** — a
-  decision testable without a clock should be.
+- **AND ON THE KEYS, A TURN PRESSED EARLY IS REMEMBERED** — `turnFrom()`. An
+  arrow set a TARGET, so a turn pressed at a wall stopped the player DEAD in
+  front of three chasers. A HEADING plus a buffered WANT; **a wall stops you
+  facing it and never picks a direction for you**. **The rule lives in
+  `maze.js`, not the canvas file** — a decision testable without a clock
+  should be.
 - **THE BIG SCREEN IS ONLY PROMISED WHERE THE BOARD DRAWS.** The board is
   lobby-only by decision; when the game was generalised to *a break that
   offers a game* the three guards changed subject and the phone's line did
@@ -1342,9 +1330,8 @@ board), `src/arcade.js` (the scores, shared by both engines),
   screen"*. A break says how many games there are and nothing else.
 - **ONE POST LEAVES A PHONE, at game over and at each life lost.** Never a
   stream of positions — the lobby is exactly when sixty people are joining.
-  Banking at each life is what puts the people who played LONGEST on the board:
-  a game interrupted by the night starting never reaches game over, and by then
-  the phase has moved and a score is rightly refused.
+  Banking per life is what puts the people who played LONGEST on the board: a
+  game the night interrupts never reaches game over.
 - **THE GAME IS STOPPED IN `buildScreen()`, ON EVERY REBUILD.** Torn down
   inside `wireArcade` it survived the quiz starting — a detached canvas looping
   all night, swallowing the arrow keys, with a comment saying it could not
@@ -1353,19 +1340,16 @@ board), `src/arcade.js` (the scores, shared by both engines),
 - **Each moment has a primary: the game before the quiz, photos between the
   rounds.** The floating camera button stands down in the lobby.
 - **MAZE MOUTH'S DEATH IS A GULP, AND IT IS THE ONLY DEATH THE GAME HAS** —
-  **never telling a story that did not happen**. **NOT the unfurl-and-spin**,
-  which is Namco's and this app is sold. **NOTHING MOVES while it runs**
-  (`dying`, `GULP_MS`); **the player is drawn BEFORE the chasers** and **only
-  the one that caught you bulges**. **The score is banked at the CATCH**, or a
-  game the quiz interrupts loses the life it just paid for.
+  **NOT the unfurl-and-spin**, which is Namco's and this app is sold.
+  **NOTHING MOVES while it runs**; **the player is drawn BEFORE the chasers**
+  and **only the one that caught you bulges**. **The score is banked at the
+  CATCH**, or a game the quiz interrupts loses the life it just paid for.
 - **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER.**
-  `lobby-sound.js` — Web Audio, no files. **What makes on-by-default safe is
-  that the HOST can switch it off** (`state.lobbySound`); **the host's switch
-  wins and does not wipe the phone's own**, both defaulting to on. **Every
-  noise is tied to something the player DID** — never a timer, or it is sixty
-  phones chirping at nobody — and it never carries information, a pub phone
-  being on silent. **No yeehaw**: synthesised it is a kazoo, recorded it is an
-  asset. The toggle is UNDER the canvas, or a near-miss tap is a shot.
+  `lobby-sound.js` — Web Audio, no files. **The HOST can switch it off**
+  (`state.lobbySound`); **the host's switch wins and does not wipe the phone's
+  own**. **Every noise is tied to something the player DID** — never a timer,
+  and it never carries information, a pub phone being on silent. **No
+  yeehaw.** The toggle is UNDER the canvas, or a near-miss tap is a shot.
 - **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — `lobby-board.js`, one
   file for both, inside the white QR panel and UNDER the code, which nothing
   may dim. **It was computed and never drawn for as long as the feature
@@ -1636,8 +1620,7 @@ could just be a symbol you click to cycle… and this would live in the bottom
 right of the pack ONCE LOADED."*
 
 - **THE DUPLICATION WAS REAL** — one `chip()`, one plan, one setter, drawn in
-  two places and neither beside the thing it acted on. The label collision
-  Sweep mode hunts, which nothing had caught.
+  two places and neither beside the thing it acted on.
 - **A TILE'S DIAL OWNS THE GAP AFTER ITS OWN ROUND — `gapIdsOfSlot()`.** It
   owned *every gap the pack makes*, right when a tile was a pack and wrong the
   day packs began BURSTING: **pressing the last tile's dial changed the
@@ -1650,9 +1633,9 @@ right of the pack ONCE LOADED."*
   clear in the corner. That is ONE 44px control and never two — so the dial is
   the PHONES and the big screen became a night-level picker. **The plan on disk
   is unchanged.**
-- **A DIAL IS SAFE HERE because every state is a real answer** — no invalid
-  position to spin past — **and the order is a SCALE**: photos, game, both,
-  nothing. A dial whose steps are not on a scale has to be memorised.
+- **A DIAL IS SAFE HERE because every state is a real answer** — **and the
+  order is a SCALE**: photos, game, both, nothing. A dial whose steps are not
+  on a scale has to be memorised.
 - **THE LIT EDGE HAD TO BE MADE HONEST** — `cleanPlan()` now runs on the way
   OUT of the dial too, or a gap cycled back to its default still claims it was
   changed.
@@ -1672,12 +1655,11 @@ right of the pack ONCE LOADED."*
   is already visible from position. **It stays on an EMPTY slot**, where it is
   the whole label.
 - **THE TILE IS 90px BECAUSE 30 + 44 DOES NOT FIT IN 76** — moving the × puts
-  "remove this" where the eye lands first and moving the dial undoes what was
-  asked for, so the tile grew. **On a phone `is-pack` tiles keep that height.**
-- **THE ERA WORD IS GONE FROM A TONIGHT TILE.** Left of the dial it overlapped
-  the round ticks by 52 x 18 and there is no third place, so the decoration goes
-  and the wash plus the coloured edge carry the subject. **It stays on the shelf
-  CARD.**
+  "remove this" where the eye lands first, so the tile grew instead. **On a
+  phone `is-pack` tiles keep that height.**
+- **THE ERA WORD IS GONE FROM A TONIGHT TILE** — it overlapped the round ticks
+  and there is no third place, so the wash and the coloured edge carry the
+  subject. **It stays on the shelf CARD.**
 - **`.lb-tiles:has(.lb-doors-slot)` OUT-SPECIFIED THE PHONE RULE** — a class
   more specific than `.lb-tiles` beat the 560px layout, and 390 came out as four
   50px columns. The specificity trap wearing `:has()`.
@@ -1709,9 +1691,8 @@ right of the pack ONCE LOADED."*
   took any of four choices and the launch sent an empty plan.
   **Present, live and IGNORED is what *present and inert* exists to refuse**,
   so the reason goes on the control (*"Add a quiz round"*).
-- **THE ROUND CEILING IS CHECKED ON THE ROW THE NIGHT IS BUILT ON.**
-  `MAX_NIGHT_ROUNDS` had one check, unreachable since packs began bursting, so
-  a thirteen-round night launched as twelve with **nothing said anywhere**.
+- **THE ROUND CEILING IS CHECKED ON THE ROW THE NIGHT IS BUILT ON.** A
+  thirteen-round night launched as twelve with **nothing said anywhere**.
   Measured against the SEGMENTS (`longestQuiz()`), never the tiles. **The
   server still slices** — a refusal costs the night.
 - **📵 RATHER THAN A DOT for "nothing on the phones".** Asked outright — *"what
@@ -1751,18 +1732,17 @@ right of the pack ONCE LOADED."*
   leaf. **Destructured ABOVE every reader**: a `const` in its temporal dead zone
   throws when the line RUNS and the catch swallows it. **A moved body keeps the
   names of the home it left.**
-- **A PACK TILE LIGHTS UP TOO — AND ONLY WHERE THE DROP WILL BE TAKEN.** A
-  tile that lit and then did nothing would be worse than one that never lit: it
-  promised. A refusal also STOPS the event, or it bubbles to the row and the
-  round lands somewhere the pointer never was. **The inset ring alone was
-  invisible** beside the picked tile's own outline.
+- **A PACK TILE LIGHTS UP TOO — AND ONLY WHERE THE DROP WILL BE TAKEN.** One
+  that lit and did nothing would be worse than one that never lit: it promised.
+  A refusal also STOPS the event, or the round lands somewhere the pointer
+  never was. **The inset ring alone was invisible.**
 - **A FILLED MIXED TILE HAS TWO WIRINGS AND THEY RACED.** The one registered
   LAST won, so a bingo tile lit for a round it would refuse. **One handler
   decides and the other stands down.**
-- **AN EMPTY SLOT TAKES A ROUND AND LIGHTS UP WHILE YOU ARE OVER IT** — it had
-  no `dragover` of its own, so **nothing lit up** and an inert square reads as
-  one that refuses; and `orderEl`'s drop APPENDS, so a round let go over slot 5
-  appeared in slot 2. `stopPropagation` makes the slot's own answer count.
+- **AN EMPTY SLOT TAKES A ROUND AND LIGHTS UP WHILE YOU ARE OVER IT** — with
+  no `dragover` of its own **nothing lit up**, and an inert square reads as one
+  that refuses; `orderEl`'s drop APPENDS, so a round let go over slot 5 landed
+  in slot 2. `stopPropagation` makes the slot's own answer count.
 - **AND MY OWN TEST HAD MISSED IT** by dispatching `drop` directly — a browser
   fires no `drop` unless `dragover` called `preventDefault()`. **Measure
   `defaultPrevented` on the dragover**, not the outcome of a synthetic drop.
@@ -1802,14 +1782,13 @@ what they could buy; a door that vanishes sells nothing.
 with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
 **What they asked for**. Settled by asking, and each answer is a rule:
 
-- **ORGANISED BY VENUE, because a venue IS a community.** The Tuesday crowd and
-  the Thursday crowd are different people, and every page is then something you
+- **ORGANISED BY VENUE, because a venue IS a community.** The Tuesday and
+  Thursday crowds are different people, and every page is then something you
   can show one landlord.
 - **THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — that is not a duplicate.**
   On Past gigs a photo is EVIDENCE; on Community it is the room itself. **What
-  is not duplicated is the CODE** — `nightPhotos()` in `console-gigs.js`, called
-  from both, so **the publish control keeps its safeguard for free** by being
-  drawn UNDER the photographs wherever it is called.
+  is not duplicated is the CODE** — `nightPhotos()`, called from both, so **the
+  publish control keeps its safeguard for free.**
 - **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** The headcount is a
   summary, so it sits on three pages from one server-side figure. **"What the
   room asked for" is a QUEUE — Yes keeps it, No bins it — so it MOVED off the
@@ -1820,12 +1799,10 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   NOTHING was right above the quiz generator and wrong on a tab whose whole job
   is the list. One optional argument, so the triage keeps one definition.
 - **AND ONE POINT FOR EVERY NIGHT PLAYED, ON TOP OF THE BEST SIX.** Under
-  best-six alone a seventh night outside your six is worth NOTHING, so a team
-  finishing near the bottom stops gaining anything after six weeks — a
-  retention hole in the feature built for retention. **THE LADDER THEREFORE
-  PAYS NOTHING BELOW SEVENTH**: it used to floor at 1, and keeping that too
-  would pay one point twice under two names. Eighth is still worth exactly 1,
-  as the attendance point. A fortnight away costs 2 rather than 20.
+  best-six alone a team near the bottom stops gaining anything after six weeks
+  — a retention hole in the feature built for retention. **THE LADDER
+  THEREFORE PAYS NOTHING BELOW SEVENTH**, or one point is paid twice under two
+  names. Eighth is still worth exactly 1, as the attendance point.
 - **A TEAM'S BEST SIX NIGHTS COUNT — a running total is not the league.** A
   cumulative table punishes absence ABSOLUTELY, so the team works out the season
   is gone and stops coming — the retention argument running backwards. **AND A
@@ -1838,11 +1815,9 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   and the console are UNCHANGED; only the public page and the report mask
   anything. **ON THE SERVER, so the word never reaches the wire.** **MASKED,
   NEVER DROPPED** ("Name hidden"): dropping the row moves everybody up a place
-  and lies about the season. **IT ERRS STRICT** — a false positive hides one
-  name and the console says so; a false negative is a slur under his brand in
-  public. **WHOLE WORDS FOR ORDINARY PROFANITY**, or it eats Scunthorpe; the
-  SLUR list is matched AGAIN with the spaces stripped, which catches
-  `n i g g a` — **never do that pass on the ordinary list.** **THE CONSOLE
+  and lies about the season. **IT ERRS STRICT.** **WHOLE WORDS FOR ORDINARY
+  PROFANITY**, or it eats Scunthorpe; the SLUR list is matched AGAIN with the
+  spaces stripped — **never do that pass on the ordinary list.** **THE CONSOLE
   SHOWS THE REAL NAME AND MARKS IT**, or a name vanishes off a published table
   with no way to tell which.
 - **AND A HUMAN OVERRULES THE LIST, IN BOTH DIRECTIONS** — it hides "The Pen
@@ -1859,44 +1834,37 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   read back as *"Not published"*. **The hazard was written down above
   `galleryRoomId()` and left** — which is how a noted hazard becomes a bug
   report. No change for an ordinary quizmaster: their room id is never HOUSE.
-- **THE PRIVATE REPO IS TESTABLE NOW** — `test/helpers/photo-repo-stub.mjs` via
+- **THE PRIVATE REPO IS TESTABLE NOW** — `photo-repo-stub.mjs` via
   `node --import`: real server, fixture network. **Publishing lived behind a
   token the suite must never need, so nothing had ever run it.**
 - **`published.json` HAS ONE WRITER AT A TIME, PER ROOM — `inOrder()` in
-  `src/gallery.js`.** Two callers each read the file whole and write it back, so
-  a lamp write begun before a publish finished **silently un-published the
-  night**, on a live gallery. **AND THE BROWSER'S QUEUE CANNOT COVER IT**: the
-  press that overlaps a publish is the one it has not started. Order it where
-  the FILE is
+  `src/gallery.js`.** Two callers each read the file whole and write it back,
+  so a lamp write begun before a publish finished **silently un-published the
+  night**. **THE BROWSER'S QUEUE CANNOT COVER IT**: the press that overlaps a
+  publish is the one it has not started. Order it where the FILE is
 - **A READ THAT FAILED IS NOT AN EMPTY FOLDER — `tryGetFile()` /
-  `tryListDir()`.** `getFile()` answers `null` and `listDir()` `[]` for a 404, a
+  `tryListDir()`.** `getFile()`/`listDir()` answer `null`/`[]` for a 404, a
   403, a 500 and a dropped connection alike — right for ninety callers, **data
-  loss for the four that LATCH**: every `ensure*Restored` added to its Set
-  BEFORE the await, so one 403 after a deploy marked a room restored with
-  nothing restored for the process's lifetime, backup intact, nothing logged.
-  **A 404 is an ANSWER; anything else is a failure to LOOK.** `restoreOnce()`
-  latches on the way OUT and holds an in-flight promise per room. **ONE
-  IMPLEMENTATION** — `getFile`/`listDir` delegate, ninety call sites unchanged.
-  **The photo cache had the same shape and REMEMBERED it.** A failed listing is
-  not cached; **no TTL, which would still serve the wrong answer for its
-  length.**
+  loss for the four that LATCH**: one 403 after a deploy marked a room restored
+  with nothing restored, backup intact, nothing logged. **A 404 is an ANSWER;
+  anything else is a failure to LOOK.** `restoreOnce()` latches on the way OUT.
+  **ONE IMPLEMENTATION** — the plain pair delegate, ninety call sites
+  unchanged. A failed listing is not cached; **no TTL, which would still serve
+  the wrong answer for its length.**
 - **A READ-BACK SHA CAN BE STALE — `GitHub 409` reached a live console.** The
-  Contents API is served from a replica, so a `GET` moments after a 200 `PUT`
-  can hand back the version before it. **The sha a `PUT` HANDS BACK cannot be
-  served stale**, so `putFile()` remembers it. **It is a CACHE, so it must be
-  able to be wrong**: a 409 is forgotten, re-read PAST the caches, retried
-  once, and a surviving one is said in WORDS
+  Contents API is served from a replica, so a `GET` after a 200 `PUT` can hand
+  back the version before it. **The sha a `PUT` HANDS BACK cannot be served
+  stale**, so `putFile()` remembers it. **It is a CACHE, so it must be able to
+  be wrong**: forgotten, re-read PAST the caches, retried once, said in WORDS
 - **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT, GROUPED BY PUB** —
-  `coverPhotos()`. **Pins lead, the rest is a SPREAD**, stable, seeded off the
-  date. **BUILT FROM THE SAME FILTERED LIST THE NIGHT'S PAGE SHOWS**, so a pin
-  cannot advertise a photograph that page refuses. **A pin is a PREFERENCE; the
-  lamp is the GATE.**
-- **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor.** A 99-photo
-  night once cost ~297 GitHub calls **per page open** against a 5,000/hour
-  limit. **Nothing deciding who may see a photo is cached with it**; **the
-  browser window is NOT lengthened past a day** — taking a photo down is a
-  promise a cache cannot reach; **48MB LRU**, this box being 512MB.
-  **[`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)**.
+  `coverPhotos()`. **Pins lead, the rest is a SPREAD**, seeded off the date.
+  **BUILT FROM THE SAME FILTERED LIST THE NIGHT'S PAGE SHOWS**, so a pin cannot
+  advertise a photograph that page refuses. **A pin is a PREFERENCE; the lamp
+  is the GATE.**
+- **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor.** **Nothing
+  deciding who may see a photo is cached with it**; **the browser window is NOT
+  lengthened past a day** — taking a photo down is a promise a cache cannot
+  reach.
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
   nights, rulings, pins. The third is when it gets forgotten; a test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
@@ -2120,6 +2088,46 @@ quiet month, when the AI is cheap and the server is not.
 
 Full reasoning: **[`docs/business.md`](docs/business.md)**.
 
+### A PHOTOGRAPH IS READ FROM MEMORY, THEN DISK, THEN GITHUB
+
+`photoBytes()` in `server.js`, the disk half of `src/photo-cache.js`. The
+memory cache is empty after every deploy — and every push is a deploy — so the
+first fifty people to open a gallery after one each spent a GitHub call against
+5,000 an hour SHARED with the packs, the accounts book and every backup.
+
+- **A PAID INSTANCE DOES NOT GIVE YOU A DISK.** Render's filesystem is
+  ephemeral on EVERY tier; only an attached disk changes it. The $7 Starter
+  bought no SLEEP, not a surviving `data/`. **`DATA_DIR` is the whole wiring** —
+  state, room codes, accounts and the archive move with it, no code change.
+- **AND A DISK REMOVES ZERO-DOWNTIME DEPLOYS**, single instance only. Worth
+  it: today's overlap hands over an EMPTY `data/` that must restore from
+  GitHub, and a failed restore after a deploy is a recorded fault here.
+- **IT IS A CACHE OF WHAT GITHUB HAS, NEVER A SECOND STORE** — the private repo
+  stays the record, so losing the disk costs speed and nothing else.
+- **THE KEY MAPPING MUST BE INJECTIVE, AND THE FIRST ONE WAS NOT.** `/` → `~`
+  put `a/b/c.jpg` and `a/b~c.jpg` on ONE file — **one photograph served in
+  place of another**. `encodeURIComponent`, hashed past 200 chars. **Do not
+  lean on `safePhotoName()`**: a guarantee held somewhere else is how it comes
+  back.
+- **A `..` MAY NOT WALK OUT** — `?q=..` once minted a shadow room over the
+  projector's own state file. The test writes a sentinel OUTSIDE the folder.
+- **NOTHING DECIDING WHO MAY SEE A PHOTO IS CACHED WITH IT**, as before.
+- **A DELETED PHOTO STILL LEAVES GIT HISTORY BEHIND. Unchanged** — that is what
+  moving to object storage would fix, and the reason to consider it.
+
+### THE CONTENTS API SENDS ZERO BYTES FOR A FILE OVER 1MB, AND CALLS IT 200
+
+`tryGetFile()` / `rawGet()` in `src/github.js`. Above the inline limit GitHub
+answers 200 with `content: ''` — a perfectly good string, so the type check
+passed and `Buffer.from('', 'base64')` returned an **empty buffer as a
+success**: a broken photograph with `ok: true`, nothing logged, nothing
+retried. **`size` tells them apart**, and the raw media type has no ceiling, so
+it asks AGAIN rather than giving up; a failure there is `ok: false`, a failure
+to LOOK. Both uploads shrink first, so it is unlikely — **but `MAX_BYTES` is
+3MB and a crowded pub is the densest thing you can hand a JPEG encoder.**
+
+Full reasoning: **[`docs/gigs/photos.md`](docs/gigs/photos.md)**.
+
 ### THE RUNGS ON A SUBSCRIBER'S ACCOUNT SELL; THEY MUST NEVER GRANT
 
 `console-tiers.js`, on My account. Bronze / Silver / Gold, yours lit in its
@@ -2227,9 +2235,8 @@ the prizes."*
   wording is about the PRIZE, never about the person.**
 - **THE CARDS CANNOT DO THIS ON THEIR OWN, and that was asked for twice.** A
   card is dealt at JOIN and who wins is decided by **the order the host plays
-  the tracks in**, which the app never sees. The measurements and the two
-  alternatives offered are in `docs/bingo.md` — **read them before re-proposing
-  dealing as the fix.**
+  the tracks in**, which the app never sees. **Read `docs/bingo.md` before
+  re-proposing dealing as the fix.**
 - **IT LIFTS THE MOMENT EVERYBODY HAS ONE.** **The test is "is anybody left
   without", never a count of prizes**, so it holds at any room size.
 - **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert.
@@ -2243,12 +2250,10 @@ the prizes."*
   landlord's report. **The button stands down for EVERYBODY** while a prize is
   taken. **`tooLate` is a separate flag**: the host's list says *"just missed
   it"*, because *"had one"* is a fact about the player and is untrue here.
-- **AND THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE.**
-  `hasMarkedPattern()` asked for one line whatever the prize needed, so on the
-  5x5/five-prize settings every 40-track pack ships with, **every phone lit up
-  the moment one line landed** — 223.9 false calls a round at sixty players.
-  It is `evaluate()`'s shape on MARKS; **the two may not disagree about what
-  the prize IS.**
+- **AND THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE.** It asked for one
+  line whatever the prize needed, so on the settings every 40-track pack ships
+  with, **every phone lit up the moment one line landed**. It is `evaluate()`'s
+  shape on MARKS; **the two may not disagree about what the prize IS.**
 - **AND A VOUCHER SURVIVES A PART BOUNDARY — `carried` in
   `startOrderSegment()`.** *Continue to the quiz* built a fresh engine and
   destroyed them: 200 from `/api/voucher` before the press, **404 after** — the

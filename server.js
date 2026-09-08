@@ -95,6 +95,7 @@ import { brandFor } from './src/branding.js';
 // spend a fiftieth page's worth of GitHub calls on it — see the file's own note.
 import {
   cachedPhoto, keepPhoto, dropPhoto, cachedNight, keepNight, dropNight,
+  diskPhoto, keepPhotoOnDisk, dropPhotoFromDisk,
 } from './src/photo-cache.js';
 import { findScheme, DEFAULT_SCHEME, SCHEMES } from './public/assets/schemes.js';
 // The logo, shared with the browser so the tab icon and the on-screen mark are
@@ -907,12 +908,22 @@ async function nightFiles(folder) {
   return read.files;
 }
 
-/** A filed photograph, from memory if it is there — see `photo-cache.js`. */
+/**
+ * A filed photograph — memory, then disk, then GitHub. See `photo-cache.js`.
+ *
+ * **THE THIRD STEP IS THE ONE WITH A LIMIT ON IT**: every photograph served
+ * from GitHub is one of 5,000 calls an hour shared with the packs, the
+ * accounts book and the backups. The first two steps exist to make the third
+ * rare, and the disk one exists because the memory one is empty after every
+ * deploy — which is the moment a gallery is most likely to be being read.
+ */
 async function photoBytes(at) {
   const held = cachedPhoto(at);
   if (held) return held;
+  const onDisk = diskPhoto(at);
+  if (onDisk) { keepPhoto(at, onDisk); return onDisk; }
   const bytes = await getFile(at, 'photos');
-  if (bytes) keepPhoto(at, bytes);
+  if (bytes) { keepPhoto(at, bytes); keepPhotoOnDisk(at, bytes); }
   return bytes;
 }
 
@@ -4865,6 +4876,7 @@ async function handleWrite(req, res, url, route) {
     // immutable by name, so nothing else invalidates one — but somebody asking
     // for theirs to be removed must not be served it a moment later.
     dropPhoto(gone);
+    dropPhotoFromDisk(gone);
     dropNight(gone.slice(0, gone.lastIndexOf('/')));
     if (done && done.ok === false) return sendJson(res, 502, { error: done.error || 'Could not delete that.' }), true;
     return sendJson(res, 200, { ok: true, night, name }), true;
