@@ -126,7 +126,7 @@
           "options": [
             "Gwen Stefani",
             "Fergie",
-            "Nelly",
+            "Jennifer Lopez",
             "Ciara"
           ],
           "correctIndex": 1,
@@ -222,7 +222,7 @@
           "options": [
             "Kasabian",
             "Hard-Fi",
-            "The Fratellis",
+            "The Zutons",
             "Maximo Park"
           ],
           "correctIndex": 0,
@@ -265,6 +265,96 @@
           "id": "r2q1",
           "prompt": "Whose face is this?",
           "options": [
+            "Ciara",
+            "Beyonc\u00e9",
+            "Kelly Rowland",
+            "Ashanti"
+          ],
+          "correctIndex": 1,
+          "answerNote": "'B'Day' arrived in September 2006, written and recorded in about three weeks.",
+          "image": "portraits/beyonce.png",
+          "imagePrompt": "A glamorous American female R&B singer in her mid twenties, long honey-blonde wavy hair, strong cheekbones, gold jewellery, confident stage presence.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q2",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Ashanti",
+            "Rihanna",
+            "Amerie",
+            "Keyshia Cole"
+          ],
+          "correctIndex": 1,
+          "answerNote": "'A Girl Like Me' came out in 2006 and gave her a first American number one.",
+          "image": "portraits/rihanna.png",
+          "imagePrompt": "A young Barbadian female singer in her late teens, long dark straight hair, striking almond eyes, hooped earrings, mid-2000s streetwear.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q3",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Chris Brown",
+            "Ne-Yo",
+            "Omarion",
+            "Trey Songz"
+          ],
+          "correctIndex": 1,
+          "answerNote": "'So Sick' went to number one in Britain in March 2006.",
+          "image": "portraits/ne-yo.png",
+          "imagePrompt": "A slim young American male R&B singer, neat short hair under a smart fedora hat, thin tie and waistcoat, polished retro-soul look.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q4",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Robin Thicke",
+            "Justin Timberlake",
+            "Nick Lachey",
+            "Jesse McCartney"
+          ],
+          "correctIndex": 1,
+          "answerNote": "'FutureSex/LoveSounds' was one of 2006's biggest albums.",
+          "image": "portraits/justin-timberlake.png",
+          "imagePrompt": "An American male pop singer in his mid twenties, close-cropped hair, light stubble, sharp suit and waistcoat, cool assured expression.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q5",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Pink",
+            "Christina Aguilera",
+            "Gwen Stefani",
+            "Britney Spears"
+          ],
+          "correctIndex": 1,
+          "answerNote": "'Back to Basics' took her into big-band and blues in 2006.",
+          "image": "portraits/christina-aguilera.png",
+          "imagePrompt": "An American female pop singer with platinum blonde hair in 1940s victory rolls, dark drawn-on eyebrows, red lipstick, glamorous retro styling.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q6",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Gwen Stefani",
+            "Nelly Furtado",
+            "Natasha Bedingfield",
+            "Sophie Ellis-Bextor"
+          ],
+          "correctIndex": 1,
+          "answerNote": "'Loose' turned her from folk-pop singer into a Timbaland-produced chart act.",
+          "image": "portraits/nelly-furtado.png",
+          "imagePrompt": "A Canadian female singer in her late twenties, long dark hair, warm olive complexion, casual streetwear with big earrings, mid-2000s look.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q7",
+          "prompt": "Whose face is this?",
+          "options": [
             "Duffy",
             "Amy Winehouse",
             "Adele",
@@ -277,138 +367,48 @@
           "zoomFrom": 6
         },
         {
-          "id": "r2q2",
-          "prompt": "Whose face is this?",
-          "options": [
-            "Carl Barat",
-            "Alex Turner",
-            "Tom Meighan",
-            "Ricky Wilson"
-          ],
-          "correctIndex": 1,
-          "answerNote": "His band's debut arrived in January 2006 and won that year's Mercury Prize.",
-          "image": "portraits/alex-turner.png",
-          "imagePrompt": "A young British indie musician in his early twenties, slicked back dark hair, sharp jawline, wearing a leather jacket, cool detached expression.",
-          "zoomFrom": 6
-        },
-        {
-          "id": "r2q3",
-          "prompt": "Whose face is this?",
-          "options": [
-            "Julian Casablancas",
-            "Brandon Flowers",
-            "Matt Bellamy",
-            "Chris Martin"
-          ],
-          "correctIndex": 1,
-          "answerNote": "The Killers released 'Sam's Town' in October 2006.",
-          "image": "portraits/brandon-flowers.png",
-          "imagePrompt": "An American rock singer with slicked dark hair, sharp cheekbones, eyeliner, wearing a smart tailored jacket, glam-indie look of the mid-2000s.",
-          "zoomFrom": 6
-        },
-        {
-          "id": "r2q4",
-          "prompt": "Whose face is this?",
-          "options": [
-            "Thom Yorke",
-            "Chris Martin",
-            "Tom Chaplin",
-            "Guy Garvey"
-          ],
-          "correctIndex": 1,
-          "answerNote": "Coldplay spent 2006 touring 'X&Y' around the world.",
-          "image": "portraits/chris-martin.png",
-          "imagePrompt": "A slim British male singer in his late twenties, floppy brown hair, wearing a plain t-shirt, known for earnest expressions and stadium rock performances in the 2000s.",
-          "zoomFrom": 6
-        },
-        {
-          "id": "r2q5",
-          "prompt": "Whose face is this?",
-          "options": [
-            "Daniel Powter",
-            "James Blunt",
-            "Paolo Nutini",
-            "David Gray"
-          ],
-          "correctIndex": 1,
-          "answerNote": "He took Best British Male at the 2006 Brit Awards.",
-          "image": "portraits/james-blunt.png",
-          "imagePrompt": "A British male singer-songwriter with light brown wavy hair, boyish face, often photographed in a casual jacket, gentle earnest expression.",
-          "zoomFrom": 6
-        },
-        {
-          "id": "r2q6",
-          "prompt": "Whose face is this?",
-          "options": [
-            "Corinne Bailey Rae",
-            "Joss Stone",
-            "Katie Melua",
-            "Beth Rowley"
-          ],
-          "correctIndex": 1,
-          "answerNote": "The Devon soul singer was still only nineteen in 2006.",
-          "image": "portraits/joss-stone.png",
-          "imagePrompt": "A young British female soul singer with long blonde wavy hair, bare feet often shown on stage, warm expressive face, early 2000s bohemian style.",
-          "zoomFrom": 6
-        },
-        {
-          "id": "r2q7",
-          "prompt": "Whose face is this?",
-          "options": [
-            "Brandon Boyd",
-            "Matt Bellamy",
-            "Justin Hawkins",
-            "Gary Lightbody"
-          ],
-          "correctIndex": 1,
-          "answerNote": "Muse released 'Black Holes and Revelations' in July 2006.",
-          "image": "portraits/matt-bellamy.png",
-          "imagePrompt": "A British rock singer with tousled dark hair, intense stare, often seen with a guitar, dramatic stage presence, 2000s alternative rock era.",
-          "zoomFrom": 6
-        },
-        {
           "id": "r2q8",
           "prompt": "Whose face is this?",
           "options": [
-            "Johnny Borrell",
-            "Pete Doherty",
-            "Liam Gallagher",
-            "Richard Ashcroft"
+            "Joss Stone",
+            "Corinne Bailey Rae",
+            "India Arie",
+            "Estelle"
           ],
           "correctIndex": 1,
-          "answerNote": "Babyshambles and the tabloids kept him on the front pages all through 2006.",
-          "image": "portraits/pete-doherty.png",
-          "imagePrompt": "A dishevelled British indie musician with messy dark hair, a trilby hat, gaunt face, wearing a scruffy blazer, tabloid-famous look of the mid-2000s.",
+          "answerNote": "Her debut album went to number one in Britain in early 2006.",
+          "image": "portraits/corinne-bailey-rae.png",
+          "imagePrompt": "A young British female soul singer from Leeds, big curly dark hair, delicate features, warm smile, softly bohemian style.",
           "zoomFrom": 6
         },
         {
           "id": "r2q9",
           "prompt": "Whose face is this?",
           "options": [
-            "Gareth Gates",
-            "Will Young",
-            "Shayne Ward",
-            "Lemar"
+            "Beverley Knight",
+            "Alicia Keys",
+            "Jill Scott",
+            "Mary J Blige"
           ],
           "correctIndex": 1,
-          "answerNote": "He won the very first series of Pop Idol back in 2002.",
-          "image": "portraits/will-young.png",
-          "imagePrompt": "A neat British male pop singer with short tidy brown hair, warm friendly smile, smart casual shirt, early 2000s talent show winner look.",
+          "answerNote": "She sang with David Bowie at his last ever live performance in November 2006.",
+          "image": "portraits/alicia-keys.png",
+          "imagePrompt": "An American female singer and pianist in her mid twenties, hair in long cornrow braids, strong brows, seated at a piano, soulful expression.",
           "zoomFrom": 6
         },
         {
           "id": "r2q10",
           "prompt": "Whose face is this?",
           "options": [
-            "Bryan Ferry",
-            "David Bowie",
-            "Mick Jagger",
-            "Iggy Pop"
+            "Shaggy",
+            "Sean Paul",
+            "Elephant Man",
+            "Wayne Wonder"
           ],
           "correctIndex": 1,
-          "answerNote": "He gave what turned out to be his last live performance in November 2006, singing with Alicia Keys.",
-          "image": "portraits/david-bowie.png",
-          "imagePrompt": "A slim British rock legend with pale skin, distinctive mismatched eyes, sharp cheekbones and neatly styled hair, elegant and theatrical.",
+          "answerNote": "'Temperature' was one of the biggest dancehall crossovers of the decade.",
+          "image": "portraits/sean-paul.png",
+          "imagePrompt": "A Jamaican male dancehall artist in his early thirties, short braided hair, goatee beard, gold chain, relaxed confident smile.",
           "zoomFrom": 6
         }
       ]
@@ -423,85 +423,13 @@
           "id": "r3q1",
           "prompt": "Which track is this?",
           "options": [
-            "Pon de Replay",
-            "SOS",
-            "Unfaithful",
-            "Break It Off"
-          ],
-          "correctIndex": 1,
-          "answerNote": "Her first American number one, built on a Soft Cell sample.",
-          "cue": {
-            "title": "SOS",
-            "artist": "Rihanna",
-            "from": "0:00",
-            "hint": "the drum and synth hook, about five seconds"
-          }
-        },
-        {
-          "id": "r3q2",
-          "prompt": "Which track is this?",
-          "options": [
-            "Sexy Love",
-            "Because of You",
-            "So Sick",
-            "Closer"
-          ],
-          "correctIndex": 2,
-          "answerNote": "A UK number one in March 2006 and his breakthrough as a singer.",
-          "cue": {
-            "title": "So Sick",
-            "artist": "Ne-Yo",
-            "from": "0:00",
-            "hint": "the soft keyboard opening, about five seconds"
-          }
-        },
-        {
-          "id": "r3q3",
-          "prompt": "Which track is this?",
-          "options": [
-            "Deja Vu",
-            "Ring the Alarm",
-            "Irreplaceable",
-            "Green Light"
-          ],
-          "correctIndex": 2,
-          "answerNote": "Written with Ne-Yo, it spent ten weeks at number one in America.",
-          "cue": {
-            "title": "Irreplaceable",
-            "artist": "Beyonc\u00e9",
-            "from": "0:00",
-            "hint": "the acoustic guitar figure, about five seconds"
-          }
-        },
-        {
-          "id": "r3q4",
-          "prompt": "Which track is this?",
-          "options": [
-            "Promiscuous",
-            "Say It Right",
-            "Maneater",
-            "All Good Things"
-          ],
-          "correctIndex": 2,
-          "answerNote": "One of three huge singles from 'Loose', all produced by Timbaland.",
-          "cue": {
-            "title": "Maneater",
-            "artist": "Nelly Furtado",
-            "from": "0:00",
-            "hint": "the stomping drum intro, about five seconds"
-          }
-        },
-        {
-          "id": "r3q5",
-          "prompt": "Which track is this?",
-          "options": [
             "Take Your Mama",
             "Laura",
             "I Don't Feel Like Dancin'",
             "Filthy/Gorgeous"
           ],
           "correctIndex": 2,
-          "answerNote": "Co-written with Elton John and four weeks at number one.",
+          "answerNote": "Co-written with Elton John, and four weeks at number one.",
           "cue": {
             "title": "I Don't Feel Like Dancin'",
             "artist": "Scissor Sisters",
@@ -510,7 +438,7 @@
           }
         },
         {
-          "id": "r3q6",
+          "id": "r3q2",
           "prompt": "Which track is this?",
           "options": [
             "Shine",
@@ -528,28 +456,10 @@
           }
         },
         {
-          "id": "r3q7",
+          "id": "r3q3",
           "prompt": "Which track is this?",
           "options": [
-            "Beautiful",
-            "Hurt",
-            "Ain't No Other Man",
-            "Candyman"
-          ],
-          "correctIndex": 2,
-          "answerNote": "The brassy lead single from 'Back to Basics'.",
-          "cue": {
-            "title": "Ain't No Other Man",
-            "artist": "Christina Aguilera",
-            "from": "0:00",
-            "hint": "the horn stabs, about five seconds"
-          }
-        },
-        {
-          "id": "r3q8",
-          "prompt": "Which track is this?",
-          "options": [
-            "Grillz",
+            "Turn It Up",
             "Ridin'",
             "Money Maker",
             "Snap Yo Fingers"
@@ -564,7 +474,7 @@
           }
         },
         {
-          "id": "r3q9",
+          "id": "r3q4",
           "prompt": "Which track is this?",
           "options": [
             "Long Way 2 Go",
@@ -582,21 +492,111 @@
           }
         },
         {
+          "id": "r3q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Hips Don't Lie",
+            "Whenever, Wherever",
+            "She Wolf",
+            "Underneath Your Clothes"
+          ],
+          "correctIndex": 0,
+          "answerNote": "With Wyclef Jean, and number one all over the world that summer.",
+          "cue": {
+            "title": "Hips Don't Lie",
+            "artist": "Shakira",
+            "from": "0:00",
+            "hint": "the horn riff, about five seconds"
+          }
+        },
+        {
+          "id": "r3q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Mardy Bum",
+            "When the Sun Goes Down",
+            "Fluorescent Adolescent",
+            "Brianstorm"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Their second single, and their second number one, in January 2006.",
+          "cue": {
+            "title": "When the Sun Goes Down",
+            "artist": "Arctic Monkeys",
+            "from": "0:00",
+            "hint": "the slow clean guitar opening, about eight seconds"
+          }
+        },
+        {
+          "id": "r3q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Whistle for the Choir",
+            "Chelsea Dagger",
+            "Flathead",
+            "Henrietta"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The 'doo doo doo' hook became a football terrace standard.",
+          "cue": {
+            "title": "Chelsea Dagger",
+            "artist": "The Fratellis",
+            "from": "0:00",
+            "hint": "the drum roll and riff, about five seconds"
+          }
+        },
+        {
+          "id": "r3q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Salute Your Solution",
+            "Steady, As She Goes",
+            "Broken Boy Soldier",
+            "Level"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Jack White's side project with Brendan Benson.",
+          "cue": {
+            "title": "Steady, As She Goes",
+            "artist": "The Raconteurs",
+            "from": "0:00",
+            "hint": "the bassline, about five seconds"
+          }
+        },
+        {
+          "id": "r3q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Ride Wit Me",
+            "Grillz",
+            "Hot in Herre",
+            "Dilemma"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Paul Wall, Ali and Gipp guested on a song about diamond teeth.",
+          "cue": {
+            "title": "Grillz",
+            "artist": "Nelly",
+            "from": "0:00",
+            "hint": "the sparse beat, about five seconds"
+          }
+        },
+        {
           "id": "r3q10",
           "prompt": "Which track is this?",
           "options": [
-            "Get Busy",
-            "We Be Burnin'",
-            "Temperature",
-            "Gimme the Light"
+            "World, Hold On",
+            "Love Generation",
+            "Rock This Party",
+            "Sound of Freedom"
           ],
-          "correctIndex": 2,
-          "answerNote": "From 'The Trinity', and one of the biggest dancehall crossovers of the decade.",
+          "correctIndex": 1,
+          "answerNote": "The whistled hook was everywhere in the summer of 2006.",
           "cue": {
-            "title": "Temperature",
-            "artist": "Sean Paul",
+            "title": "Love Generation",
+            "artist": "Bob Sinclar",
             "from": "0:00",
-            "hint": "the dancehall riddim, about five seconds"
+            "hint": "the whistle, about five seconds"
           }
         }
       ]
