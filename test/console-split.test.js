@@ -330,6 +330,14 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * which is the whole thing keeping every gig off the running-order path.
  */
 /*
+ * `console-packs.js` 1830 -> 1890 on 8 September 2026: the single-round shelf.
+ * Raised deliberately rather than by extracting a seam, and the reason is the
+ * direction the imports would have to run — the shelf draws `packCard()`,
+ * which lives here, so a `console-rounds.js` would import from this file while
+ * this file imported the renderer back. That is the cycle the split exists to
+ * avoid, and it is a worse trade than sixty lines. The comments were trimmed
+ * to their rules first, which is the order this repo pays in.
+ *
  * `console-packs.js` 1810 -> 1830 on 5 September 2026: the lobby-game picker
  * gained "Let them choose", which is the night's new default — the option
  * itself, plus the note recording that pinning one is still worth a control
@@ -394,7 +402,7 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * before that. A comment claiming the opposite of the code is not something
  * to keep paying for.
  */
-const BUDGET = { 'console-tonight.js': 4200, 'console.js': 2000, 'console-packs.js': 1830 };
+const BUDGET = { 'console-tonight.js': 4200, 'console.js': 2000, 'console-packs.js': 1890 };
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

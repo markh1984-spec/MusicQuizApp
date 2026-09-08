@@ -180,6 +180,13 @@ function pinnedArranger(kind, packs) {
   return el;
 }
 
+/*
+ * WHICH KIND'S SINGLE-ROUND SHELF IS OPEN. Module state rather than
+ * `localStorage`: a fold you open to fetch one thing, not a preference — and
+ * the shelf is rebuilt on every state push, so it lives outside the render.
+ */
+const roundsOpen = {};
+
 export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
   const door = doorNow();
   const dense = localStorage.getItem(DENSE_STORE) === '1';
@@ -244,6 +251,15 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
       </div>`}
       <div class="pin-arranger-slot"></div>
       <div class="pack-grid ${dense ? 'dense' : ''}"></div>
+      <!-- A ROUND IS NOT A NIGHT, so it gets its own shelf. Hidden when there
+           are none, which is every bingo tab. -->
+      <div class="rounds-shelf" hidden>
+        <div class="row rounds-head">
+          <h3 class="rounds-title"></h3>
+          <button class="minor rounds-fold" type="button"></button>
+        </div>
+        <div class="pack-grid rounds-grid ${dense ? 'dense' : ''}"></div>
+      </div>
       <!-- THE SHOP IS NOT HERE ANY MORE. It is its own tab behind My account
            - see shopSection(). A shop under the shelf put something to spend
            money on at the bottom of the page somebody opens to work, and it
@@ -355,7 +371,21 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
       || (shelf(a) - shelf(b))
       || (heardHere(a) - heardHere(b)));
     // Only what they can RUN. What is for sale is a room of its own now.
-    const yours = inOrder.filter((p) => !p.locked);
+    const all = inOrder.filter((p) => !p.locked);
+    /*
+     * A ROUND IS NOT A NIGHT, AND THE SHELF HAD STOPPED SAYING SO.
+     *
+     * The damage was never that the list got long: **only SIX are shown and
+     * they are RANKED, never-played first**, so twenty one-round intro packs
+     * took all six and pushed every actual quiz off the shelf somebody
+     * launches from. **Separated, not filtered** — a single round is something
+     * you drag INTO Tonight, so it stays reachable; it just must not compete
+     * with a night for the six. **Bingo is unaffected by construction**: a
+     * bingo pack has no rounds at all, so `length === 1` is false for every
+     * one. Full reasoning: `docs/console.md`.
+     */
+    const yours = all.filter((p) => (p.rounds || []).length !== 1);
+    const rounds = all.filter((p) => (p.rounds || []).length === 1);
 
     if (!yours.length) {
       grid.appendChild(node(`<div class="tiny">None of the ones you have match “${esc(queryFor())}”.</div>`));
@@ -426,6 +456,29 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit') {
       headEl.textContent = typing ? 'Your library' : 'Recommended';
     }
     for (const pack of shown) grid.appendChild(packCard(kind, pack));
+
+    /*
+     * THE ROUNDS, UNDER THEIR OWN HEADING AND FOLDED BY DEFAULT — the common
+     * job here is *find tonight's quiz and press Launch*, and twenty-four
+     * cards under the six is a wall you scroll past. **The count is IN the
+     * heading**, so what is folded away is stated rather than hidden.
+     */
+    const shelfEl = el.querySelector('.rounds-shelf');
+    if (shelfEl) {
+      const roundsGrid = shelfEl.querySelector('.rounds-grid');
+      const titleEl = shelfEl.querySelector('.rounds-title');
+      const foldEl = shelfEl.querySelector('.rounds-fold');
+      shelfEl.hidden = rounds.length === 0;
+      if (rounds.length) {
+        const open = roundsOpen[kind] === true;
+        titleEl.textContent = `Single rounds · ${rounds.length}`;
+        foldEl.textContent = open ? 'Hide' : 'Show';
+        roundsGrid.hidden = !open;
+        roundsGrid.textContent = '';
+        if (open) for (const pack of rounds) roundsGrid.appendChild(packCard(kind, pack));
+        foldEl.onclick = () => { roundsOpen[kind] = !open; paint(); };
+      }
+    }
   };
 
   // Redrawn in place rather than through render(), so the box keeps focus and
