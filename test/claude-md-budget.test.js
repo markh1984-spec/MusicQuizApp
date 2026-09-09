@@ -797,7 +797,21 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * bullet came down to the prohibition it carries. That is about 900 bytes
  * against roughly 1,900 added, and this comment is the diff saying so.
  */
-const BUDGET = 244_000;
+/*
+ * AND TO 245,500 ON 9 SEPTEMBER 2026, for three sections out of one afternoon
+ * — the Workshop saying whose a pack is, the Console shelf losing its
+ * six-pack cap, and Image Rounds as a VIEW of rounds rather than copies of
+ * them. The third is the one worth the bytes: it is the first time anything
+ * has come near extracting a round into its own file, which is rule 11 running
+ * backwards, and the reasoning has to be readable by whoever proposes it next.
+ *
+ * PAID FOR FIRST, and heavily: about 3,400 bytes came out across roughly
+ * thirty older passages trimmed to the prohibition they carry — the wordmark
+ * diet, the frame's media queries, the markup and stylesheet guards, the gap
+ * dial, the league ladder, the gallery's writers and the break plan. That is
+ * against roughly 4,900 added, and this comment is the diff saying so.
+ */
+const BUDGET = 245_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

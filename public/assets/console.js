@@ -18,6 +18,7 @@ import {
 import { gigsSection } from './console-gigs.js';
 import { invoicesSection } from './console-invoices.js';
 import { gameSection, preview } from './console-packs.js';
+import { roundsOfType, roundsSection } from './console-rounds.js';
 import { isOneRound } from './pack-look.js';
 import { showsSection } from './console-shows.js';
 import { NIGHT_BENCH_STORE, bench, lastDone, library, me, setAccountsExist, setLastDone, setLibrary, setMe, setNightBench } from './console-state.js';
@@ -830,6 +831,35 @@ export const TABS = [
     blurb: 'One round each — drop them into any night.',
     editLabel: 'Pack editor',
     packs: () => library.quizzes.filter(isOneRound),
+  },
+  {
+    /*
+     * IMAGE ROUNDS — the picture rounds you already hold, wherever they live.
+     *
+     * *"We'll need to add an image rounds tab methinks."* It is a VIEW rather
+     * than a shelf of files: every picture round in this library is inside a
+     * full quiz, and copying them out into their own packs is rule 11 running
+     * backwards. See `console-rounds.js` for the whole reasoning.
+     *
+     * **`kind` IS STILL 'quiz'** — same reason the Music Rounds tab carries it.
+     * **NO GENERATOR**: a picture round is drawn from questions that already
+     * exist, which is the Pictures button on the pack itself.
+     */
+    id: 'images',
+    kind: 'quiz',
+    doors: ['console', 'workshop'],
+    needs: FEATURES.LIBRARY,
+    label: 'Image Rounds',
+    blurb: 'Every picture round you hold — drop one into any night.',
+    packs: () => library.quizzes,
+    /*
+     * THE BADGE COUNTS ROUNDS, NOT PACKS — `tab.count`. Without it it counted
+     * `packs()`, which is every quiz in the library, so the tab read **33**
+     * over a shelf of three. A number right about the wrong question is how a
+     * working feature looks broken.
+     */
+    count: () => roundsOfType(library.quizzes, 'image').length,
+    section: (packs) => roundsSection('image', 'Image Rounds', 'Every picture round you hold — drop one into any night.', packs),
   },
   {
     id: 'bingo',
@@ -1866,7 +1896,15 @@ function tabBody(active) {
    * in there would resolve to nothing: the state stays consistent and the
    * READER cannot find the pack, which is a fault this repo has already had.
    */
-  wrap.appendChild(gameSection(tab.kind || tab.id, tab.label, tab.blurb, tab.packs(), tab.editLabel, tab.id));
+  /*
+   * A TAB MAY DRAW ITS OWN BODY — `tab.section`. Image Rounds is a shelf of
+   * ROUNDS rather than of files, so the pin button, the search box, the mode
+   * dropdown and the way into the editor all have nothing to act on. One hook
+   * beats threading four "not here" flags through `gameSection()`.
+   */
+  wrap.appendChild(tab.section
+    ? tab.section(tab.packs())
+    : gameSection(tab.kind || tab.id, tab.label, tab.blurb, tab.packs(), tab.editLabel, tab.id));
   if (workshop && tab.generator && !writing) wrap.appendChild(tab.generator());
   return wrap;
 }

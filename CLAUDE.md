@@ -1535,40 +1535,35 @@ upload per break… and the screen itself needs to be able to show ads as
 well."*
 
 - **TWO OF THE THREE THINGS ASKED FOR ALREADY EXISTED.** Photos always ran at
-  every break (`PHOTO_PHASES`), so that half is making something SWITCHABLE
-  rather than adding it; the game ran at the lobby only. **An advert only ever
-  went up because somebody pressed a button** — that is the genuinely new
-  capability, and the one that pays.
+  every break, so that half is making something SWITCHABLE rather than adding
+  it; the game ran at the lobby only. **An advert only ever went up because
+  somebody pressed a button** — the genuinely new capability, and the one that
+  pays.
 - **A BREAK IS A PLACE, NOT A NUMBER** — `p0:lobby`, `p1:r2`. Derived from the
-  part index and round index already on the state, so nothing has to be kept
-  in step and a restart resolves it for free. **A stored list of five breaks
-  would be wrong the first time a round was switched off**, silently, with
-  every row still looking real.
-- **THE PLAN IS SPARSE AND EMPTY MEANS "AS IT WAS".** `DEFAULTS` reproduces
-  the app exactly as it behaved before breaks existed — `cleanPlan()` drops
-  anything that only restates one, which is what lets `pub-unchanged.mjs`
-  still say IDENTICAL.
+  part and round indexes already on the state, so a restart resolves it for
+  free. **A stored list of five breaks would be wrong the first time a round was
+  switched off**, silently, with every row still looking real.
+- **THE PLAN IS SPARSE AND EMPTY MEANS "AS IT WAS".** `DEFAULTS` reproduces the
+  app as it behaved before breaks existed — `cleanPlan()` drops anything that
+  only restates one, which is what lets `pub-unchanged.mjs` say IDENTICAL.
 - **THE THREE LOBBY-ONLY GUARDS CHANGED SUBJECT, THEY DID NOT GO AWAY.** The
-  seed in the payload and the refusal at the score route now read "a break
-  that offers a game"; outside a break `breakNow()` is null, so **a question
-  is as unreachable as it ever was** and there is a test saying so. **The
-  arcade BOARD deliberately stayed lobby-only** — it draws inside the white QR
-  panel, and a round board already carries the board the room looked up for.
+  seed in the payload and the refusal at the score route now read "a break that
+  offers a game"; outside a break `breakNow()` is null, so **a question is as
+  unreachable as it ever was**. **The arcade BOARD deliberately stayed
+  lobby-only** — it draws inside the white QR panel.
 - **THE FINAL IS NOT A BREAK, AND THE LOBBY HAS NO SCREEN CHOICE.** A plan
   that could hide the winner would take away the moment the night is built
   towards; the lobby's screen belongs to the join code, which nothing may dim.
-- **SCORES FIRST, THEN THE SLIDES ROTATE** — the host's own choice: the room
-  gets what it looked up for, and the venue gets the screen once it has.
-  **THE PROJECTOR ROTATES, NOT THE ENGINE** — an engine timer would push state
-  to every phone on each change and need restoring mid-cycle. **The teardown
-  lives in `draw()`**, where every card change passes, which is the lobby
-  game's own expensive lesson applied before it could recur.
+- **SCORES FIRST, THEN THE SLIDES ROTATE** — the room gets what it looked up
+  for, and the venue gets the screen once it has. **THE PROJECTOR ROTATES, NOT
+  THE ENGINE** — an engine timer would push state to every phone on each change
+  and need restoring mid-cycle. **The teardown lives in `draw()`**, where every
+  card change passes.
 - **NOTHING IS A REAL ANSWER**, asked for by name — the round still names
   itself, because a projector with literally nothing on it reads as broken.
 - **`listAdvertPacks()` RETURNS A SUMMARY, NOT THE PACK.** Its slides have no
-  body, link or image; building a projector slide from them gives a heading
-  over an empty card, and nothing throws. The third sighting of the
-  picks-fields trap this month.
+  body, link or image; a projector slide built from them is a heading over an
+  empty card, and nothing throws. Third sighting of the picks-fields trap.
 
 Full reasoning: **[`docs/console/launch-bar.md`](docs/console/launch-bar.md)**.
 
@@ -1786,21 +1781,21 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   hazard was written down above `galleryRoomId()` and left** — which is how a
   noted hazard becomes a bug report.
 - **THE PRIVATE REPO IS TESTABLE NOW** — `photo-repo-stub.mjs`: real server,
-  fixture network. **Publishing lived behind a token the suite must never need,
-  so nothing had ever run it.**
+  fixture network. **Publishing lived behind a token the suite must never
+  need.**
 - **`published.json` HAS ONE WRITER AT A TIME, PER ROOM — `inOrder()` in
   `src/gallery.js`.** Two callers each read the file whole and write it back,
   so a lamp write begun before a publish finished **silently un-published the
-  night**. **THE BROWSER'S QUEUE CANNOT COVER IT**: the press that overlaps a
-  publish is the one it has not started. Order it where the FILE is
+  night**. **THE BROWSER'S QUEUE CANNOT COVER IT** — order it where the FILE
+  is
 - **A READ THAT FAILED IS NOT AN EMPTY FOLDER — `tryGetFile()` /
-  `tryListDir()`.** `getFile()`/`listDir()` answer `null`/`[]` for a 404, a 403,
-  a 500 and a dropped connection alike — right for ninety callers, **data loss
-  for the four that LATCH**: one 403 after a deploy marked a room restored with
-  nothing restored, backup intact, nothing logged. **A 404 is an ANSWER;
-  anything else is a failure to LOOK.** `restoreOnce()` latches on the way OUT.
-  **ONE IMPLEMENTATION** — the plain pair delegate. A failed listing is not
-  cached; **no TTL, which would still serve the wrong answer for its length.**
+  `tryListDir()`.** `getFile()`/`listDir()` answer `null`/`[]` for a 404, a 403
+  and a dropped connection alike — right for ninety callers, **data loss for the
+  four that LATCH**: one 403 after a deploy marked a room restored with nothing
+  restored, nothing logged. **A 404 is an ANSWER; anything else is a failure to
+  LOOK.** `restoreOnce()` latches on the way OUT. **ONE IMPLEMENTATION.** A
+  failed listing is not cached; **no TTL, which would serve the wrong answer for
+  its length.**
 - **A READ-BACK SHA CAN BE STALE — `GitHub 409` reached a live console.** The
   Contents API is served from a replica, so a `GET` after a 200 `PUT` can hand
   back the version before it. **The sha a `PUT` HANDS BACK cannot be served
@@ -1812,8 +1807,7 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   PREFERENCE; the lamp is the GATE.**
 - **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor.** **Nothing
   deciding who may see a photo is cached with it**; **the browser window is NOT
-  lengthened past a day** — taking a photo down is a promise a cache cannot
-  reach.
+  lengthened past a day.**
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
   nights, rulings, pins. A test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
@@ -1825,19 +1819,16 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   report he already receives; the teams want the table on a WALL, so `/league`
   is a public page per quizmaster. One thing for both would serve neither.
   - **A REPORT SAYS WHAT THE ROOM SAW THAT NIGHT, not what is true today** —
-    `leagueAfter()` winds the night list AND the season window back; a snapshot
-    that has moved on is not evidence.
+    `leagueAfter()` winds the night list AND the season window back.
   - **A PUBLIC PAGE IS A PUBLISH, PER VENUE, FAILING CLOSED** —
     `league-publish.js`, the gallery's shape exactly, in the private repo
     because `data/` is wiped on every deploy. **NAMES AND POINTS, NEVER
     FACES**: the fields are named on the way out rather than spread, or the
     next one added is a photograph on a public page.
-  - **THE NEXT QUIZ DATE IS THE LOUDEST THING UNDER THE TABLE** — a team lying
-    fourth wants to know when it can do something about it.
+  - **THE NEXT QUIZ DATE IS THE LOUDEST THING UNDER THE TABLE.**
   - **AN ASYNC PAINT LOOKS WHERE THE THING IS, NOT WHERE IT WAS MADE.** The
     publish control queried the `DocumentFragment` it was built in, which
-    `render()` had already emptied into the page — nothing drew, nothing
-    threw.
+    `render()` had emptied into the page — nothing drew, nothing threw.
 
 ### EVERY DOOR'S BAY IS THE LAUNCH BAY'S SIZE
 
@@ -1897,8 +1888,8 @@ with photographs).
   the control was DEAD.** Forcing a group open whenever it held the picked row
   meant pressing its heading put it straight back. **A control that does
   nothing when pressed is worse than the problem it was avoiding**, so
-  `holdsPicked` is a DEFAULT. **The folds live in a module Map keyed by rail
-  AND group** — the bay is rebuilt on every push.
+  `holdsPicked` is a DEFAULT. **The folds live in a module Map keyed by rail AND
+  group** — the bay is rebuilt on every push.
 - **NO `title` ANYWHERE IN THE RAIL — the names WRAP to two lines instead.** A
   native tooltip is an unstyled box landing over the rows beneath it.
 - **`.bay-rail > * { flex: 0 0 auto }` IS LOAD-BEARING.** A flex column shrinks
@@ -3587,6 +3578,38 @@ individual rounds."*
   played tonight*, and a five-colour code makes the switched-off round
   unfindable. **Green, pink and purple are each already spoken for.** **The word
   rides in `title` and `aria-label`.**
+
+### IMAGE ROUNDS IS A VIEW OF ROUNDS, NEVER A COPY OF THEM — `console-rounds.js`
+
+*"We'll need to add an image rounds tab"*, then the model behind it: *"a quiz
+pack is theoretically just an amalgamation of the other three."*
+
+- **COUNTED FIRST, AND THE COUNT DECIDED THE BUILD.** Twenty-four one-round
+  packs — twenty intro, four text, **no image** — and **three** picture rounds
+  in all, every one INSIDE a full quiz. A tab of one-round `image` packs would
+  have been an empty shelf.
+- **COPYING THEM OUT IS RULE 11 RUNNING BACKWARDS**, so nothing is extracted. **A
+  card is a VIEW** — `packId` plus a round INDEX, what a Tonight slot and a
+  pack card's round tick already hold. Nothing written, nothing stale.
+- **IT TRAVELS THE ROUND CHANNEL** — `addRoundToTonight()` and
+  `shelfRoundDrag`, never `packDrag`: a synthesised id like `2006#1` resolves
+  to NOTHING through `packOf()`.
+- **THE PACK NAME IS THE TITLE AND THE ROUND'S IS THE SUB — the opposite of a
+  Tonight tile.** A tile tells one pack's rounds apart; this tells packs apart,
+  and **every picture round here is called "Whose Face Is This?"**
+- **`tab.section` AND `tab.count` ARE THE TWO HOOKS.** Without the second the
+  badge read **33** over a shelf of three. **`gameSection()` is not reused**:
+  its pin, search, mode dropdown and editor link all act on a FILE.
+- **THESE ARE NOT PRODUCTS** — no rename, no delete, no price. **If the
+  amalgamation model is taken all the way**, a quiz pack REFERENCES three round
+  files rather than holding their questions, and this shelf then lists real
+  packs unchanged. **Do not start that on a gig week**: it moves `loadQuiz()`.
+- **AND THE SIXTH TAB MAKES A KNOWN FRAME FAULT ONE TAB WORSE.**
+  `console-frame.mjs` already failed *"every tab is still reachable with one
+  up"* at 1500x900 **with a banner above the doorhead**: `.consolecols` clamps
+  to its 200px floor, is `overflow: visible`, and the tab column is not
+  constrained to it — the overflow escapes the frame with no scroller to reach
+  it. Two tabs before, three now, **in the no-accounts state only**.
 
 ### THE CONSOLE SHELF SHOWS EVERYTHING; THE WORKSHOP SHOWS SIX AND A SEARCH BOX
 

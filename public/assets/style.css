@@ -9902,6 +9902,23 @@ body.gal-zoomed { overflow: hidden; }
   padding: 1px 8px;
   white-space: nowrap;
 }
+/* AN IMAGE ROUND'S CARD — a pack poster with a glyph in the corner.
+
+   The glyph goes in a CORNER rather than beside the name, where it pushed the
+   title along and read as part of it. Top LEFT, because the era word this app
+   already draws on a pack card is a full-bleed watermark and the top right is
+   where a pin and a Yours badge live: one corner per job, as everywhere else.
+
+   `pointer-events: none` — the whole card is the tap target here, and a glyph
+   that swallowed the press would be an inert patch in the middle of it. */
+.round-card-glyph {
+  position: absolute;
+  top: 8px; left: 10px;
+  font-size: 15px;
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
 .bench-whose.is-mine {
   color: var(--hot);
   border-color: color-mix(in srgb, var(--hot) 55%, transparent);
