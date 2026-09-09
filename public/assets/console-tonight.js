@@ -664,16 +664,13 @@ export function launchBar() {
              of what it does — so the words stay "for another night", which is
              the fact that matters, and the tooltip says the rest. -->
         <div class="set-keep">
-          <!-- AND THE WORDS CAME BACK, BECAUSE THE HOST ASKED THE QUESTION
-               THIS RULE EXISTS TO PREVENT: *"what is the save button even
-               for?"* The rule is written four lines up — **the label has to
-               outrank the adjacency** — and a later shortening pass overrode
-               it to the bare verb. Beside a venue picker, "Save" reads as
-               "save the venue", the one thing this deliberately does NOT do,
-               and a verb whose object lives in a tooltip is invisible on a
-               phone. -->
+          <!-- THE LABEL IS WRITTEN BY paintSettings(), NOT HERE — see the
+               note by setSave.textContent. This text is overwritten on the
+               first paint, so changing it here changes NOTHING and the two
+               quietly disagree. That mistake has been made once, and shipped.
+               (NO BACKTICKS: this comment is inside a template literal.) -->
           <button class="minor set-save" type="button"
-            title="Keeps the packs and every setting on this bar — but never the venue, so you can run the same night anywhere">Save for another night</button>
+            title="Keeps the packs and every setting on this bar — but never the venue, so you can run the same night anywhere">Save</button>
         </div>
         <!-- WHERE THEY ARE, beside the fold rather than on a row of its own:
              what kind of night it is, and whether the panel is open. On its
@@ -1931,23 +1928,26 @@ export function launchBar() {
       const hasNight = mixed ? segmentsFromSlots(lbSlots).length > 0 : Boolean(pack);
       setSave.disabled = !hasNight;
       /*
-       * THE REASON GOES ON THE BUTTON, NOT BESIDE IT — reported in exactly
-       * those terms: *"not sure what 'nothing in tonight to keep yet'
-       * means"*. It was a sentence about the app's own state, floating next
-       * to a greyed-out control, describing a condition rather than telling
-       * anybody what to do about it. Two faults at once: it named "Tonight"
-       * as though that were a place you might have put something, and it
-       * said what was missing rather than what to do.
-       *
-       * A disabled button that says what it wants is the same shape Launch
-       * already uses ("Tap a pack to launch") — one control, one
-       * sentence, and no second line to read.
+       * THE REASON GOES ON THE BUTTON, NOT BESIDE IT — *"not sure what
+       * 'nothing in tonight to keep yet' means"*. It was a sentence about the
+       * app's own state floating beside a greyed control, naming "Tonight" as
+       * though that were a place you might have put something, and saying what
+       * was missing rather than what to do. A disabled button that says what
+       * it wants is the shape Launch already uses.
        */
       /*
        * JUST "SAVE" — asked for once the bar ran out of room: *"'add a
        * pack...' is now just 'save'."* The reason it is off moves to the
        * tooltip rather than disappearing, which is the trade a five-word
        * button was costing on the one row that now holds the whole night.
+       *
+       * **AND IT IS IN TENSION WITH THE RULE ABOVE, KNOWINGLY.** That rule
+       * says the label must outrank the adjacency — beside a venue picker a
+       * bare "Save" reads as "save the venue", the one thing this does NOT
+       * do — and the host later asked *"what is the save button even for?"*,
+       * which is that rule coming true. Both are his: the short label was a
+       * request when the row had run out of room, and the row has room again
+       * now the head cannot wrap. **His call, one word either way.**
        */
       setSave.textContent = 'Save';
       setSave.title = hasNight

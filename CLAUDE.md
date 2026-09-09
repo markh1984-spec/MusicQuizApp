@@ -1373,9 +1373,8 @@ now".
   wraps**. Still wraps below 1150px.
 - **A LONG OPTION EARNS A `data-short`**, and **the pack is named on the first
   of Card/Prizes, not both.**
-- Labels shortened with it: **Secs per Q** and **Game**. **"Look" became
-  "Appearance"** — it read as an instruction first. **AND THE SHORTENING WENT
-  TOO FAR ON ONE: Save is "Save for another night" again** — see below.
+- Labels shortened with it: **Secs per Q**, **Game**, **Save**. **"Look" became
+  "Appearance"** — it read as an instruction first.
 
 ### THE MARKUP GUARD IS THE MARKUP'S HALF OF THE BRACE RULE
 
@@ -1520,10 +1519,12 @@ space where possible."* Four placements and one real bug:
 - **KEEPING A NIGHT IS A NIGHT-LEVEL QUESTION, so it moved into the head**
   beside the venue. **The label has to outrank the adjacency**: a show never
   keeps the venue, so "Save" alone beside a venue picker says the opposite of
-  what it does — the words stay *"for another night"*. **A later shortening
-  pass overrode this to the bare verb and the host asked the exact question the
-  rule exists to prevent — *"what is the save button even for?"* — so it is
-  back. A verb whose object lives in a `title` is invisible on a phone.**
+  what it does — the words stay *"for another night"*. **IN TENSION WITH THE
+  SHORTENING RULE ABOVE, BOTH THE HOST'S**: he asked for the bare verb when the
+  row ran out of room, then asked *"what is the save button even for?"* — this
+  rule coming true. **The label is written by `paintSettings()`, not the
+  markup**; editing the template changes nothing and was shipped once. **Left
+  as "Save" pending his call.**
 - **THE REASON A CONTROL IS OFF GOES ON THE CONTROL** — *"Nothing in Tonight
   to keep yet"* floated beside a greyed button; it is on the button now.
 - **A BIGGER TARGET IS NOT A HITTABLE ONE.** The tile's × grew to 30px and the
