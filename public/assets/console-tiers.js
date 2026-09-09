@@ -109,7 +109,7 @@ function addsOf(tier) {
  * @returns {Element|null}  null when there is no ladder to draw: the OWNER,
  *   whose `ladder` is empty because none of it is for sale to him.
  */
-export function tierRow(ent) {
+export function tierRow(ent, { canBuy = [], onBuy = null } = {}) {
   const ladder = (ent && ent.ladder) || [];
   if (ladder.length < 2) return null;
 
@@ -157,7 +157,39 @@ export function tierRow(ent) {
        * the day the processor lands, and it is the same wording the expired
        * trial already uses.
        */
-      : 'Get in touch to move up.'}</div>`;
+      : canBuy.includes(tier.id) ? '' : 'Get in touch to move up.'}</div>`;
+
+    /*
+     * AND THE BUTTON, ONLY WHERE THE SERVER SAYS THAT RUNG IS ON SALE.
+     *
+     * `canBuy` comes off `/api/me` and is the tiers with a live price behind
+     * them — so this appears the day the keys are set and cannot appear
+     * before. **A Subscribe button that opens a 500 is worse than the
+     * sentence it replaced**, at the exact moment somebody is trying to give
+     * you money.
+     *
+     * **IT STILL GRANTS NOTHING.** This row sells; the webhook is the only
+     * thing that moves a tier. Pressing Gold on a Bronze account opens
+     * Stripe — it does not become Gold, however the reply comes back.
+     */
+    if (state !== 'yours' && canBuy.includes(tier.id) && onBuy) {
+      const go = node(`<button type="button" class="primary tier-buy">Subscribe \u2014 ${esc(priceLabel(tier.pence))}</button>`);
+      go.addEventListener('click', async (ev) => {
+        ev.stopPropagation();
+        // SAYS SO WHILE IT WAITS — a Checkout session is a round trip to
+        // Stripe, and a button that looks unpressed gets pressed twice.
+        go.disabled = true;
+        const was = go.textContent;
+        go.textContent = 'Opening\u2026';
+        const failed = await onBuy(tier.id);
+        if (failed) {
+          go.disabled = false;
+          go.textContent = was;
+          card.querySelector('.tier-card-foot').textContent = failed;
+        }
+      });
+      card.append(go);
+    }
   };
 
   for (const button of el.querySelectorAll('.tier-rung')) {

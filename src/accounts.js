@@ -501,14 +501,25 @@ export class Accounts {
    * a migration runs both for a while, and "which one is actually billing this
    * person" is a question somebody will need to answer in a hurry.
    */
-  setBilling(id, { processor = '', reference = '', at = 0, last = '' } = {}) {
+  setBilling(id, {
+    processor = '', reference = '', at = 0, last = '', customer = '',
+  } = {}) {
     const account = this.find(id);
     if (!account) return null;
+    /*
+     * `customer` IS KEPT ACROSS EVENTS THAT DO NOT CARRY ONE, which is the
+     * whitelist trap this file already records five times, wearing a sixth
+     * hat. Only the first event of a subscription names the customer; every
+     * renewal after it would otherwise blank the one field the billing portal
+     * needs, and the "change your card" link would work once and then 400.
+     */
+    const kept = (account.billing || {}).customer || '';
     account.billing = {
       processor: String(processor).slice(0, 24),
       reference: String(reference).slice(0, 120),
       at: Number(at) || 0,
       last: String(last).slice(0, 32),
+      customer: String(customer || kept).slice(0, 120),
     };
     this.save();
     return account.billing;

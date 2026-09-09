@@ -8,7 +8,8 @@ import { night } from './console-tonight.js';
 import { money } from './console-invoices.js';
 import { TABS, can, currentTab, hostKey, keyed, load, render } from './console.js';
 import { FEATURES, FEATURE_META, NOT_BUILT, SWITCHABLE } from './plans.js';
-import { priceLabel, tierRow } from './console-tiers.js';
+import { subscribeSlot } from './console-subscribe.js';
+import { priceLabel } from './console-tiers.js';
 import { paintScheme } from './schemes.js';
 
 /**
@@ -1293,14 +1294,13 @@ function youPanel() {
     </div>`);
 
   /*
-   * THE RUNGS, UNDER THE FACTS ABOUT THE ACCOUNT — see `console-tiers.js`.
-   *
-   * A read-only summary MAY repeat, which is the rule that lets this sit here
-   * AND at the head of the Shop's tiers panel: one is "what am I on", asked
-   * while looking at your own account, and the other is "what would I get",
-   * asked while looking at prices. A QUEUE may not repeat; this is neither.
-   */
-  el.querySelector('.tier-slot')?.appendChild(tierRow(ent) || document.createComment('no ladder'));
+   * THE RUNGS, plus what you do about one. `console-tiers.js` draws them and
+   * `console-subscribe.js` wires them: two files because the first may not
+   * touch the network. A read-only summary MAY repeat, which is the rule that
+   * lets this sit here AND at the head of the Shop's tiers panel: one is "what
+   * am I on" and the other "what would I get". A QUEUE may not; this is
+   * neither. */
+  el.querySelector('.tier-slot')?.appendChild(subscribeSlot(ent, me));
 
   el.querySelector('#acctPw')?.addEventListener('click', async () => {
     const current = prompt('Your current password');
@@ -1315,7 +1315,7 @@ function youPanel() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Could not change it');
-      // Changing a password signs every other session out, this one included.
+      // Changing it signs every other session out, this one included.
       alert('Changed. You will need to sign in again.');
       location.href = '/login';
     } catch (err) {

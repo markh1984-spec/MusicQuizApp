@@ -1,20 +1,25 @@
 /**
  * What a payment processor is allowed to say to this app.
  *
- * PayPal is what gets wired up first — a business account already exists for
- * the kids' party side — but the rate is 2.9% and Stripe is cheaper, so a move
- * is likely rather than hypothetical. CLAUDE.md has said from the beginning
- * that payments stay processor-agnostic; this file is what makes that
- * structural instead of a good intention.
+ * **STRIPE IS THE ONE THAT WENT IN.** PayPal was the plan for a while — a
+ * business account already existed for the kids' party side — and this file
+ * was written processor-agnostic against that day. It never happened: Stripe
+ * is cheaper and its Checkout keeps card numbers off this server entirely.
+ * The agnosticism was still worth having, and it is what made wiring Stripe up
+ * one new file rather than a change to anything here.
+ *
+ * **AND `src/paypal.js` DOES NOT EXIST — this comment named it for months.**
+ * *A comment that claims the opposite is where the next bug hides*, which is a
+ * rule this codebase already carries three sightings of.
  *
  * ---
  *
  * **The rule: nothing outside a processor's own adapter may know which
- * processor it is.** `src/paypal.js` translates PayPal's webhooks into the
+ * processor it is.** `src/stripe.js` translates Stripe's webhooks into the
  * five events below and knows nothing about accounts; this file applies those
- * events to an account and knows nothing about PayPal. Swapping to Stripe is
- * then one new adapter file and one route — not a search through the codebase
- * for the word "paypal". There is a test that greps for exactly that.
+ * events to an account and knows nothing about Stripe. A second processor is
+ * one more adapter file and one more route — not a search through the codebase
+ * for a brand name. There is a test that greps for exactly that.
  *
  * **A webhook may only ever move a SUBSCRIPTION.** It can set the tier and the
  * status and store an opaque reference, and that is the whole list. It can
@@ -92,6 +97,11 @@ export function readEvent(raw = {}) {
       // confused with the first one's.
       processor: String(raw.processor || '').slice(0, 24),
       reference: String(raw.reference || '').slice(0, 120),
+      // WHO the processor thinks this is, so the "change your card" link has
+      // something to open. Stored and never interpreted here, like the
+      // reference — and only the FIRST event of a subscription carries one,
+      // which is why `setBilling()` keeps the last one it saw.
+      customer: String(raw.customer || '').slice(0, 120),
     },
   };
 }
@@ -151,6 +161,7 @@ export function applyBilling(accounts, raw = {}) {
   accounts.setBilling(event.accountId, {
     processor: event.processor,
     reference: event.reference,
+    customer: event.customer,
     at: event.at,
     last: event.kind,
   });

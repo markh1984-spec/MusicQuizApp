@@ -48,134 +48,127 @@ the evidence defeats it), or make a repo per room (it spreads the bytes and
 creates a repo to make per subscriber, which fails the Monday test).
 
 
-### PayPal — the half that is built, and the half that is blocked
+### Stripe — wired, 9 September 2026
 
 **Subscriptions rather than invoices**, on your own reasoning: chasing ten
-quizmasters every month is worse than chasing venues, and PayPal charges the
-card by itself.
+quizmasters every month is worse than chasing venues, and the processor charges
+the card by itself.
 
-#### Built and tested — `src/billing.js`
+**PayPal was the plan and never happened.** `billing.js` was written
+processor-agnostic against the day a PayPal adapter would land; the adapter
+never got written because `developer.paypal.com` was blocked by this
+environment's egress policy and writing a webhook-verification path from memory
+is not a bug, it is a hole where anybody can POST "subscription activated" and
+hand themselves Gold. Stripe is cheaper anyway, and its docs are reachable. The
+agnosticism was still worth having: wiring Stripe up touched no line of
+`billing.js`.
 
-The processor-agnostic half, which is the half that matters because **you are
-on 2.9% and expect to move to Stripe.** Five events and nothing else — started,
-renewed, payment_failed, cancelled, expired — applied to an account by one
-function. Four properties, all with tests:
+#### A SEPARATE STRIPE ACCOUNT, NOT A SECOND BUSINESS INSIDE THE EXISTING ONE
 
-- **A webhook may only ever move a SUBSCRIPTION.** It sets a tier and a status
-  and stores an opaque reference. It cannot set `comped`, a role, `packs`, an
-  email or a password. That endpoint is reachable by anybody who finds the URL
-  and a signature check is the only thing in front of it, so a bug there has to
-  cost a wrong tier and never an account.
-- **A failed payment moves the STATUS and never the tier**, which is the rule
-  this codebase already has tests for: a lapsed subscription never interrupts a
-  night. Dropping somebody to Bronze because a card expired on a Tuesday would
-  take their packs away mid-week.
-- **An older event can never roll a subscription backwards.** Webhooks retry
-  and arrive out of order, and a stale "cancelled" landing after a fresh
-  "started" would close an account somebody has just paid for. Same lesson the
-  invoice counter learned.
-- **Nothing outside a processor's own adapter knows which processor it is** —
-  there is a test that greps the code for the words. Moving to Stripe is one
-  new adapter file and one route, not a search through the codebase.
+The question was *"can I set up a new business in the Stripe account to make it
+Quizporium shaped?"* — and the answer is yes, but the thing to create is a new
+ACCOUNT under the same login rather than anything inside the kids'-party one.
+Stripe's dashboard has an account switcher for exactly this; one email, one
+password, two businesses side by side.
 
-#### Blocked — the PayPal adapter itself
+Four reasons it has to be separate rather than tidy-to-be-separate:
 
-`developer.paypal.com` is blocked by this environment's network egress policy,
-so the API surface cannot be read from here. **The adapter has deliberately NOT
-been written from memory.** A wrong webhook-verification path is not a bug, it
-is a hole where anybody can POST "subscription activated" and hand themselves
-Gold — which is exactly the wall `billing.js` exists to keep narrow.
+- **The statement descriptor is per account.** A subscriber's bank statement
+  would otherwise carry the kids'-party name — a support email every month from
+  somebody who does not recognise a charge, which is a Monday-load creator for
+  a cosmetic reason.
+- **Checkout branding, receipt emails and the customer portal are all per
+  account.** All three are things a paying quizmaster sees.
+- **Payouts and bookkeeping stay apart**, which is what makes the two
+  businesses' numbers answerable separately.
+- **Products and prices live in an account**, so the three tiers cannot end up
+  in a list beside party packages.
 
-Two ways to unblock it, either is fine:
+#### What is needed from you — five environment variables
 
-1. **Allow `developer.paypal.com` and `api-m.sandbox.paypal.com`** in the
-   environment's network settings (see the Claude Code on the web docs), and it
-   gets written and tested against the real shapes.
-2. **Paste the relevant doc pages in**, or hand over sandbox credentials — the
-   sandbox API answers questions about itself.
+All on the Render service (`/web/srv-…`, never the project page). **Test mode
+first**: every key below has a test twin, nothing touches real money, and the
+whole loop is provable before anything goes live.
 
-#### What is needed from you either way — about 5 minutes
+- `STRIPE_SECRET_KEY` — Developers → API keys. `sk_test_…` first.
+- `STRIPE_PRICE_BRONZE`, `STRIPE_PRICE_SILVER`, `STRIPE_PRICE_GOLD` — one
+  recurring monthly Price each, £10 / £20 / £30, matching `TIERS` in
+  `plans.js`. The ids look like `price_1AbC…`.
+- `STRIPE_WEBHOOK_SECRET` — from adding an endpoint at
+  `https://musicquizapp.onrender.com/api/stripe/webhook`, subscribed to
+  `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed` and
+  `customer.subscription.deleted`. The signing secret looks like `whsec_…`.
 
-On the kids'-party PayPal business account, at developer.paypal.com:
+**The three prices are read from the environment rather than created by a
+script**, which is the one difference from the plan written for PayPal. A
+script that mints prices is a script that can mint the wrong one on a rerun,
+and there are three of them, made once, in a form that shows you what you are
+charging before you save it.
 
-- `PAYPAL_CLIENT_ID` and `PAYPAL_SECRET` — **sandbox first**, so nothing
-  touches real money until the whole loop is proven
-- `PAYPAL_WEBHOOK_ID` — from creating a webhook pointed at
-  `https://musicquizapp.onrender.com/api/paypal/webhook`
+#### What is built
 
-#### Then, and it is small
+- **`src/stripe.js`** — the adapter, and the only file that knows the word
+  Stripe. Signature verification, the translation to the five events, Checkout
+  and the billing portal.
+- **`POST /api/stripe/webhook`** — the only thing in the app that can move a
+  tier.
+- **`POST /api/subscribe`** — turns a rung into a Checkout session.
+- **`POST /api/billing/portal`** — Stripe's own portal, where a card is changed
+  and a subscription is cancelled.
+- **`console-subscribe.js`** — the Subscribe button on each rung, and the link
+  into the portal.
 
-- `src/paypal.js` — token, plan creation, webhook signature verification.
-- `scripts/paypal-setup.mjs` — creates the product and the three plans **from
-  `TIERS` in plans.js**, so the price on the ladder and the price PayPal charges
-  cannot drift apart.
-- `POST /api/paypal/webhook` — verify, translate to one of the five events,
-  hand to `applyBilling`. **Then `billingEmail(result, accounts.find(...))`,
-  and `sendEmail()` it if it returns one** — built and tested on 19 August
-  2026 (`src/billing.js`, `src/email.js`), waiting only for a route to call
-  it from. A receipt on `started`/`renewed`, a card-failed notice on
-  `payment_failed`, both from Quizporium; `cancelled` and `expired` stay
-  silent on purpose.
-- A Subscribe button per rung on the account page. Card details never reach
-  this server.
+#### The decisions worth not re-arguing
 
-#### The two money emails, decided and built ahead of the route that fires them
+- **NO SDK.** The no-dependencies rule holds and costs almost nothing here:
+  Stripe's API is form-encoded HTTP and the webhook signature is an HMAC node's
+  own `crypto` computes. The SDK is ~40 transitive packages on the one server
+  holding a live connection to every phone in a pub.
+- **CHECKOUT RATHER THAN A FORM ON THIS APP**, and it is a decision about
+  liability rather than effort: a card number that never touches this server is
+  one this server can never leak. It is the same reasoning as the invoice
+  book's *no card details are stored and none ever will be*.
+- **THE ACCOUNT ID TRAVELS ON THE SUBSCRIPTION, not only the session.** It goes
+  on the Checkout session as `client_reference_id` AND into
+  `subscription_data.metadata.accountId`, because a renewal months later has no
+  session on it at all. Getting that wrong means the first payment lands and
+  every renewal after it is an event the app cannot attribute to anybody.
+- **THE TIER IS READ OFF THE PRICE, never off the request.** `wantedTier` must
+  never become `tier`: the browser names a rung, the server turns that into one
+  of three price ids it holds, and what an account is granted comes back off
+  whatever Stripe says was paid for.
+- **AN UNKNOWN PRICE GRANTS NOTHING.** A plan made in the dashboard that this
+  app has never heard of leaves the tier where it is rather than guessing one.
+- **THE WEBHOOK ANSWERS 200 TO ALMOST EVERYTHING.** Stripe sends dozens of
+  event types and this app acts on five things. An endpoint that errors on one
+  it does not care about makes Stripe retry for hours and eventually disable
+  the endpoint — the whole subscription plumbing going quiet with nothing on
+  screen to say so. 400 is reserved for a body that fails the signature.
+- **`customer.subscription.updated` IS DELIBERATELY NOT HANDLED.** It fires for
+  every trivial change — a card updated, a proration recalculated — and acting
+  on it would move somebody's status for reasons that are not about whether
+  they have paid.
+- **CANCELLING IS STRIPE'S PORTAL AND NOT A BUTTON HERE.** A cancel button on
+  this app would be a second place a subscription can end, and the two would
+  disagree the first time one of them failed. It also makes the honest answer
+  to "how do I stop paying" a link rather than an email to somebody with one
+  admin day a week.
+- **A GROUP SEAT CANNOT SUBSCRIBE.** Its standing is its parent's through
+  `effective()`; billing it separately would take money for something it
+  already holds.
+- **`billingEmail()` IS CALLED FROM THE ROUTE, never from `applyBilling()`** —
+  a receipt on `started`/`renewed`, a card-failed notice on `payment_failed`,
+  both from Quizporium; `cancelled` and `expired` stay silent on purpose.
 
-Decided 19 August 2026, one of a batch of decisions asked and answered up
-front rather than mid-build. `src/email.js` had one email in it — the
-password reset — and its own doc comment said in as many words not to grow
-it into notifications without a decision. The decision arrived and named two,
-and no more: **a receipt when a payment lands, a notice when one does not.**
-Both from Quizporium, because the app took the money — the mirror image of
-invoicing, which drafts from the quizmaster's own address because that money
-is theirs, never the app's.
+#### The tests, and what each is for
 
-**Kept OUT of `applyBilling()` itself, on purpose.** That function's whole
-design is a small, pure translation from a processor event to an account
-patch — no network call, easy to reason about, easy to test without a
-server. Putting a `sendEmail()` call inside it would make every future test
-of the account logic a test of email delivery too. So `billingEmail(result,
-account)` in `src/billing.js` is the connector a route calls SECOND, once
-`applyBilling()` has already succeeded:
-
-```js
-const result = applyBilling(accounts, raw);
-if (result.ok) {
-  const mail = billingEmail(result, accounts.find(raw.accountId));
-  if (mail) sendEmail(mail);
-}
-```
-
-**Only two of the five events say anything.** `started` and `renewed` are a
-payment landing, so both get the receipt — not only the first one, because a
-quizmaster paying for the third month running deserves to know it went
-through as much as the first time did. `payment_failed` gets the other half.
-`cancelled` and `expired` are silent: a quizmaster who has just left is not
-somebody this app should be emailing, and the leaving was already their own
-action — an email about it would be the app narrating a decision back at the
-person who made it.
-
-**The card-failed notice must never say a night is at risk, because it never
-is.** `applyBilling()`'s own rule is that a failed payment moves the status
-and never the tier — the same "a lapsed subscription never interrupts a
-night" this codebase already has tests for elsewhere. An email that implied
-otherwise would be the app frightening somebody about a game that was never
-in danger, over a card that will very often just be a bank's own fraud check
-having a slow day.
-
-**It is genuinely built and tested, and genuinely not reachable yet — both
-true at once, and worth holding together rather than picking one.** There is
-no webhook route to call it from, because there is no PayPal adapter, because
-`developer.paypal.com` is blocked by this environment's network egress — see
-above. Building the sender ahead of the trigger is the same shape as
-`billing.js` itself: correct and tested against invented event shapes now,
-proven against real ones the day the network access lands.
-
-#### One number worth knowing before the pack shop opens
-
-At 2.9% plus a fixed fee, **the fixed fee is what hurts a £3 pack sale and
-barely touches a £30 subscription.** Roughly: a £3 pack keeps about 87% after
-fees, a £30 subscription keeps about 96%. That is another quiet argument for
-the subscription being the business and the pack sale being the on-ramp, which
-is what the pricing already assumes — and if pack sales ever become common, it
-is an argument for selling three at once rather than one at a time.
+- `test/stripe.test.js` — the signature (a changed body, the wrong secret, a
+  replay, a rotation with two `v1`s, a wrong-LENGTH signature that used to
+  throw rather than return false), the translation, and the tier mapping both
+  ways.
+- `test/stripe-route.test.js` — the same over real HTTP, because the raw-bytes
+  requirement cannot be seen any other way. **The fixture bodies are
+  pretty-printed on purpose**: a body built with `JSON.stringify(x)` survives
+  parse-and-restringify unchanged, so the first version of that file passed
+  with the fault deliberately put back. Two spaces of indentation is what makes
+  it a real check.

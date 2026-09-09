@@ -53,6 +53,10 @@ import {
 } from './public/assets/slugs.js';
 import { comeBackFor, nextNightAt, comeBackText } from './src/comeback.js';
 import { isComposed, MAX_ROUNDS } from './src/running-order.js';
+import { applyBilling, billingEmail } from './src/billing.js';
+import {
+  checkoutSession, portalSession, sellableTiers, stripeConfigured, toBillingEvent, verifySignature, webhookSecret,
+} from './src/stripe.js';
 import { listShows, saveShow, deleteShow, showProblems } from './src/shows.js';
 import { pickIdeas, ideaLabel } from './src/round-ideas.js';
 import { getFile, tryGetFile, listDir, tryListDir, listDirs, githubConfigured, missingGithubConfig, putFile, putFiles, deleteFile, checkAccess, photosRepoConfigured, photosRepoName, missingPhotoConfig, photoRepoProblem, privateRepoConfigured, packsRepoConfigured, packsRepoName } from './src/github.js';
@@ -1825,6 +1829,23 @@ async function handleGet(req, res, url, route) {
          * place that cannot see the rooms.
          */
         ownAddress: roomForHost(req, url).id === publicRoomId(),
+        /*
+         * WHICH RUNGS CAN ACTUALLY BE BOUGHT — the ones with a live price on
+         * the server. **NO SUBSCRIBE BUTTON UNTIL THERE IS A PROCESSOR** is
+         * the rule the rungs already carry, and this is the half that makes it
+         * true without a redeploy: the keys and the three price ids are
+         * environment variables, so the button appears the moment they are set
+         * and cannot appear before. A button that opens a 500 is worse than no
+         * button at the exact moment somebody is trying to pay.
+         *
+         * A LIST rather than a boolean, because the three go on sale one at a
+         * time while they are being set up, and a rung with no price behind it
+         * must stay a price list.
+         */
+        canBuy: stripeConfigured() ? sellableTiers() : [],
+        // And whether there is a subscription to manage at all — the portal
+        // 400s without a customer, so the link is drawn only where it works.
+        hasBilling: Boolean((account.billing || {}).customer),
       },
       /*
        * THE LIVE LADDER, so the browser stops working off the shipped one.
@@ -4774,6 +4795,116 @@ function csvCell(value) {
 }
 
 async function handleWrite(req, res, url, route) {
+  /*
+   * ---- STRIPE
+   *
+   * THE WEBHOOK IS FIRST IN THIS FUNCTION BECAUSE IT NEEDS THE RAW BYTES.
+   * The signature is an HMAC over the body exactly as it was sent, so parsing
+   * it and re-serialising changes it and every check then fails — a fault
+   * that looks like a wrong secret and is not. `readJson()` consumes the
+   * stream, so nothing may reach it before this.
+   *
+   * **AND IT ANSWERS 200 TO ALMOST EVERYTHING.** Stripe sends dozens of event
+   * types; this app acts on five things. An endpoint that errors on an event
+   * it does not care about makes Stripe retry it for hours and eventually
+   * disable the endpoint — which is the whole subscription plumbing going
+   * quiet with nothing on screen to say so. 400 is reserved for the one thing
+   * that IS an emergency: a body that does not carry a valid signature.
+   */
+  if (route === '/api/stripe/webhook' && req.method === 'POST') {
+    const chunks = [];
+    let total = 0;
+    for await (const chunk of req) {
+      total += chunk.length;
+      // A webhook is small. A body far past that is not Stripe.
+      if (total > 512 * 1024) return sendJson(res, 400, { error: 'too big' }), true;
+      chunks.push(chunk);
+    }
+    const raw = Buffer.concat(chunks);
+    const checked = verifySignature(raw, req.headers['stripe-signature'], webhookSecret());
+    if (!checked.ok) {
+      // Said out loud in the log, never to the caller: which half of the check
+      // failed is exactly what somebody probing would like to know.
+      console.warn('[stripe] refused a webhook:', checked.reason);
+      return sendJson(res, 400, { error: 'signature' }), true;
+    }
+
+    const event = toBillingEvent(checked.event);
+    if (!event) return sendJson(res, 200, { ok: true, ignored: String(checked.event.type || '') }), true;
+
+    const result = applyBilling(accounts, event);
+    if (result.ok) {
+      await backUpAccounts();
+      const mail = billingEmail(result, accounts.find(event.accountId));
+      if (mail && emailConfigured()) {
+        sendEmail(mail).catch((err) => console.warn('[stripe] could not email:', err.message));
+      }
+    } else {
+      // Reported rather than thrown — see `applyBilling()`. A stale retry is
+      // normal and is not a fault.
+      console.warn('[stripe]', String(checked.event.type || ''), 'not applied:', result.reason);
+    }
+    return sendJson(res, 200, { ok: true }), true;
+  }
+
+  /*
+   * WHERE A SUBSCRIBE BUTTON SENDS SOMEBODY.
+   *
+   * **`wantedTier` MUST NEVER BECOME `tier`.** The browser names a rung; this
+   * turns that into one of three price ids the SERVER holds, and the tier the
+   * account actually ends up on is read back off whatever Stripe says was
+   * paid for, in the webhook above. A rung out of a request body is never
+   * granted anywhere on this path.
+   */
+  if (route === '/api/subscribe' && req.method === 'POST') {
+    const me = whoIs(req, url);
+    if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    if (me.bootstrap) return sendJson(res, 400, { error: 'The host key is not an account, so there is nothing to subscribe.' }), true;
+    if (me.role === 'owner') return sendJson(res, 400, { error: 'The owner account has no subscription.' }), true;
+    // A seat is covered by its parent — see `effective()`. Billing one
+    // separately would take money for something it already holds.
+    if (me.parentId) return sendJson(res, 400, { error: 'Your subscription is your group’s. Ask whoever manages it.' }), true;
+
+    const body = await readJson(req);
+    const base = (config.publicUrl || '').replace(/\/+$/, '')
+      || `${(req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim()}://${req.headers.host}`;
+    const made = await checkoutSession({
+      accountId: me.id,
+      email: me.email,
+      tier: String(body.tier || ''),
+      // Back onto their own account page either way — the webhook is what
+      // actually grants anything, so there is nothing to read off the URL.
+      successUrl: `${base}/console?tab=account&paid=1`,
+      cancelUrl: `${base}/console?tab=account`,
+      customerId: (me.billing || {}).customer || '',
+    });
+    if (!made.ok) return sendJson(res, 400, { error: made.reason }), true;
+    return sendJson(res, 200, { url: made.url }), true;
+  }
+
+  /*
+   * AND WHERE THEY GO TO CHANGE A CARD OR STOP PAYING — Stripe's own portal.
+   *
+   * **CANCELLING IS DELIBERATELY NOT BUILT HERE.** A cancel button on this app
+   * would be a second place a subscription can end, and the two would disagree
+   * the first time one of them failed. It also makes the honest answer to "how
+   * do I stop paying" a link rather than an email to somebody with one admin
+   * day a week.
+   */
+  if (route === '/api/billing/portal' && req.method === 'POST') {
+    const me = whoIs(req, url);
+    if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    if (me.bootstrap) return sendJson(res, 400, { error: 'The host key is not an account.' }), true;
+    const base = (config.publicUrl || '').replace(/\/+$/, '')
+      || `${(req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim()}://${req.headers.host}`;
+    const made = await portalSession({
+      customerId: (me.billing || {}).customer || '',
+      returnUrl: `${base}/console?tab=account`,
+    });
+    if (!made.ok) return sendJson(res, 400, { error: made.reason }), true;
+    return sendJson(res, 200, { url: made.url }), true;
+  }
+
   /*
    * PUT A NIGHT ON THE PUBLIC GALLERY, or take it back down.
    *

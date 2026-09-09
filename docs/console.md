@@ -1735,3 +1735,13 @@ He drops a round to make time, the tick goes red, the button agrees with him,
 and the room plays it. One answer to "what is being played tonight", and it is
 the one the tick already reads.
 
+
+
+---
+
+## The console's chrome — the topbar, the frame and the sizes nobody measured
+
+Moved to **[`console/chrome.md`](console/chrome.md)** on 9 September 2026, when
+this file crossed its own 100,000-byte cap for the third time. It holds the
+sweep of 25 August 2026 finding by finding, and the three things that did not
+fit, with every measurement. CLAUDE.md keeps the prohibitions.
