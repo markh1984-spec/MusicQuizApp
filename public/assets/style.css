@@ -10020,6 +10020,43 @@ body.gal-zoomed { overflow: hidden; }
   pointer-events: none;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
+
+/* DRAW THIS ROUND, FROM THE SHELF THE ROUND IS ON.
+
+   The one control on a round card that is not "place this" — so it sits in
+   the BOTTOM RIGHT, the corner nothing else on a shut card uses, well clear
+   of the glyph at the top left and the title's own fade at the foot. It is an
+   ordinary outlined button rather than a filled one: it opens the panel, and
+   the press that actually spends money is inside that panel and is the green
+   one. Same split, same words, same colours as the pack card's own Pictures
+   button — this is that button, on the shelf where the round lives.
+
+   `border-color`, never the `border` shorthand: five sightings in this sheet.
+   `z-index` because the card's title fade is a `::before` above the content,
+   and a visible button that swallows nothing is the fault this file already
+   records twice. */
+.round-card .round-pics {
+  position: absolute;
+  right: 8px; bottom: 8px;
+  z-index: 2;
+  padding: 4px 8px;
+  border-radius: var(--r-field);
+  border: 1px solid var(--panel-line);
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--ink);
+  font: inherit; font-size: 11px; line-height: 1.1;
+  cursor: pointer;
+}
+.round-card .round-pics:hover { background: rgba(0, 0, 0, 0.75); }
+.round-card .round-pics.wants {
+  border-color: var(--good);
+  background: rgba(47, 224, 122, 0.18);
+}
+.round-card .round-pics.is-open { border-color: var(--hot); }
+/* THE PANEL HANGS UNDER THE GRID, AND SAYS WHOSE IT IS. Two of these open at
+   once would be two spending controls with nothing naming the pack either
+   belongs to, which is why only one is ever open. */
+.pics-for { margin: 10px 0 4px; color: var(--ink-dim); }
 .bench-whose.is-mine {
   color: var(--hot);
   border-color: color-mix(in srgb, var(--hot) 55%, transparent);

@@ -46,9 +46,11 @@
  */
 
 import { esc, node } from './client.js';
-import { doorNow, packWord } from './console.js';
+import { can, doorNow, packWord } from './console.js';
 import { addRoundToTonight, dragging, putOnBench } from './console-tonight.js';
 import { setShelfRoundDrag } from './console-state.js';
+import { pictureLabel, picturePanel } from './console-packs.js';
+import { FEATURES } from './plans.js';
 import { packLookAttrs, roundGlyph, roundWord, shortTitle, titleSize } from './pack-look.js';
 
 /**
@@ -114,6 +116,33 @@ function roundCard(entry, type) {
   const art = artLine(pack);
   const name = shortTitle(pack.title);
   const sub = roundName(round, index);
+  /*
+   * AND A PICTURE ROUND CAN BE DRAWN FROM HERE — asked for as *"when I
+   * generate a new quiz pack, if that can't be done here I need an empty pack
+   * added to the image tab so I can generate it in there."*
+   *
+   * **THERE IS NOTHING TO ADD, BECAUSE THE ROUND IS ALREADY HERE.** A
+   * generated quiz comes out WITH its picture round — `QUIZ_ROUNDS` ticks
+   * `image` by default — so it is a card on this shelf the moment it is
+   * written. What it does NOT come out with is the pictures: drawing costs
+   * money at the supplier and waits to be asked for, which is a rule rather
+   * than an oversight. So the gap was never a missing pack, it was that the
+   * one control which draws them lived on the pack and this shelf could not
+   * reach it. **An empty pack invented to hold them would be a second file
+   * for a round that already exists, which is rule 11 running backwards.**
+   *
+   * **THE SAME PANEL, NOT A SECOND ONE** — `picturePanel()`, exported from
+   * `console-packs.js`, so the styles, the quality, the stand-in/real split
+   * and the price quoted before the press keep ONE definition.
+   *
+   * **THE OWNER'S, AND THE WORKSHOP'S.** Portraits are on the owner's bill
+   * (`FEATURES.CATALOGUE`, the same gate the pack card uses), and drawing is
+   * something you do BEFORE a night rather than while launching one — so it
+   * is not offered on the Console door, where a tap means *put this in
+   * Tonight*.
+   */
+  const drawable = type === 'image' && doorNow() !== 'console' && can(FEATURES.CATALOGUE);
+  const pic = drawable ? pictureLabel(pack) : null;
   const el = node(`
     <div class="pack-card shut round-card ${look.cls}" style="${look.style}"
       draggable="true" data-pack="${esc(pack.id)}" data-round="${index}"
@@ -122,6 +151,7 @@ function roundCard(entry, type) {
       <span class="round-card-glyph" aria-hidden="true">${roundGlyph(round.type, index + 1)}</span>
       <button class="pack-title ${titleSize(name)}" title="${esc(pack.title)}">${esc(name)}</button>
       <div class="tiny">${count} question${count === 1 ? '' : 's'}${art ? ` · ${esc(art)}` : ''}</div>
+      ${drawable ? `<button class="round-pics${pic.wants ? ' wants' : ''}" type="button" title="${esc(pic.title)}">${esc(pic.label)}</button>` : ''}
     </div>`);
 
   /*
@@ -136,6 +166,7 @@ function roundCard(entry, type) {
   });
   el.addEventListener('click', (ev) => {
     if (ev.target.closest('.pack-title')) return;
+    if (ev.target.closest('.round-pics')) return;
     if (doorNow() === 'console') addRoundToTonight(pack.id, index);
     else putOnBench(pack, 'quiz');
   });
@@ -157,6 +188,35 @@ function roundCard(entry, type) {
     dragging(false);
     el.classList.remove('is-dragging');
   });
+
+  const pics = el.querySelector('.round-pics');
+  if (pics) {
+    // A press must not also place the round, and the mousedown would otherwise
+    // start the card's own drag.
+    pics.addEventListener('mousedown', (ev) => ev.stopPropagation());
+    pics.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      /*
+       * ONE OPEN AT A TIME, AND PRESSING IT AGAIN SHUTS IT. The panel hangs
+       * under the GRID rather than inside a 146px poster, so two open at once
+       * would be two money-spending controls stacked with nothing saying which
+       * pack either belongs to.
+       */
+      const grid = el.closest('.pack-grid');
+      const host = grid && grid.parentElement;
+      if (!host) return;
+      const open = host.querySelector('.pics-slot');
+      const was = open && open.dataset.pack;
+      if (open) open.remove();
+      host.querySelectorAll('.round-pics.is-open').forEach((b) => b.classList.remove('is-open'));
+      if (was === pack.id) return;
+      const slot = node(`<div class="pics-slot" data-pack="${esc(pack.id)}"><div class="tiny pics-for">Round 2 pictures — ${esc(pack.title)}</div></div>`);
+      slot.appendChild(picturePanel(pack));
+      host.appendChild(slot);
+      pics.classList.add('is-open');
+      slot.scrollIntoView({ block: 'nearest' });
+    });
+  }
   return el;
 }
 
@@ -180,7 +240,15 @@ export function roundsSection(type, label, blurb, packs) {
     </div>`);
   const grid = el.querySelector('.pack-grid');
   if (!found.length) {
-    grid.appendChild(node('<div class="tiny">No picture rounds in your packs yet — a quiz with a picture round in it will show its round here.</div>'));
+    /*
+     * AND THE EMPTY STATE NAMES THE TYPE. It said "picture rounds" from the
+     * day this shelf was Image Rounds alone, so the General Knowledge tab
+     * would have told an empty library it held no PICTURES — the sentence a
+     * shelf prints when it has nothing is the one place it has to be exactly
+     * right about what it is looking for.
+     */
+    const word = roundWord(type).toLowerCase();
+    grid.appendChild(node(`<div class="tiny">No ${esc(word)} rounds in your packs yet — a quiz with one in it will show its round here.</div>`));
     return el;
   }
   for (const entry of found) grid.appendChild(roundCard(entry, type));

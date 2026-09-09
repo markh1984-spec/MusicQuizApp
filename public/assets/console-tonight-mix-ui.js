@@ -10,7 +10,7 @@
 import { esc, node, gripIcon, bestBingoShape } from './client.js';
 import { packWord } from './console.js';
 import { library } from './console-state.js';
-import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
+import { packLookAttrs, shortTitle, isBreakoutPack, roundGlyph, roundWord } from './pack-look.js';
 import {
   DEFAULT_BINGO_PRIZES, addBingoSlot, addQuizPackSlot, hasPack, homeSlotIndex, moveRoundToSlot, swapSlots,
   offRoundsFor, removeSlot, toggleRoundOff,
@@ -402,6 +402,37 @@ export function renderSlots(slots, {
     return trimmed || written || `Round ${i + 1}`;
   }
 
+  /**
+   * WHAT KIND OF ROUND THIS IS, IN WORDS — reported off a live bar: *"there
+   * are three greens there and they're all different rounds? Or perhaps have
+   * a little header at the top to say what they are?"*
+   *
+   * **NOT A COLOUR, AND THAT IS THIS FILE'S OLDEST RULE ARRIVING FROM A NEW
+   * DIRECTION.** The tile's edge already means the KIND OF PACK — quiz green,
+   * bingo purple, breakout its own — which is the one thing a mixed night has
+   * to say at a glance, and repainting it per round type takes that away
+   * exactly when it matters most. Green, pink and purple are each already
+   * spoken for elsewhere too. So the type is said in WORDS, which is also
+   * what the host offered himself.
+   *
+   * **AND IT TAKES THE SUB'S LINE RATHER THAN A THIRD ONE.** A tile is 90px
+   * and the two rows on it are full. What the sub was drawing on the reported
+   * screen was the pack name FOUR TIMES — one pack burst into four rounds —
+   * which is the same emptiness the tile's own rule already names: *a row of
+   * tiles all reading "1980s Pop" says nothing about the order of the
+   * evening.* So the pack name is kept only where it TELLS TWO TILES APART,
+   * which is a night holding more than one pack. The tooltip carries it
+   * always.
+   */
+  function typeLine(pack, i) {
+    const round = (pack.rounds || [])[i];
+    const type = round && round.type;
+    if (!type) return '';
+    const packs = new Set(slots.filter((s) => s && s.packId).map((s) => s.packId));
+    const also = packs.size > 1 ? ` \u00b7 ${esc(shortTitle(pack.title))}` : '';
+    return `<div class="lb-tile-sub"><span aria-hidden="true">${roundGlyph(type, i + 1)}</span> ${esc(roundWord(type))}${also}</div>`;
+  }
+
   function filledTile(slot, at) {
     const isBingo = slot.kind === 'bingo';
     const pack = packOf(slot.packId) || { id: slot.packId, title: slot.packId, trackCount: 40, cardSize: 4 };
@@ -417,12 +448,7 @@ export function renderSlots(slots, {
           <span class="drag-grip" aria-hidden="true" title="Drag to move this round">${gripIcon()}</span>
           <b class="lb-tile-name">${esc(name)}</b>
         </div>
-        ${isBingo ? bingoSaid(slot, pack) : one
-          // NOT WHEN IT ONLY SAYS THE NAME AGAIN — a pack whose round is
-          // titled after the pack drew the same words twice, one above the
-          // other, which reads as a rendering fault rather than a label.
-          ? (name === shortTitle(pack.title) ? '' : `<div class="lb-tile-sub">${esc(shortTitle(pack.title))}</div>`)
-          : roundDots(slot, at)}
+        ${isBingo ? bingoSaid(slot, pack) : one ? typeLine(pack, slot.rounds[0]) : roundDots(slot, at)}
       </div>`);
 
     tile.querySelector('.lb-tile-off').addEventListener('mousedown', (ev) => ev.stopPropagation());

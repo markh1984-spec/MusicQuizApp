@@ -724,28 +724,40 @@ export const QUIZ_ROUNDS = [
  * ALL CAPS being read as shouting. Title Case is a name, which is what a tab
  * is.
  */
+/*
+ * THE ROUND TYPES THAT HAVE A TAB OF THEIR OWN, and the one question the
+ * Quiz Packs shelf asks of a pack.
+ *
+ * A pack is off that shelf only when it is ONE round AND that round has
+ * somewhere else to be. Everything else stays — a whole night, and a lone
+ * round of a type nothing lists.
+ */
+const ROUND_TABS = ['text', 'image', 'intro'];
+
+function onARoundTab(pack) {
+  if (!isOneRound(pack)) return false;
+  const only = ((pack.rounds || [])[0] || {}).type;
+  return ROUND_TABS.includes(String(only || '').toLowerCase());
+}
+
 export const TABS = [
   {
     id: 'quiz',
     doors: ['console', 'workshop'],
     needs: FEATURES.LIBRARY,
-    label: 'Music Quiz',
-    blurb: 'Three rounds, twenty seconds a question, fastest fingers win.',
-    // "Pack editor", not "My packs" — the panel below it is called My packs and
-    // means the ones you wrote, while this opens the editor's picker, which
-    // lists your WHOLE library, most of it Quizporium's. Two controls on one
-    // screen, one word, two different sets.
+    label: 'Quiz Packs',
+    blurb: 'Whole nights — every round in one pack.',
+    // "Pack editor", not "My packs" — the panel below it means the ones you
+    // WROTE, while this opens the editor's picker, which lists your whole
+    // library. Two controls on one screen, one word, two different sets.
     editLabel: 'Pack editor',
     /*
-     * WHOLE QUIZZES ONLY — the intros have a tab of their own.
-     *
-     * They are a product somebody buys rather than a night somebody plays, and
-     * twenty of them on this shelf did real damage rather than merely looking
-     * untidy: only SIX packs are shown here and they are RANKED never-played
-     * first, so twenty brand-new intro packs took all six and pushed every
-     * actual quiz off the shelf the Console launches from.
+     * WHOLE QUIZZES ONLY — a one-round pack lives on the tab for its own round
+     * type. Twenty intro packs on this shelf did real damage rather than
+     * merely looking untidy: it is RANKED never-played first, so twenty brand
+     * new ones led the shelf the Console launches from.
      */
-    packs: () => library.quizzes.filter((p) => !isOneRound(p)),
+    packs: () => library.quizzes.filter((p) => !onARoundTab(p)),
     // Generating is the owner's, on the owner's bill. A quizmaster buys packs
     // — and writes their own, which is a different library and a different
     // panel rather than a cheaper generator.
@@ -787,40 +799,40 @@ export const TABS = [
       return wrap;
     },
   },
+  /*
+   * AND UNDER IT, ONE TAB PER ROUND TYPE — asked for directly: *"can we
+   * rename 'music quiz' tab to 'quiz packs' and then each tab below is a
+   * round so General Knowledge, image, music intro and music bingo?"*
+   *
+   * **THIS IS THE MUSIC ROUNDS TAB SPLIT BY TYPE, AND THE AXIS RULE IS NOT
+   * REVERSED — ITS SCOPE IS.** *The axis is round count, not round type* is
+   * about which shelf a PACK goes on, and it still is: seven of the eight
+   * multi-round quizzes MIX types and cannot be filed under one. These tabs
+   * list ROUNDS — the shape `console-rounds.js` built for Image Rounds — so a
+   * mixed quiz contributes its GK round to one and its intro round to another.
+   *
+   * **WHICH IS WHY MUSIC ROUNDS IS GONE RATHER THAN KEPT BESIDE THEM.** Every
+   * one of its twenty-four one-round packs is now a card on the tab for its
+   * own type, so keeping it lists the same twenty-four twice.
+   *
+   * **AND A ONE-ROUND PACK WITH NO TAB OF ITS OWN STAYS ON QUIZ PACKS** —
+   * `onARoundTab()`. There are none today (the twenty-four are four text and
+   * twenty intro), but a single `multi` or `alphabet` round saved as its own
+   * pack would otherwise appear on NO shelf at all: it is not a whole night,
+   * and its type has no room. Nothing throws, the file is fine, and the pack
+   * is simply unreachable — which is the fault this repo keeps writing down
+   * under another name.
+   */
   {
-    /*
-     * MUSIC ROUNDS — its own room, asked for directly: *"the pack can live as
-     * a specific thing that people buy and then be broken up into individual
-     * rounds for moving them onto and off of the console."*
-     *
-     * **THE TAB IS THE PRODUCT AND THE ROUND IS THE UNIT**, which is this
-     * file's own vocabulary finally reaching the shelf: a quiz is a product, a
-     * round is part of one. You buy a round here; Tonight bursts a pack into a
-     * tile per round when you drag one in, which needed no work because a slot
-     * has always held a pack id plus round indexes.
-     *
-     * **NAMED FOR THE SHAPE, NOT THE TYPE.** It was *Music Intros* for an hour
-     * and that was the wrong axis: intro is one round type among several, so a
-     * tab named after it invites a Pictures tab and a GK tab next. A pack is
-     * the thing that CONTAINS types; this holds the ones that contain exactly
-     * one, whatever it happens to be.
-     *
-     * **`kind` IS STILL 'quiz'.** These ARE quizzes — one round each — so the
-     * card, the green edge and the drag payload must all say quiz or the pack
-     * becomes unresolvable the moment it lands in Tonight. The TAB is
-     * `rounds`; the GAME is not.
-     *
-     * **NO GENERATOR.** A round is made by importing a playlist or writing one
-     * in the editor, both of which have a way in already.
-     */
-    id: 'rounds',
+    id: 'text',
     kind: 'quiz',
     doors: ['console', 'workshop'],
     needs: FEATURES.LIBRARY,
-    label: 'Music Rounds',
-    blurb: 'One round each — drop them into any night.',
-    editLabel: 'Pack editor',
-    packs: () => library.quizzes.filter(isOneRound),
+    label: 'General Knowledge',
+    blurb: 'Every general knowledge round you hold — drop one into any night.',
+    packs: () => library.quizzes,
+    count: () => roundsOfType(library.quizzes, 'text').length,
+    section: (packs) => roundsSection('text', 'General Knowledge', 'Every general knowledge round you hold — drop one into any night.', packs),
   },
   {
     /*
@@ -831,9 +843,14 @@ export const TABS = [
      * full quiz, and copying them out into their own packs is rule 11 running
      * backwards. See `console-rounds.js` for the whole reasoning.
      *
-     * **`kind` IS STILL 'quiz'** — same reason the Music Rounds tab carries it.
+     * **`kind` IS STILL 'quiz'** — these rounds belong to quizzes, so the
+     * card, the edge and anything that resolves a pack id must say quiz.
      * **NO GENERATOR**: a picture round is drawn from questions that already
      * exist, which is the Pictures button on the pack itself.
+     *
+     * **AND IT KEEPS THE WORD "ROUNDS" WHERE ITS TWO SIBLINGS DO NOT.**
+     * "Image" alone reads as a media library rather than a part of a quiz,
+     * and there is a Photos tab behind the Community door.
      */
     id: 'images',
     kind: 'quiz',
@@ -850,6 +867,17 @@ export const TABS = [
      */
     count: () => roundsOfType(library.quizzes, 'image').length,
     section: (packs) => roundsSection('image', 'Image Rounds', 'Every picture round you hold — drop one into any night.', packs),
+  },
+  {
+    id: 'intro',
+    kind: 'quiz',
+    doors: ['console', 'workshop'],
+    needs: FEATURES.LIBRARY,
+    label: 'Music Intros',
+    blurb: 'Every intro round you hold — drop one into any night.',
+    packs: () => library.quizzes,
+    count: () => roundsOfType(library.quizzes, 'intro').length,
+    section: (packs) => roundsSection('intro', 'Music Intros', 'Every intro round you hold — drop one into any night.', packs),
   },
   {
     id: 'bingo',

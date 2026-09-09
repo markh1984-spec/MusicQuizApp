@@ -2476,27 +2476,21 @@ packs the QM made for himself."* `p.mine` carried it; only a small `Yours` note
 on a rail row ever said so.
 
 - **WHOSE IT IS DECIDES WHAT MAY BE DONE TO IT, WHICH IS THE WORKSHOP'S WHOLE
-  SUBJECT** — so the bench rail compartmentalises on that FIRST and kind
-  second: *My quizzes*, *My bingo games*, then the Quizporium pair. **Yours
-  leads**, as the pack shelf has always had it. **An empty group never draws.**
-  **The `Yours` note went with it** — a note restating its own heading cost the
-  row half its width.
-- **AND THE GREEN BUTTON WAS PROMISING AN EDIT THE SERVER REFUSES.** A
-  quizmaster's Save posts to `/api/mine/<kind>` and `saveOwn()` refuses an id
-  that shadows the catalogue (rule 11), so every question was editable and Save
-  answered *"There is already a pack called … Give yours a different name"* —
-  an error about an id, on a screen with no way to change one, after the work.
-  **Present and inert with the reason ON the button**, hollow like Launch: a
-  dimmed FILL reads as broken, an outline reads as *not this one*. **Gated on
+  SUBJECT.** **Yours leads**, as the pack shelf has always had it. **A note
+  restating its own heading cost the row half its width.**
+- **AND THE GREEN BUTTON WAS PROMISING AN EDIT THE SERVER REFUSES** (rule 11):
+  every question was editable and Save answered *"There is already a pack
+  called … Give yours a different name"* — an error about an id, on a screen
+  with no way to change one, after the work. **Present and inert with the
+  reason ON the button**, hollow like Launch. **Gated on
   `can(FEATURES.CATALOGUE)`** — the entitlement the server itself checks, never
-  a hat or an account kind, so the owner is unaffected.
+  a hat or an account kind.
 - **THE BADGE NEVER TAKES GOLD.** Gold is the trophy colour; *Yours* wears
   `--hot`, the one colour that follows a quizmaster's own scheme, and
   Quizporium stays neutral. It rides in the head line so it survives the fold.
-- **TAKING YOUR OWN COPY OF A QUIZPORIUM PACK IS NOT BUILT** — the refusal
-  above is the only path, and forking one is a decision about rule 11 rather
-  than a missing button. **Do not add it without deciding what a borrowed
-  question stays linked to.**
+- **TAKING YOUR OWN COPY OF A QUIZPORIUM PACK IS NOT BUILT** — forking one is
+  a decision about rule 11 rather than a missing button. **Do not add it
+  without deciding what a borrowed question stays linked to.**
 
 ## House style for labels: say what it is, then one line
 
@@ -3506,18 +3500,16 @@ slots."*
   consecutive quiz slots into ONE segment, so three tiles compile to what one
   compiled to. Tested `deepEqual`.
 - **AND `simpleNight()` IS WHAT KEEPS EVERY GIG OFF THE RUNNING-ORDER ROUTE.**
-  `lbSlots` alone used to send a night down `/api/host/launchOrder`, moving the
+  `lbSlots` alone sent a night down `/api/host/launchOrder`, moving the
   protected path for every booking in exchange for a LAYOUT change. The row
   bursts and the launch collapses: one pack, rounds ascending, no `order` at
   all — **verified by reading the request body out of a real browser**.
-  **ASCENDING is the whole test.**
-- **THE ROW GROWS A WHOLE ROW AT A TIME**, six then twelve, capped at eighteen
-  — the next multiple of six honours *"I need 6 regardless"* and *as little
-  clutter as possible* at once.
-- **A TILE NAMES THE ROUND, WITH THE PACK UNDER IT** — a row of tiles all
-  reading "1980s Pop" says nothing about the order of the evening. **The "Round
-  One — " is trimmed off**, or the distinguishing half is what gets clipped.
-  **And the sub is dropped when it only repeats the name.**
+- **THE ROW GROWS A WHOLE ROW AT A TIME**, six then twelve, capped at
+  eighteen.
+- **A TILE NAMES THE ROUND, AND ITS SECOND LINE SAYS WHAT KIND OF ROUND** — a
+  row of tiles all reading "1980s Pop" says nothing about the order of the
+  evening, and neither does a row of subs. **The "Round One — " is trimmed
+  off**, or the distinguishing half is what gets clipped.
 - **MOVING A ROUND IS MOVING ITS TILE NOW** — the tile's own grip is the
   handle. `drag-check.mjs` COUNTS tiles rather than pinning a round count.
 
@@ -3541,41 +3533,55 @@ of 20 questions, a 10 question image round and a 10 question intros round."*
   NEEDS ITS `image` FILE**, so that round cannot be written ahead of the
   artwork: it costs money and waits to be asked for.
 
-### MUSIC ROUNDS IS ITS OWN TAB, AND A ROUND TICK WEARS A GLYPH
+### QUIZ PACKS, THEN ONE TAB PER ROUND TYPE — and a round tick wears a glyph
 
-`isOneRound()` / `roundGlyph()` in `pack-look.js`, the `rounds` entry in
-`TABS`. *"The pack can live as a thing people buy and then be broken up into
-individual rounds."*
+`onARoundTab()` in `console.js`, the `text` / `images` / `intro` entries in
+`TABS`, `isOneRound()` / `roundGlyph()` in `pack-look.js`. *"Can we rename
+'music quiz' tab to 'quiz packs' and then each tab below is a round so General
+Knowledge, image, music intro and music bingo?"* **Music Rounds is deleted** —
+the tab, not the rules under it.
 
-- **THE TAB IS THE PRODUCT; THE ROUND IS THE UNIT.** Twenty-four one-round
+- **THE PACK IS THE PRODUCT; THE ROUND IS THE UNIT.** Twenty-four one-round
   packs took the whole quiz shelf and pushed every actual quiz off the one the
-  Console launches from.
+  Console launches from, which is why they are not on it.
+- **THE AXIS RULE IS NOT REVERSED, ITS SCOPE IS.** *The axis is round count,
+  not round type* decides which shelf a PACK goes on and still does — seven of
+  eight multi-round quizzes MIX types, so a single-TYPE rule pulls a whole quiz
+  onto the wrong shelf. These three tabs list ROUNDS, so a mixed quiz gives its
+  GK round to one and its intro round to another. Derived, never declared.
+- **SO MUSIC ROUNDS IS DELETED RATHER THAN KEPT BESIDE THEM** — every one of
+  its twenty-four one-round packs is now a card on the tab for its own type,
+  and keeping it lists the same twenty-four twice under two questions.
+- **A ONE-ROUND PACK WITH NO TAB OF ITS OWN STAYS ON QUIZ PACKS.** There are
+  none today, and a lone `multi` or `alphabet` round saved as a pack would
+  otherwise be on NO shelf at all — nothing throws, the file is fine, and the
+  pack is simply unreachable.
 - **A TAB ID IS NOT A GAME KIND, and conflating them is silent.** `kind` builds
   the card, the edge colour and the `{id, kind}` a drag carries, which
-  `packOf()` resolves against `gameOf()` — a tab id of `rounds` there resolves
-  to NOTHING, state consistent and the reader lost. So `TABS` carries `kind:
-  'quiz'` and `gameSection()` takes a separate `slot` for the search box.
-- **THE AXIS IS ROUND COUNT, NOT ROUND TYPE**, and the first build got it
-  wrong: it asked whether every round was an INTRO. *A pack is the thing that
-  CONTAINS types.* Measured: of eight multi-round quizzes SEVEN mix types, so a
-  single-TYPE rule pulls a whole quiz onto the wrong shelf. Derived, never
-  declared, like `isBreakoutPack()`.
-- **THE TAB DOES THE SPLIT, SO THE SHELF DOES NOT.**
-- **THE ROUND TYPE IS A GLYPH, NEVER A COLOUR.** Asked for as a colour code and
-  **rendered before it was argued**: a tick is a SWITCH carrying *is this round
-  played tonight*, and a five-colour code makes the switched-off round
-  unfindable. **Green, pink and purple are each already spoken for.** **The word
-  rides in `title` and `aria-label`.**
+  `packOf()` resolves against `gameOf()` — a tab id there resolves to NOTHING,
+  state consistent and the reader lost. So `TABS` carries `kind: 'quiz'`.
+- **"IMAGE ROUNDS" KEEPS THE WORD ITS TWO SIBLINGS DROP** — "Image" alone
+  reads as a media library, and Photos is a tab behind the Community door.
+- **THE ROUND TYPE IS A GLYPH OR A WORD, NEVER A COLOUR.** Asked for as a
+  colour code twice — on the ticks, then on the Tonight tiles: a tick is a
+  SWITCH carrying *is this round played tonight*, and on a tile the EDGE
+  already means the kind of pack, which a mixed night needs most. **Green, pink
+  and purple are each already spoken for.** So it is the glyph plus `title` on
+  a tick, and **`typeLine()` in WORDS on a burst Tonight tile** — which takes
+  the sub's line rather than a third one, and **keeps the pack name only when
+  the night holds more than one pack**, a row of four subs all reading "2000s
+  Metal" being the same emptiness the tile's own naming rule already forbids.
+- **AND THE SEVENTH TAB MAKES `console-frame.mjs`'S KNOWN BANNER-STATE FAILURE
+  ONE TAB WORSE AGAIN** — see the foot of the section below.
 
 ### IMAGE ROUNDS IS A VIEW OF ROUNDS, NEVER A COPY OF THEM — `console-rounds.js`
 
 *"We'll need to add an image rounds tab"*, then the model behind it: *"a quiz
 pack is theoretically just an amalgamation of the other three."*
 
-- **COUNTED FIRST, AND THE COUNT DECIDED THE BUILD.** Twenty-four one-round
-  packs — twenty intro, four text, **no image** — and **three** picture rounds
-  in all, every one INSIDE a full quiz. A tab of one-round `image` packs would
-  have been an empty shelf.
+- **COUNTED FIRST, AND THE COUNT DECIDED THE BUILD** — **three** picture rounds
+  in all, every one INSIDE a full quiz, so a tab of one-round `image` packs
+  would have been an empty shelf.
 - **COPYING THEM OUT IS RULE 11 RUNNING BACKWARDS**, so nothing is extracted. **A
   card is a VIEW** — `packId` plus a round INDEX, what a Tonight slot and a
   pack card's round tick already hold. Nothing written, nothing stale.
@@ -3584,7 +3590,7 @@ pack is theoretically just an amalgamation of the other three."*
   to NOTHING through `packOf()`.
 - **THE PACK NAME IS THE TITLE AND THE ROUND'S IS THE SUB — the opposite of a
   Tonight tile.** A tile tells one pack's rounds apart; this tells packs apart,
-  and **every picture round here is called "Whose Face Is This?"**
+  and every picture round here is called *"Whose Face Is This?"*
 - **`tab.section` AND `tab.count` ARE THE TWO HOOKS.** Without the second the
   badge read **33** over a shelf of three. **`gameSection()` is not reused**:
   its pin, search, mode dropdown and editor link all act on a FILE.
@@ -3592,20 +3598,31 @@ pack is theoretically just an amalgamation of the other three."*
   amalgamation model is taken all the way**, a quiz pack REFERENCES three round
   files rather than holding their questions, and this shelf then lists real
   packs unchanged. **Do not start that on a gig week**: it moves `loadQuiz()`.
-- **AND A TARGET HAS TO ANSWER BOTH CHANNELS.** *"Drag and drop isn't working
-  for the image rounds"* — on the WORKSHOP, and it never had: the bench asked
-  for `packDrag` alone, so a round in the hand fired no `drop` at all and the
-  panel did not even light up. **The payload is not changed to suit the
-  target** — a round card carrying a PACK would be a descriptor that lies about
-  what is in your hand. The bench learns `shelfRoundDrag` and benches the
-  round's PACK, which is what its TAP already does. **It fixed a pack card's
-  round TICK at the same time**, dead on that door for as long as it existed.
-- **AND THE SIXTH TAB MAKES A KNOWN FRAME FAULT ONE TAB WORSE.**
+- **AND A PICTURE ROUND IS DRAWN FROM HERE, THROUGH THE PACK CARD'S OWN
+  PANEL.** *"If that can't be done here I need an empty pack added to the image
+  tab so I can generate it in there."* **There is nothing to add: the round is
+  already on this shelf** — `QUIZ_ROUNDS` ticks `image`, so a generated quiz
+  arrives WITH its picture round and without the pictures, drawing being a
+  press that spends money and waits to be asked for. **An empty pack invented
+  to hold them is a second file for a round that exists — rule 11 backwards.**
+  So it is `picturePanel()`, EXPORTED rather than copied, hung under the grid
+  with the pack NAMED, **one open at a time**. **Workshop door and
+  `FEATURES.CATALOGUE` only** — the pack card's own gate, and on the Console a
+  tap means *put this in Tonight*.
+- **THE EMPTY STATE NAMES THE TYPE**, or General Knowledge tells an empty
+  library it holds no PICTURES.
+- **AND A TARGET HAS TO ANSWER BOTH CHANNELS.** The bench asked for `packDrag`
+  alone, so a round in the hand fired no `drop` at all and nothing lit up.
+  **The payload is not changed to suit the target** — a round card carrying a
+  PACK would be a descriptor that lies about what is in your hand. The bench
+  learns `shelfRoundDrag` and benches the round's PACK, which is what its TAP
+  already does.
+- **AND EACH NEW TAB MAKES A KNOWN FRAME FAULT ONE TAB WORSE.**
   `console-frame.mjs` already failed *"every tab is still reachable with one
   up"* at 1500x900 **with a banner above the doorhead**: `.consolecols` clamps
   to its 200px floor, is `overflow: visible`, and the tab column is not
   constrained to it — the overflow escapes the frame with no scroller to reach
-  it. Two tabs before, three now, **in the no-accounts state only**.
+  it. **In the no-accounts state only.**
 
 ### THE PACK SHELF SHOWS EVERY PACK YOU HOLD, ON BOTH DOORS
 
@@ -3613,19 +3630,13 @@ pack is theoretically just an amalgamation of the other three."*
 I think about it."* The reason written for the cap had expired twice over.
 
 - **THE CAP WAS THE DRAG'S, AND THE DRAG IS NEITHER THE ONLY WAY IN NOR STILL
-  CONSTRAINED.** *"A drag needs the card AND the slot on screen together"* — but
-  **a TAP places a pack** through the drop's own path, and **the fixed frame
-  keeps the doorhead on screen from 900px**. Measured at 1500x900: the tab body
-  scrolls 448px and the bar does not move.
+  CONSTRAINED** — **a TAP places a pack** through the drop's own path, and the
+  fixed frame keeps the doorhead on screen from 900px.
 - **A CAP WITH NO WAY PAST IT IS THE ONLY KIND THIS APP MUST NOT HAVE.** The
   Console has no search box by decision, so six of thirty-three left the rest
-  reachable only by leaving, pinning in the Workshop and coming back.
-- **AND THE WORKSHOP LOST ITS SIX A DAY LATER, WHEN THE BENCH LOST ITS RAIL.**
-  The rule as first written kept the cap there *"because it keeps the search box
-  and the rail"* — **half a justification is not one**, and a shelf that is now
-  the ONLY way onto the bench may not hide twenty-seven of thirty-three behind a
-  box you have to think to type in. `PACK_SHELF` is deleted rather than left at
-  6 with nothing reading it.
+  reachable only by leaving, pinning in the Workshop and coming back — and the
+  Workshop's shelf is now the ONLY way onto the bench. **`PACK_SHELF` is
+  deleted rather than left at 6 with nothing reading it.**
 - **PINS STILL RANK IT** — the six you curated lead and no longer hide the
   rest. **And there is still no See all**: a shelf that is sometimes two rows
   is what makes a drag target unlearnable.
@@ -3636,35 +3647,23 @@ I think about it."* The reason written for the cap had expired twice over.
 
 ### THE WORKSHOP BENCH FILLS ITS BAY — one pack, big, and what you do to it
 
-Taking the rail off left the bench 142px of content in a 362px bay, on the
-door whose bay the host had already called *"a lot of wasted space"*.
+Taking the rail off left the bench 142px of content in a 362px bay.
 
-- **ONE `flex` LINE DOES IT.** `.bench-body` is a direct child of the panel now
-  the rail's `bayColumns()` wrapper is gone, and that panel is already a flex
-  column of a fixed height.
 - **THE PACK IS A SQUARE POSTER, AND THE SQUARE COMES FROM A COLUMN WIDTH.** A
   bench drawing the thing you are working on at 92px with 220px of nothing
   under it has the emphasis backwards. **`--bench-poster`, two numbers like
   `--bay-h`** — each is the bay less the head, the pack-actions row and the gap.
-- **NEITHER `auto` NOR THE ROW'S HEIGHT MAY DECIDE IT.** *"The packs are
-  different sizes on the bench?"* — twice over. An `auto` grid track sizes to
-  its item's MAX-CONTENT width, and the item is a tile with the pack's NAME in
-  it, so a long title made a wide column and `aspect-ratio` made it a tall
-  square. Height-first is the obvious fix and it broke the other way: the row is
-  `1fr` of a body that only has a definite height while the FIXED FRAME is on,
-  and **the frame wants a tall window as well as a wide one** — so on a 900px
-  laptop `height: 100%` fell back to auto and the title sized it again.
-  **Width-first has one answer at every size.**
-- **THE BUTTONS KEEP THEIR OWN SIZE** — three across for what you do WITH the
-  pack, four for what you do TO it, **never one 800px-wide button**: *a button's
-  width should say how big the action is*. **As many columns as there are
-  buttons**, or the packs with no picture round leave a hole.
-- **THE NOTE TAKES THE MIDDLE**, so the one gap left is where the sentence is.
+- **NEITHER `auto` NOR THE ROW'S HEIGHT MAY DECIDE IT.** An `auto` grid track
+  sizes to MAX-CONTENT, and the item is a tile with the pack's NAME in it, so a
+  long title made a wide column and a tall square. Height-first broke the other
+  way: the row is `1fr` of a body with a definite height only while the FIXED
+  FRAME is on. **Width-first has one answer at every size.**
+- **THE BUTTONS KEEP THEIR OWN SIZE**, **never one 800px-wide button**: *a
+  button's width should say how big the action is*. **As many columns as there
+  are buttons**, or the packs with no picture round leave a hole.
 - **AND THE BENCH'S DROP ZONE LOOKS LIKE ONE NOW.** It carries `lb-drop`
-  WITHOUT `lb-tile`, and the dashed border lives on `.lb-tile.lb-drop` — so the
-  empty bench had always been a bare "+" and a line of text with no box round
-  it. At 92px that read as a caption; at the full height of the bay it read as
-  nothing at all.
+  WITHOUT `lb-tile`, and the dashed border lived on `.lb-tile.lb-drop`, so the
+  empty bench had always been a bare "+" with no box round it.
 
 ### A PACK WEARS ITS OWN SUBJECT
 

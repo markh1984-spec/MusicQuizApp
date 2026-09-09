@@ -1334,31 +1334,22 @@ export function launchBar() {
    * screen."* He is right that the two disagreeing is the fault. The console
    * and the projector should agree every time it is possible for them to.
    *
-   * **BUT PICKING IS NOT LAUNCHING WHEN THERE IS A NIGHT TO LOSE.** A tap on
-   * a search result that silently ends a running quiz and wipes every score
-   * would be the most dangerous control in the app, on the protected path, in
-   * a dark pub. So the rule is: switch instantly when it costs nothing, stage
-   * it when it would cost somebody their night.
+   * **BUT PICKING IS NOT LAUNCHING WHEN THERE IS A NIGHT TO LOSE.** A tap
+   * that silently ends a running quiz and wipes every score would be the most
+   * dangerous control in the app, on the protected path, in a dark pub.
    *
-   * **THE SERVER DECIDES WHICH, NOT THIS PAGE.** It is the ordinary launch
-   * call without `replace` — which already answers 409 when a night is in
-   * progress, with the game and the player count in it, and that guard is the
-   * one this codebase has already learned cannot live in the browser. So
-   * there is no new rule here and no second definition of "in progress" to
-   * drift: a 200 means it was free to switch, a 409 means it was not.
+   * **THE SERVER DECIDES WHICH, NOT THIS PAGE** — the ordinary launch call
+   * without `replace`, which already answers 409 when a night is in progress.
+   * No second definition of "in progress" to drift.
    *
    * **A 409 is SILENT here** — no dialog. Pressing Launch is what asks that
-   * question, and it still does, with the same warning it always gave. All a
-   * 409 means at this point is that the choice stays staged and the red line
-   * under the box tells you the projector is showing something else, which is
-   * exactly the state that line exists for.
+   * question and still does; a 409 leaves the choice staged, and the red line
+   * under the box says the projector is showing something else.
    *
    * A QUIET SWITCH CARRIES THE FACTS ABOUT THE EVENING — venue, online, lobby
    * game — never the look, card shape or prizes. **The comment said "no venue"
-   * while the code sent one**, which is how the gap went unseen: `lobbyGame`
-   * was missing, so a tapped-up night went out with the DEFAULT while the bar
-   * said *Let them choose* — twice reported as *"still only allowing maze
-   * mouth"*, both times on a night nobody had pressed Launch on.
+   * while the code sent one**: `lobbyGame` was missing, so a tapped-up night
+   * went out with the DEFAULT while the bar said *Let them choose*.
    */
   /**
    * WHAT THIS EVENING IS SET TO — the night-level half of a launch, in ONE
@@ -1699,14 +1690,13 @@ export function launchBar() {
      * it: *"can I have a little button next to the text saying what's on the
      * screen to unlaunch it?"*
      *
-     * It was gated on `aNightIsOn()` — the stricter test the running panel
-     * uses, which is false while a game sits in the lobby with nobody joined.
-     * That hid the button at exactly the moment it is most wanted: something
-     * IS on the projector (this line only exists when it is) and the person
-     * reading it wants it gone. The running panel keeps the stricter test for
-     * its own Stop, and that is right for a panel that is about a night in
-     * progress; this button is about the SCREEN, and the screen is showing
-     * something whenever there is a title to name.
+     * It was gated on `aNightIsOn()`, which at the time was false while a game
+     * sat in the lobby with nobody joined. That hid the button at exactly the
+     * moment it is most wanted: something IS on the projector (this line only
+     * exists when it is) and the person reading it wants it gone. The two
+     * tests agree again now that `aNightIsOn()` asks `launched` — this one
+     * still stands on its own, because it is about the SCREEN, and the screen
+     * is showing something whenever there is a title to name.
      */
     unlaunchBtn.hidden = false;
     /*
@@ -3750,20 +3740,12 @@ export function launchBar() {
  * launches down the road it always did rather than through the composer.
  *
  * **THE VENUE IS DELIBERATELY NOT SAVED, and that reverses an earlier
- * decision.** It used to ride along with everything else, on the reasoning
- * that a show is a whole evening and the venue is part of one. The host
- * killed that with the case it never survives: *"saving everything INCLUDING
- * the venue is pointless, there's no way you'd want to run the same quiz at
- * the same venue again — but if it could be saved and the venue left open
- * that would be useful."*
- *
- * He is right, and it is the difference between a RECORD and a TEMPLATE. A
- * saved night is reached for precisely when you are somewhere new and want a
- * running order that worked; carrying the old venue in means the first thing
- * it does on landing is file tonight under last month's pub, and the prizes
- * and the voucher follow the venue — so a wrong one is somebody refused a
- * drink at the bar, which this file already records as the expensive half of
- * a venue mix-up.
+ * decision** — *"saving everything INCLUDING the venue is pointless… but if
+ * it could be saved and the venue left open that would be useful."* It is the
+ * difference between a RECORD and a TEMPLATE: a saved night is reached for
+ * when you are somewhere NEW, so carrying the old venue files tonight under
+ * last month's pub — and the prizes and the voucher follow the venue, so a
+ * wrong one is somebody refused a drink at the bar.
  *
  * **Nothing has to be migrated.** Shows saved before this still carry a
  * `venue` field; `applyShow()` simply stops reading it, so an old one loads
@@ -3994,13 +3976,26 @@ function whenShort(at) {
  * a Stop button, over a quiz the account had never launched. On a
  * quizmaster's very first sign-in that is the first thing they read.
  *
- * A night is on once it is LIVE, or once somebody has joined. Before that the
- * launch bar has the top of the page to itself, which is also what a first
- * sign-in should be about. One test, used by the topbar and the panel, or the
- * two of them disagree about whether anything is happening.
+ * **THE TEST IS `launched`, NOT "HAS ANYBODY JOINED" — reported as *"if i
+ * launch a quiz and then click console how do I get back to the launched quiz
+ * view?"*, and the honest answer was: you could not.** "Take control" lives on
+ * the running panel and NOWHERE ELSE, deliberately — the menu note in
+ * `console-account.js` says so in as many words. So while this asked
+ * `phase !== 'lobby' || playerCount > 0`, the ten minutes between pressing
+ * Launch and the first phone scanning had **no route to the control view at
+ * all**: the bar said the quiz was on the big screen, offered Unlaunch, and
+ * the only way back was to type the URL. That is the protected surface — item
+ * 4 is Next / Reveal / Back — with its front door missing in a state a host is
+ * in every week.
+ *
+ * `state.launched` is the field this test was INVENTED for and did not exist
+ * yet when it was written: the fault guarded against is the boot fallback
+ * above, and "nobody has joined" was only ever a proxy for it. Absent still
+ * means launched. One test, used by the topbar and the panel, or the two
+ * disagree about whether anything is happening.
  */
 export function aNightIsOn(running) {
-  return Boolean(running) && (running.phase !== 'lobby' || running.playerCount > 0);
+  return Boolean(running) && running.launched !== false;
 }
 
 /**
@@ -4081,8 +4076,12 @@ export function nowPlaying(running) {
     heading: running.launched === false ? 'Nothing launched yet'
       : running.phase === 'finished' || running.phase === 'final' ? "That's the night done"
         : running.phase !== 'lobby' ? 'Running now'
-          : n > 0 ? 'Waiting in the lobby'
-            : 'Loaded, nobody playing',
+          /* AND A LAUNCHED LOBBY WITH NOBODY IN IT IS STILL WAITING.
+             "Loaded, nobody playing" was written for the boot fallback, which
+             `launched === false` above catches by name — leaving that wording
+             to land on a quiz just launched and waiting for the room to scan
+             into, which reads as a failure. */
+          : 'Waiting in the lobby',
     // Said only for the fallback, because it is the one state somebody can
     // mistake for a night they started.
     note: running.launched === false

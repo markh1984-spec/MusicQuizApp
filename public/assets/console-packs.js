@@ -539,7 +539,7 @@ function hasPictureRound(pack) {
  * folder; a placeholder counts as NOT drawn, because a stand-in is precisely
  * the thing this is for finding.
  */
-function pictureLabel(pack) {
+export function pictureLabel(pack) {
   const art = pack.art;
   if (!art || !art.total) return { label: 'Pictures', title: 'Make the round 2 portraits' };
   if (art.real >= art.total) {
@@ -569,7 +569,7 @@ function pictureLabel(pack) {
  * fresh set of ten and what that costs — a picture library is only shared
  * within a style.
  */
-function picturePanel(pack) {
+export function picturePanel(pack) {
   const el = node(`
     <div class="panel pics">
       <div class="tiny status">Checking what round 2 has…</div>
