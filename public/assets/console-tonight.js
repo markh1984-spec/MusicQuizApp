@@ -923,7 +923,7 @@ export function launchBar() {
            everything below it jumped — reported as clunky, and it is the same
            fault as a row that reflows under your hand. Hollow it also says
            what it is waiting for, which an absent button cannot. -->
-      <button class="go lb-go" type="button" disabled>Drag a pack in to launch</button>
+      <button class="go lb-go" type="button" disabled>Tap a pack to launch</button>
     </div>`);
 
   const gamePick = el.querySelector('.lb-game');
@@ -1941,7 +1941,7 @@ export function launchBar() {
        * said what was missing rather than what to do.
        *
        * A disabled button that says what it wants is the same shape Launch
-       * already uses ("Drag a pack in to launch") — one control, one
+       * already uses ("Tap a pack to launch") — one control, one
        * sentence, and no second line to read.
        */
       /*
@@ -2627,7 +2627,7 @@ export function launchBar() {
     goBtn.disabled = !parts;
     goBtn.textContent = parts
       ? `Launch tonight — ${says || `${parts} part${parts === 1 ? '' : 's'}`}`
-      : 'Drag a pack in to launch';
+      : 'Tap a pack to launch';
     paintInTonight();
   }
 
@@ -2982,13 +2982,13 @@ export function launchBar() {
        * what it is.
        */
       const n = packs.length + i + 1;
-      // The teaching label is for the FIRST slot of an empty night only —
-      // it used to be every slot on a bingo shelf, which was fine when a
-      // bingo night had exactly one slot and reads as six identical
-      // instructions now that it has six.
+      /* THE TEACHING LABEL IS THE FIRST SLOT'S ONLY — six identical
+         instructions is not teaching — AND IT NAMES THE TAP, NOT THE DRAG:
+         pressing a slot opens the picker below, a tap on a card places a pack,
+         and both labels named the one input a phone does not have. */
       const label = packs.length || i > 0
         ? `Add pack ${n}`
-        : (composes ? 'Drag pack 1 here' : 'Drag a bingo game here');
+        : (composes ? 'Tap to pick a pack' : 'Tap to pick a bingo game');
       const empty = node(`
         <button class="lb-tile lb-drop" type="button">
           <span class="lb-tile-n is-empty">${n}</span>
@@ -3156,7 +3156,7 @@ export function launchBar() {
     const emptied = hasRounds() && !rounds;
     goBtn.disabled = !packs.length || emptied;
     if (!packs.length) {
-      goBtn.textContent = 'Drag a pack in to launch';
+      goBtn.textContent = 'Tap a pack to launch';
       return;
     }
     if (emptied) {

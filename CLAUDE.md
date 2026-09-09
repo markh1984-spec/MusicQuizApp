@@ -979,10 +979,9 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
 Every one lived in a band no guard looked at.
 
 - **THE LOBBY'S JOIN PANEL IS CAPPED BY THE SCREEN'S HEIGHT** — `min(100%,
-  72vh)`. A QR code is square, so on a WIDE, SHORT projector it grew taller
-  than the screen and **the code itself was 166px off**, on a page that
-  deliberately does not scroll. **72vh is measured, not chosen** — 16:9 and 4:3
-  are pixel-identical to before.
+  72vh)`. A QR code is square, so on a WIDE, SHORT projector **the code itself
+  was 166px off**, on a page that does not scroll. **72vh is measured, not
+  chosen** — 16:9 and 4:3 are pixel-identical to before.
 - **THREE ACROSS BETWEEN 561 AND 779px, AND BOTH GRIDS MOVE TOGETHER.** Six
   across needs 768px inside the panel, and a shut pack card is a square with a
   118px floor — **`aspect-ratio` plus `min-height` propagates to a minimum
@@ -993,10 +992,9 @@ Every one lived in a band no guard looked at.
   **`/host` scrolled sideways 161px at 390 and 231 at 320**, his actual
   bookmark. **The switch itself shrinks below 560 too** — a label losing its
   tail is what this bar can afford; a door off the screen is not.
-- **AND `console-frame.mjs` NOW LOOKS AT 768 AND 320** — its sizes ran 390
-  then 960, leaving the 561-899 band unmeasured. **Its one-row rule moved from
-  431px to 900px**: a second header row costs the PINNED layout, which does not
-  exist below 900.
+- **AND `console-frame.mjs` NOW LOOKS AT 768 AND 320** — its sizes ran 390 then
+  960, leaving the 561-899 band unmeasured. **Its one-row rule moved from 431px
+  to 900px**: a second header row costs the PINNED layout.
 
 ### A ROOM ID IS A PATH, AND `?q=` NAMES AN ACCOUNT OR NOBODY
 
@@ -1508,26 +1506,22 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 Reported off a screenshot: *"starting to look a bit messy — can we utilise
 space where possible."* Four placements and one real bug:
 
-- **A CONTROL SITS WITH WHAT IT ACTS ON.** *Stop* sat at the far right of a
-  1900px bar and read as a control over the whole panel. It is **Unlaunch**,
-  beside the sentence naming what it stops.
+- **A CONTROL SITS WITH WHAT IT ACTS ON.** *Stop* read as a control over the
+  whole panel. It is **Unlaunch**, beside the sentence naming what it stops.
 - **KEEPING A NIGHT IS A NIGHT-LEVEL QUESTION, so it moved into the head**
   beside the venue. **The label has to outrank the adjacency**: a show never
   keeps the venue, so "Save" alone next to a venue picker would say the
   opposite of what it does — the words stay *"for another night"*.
 - **THE REASON A CONTROL IS OFF GOES ON THE CONTROL.** *"Nothing in Tonight to
-  keep yet"* floated beside a greyed button; the button says **"Add a pack to
-  save this night"**.
+  keep yet"* floated beside a greyed button; it is on the button now.
 - **A BIGGER TARGET IS NOT THE SAME AS A HITTABLE ONE.** The tile's × grew to
-  30px and the pack NAME painted over it: `z-index` AND `padding-right` on the
-  title.
-- **EVERY DRAG NEEDS ITS TAP, and a shelf round dot never had one** — it
-  carried `mousedown`, `dragstart` and `dragend` and **no `click` at all**, so
-  the first thing anybody tries did nothing and a touchscreen had no way in.
+  30px and the pack NAME painted over it: `z-index` AND `padding-right`.
+- **EVERY DRAG NEEDS ITS TAP, and a shelf round dot never had one** — so the
+  first thing anybody tries did nothing and a touchscreen had no way in.
   `addRoundToTonight()` is that tap, through the drop's own path.
 - **FIVE SETTINGS ON ONE ROW ABOVE 1150px, LABELS ABOVE THEIR CONTROLS.** Side
-  by side, two of the five labels wrapped and three did not — five cells of
-  five different shapes, which was most of the mess.
+  by side, two of five labels wrapped and three did not — five cells of five
+  shapes, which was most of the mess.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -1744,33 +1738,31 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
 **What they asked for**. Settled by asking, and each answer is a rule:
 
 - **ORGANISED BY VENUE, because a venue IS a community.** The Tuesday and
-  Thursday crowds are different people, and every page is then something you
-  can show one landlord.
-- **THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — that is not a duplicate.**
-  On Past gigs a photo is EVIDENCE; on Community it is the room itself. **What
-  is not duplicated is the CODE** — `nightPhotos()`, called from both, so **the
-  publish control keeps its safeguard for free.**
-- **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** The headcount is a
-  summary, so it sits on three pages from one server-side figure. **"What the
-  room asked for" is a QUEUE — Yes keeps it, No bins it — so it MOVED off the
-  Music Quiz tab rather than being copied**, leaving a link that shows only when
-  something waits.
-- **A night's photos are fetched when the night is OPENED**, never up front.
+  Thursday crowds are different people, and the page is then something you can
+  show one landlord.
+- **THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — not a duplicate.** On Past
+  gigs a photo is EVIDENCE; on Community it is the room itself. **What is not
+  duplicated is the CODE** — `nightPhotos()`, from both, so **the publish
+  control keeps its safeguard for free.**
+- **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** The headcount sits on
+  three pages from one server-side figure. **"What the room asked for" is a
+  QUEUE — Yes keeps it, No bins it — so it MOVED off the Music Quiz tab rather
+  than being copied**, leaving a link that shows only when something waits.
+- **A night's photos are fetched when the night is OPENED.**
 - **`asksPanel({ whenEmpty })` — the same panel answers two pages.** Drawing
-  NOTHING was right above the quiz generator and wrong on a tab whose whole job
-  is the list. One optional argument, so the triage keeps one definition.
+  NOTHING was right above the quiz generator and wrong on a tab whose job is
+  the list. One argument, so the triage keeps one definition.
 - **AND ONE POINT FOR EVERY NIGHT PLAYED, ON TOP OF THE BEST SIX.** Under
   best-six alone a team near the bottom stops gaining anything after six weeks
   — a retention hole in the feature built for retention. **THE LADDER
   THEREFORE PAYS NOTHING BELOW SEVENTH**, or one point is paid twice under two
-  names. Eighth is still worth exactly 1, as the attendance point.
+  names.
 - **A TEAM'S BEST SIX NIGHTS COUNT — a running total is not the league.** A
   cumulative table punishes absence ABSOLUTELY, so the team works out the season
-  is gone and stops coming — the retention argument running backwards. **AND A
-  PLAIN AVERAGE BREAKS THE OTHER HALF, which is why it was offered and not
-  taken**: mean points per night puts a team that played ONCE AND WON above one
-  that won five of ten. **SUMMED, NOT DIVIDED.** `COUNTING_NIGHTS = 6` is a
-  constant with a note, like the season.
+  is gone and stops coming. **AND A PLAIN AVERAGE BREAKS THE OTHER HALF**: mean
+  points per night puts a team that played ONCE AND WON above one that won five
+  of ten. **SUMMED, NOT DIVIDED.** `COUNTING_NIGHTS = 6` is a constant with a
+  note, like the season.
 - **A NAME IS FILTERED AT THE DOOR, NEVER IN THE ROOM** — `clean-names.js`,
   off a live table with a racial slur ninth in it. The projector, the phones
   and the console are UNCHANGED; only the public page and the report mask
@@ -1888,9 +1880,8 @@ with photographs).
 - **THE CONSOLE DOOR IS THE EXCEPTION, DELIBERATELY.** Its bay is the launch
   bar — the protected surface, and the REFERENCE every other bay is sized
   against. **Do not give it a rail.**
-- **ONE DEFINITION, because each door had already invented its own** — three
-  answers to one question. The rail is the TAB COLUMN one region higher: same
-  190px, same stack, same lit left edge.
+- **ONE DEFINITION, because each door had already invented its own.** The rail
+  is the TAB COLUMN one region higher: same 190px, same stack, same lit edge.
 - **A RAIL PICKS; IT NEVER ACTS — with ONE lamp as the stated exception.**
   **The Photos rail's P publishes a night in one press**, and **the reason the
   rule existed is kept by the lamp also PICKING** — the photographs land in the
@@ -1925,16 +1916,16 @@ off the Venues list some weeks and type it freehand others and `venueKeyOf()`
 files the nights under `id:xyz` and `the station tap` — **the season cut in
 half**, on a public page.
 
-- **THE SECOND PASS ALREADY EXISTED IN `venueHeadcounts()`.** Two readers of
-  one archive disagreeing about what counts as one venue is the collision.
+- **THE SECOND PASS ALREADY EXISTED IN `venueHeadcounts()`** — two readers of
+  one archive disagreeing about what counts as one venue.
 - **THIS REVERSES A PINNED TEST, deliberately.** Two freehand nights at one pub
   have always merged, so the old rule said ADDING an id made the answer
   worse.
 - **THE KEY KEPT IS THE `id:` ONE.** Whether a table is published and every
   ruling on a team name are stored against it, so folding onto the bare name
   unpublishes a table and drops every override.
-- **THE COST, ACCEPTED KNOWINGLY:** two different pubs sharing a name merge —
-  already true on the name-only path, and why venue names carry a town.
+- **THE COST, ACCEPTED KNOWINGLY:** two pubs sharing a name merge — already
+  true on the name-only path, and why venue names carry a town.
 - **AND A THIRD TIME, WEARING A URL — `sameVenueSlug()` in `slugs.js`.** One
   pub slugged `station-tap-wokingham` and `station-tap`, filtered with `===`,
   so each address showed half of it. A public address has no id, so **the fold
@@ -3530,9 +3521,8 @@ SHOW's editor, or the Tonight row itself (`console-tonight-mix.js`/`-ui.js`;
 pack will be dragged onto the bay and then all of the rounds go into separate
 slots."*
 
-- **NOTHING IS COPIED, WHICH IS WHY THIS WAS CHEAP.** A slot has always held
-  `packId` plus round INDEXES, so a burst tile still points at the one file on
-  disk. The pack is still the unit on the shelf.
+- **NOTHING IS COPIED.** A slot has always held `packId` plus round INDEXES, so
+  a burst tile still points at the one file on disk.
 - **THE ROW CHANGED AND THE NIGHT DID NOT** — `segmentsFromSlots()` merges
   consecutive quiz slots into ONE segment, so three tiles compile to what one
   compiled to. Tested `deepEqual`.
@@ -3543,8 +3533,8 @@ slots."*
   all — **verified by reading the request body out of a real browser**.
   **ASCENDING is the whole test.**
 - **THE ROW GROWS A WHOLE ROW AT A TIME**, six then twelve, capped at eighteen
-  — filling out to the next multiple of six honours *"I need 6 regardless"* and
-  *as little clutter as possible* at once.
+  — the next multiple of six honours *"I need 6 regardless"* and *as little
+  clutter as possible* at once.
 - **A TILE NAMES THE ROUND, WITH THE PACK UNDER IT** — a row of tiles all
   reading "1980s Pop" says nothing about the order of the evening. **The "Round
   One — " is trimmed off**, or the distinguishing half is what gets clipped.
@@ -3579,29 +3569,46 @@ of 20 questions, a 10 question image round and a 10 question intros round."*
 individual rounds."*
 
 - **THE TAB IS THE PRODUCT; THE ROUND IS THE UNIT.** Twenty-four one-round
-  packs on the quiz shelf did real damage: **only SIX show and they are RANKED
-  never-played first**, so they took all six and pushed every actual quiz off
-  the shelf the Console launches from.
-- **A TAB ID IS NOT A GAME KIND, and conflating them is silent.** `kind`
-  builds the card, the edge colour and the `{id, kind}` a drag carries, which
-  `packOf()` resolves against `gameOf()` — a tab id of `rounds` in there
-  resolves to NOTHING, state consistent and the reader lost. So `TABS` carries
-  `kind: 'quiz'` and `gameSection()` takes a separate `slot` for the search
-  box, which belongs to the TAB.
+  packs took the whole quiz shelf and pushed every actual quiz off the one the
+  Console launches from.
+- **A TAB ID IS NOT A GAME KIND, and conflating them is silent.** `kind` builds
+  the card, the edge colour and the `{id, kind}` a drag carries, which
+  `packOf()` resolves against `gameOf()` — a tab id of `rounds` there resolves
+  to NOTHING, state consistent and the reader lost. So `TABS` carries `kind:
+  'quiz'` and `gameSection()` takes a separate `slot` for the search box.
 - **THE AXIS IS ROUND COUNT, NOT ROUND TYPE**, and the first build got it
-  wrong: it asked whether every round was an INTRO, which invites a Pictures
-  tab next. *A pack is the thing that CONTAINS types.* Measured: of eight
-  multi-round quizzes SEVEN mix types and one is four text rounds, so a
+  wrong: it asked whether every round was an INTRO. *A pack is the thing that
+  CONTAINS types.* Measured: of eight multi-round quizzes SEVEN mix types, so a
   single-TYPE rule pulls a whole quiz onto the wrong shelf. Derived, never
   declared, like `isBreakoutPack()`.
-- **THE TAB DOES THE SPLIT, SO THE SHELF DOES NOT** — a fold inside one grid
-  was two answers to one question.
+- **THE TAB DOES THE SPLIT, SO THE SHELF DOES NOT.**
 - **THE ROUND TYPE IS A GLYPH, NEVER A COLOUR.** Asked for as a colour code and
-  **rendered before it was argued**: `.lb-rd.on` is green and `.off` is red
-  because a tick is a SWITCH carrying *is this round played tonight*, and a
-  five-colour code makes the switched-off round unfindable. **Green, pink and
-  purple are each already spoken for.** **The word rides in `title` and
-  `aria-label`.**
+  **rendered before it was argued**: a tick is a SWITCH carrying *is this round
+  played tonight*, and a five-colour code makes the switched-off round
+  unfindable. **Green, pink and purple are each already spoken for.** **The word
+  rides in `title` and `aria-label`.**
+
+### THE CONSOLE SHELF SHOWS EVERYTHING; THE WORKSHOP SHOWS SIX AND A SEARCH BOX
+
+*"Limiting to 6 seemed like a good idea at the time but it actually isn't now
+I think about it."* The reason written for the cap had expired twice over.
+
+- **THE CAP WAS THE DRAG'S, AND THE DRAG IS NEITHER THE ONLY WAY IN NOR STILL
+  CONSTRAINED.** *"A drag needs the card AND the slot on screen together"* — but
+  **a TAP places a pack** through the drop's own path, and **the fixed frame
+  keeps the doorhead on screen from 900px**. Measured at 1500x900: the tab body
+  scrolls 448px and the bar does not move.
+- **A CAP WITH NO WAY PAST IT IS THE ONLY KIND THIS APP MUST NOT HAVE.** The
+  Console has no search box by decision, so six of thirty-three left the rest
+  reachable only by leaving, pinning in the Workshop and coming back. **The
+  Workshop keeps its six because it keeps the search box and the rail.**
+- **PINS STILL RANK IT** — the six you curated lead and no longer hide the
+  rest. **And there is still no See all**: a shelf that is sometimes two rows
+  is what makes a drag target unlearnable.
+- **AND THE LABELS NAME THE TAP.** *"Drag a pack in to launch"* named the one
+  input a phone does not have, while pressing an empty slot has opened a
+  searchable picker for months. **The drag stays the fast path and is not
+  advertised** — it is found by trying it, which is how a drag always is.
 
 ### A PACK WEARS ITS OWN SUBJECT
 
@@ -3684,8 +3691,7 @@ and on Gigs. Nothing new is collected — this is arithmetic over the archive.
 one venue and all of them cannot disagree; it takes what `mergeGigs()` returns,
 which buys the 6am roll-over for nothing. Tested:
 
-- **A night's headcount is the MAX across its games, never the sum** — a quiz
-  and the bingo after it are the same room.
+- **A night's headcount is the MAX across its games, never the sum.**
 - **A night nobody played is left out**, or an abandoned launch puts a 0 in the
   middle of somebody's trend.
 - **A night with no venue is COUNTED AND SAID**, in a line under the panel.
@@ -3707,31 +3713,26 @@ needs to be factored in."* Nothing new is collected; the archive has held the
 venue and the pack of every filed night for months and nothing joined them.
 
 - **A GLOBAL "last played" ANSWERS THE WRONG QUESTION.** It says *have I run
-  this lately*, a fact about the diary. The shelf is for *will this room have
-  heard it*, a fact about one venue — so the 80s quiz run at The Crown on
-  Tuesday is fresh at The Station Tap on Thursday, and the old ranking buried
-  it at both.
-- **NEVER PLAYED HERE READS AS NEVER PLAYED, FULL STOP** — 0, not the global
-  date, or the feature does nothing.
-- **WITH NO VENUE CHOSEN IT FALLS BACK TO THE GLOBAL DATE** — nothing is known
-  about where tonight is, so that night behaves exactly as it always did.
+  this lately*; the shelf is for *will this room have heard it* — so the 80s
+  quiz run at The Crown on Tuesday is fresh at The Station Tap on Thursday, and
+  the old ranking buried it at both.
+- **NEVER PLAYED HERE READS AS NEVER PLAYED** — 0, not the global date, or the
+  feature does nothing.
+- **WITH NO VENUE CHOSEN IT FALLS BACK TO THE GLOBAL DATE**, so that night
+  behaves exactly as it always did.
 - **A NIGHT IS FILED UNDER ITS ID *AND* ITS NAME, and the reader asks under
-  both.** **The reconciling has to be the READER's job**: nothing on a
-  hand-typed night says which book entry it meant.
+  both** — nothing on a hand-typed night says which book entry it meant.
 - **THE ORDER AND ITS EXPLANATION COME FROM ONE PLACE.** `playedLine()` LEADS
-  with the local answer and lets the count follow, because *"Played 4 times"*
-  over a card at the FRONT of the shelf reads as a bug. **The two halves must
-  never contradict**: "Never played · here 2 days ago" is a sentence this app
-  should not be able to print.
+  with the local answer, because *"Played 4 times"* over a card at the FRONT of
+  the shelf reads as a bug. **The two halves must never contradict**: "Never
+  played · here 2 days ago" is a sentence this app cannot print.
 - **CHANGING THE VENUE RE-RENDERS THE SHELF.** `chooseVenue()` repainted the
-  bar alone, leaving a grid ordered for the pub before it — silently, with
-  every card real and nothing thrown.
+  bar alone, leaving a grid ordered for the pub before it — silently.
 - **The arithmetic is on the SERVER and the venue question is in the BROWSER.**
-  `src/heard.js` takes what `mergeGigs()` returns — same input as the
-  headcounts — and rides with the library rather than being fetched per venue
+  `src/heard.js` rides with the library rather than being fetched per venue
   change, because the shelf re-ranks on every one.
 - **A MIXED NIGHT COUNTS EVERY PART**, or a bingo interlude reads as never
-  played here for ever.
+  played here.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -3749,14 +3750,13 @@ test that the route works proves nothing about whether anybody can reach it.
   a feature.** The test POSTs over real HTTP and asserts against the 404 rather
   than for the 400 — that difference is the bug.
 - **The control sits UNDER the photographs, inside a night you have opened** —
-  so nobody publishes a night without having just looked at what is in it. A
-  button on the collapsed row would be one tap from a stranger's face going
+  a button on the collapsed row is one tap from a stranger's face going
   public.
 - **It says what publishing means in one line** — *"Anyone with the link can
   see these."* A warning is the exception to the short-label rule. Not red: it
   is read BEFORE pressing, and red would say a mistake had been made.
-- **Taking it down is as prominent as putting it up**, outlined red. Somebody
-  will ask, and the honest answer is a quizmaster who can do it while stood
+- **Taking it down is as prominent as putting it up**, outlined red — the
+  honest answer to somebody asking is a quizmaster who can do it stood
   there.
 - **THE OWNER PREVIEW NEEDS THE KEY AND WAS NOT SENDING IT.** `/gallery` shows
   unpublished nights to whoever is signed in — but the page sent nothing on a

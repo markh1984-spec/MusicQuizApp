@@ -923,7 +923,7 @@ anybody what to do about it — a sentence about the app's own state, floating
 next to a greyed-out button.
 
 The button now says **"Add a pack to save this night"** when it is disabled,
-which is exactly the shape Launch already uses ("Drag a pack in to launch"):
+which is exactly the shape Launch already uses ("Tap a pack to launch"):
 one control, one sentence, no second line to read.
 
 ### A bigger target is not the same as a hittable one

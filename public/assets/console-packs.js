@@ -385,50 +385,43 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit', slot 
     }
 
     /*
-     * SIX ON DISPLAY, AND THE REST BEHIND THE SEARCH BOX.
-     *
-     * Asked for in these words: *"the section needs 6 on display in total and
-     * to hide the other packs behind a search function… these sections are
-     * designed to quick launch a night as quickly as possible."*
-     *
-     * **AND THE REASON IS THE DRAG, not tidiness** — the host's own earlier
-     * framing, which is what makes six the right number rather than an
-     * arbitrary one: *"6 is perfect because it's not just about crowding but
-     * also what can be seen to be dragged and dropped."* A drag needs the card
-     * AND the slot on screen together. One row directly under the Tonight bar
-     * is what makes that possible; a second row is already a scroll away from
-     * the thing you are dragging into.
-     *
-     * **THE SIX ARE A WINDOW, AND ONLY THEIR CONTENTS CHANGE.** At rest they
-     * are the ranking above; while searching they are the top six matches.
-     * Search scans everything and shows six — so a pack you searched for is
-     * exactly as reachable as one the app suggested, which is the entire
-     * point. Results appearing in a longer list further down the page would
-     * put the thing you were looking for out of reach of the slot you want it
-     * in.
-     *
-     * **See all** is the way to everything, and it is a plain outlined button
-     * rather than a second gradient: the one "press this" on this tab is
-     * Launch.
+     * WHAT THE WORKSHOP'S SIX STILL ARE — A WINDOW, AND ONLY THEIR CONTENTS
+     * CHANGE. At rest they are the ranking above; while searching they are the
+     * top six matches, scanned across everything you hold. **A shelf with an
+     * expander is a shelf that is sometimes two rows**, and "sometimes" is what
+     * makes a drag target unlearnable — so there is no See all and there must
+     * not be one.
      */
     /*
-     * SIX, AND NOTHING THAT EXPANDS. Asked for directly: *"only show 6 and no
-     * options to expand or see more — the link is fine but only one link."*
+     * THE CONSOLE SHOWS EVERYTHING IT CAN RUN. THE WORKSHOP SHOWS SIX AND A
+     * SEARCH BOX.
      *
-     * The See all button is gone rather than hidden. **The way to the other
-     * seventeen is the search box**, which is the same answer as before minus
-     * a control that put a second row back on the one page whose whole job is
-     * to stay one row. A shelf with an expander is a shelf that is sometimes
-     * two rows, and "sometimes" is what makes a drag target unlearnable.
+     * The cap was six on both, and the reason written for it was the DRAG: *"a
+     * drag needs the card AND the slot on screen together. One row directly
+     * under the Tonight bar is what makes that possible."* Reported as wrong
+     * by the host once he had thirty-three quizzes — *"limiting to 6 seemed
+     * like a good idea at the time but it actually isn't"* — and he is right
+     * twice over:
+     *
+     * **THE DRAG IS NO LONGER THE ONLY WAY IN.** A TAP places a pack, through
+     * the same path a drop uses (see `placeIt()` below), and a tap does not
+     * need the drop target on screen at all. **AND THE FIXED FRAME ALREADY
+     * SOLVED THE DRAG'S HALF**: from 900px the doorhead does not scroll, so
+     * Tonight is on screen however far down the shelf you are — the reason
+     * for the cap was answered by a layout change months ago and the cap
+     * outlived it.
+     *
+     * **AND WITHOUT A SEARCH BOX THE CONSOLE'S SIX WAS A WALL, NOT A
+     * WINDOW.** `searchable` is false on this door by decision, so the only
+     * way to the seventh pack was to leave, pin it in the Workshop, and come
+     * back. Six of thirty-three, with no control on the page that reaches the
+     * other twenty-seven.
+     *
+     * The Workshop keeps the six because it keeps the search box and the rail
+     * — there the six is a window you can move. A cap with no way past it is
+     * the only kind this app should not have.
      */
-    /*
-     * SIX WHEN YOU ARE CHOOSING WHAT TO PLAY, EVERYTHING WHEN YOU ARE
-     * CHOOSING WHAT TO PIN. The cap exists so a drag has the card and the
-     * slot on screen together — a reason that belongs entirely to the
-     * Console. Curating the six FROM six is the circular thing the mode
-     * dropdown exists to break.
-     */
-    const shown = mode === 'pin' ? yours : yours.slice(0, PACK_SHELF);
+    const shown = (mode === 'pin' || door === 'console') ? yours : yours.slice(0, PACK_SHELF);
     // The heading follows the state — see the note where it is drawn. Set here
     // rather than in the template because `paint()` runs again on every search
     // keystroke and every See all, and the head is not rebuilt with the grid.
