@@ -913,65 +913,59 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
   `min-width: auto` TOO** — **a clipped overflow is worse than a scrolling
   one**: nothing throws and the control is unreachable.
 - **…AND CONSTRAINING IT MOVED THE OVERFLOW ONTO THE MENU**, so **My account
-  simply was not there**. **A door you cannot see is a door that does not
-  exist**, and **a fix that relieves pressure has to be followed to wherever
-  the pressure went.**
+  was not there**. **A door you cannot see does not exist**, and **a fix that
+  relieves pressure has to be followed to wherever the pressure went.**
 - **THE DIET HAS NO UPPER BOUND, BECAUSE `.console .wrap` CAPS THE BAR AT
-  1180px.** **A media query on the window is the wrong tool the moment a
+  1180px** — **a media query on the window is the wrong tool the moment a
   CONTAINER caps what you are protecting.**
-- **AND `#runningNow` IS WHY NOTHING SAW IT**, so the guard measured a bar
-  230px narrower than the host's. **A guard that sets a night up but never lets
-  anybody in is measuring a console nobody uses.**
 - **WHAT IS PLAYING NOW IS WORDED IN ONE PLACE — `nowPlaying()`.** There were
   THREE. **The SHORT form is a different job, not an abbreviation**, and
-  **under 1050px the live line stands down** — the only thing in that bar that
-  summarises something else on screen.
+  **under 1050px the live line stands down.**
 - **THE BAR GOES ON A DIET; WRAPPING IS ONLY THE FALLBACK** — two rows read as
   a second bar. **Scoped with `:has(.hat-switch)` to the OWNER's bar**: a fix
   for one account must not land on everybody. **AND IT NEVER TAKES THE
-  POSSESSIVE** — it hid the whole stacked wordmark, so the one bar this rule
-  reaches lost its own name off its own console. **THE WHOLE WORDMARK SHOWS AT
-  1180px AND UP** — *"the whole point is to have [QM's] Quizporium"* — **and
-  that number is the CONTAINER's, which is what makes a media query right
-  here**. **Below it the product name gives way and the possessive stays**, and
-  **a wordmark with no possessive in it still goes**. **BELOW THE CAP THE BAR
-  WRAPS AT 960 AND THE WORDMARK IS NOT WHY** — `#hatSlot` drops. **KEEP THE
-  GATE AT THE CONTAINER'S NUMBER**: the switch measures 310px or 387px
-  depending on whether a host KEY is in use, which moves any bisected threshold
-  by ~77px.
+  POSSESSIVE** — it hid the stacked wordmark, so the one bar this rule reaches
+  lost its own name off its own console. **THE WHOLE WORDMARK SHOWS AT 1180px
+  AND UP** — *"the whole point is to have [QM's] Quizporium"* — **and that
+  number is the CONTAINER's, which is what makes a media query right here**.
+  **Below it the product name gives way and the possessive stays.** **BELOW THE
+  CAP THE BAR WRAPS AT 960 AND THE WORDMARK IS NOT WHY** — `#hatSlot` drops.
+  **KEEP THE GATE AT THE CONTAINER'S NUMBER**: the switch measures 310px or
+  387px depending on whether a host KEY is in use, moving any bisected
+  threshold by ~77px.
 - **AND `setViewportSize()` IN A LOOP IS NON-DETERMINISTIC HERE** — the same
-  sweep read the wrap at 1090 then 960, a real recalculation race against
-  `:has()`. **Navigate fresh per width and poll twice 250ms apart until two
-  readings agree**, or the threshold is whatever the timing gave you.
+  sweep read the wrap at 1090 then 960, a recalculation race against `:has()`.
+  **Navigate fresh per width and poll twice 250ms apart until two readings
+  agree**, or the threshold is whatever the timing gave you.
 - **AND NOTHING RESTATES `overflow` AFTER `.console .wrap`'S PAIR.** A trailing
-  `overflow: hidden` wiped the `overflow-y: auto` five lines above it, so the
-  frame CLIPPED instead of scrolling and a real wheel moved nothing — the fix
-  written for it had never once been in effect. FOURTH sighting of
-  shorthand-beats-longhand, inside ONE declaration block. **`console-frame.mjs`
-  turns a REAL wheel** — a programmatic scroll succeeds on a clipped box.
-- **THE FIXED FRAME NEEDS A MINIMUM HEIGHT.** **LETTING THE BAY SHRINK INSTEAD
-  WAS TRIED AND IS WORSE** — it painted over the tab column. **The numbers said
+  `overflow: hidden` wiped the `overflow-y: auto` five lines above, so the frame
+  CLIPPED and a real wheel moved nothing — the fix written for it had never
+  once been in effect. FOURTH sighting of shorthand-beats-longhand, inside ONE
+  block. **`console-frame.mjs` turns a REAL wheel** — a programmatic scroll
+  succeeds on a clipped box.
+- **THE FIXED FRAME NEEDS A MINIMUM HEIGHT. LETTING THE BAY SHRINK INSTEAD WAS
+  TRIED AND IS WORSE** — it painted over the tab column. **The numbers said
   fixed and the render said broken**, which is why the screenshot is the
   check.
-- **AND THE FRAME'S MINIMUM HEIGHT IS TWO NUMBERS, BECAUSE THE DOORHEAD IS
-  TWO HEIGHTS. Do not collapse it to one**: one either takes the frame off a
+- **AND THE FRAME'S MINIMUM HEIGHT IS TWO NUMBERS, BECAUSE THE DOORHEAD IS TWO
+  HEIGHTS. Do not collapse it to one**: one either takes the frame off a
   1500x900 laptop that fits it, or keeps it at 960x760 where it does not.
 - **THE EQUAL-BAY RULE ONLY EXISTS BECAUSE OF THE FRAME**, so
-  `community-bay.mjs` checks it only where the frame is on. **Both scripts carry
-  the frame's two numbers; they move together.**
+  `community-bay.mjs` checks it only where the frame is on. **Both scripts
+  carry the frame's two numbers; they move together.**
 - **TWO COLUMNS IS A WIDTH DECISION; THE PINNED FRAME IS A HEIGHT ONE.** Gating
-  it on height took the SIDEBAR away too — the 190px rail holds at every height
-  and only the pinning goes. **A media query is two decisions the moment it
-  names two axes.**
+  it on height took the SIDEBAR away too — the rail holds at every height and
+  only the pinning goes. **A media query is two decisions the moment it names
+  two axes.**
 - **`main` IS A FLEX COLUMN — never give it a row template.** Its
-  `auto minmax(0,1fr)` grid assumed two children, so any banner above the
-  doorhead turned the fixed frame back into a scrolling page.
-- **THE SHELF IS SIX ACROSS, BY DECISION — it mirrors the six bays above it.**
-  **Do not "fix" a squeezed card by dropping a column** — where six genuinely
-  cannot be honoured, both grids move together (see below).
+  `auto minmax(0,1fr)` grid assumed two children, so a banner above the doorhead
+  turned the fixed frame back into a scrolling page.
+- **THE SHELF IS SIX ACROSS, BY DECISION — it mirrors the six bays above it.
+  Do not "fix" a squeezed card by dropping a column** — where six cannot be
+  honoured, both grids move together (see below).
 - **THE FINISH LAYER at the foot of `style.css` owns selection, caret,
-  `:focus-visible` and the card hover** — one named block, so the next control is
-  finished there rather than growing scattered rules.
+  `:focus-visible` and the card hover** — one named block, so the next control
+  is finished there rather than in scattered rules.
 
 ### THREE THINGS THAT DID NOT FIT, AND THE SIZES NOBODY MEASURED
 
@@ -1470,13 +1464,13 @@ Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 premium."* Nothing sits between the running order and Launch now, by rule.
 What was there and where it went:
 
-- **The break strip moved ABOVE the tiles.** It describes the gaps either way,
-  and above it does not stand between the order and Launch.
+- **The break strip moved ABOVE the tiles**, where it does not stand between
+  the order and Launch.
 - **The pack settings row only exists when it HOLDS a control** — a bingo pack
-  picked. Every quiz night carried a labelled row above Launch containing one
-  caption and nothing else. That is not the present-and-inert rule being
-  broken: that rule is about a control coming and going as you work, and Card
-  and Prizes already do not exist for a quiz pack.
+  picked. Every quiz night carried a labelled row above Launch holding one
+  caption and nothing else. **Not the present-and-inert rule being broken**:
+  that rule is about a control coming and going as you work, and Card and
+  Prizes already do not exist for a quiz pack.
 - **The four-fact info line is gone, and the host was right about why** —
   *"this is all venue settings stuff that can be done in the workshop?"* The
   venue name duplicated the picker and *start when you like* was the app
@@ -1507,20 +1501,27 @@ space where possible."* Four placements and one real bug:
 
 - **A CONTROL SITS WITH WHAT IT ACTS ON.** *Stop* read as a control over the
   whole panel. It is **Unlaunch**, beside the sentence naming what it stops.
+- **AND THE WAY BACK IN SITS THERE TOO** — *"a button next to the explainer at
+  the top saying what quiz was loaded."* The line said a night was on the big
+  screen and **the only control beside it ENDED the night**. **ORDINARY, never
+  the gradient**: the panel below wears the account's fill, and two on a screen
+  means neither is the one to press. **Same words as the panel**
+  (`nowPlaying()`), or one destination has two names. **Before Unlaunch.**
+- **AND THE PANEL NO LONGER PRINTS ITS HEADING TWICE** — `running.at` repeats
+  the `h3` at the lobby, so it is dropped when it only repeats.
 - **KEEPING A NIGHT IS A NIGHT-LEVEL QUESTION, so it moved into the head**
   beside the venue. **The label has to outrank the adjacency**: a show never
-  keeps the venue, so "Save" alone next to a venue picker would say the
-  opposite of what it does — the words stay *"for another night"*.
-- **THE REASON A CONTROL IS OFF GOES ON THE CONTROL.** *"Nothing in Tonight to
-  keep yet"* floated beside a greyed button; it is on the button now.
-- **A BIGGER TARGET IS NOT THE SAME AS A HITTABLE ONE.** The tile's × grew to
-  30px and the pack NAME painted over it: `z-index` AND `padding-right`.
-- **EVERY DRAG NEEDS ITS TAP, and a shelf round dot never had one** — so the
+  keeps the venue, so "Save" alone beside a venue picker says the opposite of
+  what it does — the words stay *"for another night"*.
+- **THE REASON A CONTROL IS OFF GOES ON THE CONTROL** — *"Nothing in Tonight
+  to keep yet"* floated beside a greyed button; it is on the button now.
+- **A BIGGER TARGET IS NOT A HITTABLE ONE.** The tile's × grew to 30px and the
+  pack NAME painted over it: `z-index` AND `padding-right`.
+- **EVERY DRAG NEEDS ITS TAP, and a shelf round dot never had one** — the
   first thing anybody tries did nothing and a touchscreen had no way in.
   `addRoundToTonight()` is that tap, through the drop's own path.
 - **FIVE SETTINGS ON ONE ROW ABOVE 1150px, LABELS ABOVE THEIR CONTROLS.** Side
-  by side, two of five labels wrapped and three did not — five cells of five
-  shapes, which was most of the mess.
+  by side, two of five labels wrapped and three did not.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -1841,19 +1842,19 @@ moves the tab column and everything below it.
 - **THE VALUE IS THE LAUNCH BAR'S OWN OPEN PANEL HEIGHT, MEASURED** — the
   panel, not the doorhead. Two values: the row wraps below 1150px..
 - **AND THE RULE IS ABOUT THE BAY, NOT THE DOORHEAD.** With a night running the
-  Console's doorhead is **573px and the other three 386**, because it carries a
-  SECOND panel. **Every BAY is 362px on every door.** **DO NOT RAISE `--bay-h`
-  TO 549 TO EVEN THEM UP**: it spends 187px of tab column on three doors
-  PERMANENTLY, leaving **234px against the frame's own 200px floor**. **Nor put
-  the running panel on the other doors.**
+  Console's doorhead is **573px and the other three 386**, carrying a SECOND
+  panel. **Every BAY is 362px on every door. DO NOT RAISE `--bay-h` TO 549 TO
+  EVEN THEM UP**: it spends 187px of tab column on three doors PERMANENTLY,
+  leaving **234px against the frame's own 200px floor**. **Nor put the running
+  panel on the other doors.**
 - **AND THE GUARD MEASURED IT IDLE, so both sides read 386 and it agreed with
-  itself.** It launches a quiz and lets two phones in, and **names the Console's
-  two panels** so a third is looked at.
+  itself.** It launches a quiz and lets two phones in, and **names the
+  Console's two panels** so a third is looked at.
 - **THE BAR ITSELF IS NOT GIVEN THE HEIGHT.** It is the REFERENCE, it folds to
   a line on purpose, and clipping the one panel on the protected launch path to
   a stylesheet number is not a trade worth making.
 - **BELOW 900px THERE IS NO RULE**, there being no frame — the bar is 745px on
-  a phone, a screen of empty panel per door.
+  a phone.
 - **A FIXED BOX LETS THE CONTENT STOP WORRYING** — anything SCROLLS INSIDE IT,
   so nothing needs a row cap or an "and N more".
 
@@ -1877,31 +1878,31 @@ sections?"* `bayRail()` / `bayColumns()` / `bayHead()`, drawn by Post gig
   listing every pack while the shelf showed six. **The rule is not reversed, its
   scope is.** **Do not put one back on the Workshop**; `community-bay.mjs`
   asserts it in BOTH directions.
-- **ONE DEFINITION, because each door had already invented its own.** The rail
-  is the TAB COLUMN one region higher: same 190px, same stack, same lit edge.
+- **ONE DEFINITION, because each door had invented its own.** The rail is the
+  TAB COLUMN one region higher: same 190px, same stack, same lit edge.
 - **A RAIL PICKS; IT NEVER ACTS — with ONE lamp as the stated exception.**
   **The Photos rail's P publishes a night in one press**, and **the reason the
   rule existed is kept by the lamp also PICKING** — the photographs land in the
   bay as it goes public, so nobody publishes strangers' faces unseen. **Opt-in
-  per item**, and **the tab body's panel GOES**. **The night's address is in the
-  bay HEAD, from one `galleryAddress()`**, saying which kind it is.
-- **COMPARTMENTALISED BY PUB, AND THE PUB FOLDS.** **Group by the pub FIRST,
-  then order within it**, or "The Crown" prints twice with another pub between.
+  per item**, and **the tab body's panel GOES**. **The night's address is in
+  the bay HEAD, from one `galleryAddress()`.**
+- **COMPARTMENTALISED BY PUB, AND THE PUB FOLDS. Group by the pub FIRST, then
+  order within it**, or "The Crown" prints twice with another pub between.
   **FOUR TO A GROUP.**
 - **WHAT IS REMEMBERED WINS, ALWAYS — the first build had it the other way and
   the control was DEAD.** Forcing a group open whenever it held the picked row
   meant pressing its heading put it straight back. **A control that does
   nothing when pressed is worse than the problem it was avoiding**, so
-  `holdsPicked` is a DEFAULT. **The folds live in a module Map keyed by rail AND
-  group** — the bay is rebuilt on every push.
-- **NO `title` ANYWHERE IN THE RAIL — the names WRAP to two lines instead.** A
-  native tooltip is an unstyled box landing over the rows beneath it.
+  `holdsPicked` is a DEFAULT. **The folds live in a module Map keyed by rail
+  AND group** — the bay is rebuilt on every push.
+- **NO `title` ANYWHERE IN THE RAIL — the names WRAP instead.** A native
+  tooltip is an unstyled box landing over the rows beneath it.
 - **`.bay-rail > * { flex: 0 0 auto }` IS LOAD-BEARING.** A flex column shrinks
   its children and the rail always overflows. The rows survived on
   `min-height: 44px`; the pub headings had no floor and rendered at **2px with
-  their text in the DOM.**
-- **THE DRAGS SURVIVED because they were on the PANEL, not on a slot inside
-  it** — and each empty state keeps its drop zone.
+  their text in the DOM**.
+- **THE DRAGS SURVIVED because they were on the PANEL, not a slot inside it**
+  — and each empty state keeps its drop zone.
 
 ### ONE PUB IS ONE LEAGUE — the id key and the typed name are the same room
 

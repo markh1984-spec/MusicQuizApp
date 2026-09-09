@@ -694,14 +694,21 @@ export function launchBar() {
              stays down with the order it happens in. -->
         <div class="lb-live-row" hidden>
           <span class="tiny lb-live"></span>
-          <!-- UNLAUNCH, AND IT SITS AGAINST THE SENTENCE IT UNDOES — reported
-               off a screenshot: it said "Stop" and sat at the far right of the
-               bar, an inch of empty space away from the line naming what it
-               would stop. At that distance it reads as a control over the whole
-               panel, which is the one thing it must not be mistaken for on a
-               gig night. "Unlaunch" because it is the exact opposite of the
-               button underneath it, and a word somebody can pair with Launch
-               without being told. -->
+          <!-- AND THE WAY BACK IN SITS ON THE SAME LINE — *"would be better
+               if there was a button next to the explainer at the top saying
+               what quiz was loaded, as this is the most obvious place for
+               it."* The tell is what was already here: this line says a night
+               is on the big screen and the ONLY control beside it ENDED the
+               night. One door, and the wrong one. ORDINARY, NEVER THE
+               GRADIENT — the panel below already wears the account's fill, and
+               two on a screen means neither is the one to press. Same WORDS as
+               the panel: one destination must not have two names. Before
+               Unlaunch: going somewhere comes before undoing something. -->
+          <a class="minor lb-tocontrols" href="#">Open the controls</a>
+          <!-- UNLAUNCH, AND IT SITS AGAINST THE SENTENCE IT UNDOES — it said
+               "Stop" and sat at the far right of the bar, an inch from the line
+               naming what it would stop, where it reads as a control over the
+               whole panel. "Unlaunch" pairs with Launch without being told. -->
           <button class="minor danger lb-unlaunch" type="button"
             title="Take it off the big screen and go back to waiting">Unlaunch</button>
         </div>
@@ -940,6 +947,7 @@ export function launchBar() {
   const sayEl = el.querySelector('.lb-warn-slot');
   const liveEl = el.querySelector('.lb-live');
   const unlaunchBtn = el.querySelector('.lb-unlaunch');
+  const toControls = el.querySelector('.lb-tocontrols');
   const shapePick = el.querySelector('.shape-pick');
   const prizePick = el.querySelector('.prize-pick');
   const cardRow = el.querySelector('.lb-set-card');
@@ -1328,23 +1336,20 @@ export function launchBar() {
   /*
    * PICKING A PACK PUTS IT ON THE BIG SCREEN — when nothing would be lost.
    *
-   * The host's own complaint, from a real night: *"the quiz in the launch bit
-   * after I pressed launch didn't say what the big screen said"*, and then the
-   * conclusion — *"changing quiz packs should change the console and the big
-   * screen."* He is right that the two disagreeing is the fault. The console
-   * and the projector should agree every time it is possible for them to.
+   * From a real night: *"the quiz in the launch bit after I pressed launch
+   * didn't say what the big screen said… changing quiz packs should change the
+   * console and the big screen."* The two disagreeing is the fault.
    *
    * **BUT PICKING IS NOT LAUNCHING WHEN THERE IS A NIGHT TO LOSE.** A tap
-   * that silently ends a running quiz and wipes every score would be the most
-   * dangerous control in the app, on the protected path, in a dark pub.
+   * that silently ends a running quiz would be the most dangerous control in
+   * the app, on the protected path, in a dark pub.
    *
    * **THE SERVER DECIDES WHICH, NOT THIS PAGE** — the ordinary launch call
    * without `replace`, which already answers 409 when a night is in progress.
    * No second definition of "in progress" to drift.
    *
-   * **A 409 is SILENT here** — no dialog. Pressing Launch is what asks that
-   * question and still does; a 409 leaves the choice staged, and the red line
-   * under the box says the projector is showing something else.
+   * **A 409 is SILENT here** — no dialog. Pressing Launch asks that question;
+   * a 409 leaves the choice staged and the red line says why.
    *
    * A QUIET SWITCH CARRIES THE FACTS ABOUT THE EVENING — venue, online, lobby
    * game — never the look, card shape or prizes. **The comment said "no venue"
@@ -1690,13 +1695,11 @@ export function launchBar() {
      * it: *"can I have a little button next to the text saying what's on the
      * screen to unlaunch it?"*
      *
-     * It was gated on `aNightIsOn()`, which at the time was false while a game
-     * sat in the lobby with nobody joined. That hid the button at exactly the
-     * moment it is most wanted: something IS on the projector (this line only
-     * exists when it is) and the person reading it wants it gone. The two
-     * tests agree again now that `aNightIsOn()` asks `launched` — this one
-     * still stands on its own, because it is about the SCREEN, and the screen
-     * is showing something whenever there is a title to name.
+     * It was gated on `aNightIsOn()`, false at the time while a game sat in
+     * the lobby with nobody joined — hiding the button exactly when it is most
+     * wanted. The two agree again now that `aNightIsOn()` asks `launched`; this
+     * one still stands alone, being about the SCREEN, which is showing
+     * something whenever there is a title to name.
      */
     unlaunchBtn.hidden = false;
     /*
@@ -1739,6 +1742,11 @@ export function launchBar() {
       : venueDiffers
         ? `On the big screen now — this one, but filed under ${runVenue || 'nowhere'}. Launch again to move it.`
         : 'On the big screen now — this one';
+    // THE HREF IS PAINTED, NOT IN THE TEMPLATE — `linkTo()` carries the host
+    // key. The WORDS come from `nowPlaying()`, the one place that decides them.
+    const now = nowPlaying(running);
+    toControls.href = linkTo('/host');
+    toControls.textContent = now && now.live ? 'Take control' : 'Open the controls';
   }
 
   unlaunchBtn.addEventListener('click', (ev) => stopRunningNight(ev.currentTarget));
@@ -3971,10 +3979,9 @@ function whenShort(at) {
  * A LOADED PACK IS NOT A NIGHT.
  *
  * A session always has a pack — `boot()` falls back to one so the projector is
- * never blank — so the console said "Now: The 1980s Pop Music Quiz (0 in)" in
- * the topbar and drew a panel underneath saying "Loaded, nobody playing", with
- * a Stop button, over a quiz the account had never launched. On a
- * quizmaster's very first sign-in that is the first thing they read.
+ * never blank — so the console drew a panel saying "Loaded, nobody playing",
+ * with a Stop button, over a quiz the account had never launched. On a
+ * quizmaster's first sign-in that is the first thing they read.
  *
  * **THE TEST IS `launched`, NOT "HAS ANYBODY JOINED" — reported as *"if i
  * launch a quiz and then click console how do I get back to the launched quiz
@@ -3999,11 +4006,9 @@ export function aNightIsOn(running) {
 }
 
 /**
- * STOP WHATEVER IS RUNNING — shared by the running panel's own Stop button
- * and the launch bar's own quick stop beside the live-drift warning, so the
- * two cannot end up with different confirm wording or a different call.
- * Reads `library.running` fresh rather than taking it as a parameter, since
- * that is what both callers already agree on.
+ * STOP WHATEVER IS RUNNING — shared by the running panel's Stop and the bar's
+ * quick stop, so the two cannot drift apart on wording or on the call. Reads
+ * `library.running` fresh rather than taking it as a parameter.
  */
 async function stopRunningNight(button) {
   const running = (library && library.running) || {};
@@ -4028,18 +4033,13 @@ async function stopRunningNight(button) {
 /**
  * WHAT IS PLAYING NOW, IN WORDS — the one place that decides.
  *
- * Asked for: *"can we make it so what is displayed as 'playing now' is all read
- * from the same place so its never drifting?"* He is right, and there were
- * THREE: the topbar wrote `Now: <title> (<n> in)`, this panel wrote
- * `<kind> — <n> playing`, and the launch bar's live line worded it a third way.
- * One fact, three sentences, and nothing stopping them disagreeing.
+ * *"Can we make it so what is displayed as 'playing now' is all read from the
+ * same place so its never drifting?"* There were THREE wordings for one fact.
  *
- * **The SHORT form is not an abbreviation of the long one, it is a different
- * job.** The topbar has to say *something is live and how many are in* from any
- * door in the app; the panel is the thing itself and says what it is and where
- * it has got to. So the title lives in the panel, where it is not competing for
- * room — which is also what stops the bar wrapping: the title was 222px the
- * capped bar could not afford.
+ * **The SHORT form is not an abbreviation, it is a different job.** The topbar
+ * says *something is live and how many are in* from any door; the panel is the
+ * thing itself. So the title lives in the panel, where it is not competing for
+ * room — which is also what stops the bar wrapping at 222px.
  */
 export function nowPlaying(running) {
   if (!aNightIsOn(running)) return null;
@@ -4064,26 +4064,22 @@ export function nowPlaying(running) {
      * claiming nobody is in it when somebody is.
      */
     /*
-     * A NIGHT THAT IS OVER SAYS SO — and that rung goes ABOVE the lobby ones,
-     * not beside them. `live` is "not lobby and not finished", so bingo's own
-     * FINISHED phase fell straight through to the lobby branches: a finished
-     * night was headed **"Waiting in the lobby"**, or with nobody joined
-     * **"Loaded, nobody playing"**, directly over a line already reading
-     * "Finished — the winners are up". Same shape as the fault one branch
-     * along, and it lands at the end of every bingo night — which is exactly
-     * when the host is reading this panel to decide what to do next.
+     * A NIGHT THAT IS OVER SAYS SO — and that rung goes ABOVE the lobby ones.
+     * `live` is "not lobby and not finished", so bingo's FINISHED phase fell
+     * through to the lobby branches: a finished night was headed **"Waiting in
+     * the lobby"** directly over a line reading "Finished — the winners are
+     * up". It lands at the end of every bingo night, which is when the host is
+     * reading this panel to decide what to do next.
      */
     heading: running.launched === false ? 'Nothing launched yet'
       : running.phase === 'finished' || running.phase === 'final' ? "That's the night done"
         : running.phase !== 'lobby' ? 'Running now'
           /* AND A LAUNCHED LOBBY WITH NOBODY IN IT IS STILL WAITING.
              "Loaded, nobody playing" was written for the boot fallback, which
-             `launched === false` above catches by name — leaving that wording
-             to land on a quiz just launched and waiting for the room to scan
-             into, which reads as a failure. */
+             `launched === false` above catches by name — leaving it to land on
+             a quiz just launched, which reads as a failure. */
           : 'Waiting in the lobby',
-    // Said only for the fallback, because it is the one state somebody can
-    // mistake for a night they started.
+    // Said only for the fallback — the one state mistakable for a night you started.
     note: running.launched === false
       ? 'This is just the pack sitting on the big screen so it is not blank. Nothing you set here reaches it until you press Launch.'
       : '',
@@ -4109,7 +4105,12 @@ export function runningPanel(running) {
         <div>
           <div class="running-title">${esc(running.title)}</div>
           <div class="tiny">${esc(what)} — ${who}</div>
-          ${running.at ? `<div class="running-at">${esc(running.at)}</div>` : ''}
+          <!-- NOT WHEN IT ONLY REPEATS THE HEADING. At the lobby this says
+               "Waiting in the lobby", which the heading three lines above
+               already says - the same words twice in one panel reads as a
+               rendering fault. NO BACKTICKS IN HERE: this comment is inside a
+               template literal, so one ends the string. -->
+          ${running.at && running.at !== now.heading ? `<div class="running-at">${esc(running.at)}</div>` : ''}
           ${nowNextRows(running)}
         </div>
         <div class="running-links">
