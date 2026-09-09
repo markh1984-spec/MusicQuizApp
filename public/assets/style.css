@@ -9902,6 +9902,88 @@ body.gal-zoomed { overflow: hidden; }
   padding: 1px 8px;
   white-space: nowrap;
 }
+/* ---- THE WORKSHOP BENCH FILLS ITS BAY, once the rail came off it.
+
+   The bay is 362px by rule and the bench came to 142 of it — two thirds empty,
+   on the door whose bay the host had already called *"a lot of wasted space"*.
+   Taking the rail away made that worse, so the bench takes the height it is
+   sitting in: `.bench-body` is now a direct child of the panel, which is
+   already a flex column of a fixed height, so ONE `flex` line does it.
+
+   THE PACK IS A FULL-HEIGHT SQUARE POSTER, which is what the pack shelf
+   already does on a 146px card. It is the thing you are working on; a bench
+   that draws it at 92px and leaves 220px of nothing under it has the emphasis
+   exactly backwards.
+
+   AND THE BUTTONS STAY THEIR OWN SIZE — three across for what you do WITH the
+   pack, four across for what you do TO it, never one 800px-wide button. *"A
+   button's width should say how big the action is"* is the rule that put them
+   beside the slot in the first place, and a full-width bay is where it is
+   easiest to break.
+
+   BELOW 900px NONE OF THIS APPLIES: no frame, no `--bay-h`, and `.bench-body`
+   is one column already. */
+@media (min-width: 900px) {
+  .bench.launchbar > .bench-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: 12px 18px;
+  }
+  .bench.launchbar > .bench-body > .bench-slot {
+    grid-row: 1 / -1;
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+  /* `height: auto` plus the stretch above is what makes the tile take the row,
+     and `aspect-ratio` then decides its WIDTH from that height — the other way
+     round (a width and a ratio) gives a poster taller than the bay. */
+  .bench.launchbar > .bench-body > .bench-slot .lb-tile,
+  .bench.launchbar > .bench-body > .bench-slot .lb-drop {
+    height: auto;
+    min-height: 0;
+    width: auto;
+    aspect-ratio: 1;
+    flex: 0 0 auto;
+  }
+  .bench.launchbar > .bench-body > .bench-do {
+    grid-column: 2;
+    grid-row: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: stretch;
+    gap: 10px;
+    min-height: 0;
+  }
+  /* THE NOTE TAKES THE MIDDLE, rather than sitting under the buttons with a
+     void beneath it. The two button rows are anchored top and bottom — what
+     you do next, and what you do to the file — so the one thing left is the
+     sentence, and the middle is where it stops being a gap. */
+  .bench.launchbar > .bench-body > .bench-do p {
+    grid-column: 1 / -1;
+    margin: 0;
+    max-width: 70ch;
+    align-self: center;
+  }
+  .bench.launchbar > .bench-body > .bench-pack-actions { grid-column: 2; grid-row: 2; }
+  /* AS MANY COLUMNS AS THERE ARE BUTTONS — a fixed four leaves a hole on the
+     packs that have no picture round, which is most of them. `grid-auto-flow:
+     column` lets the row size itself to what is actually in it. */
+  .bench.launchbar > .bench-body > .bench-pack-actions .pack-actions {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .console .bench.launchbar > .bench-body > .bench-do .go,
+  .console .bench.launchbar > .bench-body > .bench-do .minor,
+  .bench.launchbar > .bench-body > .bench-pack-actions .pack-actions > * { width: 100%; }
+}
+
 /* AN IMAGE ROUND'S CARD — a pack poster with a glyph in the corner.
 
    The glyph goes in a CORNER rather than beside the name, where it pushed the
@@ -9965,6 +10047,22 @@ body.gal-zoomed { overflow: hidden; }
    a pack lands on it — a panel that changes height on a drop is the reflow
    this file already refuses on the pack shelf. */
 .bench-slot .lb-drop, .bench-slot .lb-tile { min-height: 92px; }
+/* AND THE BENCH'S DROP ZONE LOOKS LIKE ONE. It carries `lb-drop` without
+   `lb-tile`, and the dashed border lives on `.lb-tile.lb-drop` — so the empty
+   bench has always been a bare "+" and a line of text with no box round it,
+   which reads as a caption rather than as somewhere to let go of a pack. It
+   was 92px tall and easy to miss; at the full height of the bay it is not. */
+.bench-slot .lb-drop {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  gap: 4px;
+  border: 2px dashed var(--panel-line);
+  border-radius: var(--r-card);
+  color: var(--ink-dim);
+  font-weight: 800;
+  cursor: pointer;
+}
+.bench.drop-here .bench-slot .lb-drop { border-color: var(--hot); color: var(--ink); }
 /* ---- A ROW OF BUTTONS SHARES A HEIGHT AND A TYPE SIZE; THE ROLE SHOWS IN
    THE FILL, NEVER IN THE SIZE.
 

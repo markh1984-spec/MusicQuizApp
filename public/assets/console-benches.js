@@ -21,11 +21,13 @@
  *
  * ---
  *
- * **BOTH BAYS ARE NOW A RAIL AND WHAT IT PICKED** — `bayRail()`, the same
+ * **POST GIG'S BAY IS A RAIL AND WHAT IT PICKED** — `bayRail()`, the same
  * component the Community door draws, asked for in those words: *"content
- * taking up the bulk to the right, controls on the left. How can we utilise
- * this for all of the sections?"* Three doors, one definition, so they cannot
- * grow three ideas of what "pick one of these" looks like.
+ * taking up the bulk to the right, controls on the left."*
+ *
+ * **THE WORKSHOP'S IS NOT, AND HAD ONE FOR A FORTNIGHT BY MISTAKE.** Its shelf
+ * below is already the picker, so a rail beside the bench was a second answer
+ * to one question — see the note where it was taken out.
  *
  * **THE DRAG SURVIVED THE RAIL, on both.** It was already on the panel rather
  * than on a slot inside it, so nothing had to be rewired — and the empty
@@ -171,7 +173,7 @@ export function workBench() {
             </div>` : `
             <div class="lb-drop bench-drop">
               <span class="lb-drop-plus">+</span>
-              <span>Pick one on the left</span>
+              <span>Pick one below</span>
             </div>`}
         </div>
         <div class="bench-do">
@@ -196,8 +198,8 @@ export function workBench() {
               it to Tonight, or write your own from the shelf below.`}</p>`
     : `
             <a class="go bench-go role-make" href="${esc(linkTo('/editor'))}">Write a new one</a>
-            <p class="tiny">Or pick one on the left to edit, rename or read
-              something you already have.</p>`}
+            <p class="tiny">Or pick one from the shelf below to edit, rename
+              or read something you already have.</p>`}
         </div>
         <!-- RENAME, DELETE, PICTURES, PLAYLIST, A COPY TO KEEP — everything a
              pack card itself used to open a caret to reach, before a tap
@@ -213,68 +215,29 @@ export function workBench() {
     </div>`);
 
   /*
-   * YOUR PACKS, DOWN THE LEFT — the same rail the other two doors draw.
+   * NO RAIL ON THIS BENCH — and it had one for a fortnight, which was the
+   * mistake.
    *
-   * The bench held one pack and the only ways to change it were a drag from
-   * the shelf below or a tap on a card down there. Both still work; this adds
-   * the third, which is the one the other doors now have: pick it in the bay,
-   * see it in the bay.
+   * Reported plainly: *"the workshop bench is literally only meant to be for
+   * whatever you drag to it to be currently worked on — not sure why there is
+   * a dropdown list of different things, they're selected from the bottom,
+   * dragged or clicked to the top and then edited when there."*
    *
-   * **COMPARTMENTALISED BY WHOSE IT IS FIRST, THEN BY KIND** — My quizzes, My
-   * bingo games, then the Quizporium ones. It was by kind alone, with a small
-   * `Yours` note on the rows that were the quizmaster's, and that is the wrong
-   * way round for this door: whose a pack is decides what may be DONE to it,
-   * which is the Workshop's entire subject, while quiz-or-bingo is answered by
-   * the row's own colour and by the shelf below.
+   * **HE IS RIGHT, AND IT IS THE LABEL COLLISION THIS FILE KEEPS A RULE
+   * AGAINST.** The shelf below IS the picker — search it, drag a card up, or
+   * tap one — and a rail beside the bench is a second answer to that one
+   * question, sitting on the door where the first answer is already the whole
+   * bottom half of the page. Worse, the two disagreed about what they held:
+   * the rail listed every pack and the shelf showed six, so the duplicate was
+   * the better list, which is backwards.
    *
-   * **YOURS FIRST**, the same order the pack shelf has always used — a pack
-   * somebody wrote is the one they came here to work on.
-   *
-   * **AND THE `Yours` NOTE GOES**, because the heading above the row now says
-   * it. A note that only restates its own heading is the duplication this file
-   * keeps a rule against, and it cost a row half its width.
-   *
-   * An empty group never draws, so a quizmaster who has written nothing sees
-   * exactly the two headings they saw before, and the owner sees four.
-   * The row wears the pack's own colours, which is `packLookAttrs()` doing on
-   * a 190px row exactly what it does on a card: the subject, at a glance.
+   * **THE RAIL RULE IS NOT REVERSED, ITS SCOPE IS.** `bayRail()` is right on
+   * Post gig and Community, where the bay is *"a narrow list of what you could
+   * be looking at, and the one you picked filling the rest"* and there is no
+   * second picker. The Workshop's bay is a WORKBENCH: one pack, and what you
+   * do to it. **Do not put a rail back on it.**
    */
-  const railRows = [];
-  for (const whose of [true, false]) {
-    for (const kind of ['quiz', 'bingo']) {
-      for (const p of shelfFor(kind)) {
-        if (p.locked || Boolean(p.mine) !== whose) continue;
-        const l = packLookAttrs(p, kind === 'quiz' && isBreakoutPack(p) ? 'breakout' : kind);
-        railRows.push({
-          key: `${kind}:${p.id}`,
-          group: `${whose ? 'My' : 'Quizporium'} ${kind === 'quiz' ? 'quizzes' : 'bingo games'}`,
-          name: shortTitle(p.title),
-          cls: `tinted ${l.cls}`,
-          style: l.style,
-        });
-      }
-    }
-  }
-  const cols = bayColumns(
-    bayRail({
-      items: railRows,
-      picked: bench ? `${bench.kind}:${bench.id}` : '',
-      railId: 'packs',
-      // The rail is the handful you are working on; the shelf below is every
-      // pack you hold, with its search and its filters.
-      more: 'The rest are on the shelf below.',
-      onFold: () => putOnBench(bench ? shelfFor(bench.kind).find((p) => p.id === bench.id) : null, bench && bench.kind),
-      onPick: (key) => {
-        const kind = key.slice(0, key.indexOf(':'));
-        const id = key.slice(kind.length + 1);
-        putOnBench(shelfFor(kind).find((p) => p.id === id), kind);
-      },
-      empty: 'No packs yet.',
-    }),
-    el.querySelector('.bench-body'),
-  );
-  cols.classList.add('bench-fold-body');
-  el.appendChild(cols);
+  el.querySelector('.bench-body').classList.add('bench-fold-body');
 
   el.querySelector('.bench-off')?.addEventListener('click', () => putOnBench(null));
   el.querySelector('.bench-read')?.addEventListener('click', () => preview(bench.kind, on));

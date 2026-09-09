@@ -1840,23 +1840,21 @@ of the page changed shape on every door press, and under a fixed frame that
 moves the tab column and everything below it.
 
 - **THE VALUE IS THE LAUNCH BAR'S OWN OPEN PANEL HEIGHT, MEASURED** — the
-  panel, not the doorhead. Two values: the row wraps below 1150px.
+  panel, not the doorhead. Two values: the row wraps below 1150px..
 - **AND THE RULE IS ABOUT THE BAY, NOT THE DOORHEAD.** With a night running the
   Console's doorhead is **573px and the other three 386**, because it carries a
-  SECOND panel. **Every BAY is 362px on every door**, so the rule holds. **DO
-  NOT RAISE `--bay-h` TO 549 TO EVEN THEM UP**: it spends 187px of tab column
-  on three doors PERMANENTLY, leaving **234px against the frame's own 200px
-  floor**. **Nor put the running panel on the other doors.**
+  SECOND panel. **Every BAY is 362px on every door.** **DO NOT RAISE `--bay-h`
+  TO 549 TO EVEN THEM UP**: it spends 187px of tab column on three doors
+  PERMANENTLY, leaving **234px against the frame's own 200px floor**. **Nor put
+  the running panel on the other doors.**
 - **AND THE GUARD MEASURED IT IDLE, so both sides read 386 and it agreed with
-  itself.** It launches a quiz and lets two phones in, compares `.panel.bench`
-  against `.panel.launchbar`, and **names the Console's two panels** so a third
-  is looked at.
+  itself.** It launches a quiz and lets two phones in, and **names the Console's
+  two panels** so a third is looked at.
 - **THE BAR ITSELF IS NOT GIVEN THE HEIGHT.** It is the REFERENCE, it folds to
   a line on purpose, and clipping the one panel on the protected launch path to
-  a stylesheet number is not a trade worth making. `community-bay.mjs` asserts
-  the two agree.
+  a stylesheet number is not a trade worth making.
 - **BELOW 900px THERE IS NO RULE**, there being no frame — the bar is 745px on
-  a phone, which as a floor is a screen of empty panel per door.
+  a phone, a screen of empty panel per door.
 - **A FIXED BOX LETS THE CONTENT STOP WORRYING** — anything SCROLLS INSIDE IT,
   so nothing needs a row cap or an "and N more".
 
@@ -1864,13 +1862,22 @@ moves the tab column and everything below it.
 
 *"The way this is presented is perfect — content taking up the bulk to the
 right, controls on the left. How can we utilise this for all of the
-sections?"* `bayRail()` / `bayColumns()` / `bayHead()`, drawn by Workshop
-(your packs), Post gig (your nights) and Community (venues, and the nights
-with photographs).
+sections?"* `bayRail()` / `bayColumns()` / `bayHead()`, drawn by Post gig
+(your nights) and Community (venues, and the nights with photographs).
 
 - **THE CONSOLE DOOR IS THE EXCEPTION, DELIBERATELY.** Its bay is the launch
   bar — the protected surface, and the REFERENCE every other bay is sized
   against. **Do not give it a rail.**
+- **AND THE WORKSHOP IS THE SECOND EXCEPTION — it had a rail for a fortnight
+  and that was the mistake.** *"The workshop bench is literally only meant to be
+  for whatever you drag to it to be currently worked on — not sure why there is
+  a dropdown list of different things, they're selected from the bottom, dragged
+  or clicked to the top."* **The shelf below IS the picker**, so a rail beside
+  the bench was a second answer to one question on the one door where the first
+  answer is the whole bottom half of the page — and the two disagreed, the rail
+  listing every pack while the shelf showed six. **The rule is not reversed, its
+  scope is.** **Do not put one back on the Workshop**; `community-bay.mjs`
+  asserts it in BOTH directions.
 - **ONE DEFINITION, because each door had already invented its own.** The rail
   is the TAB COLUMN one region higher: same 190px, same stack, same lit edge.
 - **A RAIL PICKS; IT NEVER ACTS — with ONE lamp as the stated exception.**
@@ -1878,12 +1885,10 @@ with photographs).
   rule existed is kept by the lamp also PICKING** — the photographs land in the
   bay as it goes public, so nobody publishes strangers' faces unseen. **Opt-in
   per item**, and **the tab body's panel GOES**. **The night's address is in the
-  bay HEAD, from one `galleryAddress()`**, saying which kind it is — *see it*
-  versus *preview*, an owner being able to open a draft.
+  bay HEAD, from one `galleryAddress()`**, saying which kind it is.
 - **COMPARTMENTALISED BY PUB, AND THE PUB FOLDS.** **Group by the pub FIRST,
   then order within it**, or "The Crown" prints twice with another pub between.
-  **FOUR TO A GROUP** — the rail is the night you are thinking about; the tab
-  body is the archive.
+  **FOUR TO A GROUP.**
 - **WHAT IS REMEMBERED WINS, ALWAYS — the first build had it the other way and
   the control was DEAD.** Forcing a group open whenever it held the picked row
   meant pressing its heading put it straight back. **A control that does
@@ -1895,7 +1900,7 @@ with photographs).
 - **`.bay-rail > * { flex: 0 0 auto }` IS LOAD-BEARING.** A flex column shrinks
   its children and the rail always overflows. The rows survived on
   `min-height: 44px`; the pub headings had no floor and rendered at **2px with
-  their text in the DOM**. Found by measuring `getClientRects()`.
+  their text in the DOM.**
 - **THE DRAGS SURVIVED because they were on the PANEL, not on a slot inside
   it** — and each empty state keeps its drop zone.
 
@@ -1932,32 +1937,28 @@ half**, on a public page.
 should load onto the top bar bit — the photos in a 3 x 6 grid, and quiz league
 up there too."*
 
-- **THE BOTTOM IS CONTROLS AND OPTIONS. IT NEVER DISPLAYS THE THING.** *"If a
-  quiz league appears at the top it shouldn't be at the bottom — so you click
-  the thing at the bottom to reveal it at the top."* The league tab draws no
-  table and the Photos tab draws no photographs.
-- **THE SAFEGUARDS SURVIVED THE MOVE.** Nobody publishes a night or a table
-  without having just looked at it — the button is UNDER the thing, **drawn
+- **THE BOTTOM IS CONTROLS AND OPTIONS. IT NEVER DISPLAYS THE THING** — *"you
+  click the thing at the bottom to reveal it at the top."* The league tab draws
+  no table and the Photos tab draws no photographs.
+- **THE SAFEGUARDS SURVIVED THE MOVE** — the button is UNDER the thing, **drawn
   ONLY for the night showing**.
-- **ONE PRESS PUTS IT IN THE BAY, THE NEXT TAKES IT OUT** — wall → one night →
-  one picture, each step reversed by pressing the same thing.
+- **ONE PRESS PUTS IT IN THE BAY, THE NEXT TAKES IT OUT** — wall → night →
+  picture, each step reversed by pressing the same thing.
 - **A PICTURE IS AN OVERLAY, NOT A REPLACEMENT — which keeps the wall's
-  place.** Nothing reloaded; the bay was REBUILT and a fresh element scrolls at
-  0. **`renderKeepingPlace()` holds every scroller in the frame**, by class.
-  **AND THE OVERLAY HANGS ON THE COLUMN, NEVER ON THE SCROLLING GRID INSIDE
-  IT** — `inset: 0` anchors to the padding box, which in a scrolled container
-  starts at the top of the CONTENT.
+  place.** **`renderKeepingPlace()` holds every scroller in the frame**, by
+  class. **AND THE OVERLAY HANGS ON THE COLUMN, NEVER ON THE SCROLLING GRID
+  INSIDE IT** — `inset: 0` anchors to the padding box, which in a scrolled
+  container starts at the top of the CONTENT.
 - **ONE REQUEST PER NIGHT, NOT TWO.** `nightPhotos()` fetches the pictures and
   the published flag together, so the control is BUILT in the bay and HUNG in
-  the tab body — safe because `render()` evaluates the doorhead before the tab
-  body.
+  the tab body — safe because `render()` evaluates the doorhead first.
 - **THE WALL IS FETCHED ONCE PER PAGE LOAD AND STOPS ASKING** — newest first
   until eighteen, never past `WALL_NIGHTS`. In a module binding: the bay is
-  rebuilt on every push, at a lobby every join.
+  rebuilt on every push.
 - **`node scripts/community-bay.mjs` IS THE GUARD, and it measures GEOMETRY** —
   every door's bay against the launch bar's, squashed rail headings, whether the
   page scrolls, controls in the bay, and that pressing a rail button, a night
-  and a picture each change what is drawn. `npm test` sees none of it.
+  and a picture each change what is drawn.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -3611,7 +3612,7 @@ pack is theoretically just an amalgamation of the other three."*
   constrained to it — the overflow escapes the frame with no scroller to reach
   it. Two tabs before, three now, **in the no-accounts state only**.
 
-### THE CONSOLE SHELF SHOWS EVERYTHING; THE WORKSHOP SHOWS SIX AND A SEARCH BOX
+### THE PACK SHELF SHOWS EVERY PACK YOU HOLD, ON BOTH DOORS
 
 *"Limiting to 6 seemed like a good idea at the time but it actually isn't now
 I think about it."* The reason written for the cap had expired twice over.
@@ -3623,8 +3624,13 @@ I think about it."* The reason written for the cap had expired twice over.
   scrolls 448px and the bar does not move.
 - **A CAP WITH NO WAY PAST IT IS THE ONLY KIND THIS APP MUST NOT HAVE.** The
   Console has no search box by decision, so six of thirty-three left the rest
-  reachable only by leaving, pinning in the Workshop and coming back. **The
-  Workshop keeps its six because it keeps the search box and the rail.**
+  reachable only by leaving, pinning in the Workshop and coming back.
+- **AND THE WORKSHOP LOST ITS SIX A DAY LATER, WHEN THE BENCH LOST ITS RAIL.**
+  The rule as first written kept the cap there *"because it keeps the search box
+  and the rail"* — **half a justification is not one**, and a shelf that is now
+  the ONLY way onto the bench may not hide twenty-seven of thirty-three behind a
+  box you have to think to type in. `PACK_SHELF` is deleted rather than left at
+  6 with nothing reading it.
 - **PINS STILL RANK IT** — the six you curated lead and no longer hide the
   rest. **And there is still no See all**: a shelf that is sometimes two rows
   is what makes a drag target unlearnable.
@@ -3632,6 +3638,29 @@ I think about it."* The reason written for the cap had expired twice over.
   input a phone does not have, while pressing an empty slot has opened a
   searchable picker for months. **The drag stays the fast path and is not
   advertised** — it is found by trying it, which is how a drag always is.
+
+### THE WORKSHOP BENCH FILLS ITS BAY — one pack, big, and what you do to it
+
+Taking the rail off left the bench 142px of content in a 362px bay, on the
+door whose bay the host had already called *"a lot of wasted space"*.
+
+- **ONE `flex` LINE DOES IT.** `.bench-body` is a direct child of the panel now
+  the rail's `bayColumns()` wrapper is gone, and that panel is already a flex
+  column of a fixed height.
+- **THE PACK IS A FULL-HEIGHT SQUARE POSTER.** A bench drawing the thing you
+  are working on at 92px with 220px of nothing under it has the emphasis
+  backwards. **`height: auto` and let `aspect-ratio` take the WIDTH from the
+  row** — a width plus a ratio gives a poster taller than the bay.
+- **THE BUTTONS KEEP THEIR OWN SIZE** — three across for what you do WITH the
+  pack, four for what you do TO it, **never one 800px-wide button**: *a button's
+  width should say how big the action is*. **As many columns as there are
+  buttons**, or the packs with no picture round leave a hole.
+- **THE NOTE TAKES THE MIDDLE**, so the one gap left is where the sentence is.
+- **AND THE BENCH'S DROP ZONE LOOKS LIKE ONE NOW.** It carries `lb-drop`
+  WITHOUT `lb-tile`, and the dashed border lives on `.lb-tile.lb-drop` — so the
+  empty bench had always been a bare "+" and a line of text with no box round
+  it. At 92px that read as a caption; at the full height of the bay it read as
+  nothing at all.
 
 ### A PACK WEARS ITS OWN SUBJECT
 

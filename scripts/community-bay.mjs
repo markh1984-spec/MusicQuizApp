@@ -474,12 +474,27 @@ try {
             .filter((g) => g.getBoundingClientRect().height < 12).length,
         }));
         check(`${label}: the ${door} bay is the launch bay's height`, m.bay === bayH, `bay ${m.bay}px vs launch bar ${bayH}px (doorhead ${m.h}px)`);
-        check(`${label}: ${door} has a rail`, m.rail > 0, `${m.rail} rows`);
+        /*
+         * A RAIL ON POST GIG AND COMMUNITY — AND DELIBERATELY NOT ON THE
+         * WORKSHOP.
+         *
+         * It had one for a fortnight and it was a second picker: the Workshop's
+         * shelf below IS the list, and you drag or tap a card from it onto the
+         * bench. *"The workshop bench is literally only meant to be for
+         * whatever you drag to it to be currently worked on — not sure why
+         * there is a dropdown list of different things."* So the check is
+         * asserted in BOTH directions rather than dropped, or the rail can come
+         * back with nothing noticing.
+         */
+        const wantsRail = door !== 'workshop';
+        check(`${label}: ${door} ${wantsRail ? 'has a rail' : 'has NO rail — its shelf is the picker'}`,
+          wantsRail ? m.rail > 0 : m.rail === 0, `${m.rail} rows`);
         /*
          * A GROUP FOLDS AND UNFOLDS. Nothing in this repo presses a control,
          * and a dead one draws perfectly — the handler's own catch eats the
          * ReferenceError, so the caret simply never turns.
          */
+        if (!wantsRail) continue;
         const beforeRows = m.rail;
         /*
          * ONLY WHERE THERE IS SOMETHING TO FOLD. The league rail is one row per

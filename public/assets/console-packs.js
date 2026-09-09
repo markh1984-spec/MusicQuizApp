@@ -8,7 +8,7 @@ import { field, money, sheet } from './console-invoices.js';
 import { renderBingoPreview, renderQuizPreview } from './console-preview.js';
 import { library, me, setPackDrag, setShelfRoundDrag } from './console-state.js';
 import { addRoundToTonight, addToTonight, dragging, heardHere, heardHereIsLocal, night, packIsInTonight, putOnBench } from './console-tonight.js';
-import { PACK_SHELF, can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, pinRank, pinnedPacks, render, reorderPins, showDone, togglePin } from './console.js';
+import { can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, pinRank, pinnedPacks, render, reorderPins, showDone, togglePin } from './console.js';
 import { tonight } from './diary.js';
 import { lobbyGameChoices, lobbyGameFor, ANY_LOBBY_GAME } from './lobby-games.js';
 import { inSeason } from './looks.js';
@@ -393,35 +393,42 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit', slot 
      * not be one.
      */
     /*
-     * THE CONSOLE SHOWS EVERYTHING IT CAN RUN. THE WORKSHOP SHOWS SIX AND A
-     * SEARCH BOX.
+     * EVERY PACK YOU HOLD, ON BOTH DOORS.
      *
-     * The cap was six on both, and the reason written for it was the DRAG: *"a
-     * drag needs the card AND the slot on screen together. One row directly
-     * under the Tonight bar is what makes that possible."* Reported as wrong
-     * by the host once he had thirty-three quizzes — *"limiting to 6 seemed
-     * like a good idea at the time but it actually isn't"* — and he is right
-     * twice over:
+     * The cap was six, and the reason written for it was the DRAG: *"a drag
+     * needs the card AND the slot on screen together. One row directly under
+     * the Tonight bar is what makes that possible."* Reported as wrong by the
+     * host once he had thirty-three quizzes — *"limiting to 6 seemed like a
+     * good idea at the time but it actually isn't"* — and he is right twice
+     * over:
      *
      * **THE DRAG IS NO LONGER THE ONLY WAY IN.** A TAP places a pack, through
      * the same path a drop uses (see `placeIt()` below), and a tap does not
      * need the drop target on screen at all. **AND THE FIXED FRAME ALREADY
      * SOLVED THE DRAG'S HALF**: from 900px the doorhead does not scroll, so
-     * Tonight is on screen however far down the shelf you are — the reason
-     * for the cap was answered by a layout change months ago and the cap
-     * outlived it.
+     * Tonight is on screen however far down the shelf you are — the reason for
+     * the cap was answered by a layout change months ago and the cap outlived
+     * it. Measured at 1500x900: the tab body scrolls 448px and the bar does
+     * not move.
      *
-     * **AND WITHOUT A SEARCH BOX THE CONSOLE'S SIX WAS A WALL, NOT A
-     * WINDOW.** `searchable` is false on this door by decision, so the only
+     * **AND A CAP WITH NO WAY PAST IT IS THE ONLY KIND THIS APP MUST NOT
+     * HAVE.** `searchable` is false on the Console by decision, so the only
      * way to the seventh pack was to leave, pin it in the Workshop, and come
-     * back. Six of thirty-three, with no control on the page that reaches the
+     * back. Six of thirty-three, with no control on the page that reached the
      * other twenty-seven.
      *
-     * The Workshop keeps the six because it keeps the search box and the rail
-     * — there the six is a window you can move. A cap with no way past it is
-     * the only kind this app should not have.
+     * **THE WORKSHOP LOST ITS SIX A DAY LATER, WHEN THE BENCH LOST ITS RAIL.**
+     * The rule as first written kept the cap there *"because it keeps the
+     * search box and the rail"* — and the rail is gone, taken out as a second
+     * picker on a door whose shelf already is one. Half a justification is not
+     * one, and a shelf that is now the ONLY way onto the bench may not hide
+     * twenty-seven of thirty-three behind a box you have to think to type in.
+     *
+     * **STILL NO See all**, on either door: a shelf that is sometimes two rows
+     * is what makes a drag target unlearnable. Nothing expands — it is simply
+     * all there, ranked, with the pins leading.
      */
-    const shown = (mode === 'pin' || door === 'console') ? yours : yours.slice(0, PACK_SHELF);
+    const shown = yours;
     // The heading follows the state — see the note where it is drawn. Set here
     // rather than in the template because `paint()` runs again on every search
     // keystroke and every See all, and the head is not rebuilt with the grid.

@@ -811,7 +811,21 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * dial, the league ladder, the gallery's writers and the break plan. That is
  * against roughly 4,900 added, and this comment is the diff saying so.
  */
-const BUDGET = 245_500;
+/*
+ * AND TO 247,500 THE SAME AFTERNOON, for the two that came out of taking the
+ * rail off the Workshop bench: the bay rule gaining a SECOND exception, and
+ * the bench filling the bay it was left two-thirds empty in. The exception is
+ * the one worth the bytes — `bayRail()` is the right answer on two doors and
+ * the wrong one on a third, and without the reason written down the next
+ * session puts it back for consistency.
+ *
+ * PAID FOR AGAIN: about 900 more bytes out of the bay, Community and photos
+ * sections, on top of the 3,400 above. Roughly 4,300 trimmed against 5,600
+ * added across five sections in one day, and this comment is the diff saying
+ * so. THE NEXT RAISE SHOULD BE ARGUED HARDER: three in a day is the shape of a
+ * budget that has stopped biting.
+ */
+const BUDGET = 247_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

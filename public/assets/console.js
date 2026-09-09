@@ -68,16 +68,6 @@ import { paintScheme } from './schemes.js';
  */
 export const canPin = () => Boolean(me && !me.bootstrap);
 
-/**
- * How many packs the shelf shows before you have to search or press See all.
- *
- * SIX, and it is one row on a laptop by construction — the grid is six columns
- * — which is the whole point: a drag needs the card and the Tonight slot on
- * screen at once, and a second row is a scroll away from the thing you are
- * dragging into.
- */
-export const PACK_SHELF = 6;
-
 export const pinnedPacks = () => (library && library.prefs && library.prefs.pinnedPacks) || [];
 export const isPinned = (id) => pinnedPacks().includes(id);
 
