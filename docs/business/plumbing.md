@@ -63,15 +63,42 @@ hand themselves Gold. Stripe is cheaper anyway, and its docs are reachable. The
 agnosticism was still worth having: wiring Stripe up touched no line of
 `billing.js`.
 
-#### A SEPARATE STRIPE ACCOUNT, NOT A SECOND BUSINESS INSIDE THE EXISTING ONE
+#### ONE STRIPE ACCOUNT PER BUSINESS, GROUPED BY AN ORGANIZATION
 
-The question was *"can I set up a new business in the Stripe account to make it
-Quizporium shaped?"* — and the answer is yes, but the thing to create is a new
-ACCOUNT under the same login rather than anything inside the kids'-party one.
-Stripe's dashboard has an account switcher for exactly this; one email, one
-password, two businesses side by side.
+Asked as *"can I set up a new business in the Stripe account"*, then, on
+hearing there would be four of them — a mobile booking app, this, kids parties
+and mobile DJ services — *"would it not be better to have a single account with
+multiple sub accounts?"*
 
-Four reasons it has to be separate rather than tidy-to-be-separate:
+**The grouping instinct is right and the mechanism is an ORGANIZATION, not
+Connect.** Stripe's own line is that *"a Connect platform extends its Stripe
+integration to third parties, while an organization centralizes the management
+of multiple accounts under common ownership"* — so Connect is for paying out to
+OTHER people's businesses, and using it to hold your own turns four businesses
+into a platform with onboarding flows and platform compliance obligations for
+no gain. Stripe only points at Connect for many entities or automatic
+provisioning; four is not that.
+
+**AN ORGANIZATION IS A CONTAINER, NOT A MERGE — this is the part worth being
+clear about.** Underneath it there is still one account per business, each with
+its own keys, prices, statement descriptor, payouts and risk profile. What the
+org adds on top is one login across the lot, consolidated reporting and
+downloadable unified reports across currencies, central team management and
+SSO, and Sigma SQL across every account.
+
+**So the structure this app needs is identical either way**, which is what
+makes the decision safe to defer: Quizporium points at ITS OWN account's key,
+prices and webhook secret. An account can be created now and put in an
+organization later without touching a line here.
+
+**AND SEPARATE LEGAL ENTITIES HAVE NO CHOICE.** Stripe: *"If you operate
+multiple businesses that have separate tax ID information (for example,
+separate legal entities), you must create additional accounts for each."* Same
+sole trader or one Ltd across all four is the only case where a single account
+would even have been possible.
+
+Five reasons the accounts stay separate rather than one account with four
+products in it:
 
 - **The statement descriptor is per account.** A subscriber's bank statement
   would otherwise carry the kids'-party name — a support email every month from
@@ -83,6 +110,24 @@ Four reasons it has to be separate rather than tidy-to-be-separate:
   businesses' numbers answerable separately.
 - **Products and prices live in an account**, so the three tiers cannot end up
   in a list beside party packages.
+- **AND RISK IS ASSESSED PER ACCOUNT, which is the strongest of the five.**
+  Parties and DJ bookings are cancellation-prone and therefore chargeback-prone;
+  a subscription business sharing an account with them inherits that dispute
+  rate, and Stripe's answer to a bad one is a reserve or a hold. Keeping the
+  recurring revenue in its own account is what stops a cancelled party in
+  December putting a quizmaster's Friday night at risk.
+
+**THE ONE REAL COST, and an organization does not fix it: customers are not
+shared across accounts.** Somebody who books a party AND subscribes here is two
+customers with two saved cards. For four businesses with almost no overlapping
+audience that is a price worth paying; if the audiences ever do overlap, it is
+the thing to look at again.
+
+**NOT VERIFIED FROM HERE:** whether creating an organization needs Stripe to
+enable it, and what it costs. `docs.stripe.com` is blocked by this
+environment's egress proxy, so the quotes above come from search results rather
+than from the pages themselves. **Check it in the dashboard before relying on
+it** — the account-per-business half is solid either way.
 
 #### What is needed from you — five environment variables
 
