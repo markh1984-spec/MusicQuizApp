@@ -70,7 +70,7 @@ import { Rooms, HOUSE, GALLERY_NONE, tidyCode } from './src/rooms.js';
 import { ownsPlayer, PHASES } from './src/engine.js';
 import { upcoming } from './public/assets/diary.js';
 import { calendarIcs } from './src/ics.js';
-import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PACK_PENCE, TRIAL_DAYS, REFERRAL_BONUS_DAYS } from './public/assets/plans.js';
+import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PAYING, PACK_PENCE, TRIAL_DAYS, REFERRAL_BONUS_DAYS } from './public/assets/plans.js';
 import { lobbyGameFor, lobbyGamesFor, ANY_LOBBY_GAME } from './public/assets/lobby-games.js';
 import {
   publishedNights, isPublished, setPublished, readableNight,
@@ -1270,6 +1270,14 @@ const SUPPORT_NEVER = ['/api/host/'];
  * A route added here has to be one where a LINE would be noise, not one where
  * the ACT is dull. There are no `/api/me/*` reads that write anything.
  */
+/*
+ * HOW MANY SEATS ONE GROUP MAY HOLD. A SAFETY number, not a design one — the
+ * same distinction `MAX_TEAMS` records in the engine: there was no ceiling at
+ * all, so one signed-in account could mint accounts in a loop. A pub group
+ * with more than this many venues is a conversation, not a form submission.
+ */
+const MAX_SEATS = 50;
+
 const SUPPORT_QUIET = ['/api/state', '/api/stream', '/health', '/api/me', '/api/brand', '/api/has-accounts'];
 
 /**
@@ -5617,6 +5625,37 @@ async function handleWrite(req, res, url, route) {
     if (me.bootstrap) return sendJson(res, 400, { error: 'The host key is not an account, so there is no group to add a seat to.' }), true;
     if (me.role === 'owner') return sendJson(res, 400, { error: 'The owner account does not run a group.' }), true;
     if (me.parentId) return sendJson(res, 400, { error: 'You are a seat in somebody else’s group, so you cannot have seats of your own.' }), true;
+    /*
+     * A SEAT IS A PAID THING, AND THIS ROUTE HAD NO GATE AT ALL.
+     *
+     * Found by a sweep and reproduced in five calls: a `past_due` account
+     * whose grace night was already spent — correctly 403ing on launch —
+     * added a seat, read the reset link out of THIS reply, deleted the seat
+     * (which left the ex-seat an ordinary `active` Bronze account), set a
+     * password and launched a night. **The whole subscription gate walked
+     * round by a route on My account.** So: in good standing to add one, and
+     * `removeChild()` no longer hands out a paying account on the way out.
+     *
+     * Not a `FEATURES` flag, deliberately — which tier may run a group is a
+     * pricing question nobody has answered, and inventing an answer here
+     * would put it in the ladder by accident. This asks the one thing that
+     * is not in doubt: are you paying.
+     */
+    if (!me.comped && !PAYING.has(me.status)) {
+      return sendJson(res, 402, {
+        error: 'Seats need a live subscription. Sort the payment out and you can add them again.',
+        upgrade: true,
+      }), true;
+    }
+    /*
+     * AND A CEILING, because there was none: one signed-in account could mint
+     * accounts in a loop. **A SAFETY number, not a design one** — the same
+     * distinction `MAX_TEAMS` records. A pub group with more than fifty
+     * venues is a conversation, not a form submission.
+     */
+    if (accounts.childrenOf(me.id).length >= MAX_SEATS) {
+      return sendJson(res, 400, { error: `A group holds up to ${MAX_SEATS} seats. Get in touch if you need more.` }), true;
+    }
     const body = await readJson(req);
     let created;
     try {
@@ -6778,18 +6817,6 @@ async function handleWrite(req, res, url, route) {
       const launcher = allowed(req, res, url, wanted);
       if (!launcher) return true;
       /*
-       * AND IF A LAPSED SUBSCRIPTION GOT THROUGH, THIS IS THE NIGHT IT SPENDS.
-       *
-       * `mayStartSomething()` allows one more app-day of launching after a
-       * subscription lapses — see `lastNightLeft()` — and the day is stamped
-       * HERE rather than inside that check, because the check runs on every
-       * gated route and opening the console on a Wednesday must not spend the
-       * Thursday. Idempotent within a day, so the bingo after the quiz is the
-       * same night.
-       */
-      accounts.useLastNight(launcher);
-
-      /*
        * And it has to be a pack they actually hold.
        *
        * Checked here rather than trusted to the console not drawing a Launch
@@ -7023,6 +7050,28 @@ async function handleWrite(req, res, url, route) {
             .map((q) => q.title))
           : [];
         const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, winners, look, questionSeconds, lobbyGame, lobbyGames, lobbySound, league, online, teamPlay, teamMode, venue, venueId, rewards, venueLogo, comeBack, photoLink: photoLinkFor(req, url, venue), askForRounds, roundIdeas: askIdeas, order: wantedOrder, breakPlan: body.breakPlan || {} });
+        /*
+         * AND IF A LAPSED SUBSCRIPTION GOT THROUGH, THIS IS THE NIGHT IT
+         * SPENDS — stamped AFTER the launch, never before it.
+         *
+         * `mayStartSomething()` allows one more app-day of launching after a
+         * subscription lapses (see `lastNightLeft()`), and the day is stamped
+         * on the LAUNCH ROUTES rather than inside that check, because the
+         * check runs on every gated route and opening the console on a
+         * Wednesday must not spend the Thursday.
+         *
+         * **It has to be the last thing, not the first.** Stamped before the
+         * pack check and the 409 it was spent by launches that never
+         * happened: a pack since deleted, a "that would end the live game"
+         * prompt somebody cancelled — and worst, `switchIfFree()` fires a
+         * real launch and swallows the 409, so merely TAPPING a pack tile on
+         * a Wednesday silently spent the Thursday. That is exactly the nasty
+         * shock this grace exists to prevent.
+         *
+         * Idempotent within a day, so the bingo after the quiz is the same
+         * night.
+         */
+        accounts.useLastNight(launcher);
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();
@@ -7077,10 +7126,6 @@ async function handleWrite(req, res, url, route) {
       // running a quiz-only running order must not be asked about bingo.
       if (neededQuiz.size && !allowed(req, res, url, FEATURES.QUIZ)) return true;
       if (neededBingo.size && !allowed(req, res, url, FEATURES.BINGO)) return true;
-      // A running order is a night like any other — see `launch` above. Both
-      // routes spend it, or the composed half hands out an endless grace.
-      accounts.useLastNight(whoIs(req, url));
-
       const live = session.inProgress();
       if (live && !body.replace) {
         return sendJson(res, 409, {
@@ -7169,6 +7214,10 @@ async function handleWrite(req, res, url, route) {
            */
           breakPlan: body.breakPlan || {},
         });
+        // A running order is a night like any other — see `launch` above.
+        // Both routes spend it, or the composed half hands out an endless
+        // grace; and both spend it only once the night is actually on.
+        accounts.useLastNight(whoIs(req, url));
         backUpLibraryStats();
         return sendJson(res, 200, { ok: true, started, view: session.hostView() }), true;
       } catch (err) {

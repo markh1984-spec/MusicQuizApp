@@ -731,6 +731,24 @@ export class Accounts {
     const account = this.find(childId);
     if (!account || !account.parentId) return null;
     delete account.parentId;
+    /*
+     * AND IT LEAVES WITH NO SUBSCRIPTION, WHICH IS THE TRUTH RATHER THAN A
+     * PUNISHMENT. A seat is created `status: 'active'` and has never paid for
+     * anything — its standing was borrowed from the parent through
+     * `effective()`. Leaving that `active` behind made removal MINT a fully
+     * paid independent account, which is how a lapsed parent could add a
+     * seat, remove it and launch a night on it: the whole subscription gate
+     * walked round in five calls.
+     *
+     * `cancelled` is what an account with no subscription of its own is
+     * called everywhere else here, so it gets exactly what any lapse gets —
+     * including the one grace night, which is right: a venue whose head
+     * office dropped them mid-week should not lose the gig they are stood in.
+     *
+     * NOTHING IS DELETED. The account, its room, its own packs and its whole
+     * history are untouched, so subscribing puts it straight back.
+     */
+    account.status = 'cancelled';
     this.save();
     return safe(account);
   }

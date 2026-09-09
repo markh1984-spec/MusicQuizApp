@@ -1273,11 +1273,10 @@ board), `src/arcade.js` (the scores, shared by both engines),
   fires itself** — auto-fire makes POSITIONING the game. **Reaching the bar
   ends it outright.**
 - **THREE WAYS A GAME IS MADE THE SAME ON EVERY PHONE, and a new one must use
-  one:** a GRID with a fixed step, an ACCUMULATOR of whole ticks with the
-  catch-up capped, or a SCHEDULE where the state at T is a pure function of the
-  seed and T. **A frame delta is none of them and is always wrong here.** A
-  REACTION game makes input latency part of the score, so its windows stay
-  generous.
+  one:** a fixed-step GRID, a capped ACCUMULATOR of whole ticks, or a SCHEDULE
+  pure in the seed and T. **A frame delta is none of them and is always wrong
+  here.** A REACTION game makes input latency part of the score, so its
+  windows stay generous.
 - **ONE SCOREBOARD FOR BOTH, in `src/arcade.js`** — the same clamp, the
   best-not-latest rule and the refusal outside the lobby. Two copies is two
   rules and one gets fixed.
@@ -1297,8 +1296,7 @@ board), `src/arcade.js` (the scores, shared by both engines),
   **a wall stops you facing it and never picks a direction for you**. **The
   rule lives in `maze.js`, not the canvas file.**
 - **TAILBACK'S TAIL IS FATAL AND ITS WALLS ARE NOT, and that split is the
-  whole game.** The steering was a search routing AROUND the body, so the tail
-  was scenery. `stepToward()` is GREEDY now — **it still never returns a cell
+  whole game.** `stepToward()` is GREEDY — **it still never returns a cell
   inside the body**, so a life is never taken for a route the player did not
   choose. **Six lives at 170ms, not the four asked for.**
 - **THE BIG SCREEN IS ONLY PROMISED WHERE THE BOARD DRAWS** — generalising to
@@ -1312,13 +1310,13 @@ board), `src/arcade.js` (the scores, shared by both engines),
   every phase change passes.**
 - **Each moment has a primary: the game before the quiz, photos between the
   rounds** — the camera button stands down at the lobby.
-- **MAZE MOUTH'S DEATH IS A GULP** — **NOT the unfurl-and-spin**, which is
-  Namco's and this app is sold. **NOTHING MOVES while it runs**; **the score is
-  banked at the CATCH.**
-- **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER** — Web Audio,
-  no files. **The HOST can switch it off**; **the host's switch wins and does
-  not wipe the phone's own**. **Every noise is tied to something the player
-  DID**, and it never carries information, a pub phone being on silent.
+- **MAZE MOUTH'S DEATH IS A GULP — NOT the unfurl-and-spin**, which is
+  Namco's and this app is sold. **NOTHING MOVES while it runs**; **the score
+  is banked at the CATCH.**
+- **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER.** **The HOST
+  can switch it off; the host's switch wins and does not wipe the phone's
+  own.** **Every noise is tied to something the player DID**, and it never
+  carries information, a pub phone being on silent.
 - **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — inside the white QR
   panel and UNDER the code, which nothing may dim. **It was computed and never
   drawn for as long as the feature existed**, and **a test that the payload is
@@ -3615,6 +3613,27 @@ pack is theoretically just an amalgamation of the other three."*
   constrained to it, so the overflow escapes the frame with no scroller to
   reach it. **No-accounts state only.**
 
+### A TAB ID IS NOT A GAME KIND, AND A SHELF IS NOT THE LIBRARY
+
+`GAME_KINDS` in `console.js`, `shelvesFor()` in `console-tonight.js`. Two
+faults from ONE change to the tab list, both silent, both on the protected
+surface, and `npm test` could see neither.
+
+- **THE GAME PICKER IS BUILT FROM `GAME_KINDS`, never "every tab with a
+  shelf"** — the old filter grew from two entries to five, so it offered Image
+  Rounds and sent `gameOf().id` as `game`: **`400 Unknown game: text`**.
+  **NAMED, never derived from a row's shape.** `LAUNCHERS` is the server's
+  half; `game-kinds.test.js` fails the moment they part.
+- **WHAT IS DRAWN IS A SHELF QUESTION; WHAT A NIGHT MAY REFER TO IS THE
+  LIBRARY.** Quiz Packs hides the one-round packs, so `applyShow()` resolving
+  against THAT shelf left **Tonight empty with nothing said**.
+- **BUT `games[].packs` STAYS THE TAB'S OWN** — `quickPicks()` ranks
+  never-played first, so widening the DRAWN shelf auto-fills Tonight with an
+  intro round. Resolution widens; ranking does not.
+- **`node scripts/tonight-resolves.mjs`** opens the real console.
+
+Full reasoning: **[`docs/console.md`](docs/console.md)**.
+
 ### THE PACK SHELF SHOWS EVERY PACK YOU HOLD, ON BOTH DOORS
 
 *"Limiting to 6 seemed like a good idea at the time but it actually isn't now
@@ -3917,6 +3936,22 @@ pay."*
   reason read the REAL account, so capabilities open and the standing is told
   straight. **Found by a browser agent taking the screenshot** — *a test that
   the payload is right proves nothing about whether anybody drew it.*
+- **AND THE STAMP IS THE LAST THING ON THE ROUTE, NEVER THE FIRST.** Spent
+  before the pack check and the 409 it was spent by launches that never
+  happened — a pack since deleted, a prompt somebody cancelled, and worst
+  `switchIfFree()`, which fires a real launch and swallows the 409: **tapping
+  a pack tile on a Wednesday silently spent the Thursday**, which is exactly
+  the nasty shock this exists to prevent.
+- **AND A SEAT IS A PAID THING — `POST /api/group/seats` HAD NO GATE AND NO
+  CAP, WHICH WAS A WAY ROUND THE WHOLE SUBSCRIPTION.** A lapsed account added
+  a seat, read the reset link out of the reply, removed it — leaving an
+  ordinary `active` account — and launched. So the route asks for good
+  standing, and **`removeChild()` leaves `cancelled`**: a seat never paid for
+  anything, its standing was the parent's. It still destroys nothing and gets
+  the grace night like any lapse. **NOT a `FEATURES` flag** — which tier may
+  run a group is a pricing question nobody has answered. **`MAX_SEATS` is 50,
+  a SAFETY number like `MAX_TEAMS`.** See
+  **[`docs/business/groups.md`](docs/business/groups.md)**.
 - **NONE OF IT CAN HAPPEN UNTIL A PROCESSOR IS WIRED.** `applyBilling()` alone
   sets `past_due` and nothing calls it, so this is groundwork and
   `test/last-night.test.js` seeds the state and asks over HTTP — the unit tests
@@ -3996,6 +4031,7 @@ node scripts/shot-bingo.mjs            # bingo, incl. card-reload
 node scripts/bingo-prizes.mjs          # does a bingo prize reach who won it?
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break a pub night?
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
+node scripts/tonight-resolves.mjs       # does the bar offer real games, and find every pack?
 node scripts/community-bay.mjs          # does the Community bay still fit the frame?
 node scripts/console-frame.mjs          # is every Console control reachable?
 node scripts/console-controls.mjs       # and does pressing one do what it says?
@@ -4044,20 +4080,16 @@ account is in [`docs/checks.md`](docs/checks.md):**
   `effectAllowed` forbids. A dispatched event enforces neither, so a test built
   from them passes while every pack drop is dead. `scripts/drag-check.mjs`
   drives the real mouse; run it after touching a drag handler.
-- **THE MIDDLE OF A PACK CARD WAS A ROUND SQUARE — FIXED, AND THE CAUSE WAS
-  WRAPPING.** `drag-check.mjs` called the launch bar broken on a working app:
-  it drags from the CENTRE of `.pack-card`, and `elementFromPoint()` there
-  returned `button.lb-rd`, so it lifted ONE ROUND and asserted a pack had
-  burst. **Measured before it was changed**: the card is 146x146 with 16px of
-  padding, so 114px of inner width, and four 28px ticks with 4px gaps come to
-  124px and **wrap to a second row whose top edge is y=67 against a centre of
-  y=73**. Seven of nine quiz packs carry four or five rounds; the two with
-  three fitted one row and were always right, which is why it looked
-  intermittent. **ONE ROW, NEVER WRAPPING, is the fix** — bottom-anchoring two
-  rows reaches y=70 against 73, which is not a fix. Five ticks in one
-  full-bleed row means **24px on the SHELF card only**; the 28px rule is the
-  Tonight tile's, where a tick is a SWITCH, and is untouched there. **Verified by clicking the centre
-  of every card at five widths and counting the tiles that land — 45/45.**
+- **THE MIDDLE OF A PACK CARD WAS A ROUND SQUARE — the cause was WRAPPING.**
+  `drag-check.mjs` drags from the CENTRE of `.pack-card`, and
+  `elementFromPoint()` there returned `button.lb-rd`: it lifted ONE ROUND and
+  asserted a pack had burst, so it called a working bar broken. Four 28px
+  ticks with 4px gaps are 124px in 114px of inner width and wrap to a row
+  whose top edge is y=67 against a centre of y=73. **ONE ROW, NEVER WRAPPING**
+  — bottom-anchoring two rows reaches y=70 against 73, which is not a fix. So
+  **24px on the SHELF card only**; the 28px rule is the Tonight tile's, where
+  a tick is a SWITCH, and is untouched. Verified by clicking every card's
+  centre at five widths — 45/45.
 - **A TEST THAT NEVER RUNS THE ARTEFACT PROVES NOTHING ABOUT IT.** Reading
   `server.js` as a string to check a route exists is how a broken Launch reached
   the live app, 1,150 tests green.

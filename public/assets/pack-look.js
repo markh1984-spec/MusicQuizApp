@@ -178,6 +178,24 @@ export function isOneRound(pack) {
   return ((pack && pack.rounds) || []).length === 1;
 }
 
+/*
+ * THE ROUND TYPES THAT HAVE A TAB OF THEIR OWN, and the one question the Quiz
+ * Packs shelf asks of a pack. A pack is off that shelf only when it is ONE
+ * round AND that round has somewhere else to be — everything else stays: a
+ * whole night, and a lone round of a type nothing lists.
+ *
+ * Here rather than in `console.js` because it is a question about a pack's
+ * SHAPE, which is this file's whole subject, and the shell was at its line
+ * cap. `TABS` still names the three tabs; this names what they hold.
+ */
+export const ROUND_TABS = ['text', 'image', 'intro'];
+
+export function onARoundTab(pack) {
+  if (!isOneRound(pack)) return false;
+  const only = ((pack.rounds || [])[0] || {}).type;
+  return ROUND_TABS.includes(String(only || '').toLowerCase());
+}
+
 const KIND_EDGE_FALLBACK = 'rgba(255, 255, 255, 0.35)';
 
 const EDGE_ALPHA = 0.85;

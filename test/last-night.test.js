@@ -151,3 +151,59 @@ test('a paying account is untouched by any of it', async () => {
     assert.equal(dave.lastNight, undefined, 'a paying account had a grace night stamped on it');
   }, { status: 'active' });
 });
+
+/*
+ * AND A LAUNCH THAT NEVER HAPPENED MUST NOT SPEND IT.
+ *
+ * Found by a sweep. `useLastNight()` was called BEFORE the pack-library check
+ * and before the "that would end the live game" 409 — so four ordinary
+ * presses spent Thursday without a note ever going up. The worst of them is
+ * not even a press: `switchIfFree()` in `console-tonight.js` fires a real
+ * launch and swallows the 409, so **tapping a pack tile on a Wednesday spent
+ * the Thursday**, which is precisely the nasty shock the grace exists to
+ * prevent.
+ */
+test('a launch that failed does not spend the last night', async () => {
+  await withServer(async (base, file) => {
+    const cookie = await cookieFor(base);
+    const spent = () => JSON.parse(fs.readFileSync(file, 'utf8'))
+      .accounts.find((a) => a.email === EMAIL).lastNight;
+
+    const bad = await fetch(`${base}/api/host/launch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({ game: 'quiz', packId: 'a-pack-that-is-not-there' }),
+    });
+    assert.notEqual(bad.status, 200, 'a pack that does not exist launched');
+    assert.ok(!spent(), 'a launch that never happened spent the last night');
+
+    // And the real one still does, so the guard has not simply switched it off.
+    assert.equal((await launch(base, cookie)).status, 200);
+    assert.ok(spent(), 'a real launch stopped spending the night');
+  });
+});
+
+/*
+ * AND A SEAT IS A PAID THING — the route had NO gate and NO cap.
+ *
+ * Reproduced by the sweep in five calls: this account (past_due, its grace
+ * night already spent, correctly 403ing on launch) added a seat, read the
+ * reset link out of the reply, deleted the seat — which left an ordinary
+ * `active` Bronze account — set a password and launched. The whole
+ * subscription gate walked round from a panel on My account.
+ */
+test('a lapsed account cannot mint a seat, which is a way round the whole gate', async () => {
+  await withServer(async (base) => {
+    const cookie = await cookieFor(base);
+    assert.equal((await launch(base, cookie)).status, 403, 'the fixture is not actually cut off');
+
+    const res = await fetch(`${base}/api/group/seats`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({ email: 'free-ride@x.com', name: 'A way in' }),
+    });
+    assert.notEqual(res.status, 200, 'an unpaid account minted a brand new paying account');
+    const body = await res.json();
+    assert.match(body.error, /subscription|payment/i, `a bare refusal: ${body.error}`);
+  }, { lastNight: '2000-01-01' });
+});

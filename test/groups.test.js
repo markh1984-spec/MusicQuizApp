@@ -114,6 +114,34 @@ test('removeChild is never destructive — the account survives, just on its own
   });
 });
 
+/*
+ * AND IT LEAVES WITH NO SUBSCRIPTION, which is a fact rather than a penalty.
+ *
+ * Found by a sweep: a seat is created `status: 'active'` and has never paid
+ * for anything — its standing was borrowed from the parent through
+ * `effective()`. Leaving that behind made REMOVAL mint a fully paid
+ * independent account, and the loop was five calls long: a lapsed parent adds
+ * a seat, reads the reset link out of the reply, removes the seat, sets a
+ * password and launches a night on an account that has never been billed.
+ */
+test('an ex-seat leaves with no subscription of its own', () => {
+  withBook((book) => {
+    const parent = makeParent(book, { tier: 'gold', status: 'active' });
+    const child = book.addChild(parent.id, { email: 'dave@example.com', password: PASSWORD, name: 'Dave' });
+    assert.equal(book.find(child.id).status, 'active', 'a seat is active while it is a seat');
+
+    const removed = book.removeChild(child.id);
+    assert.equal(removed.status, 'cancelled', 'removal minted a paying account');
+    assert.deepEqual(
+      featuresFor(book.effective(book.find(child.id))),
+      [],
+      'an ex-seat kept the parent\u2019s capabilities',
+    );
+    // And nothing was destroyed — the account is still there to subscribe.
+    assert.ok(book.signIn('dave@example.com', PASSWORD));
+  });
+});
+
 test('removeChild on somebody who is not a seat is a no-op, not an error', () => {
   withBook((book) => {
     const solo = book.create({ email: 'solo@example.com', password: PASSWORD, name: 'Solo' });

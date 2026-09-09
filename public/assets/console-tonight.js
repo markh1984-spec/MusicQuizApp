@@ -19,7 +19,7 @@ import { renderSlots } from './console-tonight-mix-ui.js';
 import { lastNightWarning, venuePrizeWarning } from './console-warnings.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, me, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
 import { nowNextRows } from './console-venues.js';
-import { TABS, can, doorNow, goTo, goToDoor, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone } from './console.js';
+import { GAME_KINDS, TABS, can, doorNow, goTo, goToDoor, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone } from './console.js';
 import { clashTonight, nightKey, tonight, upcoming } from './diary.js';
 import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
 import { FEATURES } from './plans.js';
@@ -604,10 +604,30 @@ export function launchBar() {
   // Only the games this account can actually run, so the dropdown never offers
   // something that would be refused. It is a dropdown rather than two boxes
   // because a third game is a matter of time — see LAUNCHERS in session.js.
-  const games = TABS
-    .filter((t) => t.packs && t.needs && can(t.needs))
+  /*
+   * ONLY REAL GAME KINDS — `GAME_KINDS`, never "every tab with a shelf".
+   * `gameOf().id` goes to the launch route as `game`, and the filter was
+   * `t.packs && t.needs`: quiz and bingo until the round tabs landed, then
+   * FIVE, so the picker offered Music Intros and the launch answered
+   * `400 Unknown game: intro` — the protected path, broken by a tab list.
+   */
+  const games = GAME_KINDS
+    .map((kind) => TABS.find((t) => t.id === kind))
+    .filter((t) => t && t.packs && t.needs && can(t.needs))
     .map((t) => ({ id: t.id, label: t.label, packs: (t.packs() || []).filter((p) => !p.locked && !p.broken) }))
     .filter((g) => g.packs.length);
+  /*
+   * WHAT IS DRAWN IS A SHELF QUESTION; WHAT A NIGHT MAY REFER TO IS THE
+   * LIBRARY, and they are not the same list. `games[].packs` must stay the
+   * TAB's shelf: Quiz Packs hides the twenty-four one-round packs and
+   * `quickPicks()` ranks never-played first, so widening it auto-fills
+   * Tonight's box with an intro round. RESOLVING an id is the other
+   * question — a show, a drag or a tap naming a one-round pack found nothing
+   * on the filtered shelf, so `applyShow()` returned early and **Tonight drew
+   * empty with nothing said**: the server reports no `problems`, the file
+   * being fine. */
+  const shelvesFor = (kind) => ((kind === 'bingo' ? library.bingo : library.quizzes) || [])
+    .filter((p) => !p.locked && !p.broken);
   if (!games.length) return node('<div></div>');
 
   const el = node(`
@@ -1623,7 +1643,10 @@ export function launchBar() {
      * when there is no choice yet, or when the choice is not on this game's
      * shelf (changing game, or a pack that has since been deleted).
      */
-    const shelf = gameOf().packs;
+    // Library-wide (`shelvesFor()`): a pack put in from the Image Rounds tab
+    // is not ON the Quiz Packs shelf, and reading that as "changed game"
+    // threw it out and auto-picked something else on the next push.
+    const shelf = shelvesFor(gameOf().id);
     const stillThere = currentPack && shelf.some((p) => p.id === currentPack.id);
     // QUIET: this runs on every state push, and a re-render is not somebody
     // choosing a pack. Without it the bar would relaunch the projector every
@@ -2353,12 +2376,12 @@ export function launchBar() {
     .map((_, i) => ({ packId: pack.id, round: i }));
 
   /** A pack off the shelf by id. Never stored — see `lbExtra`. */
-  const packOf = (id) => (gameOf().packs || []).find((p) => p.id === id);
-  /** A pack off a NAMED shelf, whichever one is active — the mixed row needs
-      to find a bingo pack while quiz is picked, and vice versa. */
-  const packOnShelf = (kind, id) => ((games.find((g) => g.id === kind) || {}).packs || []).find((p) => p.id === id);
-  /** Any pack anywhere in the mixed row, for `renderSlots()`'s own lookups. */
-  const anyPack = (id) => games.flatMap((g) => g.packs || []).find((p) => p.id === id);
+  const packOf = (id) => packOnShelf(gameOf().id, id);
+  /** A pack of a NAMED kind, whichever tab is active — the mixed row finds a
+      bingo pack while quiz is picked. Off the LIBRARY: see `shelvesFor()`. */
+  const packOnShelf = (kind, id) => shelvesFor(kind).find((p) => p.id === id);
+  /** Any pack of any kind, for `renderSlots()`. Library-wide, same reason. */
+  const anyPack = (id) => packOnShelf('quiz', id) || packOnShelf('bingo', id);
 
   /** Tonight, in order: the chosen pack and anything dropped in after it. */
   const lbPacks = () => [currentPack, ...lbExtra.map(packOf)].filter(Boolean);
@@ -3605,7 +3628,8 @@ export function launchBar() {
     showRunning = { show, at };
     if (gamePick && item.kind && gamePick.value !== item.kind) gamePick.value = item.kind;
     if (item.kind) lbGame = item.kind;
-    const shelf = gameOf().packs;
+    // THE LIBRARY, NOT THE TAB'S SHELF — see `shelvesFor()`.
+    const shelf = shelvesFor(gameOf().id);
     const ids = (item.order && item.order.length)
       ? [...new Set(item.order.map((r) => r.packId))]
       : [String(item.packId || '')];

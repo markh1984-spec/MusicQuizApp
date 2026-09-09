@@ -19,7 +19,7 @@ import { gigsSection } from './console-gigs.js';
 import { invoicesSection } from './console-invoices.js';
 import { gameSection, preview } from './console-packs.js';
 import { roundsOfType, roundsSection } from './console-rounds.js';
-import { isOneRound } from './pack-look.js';
+import { onARoundTab } from './pack-look.js';
 import { showsSection } from './console-shows.js';
 import { NIGHT_BENCH_STORE, bench, lastDone, library, me, setAccountsExist, setLastDone, setLibrary, setMe, setNightBench } from './console-state.js';
 import { aNightIsOn, dragging, launchBar, night, nowPlaying, putNightOnBench, runningPanel, wantPackFromUrl } from './console-tonight.js';
@@ -725,20 +725,16 @@ export const QUIZ_ROUNDS = [
  * is.
  */
 /*
- * THE ROUND TYPES THAT HAVE A TAB OF THEIR OWN, and the one question the
- * Quiz Packs shelf asks of a pack.
- *
- * A pack is off that shelf only when it is ONE round AND that round has
- * somewhere else to be. Everything else stays — a whole night, and a lone
- * round of a type nothing lists.
+ * THE TAB IDS THAT ARE ACTUALLY GAME KINDS. **A tab id is not a game kind**:
+ * the launch bar built its dropdown from every `TABS` entry with `packs` +
+ * `needs`, two until the round tabs landed and then five, so it offered Image
+ * Rounds and Music Intros and sent `gameOf().id` as `game` — `400 Unknown
+ * game: text`, on the protected launch path. NAMED rather than derived from
+ * a row's shape, because the shape is what went wrong: the next tab with a
+ * shelf would join the dropdown by accident all over again. `LAUNCHERS` in
+ * `src/session.js` is the server's half; a third game adds a line to both.
  */
-const ROUND_TABS = ['text', 'image', 'intro'];
-
-function onARoundTab(pack) {
-  if (!isOneRound(pack)) return false;
-  const only = ((pack.rounds || [])[0] || {}).type;
-  return ROUND_TABS.includes(String(only || '').toLowerCase());
-}
+export const GAME_KINDS = ['quiz', 'bingo'];
 
 export const TABS = [
   {
