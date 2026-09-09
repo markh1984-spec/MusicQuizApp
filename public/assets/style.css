@@ -7203,6 +7203,30 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   margin-left: auto;
   display: flex; align-items: center; gap: 8px;
 }
+/*
+ * THE HEAD MAY NOT WRAP ABOVE 1150px, AND THIS IS THE SETTINGS ROW'S OWN RULE
+ * ARRIVING ONE ROW HIGHER.
+ *
+ * Adding "Open the controls" beside the live line moved the wrap threshold
+ * from between 1100 and 1000 up to between 1200 and 1150 — measured against
+ * the commit before it, at seven widths — so the mode switch and the fold
+ * dropped onto a second row at 1150, where they used to hold. Two rows read
+ * as a second bar, which is the fault this bar already has a rule about.
+ *
+ * `flex-wrap: nowrap` is the fix rather than `flex-shrink`, and that
+ * distinction is written down one row below: **a wrapping flex row WRAPS
+ * FIRST and shrinks per line afterwards**, so a row twenty pixels over drops
+ * a control onto a second line instead of taking two pixels off each of five.
+ *
+ * WHAT GIVES GROUND IS THE SENTENCE, NEVER A CONTROL — `.lb-live` already
+ * ellipsises, so a long pack title shortens and every button keeps its size.
+ * Below 1150 the row still wraps, exactly as it did.
+ */
+@media (min-width: 1150px) {
+  .lb-head { flex-wrap: nowrap; }
+}
+.lb-live-row > .lb-live { flex: 0 1 auto; }
+.lb-live-row > .minor { flex: 0 0 auto; }
 .lb-head .lb-mode { margin: 0; }
 /* THE VENUE PICKER LOOKS LIKE EVERY OTHER DROPDOWN ON THE BAR — reported
    directly: *"there's two places to select venue, and neither of them conform
@@ -9233,7 +9257,10 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 .lb-doors[hidden] { display: none; }
 /* Its own line, always — see the markup note. Hidden entirely when the night
    has prizes, which is the ordinary case and costs nothing. */
-.lb-warn-slot { flex: 1 0 100%; min-width: 0; }
+/* A BLOCK OF ITS OWN, OUTSIDE THE HEAD — see the note in `console-tonight.js`.
+   `flex: 1 0 100%` is kept harmlessly for any other flex parent, but the line
+   it gets no longer depends on a parent choosing to wrap. */
+.lb-warn-slot { flex: 1 0 100%; min-width: 0; margin-top: 10px; }
 .lb-warn-slot[hidden] { display: none; }
 .lb-warn-slot .lb-say { margin: 0; }
 /* Open, a chip wears the account edge whether or not it has been changed —

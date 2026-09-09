@@ -1347,19 +1347,17 @@ the CONTROL, so one narrow enough for "The usual" clips "Halloween — in season
 now".
 
 - **THE NATIVE `<select>` STAYS IN THE DOM AND STAYS THE TRUTH.** The popover
-  is a skin: every `.value` read, every `innerHTML = options(…)` rebuild and
-  every `change` listener goes on working, and **the LAUNCH still reads what it
-  always read**. This bar is the protected surface, and **a skin cannot lose a
-  value, because it never holds one.**
+  is a skin: every `.value` read, every rebuild and every `change` listener goes
+  on working, and **the LAUNCH still reads what it always read**. **A skin
+  cannot lose a value, because it never holds one.**
 - **SO IT MUST BE REPAINTED WHEN THE SELECT CHANGES UNDERNEATH IT** —
-  `refreshPicks()` at the end of `paintSettings()`, because `.value = x` fires
-  no event and nothing else would tell the face it is stale.
+  `refreshPicks()` at the end of `paintSettings()`: `.value = x` fires no event
+  and nothing else would tell the face it is stale.
 - **CHOOSING DISPATCHES A REAL `change`.** Setting `.value` from script fires
-  nothing, so the picker would look like it worked and the launch would send
-  the value from before.
-- **ONE DOCUMENT LISTENER FOR ALL OF THEM, not one per picker** — the bar is
-  rebuilt on every state push, so per-render listeners leak with the room.
-- **WHICH WAY A MENU OPENS IS MEASURED**, or the rightmost hangs off the edge.
+  nothing: the picker looks like it worked and the launch sends the old value.
+- **ONE DOCUMENT LISTENER FOR ALL OF THEM** — the bar is rebuilt on every
+  state push, so per-render listeners leak with the room.
+- **WHICH WAY A MENU OPENS IS MEASURED**, or the rightmost hangs off.
 - **A FLOATING SHEET NEEDS AN OUTSIDE-CLICK CLOSE IT DID NOT NEED INLINE.**
   Left open, the venue sheet sits over the settings and swallows every click
   aimed at them. A popover only its own button can close is a trap.
@@ -1367,17 +1365,17 @@ now".
   something** — *"dropdowns don't change size at all regardless of what's
   selected."* Every option's SHORT name goes into one grid cell, all but the
   chosen one hidden, so the BROWSER reserves the width. **`visibility`, never
-  `display: none`** — a hidden item still sizes the grid. It does not undo
-  *narrow shut*: the ghosts are short names.
+  `display: none`** — a hidden item still sizes the grid.
 - **THE ROW MAY NOT WRAP ABOVE 1150px, AND `flex-shrink` ALONE CANNOT HOLD
   IT** — a wrapping flex row WRAPS FIRST and shrinks per line after, so a row
   twenty pixels over drops a control onto a second line rather than taking two
   pixels off eight. `flex-wrap: nowrap`, and **a heading ellipsises rather than
-  wraps**. It still wraps below 1150px.
-- **A LONG OPTION EARNS A `data-short`, or it costs that width for ever**, and
-  **the pack is named on the first of Card/Prizes, not both.**
-- Labels shortened with it: **Secs per Q**, **Game**, and Save is just
-  **Save**. **"Look" became "Appearance"** — it read as an instruction first.
+  wraps**. Still wraps below 1150px.
+- **A LONG OPTION EARNS A `data-short`**, and **the pack is named on the first
+  of Card/Prizes, not both.**
+- Labels shortened with it: **Secs per Q** and **Game**. **"Look" became
+  "Appearance"** — it read as an instruction first. **AND THE SHORTENING WENT
+  TOO FAR ON ONE: Save is "Save for another night" again** — see below.
 
 ### THE MARKUP GUARD IS THE MARKUP'S HALF OF THE BRACE RULE
 
@@ -1501,6 +1499,16 @@ space where possible."* Four placements and one real bug:
 
 - **A CONTROL SITS WITH WHAT IT ACTS ON.** *Stop* read as a control over the
   whole panel. It is **Unlaunch**, beside the sentence naming what it stops.
+- **THE HEAD MAY NOT WRAP ABOVE 1150px EITHER — `flex-wrap: nowrap`.** The
+  control below moved the threshold from ~1050 to 1150, measured against the
+  previous commit at seven widths, dropping the mode switch a row. **What gives
+  ground is the SENTENCE, never a control**: `.lb-live` ellipsises.
+- **AND `.lb-warn-slot` HAD TO LEAVE THE HEAD FIRST.** `flex: 1 0 100%` got it
+  a line only because the head WRAPPED, so under `nowrap` it took the whole
+  row and **every control in the head collapsed to zero width** — all in the
+  DOM, all unclickable, nothing thrown, and only on a night with a warning up.
+  **A block that depends on its parent wrapping is borrowing a line, not owning
+  one.**
 - **AND THE WAY BACK IN SITS THERE TOO** — *"a button next to the explainer at
   the top saying what quiz was loaded."* The line said a night was on the big
   screen and **the only control beside it ENDED the night**. **ORDINARY, never
@@ -1512,7 +1520,10 @@ space where possible."* Four placements and one real bug:
 - **KEEPING A NIGHT IS A NIGHT-LEVEL QUESTION, so it moved into the head**
   beside the venue. **The label has to outrank the adjacency**: a show never
   keeps the venue, so "Save" alone beside a venue picker says the opposite of
-  what it does — the words stay *"for another night"*.
+  what it does — the words stay *"for another night"*. **A later shortening
+  pass overrode this to the bare verb and the host asked the exact question the
+  rule exists to prevent — *"what is the save button even for?"* — so it is
+  back. A verb whose object lives in a `title` is invisible on a phone.**
 - **THE REASON A CONTROL IS OFF GOES ON THE CONTROL** — *"Nothing in Tonight
   to keep yet"* floated beside a greyed button; it is on the button now.
 - **A BIGGER TARGET IS NOT A HITTABLE ONE.** The tile's × grew to 30px and the
@@ -1575,23 +1586,22 @@ round 1' both fill the same function, don't really need both"*, then *"it
 could just be a symbol you click to cycle… and this would live in the bottom
 right of the pack ONCE LOADED."*
 
-- **THE DUPLICATION WAS REAL** — one `chip()`, one plan, one setter, drawn in
-  two places and neither beside the thing it acted on.
+- **THE DUPLICATION WAS REAL** — one `chip()`, one plan, one setter, drawn
+  twice and neither beside the thing it acted on.
 - **A TILE'S DIAL OWNS THE GAP AFTER ITS OWN ROUND — `gapIdsOfSlot()`.** It
   owned *every gap the pack makes*, so **pressing the last tile's dial changed
   the first.** A BINGO slot owns the gap BEFORE it, never `p0:lobby`; **the
-  FINAL is not a gap**, so the caller filters through `breaksOf()`.
-  **`drag-check` asserts ONE face moved** — **a guard aimed at whatever happens
-  to be first is measuring the shelf, not the row.**
+  FINAL is not a gap.** **`drag-check` asserts ONE face moved** — **a guard
+  aimed at whatever happens to be first is measuring the shelf, not the row.**
 - **THE TILE'S SIZE DECIDED THE SHAPE, MEASURED FIRST**: 179 x 76 with 58px
-  clear in the corner. That is ONE 44px control and never two — so the dial is
-  the PHONES and the big screen became a night-level picker. **The plan on disk
-  is unchanged.**
-- **A DIAL IS SAFE HERE because every state is a real answer** — **and the
-  order is a SCALE**: photos, game, both, nothing. A dial whose steps are not
-  on a scale has to be memorised.
+  clear. That is ONE 44px control and never two — so the dial is the PHONES and
+  the big screen became a night-level picker. **The plan on disk is
+  unchanged.**
+- **A DIAL IS SAFE HERE because every state is a real answer, and the order is
+  a SCALE**: photos, game, both, nothing. A dial whose steps are not on a scale
+  has to be memorised.
 - **THE LIT EDGE HAD TO BE MADE HONEST** — `cleanPlan()` runs on the way OUT
-  of the dial too, or a gap cycled back to its default still claims a change.
+  too, or a gap cycled back to its default still claims a change.
 - **DOORS KEEPS A DIAL, the one gap with no tile.** Phone-only: the join code
   owns the lobby's screen.
 - **THE ERA WORD MOVED 52px LEFT** — **the control wins and the decoration
@@ -1606,11 +1616,9 @@ right of the pack ONCE LOADED."*
 - **THE SLOT NUMBER GOES WHEN A PACK LANDS IN IT**; **it stays on an EMPTY
   slot**, where it is the whole label.
 - **THE TILE IS 90px BECAUSE 30 + 44 DOES NOT FIT IN 76** — moving the × puts
-  "remove this" where the eye lands first. **On a phone `is-pack` tiles keep
-  that height.**
+  "remove this" where the eye lands first.
 - **THE ERA WORD IS GONE FROM A TONIGHT TILE** — it overlapped the round ticks
-  and there is no third place, so the wash and the coloured edge carry the
-  subject. **It stays on the shelf CARD.**
+  and there is no third place. **It stays on the shelf CARD.**
 - **`.lb-tiles:has(.lb-doors-slot)` OUT-SPECIFIED THE PHONE RULE** — a class
   more specific than `.lb-tiles` beat the 560px layout, and 390 came out as four
   50px columns. The specificity trap wearing `:has()`.
@@ -1650,60 +1658,55 @@ right of the pack ONCE LOADED."*
   does this mean? the . ?"* — which is the *clarity beats everything* test
   failing. The other three states are pictures; punctuation on a button reads
   as a control that failed to load.
-- **THE PACK LIFTS FROM ITS GRIP; A ROUND LIFTS FROM ITS OWN SQUARE.** A
-  tick with no drag handlers lets the browser walk up to the nearest draggable
-  ancestor and take the whole pack; **a `draggable` child is what stops the
-  walk.** The tile refuses a `dragstart` that did not begin on `.lb-tile-head`
-  — the smallest drag handle there is, nothing to arm and disarm.
-- **A `dropEffect` THE SOURCE DID NOT ALLOW KILLS THE DROP SILENTLY.** A pack
-  card allows `'copy'` and a round tick `'move'`; set the wrong one and the
-  browser treats the target as REFUSING, so **no `drop` fires at all**.
-  Hard-coding `'move'` in a handler serving both killed every pack drop while
-  rounds kept working. **A synthesised `DragEvent` does not enforce it** —
-  `drag-check.mjs` drives the real mouse and is the only thing that can see
-  this or the `preventDefault` rule.
+- **THE PACK LIFTS FROM ITS GRIP; A ROUND LIFTS FROM ITS OWN SQUARE.** A tick
+  with no drag handlers lets the browser walk up to the nearest draggable
+  ancestor and take the whole pack; **a `draggable` child stops the walk.** The
+  tile refuses a `dragstart` that did not begin on `.lb-tile-head`.
+- **A `dropEffect` THE SOURCE DID NOT ALLOW KILLS THE DROP SILENTLY.** Set the
+  wrong one and the browser treats the target as REFUSING, so **no `drop` fires
+  at all** — hard-coding `'move'` in a handler serving both killed every pack
+  drop while rounds kept working. **A synthesised `DragEvent` does not enforce
+  it**: `drag-check.mjs` drives the real mouse.
 - **THE SLOT YOU DROP ON IS THE SLOT IT GOES IN — for a whole PACK too.** `at`
   is honoured only when that slot is genuinely EMPTY: **a slot you can destroy
   by letting go over it is a hazard**, so a drop onto a full tile appends. **A
-  drop that MISSES every square means "the next free slot"**, which with holes
-  is the first hole.
+  drop that MISSES every square means "the next free slot".**
 - **A DESCRIPTOR IS NOT THE THING IT DESCRIBES.** `packDrag` is `{ id, kind }`
   and the empty slot's drop handed it on as the pack — **the slot lit, the drop
   was taken, nothing appeared.**
 - **A KIND THAT DISAGREES WITH THE NIGHT'S OWN IS A MIXED NIGHT** — a quiz pack
-  added to a bingo night went into `lbExtra`, whose ids `packOf()` resolves
-  against `gameOf()` alone, and was never found again. **Nothing threw — the
-  state was consistent and the READER could not resolve it.**
+  added to a bingo night went into `lbExtra` and was never found again.
+  **Nothing threw — the state was consistent and the READER could not resolve
+  it.**
 - **A PACK CARD ASKS WHETHER IT IS IN TONIGHT; IT IS NOT PAINTED AFTERWARDS.**
   `render()` assembles the page OFF the document, so a later paint finds the
-  PREVIOUS page's cards — **every tab change drew a shelf with no ghosting**.
+  PREVIOUS page's cards.
 - **THE BREAK PLUMBING MOVED INTO `console-breaks.js`** rather than the line
-  budget being raised a fifth time — handed what it needs so the module stays a
-  leaf. **Destructured ABOVE every reader**: a `const` in its temporal dead zone
-  throws when the line RUNS and the catch swallows it. **A moved body keeps the
-  names of the home it left.**
+  budget being raised a fifth time. **Destructured ABOVE every reader**: a
+  `const` in its temporal dead zone throws when the line RUNS and the catch
+  swallows it. **A moved body keeps the names of the home it left.**
 - **A PACK TILE LIGHTS UP TOO — AND ONLY WHERE THE DROP WILL BE TAKEN.** One
-  that lit and did nothing would be worse than one that never lit: it promised.
-  A refusal also STOPS the event, or the round lands somewhere the pointer
-  never was. **The inset ring alone was invisible.**
+  that lit and did nothing promised. A refusal also STOPS the event, or the
+  round lands somewhere the pointer never was. **The inset ring alone was
+  invisible.**
 - **A FILLED MIXED TILE HAS TWO WIRINGS AND THEY RACED.** The one registered
   LAST won, so a bingo tile lit for a round it would refuse. **One handler
   decides and the other stands down.**
 - **AN EMPTY SLOT TAKES A ROUND AND LIGHTS UP WHILE YOU ARE OVER IT** — with
   no `dragover` of its own **nothing lit up**, and an inert square reads as one
   that refuses; `orderEl`'s drop APPENDS, so a round let go over slot 5 landed
-  in slot 2. `stopPropagation` makes the slot's own answer count.
+  in slot 2. `stopPropagation` makes the slot's answer count.
 - **AND MY OWN TEST HAD MISSED IT** by dispatching `drop` directly — a browser
   fires no `drop` unless `dragover` called `preventDefault()`. **Measure
-  `defaultPrevented` on the dragover**, not the outcome of a synthetic drop.
-- **A CHILD'S `dragend` BUBBLES TO THE TILE, and the tile's removes the
-  pack** — dragging a round out emptied Tonight. The round's own drag travels
-  the SHELF channel so `moveRoundToSlot()` MOVES it rather than duplicating.
-- **A ROUND IS A ROUNDED SQUARE AT 28px, AND ITS HOVER LIFTS.** *"Square
-  shaped with round edges… I need to see when mousing over them."* `--r-field`
-  only reads as a square on a box with sides — at 22px it is nearly a circle —
-  and the old `filter: brightness(1.25)` hover is a change you cannot find on a
-  faint dot. **A four-round pack wraps to two rows and that is fine.**
+  `defaultPrevented` on the dragover.**
+- **A CHILD'S `dragend` BUBBLES TO THE TILE, and the tile's removes the pack**
+  — dragging a round out emptied Tonight. The round's drag travels the SHELF
+  channel so `moveRoundToSlot()` MOVES rather than duplicates.
+- **A ROUND IS A ROUNDED SQUARE AT 28px ON A TONIGHT TILE, AND ITS HOVER
+  LIFTS.** *"Square shaped with round edges… I need to see when mousing over
+  them."* `--r-field` only reads as a square on a box with sides — at 22px it
+  is nearly a circle — and `filter: brightness(1.25)` is a change you cannot
+  find on a faint dot.
 
 ### FIVE DOORS: CONSOLE · WORKSHOP · POST GIG · COMMUNITY · MY ACCOUNT
 

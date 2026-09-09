@@ -612,13 +612,11 @@ export function launchBar() {
   const el = node(`
     <div class="panel launchbar">
       <div class="lb-head">
-        <!-- WHERE, at the top, because it decides the prizes, the voucher and
-             what the night is filed under — and it used to be visible only on
-             a button label. -->
-        <!-- ONE CELL, both facts. They are two spans in a single grid child
-             rather than two children, or the grid has four items in three
-             columns the moment the shut line appears and the way back in
-             drops onto a row of its own. -->
+        <!-- WHERE, at the top: it decides the prizes, the voucher and what
+             the night is filed under. -->
+        <!-- ONE CELL, both facts — two spans in a single grid child, or the
+             grid has four items in three columns the moment the shut line
+             appears. -->
         <div class="lb-what">
           <!-- THE VENUE IS THE CONTROL, not a caption. It decides the prizes,
                the voucher and what the night is filed under, so it belongs at
@@ -666,32 +664,32 @@ export function launchBar() {
              of what it does — so the words stay "for another night", which is
              the fact that matters, and the tooltip says the rest. -->
         <div class="set-keep">
+          <!-- AND THE WORDS CAME BACK, BECAUSE THE HOST ASKED THE QUESTION
+               THIS RULE EXISTS TO PREVENT: *"what is the save button even
+               for?"* The rule is written four lines up — **the label has to
+               outrank the adjacency** — and a later shortening pass overrode
+               it to the bare verb. Beside a venue picker, "Save" reads as
+               "save the venue", the one thing this deliberately does NOT do,
+               and a verb whose object lives in a tooltip is invisible on a
+               phone. -->
           <button class="minor set-save" type="button"
-            title="Keeps the packs and every setting on this bar — but never the venue, so you can run the same night anywhere">Save</button>
+            title="Keeps the packs and every setting on this bar — but never the venue, so you can run the same night anywhere">Save for another night</button>
         </div>
-        <!-- WHERE THEY ARE, beside the fold rather than on a row of its own.
-             Two pills at the right-hand end: what kind of night it is, and
-             whether the panel is open. Moved there on the host's own reading
-             — on its own line it was a third row in a bar that is meant to be
-             glanceable, and it is one of the two facts that place a night, so
-             it belongs beside the other one rather than under it.
-             "In the room" rather than "Venue", and the reason it was Venue is
-             exactly why it had to change: it was chosen so "the pair reads as
-             one question with two answers" with the venue button to its left —
-             which is the definition of two controls on one row sharing a word
-             for different things. One picks WHICH PUB; this one decides
-             whether the questions go on sixty phones. The project notes have
-             said "IN THE ROOM / ONLINE" all along, so this is the code
-             catching up rather than a new opinion. -->
-        <!-- WHAT IS ON THE PROJECTOR, AND THE DOORS, BOTH UP HERE — asked
-             for directly: *"the doors button and the 'on the big screen now'
-             and unlaunch buttons can all go right at the top to save space."*
-
-             It cost a whole row of its own before, for one short sentence and
-             one small button; and Doors is the gap BEFORE the night starts,
-             which makes it a fact about the evening like the venue beside it
-             rather than a gap inside the running order. Every other break
-             stays down with the order it happens in. -->
+        <!-- WHERE THEY ARE, beside the fold rather than on a row of its own:
+             what kind of night it is, and whether the panel is open. On its
+             own line it was a third row in a bar meant to be glanceable.
+             "In the room" rather than "Venue", and the reason it WAS Venue is
+             exactly why it changed: it was chosen so "the pair reads as one
+             question with two answers" with the venue button to its left,
+             which is two controls on one row sharing a word for different
+             things. One picks WHICH PUB; this decides whether the questions go
+             on sixty phones. -->
+        <!-- WHAT IS ON THE PROJECTOR, AND THE DOORS, BOTH UP HERE — *"the
+             doors button and the 'on the big screen now' and unlaunch buttons
+             can all go right at the top to save space."* It cost a whole row
+             before, for one sentence and one small button; and Doors is the
+             gap BEFORE the night starts, a fact about the evening like the
+             venue beside it. Every other break stays with its own order. -->
         <div class="lb-live-row" hidden>
           <span class="tiny lb-live"></span>
           <!-- AND THE WAY BACK IN SITS ON THE SAME LINE — *"would be better
@@ -724,13 +722,18 @@ export function launchBar() {
             <span class="lb-fold-word"></span>
           </button>
         </div>
-        <!-- ONLY WHEN SOMETHING IS WRONG, and on a line of its own when it
-             is. Placed last so it wraps UNDER the row rather than shoving the
-             mode switch and the fold onto a second line in front of it — a
-             warning should be the thing that moves, not the controls whose
-             position people learn. -->
-        <div class="lb-warn-slot" hidden></div>
       </div>
+      <!-- ONLY WHEN SOMETHING IS WRONG, and on a line of its own when it is —
+           a warning should move, not the controls whose position people learn.
+           **OUTSIDE .lb-head, NOT THE LAST CHILD OF IT.** It carried
+           flex 1-0-100% and relied on the head WRAPPING to get its own line,
+           so the moment the head was told not to wrap it took the whole
+           1114px row and **every control in the head collapsed to zero
+           width** — venue picker, Save, live line and mode switch all still
+           in the DOM, all unclickable, nothing thrown. A block that depends on
+           its parent wrapping is borrowing a line, not owning one.
+           (NO BACKTICKS: this comment is inside a template literal.) -->
+      <div class="lb-warn-slot" hidden></div>
       <!-- WHAT IS ACTUALLY ON THE PROJECTOR, which is a different question
            from what the box is set to. Reported from a real night: the two
            disagreed and nothing said which was which.
@@ -1342,11 +1345,9 @@ export function launchBar() {
    *
    * **BUT PICKING IS NOT LAUNCHING WHEN THERE IS A NIGHT TO LOSE.** A tap
    * that silently ends a running quiz would be the most dangerous control in
-   * the app, on the protected path, in a dark pub.
-   *
-   * **THE SERVER DECIDES WHICH, NOT THIS PAGE** — the ordinary launch call
-   * without `replace`, which already answers 409 when a night is in progress.
-   * No second definition of "in progress" to drift.
+   * the app, on the protected path, in a dark pub. **THE SERVER DECIDES, NOT
+   * THIS PAGE** — the ordinary launch call without `replace`, which already
+   * answers 409 when a night is in progress. No second definition to drift.
    *
    * **A 409 is SILENT here** — no dialog. Pressing Launch asks that question;
    * a 409 leaves the choice staged and the red line says why.
@@ -4007,8 +4008,7 @@ export function aNightIsOn(running) {
 
 /**
  * STOP WHATEVER IS RUNNING — shared by the running panel's Stop and the bar's
- * quick stop, so the two cannot drift apart on wording or on the call. Reads
- * `library.running` fresh rather than taking it as a parameter.
+ * quick stop, so the two cannot drift on wording or on the call.
  */
 async function stopRunningNight(button) {
   const running = (library && library.running) || {};
