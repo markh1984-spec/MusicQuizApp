@@ -824,8 +824,31 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * added across five sections in one day, and this comment is the diff saying
  * so. THE NEXT RAISE SHOULD BE ARGUED HARDER: three in a day is the shape of a
  * budget that has stopped biting.
+ *
+ * ---
+ *
+ * 249,500 — AND THE ARGUMENT, SINCE THE LINE ABOVE ASKED FOR ONE.
+ *
+ * What went in is the LAST NIGHT: a lapsed subscription still launches tonight
+ * and is cut off from the next day. It earns the bytes on three counts that
+ * the sections trimmed to pay for it do not:
+ *
+ *  - **It REVERSES a pinned test**, so a session that finds
+ *    `mayStartSomething` letting a lapsed account through will otherwise read
+ *    it as the bug it used to be and "fix" it — taking a night off somebody
+ *    mid-week.
+ *  - **It is about MONEY and about somebody's livelihood**, which is the one
+ *    class of rule this file already says being short about costs a real
+ *    person something real.
+ *  - **It cannot be discovered by reading the app**, because nothing can reach
+ *    `past_due` until a processor is wired. There is no running behaviour to
+ *    infer it from — only this.
+ *
+ * PAID FOR FIRST: ~900 bytes out of the lobby-games section, trimmed to its
+ * prohibitions, before this number moved. ~900 trimmed against ~2,900 added,
+ * and this comment is the diff saying so.
  */
-const BUDGET = 247_500;
+const BUDGET = 249_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

@@ -1783,6 +1783,17 @@ async function handleGet(req, res, url, route) {
         // `who.account` and drops everything else in the response.
         referralCreditPence: account.role === 'owner' ? 0 : accounts.referralCredit(account.id),
         /*
+         * IS TONIGHT THEIR LAST NIGHT? — answered HERE, never re-derived in
+         * the browser, for the same reason the address question below is.
+         *
+         * It needs the accounts book (a group seat's grace belongs to its
+         * PARENT) and the server's own clock against a 6am roll-over, and a
+         * console that guessed either would warn the wrong person or, worse,
+         * stay silent for the right one. See `lastNightLeft()` in
+         * `accounts.js` for what it means.
+         */
+        lastNightLeft: accounts.lastNightLeft(account),
+        /*
          * DOES A VENUE'S OWN ADDRESS WORK FOR THIS ACCOUNT?
          *
          * `/station-tap-wokingham/quiz-league` resolves against the room the
@@ -6757,7 +6768,19 @@ async function handleWrite(req, res, url, route) {
        * and it is exactly where "you need to sort the payment out" belongs.
        */
       const wanted = String(body.game || 'quiz') === 'bingo' ? FEATURES.BINGO : FEATURES.QUIZ;
-      if (!allowed(req, res, url, wanted)) return true;
+      const launcher = allowed(req, res, url, wanted);
+      if (!launcher) return true;
+      /*
+       * AND IF A LAPSED SUBSCRIPTION GOT THROUGH, THIS IS THE NIGHT IT SPENDS.
+       *
+       * `mayStartSomething()` allows one more app-day of launching after a
+       * subscription lapses — see `lastNightLeft()` — and the day is stamped
+       * HERE rather than inside that check, because the check runs on every
+       * gated route and opening the console on a Wednesday must not spend the
+       * Thursday. Idempotent within a day, so the bingo after the quiz is the
+       * same night.
+       */
+      accounts.useLastNight(launcher);
 
       /*
        * And it has to be a pack they actually hold.
@@ -7047,6 +7070,9 @@ async function handleWrite(req, res, url, route) {
       // running a quiz-only running order must not be asked about bingo.
       if (neededQuiz.size && !allowed(req, res, url, FEATURES.QUIZ)) return true;
       if (neededBingo.size && !allowed(req, res, url, FEATURES.BINGO)) return true;
+      // A running order is a night like any other — see `launch` above. Both
+      // routes spend it, or the composed half hands out an endless grace.
+      accounts.useLastNight(whoIs(req, url));
 
       const live = session.inProgress();
       if (live && !body.replace) {

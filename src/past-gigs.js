@@ -29,6 +29,8 @@
  */
 
 import { HOUSE_ROOM, listArchive, updateArchivedNight, archiveResults } from './library.js';
+// The 6am roll-over lives in its own file — see the note there for why.
+import { nightDay } from './night-day.js';
 
 /** Where this room's photos are filed in the private photo repository. */
 export function photoFolder(roomId) {
@@ -56,9 +58,7 @@ export function isNightFolder(name) {
  * appearing twice, which is worse than either half being missing.
  */
 export function nightOfGig(at) {
-  const t = Number(at);
-  if (!Number.isFinite(t) || t <= 0) return '';
-  return new Date(t - 6 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return nightDay(at);
 }
 
 /**

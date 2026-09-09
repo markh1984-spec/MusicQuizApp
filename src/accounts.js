@@ -33,7 +33,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-import { ROLES, KINDS, DEFAULT_KIND, STATUSES, TIERS, DEFAULT_TIER, findTier, tierFor, can, featuresFor, entitlements, FEATURE_TIER, switchable, setTierOverrides, tierOf, tierOverridesNow, trialLengthDays, REFERRAL_DISCOUNT } from '../public/assets/plans.js';
+import { nightDay } from './night-day.js';
+
+/**
+ * LAPSED — a subscription that HAS been paid for and now is not.
+ *
+ * `trialing` is deliberately absent: a trial that ran out never paid, and it
+ * has its own wording. See `lastNightLeft()` for why the two are not the same
+ * kindness.
+ */
+const LAPSED = new Set(['past_due', 'cancelled']);
+import { ROLES, KINDS, DEFAULT_KIND, STATUSES, PAYING, TIERS, DEFAULT_TIER, findTier, tierFor, can, featuresFor, entitlements, FEATURE_TIER, switchable, setTierOverrides, tierOf, tierOverridesNow, trialLengthDays, REFERRAL_DISCOUNT } from '../public/assets/plans.js';
 import { findScheme, DEFAULT_SCHEME } from '../public/assets/schemes.js';
 
 /** Work factor for scrypt. Slow enough to matter, fast enough for a login. */
@@ -400,6 +410,19 @@ export class Accounts {
     if (patch.status !== undefined) {
       if (!STATUSES.includes(patch.status)) throw new Error(`"${patch.status}" is not a subscription status.`);
       account.status = patch.status;
+      /*
+       * PAYING AGAIN GIVES BACK THE LAST NIGHT — a CONSEQUENCE of the status,
+       * never a field a webhook may name.
+       *
+       * The rule at the top of `billing.js` is that a webhook may only ever
+       * move a SUBSCRIPTION, so `lastNight` is not in this patch's vocabulary
+       * and cannot be: a processor able to write it could hand out an extra
+       * night by naming tomorrow. Clearing it here is safe because the only
+       * way in is the status becoming one somebody has paid for — and without
+       * it, a quizmaster who lapses, pays, and lapses again six months later
+       * has already spent a grace they never knew about.
+       */
+      if (PAYING.has(account.status)) delete account.lastNight;
     }
     /*
      * Which packs this account can reach.
@@ -952,7 +975,77 @@ export class Accounts {
    * payment out is a thing for the morning.
    */
   mayStartSomething(account, feature) {
-    return can(account, feature);
+    if (can(account, feature)) return true;
+    if (!this.lastNightLeft(account)) return false;
+    // Lapsed, inside the last night, and this is a feature their plan covers.
+    return featuresFor({ ...account, status: 'active' }).includes(feature);
+  }
+
+  /**
+   * THE LAST NIGHT — one more evening of launching after a subscription lapses.
+   *
+   * Asked for in these words: *"I don't want someone to get a nasty shock if
+   * they haven't paid… I know what it's like struggling for money. I want them
+   * to be able to run the nights that they thought they were gonna run, but it
+   * warns them — this will be the last night you can run — and then it cuts
+   * them off at midnight so they can't run anything the next day."*
+   *
+   * **IT IS A DAY, NOT A COUNT.** A host can run a quiz and the bingo after it,
+   * or two venues in one evening; charging those as two last nights would take
+   * away the second half of a night somebody is standing in front of. So the
+   * grace is the whole app-DAY of the first launch after lapsing, and every
+   * launch inside that day is covered.
+   *
+   * **AND THE DAY ROLLS AT 6am, NOT MIDNIGHT** — the same boundary Past gigs,
+   * the photos, the league and the headcounts already use. He said midnight
+   * and meant *"they can't run anything the next day"*; 6am is that sentence
+   * as this app already defines a day, and it is the only version that cannot
+   * refuse a second game at ten past twelve to somebody still in the pub.
+   *
+   * **IT IS STAMPED WHEN A NIGHT IS LAUNCHED, NEVER WHEN THE CONSOLE OPENS.**
+   * This method is a pure question — `allowed()` asks it on many routes — so
+   * the writing is `useLastNight()` below, called by the launch routes alone.
+   * Reading the console on a Wednesday must not spend the Thursday.
+   *
+   * **A GROUP'S LAST NIGHT BELONGS TO THE PARENT**, because the subscription
+   * does. `effective()` has already swapped the parent's status onto the seat
+   * and leaves `parentId` behind for exactly this kind of question, so five
+   * seats on one unpaid subscription get one last night between them rather
+   * than five.
+   *
+   * **AN EXPIRED TRIAL IS NOT THIS.** Somebody who never paid is a different
+   * conversation with its own wording, and a grace night there is a free gig
+   * for anybody who signs up and walks away.
+   */
+  lastNightLeft(account) {
+    if (!account || account.comped || account.role === 'owner') return false;
+    if (!LAPSED.has(account.status)) return false;
+    const today = nightDay(this.now());
+    if (!today) return false;
+    const spent = this.lastNightSpent(account);
+    return !spent || spent === today;
+  }
+
+  /** Which day this account's last night was spent on — the parent's, in a group. */
+  lastNightSpent(account) {
+    if (!account) return '';
+    const holder = account.parentId ? this.find(account.parentId) : account;
+    return String((holder && holder.lastNight) || '');
+  }
+
+  /**
+   * Spend it. Called by the launch routes ONLY, and idempotent within a day so
+   * a second game the same evening does not read as a second night.
+   */
+  useLastNight(account) {
+    if (!this.lastNightLeft(account)) return false;
+    const holder = account.parentId ? this.find(account.parentId) : this.find(account.id);
+    if (!holder) return false;
+    const today = nightDay(this.now());
+    if (holder.lastNight === today) return false;
+    holder.lastNight = today;
+    this.save();
+    return true;
   }
 
   mayCarryOn(account, feature) {

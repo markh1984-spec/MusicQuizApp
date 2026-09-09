@@ -227,9 +227,80 @@ test('a failed payment never blacks out a live projector', () => {
     book.update(made.id, { status: 'past_due' });
     const lapsed = safe(book.find(made.id));
 
-    assert.equal(book.mayStartSomething(lapsed, FEATURES.QUIZ), false, 'no NEW night starts');
-    assert.equal(book.mayCarryOn(lapsed, FEATURES.QUIZ), true, 'but the one already running carries on');
+    /*
+     * THE LAST NIGHT STILL LAUNCHES — this REVERSES what this test pinned
+     * before, deliberately, and the host's reason is the whole of it: *"I
+     * wouldn't want to stop someone from working that night, it seems a bit
+     * unnecessarily harsh."* They get the day; they do not get the week.
+     */
+    assert.equal(book.mayStartSomething(lapsed, FEATURES.QUIZ), true, 'the last night still launches');
+    assert.equal(book.mayCarryOn(lapsed, FEATURES.QUIZ), true, 'and the one already running carries on');
     assert.equal(book.mayCarryOn(lapsed, FEATURES.BINGO), true);
+  });
+});
+
+test('the last night is a DAY, so the bingo after the quiz is covered', () => {
+  withBook((book) => {
+    const made = book.create({ email: 'dave@example.com', password: PASSWORD, status: 'past_due' });
+    const lapsed = () => safe(book.find(made.id));
+
+    assert.equal(book.useLastNight(lapsed()), true, 'the quiz spends it');
+    assert.equal(book.mayStartSomething(lapsed(), FEATURES.BINGO), true, 'the bingo after it is the same night');
+    assert.equal(book.useLastNight(lapsed()), false, 'and spending it twice in a day is not a second night');
+  });
+});
+
+test('and the next day it is over', () => {
+  withBook((book, file) => {
+    const made = book.create({ email: 'dave@example.com', password: PASSWORD, status: 'past_due' });
+    assert.equal(book.useLastNight(safe(book.find(made.id))), true);
+
+    // The same book, a day later. 30 hours clears the 6am roll-over from any
+    // starting hour, which is the point of asking the boundary rather than
+    // adding 24.
+    const tomorrow = new Accounts(file, { now: () => AT + 30 * 60 * 60 * 1000 });
+    const lapsed = safe(tomorrow.find(made.id));
+    assert.equal(tomorrow.lastNightLeft(lapsed), false, 'the grace is spent');
+    assert.equal(tomorrow.mayStartSomething(lapsed, FEATURES.QUIZ), false, 'no new night');
+    assert.equal(tomorrow.mayCarryOn(lapsed, FEATURES.QUIZ), true, 'a running one is still never interrupted');
+  });
+});
+
+test('paying again gives back a fresh last night', () => {
+  withBook((book, file) => {
+    const made = book.create({ email: 'dave@example.com', password: PASSWORD, status: 'past_due' });
+    assert.equal(book.useLastNight(safe(book.find(made.id))), true);
+    book.update(made.id, { status: 'active' });
+
+    /*
+     * A DAY LATER, OR THIS PASSES FOR THE WRONG REASON. Asked on the same day,
+     * the spent night IS today and `lastNightLeft` says yes whether or not
+     * paying cleared anything — so the first version of this test was green
+     * against an unimplemented feature.
+     */
+    const later = new Accounts(file, { now: () => AT + 30 * 60 * 60 * 1000 });
+    later.update(made.id, { status: 'past_due' });
+    assert.equal(later.lastNightLeft(safe(later.find(made.id))), true, 'a lapse after paying is a new one');
+  });
+});
+
+test('and a lapse that was never paid off keeps its spent night', () => {
+  withBook((book, file) => {
+    const made = book.create({ email: 'dave@example.com', password: PASSWORD, status: 'past_due' });
+    assert.equal(book.useLastNight(safe(book.find(made.id))), true);
+    // Still past_due the next day: nothing was paid, so nothing comes back.
+    const later = new Accounts(file, { now: () => AT + 30 * 60 * 60 * 1000 });
+    assert.equal(later.lastNightLeft(safe(later.find(made.id))), false);
+  });
+});
+
+test('an expired trial gets no last night — it never paid', () => {
+  withBook((book) => {
+    const made = book.create({ email: 'dave@example.com', password: PASSWORD, status: 'trialing' });
+    book.update(made.id, { trialEndsAt: new Date(AT - 86_400_000).toISOString() });
+    const over = safe(book.find(made.id));
+    assert.equal(book.lastNightLeft(over), false);
+    assert.equal(book.mayStartSomething(over, FEATURES.QUIZ), false);
   });
 });
 

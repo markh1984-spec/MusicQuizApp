@@ -829,7 +829,7 @@ export function kindOf(account) {
  * here is allowed to interrupt a night that is already running.
  */
 export const STATUSES = ['trialing', 'active', 'past_due', 'cancelled'];
-const PAYING = new Set(['trialing', 'active']);
+export const PAYING = new Set(['trialing', 'active']);
 
 /*
  * THE TRIAL, AND THE REFERRAL BONUS ON TOP OF IT.

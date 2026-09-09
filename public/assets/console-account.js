@@ -1247,21 +1247,18 @@ function youPanel() {
     : status.replace('_', ' ');
 
   /*
-   * WHAT THE END OF A TRIAL COSTS YOU, SAID BEFORE IT HAPPENS.
+   * WHAT THE END OF A TRIAL COSTS YOU, SAID BEFORE IT HAPPENS. A trial runs at
+   * the top of the ladder, so without this a fortnight of everything stops one
+   * morning with no explanation — the one thing this app must never do to
+   * somebody on a gig day. Money and warnings are the stated exceptions to the
+   * one-short-line rule. It also says what the trial is NOT: the catalogue is
+   * what is being sold, and a trialist who assumes the library comes too is
+   * set up for a worse surprise. The rung's pack label is NOT spliced in — the
+   * labels are headings, and one dropped mid-sentence reads as a bug.
    *
-   * A trial runs at the top of the ladder (`trialPreview()` in plans.js), so
-   * without this line a fortnight of everything simply stops one morning and
-   * four features are missing with no explanation — which is the one thing
-   * this app must never do to somebody on a gig day. Money and warnings are
-   * the stated exceptions to the one-short-line rule.
-   *
-   * It also says what the trial is NOT, because the catalogue is the thing
-   * being sold and a trialist who assumes the whole library is coming with
-   * them is being set up for a worse surprise than the features. The rung's
-   * own pack label is deliberately NOT spliced into that sentence — the
-   * labels are headings ("Eight packs to start"), and a heading dropped
-   * mid-sentence reads as a bug. The compare table's Packs row says which.
-   */
+   * AND THE LAPSED LINE HAS TWO HALVES NOW: with a last night left, "never
+   * interrupts a night" is beside the point — what they need is that tonight
+   * runs and tomorrow does not. */
 
   const el = node(`
     <div class="panel">
@@ -1279,8 +1276,12 @@ function youPanel() {
         how you introduce yourself.</div>
       ${ent.trialExpired ? `<div class="tiny acct-note bad"><b>Your trial has ended.</b>
         Get in touch to keep going.</div>`
-        : bad ? `<div class="tiny acct-note bad"><b>A lapsed subscription never interrupts a night.</b>
-        It is starting a NEW one that stops.</div>`
+        : bad ? `<div class="tiny acct-note bad"><b>${me && me.lastNightLeft
+          ? 'You can still run tonight, and tonight is the last one.'
+          : 'A lapsed subscription never interrupts a night.'}</b>
+        ${me && me.lastNightLeft
+          ? 'Sort the payment out and everything carries on as it was.'
+          : 'A night already running is never cut off &mdash; it is starting a NEW one that stops.'}</div>`
         : ent.previewing ? `<div class="tiny acct-note"><b>Your trial has every feature switched on
         &mdash; adverts, the league, pack requests and online nights.</b>
         ${daysLeft ? `For ${daysLeft} more day${daysLeft === 1 ? '' : 's'}, then you are on

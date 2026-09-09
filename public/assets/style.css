@@ -7755,6 +7755,13 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    rather than warned about, and it names where to fix it rather than leaving
    somebody to find the shelf. */
 .lb-say-none { color: var(--ink-dim); }
+/* MONEY IS THE OTHER STATED EXCEPTION TO THE SHORT-LABEL RULE, so this one is
+   allowed its two sentences — and it is full ink rather than red, because
+   nothing has gone wrong yet and tonight still runs. Red here would say the
+   night was in trouble, which is the shock the whole policy exists to avoid.
+   See `lastNightWarning()` in `console-tonight.js`. */
+.lb-say-money { color: var(--ink); }
+.lb-say-money b { color: var(--gold); }
 
 .lb-tile {
   position: relative; display: flex; flex-direction: column; justify-content: flex-end;

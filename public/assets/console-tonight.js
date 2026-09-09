@@ -16,7 +16,8 @@ import {
   moveRoundToSlot, segmentsFromSlots, simpleNight, slotsFromSimple,
 } from './console-tonight-mix.js';
 import { renderSlots } from './console-tonight-mix-ui.js';
-import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
+import { lastNightWarning, venuePrizeWarning } from './console-warnings.js';
+import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, me, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
 import { nowNextRows } from './console-venues.js';
 import { TABS, can, doorNow, goTo, goToDoor, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone } from './console.js';
 import { clashTonight, nightKey, tonight, upcoming } from './diary.js';
@@ -1346,8 +1347,8 @@ export function launchBar() {
    * THIS PAGE** — the ordinary launch call without `replace`, which already
    * answers 409 when a night is in progress. No second definition to drift.
    *
-   * **A 409 is SILENT here** — no dialog. Pressing Launch asks that question;
-   * a 409 leaves the choice staged and the red line says why.
+   * **A 409 is SILENT here** — Launch asks that question; a 409 leaves the
+   * choice staged and the red line says why.
    *
    * A QUIET SWITCH CARRIES THE FACTS ABOUT THE EVENING — venue, online, lobby
    * game — never the look, card shape or prizes. **The comment said "no venue"
@@ -2710,9 +2711,9 @@ export function launchBar() {
     const segments = segmentsNow();
     night.breaks = prunePlan(night.breaks, segments);
     if (sayEl) {
-      const warn = prizeWarning();
-      sayEl.replaceChildren(...(warn ? [warn] : []));
-      sayEl.hidden = !warn;
+      const warns = [lastNightWarning(me), prizeWarning()].filter(Boolean);
+      sayEl.replaceChildren(...warns);
+      sayEl.hidden = !warns.length;
     }
     // THE DOORS LEFT THE HEAD — see `doorsSlot()`.
     if (doorsEl) { doorsEl.replaceChildren(); doorsEl.hidden = true; }
@@ -3200,31 +3201,11 @@ export function launchBar() {
    * **It draws in the HEAD, never between the tiles and Launch.** That band
    * is kept clear on purpose — see `paintOrder()`.
    */
-  function prizeWarning() {
-    const name = venueNow();
-    const record = name
-      ? (library.venueRecords || [])
-        .find((v) => (v.name || '').toLowerCase() === String(name).toLowerCase())
-      : null;
-    const prizes = ((record && record.rewards) || []).map((r) => String(r || '').trim()).filter(Boolean);
-    if (prizes.length) return null;
-    /*
-     * IT SAYS THE CONSEQUENCE, AND IT SAYS IT WITH NO VENUE PICKED TOO.
-     *
-     * Off a live night: *"my quiz and bingo winners didn't receive a QR
-     * code"*. Prizes are read off the venue record at launch and nowhere
-     * else, so a night with no venue has none — and the warning began
-     * `if (!name) return null`, switched off in exactly the case it was for.
-     * It names the VOUCHER rather than the list, and says "VENUE prizes"
-     * because "Prizes" is taken 80px lower on the same panel: that one is how
-     * many stopping points a bingo CARD pays out, this one is the venue's
-     * list of what they are. A bar reading "Prizes 5" under "No prizes set"
-     * says the app is broken.
-     */
-    return node(`<div class="lb-say lb-say-none">No venue prizes set${
-      name ? '' : ' — no venue picked'}, so the winners get no voucher to scan${
-      name ? ` — add them on ${goTo('workshop', 'venues', 'the Venues tab')}` : ''}</div>`);
-  }
+  // WHAT IS WRONG WITH TONIGHT — both builders live in `console-warnings.js`.
+  // Taken out as a seam rather than paying the line cap a fifth time, which is
+  // what `console-breaks.js` did before it. They are handed what they need so
+  // that module stays a leaf.
+  const prizeWarning = () => venuePrizeWarning(venueNow(), library.venueRecords);
 
   /*
    * A PACK — OR NOW A SINGLE ROUND — DROPPED ON THE STRIP JOINS THE NIGHT.
@@ -3977,12 +3958,10 @@ function whenShort(at) {
 }
 
 /*
- * A LOADED PACK IS NOT A NIGHT.
- *
- * A session always has a pack — `boot()` falls back to one so the projector is
- * never blank — so the console drew a panel saying "Loaded, nobody playing",
- * with a Stop button, over a quiz the account had never launched. On a
- * quizmaster's first sign-in that is the first thing they read.
+ * A LOADED PACK IS NOT A NIGHT. A session always has a pack — `boot()` falls
+ * back to one so the projector is never blank — so the console drew a panel
+ * saying "Loaded, nobody playing", with a Stop button, over a quiz the account
+ * had never launched.
  *
  * **THE TEST IS `launched`, NOT "HAS ANYBODY JOINED" — reported as *"if i
  * launch a quiz and then click console how do I get back to the launched quiz
@@ -4031,15 +4010,13 @@ async function stopRunningNight(button) {
 }
 
 /**
- * WHAT IS PLAYING NOW, IN WORDS — the one place that decides.
- *
- * *"Can we make it so what is displayed as 'playing now' is all read from the
- * same place so its never drifting?"* There were THREE wordings for one fact.
+ * WHAT IS PLAYING NOW, IN WORDS — the one place that decides. There were THREE
+ * wordings for one fact.
  *
  * **The SHORT form is not an abbreviation, it is a different job.** The topbar
  * says *something is live and how many are in* from any door; the panel is the
- * thing itself. So the title lives in the panel, where it is not competing for
- * room — which is also what stops the bar wrapping at 222px.
+ * thing itself. So the title lives in the panel, which is also what stops the
+ * bar wrapping at 222px.
  */
 export function nowPlaying(running) {
   if (!aNightIsOn(running)) return null;
@@ -4066,10 +4043,9 @@ export function nowPlaying(running) {
     /*
      * A NIGHT THAT IS OVER SAYS SO — and that rung goes ABOVE the lobby ones.
      * `live` is "not lobby and not finished", so bingo's FINISHED phase fell
-     * through to the lobby branches: a finished night was headed **"Waiting in
-     * the lobby"** directly over a line reading "Finished — the winners are
-     * up". It lands at the end of every bingo night, which is when the host is
-     * reading this panel to decide what to do next.
+     * through: a finished night was headed **"Waiting in the lobby"** over a
+     * line reading "Finished — the winners are up", at the end of every bingo
+     * night.
      */
     heading: running.launched === false ? 'Nothing launched yet'
       : running.phase === 'finished' || running.phase === 'final' ? "That's the night done"

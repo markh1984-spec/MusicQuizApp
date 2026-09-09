@@ -258,9 +258,20 @@ test('the launch route asks the session what is live, and offers a second press'
   const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
   const at = server.indexOf("if (action === 'launch')");
   assert.ok(at > 0, 'the launch route has moved');
-  // Wide enough to still contain the in-progress check after the gate above it
-  // grew — the running-order check put another ~900 characters between the two.
-  const route = server.slice(at, at + 4200);
+  /*
+   * TO THE NEXT ACTION, NEVER A CHARACTER COUNT.
+   *
+   * This was `slice(at, at + 4200)` and had already been widened once "after
+   * the gate above it grew". It broke again the next time a comment landed in
+   * front of the check — which is the fault this repo records for
+   * `console-markup.test.js`: a window drawn at "where the code probably ends"
+   * moves every time somebody writes a paragraph inside it, and what it
+   * reports is a missing 409 rather than a long comment. The next `action ===`
+   * is a real boundary and cannot drift.
+   */
+  const rest = server.slice(at + 10);
+  const ends = rest.indexOf("if (action === '");
+  const route = ends > 0 ? server.slice(at, at + 10 + ends) : server.slice(at);
 
   assert.match(route, /session\.inProgress\(\)/, 'the launch route no longer checks for a night in progress');
   assert.match(route, /409/, 'a collision is not reported as a conflict');

@@ -1221,71 +1221,63 @@ drawing it. If the control view wants a round list, draw one.
 board), `src/arcade.js` (the scores, shared by both engines),
 `state.gameSeed`, `state.arcade`, `state.lobbyGame`.
 
-- **THE ROOM PICKS, AND THAT IS THE DEFAULT — `lobbyGamesFor()`,
-  `state.lobbyGames`.** **`ANY_LOBBY_GAME` is a SENTINEL, never an empty
-  string** — empty already means *"nobody said"*. **Resolved at the LAUNCH
-  ROUTE against `tierInUse`**; **the phone honours the list and re-checks
-  nothing**. **`null` rather than `[]`, SPREAD in only when it exists**, so
-  `pub-unchanged` still says IDENTICAL. **A list of ONE is dropped**, so an
-  UNLAUNCHED room offers one game and no chooser — which reads exactly like the
-  feature being broken.
+- **THE ROOM PICKS, AND THAT IS THE DEFAULT — `lobbyGamesFor()`.**
+  **`ANY_LOBBY_GAME` is a SENTINEL, never an empty string** — empty already
+  means *"nobody said"*. **Resolved at the LAUNCH ROUTE against `tierInUse`**;
+  **the phone honours the list and re-checks nothing**. **`null` rather than
+  `[]`, SPREAD in only when it exists**, so `pub-unchanged` still says
+  IDENTICAL. **A list of ONE is dropped.**
 - **THE QUIET LAUNCH SENDS THE WHOLE NIGHT — `nightOpts()`.** Tapping a pack
   sent FIVE of Launch's twelve fields. **One `nightOpts()`, spread into all
   three launches**, with a test that fails if a fourth writes its own.
-- **ONE ROW EITHER WAY, AND THE CHOICE IS ONE TAP INSIDE IT.** A row per game
+- **ONE ROW EITHER WAY, AND THE CHOICE IS ONE TAP INSIDE IT** — a row per game
   is **423px of menu** at 390px. **The box opens on the CHOOSER and nothing
-  runs yet** — auto-starting spends somebody's opening seconds. **Switching
-  calls `stopArcade()` first and RESHAPES the canvas**, or a loop banks under
-  the wrong game.
+  runs yet.** **Switching calls `stopArcade()` first and RESHAPES the canvas**,
+  or a loop banks under the wrong game.
 - **NO PHOTO GATE, AND ONE WAS PROPOSED AND TURNED DOWN** — **it prices
   consent**; *sending it is the consent*.
 - **THE BOARD SAYS WHICH GAME EACH SCORE WAS ON — `state.arcadeGame`, a map
-  BESIDE the scores.** **Never folded into `state.arcade`** — that is
+  BESIDE the scores. Never folded into `state.arcade`** — that is
   `{id: number}` in every state file there is. **The id is a LABEL.**
-- **QUICK DRAW'S OUTLAW RAISES ITS GUN.** Every pop already carries `downAt`,
-  so *how close is this one to shooting me* was information the schedule held
-  and the canvas never drew. **It changes what the game IS**: without it the
-  winning move is to tap the instant anything appears.
+- **QUICK DRAW'S OUTLAW RAISES ITS GUN** — *how close is this one to shooting
+  me* was information the schedule held and the canvas never drew. **It changes
+  what the game IS**: without it the winning move is to tap the instant
+  anything appears.
 - **THE DEFAULT FOLLOWS THE GAME, NOT THE ACCOUNT: Maze Mouth before a quiz,
   Rally before the bingo.** A remembered preference is wrong on half the nights
   of anybody running both.
-- **WHICH GAME IS A DECISION ABOUT TONIGHT**, so it goes where the look and
-  the card shape go — chosen on the launch bar, written into `state.lobbyGame`
-  at launch. **THE TIER IS CHECKED AT THE ROUTE, never in the console**, and a
-  game above the tier is **dropped in favour of the default rather than
-  refused**: losing a choice costs a game nobody has seen, refusing the launch
-  costs the night.
-- **THE TIER GATES HOW MANY GAMES, NOT WHETHER THERE IS ONE.** **THE ONLY
-  THING GATED BY TIER RANK RATHER THAN A `FEATURES` FLAG, so they ask
-  `tierInUse()` and never `tierFor()`** — a comped account holds every FEATURE
-  while `tier` still reads `bronze`, and **nothing threw because the console
-  agreed with the room, both wrong the same way.** **Do not sell the game
-  itself away from the bottom tier** — a phone with a game on it stays in the
-  FOREGROUND, so sixty connections do not all return when the join gate is
-  busiest. **Locked games are SHOWN.**
+- **WHICH GAME IS A DECISION ABOUT TONIGHT**, chosen on the launch bar and
+  written into `state.lobbyGame`. **THE TIER IS CHECKED AT THE ROUTE, never in
+  the console**, and a game above the tier is **dropped in favour of the
+  default rather than refused**: losing a choice costs a game nobody has seen,
+  refusing the launch costs the night.
+- **THE TIER GATES HOW MANY GAMES, NOT WHETHER THERE IS ONE. THE ONLY THING
+  GATED BY TIER RANK RATHER THAN A `FEATURES` FLAG, so they ask `tierInUse()`
+  and never `tierFor()`** — a comped account holds every FEATURE while `tier`
+  still reads `bronze`, and **nothing threw because the console agreed with the
+  room, both wrong the same way.** **Do not sell the game itself away from the
+  bottom tier** — a phone with a game on it stays in the FOREGROUND. **Locked
+  games are SHOWN.**
 - **THEY ARE CALLED MAZE MOUTH, RALLY, TAILBACK, QUICK DRAW AND LAST ORDERS.**
   The names and characters the first three resemble are Namco's and Atari's,
   and this app is SOLD — a legal line, not a taste one. **An unnamed game keeps
   inviting the wrong name**, which is why the later ones were named first.
-- **PILE UP IS DELETED, AND TETRIS IS STILL THE REASON.** Asked to be "more
-  like Tetris, with three-sided blocks", the answer was no twice: **the shapes
-  were not the only thing held protectable in *Tetris Holding v. Xio*** — the
-  well and the piece behaviour went with them, and this app is SOLD; **and
-  triangles do not tile a square grid**. **Do not rebuild it.**
+- **PILE UP IS DELETED, AND TETRIS IS STILL THE REASON.** **The shapes were
+  not the only thing held protectable in *Tetris Holding v. Xio*** — the well
+  and the piece behaviour went with them, and this app is SOLD; **and triangles
+  do not tile a square grid**. **Do not rebuild it.**
 - **LAST ORDERS REPLACED IT, and its legal line is a DIFFERENT one.** Taito
   owns the NAME and the specific sprites, **not** a formation descending on a
-  defender — a whole genre. So: **not called Space Invaders, no
-  crab/squid/octopus, no 5x11, no saucer, no bunkers**, with a test on the
-  words. **Tap-to-destination and it fires itself** — auto-fire makes
-  POSITIONING the game rather than a second Quick Draw. **Reaching the bar ends
-  it outright.**
+  defender. So: **not called Space Invaders, no crab/squid/octopus, no 5x11, no
+  saucer, no bunkers**, with a test on the words. **Tap-to-destination and it
+  fires itself** — auto-fire makes POSITIONING the game. **Reaching the bar
+  ends it outright.**
 - **THREE WAYS A GAME IS MADE THE SAME ON EVERY PHONE, and a new one must use
-  one:** a GRID with a fixed step (Maze Mouth, Tailback, Last Orders), an
-  ACCUMULATOR of whole ticks with the catch-up capped (Rally), or a SCHEDULE
-  where the state at T is a pure function of the seed and T (Quick Draw —
-  cleanest, but impossible once the player DESTROYS things). **A frame delta is
-  none of them and is always wrong here.** A REACTION game makes input latency
-  part of the score, so its windows stay generous.
+  one:** a GRID with a fixed step, an ACCUMULATOR of whole ticks with the
+  catch-up capped, or a SCHEDULE where the state at T is a pure function of the
+  seed and T. **A frame delta is none of them and is always wrong here.** A
+  REACTION game makes input latency part of the score, so its windows stay
+  generous.
 - **ONE SCOREBOARD FOR BOTH, in `src/arcade.js`** — the same clamp, the
   best-not-latest rule and the refusal outside the lobby. Two copies is two
   rules, and one gets fixed.
@@ -1301,40 +1293,36 @@ board), `src/arcade.js` (the scores, shared by both engines),
 - **No control panel: you tap and it walks there.** A swipe has to be READ and
   a misread one costs a life. `touch-action: none` is load-bearing. **A fire
   button plus movement is a control panel too.**
-- **A TURN PRESSED EARLY IS REMEMBERED** — `turnFrom()`: a HEADING plus a
-  buffered WANT, and **a wall stops you facing it and never picks a direction
-  for you**. **The rule lives in `maze.js`, not the canvas file.**
+- **A TURN PRESSED EARLY IS REMEMBERED** — a HEADING plus a buffered WANT, and
+  **a wall stops you facing it and never picks a direction for you**. **The
+  rule lives in `maze.js`, not the canvas file.**
 - **TAILBACK'S TAIL IS FATAL AND ITS WALLS ARE NOT, and that split is the
   whole game.** The steering was a search routing AROUND the body, so the tail
   was scenery. `stepToward()` is GREEDY now — **it still never returns a cell
   inside the body**, so a life is never taken for a route the player did not
-  choose. **A wall turns you, your own tail kills you.** **Six lives at 170ms,
-  not the four asked for** — four failed the two rules this game tests: worth
-  opening, and an idle phone cannot reach the board.
-- **THE BIG SCREEN IS ONLY PROMISED WHERE THE BOARD DRAWS.** Generalising to
+  choose. **Six lives at 170ms, not the four asked for.**
+- **THE BIG SCREEN IS ONLY PROMISED WHERE THE BOARD DRAWS** — generalising to
   *a break that offers a game* moved the guards and not the phone's line, so a
   break told sixty people *"Top scores go on the big screen"*.
 - **ONE POST LEAVES A PHONE, at game over and at each life lost** — never a
   stream of positions. Banking per life puts the people who played LONGEST on
   the board.
-- **THE GAME IS STOPPED IN `buildScreen()`, ON EVERY REBUILD.** Torn down
+- **THE GAME IS STOPPED IN `buildScreen()`, ON EVERY REBUILD** — torn down
   inside `wireArcade` it survived the quiz starting. **A teardown belongs where
   every phase change passes.**
 - **Each moment has a primary: the game before the quiz, photos between the
   rounds.** The camera button stands down at the lobby.
 - **MAZE MOUTH'S DEATH IS A GULP** — **NOT the unfurl-and-spin**, which is
   Namco's and this app is sold. **NOTHING MOVES while it runs**; **the score is
-  banked at the CATCH**, or a game the quiz interrupts loses that life.
-- **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER.**
-  `lobby-sound.js` — Web Audio, no files. **The HOST can switch it off**
-  (`state.lobbySound`); **the host's switch wins and does not wipe the phone's
-  own**. **Every noise is tied to something the player DID**, and it never
-  carries information, a pub phone being on silent.
-- **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — `lobby-board.js`, one
-  file for both, inside the white QR panel and UNDER the code, which nothing
-  may dim. **It was computed and never drawn for as long as the feature
-  existed**, and **a test that the payload is right proves nothing about
-  whether anybody drew it.**
+  banked at the CATCH.**
+- **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER** — Web Audio,
+  no files. **The HOST can switch it off**; **the host's switch wins and does
+  not wipe the phone's own**. **Every noise is tied to something the player
+  DID**, and it never carries information, a pub phone being on silent.
+- **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — inside the white QR
+  panel and UNDER the code, which nothing may dim. **It was computed and never
+  drawn for as long as the feature existed**, and **a test that the payload is
+  right proves nothing about whether anybody drew it.**
 
 Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
@@ -3888,6 +3876,50 @@ count cannot drift from the pack; the editor keeps it OUT of the object it PUTs
 back. Silent until there is a code, and until anything has scanned it.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
+
+### A LAPSED SUBSCRIPTION GETS ONE MORE NIGHT — `lastNightLeft()` in `accounts.js`
+
+*"I don't want someone to get a nasty shock if they haven't paid — I know what
+it's like struggling for money. I want them to be able to run the nights they
+thought they were gonna run, but it warns them: this will be the last night you
+can run. Then it cuts them off at midnight so they can't run anything the next
+day."* **This REVERSES the pinned test that said no new night starts on a
+lapse**, deliberately and on his reasoning: *"it seems a bit unnecessarily
+harsh, and if they're using the software and they like it, the chances are
+they'll pay."*
+
+- **IT IS A DAY, NOT A COUNT.** A quiz and the bingo after it, or two short
+  quizzes, are ONE night — charging the second as a second grace takes away the
+  half a host is standing in front of. `useLastNight()` is idempotent per day.
+- **AND THE DAY ROLLS AT 6am, NOT MIDNIGHT** — `nightDay()`, the same boundary
+  Past gigs, the photos, the league and the headcounts already use. He said
+  midnight and meant *"not the next day"*; 6am is that sentence as this app
+  already defines a day, and it is the only version that cannot refuse a second
+  game at ten past twelve to somebody still in the pub.
+- **STAMPED BY THE LAUNCH ROUTES ALONE, never by the check.**
+  `mayStartSomething()` runs on every gated route, so spending it there would
+  burn Thursday by opening the console on Wednesday. **Both launch routes
+  spend it** or the composed half hands out an endless grace.
+- **A GROUP'S LAST NIGHT BELONGS TO THE PARENT**, because the subscription
+  does — five seats on one unpaid subscription get one night between them.
+- **AN EXPIRED TRIAL GETS NOTHING**: somebody who never paid is a different
+  conversation, and a grace there is a free gig for anyone who signs up and
+  walks away.
+- **PAYING AGAIN CLEARS IT — as a CONSEQUENCE of the status, never a field a
+  webhook may name.** A processor able to write `lastNight` could hand out a
+  night by naming tomorrow.
+- **AND THE WARNING IS THE HALF THE GATE CANNOT DO** — `lastNightWarning()`.
+  A refusal that arrives when the button stops working IS the shock. **The
+  SERVER answers whether** (`me.lastNightLeft`): re-derived in the browser from
+  `status` it would warn a seat whose parent had already spent the night.
+  **It names what still works FIRST**, and **it is not red** — nothing has gone
+  wrong and tonight runs.
+- **`console-warnings.js` IS A SEAM, TAKEN RATHER THAN A FIFTH PAYMENT ON THE
+  LINE CAP** — the shape `console-breaks.js` set. A leaf, handed what it needs.
+- **NONE OF IT CAN HAPPEN UNTIL A PROCESSOR IS WIRED.** `applyBilling()` is the
+  only thing that sets `past_due` and nothing calls it, so this is groundwork
+  and `test/last-night.test.js` seeds the state and asks over HTTP — the unit
+  tests only ever ask the BOOK, and the STAMP is the half they cannot see.
 
 ### THE APP SENDS THE MONEY EMAILS, AND NOTHING ELSE
 
