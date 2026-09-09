@@ -2031,20 +2031,17 @@ first fifty people to open a gallery after one each spent a GitHub call against
 
 - **A PAID INSTANCE DOES NOT GIVE YOU A DISK.** Render's filesystem is
   ephemeral on EVERY tier; only an attached disk changes it. The $7 Starter
-  bought no SLEEP, not a surviving `data/`. **`DATA_DIR` is the whole wiring** —
-  state, room codes, accounts and the archive move with it, no code change.
-- **AND A DISK REMOVES ZERO-DOWNTIME DEPLOYS**, single instance only. Worth
-  it: today's overlap hands over an EMPTY `data/` that must restore from
-  GitHub, and a failed restore after a deploy is a recorded fault here.
-- **IT IS A CACHE OF WHAT GITHUB HAS, NEVER A SECOND STORE** — the private repo
-  stays the record, so losing the disk costs speed and nothing else.
+  bought no SLEEP, not a surviving `data/`. **`DATA_DIR` is the whole wiring.**
+- **AND A DISK REMOVES ZERO-DOWNTIME DEPLOYS**, single instance only. Worth it:
+  today's overlap hands over an EMPTY `data/` that must restore from GitHub.
+- **IT IS A CACHE OF WHAT GITHUB HAS, NEVER A SECOND STORE** — losing the disk
+  costs speed and nothing else.
 - **THE KEY MAPPING MUST BE INJECTIVE, AND THE FIRST ONE WAS NOT.** `/` → `~`
-  put `a/b/c.jpg` and `a/b~c.jpg` on ONE file — **one photograph served in
-  place of another**. `encodeURIComponent`, hashed past 200 chars. **Do not
-  lean on `safePhotoName()`**: a guarantee held somewhere else is how it comes
-  back.
-- **A `..` MAY NOT WALK OUT** — `?q=..` once minted a shadow room over the
-  projector's own state file. The test writes a sentinel OUTSIDE the folder.
+  put `a/b/c.jpg` and `a/b~c.jpg` on ONE file — **one photograph served in place
+  of another**. `encodeURIComponent`, hashed past 200 chars. **Do not lean on
+  `safePhotoName()`**: a guarantee held elsewhere is how it comes back.
+- **A `..` MAY NOT WALK OUT.** The test writes a sentinel OUTSIDE the
+  folder.
 - **NOTHING DECIDING WHO MAY SEE A PHOTO IS CACHED WITH IT**, as before.
 - **A DELETED PHOTO STILL LEAVES GIT HISTORY BEHIND. Unchanged** — that is what
   moving to object storage would fix, and the reason to consider it.
@@ -2073,14 +2070,13 @@ metal, the ones above locked; pressing one opens a card naming what it holds.
   this spells WORDS.
 - **A LOCKED RUNG IS PRESSABLE** — `disabled` swallows the press and the sell
   is the point. **NOT A NATIVE `title`**: a card, outside-click close, one
-  document listener for all rows.
+  listener for all rows.
 - **THE OWNER'S OWN RUNGS ARE 30 x 34 WITH 5px BETWEEN THEM**, the hat switch
   beside them 34px, and **the 560px diet must take BOTH down together** — it
   shrank the switch and not the rungs, and the owner's bar ran off a 390px
-  screen. **Not the 44px touch floor, deliberately**: a mouse presses this.
+  screen. **Not the 44px touch floor**: a mouse presses this.
 - **BUILT FROM `ladderFor()`, never written out**, and **`NOT_BUILT` says "not
-  yet"**. **NO SUBSCRIBE BUTTON UNTIL THERE IS A PROCESSOR** — a dead button is
-  worse than a sentence.
+  yet"**. **NO SUBSCRIBE BUTTON UNTIL THERE IS A PROCESSOR.**
 - **`.tier-row` WAS ALREADY `owner.js`'S** and won at equal specificity from
   3,300 lines lower, silently. It is `.rung-row`.
 
@@ -2098,8 +2094,7 @@ for each."* One winner draws no podium and issues one voucher.
   draw and the comeback band, so `pub-unchanged` says IDENTICAL with no
   `--ignore`.
 - **IT CAN ONLY EVER SUBTRACT** — `rewards[position - 1]` still has to find a
-  prize, so a generous setting cannot conjure one. That is what made it safe
-  to add on a gig day.
+  prize, so a generous setting cannot conjure one.
 - **A STATE OR A SHOW WRITTEN BEFORE THIS EXISTED READS AS THREE**, never as
   zero: a redeploy mid-season must not change what a running night pays out.
 - **NOBODY SCORED IS NOT EVERYBODY WON.** Equal scores share a position, so an
@@ -2109,8 +2104,7 @@ for each."* One winner draws no podium and issues one voucher.
   never connecting, and any breakout-only night. **A row scoring zero is
   skipped** — a FLOOR, so it can only issue fewer.
 - **A TIE FOR FIRST IS STILL PAID IN FULL** — the cap is on POSITION, not on
-  how many rows have been paid, so two teams the room watched finish level
-  both get the prize.
+  how many rows have been paid.
 - **`doLaunch()`/`doLaunchOrder()` IN `console-packs.js` DESTRUCTURE A
   WHITELIST, AND A FIELD MISSING FROM IT IS DROPPED IN SILENCE.** `winners` was
   wired through the bar, `night`, both payload builders, the route,
@@ -2159,14 +2153,14 @@ bingo winners on thursday didn't receive a QR code"*.
 music bingo prizes yesterday… it looks really bad on me if one guy wins all
 the prizes."*
 
-- **IT IS THE SHAPE OF THE GAME, NOT LUCK.** The best card wins the line, is
-  then nearest to two lines and nearest to the house — so **whoever takes the
-  first prize is the favourite for every prize after it.**
+- **IT IS THE SHAPE OF THE GAME, NOT LUCK.** The best card wins the line and is
+  then nearest to two lines and to the house — so **whoever takes the first
+  prize is the favourite for every prize after it.**
 - **THE CLAIM IS STILL RIGHT AND IS RECORDED AS RIGHT** — no false call, no
   telling-off, so the control view has THREE outcomes rather than two. **AND NO
-  SENTENCE ON A PHONE MAY SAY "you have already won"** — asked for in those
-  words, and the first build was reverted off the live app for it. **The
-  wording is about the PRIZE, never about the person.**
+  SENTENCE ON A PHONE MAY SAY "you have already won"** — the first build was
+  reverted off the live app for it. **The wording is about the PRIZE, never
+  about the person.**
 - **THE CARDS CANNOT DO THIS ON THEIR OWN, and that was asked for twice.** A
   card is dealt at JOIN and who wins is decided by **the order the host plays
   the tracks in**, which the app never sees. **Read `docs/bingo.md` before
@@ -2174,8 +2168,7 @@ the prizes."*
 - **IT LIFTS THE MOMENT EVERYBODY HAS ONE.** **The test is "is anybody left
   without", never a count of prizes**, so it holds at any room size.
 - **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert.
-- **NO SETTING.** A venue wanting one person to take the lot is not a thing
-  anybody has asked for; it is one line to invert if it ever is.
+- **NO SETTING.** It is one line to invert if anybody ever asks.
 - **AND A STAGE CAN ONLY BE TAKEN ONCE — `stageTaken()`, checked BEFORE
   anything is recorded.** A second GENUINE line a beat later — the ordinary
   thing that happens in a pub — stopped the second voucher and let everything
@@ -2197,14 +2190,13 @@ the prizes."*
   them. **`prizeWinners` does NOT carry** — `stageIndex` restarts, so a carried
   list makes `stageTaken()` true for a prize nobody has played for.
 - **`Continue to the quiz` IS DRAWN ONCE**, and **bingo's `Finish` STAYS AND
-  SAYS WHAT IT COSTS** — it is a deliberate escape hatch, so it is not hidden
-  the way the quiz's *Stop* is — but its confirm names what filing on the bingo
-  alone leaves out.
+  SAYS WHAT IT COSTS** — a deliberate escape hatch, so it is not hidden the way
+  the quiz's *Stop* is, but its confirm names what filing on the bingo alone
+  leaves out.
 - **AND THE ROUND CAN STALL, SO THE CONTROL VIEW SAYS SO — `view.stalled`.**
-  If everyone who has completed the card already holds a prize, nobody can
-  claim this stage and the round waits for a card that may never land. **The
-  rule is NOT lifted** — the host already has *Play on*, *New round* and
-  *Finish*. What was missing is being told.
+  If everyone who has completed the card already holds a prize, the round waits
+  for a card that may never land. **The rule is NOT lifted** — the host already
+  has *Play on*, *New round* and *Finish*. What was missing is being told.
 - **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS — it reads `quizzes/`
   only.** IDENTICAL on a bingo change is the guard answering confidently about
   something it is not looking at. `node scripts/bingo-prizes.mjs` drives three
@@ -2220,18 +2212,18 @@ gig actually takes.
 - **BACK WIPES THE QUESTION IT IS LEAVING**, exactly as `Skip` and `Ask again`
   do — one act from three directions, and Back was the one that did not. Two
   tables kept points AND the bonus for a question never played, then answered
-  `already_answered` on the replay while everybody else played for less.
+  `already_answered` on the replay.
 - **A PRIZE NO LONGER OWED IS TAKEN BACK — unless it has been SPENT.**
   `issueVouchers()` only topped up, so four ordinary presses left **three live
   top-prize codes on a night with two winners**. **A redeemed, `draw` or
   `carried` one stays.**
 - **RESET SCORES HANDS THE NEXT GAME A CLEAN LEDGER, and destroys nothing.** It
-  kept `luckyDip`, so **the draw never ran again**, and kept game one's
-  vouchers in the paid set, so game two's winner got nothing. **Marked
-  `carried`, never deleted** — somebody won that drink.
+  kept `luckyDip`, so **the draw never ran again**, and kept game one's vouchers
+  in the paid set, so game two's winner got nothing. **Marked `carried`, never
+  deleted.**
 - **AND THE DRAW READS THE LAST QUESTION PLAYED, not the pointer.** Stopping at
-  a round intro — exactly when a room is thinning out, which is what the draw
-  is FOR — left it reading a question nobody had been asked.
+  a round intro — when a room is thinning out, which is what the draw is FOR —
+  left it reading a question nobody had been asked.
 
 ### A TEAM'S SEATS ARE SETTLED AT A BOUNDARY, AND A PHONE MAY NOT MINT ONE
 
@@ -2242,9 +2234,8 @@ gig actually takes.
   injected team has size 0, so `dealInto()` puts the next honest joiner into
   it. `dealt: true` is the app's own way in.
 - **AND THERE IS A CEILING — `MAX_TEAMS`.** There was none: **1,200 teams in
-  1.3 seconds** from one phone at the lobby. **Forty, not `RANDOM_TEAM_MAX`** —
-  six is a DESIGN number for what the app deals; this is a SAFETY number, and
-  fifteen tables is an ordinary Friday.
+  1.3 seconds** from one phone. **Forty, not `RANDOM_TEAM_MAX`** — six is a
+  DESIGN number for what the app deals; this is a SAFETY number.
 - **A TEAM MAY ONLY CHANGE AT A BOUNDARY — `TEAM_CHANGE_PHASES`.** The rule was
   `QUESTION && !closed`, leaving the seconds after the clock runs out, the whole
   REVEAL and the FINAL open. **Scores are AVERAGED**, so a table that sheds its
@@ -3651,10 +3642,19 @@ door whose bay the host had already called *"a lot of wasted space"*.
 - **ONE `flex` LINE DOES IT.** `.bench-body` is a direct child of the panel now
   the rail's `bayColumns()` wrapper is gone, and that panel is already a flex
   column of a fixed height.
-- **THE PACK IS A FULL-HEIGHT SQUARE POSTER.** A bench drawing the thing you
-  are working on at 92px with 220px of nothing under it has the emphasis
-  backwards. **`height: auto` and let `aspect-ratio` take the WIDTH from the
-  row** — a width plus a ratio gives a poster taller than the bay.
+- **THE PACK IS A SQUARE POSTER, AND THE SQUARE COMES FROM A COLUMN WIDTH.** A
+  bench drawing the thing you are working on at 92px with 220px of nothing
+  under it has the emphasis backwards. **`--bench-poster`, two numbers like
+  `--bay-h`** — each is the bay less the head, the pack-actions row and the gap.
+- **NEITHER `auto` NOR THE ROW'S HEIGHT MAY DECIDE IT.** *"The packs are
+  different sizes on the bench?"* — twice over. An `auto` grid track sizes to
+  its item's MAX-CONTENT width, and the item is a tile with the pack's NAME in
+  it, so a long title made a wide column and `aspect-ratio` made it a tall
+  square. Height-first is the obvious fix and it broke the other way: the row is
+  `1fr` of a body that only has a definite height while the FIXED FRAME is on,
+  and **the frame wants a tall window as well as a wide one** — so on a 900px
+  laptop `height: 100%` fell back to auto and the title sized it again.
+  **Width-first has one answer at every size.**
 - **THE BUTTONS KEEP THEIR OWN SIZE** — three across for what you do WITH the
   pack, four for what you do TO it, **never one 800px-wide button**: *a button's
   width should say how big the action is*. **As many columns as there are

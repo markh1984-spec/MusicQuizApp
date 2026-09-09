@@ -9923,11 +9923,26 @@ body.gal-zoomed { overflow: hidden; }
 
    BELOW 900px NONE OF THIS APPLIES: no frame, no `--bay-h`, and `.bench-body`
    is one column already. */
+/* THE POSTER'S COLUMN IS A NUMBER, NOT `auto` — and `auto` is why three packs
+   came out three different sizes.
+
+   Reported off the live console: *"the packs are different sizes on the
+   bench?"* An `auto` grid track sizes to its item's MAX-CONTENT width, and the
+   item here is a pack tile with the pack's NAME inside it — so
+   "2000-2010 Pop, Indie and Rock" made a wide column, `aspect-ratio` turned
+   that width into a tall square, and "2006" got a small one. The poster was
+   being sized by how long the title is.
+
+   TWO NUMBERS, BECAUSE `--bay-h` IS TWO. Each is the row the poster sits in:
+   the bay, less the panel's own head and padding, less the pack-actions row
+   and the gap above it. They move with `--bay-h` and nothing else. */
+:root { --bench-poster: 297px; }
+@media (min-width: 1150px) { :root { --bench-poster: 234px; } }
 @media (min-width: 900px) {
   .bench.launchbar > .bench-body {
     flex: 1 1 auto;
     min-height: 0;
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: var(--bench-poster) minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto;
     align-items: stretch;
     gap: 12px 18px;
@@ -9935,17 +9950,21 @@ body.gal-zoomed { overflow: hidden; }
   .bench.launchbar > .bench-body > .bench-slot {
     grid-row: 1 / -1;
     display: flex;
-    align-items: stretch;
+    align-items: flex-start;
     justify-content: flex-start;
   }
-  /* `height: auto` plus the stretch above is what makes the tile take the row,
-     and `aspect-ratio` then decides its WIDTH from that height — the other way
-     round (a width and a ratio) gives a poster taller than the bay. */
+  /* THE SQUARE COMES FROM THE COLUMN'S WIDTH, NEVER FROM THE ROW'S HEIGHT.
+     Height-first is the obvious way round and it is the one that broke: the
+     row is `1fr` of a body that only has a definite height while the FIXED
+     FRAME is on — and the frame needs a tall window as well as a wide one, so
+     on a 900px-high laptop `height: 100%` fell back to auto and the tile went
+     back to being sized by its own text. Width-first has one answer at every
+     size. */
   .bench.launchbar > .bench-body > .bench-slot .lb-tile,
   .bench.launchbar > .bench-body > .bench-slot .lb-drop {
+    width: 100%;
     height: auto;
     min-height: 0;
-    width: auto;
     aspect-ratio: 1;
     flex: 0 0 auto;
   }
