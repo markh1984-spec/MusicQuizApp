@@ -1520,11 +1520,10 @@ space where possible."* Four placements and one real bug:
   beside the venue. **The label has to outrank the adjacency**: a show never
   keeps the venue, so "Save" alone beside a venue picker says the opposite of
   what it does — the words stay *"for another night"*. **IN TENSION WITH THE
-  SHORTENING RULE ABOVE, BOTH THE HOST'S**: he asked for the bare verb when the
-  row ran out of room, then asked *"what is the save button even for?"* — this
-  rule coming true. **The label is written by `paintSettings()`, not the
-  markup**; editing the template changes nothing and was shipped once. **Left
-  as "Save" pending his call.**
+  SHORTENING RULE ABOVE, BOTH HIS**: he asked for the bare verb when the row
+  ran out of room, then asked *"what is the save button even for?"* — this rule
+  coming true. **The label is written by `paintSettings()`, not the markup**;
+  editing the template changes nothing and was shipped once. **Left as "Save".**
 - **THE REASON A CONTROL IS OFF GOES ON THE CONTROL** — *"Nothing in Tonight
   to keep yet"* floated beside a greyed button; it is on the button now.
 - **A BIGGER TARGET IS NOT A HITTABLE ONE.** The tile's × grew to 30px and the
