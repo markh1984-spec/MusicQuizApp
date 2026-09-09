@@ -2651,6 +2651,48 @@ body.console .panel::after { bottom: -4px; }
    off an ordinary card, just not the compact ones a search for eighty packs
    is asking to see MORE of, not more to grab hold of. */
 .pack-grid.dense .pack-card .pack-rounds { display: none; }
+
+/* THE CENTRE OF A PACK CARD BELONGS TO THE PACK — reported as *"fix the pack
+   card centre so a click gets the whole pack"*, and measured before it was
+   changed rather than after.
+
+   The card is 146x146 with 16px of padding, so 114px of inner width — and a
+   round tick is 28px with a 4px gap, so FOUR of them come to 124px and wrap to
+   a second row. That second row's top edge measured y=67 against a centre of
+   y=73: six pixels, which is why the aim point of a thumb landed on a round
+   and put ONE round into Tonight instead of the pack. Seven of the nine quiz
+   packs here carry four or five rounds; the two with three fitted one row and
+   were always correct, which is exactly why it looked intermittent.
+
+   **ONE ROW, ALWAYS — that is the fix, and the wrapping was the whole bug.**
+   Bottom-anchoring the strip was measured first and rejected: two rows are
+   60px, the card's content ends at y=130, so the strip still reaches y=70
+   against a centre of 73. Three pixels is not a fix, and at the 118px card the
+   min-height floor allows it is wrong again.
+
+   So the strip cannot wrap, which means five ticks have to fit 134px of
+   full-bleed width: 5x24 + 4x3 = 132. **24px on the SHELF only.** The 28px
+   rule was set for the Tonight tile, where a tick is an on/off SWITCH you
+   press repeatedly — *"easier to click on/off"* — and it is untouched there.
+   Here it is a shortcut sitting on top of the card's primary job, and one row
+   puts the strip at y=106..130, clear of the centre by 33px rather than by 3.
+   At `--r-field` a 24px box still reads as a rounded square; 22px was the size
+   rejected for reading as a circle, and this is not that.
+
+   Full-bleed with negative margins because 114px cannot hold five of anything
+   useful, and the strip is the one child on this card that wants the whole
+   width. */
+.pack-card.shut > .pack-rounds {
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 3px;
+  margin: 2px -16px 0;
+  padding: 0 6px;
+}
+.pack-card.shut > .pack-rounds > .lb-rd {
+  width: 24px; height: 24px;
+  flex: 0 0 auto;
+}
 .pack-grid.dense .pack-shape { font-size: var(--fs-tag); }
 .pack-grid.dense .pack-shape select { padding: 5px 24px 5px 8px; font-size: var(--fs-mini); }
 .pack-grid.dense .pack-actions { gap: 4px; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); }

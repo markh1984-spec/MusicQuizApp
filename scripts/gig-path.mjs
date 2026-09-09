@@ -138,12 +138,16 @@ try {
    * THE WHOLE PACK, NOT "SOMETHING" — and `> 0` was why this passed on a
    * night that had lost three of its four rounds.
    *
-   * The round squares sit at the middle of a shut card, so the very spot this
-   * check aims at lifts ONE ROUND on most of the shelf rather than the pack.
-   * Driven live, a four-round pack tapped here played ten questions and went
-   * to the winner — and this guard said the gig path was fine, because one
-   * tile is more than none. A count is the difference between "a press did
-   * something" and "a press did what it says".
+   * The round squares USED to sit at the middle of a shut card, so the very
+   * spot this check aims at lifted ONE ROUND on most of the shelf rather than
+   * the pack. Driven live, a four-round pack tapped here played ten questions
+   * and went to the winner — and this guard said the gig path was fine,
+   * because one tile is more than none. A count is the difference between "a
+   * press did something" and "a press did what it says".
+   *
+   * The cards were fixed on 9 September 2026 — the tick strip is one row that
+   * cannot wrap — so this check passes. It stays as the regression: the moment
+   * anything lands back in the middle of a card, this is what says so.
    */
   const wanted = await con.evaluate(async (id) => {
     const r = await fetch('/api/library' + location.search);

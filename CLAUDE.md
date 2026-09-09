@@ -919,10 +919,9 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
 - **THE DIET HAS NO UPPER BOUND, BECAUSE `.console .wrap` CAPS THE BAR AT
   1180px.** **A media query on the window is the wrong tool the moment a
   CONTAINER caps what you are protecting.**
-- **AND `#runningNow` IS WHY NOTHING SAW IT: `aNightIsOn()` IS FALSE FOR AN
-  EMPTY LOBBY**, so the guard measured a bar 230px narrower than the host's.
-  **A guard that sets a night up but never lets anybody in is measuring a
-  console nobody uses.**
+- **AND `#runningNow` IS WHY NOTHING SAW IT**, so the guard measured a bar
+  230px narrower than the host's. **A guard that sets a night up but never lets
+  anybody in is measuring a console nobody uses.**
 - **WHAT IS PLAYING NOW IS WORDED IN ONE PLACE — `nowPlaying()`.** There were
   THREE. **The SHORT form is a different job, not an abbreviation**, and
   **under 1050px the live line stands down** — the only thing in that bar that
@@ -979,22 +978,22 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
 Every one lived in a band no guard looked at.
 
 - **THE LOBBY'S JOIN PANEL IS CAPPED BY THE SCREEN'S HEIGHT** — `min(100%,
-  72vh)`. A QR code is square, so on a WIDE, SHORT projector **the code itself
-  was 166px off**, on a page that does not scroll. **72vh is measured, not
-  chosen** — 16:9 and 4:3 are pixel-identical to before.
+  72vh)`. A QR code is square, so on a WIDE, SHORT projector **the code was
+  166px off**, on a page that does not scroll. **72vh is measured, not
+  chosen.**
 - **THREE ACROSS BETWEEN 561 AND 779px, AND BOTH GRIDS MOVE TOGETHER.** Six
   across needs 768px inside the panel, and a shut pack card is a square with a
   118px floor — **`aspect-ratio` plus `min-height` propagates to a minimum
   WIDTH**. At 561 the cards **overlapped by 28px**. **This is not six-across
-  being dropped** — that rule is about a shelf wide enough to honour it.
+  being dropped.**
 - **`#hatSlot` IS A BARE `<span>`, SO IT HAD `min-width: auto`** — third
-  sighting on this bar. The span would not give ground, so the row grew:
-  **`/host` scrolled sideways 161px at 390 and 231 at 320**, his actual
-  bookmark. **The switch itself shrinks below 560 too** — a label losing its
-  tail is what this bar can afford; a door off the screen is not.
+  sighting on this bar. The span would not give ground, so **`/host` scrolled
+  sideways 161px at 390 and 231 at 320**. **The switch itself shrinks below 560
+  too** — a label losing its tail is what this bar can afford; a door off the
+  screen is not.
 - **AND `console-frame.mjs` NOW LOOKS AT 768 AND 320** — its sizes ran 390 then
   960, leaving the 561-899 band unmeasured. **Its one-row rule moved from 431px
-  to 900px**: a second header row costs the PINNED layout.
+  to 900px.**
 
 ### A ROOM ID IS A PATH, AND `?q=` NAMES AN ACCOUNT OR NOBODY
 
@@ -3621,8 +3620,8 @@ pack is theoretically just an amalgamation of the other three."*
   `console-frame.mjs` already failed *"every tab is still reachable with one
   up"* at 1500x900 **with a banner above the doorhead**: `.consolecols` clamps
   to its 200px floor, is `overflow: visible`, and the tab column is not
-  constrained to it — the overflow escapes the frame with no scroller to reach
-  it. **In the no-accounts state only.**
+  constrained to it, so the overflow escapes the frame with no scroller to
+  reach it. **No-accounts state only.**
 
 ### THE PACK SHELF SHOWS EVERY PACK YOU HOLD, ON BOTH DOORS
 
@@ -3634,15 +3633,12 @@ I think about it."* The reason written for the cap had expired twice over.
   fixed frame keeps the doorhead on screen from 900px.
 - **A CAP WITH NO WAY PAST IT IS THE ONLY KIND THIS APP MUST NOT HAVE.** The
   Console has no search box by decision, so six of thirty-three left the rest
-  reachable only by leaving, pinning in the Workshop and coming back — and the
-  Workshop's shelf is now the ONLY way onto the bench. **`PACK_SHELF` is
-  deleted rather than left at 6 with nothing reading it.**
-- **PINS STILL RANK IT** — the six you curated lead and no longer hide the
-  rest. **And there is still no See all**: a shelf that is sometimes two rows
-  is what makes a drag target unlearnable.
+  reachable only by pinning in the Workshop and coming back — and that shelf is
+  now the ONLY way onto the bench. **`PACK_SHELF` is deleted, not left at 6.**
+- **PINS STILL RANK IT**, and **there is still no See all**: a shelf that is
+  sometimes two rows is what makes a drag target unlearnable.
 - **AND THE LABELS NAME THE TAP.** *"Drag a pack in to launch"* named the one
-  input a phone does not have, while pressing an empty slot has opened a
-  searchable picker for months. **The drag stays the fast path and is not
+  input a phone does not have. **The drag stays the fast path and is not
   advertised** — it is found by trying it, which is how a drag always is.
 
 ### THE WORKSHOP BENCH FILLS ITS BAY — one pack, big, and what you do to it
@@ -4011,14 +4007,20 @@ account is in [`docs/checks.md`](docs/checks.md):**
   `effectAllowed` forbids. A dispatched event enforces neither, so a test built
   from them passes while every pack drop is dead. `scripts/drag-check.mjs`
   drives the real mouse; run it after touching a drag handler.
-- **THE MIDDLE OF A PACK CARD IS A ROUND SQUARE.** `drag-check.mjs` called the
-  launch bar broken on a working app: it drags from the CENTRE of
-  `.pack-card`, and on five of six cards `elementFromPoint()` there returns
-  `button.lb-rd` — so it lifted ONE ROUND and asserted a pack had burst. **Aim
-  at `.pack-title`.** The app is right (*a round lifts from its own square*)
-  but **the ergonomic half is real and NOT fixed**: a thumb on the poster gets
-  round two, so `gig-path.mjs` asserts the WHOLE pack lands and stays RED until
-  the cards move. **Launch names the ROUNDS**, which is the only tell there is.
+- **THE MIDDLE OF A PACK CARD WAS A ROUND SQUARE — FIXED, AND THE CAUSE WAS
+  WRAPPING.** `drag-check.mjs` called the launch bar broken on a working app:
+  it drags from the CENTRE of `.pack-card`, and `elementFromPoint()` there
+  returned `button.lb-rd`, so it lifted ONE ROUND and asserted a pack had
+  burst. **Measured before it was changed**: the card is 146x146 with 16px of
+  padding, so 114px of inner width, and four 28px ticks with 4px gaps come to
+  124px and **wrap to a second row whose top edge is y=67 against a centre of
+  y=73**. Seven of nine quiz packs carry four or five rounds; the two with
+  three fitted one row and were always right, which is why it looked
+  intermittent. **ONE ROW, NEVER WRAPPING, is the fix** — bottom-anchoring two
+  rows reaches y=70 against 73, which is not a fix. Five ticks in one
+  full-bleed row means **24px on the SHELF card only**; the 28px rule is the
+  Tonight tile's, where a tick is a SWITCH, and is untouched there. **Verified by clicking the centre
+  of every card at five widths and counting the tiles that land — 45/45.**
 - **A TEST THAT NEVER RUNS THE ARTEFACT PROVES NOTHING ABOUT IT.** Reading
   `server.js` as a string to check a route exists is how a broken Launch reached
   the live app, 1,150 tests green.
