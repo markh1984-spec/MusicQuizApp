@@ -1259,9 +1259,9 @@ board), `src/arcade.js` (the scores, shared by both engines),
   bottom tier** — a phone with a game on it stays in the FOREGROUND. **Locked
   games are SHOWN.**
 - **THEY ARE CALLED MAZE MOUTH, RALLY, TAILBACK, QUICK DRAW AND LAST ORDERS.**
-  The names and characters the first three resemble are Namco's and Atari's,
-  and this app is SOLD — a legal line, not a taste one. **An unnamed game keeps
-  inviting the wrong name**, which is why the later ones were named first.
+  The names and characters the first three resemble are Namco's and Atari's and
+  this app is SOLD — a legal line, not a taste one. **An unnamed game keeps
+  inviting the wrong name.**
 - **PILE UP IS DELETED, AND TETRIS IS STILL THE REASON.** **The shapes were
   not the only thing held protectable in *Tetris Holding v. Xio*** — the well
   and the piece behaviour went with them, and this app is SOLD; **and triangles
@@ -1280,19 +1280,19 @@ board), `src/arcade.js` (the scores, shared by both engines),
   generous.
 - **ONE SCOREBOARD FOR BOTH, in `src/arcade.js`** — the same clamp, the
   best-not-latest rule and the refusal outside the lobby. Two copies is two
-  rules, and one gets fixed.
+  rules and one gets fixed.
 - **RALLY RUNS ON A FIXED TIMESTEP, NEVER A FRAME DELTA** — advanced by `dt` a
   120Hz phone and a 30Hz one play different games. **Capped**, or a phone face
   down for two minutes spends the gap in one frame.
 - **EVERY PHONE PLAYS THE SAME GAME**, seeded from `state.gameSeed` at launch,
-  or the scoreboard compares two different games.
+  or the board compares two different games.
 - **IT CANNOT REACH A QUIZ**, tested each half: the seed is in the phone's
-  payload at the LOBBY only, and a score refused at any other phase.
+  payload at the LOBBY only, and a score is refused at any other phase.
 - **Behind a button, below the photo card** — *"don't want to disincentivise
-  photo uploads"*. Imported only when pressed.
-- **No control panel: you tap and it walks there.** A swipe has to be READ and
-  a misread one costs a life. `touch-action: none` is load-bearing. **A fire
-  button plus movement is a control panel too.**
+  photo uploads"*; imported only when pressed.
+- **No control panel: you tap and it walks there** — a swipe has to be READ
+  and a misread one costs a life. `touch-action: none` is load-bearing. **A
+  fire button plus movement is a control panel too.**
 - **A TURN PRESSED EARLY IS REMEMBERED** — a HEADING plus a buffered WANT, and
   **a wall stops you facing it and never picks a direction for you**. **The
   rule lives in `maze.js`, not the canvas file.**
@@ -1305,13 +1305,13 @@ board), `src/arcade.js` (the scores, shared by both engines),
   *a break that offers a game* moved the guards and not the phone's line, so a
   break told sixty people *"Top scores go on the big screen"*.
 - **ONE POST LEAVES A PHONE, at game over and at each life lost** — never a
-  stream of positions. Banking per life puts the people who played LONGEST on
-  the board.
+  stream of positions, and banking per life puts the people who played LONGEST
+  on the board.
 - **THE GAME IS STOPPED IN `buildScreen()`, ON EVERY REBUILD** — torn down
   inside `wireArcade` it survived the quiz starting. **A teardown belongs where
   every phase change passes.**
 - **Each moment has a primary: the game before the quiz, photos between the
-  rounds.** The camera button stands down at the lobby.
+  rounds** — the camera button stands down at the lobby.
 - **MAZE MOUTH'S DEATH IS A GULP** — **NOT the unfurl-and-spin**, which is
   Namco's and this app is sold. **NOTHING MOVES while it runs**; **the score is
   banked at the CATCH.**
@@ -1796,11 +1796,11 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   `coverPhotos()`. **Pins lead, the rest is a SPREAD**, seeded off the date.
   **BUILT FROM THE SAME FILTERED LIST THE NIGHT'S PAGE SHOWS.** **A pin is a
   PREFERENCE; the lamp is the GATE.**
-- **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor.** **Nothing
+- **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor. Nothing
   deciding who may see a photo is cached with it**; **the browser window is NOT
   lengthened past a day.**
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
-  nights, rulings, pins. A test walks them.
+  nights, rulings, pins; a test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
   **decided on the SERVER**. **An end of the run is an ABSENT link, not a dead
   one**: the one place *present and inert* does not apply, that rule being
@@ -1904,7 +1904,7 @@ files the nights under `id:xyz` and `the station tap` — **the season cut in
 half**, on a public page.
 
 - **THE SECOND PASS ALREADY EXISTED IN `venueHeadcounts()`** — two readers of
-  one archive disagreeing about what counts as one venue.
+  one archive disagreeing about what one venue is.
 - **THIS REVERSES A PINNED TEST, deliberately.** Two freehand nights at one pub
   have always merged, so the old rule said ADDING an id made the answer
   worse.
@@ -1930,7 +1930,7 @@ up there too."*
 
 - **THE BOTTOM IS CONTROLS AND OPTIONS. IT NEVER DISPLAYS THE THING** — *"you
   click the thing at the bottom to reveal it at the top."* The league tab draws
-  no table and the Photos tab draws no photographs.
+  no table, the Photos tab no photographs.
 - **THE SAFEGUARDS SURVIVED THE MOVE** — the button is UNDER the thing, **drawn
   ONLY for the night showing**.
 - **ONE PRESS PUTS IT IN THE BAY, THE NEXT TAKES IT OUT** — wall → night →
@@ -1948,8 +1948,8 @@ up there too."*
   rebuilt on every push.
 - **`node scripts/community-bay.mjs` IS THE GUARD, and it measures GEOMETRY** —
   every door's bay against the launch bar's, squashed rail headings, whether the
-  page scrolls, controls in the bay, and that pressing a rail button, a night
-  and a picture each change what is drawn.
+  page scrolls, and that pressing a rail button, a night and a picture each
+  change what is drawn.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -3641,17 +3641,13 @@ Taking the rail off left the bench 142px of content in a 362px bay.
   bench drawing the thing you are working on at 92px with 220px of nothing
   under it has the emphasis backwards. **`--bench-poster`, two numbers like
   `--bay-h`** — each is the bay less the head, the pack-actions row and the gap.
-- **NEITHER `auto` NOR THE ROW'S HEIGHT MAY DECIDE IT.** An `auto` grid track
-  sizes to MAX-CONTENT, and the item is a tile with the pack's NAME in it, so a
-  long title made a wide column and a tall square. Height-first broke the other
-  way: the row is `1fr` of a body with a definite height only while the FIXED
-  FRAME is on. **Width-first has one answer at every size.**
+- **NEITHER `auto` NOR THE ROW'S HEIGHT MAY DECIDE IT.** An `auto` track sizes
+  to MAX-CONTENT — the pack's NAME — so a long title made a tall square;
+  height-first needs a definite height, which only exists under the FIXED
+  FRAME. **Width-first has one answer at every size.**
 - **THE BUTTONS KEEP THEIR OWN SIZE**, **never one 800px-wide button**: *a
   button's width should say how big the action is*. **As many columns as there
   are buttons**, or the packs with no picture round leave a hole.
-- **AND THE BENCH'S DROP ZONE LOOKS LIKE ONE NOW.** It carries `lb-drop`
-  WITHOUT `lb-tile`, and the dashed border lived on `.lb-tile.lb-drop`, so the
-  empty bench had always been a bare "+" with no box round it.
 
 ### A PACK WEARS ITS OWN SUBJECT
 
@@ -3882,44 +3878,49 @@ Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 *"I don't want someone to get a nasty shock if they haven't paid — I know what
 it's like struggling for money. I want them to be able to run the nights they
 thought they were gonna run, but it warns them: this will be the last night you
-can run. Then it cuts them off at midnight so they can't run anything the next
-day."* **This REVERSES the pinned test that said no new night starts on a
-lapse**, deliberately and on his reasoning: *"it seems a bit unnecessarily
-harsh, and if they're using the software and they like it, the chances are
-they'll pay."*
+can run. Then it cuts them off at midnight."* **This REVERSES the pinned test
+that said no new night starts on a lapse**, on his reasoning: *"it seems a bit
+unnecessarily harsh, and if they like the software the chances are they'll
+pay."*
 
-- **IT IS A DAY, NOT A COUNT.** A quiz and the bingo after it, or two short
-  quizzes, are ONE night — charging the second as a second grace takes away the
-  half a host is standing in front of. `useLastNight()` is idempotent per day.
-- **AND THE DAY ROLLS AT 6am, NOT MIDNIGHT** — `nightDay()`, the same boundary
-  Past gigs, the photos, the league and the headcounts already use. He said
-  midnight and meant *"not the next day"*; 6am is that sentence as this app
-  already defines a day, and it is the only version that cannot refuse a second
-  game at ten past twelve to somebody still in the pub.
-- **STAMPED BY THE LAUNCH ROUTES ALONE, never by the check.**
-  `mayStartSomething()` runs on every gated route, so spending it there would
-  burn Thursday by opening the console on Wednesday. **Both launch routes
-  spend it** or the composed half hands out an endless grace.
-- **A GROUP'S LAST NIGHT BELONGS TO THE PARENT**, because the subscription
-  does — five seats on one unpaid subscription get one night between them.
-- **AN EXPIRED TRIAL GETS NOTHING**: somebody who never paid is a different
-  conversation, and a grace there is a free gig for anyone who signs up and
-  walks away.
-- **PAYING AGAIN CLEARS IT — as a CONSEQUENCE of the status, never a field a
+- **IT IS A DAY, NOT A COUNT.** A quiz and the bingo after it are ONE night —
+  charging the second takes away the half a host is standing in front of.
+  `useLastNight()` is idempotent per day.
+- **AND THE DAY ROLLS AT 6am, NOT MIDNIGHT** — `nightDay()`, the boundary Past
+  gigs, the photos, the league and the headcounts already use. He said midnight
+  and meant *"not the next day"*; 6am is that sentence as this app already
+  defines a day, and the only version that cannot refuse a second game at ten
+  past twelve to somebody still in the pub.
+- **STAMPED BY THE LAUNCH ROUTES ALONE, never by the check** —
+  `mayStartSomething()` runs on every gated route, so spending it there burns
+  Thursday by opening the console on Wednesday. **Both launch routes spend it**
+  or the composed half hands out an endless grace.
+- **A GROUP'S LAST NIGHT BELONGS TO THE PARENT** — five seats on one unpaid
+  subscription get one night between them. **AN EXPIRED TRIAL GETS NOTHING**:
+  a grace there is a free gig for anyone who signs up and walks away.
+- **PAYING AGAIN CLEARS IT — a CONSEQUENCE of the status, never a field a
   webhook may name.** A processor able to write `lastNight` could hand out a
   night by naming tomorrow.
 - **AND THE WARNING IS THE HALF THE GATE CANNOT DO** — `lastNightWarning()`.
-  A refusal that arrives when the button stops working IS the shock. **The
-  SERVER answers whether** (`me.lastNightLeft`): re-derived in the browser from
-  `status` it would warn a seat whose parent had already spent the night.
-  **It names what still works FIRST**, and **it is not red** — nothing has gone
-  wrong and tonight runs.
+  A refusal arriving when the button stops working IS the shock. **The SERVER
+  answers whether** (`me.lastNightLeft`): re-derived from `status` it would
+  warn a seat whose parent had already spent the night. **It names what still
+  works FIRST**, and **it is not red** — tonight runs.
 - **`console-warnings.js` IS A SEAM, TAKEN RATHER THAN A FIFTH PAYMENT ON THE
-  LINE CAP** — the shape `console-breaks.js` set. A leaf, handed what it needs.
-- **NONE OF IT CAN HAPPEN UNTIL A PROCESSOR IS WIRED.** `applyBilling()` is the
-  only thing that sets `past_due` and nothing calls it, so this is groundwork
-  and `test/last-night.test.js` seeds the state and asks over HTTP — the unit
-  tests only ever ask the BOOK, and the STAMP is the half they cannot see.
+  LINE CAP** — `console-breaks.js`'s shape. A leaf, handed what it needs.
+- **AND THE CONSOLE'S OWN GATE HAS TO AGREE WITH THE ROUTE'S —
+  `entitlements(account, { asIfPaying })`.** The route allowed the night and
+  every test passed, while `can()` reads `entitlements.features`, EMPTY on a
+  lapse — so `launchBar()` returned an empty div and **the console drew no
+  launch bar at all**. A grace nobody can press reads as the app being broken.
+  **Only `held` and `on` take the substitute**: status and every `whyNot()`
+  reason read the REAL account, so capabilities open and the standing is told
+  straight. **Found by a browser agent taking the screenshot** — *a test that
+  the payload is right proves nothing about whether anybody drew it.*
+- **NONE OF IT CAN HAPPEN UNTIL A PROCESSOR IS WIRED.** `applyBilling()` alone
+  sets `past_due` and nothing calls it, so this is groundwork and
+  `test/last-night.test.js` seeds the state and asks over HTTP — the unit tests
+  only ask the BOOK, and the STAMP is the half they cannot see.
 
 ### THE APP SENDS THE MONEY EMAILS, AND NOTHING ELSE
 

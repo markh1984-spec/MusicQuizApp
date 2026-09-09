@@ -1775,7 +1775,14 @@ async function handleGet(req, res, url, route) {
       signedIn: true,
       account: {
         ...account,
-        entitlements: entitlements(account),
+        /*
+         * THE CONSOLE'S GATE HAS TO AGREE WITH THE ROUTE'S. On a last night
+         * `mayStartSomething()` will allow the launch, so the capabilities
+         * reported here have to say so too — otherwise `can()` in the browser
+         * stays shut and `launchBar()` draws an empty div over a night the
+         * server would have run. See `entitlements()`'s own note.
+         */
+        entitlements: entitlements(account, { asIfPaying: accounts.lastNightLeft(account) }),
         // 20% of what everybody THIS account referred is paying, added up —
         // see referralCredit() in accounts.js. Nothing to compute for the
         // owner, who has no subscription of their own to credit. On the

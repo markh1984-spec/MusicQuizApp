@@ -1070,9 +1070,33 @@ export function whyNot(account, feature) {
  * What the console needs to draw itself: which tabs to show, and what to say
  * about the ones it is not showing.
  */
-export function entitlements(account) {
-  const held = featuresFor(account);
-  const on = activeFeatures(account);
+export function entitlements(account, { asIfPaying = false } = {}) {
+  /*
+   * `asIfPaying` IS THE LAST NIGHT, AND IT OPENS CAPABILITIES WITHOUT MOVING
+   * THE STANDING.
+   *
+   * `mayStartSomething()` in `accounts.js` lets a lapsed subscription launch
+   * for one more app-day, by asking `featuresFor({ ...account, status:
+   * 'active' })`. The browser has its own gate — `can()` in `console.js` reads
+   * `entitlements.features` — and it was still reading the lapsed list, which
+   * is EMPTY. So the server allowed the night and the console drew no launch
+   * bar at all: `launchBar()` returns an empty div when it holds neither QUIZ
+   * nor BINGO. A grace nobody can press is worse than no grace, because it
+   * reads as the app being broken rather than as a subscription needing
+   * attention.
+   *
+   * **ONLY `held` AND `on` READ THE SUBSTITUTE.** `status`, `trialExpired`,
+   * `previewing`, `tier` and every `whyNot()` reason still read the REAL
+   * account, so My account still says "past due" and still shows the lapsed
+   * note. Capabilities open; what they have paid for is told straight.
+   *
+   * **AND THE CALLER DECIDES, because this file cannot.** Whether a last night
+   * is left needs the accounts book and a 6am roll-over — see `lastNightLeft()`
+   * — and `plans.js` has neither a clock nor a way to look another account up.
+   */
+  const source = asIfPaying ? { ...account, status: 'active' } : account;
+  const held = featuresFor(source);
+  const on = activeFeatures(source);
   return {
     role: account.role,
     // The ladder is the plan now. `plan` is kept as the tier id so anything

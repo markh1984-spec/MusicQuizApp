@@ -30,6 +30,7 @@ import path from 'node:path';
 
 import { withServer as live } from './helpers/live-server.mjs';
 import { Accounts } from '../src/accounts.js';
+import { FEATURES } from '../public/assets/plans.js';
 
 const PASSWORD = 'a-long-lapsed-password';
 const EMAIL = 'skint@x.com';
@@ -83,6 +84,23 @@ test('a lapsed subscription still launches tonight, and says so', async () => {
     assert.equal(me.account.entitlements.status, 'past_due', 'the fixture is not lapsed');
     assert.equal(me.account.lastNightLeft, true, 'the console was never told it is the last night');
 
+    /*
+     * AND THE CONSOLE'S OWN GATE HAS TO AGREE, which the first version of this
+     * file did not check — and it was wrong.
+     *
+     * `can()` in `console.js` reads `entitlements.features`, and for a lapsed
+     * account `featuresFor()` returns an EMPTY LIST. So the route allowed the
+     * launch, `lastNightLeft` said yes, every assertion here passed — and
+     * `launchBar()` returned an empty div, so the console drew NO LAUNCH BAR
+     * AT ALL. Found by a browser agent taking the screenshot, which is the
+     * only thing that could see it: *a test that the payload is right proves
+     * nothing about whether anybody drew it.*
+     */
+    const features = me.account.entitlements.features;
+    assert.ok(features.includes(FEATURES.QUIZ), `the console cannot draw a launch bar: ${JSON.stringify(features)}`);
+    assert.ok(features.includes(FEATURES.BINGO), 'no bingo on the last night either');
+    assert.equal(me.account.entitlements.status, 'past_due', 'the standing was moved, not just the capabilities');
+
     const res = await launch(base, cookie);
     assert.equal(res.status, 200, 'a lapsed subscription was refused its last night');
 
@@ -117,6 +135,8 @@ test('a night already spent on an earlier day is refused, with the reason in wor
 
     const me = await (await fetch(`${base}/api/me`, { headers: { Cookie: cookie } })).json();
     assert.equal(me.account.lastNightLeft, false, 'the console still offers a last night that is gone');
+    // And the capabilities shut again with it, or the bar draws over a refusal.
+    assert.deepEqual(me.account.entitlements.features, [], 'a spent night still reports capabilities');
   }, { lastNight: '2000-01-01' });
 });
 
