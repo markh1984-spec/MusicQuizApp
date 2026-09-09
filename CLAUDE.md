@@ -910,22 +910,19 @@ they say next.
 Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
 
 - **THE CONSOLE'S TOPBAR IS A GRID ITEM, AND A GRID ITEM DEFAULTS TO
-  `min-width: auto` TOO** — **the rule was applied one level too deep**, and
-  **a clipped overflow is worse than a scrolling one**: nothing throws and the
-  control is unreachable.
+  `min-width: auto` TOO** — **a clipped overflow is worse than a scrolling
+  one**: nothing throws and the control is unreachable.
 - **…AND CONSTRAINING IT MOVED THE OVERFLOW ONTO THE MENU**, so **My account
   simply was not there**. **A door you cannot see is a door that does not
   exist**, and **a fix that relieves pressure has to be followed to wherever
   the pressure went.**
 - **THE DIET HAS NO UPPER BOUND, BECAUSE `.console .wrap` CAPS THE BAR AT
-  1180px.** `@media (max-width: 1179px)` measures the WINDOW, so it switched
-  OFF where it was still needed. **A media query on the window is the wrong
-  tool the moment a CONTAINER caps what you are protecting.**
+  1180px.** **A media query on the window is the wrong tool the moment a
+  CONTAINER caps what you are protecting.**
 - **AND `#runningNow` IS WHY NOTHING SAW IT: `aNightIsOn()` IS FALSE FOR AN
-  EMPTY LOBBY**, so the guard measured a bar **230px narrower than the host's**.
+  EMPTY LOBBY**, so the guard measured a bar 230px narrower than the host's.
   **A guard that sets a night up but never lets anybody in is measuring a
-  console nobody uses**, **a harness whose injected hat switch comes out 25px
-  instead of 310 included.**
+  console nobody uses.**
 - **WHAT IS PLAYING NOW IS WORDED IN ONE PLACE — `nowPlaying()`.** There were
   THREE. **The SHORT form is a different job, not an abbreviation**, and
   **under 1050px the live line stands down** — the only thing in that bar that
@@ -933,57 +930,49 @@ Full reasoning, with the measurements: **[`docs/console.md`](docs/console.md)**.
 - **THE BAR GOES ON A DIET; WRAPPING IS ONLY THE FALLBACK** — two rows read as
   a second bar. **Scoped with `:has(.hat-switch)` to the OWNER's bar**: a fix
   for one account must not land on everybody. **AND IT NEVER TAKES THE
-  POSSESSIVE.** It hid `.brand-name` — the whole stacked wordmark — so the ONE
-  bar this rule reaches is the one account that lost its own name off its own
-  console; reported as the name having *"disappeared"*. **THE WHOLE WORDMARK
-  SHOWS AT 1180px AND UP** — *"the whole point is to have [QM's]
-  Quizporium"* — **and that number is the CONTAINER's, which is what makes a
-  media query right here**: `.console .wrap` caps the bar at a constant ~1148px,
-  so above the cap the window says nothing and at it the window is the bar.
-  **Below it the product name gives way and the possessive stays** (40px
-  against the stack's 81). **A wordmark with no possessive in it still goes**,
-  saying only what the mark already said. **BELOW THE CAP THE BAR WRAPS AT
-  960 AND THE WORDMARK IS NOT WHY** — `#hatSlot` drops, and it does that at
-  the same width with the possessive as without it. **KEEP THE GATE AT THE
-  CONTAINER'S NUMBER**: hand-picking one from a sweep is strictly worse, and
-  the switch measures 310px or 387px depending on whether a host KEY is in
-  use, which moves any bisected threshold by ~77px.
+  POSSESSIVE** — it hid the whole stacked wordmark, so the one bar this rule
+  reaches lost its own name off its own console. **THE WHOLE WORDMARK SHOWS AT
+  1180px AND UP** — *"the whole point is to have [QM's] Quizporium"* — **and
+  that number is the CONTAINER's, which is what makes a media query right
+  here**. **Below it the product name gives way and the possessive stays**, and
+  **a wordmark with no possessive in it still goes**. **BELOW THE CAP THE BAR
+  WRAPS AT 960 AND THE WORDMARK IS NOT WHY** — `#hatSlot` drops. **KEEP THE
+  GATE AT THE CONTAINER'S NUMBER**: the switch measures 310px or 387px
+  depending on whether a host KEY is in use, which moves any bisected threshold
+  by ~77px.
 - **AND `setViewportSize()` IN A LOOP IS NON-DETERMINISTIC HERE** — the same
   sweep read the wrap at 1090 then 960, a real recalculation race against
   `:has()`. **Navigate fresh per width and poll twice 250ms apart until two
   readings agree**, or the threshold is whatever the timing gave you.
 - **AND NOTHING RESTATES `overflow` AFTER `.console .wrap`'S PAIR.** A trailing
   `overflow: hidden` wiped the `overflow-y: auto` five lines above it, so the
-  frame CLIPPED instead of scrolling: 161px of overflow at 1500x900, and a real
-  wheel moving nothing. **That is the fault reported twice as "the sub menu is
-  still missing from the console", and the fix written for it had never once
-  been in effect.** FOURTH sighting of shorthand-beats-longhand, this time
-  inside ONE declaration block. `console-frame.mjs` turns a REAL wheel now — a
-  programmatic scroll succeeds on a clipped box.
+  frame CLIPPED instead of scrolling and a real wheel moved nothing — the fix
+  written for it had never once been in effect. FOURTH sighting of
+  shorthand-beats-longhand, inside ONE declaration block. **`console-frame.mjs`
+  turns a REAL wheel** — a programmatic scroll succeeds on a clipped box.
 - **THE FIXED FRAME NEEDS A MINIMUM HEIGHT.** **LETTING THE BAY SHRINK INSTEAD
-  WAS TRIED AND IS WORSE**: it **painted over the tab column**. **The numbers
-  said fixed and the render said broken**, which is why the screenshot is the
+  WAS TRIED AND IS WORSE** — it painted over the tab column. **The numbers said
+  fixed and the render said broken**, which is why the screenshot is the
   check.
 - **AND THE FRAME'S MINIMUM HEIGHT IS TWO NUMBERS, BECAUSE THE DOORHEAD IS
   TWO HEIGHTS. Do not collapse it to one**: one either takes the frame off a
   1500x900 laptop that fits it, or keeps it at 960x760 where it does not.
 - **THE EQUAL-BAY RULE ONLY EXISTS BECAUSE OF THE FRAME**, so
-  `community-bay.mjs` checks it only where the frame is on. **Both scripts
-  carry the frame's two numbers; they move together.**
+  `community-bay.mjs` checks it only where the frame is on. **Both scripts carry
+  the frame's two numbers; they move together.**
 - **TWO COLUMNS IS A WIDTH DECISION; THE PINNED FRAME IS A HEIGHT ONE.** Gating
-  it on height in one media query took the SIDEBAR away too, and **the drag is
-  what the layout is for** — the 190px rail holds at every height and only the
-  pinning goes. **A media query is two decisions the moment it names two
-  axes.**
+  it on height took the SIDEBAR away too — the 190px rail holds at every height
+  and only the pinning goes. **A media query is two decisions the moment it
+  names two axes.**
 - **`main` IS A FLEX COLUMN — never give it a row template.** Its
-  `auto minmax(0,1fr)` grid assumed two children, so ANY banner above the
+  `auto minmax(0,1fr)` grid assumed two children, so any banner above the
   doorhead turned the fixed frame back into a scrolling page.
 - **THE SHELF IS SIX ACROSS, BY DECISION — it mirrors the six bays above it.**
   **Do not "fix" a squeezed card by dropping a column** — where six genuinely
   cannot be honoured, both grids move together (see below).
 - **THE FINISH LAYER at the foot of `style.css` owns selection, caret,
-  `:focus-visible` and the card hover** — one named block, so the next control
-  is finished there rather than growing scattered rules.
+  `:focus-visible` and the card hover** — one named block, so the next control is
+  finished there rather than growing scattered rules.
 
 ### THREE THINGS THAT DID NOT FIT, AND THE SIZES NOBODY MEASURED
 
@@ -1408,18 +1397,17 @@ Save and the mode switch drew on top of one another.**
 - **`node --check` PASSES BROKEN HTML.** A template literal holding it is a
   good string, and the browser silently re-nests it: the page renders wrong.
 - **A WHOLE-FILE TAG COUNT WAS TRIED AND TURNED DOWN.** This app builds markup
-  from concatenated fragments, so `console-venues.js` is nine divs "short" and
-  entirely correct. **A test needing a growing exceptions list has stopped
-  being a test.** What is left is the launch bar's own template, checked
-  precisely, and verified by reintroducing the fault.
+  from fragments, so `console-venues.js` is nine divs "short" and correct. **A
+  test needing a growing exceptions list has stopped being a test.** What is
+  left is the launch bar's own template, checked precisely.
 - **AND `console-markup.test.js` COUNTS THE WHOLE BUILDER, by matching its
-  braces.** It stopped at the first `querySelector` after the function's name,
-  so an unbalanced `<div>` past that point passed all three markup guards. **A
-  window drawn at "where the template probably ends" moves every time somebody
-  queries the DOM a little earlier.**
+  braces.** It stopped at the first `querySelector`, so an unbalanced `<div>`
+  past that point passed all three markup guards. **A window drawn at "where
+  the template probably ends" moves every time somebody queries the DOM a
+  little earlier.**
 - **`play.js` genuinely leaves two `<div>`s and a `<label>` open** in the
-  camera sheet. Harmless, and deliberately not fixed blind: re-nesting a screen
-  nobody reported a problem with is how you cause the next fault.
+  camera sheet. **Deliberately not fixed blind**: re-nesting a screen nobody
+  reported a problem with is how you cause the next fault.
 
 ### A STRAY BRACE IN THE STYLESHEET IS SILENT, AND IT REACHED A REAL CONSOLE
 
@@ -1428,19 +1416,16 @@ Tonight's six pack slots showing as ONE on a laptop, twice, with the markup
 and the JavaScript both correct and six `<button>`s in the DOM.
 
 - **A SCRIPTED EDIT WITH `s.index(needle)` AND NO START OFFSET DUPLICATES
-  TEXT** — `end` before `start` copies everything between them, including a
-  `@media` block's closing brace. **Always pass the start offset**, and check
-  the brace balance after any scripted CSS edit.
+  TEXT.** **Always pass the start offset**, and check the brace balance after
+  any scripted CSS edit.
 - **THE MEDIA QUERY THEN ENDED EARLY and its phone-only rule applied at every
-  width** — hiding every empty pack slot after the first. CSS throws nothing;
-  it re-scopes silently from the stray brace onwards.
+  width.** CSS throws nothing; it re-scopes silently from the stray brace on.
 - **AND THE OLD BLOCK SURVIVED AFTER THE NEW ONE, so the old rules won** — a
   duplicated region puts a second copy LATER in the cascade.
-- **THE VERIFICATION FAILED IN THE MOST INSTRUCTIVE WAY: it counted `.lb-tile`
-  ELEMENTS, which `display: none` elements still are.** **Measure
-  `getClientRects()`, not `querySelectorAll().length`** — "it is in the
-  document" and "somebody can see it" are different questions, and this repo
-  has been bitten by it four times.
+- **MEASURE `getClientRects()`, NOT `querySelectorAll().length`** — the
+  verification counted `.lb-tile` ELEMENTS, which `display: none` elements still
+  are. "In the document" and "somebody can see it" are different questions, and
+  this repo has been bitten by it four times.
 - `browser-parses.test.js` catches a JS file that will not parse; nothing
   caught a stylesheet that parses fine and means something else. Now something
   does — brace balance, no nested `@media`, and the escaped rule named
@@ -1604,13 +1589,11 @@ right of the pack ONCE LOADED."*
 - **THE DUPLICATION WAS REAL** — one `chip()`, one plan, one setter, drawn in
   two places and neither beside the thing it acted on.
 - **A TILE'S DIAL OWNS THE GAP AFTER ITS OWN ROUND — `gapIdsOfSlot()`.** It
-  owned *every gap the pack makes*, right when a tile was a pack and wrong the
-  day packs began BURSTING: **pressing the last tile's dial changed the
-  first.** A BINGO slot owns the gap BEFORE it, never `p0:lobby`; **the FINAL
-  is not a gap**, so the caller filters through `breaksOf()`. **`drag-check`
-  asserts ONE face moved** — pressing the FIRST dial passed with the fault in,
-  the first pack having one round: **a guard aimed at whatever happens to be
-  first is measuring the shelf, not the row.**
+  owned *every gap the pack makes*, so **pressing the last tile's dial changed
+  the first.** A BINGO slot owns the gap BEFORE it, never `p0:lobby`; **the
+  FINAL is not a gap**, so the caller filters through `breaksOf()`.
+  **`drag-check` asserts ONE face moved** — **a guard aimed at whatever happens
+  to be first is measuring the shelf, not the row.**
 - **THE TILE'S SIZE DECIDED THE SHAPE, MEASURED FIRST**: 179 x 76 with 58px
   clear in the corner. That is ONE 44px control and never two — so the dial is
   the PHONES and the big screen became a night-level picker. **The plan on disk
@@ -1624,18 +1607,18 @@ right of the pack ONCE LOADED."*
   owns the lobby's screen.
 - **THE ERA WORD MOVED 52px LEFT** — **the control wins and the decoration
   moves.**
-- **A LOST `import` DREW A BAR WITH NO DIALS AND EVERY CHECK PASSED** — four
-  swallowed `ReferenceError`s, `node --check` happy, 1,516 tests green, the same
-  fault that shipped a broken Launch. **`test/imports-present.test.js`** asserts
-  every module imports the shared helpers it calls.
+- **A LOST `import` DREW A BAR WITH NO DIALS AND EVERY CHECK PASSED** —
+  swallowed `ReferenceError`s, `node --check` happy, the suite green.
+  **`test/imports-present.test.js`** asserts every module imports the shared
+  helpers it calls.
 - **A TILE IS NOT A PART** — several quiz packs are welded into ONE quiz, so
   mapping a tile to a part gave tile 1 every gap in the night and tile 2 no
   dial. `gapsOfPack()` reads the part's `order`.
 - **THE SLOT NUMBER GOES WHEN A PACK LANDS IN IT**; **it stays on an EMPTY
   slot**, where it is the whole label.
 - **THE TILE IS 90px BECAUSE 30 + 44 DOES NOT FIT IN 76** — moving the × puts
-  "remove this" where the eye lands first, so the tile grew instead. **On a
-  phone `is-pack` tiles keep that height.**
+  "remove this" where the eye lands first. **On a phone `is-pack` tiles keep
+  that height.**
 - **THE ERA WORD IS GONE FROM A TONIGHT TILE** — it overlapped the round ticks
   and there is no third place, so the wash and the coloured edge carry the
   subject. **It stays on the shelf CARD.**
@@ -1696,9 +1679,8 @@ right of the pack ONCE LOADED."*
   drop that MISSES every square means "the next free slot"**, which with holes
   is the first hole.
 - **A DESCRIPTOR IS NOT THE THING IT DESCRIBES.** `packDrag` is `{ id, kind }`
-  and the empty slot's drop handed it on as the pack: with no `rounds`,
-  `addQuizPackSlot()` gave the row back unchanged — **the slot lit, the drop was
-  taken, nothing appeared.**
+  and the empty slot's drop handed it on as the pack — **the slot lit, the drop
+  was taken, nothing appeared.**
 - **A KIND THAT DISAGREES WITH THE NIGHT'S OWN IS A MIXED NIGHT** — a quiz pack
   added to a bingo night went into `lbExtra`, whose ids `packOf()` resolves
   against `gameOf()` alone, and was never found again. **Nothing threw — the
@@ -2502,21 +2484,45 @@ can get hold of.
 
 ## The two shelves have names now: **My packs** and **Quizporium packs**
 
-A quizmaster sees two libraries and they were called things that described
-where the code keeps them rather than whose they are: "Your saved quizzes"
-above, "The rest of the catalogue" below, and the way into the editor was
-"The pack editor" — the name of a TOOL, on a link somebody presses when they
-want to write something.
+They were named for where the code keeps them rather than whose they are.
 
 - **My packs** — the ones they write. The panel, the link into the editor and
   the button on every pack tab all say it, so the concept has one name.
 - **Quizporium packs** — the ones written for them and sold. Says who wrote it
   and therefore why it costs money, which "the catalogue" never did.
 
-The grid on a pack tab is everything you can RUN tonight — your own packs and
-the Quizporium ones you hold, mixed. **What you do NOT hold is not on it**: the
-shop is its own tab, so a padlocked card can never appear among the ones you
-are choosing between ten minutes before a gig.
+The grid on a pack tab is everything you can RUN tonight, mixed. **What you do
+NOT hold is not on it**: the shop is its own tab, so a padlocked card can never
+appear among the ones you are choosing between ten minutes before a gig.
+
+### AND THE WORKSHOP SAYS WHOSE — the rail groups on it, the bench badges it
+
+*"The workshop needs to distinguish between packs that I made for the QM and
+packs the QM made for himself."* `p.mine` carried it; only a small `Yours` note
+on a rail row ever said so.
+
+- **WHOSE IT IS DECIDES WHAT MAY BE DONE TO IT, WHICH IS THE WORKSHOP'S WHOLE
+  SUBJECT** — so the bench rail compartmentalises on that FIRST and kind
+  second: *My quizzes*, *My bingo games*, then the Quizporium pair. **Yours
+  leads**, as the pack shelf has always had it. **An empty group never draws.**
+  **The `Yours` note went with it** — a note restating its own heading cost the
+  row half its width.
+- **AND THE GREEN BUTTON WAS PROMISING AN EDIT THE SERVER REFUSES.** A
+  quizmaster's Save posts to `/api/mine/<kind>` and `saveOwn()` refuses an id
+  that shadows the catalogue (rule 11), so every question was editable and Save
+  answered *"There is already a pack called … Give yours a different name"* —
+  an error about an id, on a screen with no way to change one, after the work.
+  **Present and inert with the reason ON the button**, hollow like Launch: a
+  dimmed FILL reads as broken, an outline reads as *not this one*. **Gated on
+  `can(FEATURES.CATALOGUE)`** — the entitlement the server itself checks, never
+  a hat or an account kind, so the owner is unaffected.
+- **THE BADGE NEVER TAKES GOLD.** Gold is the trophy colour; *Yours* wears
+  `--hot`, the one colour that follows a quizmaster's own scheme, and
+  Quizporium stays neutral. It rides in the head line so it survives the fold.
+- **TAKING YOUR OWN COPY OF A QUIZPORIUM PACK IS NOT BUILT** — the refusal
+  above is the only path, and forking one is a decision about rule 11 rather
+  than a missing button. **Do not add it without deciding what a borrowed
+  question stays linked to.**
 
 ## House style for labels: say what it is, then one line
 

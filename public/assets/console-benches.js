@@ -39,7 +39,8 @@ import {
   BENCH_STORE, NIGHT_BENCH_STORE, bench, gigsSeen, nightBench, nightDrag, packDrag,
   setBench, setGigsSeen, setNightBench, setNightDrag, setPackDrag,
 } from './console-state.js';
-import { keyed, linkTo, packWord } from './console.js';
+import { can, keyed, linkTo, packWord } from './console.js';
+import { FEATURES } from './plans.js';
 import { fillNightDetail } from './console-gigs.js';
 import { packActionsMarkup, preview, wirePackActions } from './console-packs.js';
 import { editPopover } from './console-editor-popover.js';
@@ -114,12 +115,39 @@ export function workBench() {
 
   const look = on ? packLookAttrs(on, bench.kind === 'quiz' && isBreakoutPack(on) ? 'breakout' : bench.kind) : null;
 
+  /*
+   * WHOSE PACK IS ON THE BENCH — asked for directly: *"the workshop needs to
+   * distinguish between packs that I made for the QM and packs the QM made for
+   * himself."*
+   *
+   * `mine` is set by `own-packs.js`: true for a pack in this account's own
+   * folder, false for one out of the catalogue. That single flag is the whole
+   * distinction and it already decides what may be DONE to a pack — which is
+   * exactly why the Workshop is the door that has to say it. A quizmaster who
+   * cannot tell the two apart finds out by editing a Quizporium pack for twenty
+   * minutes and being refused on Save.
+   *
+   * The words are the ones this app already settled on: **My packs** and
+   * **Quizporium packs**. Never "yours and the catalogue" — "the catalogue"
+   * describes where the code keeps it, not who wrote it or why it costs money.
+   */
+  const isMine = Boolean(on && on.mine);
+  // The owner maintains what the owner distributes, so a catalogue pack is his
+  // to edit and nobody else's. `can()` rather than a hat or an account kind:
+  // the entitlement is the thing the SERVER will actually check on Save.
+  const theirsToEdit = Boolean(on) && (isMine || can(FEATURES.CATALOGUE));
+
   const el = node(`
     <div class="panel launchbar bench bay-scroller">
       <div class="lb-head">
         <div class="lb-what">
           <span class="bench-where">On the bench</span>
           <span class="tiny lb-shut-what">${on ? esc(shortTitle(on.title)) : 'Nothing yet'}</span>
+          <!-- IT RIDES IN THE HEAD, so it is still true when the bench is
+               folded to a line - which is the state it spends most of its
+               time in. A badge, because that is what this app's one-word
+               facts wear: PAID, YOURS, BRONZE. -->
+          ${on ? `<span class="bench-whose ${isMine ? 'is-mine' : ''}">${isMine ? 'Yours' : 'Quizporium'}</span>` : ''}
         </div>
         <div class="lb-right">
           <button class="lb-fold" type="button" aria-expanded="true"><span class="lb-fold-word"></span></button>
@@ -148,12 +176,24 @@ export function workBench() {
         </div>
         <div class="bench-do">
           ${on ? `
-            <button class="go bench-go role-make" type="button">Edit the questions</button>
+            <!-- PRESENT AND INERT ON SOMEBODY ELSE'S PACK, WITH THE REASON ON
+                 THE BUTTON. It used to open the editor whoever was looking:
+                 every question was editable, and Save then answered *"There is
+                 already a pack called ... in the catalogue. Give yours a
+                 different name"* - an error about an id, on a screen with no
+                 way to change one, after the work was already done. A control
+                 that reports success it did not have is this repo's commonest
+                 fault; this is its twin, a control that promises one. -->
+            <button class="go bench-go role-make" type="button" ${theirsToEdit ? '' : 'disabled'}
+              >${theirsToEdit ? 'Edit the questions' : 'Quizporium keeps this one up to date'}</button>
             <button class="minor bench-read" type="button">Read it through</button>
             <a class="minor bench-tonight" href="${esc(linkTo(`/console?tonightPack=${encodeURIComponent(on.id)}&tonightKind=${bench.kind}`))}">Take it to Tonight</a>
-            <p class="tiny">Saved as you go. Take it off when you are done with it.
+            <p class="tiny">${theirsToEdit ? `Saved as you go. Take it off when you are done with it.
               Set it up on Tonight and press <b>Keep this as a show</b> to save the
-              whole evening — the venue, the prizes, the order — not just this pack.</p>`
+              whole evening — the venue, the prizes, the order — not just this pack.`
+    : `This one is written and maintained for you, so a fix reaches every copy
+              at once — there is nothing here to keep in step. Read it through, take
+              it to Tonight, or write your own from the shelf below.`}</p>`
     : `
             <a class="go bench-go role-make" href="${esc(linkTo('/editor'))}">Write a new one</a>
             <p class="tiny">Or pick one on the left to edit, rename or read
@@ -180,24 +220,39 @@ export function workBench() {
    * the third, which is the one the other doors now have: pick it in the bay,
    * see it in the bay.
    *
-   * **COMPARTMENTALISED BY KIND** — quizzes, then bingo games — because that
-   * is what a pack IS, and it is the grouping the shelf below already uses.
+   * **COMPARTMENTALISED BY WHOSE IT IS FIRST, THEN BY KIND** — My quizzes, My
+   * bingo games, then the Quizporium ones. It was by kind alone, with a small
+   * `Yours` note on the rows that were the quizmaster's, and that is the wrong
+   * way round for this door: whose a pack is decides what may be DONE to it,
+   * which is the Workshop's entire subject, while quiz-or-bingo is answered by
+   * the row's own colour and by the shelf below.
+   *
+   * **YOURS FIRST**, the same order the pack shelf has always used — a pack
+   * somebody wrote is the one they came here to work on.
+   *
+   * **AND THE `Yours` NOTE GOES**, because the heading above the row now says
+   * it. A note that only restates its own heading is the duplication this file
+   * keeps a rule against, and it cost a row half its width.
+   *
+   * An empty group never draws, so a quizmaster who has written nothing sees
+   * exactly the two headings they saw before, and the owner sees four.
    * The row wears the pack's own colours, which is `packLookAttrs()` doing on
    * a 190px row exactly what it does on a card: the subject, at a glance.
    */
   const railRows = [];
-  for (const kind of ['quiz', 'bingo']) {
-    for (const p of shelfFor(kind)) {
-      if (p.locked) continue;
-      const l = packLookAttrs(p, kind === 'quiz' && isBreakoutPack(p) ? 'breakout' : kind);
-      railRows.push({
-        key: `${kind}:${p.id}`,
-        group: kind === 'quiz' ? 'Quizzes' : 'Bingo games',
-        name: shortTitle(p.title),
-        note: p.mine ? 'Yours' : '',
-        cls: `tinted ${l.cls}`,
-        style: l.style,
-      });
+  for (const whose of [true, false]) {
+    for (const kind of ['quiz', 'bingo']) {
+      for (const p of shelfFor(kind)) {
+        if (p.locked || Boolean(p.mine) !== whose) continue;
+        const l = packLookAttrs(p, kind === 'quiz' && isBreakoutPack(p) ? 'breakout' : kind);
+        railRows.push({
+          key: `${kind}:${p.id}`,
+          group: `${whose ? 'My' : 'Quizporium'} ${kind === 'quiz' ? 'quizzes' : 'bingo games'}`,
+          name: shortTitle(p.title),
+          cls: `tinted ${l.cls}`,
+          style: l.style,
+        });
+      }
     }
   }
   const cols = bayColumns(

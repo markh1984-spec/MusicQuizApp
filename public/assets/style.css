@@ -9878,6 +9878,50 @@ body.gal-zoomed { overflow: hidden; }
    differs is what it holds: Tonight composes an evening out of several packs,
    the bench works on ONE, so it has one slot rather than six. */
 .bench .bench-where { font-size: var(--fs-ctl); font-weight: 900; color: var(--ink); }
+/* WHOSE PACK IS ON THE BENCH - "Yours" or "Quizporium", on the head line so it
+   survives the fold.
+
+   A PILL, because that is what this app's one-word facts already wear - PAID,
+   BRONZE, YOURS - and the badge exception in the capitals rule is written for
+   exactly this shape: a four-letter pill is something you recognise rather than
+   a word you read.
+
+   YOURS TAKES THE ACCOUNT'S OWN COLOUR AND QUIZPORIUM STAYS NEUTRAL. Never
+   gold: gold is the trophy colour here and means first place, which is not what
+   authorship is. `--hot` is the one colour that follows a quizmaster's own
+   scheme, and "this one is mine" is precisely the thing worth saying in it. */
+.bench-whose {
+  flex: 0 0 auto;
+  font-size: 0.62rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--ink-dim);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: var(--r-pill);
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+.bench-whose.is-mine {
+  color: var(--hot);
+  border-color: color-mix(in srgb, var(--hot) 55%, transparent);
+}
+/* AND THE GREEN GOES HOLLOW ON SOMEBODY ELSE'S PACK - the launch button's own
+   treatment, for the same reason it was chosen there: an outline reads as "not
+   this one" where a dimmed FILL reads as broken. Filled green means *make
+   something*, and a Quizporium pack is not a thing this account makes.
+
+   `.console .bench .bench-go` sets `border: none`, so this needs the same three
+   classes plus the state to reach it - the shorthand-beats-longhand trap
+   recorded in the project notes, met head on rather than by luck. */
+.console .bench .bench-go:disabled {
+  cursor: default;
+  background: none;
+  border: 2px dashed var(--panel-line);
+  color: var(--ink-dim);
+  filter: none;
+  opacity: 1;
+}
 /* THE SLOT ON THE LEFT, WHAT YOU DO WITH IT ON THE RIGHT.
 
    Reported as *"I don't want a tiny button taking up a whole row"*, and that
