@@ -3391,48 +3391,44 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 just don't want to think, you want to get in and go and know it will work."*
 
 - **NOTHING IS CHOSEN FOR YOU** — a bar that guesses guesses wrongly the moment
-  a pack is launched, and then the console and the projector name different
-  quizzes. **Night settings sit above the packs, a picked pack's below** — tap
-  a tile to pick it.
+  a pack is launched. **Night settings sit above the packs, a picked pack's
+  below** — tap a tile to pick it.
 - **ONE gradient button on the whole console.** There were three on this bar
   alone, and a Launch on every pack card besides.
 - **THE CONSOLE AND THE BIG SCREEN MUST AGREE, ALWAYS.** A choice STICKS, and
-  `paintLive()` prints what is actually on the projector in gold when it
-  differs from what the bar is set to.
+  `paintLive()` prints what is on the projector in gold when it differs from
+  what the bar is set to.
 - **A LOADED PACK IS NOT A NIGHT — `state.launched`, and Unlaunch is what it
   was for.** A room ALWAYS has a game built, so the live line named a quiz on a
   console nobody had touched and `resetAll()` built another lobby around the
-  SAME pack — *"unlaunching doesn't actually unlaunch anything"*. `false` in
-  both `freshState()`s, `true` in `session.launch()` alone. **Written
-  EXPLICITLY, so ABSENT can mean launched** — a state on disk from before the
-  field existed is there because somebody launched it, and a redeploy mid-quiz
-  must not report an idle projector. **Not `launchedSinceBoot`**, which answers
-  a different question in MEMORY.
+  SAME pack. `false` in both `freshState()`s, `true` in `session.launch()`
+  alone. **Written EXPLICITLY, so ABSENT can mean launched** — a state on disk
+  from before the field existed is there because somebody launched it. **Not
+  `launchedSinceBoot`**, which answers a different question in MEMORY.
 - **Picking a pack puts it on the big screen when nothing would be lost.** THE
-  SERVER decides which — the launch call without `replace` answers 409 when
+  SERVER decides — the launch call without `replace` answers 409 when
   `session.inProgress()`. A 409 is SILENT here. A re-render is not somebody
   choosing a pack (`quiet`), and what is running is READ BACK.
 - **IN THE ROOM / ONLINE is a switch in the head** — a setting whose wrong
   value ruins the night belongs where it is read. **BOTH halves wear the same
-  lit treatment**, never the gradient (Launch keeps that): the
-  gradient-on-Online-only version was a different object per mode. Shut, the
-  line still says "Online".
+  lit treatment**, never the gradient (Launch keeps that). Shut, the line still
+  says "Online".
 - **The venue is chosen HERE and on the Venues shelf, nowhere else** — both go
   through `chooseVenue()`. **Neither the venue nor online is remembered on the
   device**: both are facts about one evening, and a remembered one files next
   Tuesday under last Thursday's pub.
 - **Whose night it is, RANKED**: a date you typed, then whose usual night, then
   where you played last. **Two claims are NAMED, never left blank**
-  (`clashTonight()`) — a decision only the human can make.
+  (`clashTonight()`).
 - **It folds to a thin line that still says what it is set to**, in
-  `localStorage`; one row, no wrap, the middle ellipsised, the whole row the
-  target. **The heading does not move when it folds** — a three-cell grid and a
-  fold that says HIDE and SHOW at a fixed width.
+  `localStorage`; one row, no wrap, the middle ellipsised. **The heading does
+  not move when it folds** — a three-cell grid and a fold that says HIDE and
+  SHOW at a fixed width.
 - **THE PACK CARDS NO LONGER LAUNCH; TONIGHT IS THE ONLY WAY IN.** **The
   guarantee was never a Launch on every card, it was that launching is one
-  predictable move away.** A card keeps what is true of the PACK — Read,
-  Rename, Delete, Pictures — behind the Workshop door, and **on the Console a
-  tap puts it in Tonight**, same path as a drop.
+  predictable move away.** A card keeps what is true of the PACK behind the
+  Workshop door, and **on the Console a tap puts it in Tonight**, same path as
+  a drop.
 - **A CONTROL NEVER APPEARS OUT OF NOTHING.** Launch goes hollow saying what it
   wants; *Keep this as a show* goes disabled. Both were built appearing and
   disappearing and both were reported as clunky in the same words: a control
@@ -3468,11 +3464,11 @@ having a nights section."*
   a night nobody is running.
 - **IT STORES REFERENCES AND NEVER COPIES** — rule 11.
 - **IT IS NOT A GATE AND MUST NEVER BECOME ONE.** The launch re-checks the
-  tier, every pack and the lobby game.
+  tier, the packs and the lobby game.
 - **CALLED A SHOW BECAUSE "NIGHT" IS TAKEN TWICE** — Calendar's are bookings,
-  Gigs' are the archive.
+  Gigs' the archive.
 - **THE ORDER IS REBUILT INTO `lbExtra` AND `lbOff`, never held a third way**,
-  and **a BROKEN SHOW IS NAMED ON THE CARD, DAYS EARLY** — every part.
+  and **a BROKEN SHOW IS NAMED ON THE CARD, DAYS EARLY.**
 - **A BINGO PART CARRIES ITS OWN CARD AND PRIZE COUNT**, beside the show's own
   pair rather than instead of it. **The part's own beats the show's and the
   show's is the fallback**, so every one-game night and every older show reads
@@ -3605,6 +3601,14 @@ pack is theoretically just an amalgamation of the other three."*
   amalgamation model is taken all the way**, a quiz pack REFERENCES three round
   files rather than holding their questions, and this shelf then lists real
   packs unchanged. **Do not start that on a gig week**: it moves `loadQuiz()`.
+- **AND A TARGET HAS TO ANSWER BOTH CHANNELS.** *"Drag and drop isn't working
+  for the image rounds"* — on the WORKSHOP, and it never had: the bench asked
+  for `packDrag` alone, so a round in the hand fired no `drop` at all and the
+  panel did not even light up. **The payload is not changed to suit the
+  target** — a round card carrying a PACK would be a descriptor that lies about
+  what is in your hand. The bench learns `shelfRoundDrag` and benches the
+  round's PACK, which is what its TAP already does. **It fixed a pack card's
+  round TICK at the same time**, dead on that door for as long as it existed.
 - **AND THE SIXTH TAB MAKES A KNOWN FRAME FAULT ONE TAB WORSE.**
   `console-frame.mjs` already failed *"every tab is still reachable with one
   up"* at 1500x900 **with a banner above the doorhead**: `.consolecols` clamps

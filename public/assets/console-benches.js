@@ -39,7 +39,8 @@ import { esc, node } from './client.js';
 import { bayColumns, bayRail } from './console-bay.js';
 import {
   BENCH_STORE, NIGHT_BENCH_STORE, bench, gigsSeen, nightBench, nightDrag, packDrag,
-  setBench, setGigsSeen, setNightBench, setNightDrag, setPackDrag,
+  setBench, setGigsSeen, setNightBench, setNightDrag, setPackDrag, setShelfRoundDrag,
+  shelfRoundDrag,
 } from './console-state.js';
 import { can, keyed, linkTo, packWord } from './console.js';
 import { FEATURES } from './plans.js';
@@ -249,9 +250,35 @@ export function workBench() {
    * THE SAME DROP GESTURE AS TONIGHT, on the same kind of target — and it
    * takes a BINGO pack as readily as a quiz, because the editor does.
    */
+  /*
+   * AND A ROUND IN THE HAND BENCHES ITS PACK — the second channel this target
+   * has to answer.
+   *
+   * Reported as *"drag and drop isn't working for the image rounds"*, and it
+   * was not: an Image Rounds card and a pack card's round tick both set
+   * `shelfRoundDrag`, never `packDrag`, because on the Console what you are
+   * holding really is one round. This handler asked for `packDrag` alone, so
+   * the drop never fired at all — no error, no movement, the panel not even
+   * lighting up.
+   *
+   * **THE PAYLOAD IS NOT CHANGED TO SUIT THE TARGET.** Making a round card
+   * carry a PACK on this door would be a descriptor that lies about what is in
+   * your hand, which this file already has a rule against. The target learns
+   * the second channel instead, and answers it the way the TAP already does:
+   * a round cannot be edited on its own, so the bench takes its pack. **A tap
+   * and a drag may not come to mean different things.**
+   */
+  const benchDrag = () => {
+    if (packDrag) return { id: packDrag.id, kind: packDrag.kind };
+    if (shelfRoundDrag) return { id: shelfRoundDrag.packId, kind: 'quiz' };
+    return null;
+  };
   el.addEventListener('dragover', (ev) => {
-    if (!packDrag) return;
+    if (!benchDrag()) return;
     ev.preventDefault();
+    // `copy` on both channels: a round tick and an Image Rounds card each start
+    // with `effectAllowed = 'copy'`, and a `dropEffect` the source did not
+    // allow makes the browser treat this target as REFUSING — no `drop` at all.
     ev.dataTransfer.dropEffect = 'copy';
     el.classList.add('drop-here');
   });
@@ -259,11 +286,12 @@ export function workBench() {
     if (!el.contains(ev.relatedTarget)) el.classList.remove('drop-here');
   });
   el.addEventListener('drop', (ev) => {
-    if (!packDrag) return;
+    const dropped = benchDrag();
+    if (!dropped) return;
     ev.preventDefault();
     el.classList.remove('drop-here');
-    const dropped = packDrag;
     setPackDrag(null);
+    setShelfRoundDrag(null);
     dragging(false);
     putOnBench(shelfFor(dropped.kind).find((p) => p.id === dropped.id), dropped.kind);
   });
