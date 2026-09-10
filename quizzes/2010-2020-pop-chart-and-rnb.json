@@ -1,0 +1,605 @@
+{
+  "id": "2010-2020-pop-chart-and-rnb",
+  "title": "The 2010-2020 Pop, Chart and R’n’B Quiz",
+  "subtitle": "Three rounds. Twenty seconds a question. Fastest fingers win.",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-10T09:00:00.000Z",
+  "notes": "Written for a last-minute 2010-2020 pop, chart and R’n’B night. The picture round has no artwork yet — press Pictures on the pack card to draw it. The intro cues carry no Spotify links, so play them off the DJ app.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "text",
+      "title": "Round One — 2010-2020 Pop, Chart and R’n’B",
+      "blurb": "20 questions on the pop, chart and R’n’B of 2010 to 2020",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which Adele album features the single \"Someone Like You\"?",
+          "options": [
+            "19",
+            "21",
+            "25",
+            "30"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Released in 2011, 21 became the best-selling album of the 21st century in the UK."
+        },
+        {
+          "id": "r1q2",
+          "prompt": "Which American singer released the 2013 album \"The 20/20 Experience\"?",
+          "options": [
+            "Usher",
+            "Justin Timberlake",
+            "Ne-Yo",
+            "Robin Thicke"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It produced \"Mirrors\" and \"Suit & Tie\" and topped the UK album chart."
+        },
+        {
+          "id": "r1q3",
+          "prompt": "\"Pompeii\" was the breakthrough single from which British band?",
+          "options": [
+            "Bastille",
+            "Alt-J",
+            "Everything Everything",
+            "Bombay Bicycle Club"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Their 2013 debut album Bad Blood went to number one in the UK."
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Which 2016 Rihanna album included the single \"Work\"?",
+          "options": [
+            "Anti",
+            "Unapologetic",
+            "Talk That Talk",
+            "Loud"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It was her eighth studio album and her first in nearly four years."
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which Scottish DJ produced and featured on Rihanna’s \"We Found Love\"?",
+          "options": [
+            "Calvin Harris",
+            "Jax Jones",
+            "Sigala",
+            "Duke Dumont"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It topped the UK chart for six weeks in late 2011."
+        },
+        {
+          "id": "r1q6",
+          "prompt": "Which rapper won the 2019 Mercury Prize with the album \"Psychodrama\"?",
+          "options": [
+            "Dave",
+            "AJ Tracey",
+            "Skepta",
+            "Little Simz"
+          ],
+          "correctIndex": 0,
+          "answerNote": "He was twenty-one when it won."
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which girl group won The X Factor in 2011?",
+          "options": [
+            "Stooshe",
+            "Neon Jungle",
+            "Little Mix",
+            "Fifth Harmony"
+          ],
+          "correctIndex": 2,
+          "answerNote": "They were the first group ever to win the competition."
+        },
+        {
+          "id": "r1q8",
+          "prompt": "What was the name of Disclosure’s 2013 debut album?",
+          "options": [
+            "Settle",
+            "Caracal",
+            "Energy",
+            "Alchemy"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It was nominated for the Mercury Prize and reached number one in the UK."
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which British group had a 2012 UK number one with \"Feel the Love\"?",
+          "options": [
+            "Rudimental",
+            "Chase & Status",
+            "Sigma",
+            "DJ Fresh"
+          ],
+          "correctIndex": 0,
+          "answerNote": "John Newman sang on it, two years before his own solo hits."
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which singer released the 2013 album \"Halcyon Days\"?",
+          "options": [
+            "Ellie Goulding",
+            "Birdy",
+            "Marina",
+            "Florence Welch"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It was a reissue of Halcyon and produced \"Burn\"."
+        },
+        {
+          "id": "r1q11",
+          "prompt": "Which 2015 album by Justin Bieber contained \"Sorry\" and \"Love Yourself\"?",
+          "options": [
+            "Believe",
+            "Purpose",
+            "Changes",
+            "Justice"
+          ],
+          "correctIndex": 1,
+          "answerNote": "He held the top three places in the UK singles chart in early 2016."
+        },
+        {
+          "id": "r1q12",
+          "prompt": "What is the name of Emeli Sandé’s 2012 debut album?",
+          "options": [
+            "Long Live the Angels",
+            "Our Version of Events",
+            "Real Life",
+            "Let’s Say for Instance"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It was the best-selling album in the UK in 2012."
+        },
+        {
+          "id": "r1q13",
+          "prompt": "Which American rapper released \"To Pimp a Butterfly\" in 2015?",
+          "options": [
+            "Kendrick Lamar",
+            "J. Cole",
+            "Big Sean",
+            "Vince Staples"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It is widely held to be one of the defining albums of the decade."
+        },
+        {
+          "id": "r1q14",
+          "prompt": "Which boy band released the 2013 album \"Midnight Memories\"?",
+          "options": [
+            "The Wanted",
+            "JLS",
+            "One Direction",
+            "5 Seconds of Summer"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It was the best-selling album worldwide that year."
+        },
+        {
+          "id": "r1q15",
+          "prompt": "Which member left One Direction in 2015 to go solo?",
+          "options": [
+            "Zayn Malik",
+            "Niall Horan",
+            "Liam Payne",
+            "Louis Tomlinson"
+          ],
+          "correctIndex": 0,
+          "answerNote": "His solo single \"Pillowtalk\" went straight to number one in the UK."
+        },
+        {
+          "id": "r1q16",
+          "prompt": "\"Shallow\" by Lady Gaga and Bradley Cooper came from which film?",
+          "options": [
+            "La La Land",
+            "The Greatest Showman",
+            "Bohemian Rhapsody",
+            "A Star Is Born"
+          ],
+          "correctIndex": 3,
+          "answerNote": "It won the Academy Award for Best Original Song in 2019."
+        },
+        {
+          "id": "r1q17",
+          "prompt": "Which single was Rag’n’Bone Man’s breakthrough hit?",
+          "options": [
+            "Skin",
+            "Human",
+            "Giant",
+            "All You Ever Wanted"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Released in 2016, it won him the Brit Award for British Breakthrough Act."
+        },
+        {
+          "id": "r1q18",
+          "prompt": "Which 2016 Beyoncé album was released alongside a film on HBO?",
+          "options": [
+            "4",
+            "Lemonade",
+            "Renaissance",
+            "Cowboy Carter"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It was her sixth studio album."
+        },
+        {
+          "id": "r1q19",
+          "prompt": "Sia’s \"Chandelier\" appears on which 2014 album?",
+          "options": [
+            "We Are Born",
+            "Some People Have Real Problems",
+            "1000 Forms of Fear",
+            "This Is Acting"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The video featured the dancer Maddie Ziegler."
+        },
+        {
+          "id": "r1q20",
+          "prompt": "Which Frank Ocean album, released in 2012, features \"Thinkin Bout You\"?",
+          "options": [
+            "Blonde",
+            "Endless",
+            "Channel Orange",
+            "Nostalgia, Ultra"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It won the Grammy for Best Urban Contemporary Album."
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "image",
+      "title": "Round Two — Whose Face Is This?",
+      "blurb": "The picture pulls back as the clock runs down. Guess early, score more.",
+      "reveal": "mix",
+      "questions": [
+        {
+          "id": "r2q1",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Adele",
+            "Jess Glynne",
+            "Paloma Faith",
+            "Rita Ora"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Her album 21 is the best-selling album of the 21st century in the UK.",
+          "image": "portraits/adele.png",
+          "imagePrompt": "A British female singer in her twenties with heavy winged eyeliner, a beehive of dark hair swept up, wearing a plain black dress, known for enormous soul-influenced ballads.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q2",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Rita Ora",
+            "Anne-Marie",
+            "Mabel",
+            "Zara Larsson"
+          ],
+          "correctIndex": 0,
+          "answerNote": "She had four UK number one singles before her debut album was out.",
+          "image": "portraits/rita-ora.png",
+          "imagePrompt": "A British female pop singer with long platinum-blonde hair, strong dark eyebrows and bold lipstick, in a glossy stage outfit.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q3",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Dua Lipa",
+            "Mabel",
+            "Anne-Marie",
+            "Zara Larsson"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Her 2017 debut produced \"New Rules\" and \"IDGAF\".",
+          "image": "portraits/dua-lipa.png",
+          "imagePrompt": "A young British female pop singer with long dark hair, strong straight eyebrows and bold red lipstick, in a glossy stage outfit.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q4",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Dave",
+            "Stormzy",
+            "AJ Tracey",
+            "Headie One"
+          ],
+          "correctIndex": 1,
+          "answerNote": "He headlined Glastonbury in 2019, the first British rapper to do so.",
+          "image": "portraits/stormzy.png",
+          "imagePrompt": "A very tall young Black British male rapper with a short beard and close-cropped hair, wearing a black tracksuit, photographed mid-performance.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q5",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Sam Smith",
+            "John Newman",
+            "Olly Alexander",
+            "Jack Garratt"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Their debut album In the Lonely Hour won British Album of the Year.",
+          "image": "portraits/sam-smith.png",
+          "imagePrompt": "A young British singer with a round face, short neatly swept hair and a smart dark suit, known for big emotional ballads.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q6",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Bruno Mars",
+            "The Weeknd",
+            "Miguel",
+            "Anderson Paak"
+          ],
+          "correctIndex": 0,
+          "answerNote": "He sang on \"Uptown Funk\" and released the album 24K Magic in 2016.",
+          "image": "portraits/bruno-mars.png",
+          "imagePrompt": "A short American male pop singer with dark curly hair under a flat cap, a thin moustache and a shiny retro-styled jacket.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q7",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Lewis Capaldi",
+            "Tom Walker",
+            "Dermot Kennedy",
+            "James Arthur"
+          ],
+          "correctIndex": 0,
+          "answerNote": "\"Someone You Loved\" spent seven weeks at UK number one.",
+          "image": "portraits/lewis-capaldi.png",
+          "imagePrompt": "A young Scottish male singer with dark curly hair and a full dark beard, wearing a plain t-shirt, with a wry expression.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q8",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Frank Ocean",
+            "The Weeknd",
+            "Khalid",
+            "Miguel"
+          ],
+          "correctIndex": 1,
+          "answerNote": "\"Blinding Lights\" became one of the biggest chart singles ever recorded.",
+          "image": "portraits/the-weeknd.png",
+          "imagePrompt": "A Canadian male R&B singer with dark skin, a short beard and distinctive tall dreadlocks piled upwards, wearing a red jacket.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q9",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Jess Glynne",
+            "Ella Henderson",
+            "Becky Hill",
+            "Anne-Marie"
+          ],
+          "correctIndex": 0,
+          "answerNote": "She has had more UK number ones than any other British female solo artist.",
+          "image": "portraits/jess-glynne.png",
+          "imagePrompt": "A British female singer with bright orange-red curly hair, freckles and a wide smile, in a colourful jacket.",
+          "zoomFrom": 6
+        },
+        {
+          "id": "r2q10",
+          "prompt": "Whose face is this?",
+          "options": [
+            "Tom Odell",
+            "George Ezra",
+            "Jack Savoretti",
+            "Passenger"
+          ],
+          "correctIndex": 1,
+          "answerNote": "\"Shotgun\" gave him a UK number one in 2018.",
+          "image": "portraits/george-ezra.png",
+          "imagePrompt": "A tall young British male singer with short neat brown hair and a boyish clean-shaven face, wearing a buttoned shirt, known for an unexpectedly deep voice.",
+          "zoomFrom": 6
+        }
+      ]
+    },
+    {
+      "id": "r3",
+      "type": "intro",
+      "title": "Round Three — Name That Intro",
+      "blurb": "10 intros. You get the first few seconds and nothing else.",
+      "questions": [
+        {
+          "id": "r3q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Treasure",
+            "Uptown Funk",
+            "24K Magic",
+            "Finesse"
+          ],
+          "correctIndex": 1,
+          "answerNote": "seven weeks at UK number one over the turn of 2015",
+          "cue": {
+            "title": "Uptown Funk",
+            "artist": "Mark Ronson ft. Bruno Mars",
+            "from": "0:00",
+            "hint": "let the horn stab and the bassline run"
+          }
+        },
+        {
+          "id": "r3q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Castle on the Hill",
+            "Perfect",
+            "Shape of You",
+            "Galway Girl"
+          ],
+          "correctIndex": 2,
+          "answerNote": "from the 2017 album Divide",
+          "cue": {
+            "title": "Shape of You",
+            "artist": "Ed Sheeran",
+            "from": "0:00",
+            "hint": "the marimba hook is the giveaway"
+          }
+        },
+        {
+          "id": "r3q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Set Fire to the Rain",
+            "Rolling in the Deep",
+            "Someone Like You",
+            "Skyfall"
+          ],
+          "correctIndex": 1,
+          "answerNote": "the lead single from 21",
+          "cue": {
+            "title": "Rolling in the Deep",
+            "artist": "Adele",
+            "from": "0:00",
+            "hint": "the muted guitar and stamp come in almost immediately"
+          }
+        },
+        {
+          "id": "r3q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Get Lucky",
+            "Blurred Lines",
+            "Happy",
+            "Freedom"
+          ],
+          "correctIndex": 2,
+          "answerNote": "from the Despicable Me 2 soundtrack",
+          "cue": {
+            "title": "Happy",
+            "artist": "Pharrell Williams",
+            "from": "0:00",
+            "hint": "give it a few seconds before the vocal"
+          }
+        },
+        {
+          "id": "r3q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "One More Time",
+            "Instant Crush",
+            "Lose Yourself to Dance",
+            "Get Lucky"
+          ],
+          "correctIndex": 3,
+          "answerNote": "Nile Rodgers on guitar, 2013",
+          "cue": {
+            "title": "Get Lucky",
+            "artist": "Daft Punk ft. Pharrell Williams",
+            "from": "0:00",
+            "hint": "the guitar figure is instant"
+          }
+        },
+        {
+          "id": "r3q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "Hotline Bling",
+            "One Dance",
+            "Passionfruit",
+            "God’s Plan"
+          ],
+          "correctIndex": 1,
+          "answerNote": "fifteen weeks at UK number one in 2016",
+          "cue": {
+            "title": "One Dance",
+            "artist": "Drake ft. Wizkid and Kyla",
+            "from": "0:00",
+            "hint": "the piano loop opens it"
+          }
+        },
+        {
+          "id": "r3q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Starboy",
+            "Save Your Tears",
+            "Blinding Lights",
+            "Can’t Feel My Face"
+          ],
+          "correctIndex": 2,
+          "answerNote": "released at the end of 2019",
+          "cue": {
+            "title": "Blinding Lights",
+            "artist": "The Weeknd",
+            "from": "0:00",
+            "hint": "the synth intro is unmistakable"
+          }
+        },
+        {
+          "id": "r3q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Rockabye",
+            "Symphony",
+            "Rather Be",
+            "Solo"
+          ],
+          "correctIndex": 2,
+          "answerNote": "a 2014 UK number one",
+          "cue": {
+            "title": "Rather Be",
+            "artist": "Clean Bandit ft. Jess Glynne",
+            "from": "0:00",
+            "hint": "the strings come in first"
+          }
+        },
+        {
+          "id": "r3q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Budapest",
+            "Paradise",
+            "Shotgun",
+            "Blame It on Me"
+          ],
+          "correctIndex": 2,
+          "answerNote": "UK number one in 2018",
+          "cue": {
+            "title": "Shotgun",
+            "artist": "George Ezra",
+            "from": "0:00",
+            "hint": "the guitar lick then the shuffle"
+          }
+        },
+        {
+          "id": "r3q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Bruises",
+            "Grace",
+            "Before You Go",
+            "Someone You Loved"
+          ],
+          "correctIndex": 3,
+          "answerNote": "seven weeks at UK number one in 2019",
+          "cue": {
+            "title": "Someone You Loved",
+            "artist": "Lewis Capaldi",
+            "from": "0:00",
+            "hint": "the organ chords open it — give it a moment"
+          }
+        }
+      ]
+    }
+  ]
+}
