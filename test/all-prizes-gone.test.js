@@ -79,16 +79,43 @@ test('THE FIRST LINE DOES NOT END THE ROUND, however much the phase says WON', (
   assert.equal(game.playerView(b.id).prizesAllGone, undefined);
 });
 
-test('…and the winner still gets their code the instant they win it', () => {
-  // The half that must NOT change: nobody loses their proof at the bar, and
-  // "you got it" goes on meaning the prize on the table.
+test('…and the code WAITS for the end of the round, then arrives', () => {
+  /*
+   * THIS REVERSES WHAT THIS TEST FIRST ASSERTED, and the reversal is the ask.
+   * The first build sent the code the instant it was won and put the banner
+   * on top of it, on an answer of "both" given before anybody had seen it.
+   * One live night later: *"the QR codes should all appear at the end."*
+   *
+   * So the code is MINTED at the win — losing that would be the original
+   * "my bingo winners didn't receive a QR code" complaint — and HELD from the
+   * phone until the round is over. Both halves are checked here, because a
+   * test that only looked at the phone could not tell "held" from "lost".
+   */
   const game = threePrizeGame();
   const a = game.join({ name: 'Table One' });
+  const b = game.join({ name: 'Table Two' });
+  const c = game.join({ name: 'Table Three' });
   game.start();
   winLine(game, a);
   game.claim(a.id);
+
+  assert.equal(Object.values(game.state.vouchers).length, 1, 'the code was never minted');
+  assert.equal(game.playerView(a.id).vouchers, undefined,
+    'the code went up while two prizes were still to play for');
+  assert.equal(game.hostView().vouchers.length, 1,
+    'the host must still see it — they are who a blank phone asks');
+
+  // Play the round out: the other two prizes go to the other two tables.
+  game.playOn();
+  winHouse(game, b);
+  game.claim(b.id);
+  game.playOn();
+  winHouse(game, c);
+  game.claim(c.id);
+
+  assert.equal(game.allPrizesGone, true);
   const view = game.playerView(a.id);
-  assert.equal((view.vouchers || []).length, 1, 'the instant voucher was lost');
+  assert.equal((view.vouchers || []).length, 1, 'the held code never arrived');
   assert.ok(view.vouchers[0].code, 'a voucher with no code');
 });
 
@@ -110,8 +137,11 @@ test('ONLY THE LAST PRIZE TURNS IT ON', () => {
   assert.equal(game.allPrizesGone, false, 'the break fired on the second of three');
   game.playOn();
 
-  // Stage three: the full house, and the round is done.
-  assert.equal(game.claim(b.id).valid, true);
+  // Stage three needs a THIRD table: one prize each per round is absolute, so
+  // b is out of the running having taken stage two.
+  const c = game.join({ name: 'Table Three' });
+  winHouse(game, c);
+  assert.equal(game.claim(c.id).valid, true);
   assert.equal(game.allPrizesGone, true, 'the last prize went and nothing said so');
 });
 
@@ -161,11 +191,13 @@ test('A ONE-PRIZE ROUND ENDS ON ITS ONLY PRIZE', () => {
 test('a fresh round turns it back off', () => {
   const game = threePrizeGame();
   const a = game.join({ name: 'Table One' });
+  const b = game.join({ name: 'Table Two' });
+  const c = game.join({ name: 'Table Three' });
   game.start();
-  winHouse(game, a);
-  game.claim(a.id); game.playOn();
-  game.claim(a.id); game.playOn();
-  game.claim(a.id);
+  // Three prizes now means three different tables — one each, absolutely.
+  winHouse(game, a); game.claim(a.id); game.playOn();
+  winHouse(game, b); game.claim(b.id); game.playOn();
+  winHouse(game, c); game.claim(c.id);
   assert.equal(game.allPrizesGone, true);
 
   game.newRound();
@@ -180,4 +212,88 @@ test('an ordinary payload is untouched while the round is being played', () => {
   const a = game.join({ name: 'Table One' });
   game.start();
   assert.equal('prizesAllGone' in game.playerView(a.id), false);
+});
+
+/*
+ * ONE PRIZE EACH PER ROUND, ABSOLUTELY — and the three ways a held code still
+ * reaches the person holding it.
+ *
+ * Both were asked for off a live night: *"it needs to be so that the cards
+ * don't give a more than one prize to any single phone, right now a single
+ * person can win but it has weird block midway through"*, and *"the QR codes
+ * should all appear at the end."*
+ *
+ * The second is the dangerous one. Holding a code back is one line; every one
+ * of these is a way the round can END that is not the last prize landing, and
+ * each is somebody standing at a bar with nothing to show if it is missed.
+ */
+
+test('the rule never lifts, however small the room', () => {
+  const game = threePrizeGame();
+  const a = game.join({ name: 'Table One' });
+  const b = game.join({ name: 'Table Two' });
+  game.start();
+
+  winHouse(game, a);
+  game.claim(a.id);
+  game.playOn();
+  winHouse(game, b);
+  game.claim(b.id);
+  game.playOn();
+
+  // Everybody in the room now holds a prize. The rule USED to lift here.
+  const third = game.claim(a.id);
+  assert.equal(third.valid, true, 'the call was right and must be recorded as right');
+  assert.equal(third.prize, false, 'a second prize went to a phone that already had one');
+  assert.equal(game.state.prizeWinners.length, 2);
+
+  // And the phone is told which of the two stand-downs it is, so it can say
+  // something other than a dead button.
+  assert.equal(game.playerView(a.id).tookOne, true);
+  assert.equal(game.playerView(b.id).tookOne, true);
+
+  // The host is told the prize cannot be won at all — its own flag, because
+  // "play on" is the wrong advice here and wrong advice is worse than none.
+  assert.equal(game.hostView().noneLeft, true);
+});
+
+test('a code held back still arrives when the host FINISHES the round', () => {
+  const game = threePrizeGame();
+  const a = game.join({ name: 'Table One' });
+  game.start();
+  winLine(game, a);
+  game.claim(a.id);
+  assert.equal(game.playerView(a.id).vouchers, undefined, 'held, correctly');
+
+  game.finish();
+  assert.equal((game.playerView(a.id).vouchers || []).length, 1,
+    'finishing on an unwinnable round took a real drink off somebody');
+});
+
+test('a code held back still arrives once a NEW ROUND has started', () => {
+  const game = threePrizeGame();
+  const a = game.join({ name: 'Table One' });
+  game.start();
+  winLine(game, a);
+  game.claim(a.id);
+  assert.equal(game.playerView(a.id).vouchers, undefined);
+
+  // `newRound()` deliberately does not clear vouchers — so without the round
+  // stamp on each one, round two would hold round one's code back for ever.
+  game.newRound();
+  assert.equal((game.playerView(a.id).vouchers || []).length, 1,
+    'round two swallowed round one’s prize');
+});
+
+test('a voucher written before the round stamp existed still shows', () => {
+  // The safe direction: every unsure case shows, because a held code is a
+  // prize somebody standing at a bar cannot prove.
+  const game = threePrizeGame();
+  const a = game.join({ name: 'Table One' });
+  game.start();
+  winLine(game, a);
+  game.claim(a.id);
+  for (const v of Object.values(game.state.vouchers)) delete v.round;
+  assert.equal((game.playerView(a.id).vouchers || []).length, 1,
+    'an older state file lost its winner their code');
 });

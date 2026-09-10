@@ -195,9 +195,22 @@ test('a bingo prize typed in after a line is won still reaches that winner', () 
     'a bingo night with no prizes set should mint nothing at all');
 
   game.setRewards(['A free drink', 'A bottle of wine']);
-  const mine = game.playerView(sharon.id).vouchers;
-  assert.ok(mine && mine.length, 'the line winner got no voucher when the prize was typed in afterwards');
-  assert.equal(mine[0].reward, 'A free drink');
+  /*
+   * THE CATCH-UP IS WHAT THIS TEST IS ABOUT, and it is unchanged: typing the
+   * prize in late MINTS the code for the line winner there and then.
+   *
+   * What changed is when a PHONE is shown it — the codes are held until the
+   * round is over so the room goes to the bar together — so the assertion
+   * moved from `playerView` to the ledger, and the phone half is checked
+   * below once the round has actually finished. Asserting only on the phone
+   * would have made a working catch-up look broken.
+   */
+  const minted = Object.values(game.state.vouchers || {});
+  assert.equal(minted.length, 1, 'the line winner got no voucher when the prize was typed in afterwards');
+  assert.equal(minted[0].reward, 'A free drink');
+  assert.equal(minted[0].winnerId, sharon.id);
+  assert.equal(game.playerView(sharon.id).vouchers, undefined,
+    'and it waits for the end of the round rather than going up on its own');
 
   // Twice, and then with the wording corrected: still exactly one code.
   game.setRewards(['A free drink', 'A bottle of wine']);

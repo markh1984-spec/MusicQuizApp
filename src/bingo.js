@@ -611,7 +611,29 @@ export class BingoGame {
       return { ok: true, valid: true, prize: false, reason: 'stage_gone' };
     }
 
-    if (this.holdsAPrize(playerId) && this.stillWithoutAPrize(playerId) > 0) {
+    /*
+     * ONE PRIZE PER PHONE PER ROUND, AND IT NEVER LIFTS.
+     *
+     * It used to lift the moment everybody in the room held a prize —
+     * `stillWithoutAPrize()`, now deleted. The reasoning was that the rule
+     * had done its job by then, and it is the wrong reasoning: **from the
+     * room's side that is a BINGO button that goes live, dead, then live
+     * again, with nothing on screen explaining either change.** Reported off
+     * a real night as *"it has weird block midway through and its not as
+     * smooth as I'd like"*, which is that exactly.
+     *
+     * So a phone that has won is out of the running for the rest of the
+     * round, full stop — one state change, forwards only, and the phone is
+     * given something to look at instead of a dead button (`view.tookOne`).
+     *
+     * **THE COST IS A ROUND THAT CANNOT PAY OUT, and it is not automated
+     * away.** Five prizes among three phones now leaves prizes four and five
+     * unwinnable, so `view.stalled` tells the host and the host decides —
+     * *Play on*, *New round*, *Finish*. Lifting a rule the room was told
+     * about is the rig running backwards; saying nothing is the fault
+     * `stalled` was built for.
+     */
+    if (this.holdsAPrize(playerId)) {
       record.standDown = true;
       this.changed();
       return { ok: true, valid: true, prize: false, reason: 'already_won' };
@@ -703,18 +725,6 @@ export class BingoGame {
     return (this.state.prizeWinners || []).some((w) => w.playerId === playerId);
   }
 
-  /**
-   * How many OTHER players are still waiting for their first prize.
-   *
-   * The safety valve on the rule above: at zero, everybody in the room has
-   * won something and the next prize is open to all of them again. Counted
-   * off `playerList()` so somebody the host removed is not still holding the
-   * round open from outside it.
-   */
-  stillWithoutAPrize(playerId) {
-    return this.playerList().filter((p) => p.id !== playerId && !this.holdsAPrize(p.id)).length;
-  }
-
   payWinnersOwed() {
     const rewards = this.rewardList();
     const held = Object.values(this.state.vouchers || {});
@@ -777,6 +787,18 @@ export class BingoGame {
       stage: this.state.stages[stageIndex],
       reward,
       venue: this.state.venue || '',
+      /*
+       * WHICH ROUND IT WAS WON IN — so a phone can be told to sit on it until
+       * the round is over without ever holding one back from a round that has
+       * already finished. `newRound()` bumps `state.round` and deliberately
+       * does NOT clear `vouchers`, so without this stamp a code won in round
+       * one would be held back for ever by round two.
+       *
+       * A voucher written before this existed has no `round`, which reads as
+       * "not this one" and shows — the safe direction: a code nobody can see
+       * is a drink nobody gets.
+       */
+      round: this.state.round,
       issuedAt: this.now(),
       redeemedAt: null,
       reinstated: 0,
@@ -1073,8 +1095,16 @@ export class BingoGame {
      * taken is a promise the app cannot keep, and pressing it used to change
      * the name on the projector.
      */
-    view.standDown = this.stageTaken()
-      || (this.holdsAPrize(playerId) && this.stillWithoutAPrize(playerId) > 0);
+    view.standDown = this.stageTaken() || this.holdsAPrize(playerId);
+    /*
+     * AND WHY, so the phone can draw something other than a dead button.
+     * `standDown` is true for two different reasons — this prize has gone, or
+     * you already hold one — and only the second one lasts the round. The
+     * phone shows a card instead of the button for it; the first stays the
+     * present-and-inert button it has always been, because that one lifts the
+     * moment the host plays on.
+     */
+    if (this.holdsAPrize(playerId)) view.tookOne = true;
     /*
      * "You got it" means the prize ON THE TABLE, not one won earlier.
      *
@@ -1108,8 +1138,38 @@ export class BingoGame {
      * spreading `s.question`, and the same list the quiz sends — with the
      * venue's logo, which the quiz's card already carries.
      */
+    /*
+     * THE CODES ALL APPEAR AT THE END OF THE ROUND, TOGETHER.
+     *
+     * Asked for after a live night, in these words: *"the QR codes should all
+     * appear at the end."* A trickle of people getting up as each prize lands
+     * is the thing the break is meant to replace, so a code won at the line
+     * now waits until the last prize of that round has gone and the whole
+     * room is sent to the bar in one go.
+     *
+     * **HELD, NEVER LOST — three ways out, and the round ending normally is
+     * only one of them:**
+     *
+     *  - the round is OVER (`allPrizesGone`), which is the ordinary path;
+     *  - the game is FINISHED, so a host who presses *Finish* on a round that
+     *    can never pay out its last prize does not take a real drink off
+     *    somebody;
+     *  - it was won in an EARLIER round, or CARRIED in from another part of
+     *    the night, so `newRound()` and *Continue to the quiz* both release
+     *    what they inherit rather than swallowing it.
+     *
+     * A voucher with no `round` on it predates the stamp and is treated as an
+     * earlier one — it shows. **Every unsure case shows**, because a held
+     * code is a prize somebody standing at a bar cannot prove.
+     *
+     * The HOST's own panel is untouched and still lists every voucher the
+     * moment it exists: they are the person a phone with nothing on it asks.
+     */
+    const roundOver = this.allPrizesGone || this.state.phase === BINGO_PHASES.FINISHED;
+    const showsYet = (v) => roundOver || v.carried || v.round !== this.state.round;
     const mine = Object.values(this.state.vouchers || {})
       .filter((v) => v.winnerId === playerId)
+      .filter(showsYet)
       .map((v) => ({
         code: v.code,
         name: v.name,
@@ -1128,11 +1188,13 @@ export class BingoGame {
      * AND WHETHER THAT IS THE LOT — so the phone can turn the codes people are
      * already holding into one shared moment.
      *
-     * **The voucher still arrives the instant it is won and that is
-     * unchanged**: nobody loses their proof at the bar, and *"you got it"* goes
-     * on meaning the prize on the table. This is the SECOND half he asked for
-     * — *both* — a break the whole room reaches at once rather than a trickle
-     * of people leaving their seats.
+     * **The codes are HELD until this is true** — see `showsYet` above. The
+     * first build sent them the instant they were won and put this banner on
+     * top, on an answer of *"both"* given before anybody had seen it; one
+     * live night later the ask was *"the QR codes should all appear at the
+     * end"*, so the banner and the codes now arrive together. *"You got it"*
+     * still means the prize on the table — the phone says so the moment they
+     * win (`view.tookOne`), it is only the CODE that waits.
      *
      * SPREAD IN ONLY WHEN TRUE, like the draw and the comeback band, so a
      * phone's payload during play is byte-for-byte what it was.
@@ -1245,6 +1307,26 @@ export class BingoGame {
     const stuck = this.playerList().filter((p) => this.squaresAway(p) === 0);
     if (stuck.length && stuck.every((p) => this.holdsAPrize(p.id)) && !this.stageTaken()) {
       view.stalled = stuck.length;
+    }
+    /*
+     * AND THE HARDER CASE, WHICH ONLY EXISTS NOW THE RULE IS ABSOLUTE: every
+     * phone in the room already holds a prize, so this one can NEVER be
+     * claimed however long the host keeps calling.
+     *
+     * It is a SEPARATE flag from `stalled` because the advice is different
+     * and the wrong advice is worse than none. `stalled` means *the people
+     * who could win have won* — playing on may still turn up a card. This
+     * means *there is nobody left at all*, and "play on" is then a
+     * quizmaster calling songs at a room that cannot answer. Five prizes
+     * among three phones reaches it on prize four.
+     *
+     * **Still not automated.** Lifting the rule mid-round takes back
+     * something the room was told; a new round is the honest move and it is
+     * the host's to make.
+     */
+    const everyone = this.playerList();
+    if (everyone.length && everyone.every((p) => this.holdsAPrize(p.id)) && !this.stageTaken()) {
+      view.noneLeft = true;
     }
     // `standDown` rides with each row: a correct call that took no prize is a
     // third outcome and the control view has to say which — see `claimsPanel`.

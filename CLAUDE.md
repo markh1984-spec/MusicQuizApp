@@ -2113,56 +2113,61 @@ bingo winners on thursday didn't receive a QR code"*.
 music bingo prizes yesterday… it looks really bad on me if one guy wins all
 the prizes."*
 
-- **IT IS THE SHAPE OF THE GAME, NOT LUCK.** The best card wins the line and is
-  then nearest to two lines and to the house — so **whoever takes the first
-  prize is the favourite for every prize after it.**
-- **THE CLAIM IS STILL RIGHT AND IS RECORDED AS RIGHT** — no false call, no
-  telling-off, so the control view has THREE outcomes rather than two. **AND NO
-  SENTENCE ON A PHONE MAY SAY "you have already won"** — the first build was
-  reverted off the live app for it. **The wording is about the PRIZE, never
-  about the person.**
-- **THE CARDS CANNOT DO THIS ON THEIR OWN, and that was asked for twice.** A
-  card is dealt at JOIN and who wins is decided by **the order the host plays
-  the tracks in**, which the app never sees. **Read `docs/bingo.md` before
-  re-proposing dealing as the fix.**
-- **IT LIFTS THE MOMENT EVERYBODY HAS ONE.** **The test is "is anybody left
-  without", never a count of prizes**, so it holds at any room size.
+- **IT IS THE SHAPE OF THE GAME, NOT LUCK** — the best card is nearest to
+  every prize after the one it just won.
+- **THE CLAIM IS STILL RIGHT AND IS RECORDED AS RIGHT** — THREE outcomes on
+  the control view, not two. **AND NO SENTENCE ON A PHONE MAY SAY "you have
+  already won"** — reverted off the live app once. **The wording is about the
+  PRIZE, never the person.**
+- **THE CARDS CANNOT DO THIS ON THEIR OWN, asked for twice.** A card is dealt
+  at JOIN and who wins is decided by **the order the host plays the tracks
+  in**, which the app never sees. **Read `docs/bingo.md` before re-proposing
+  dealing as the fix.**
 - **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert.
 - **NO SETTING.** It is one line to invert if anybody ever asks.
 - **AND A STAGE CAN ONLY BE TAKEN ONCE — `stageTaken()`, checked BEFORE
-  anything is recorded.** A second GENUINE line a beat later — the ordinary
-  thing that happens in a pub — stopped the second voucher and let everything
-  after it run: **the projector changed the winner's name while the prize
-  stayed with the first**, and `results()` filed BOTH into Past gigs and the
-  landlord's report. **The button stands down for EVERYBODY** while a prize is
-  taken. **`tooLate` is a separate flag**: the host's list says *"just missed
-  it"*, because *"had one"* is a fact about the player and is untrue here.
-- **AND THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE.** It asked for one
-  line whatever the prize needed, so on the settings every 40-track pack ships
-  with, **every phone lit up the moment one line landed**. It is `evaluate()`'s
-  shape on MARKS; **the two may not disagree about what the prize IS.**
+  anything is recorded.** A second GENUINE line a beat later **changed the
+  winner's name on the projector while the prize stayed with the first**, and
+  `results()` filed BOTH. **The button stands down for EVERYBODY** while a
+  prize is taken. **`tooLate` is a separate flag**: *"had one"* is a fact
+  about the player and is untrue here.
+- **AND THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE** — **every phone
+  lit up the moment one line landed**, on the settings every 40-track pack
+  ships with. It is `evaluate()`'s shape on MARKS; **the two may not disagree
+  about what the prize IS.**
 - **AND A VOUCHER SURVIVES A PART BOUNDARY — `carried` in
   `startOrderSegment()`.** *Continue to the quiz* built a fresh engine and
-  destroyed them: 200 from `/api/voucher` before the press, **404 after** — the
-  live *"my bingo winners didn't receive a QR code"* complaint by another
-  route. **The flag is load-bearing**: the idempotency check sees THIS part's
-  only, while the lookup, the redeem, the host panel and the archive see all of
-  them. **`prizeWinners` does NOT carry** — `stageIndex` restarts, so a carried
-  list makes `stageTaken()` true for a prize nobody has played for.
+  destroyed them. **The flag is load-bearing**: the idempotency check sees
+  THIS part's only, while the lookup, the redeem, the host panel and the
+  archive see all of them. **`prizeWinners` does NOT carry** — `stageIndex`
+  restarts, so a carried list makes `stageTaken()` true for a prize nobody
+  has played for.
 - **`Continue to the quiz` IS DRAWN ONCE**, and **bingo's `Finish` STAYS AND
-  SAYS WHAT IT COSTS** — a deliberate escape hatch, so it is not hidden the way
-  the quiz's *Stop* is, but its confirm names what filing on the bingo alone
-  leaves out.
-- **AND THE ROUND CAN STALL, SO THE CONTROL VIEW SAYS SO — `view.stalled`.**
-  If everyone who has completed the card already holds a prize, the round waits
-  for a card that may never land. **The rule is NOT lifted** — the host already
-  has *Play on*, *New round* and *Finish*. What was missing is being told.
+  SAYS WHAT IT COSTS** — a deliberate escape hatch, not hidden the way the
+  quiz's *Stop* is; its confirm names what it leaves out.
+- **AND THE ROUND CAN STALL, SO THE CONTROL VIEW SAYS SO — `view.stalled`**,
+  when everyone who has completed the card already holds a prize. **The rule
+  is NOT lifted** — the host has *Play on*, *New round* and *Finish*.
 - **AND WHEN THE LAST PRIZE GOES THE WHOLE ROOM IS TOLD — `allPrizesGone`**,
-  one break everybody reaches at once. **The instant voucher is UNCHANGED** —
-  *both*. **IT IS NOT THE `WON` PHASE**, which fires on EVERY claim: it is
-  `onLastStage && stageTaken()`, neither half alone. **DRAWN ON EVERY PHONE,
-  not only the winners'** — and the card key broke it on every phone BUT the
-  winner's, so `bingo-round-ends.mjs` is the check.
+  one break everybody reaches at once. **IT IS NOT THE `WON` PHASE**, which
+  fires on EVERY claim: it is `onLastStage && stageTaken()`, neither half
+  alone. **DRAWN ON EVERY PHONE, not only the winners'** — and the card key
+  broke it on every phone BUT the winner's.
+- **THE CODES ARE HELD AND ALL APPEAR TOGETHER AT THE END OF THE ROUND** —
+  *"the QR codes should all appear at the end."* **THIS REVERSES AN ANSWER OF
+  "both": do not put the trickle back.** **MINTED at the win, held from the
+  PHONE**, or it is *"my bingo winners didn't receive a QR code"* rebuilt.
+  **THREE RELEASES, ALL LOAD-BEARING** — the round ending, `Finish`, and an
+  EARLIER `round` or `carried`; **an unstamped voucher SHOWS**. **The HOST's
+  panel is never held.** **The phone says when it is coming, on the `won`
+  branch TOO** — that branch replaces the whole line.
+- **ONE PRIZE PER PHONE PER ROUND, AND IT NEVER LIFTS —
+  `stillWithoutAPrize()` is DELETED.** Lifting it is a BINGO button going
+  live, dead, then live again explaining neither: *"weird block midway
+  through"*. **This REVERSES a pinned test.** **The round that cannot pay out
+  is NOT automated away** — `view.noneLeft`, **its own flag beside `stalled`
+  because "play on" is then the wrong advice**. **Still no "you have already
+  won" on a phone** (`view.tookOne`).
 
 - **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS — it reads `quizzes/`
   only.** IDENTICAL on a bingo change is the guard answering confidently about

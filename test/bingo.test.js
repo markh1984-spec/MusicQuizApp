@@ -259,6 +259,11 @@ test('columns and diagonals count, not just rows', () => {
 test('after a line, you can play on for a full house', () => {
   const { game } = makeGame();
   const p = game.join({ name: 'X' });
+  // The full house goes to somebody ELSE, because one prize each is absolute:
+  // the line winner is out of the running for the rest of the round. What is
+  // under test here is `playOn` — the target moves and a full house is
+  // recognised — not who may take it.
+  const q = game.join({ name: 'Y' });
   winLine(game, p);
   game.claim(p.id);
 
@@ -266,15 +271,25 @@ test('after a line, you can play on for a full house', () => {
   assert.equal(game.state.target, TARGETS.FULL);
   assert.equal(game.state.phase, BINGO_PHASES.PLAYING);
   // The line they already had is no longer enough.
-  assert.equal(game.claim(p.id).valid, false);
+  assert.equal(game.claim(q.id).valid, false);
 
+  for (let i = 0; i < q.card.length; i++) {
+    game.call(q.card[i]);
+    game.mark({ playerId: q.id, index: i, marked: true });
+  }
+  const full = game.claim(q.id);
+  assert.equal(full.valid, true);
+  assert.equal(full.pattern, 'full');
+
+  // And the line winner really is done: a genuine full house of their own
+  // is still recorded as a correct call and still takes nothing.
   for (let i = 0; i < p.card.length; i++) {
     game.call(p.card[i]);
     game.mark({ playerId: p.id, index: i, marked: true });
   }
-  const full = game.claim(p.id);
-  assert.equal(full.valid, true);
-  assert.equal(full.pattern, 'full');
+  const again = game.claim(p.id);
+  assert.equal(again.valid, true, 'their call was right and is recorded as right');
+  assert.equal(again.prize, false, 'but one prize each per round never lifts');
 });
 
 test('every claim is recorded, right or wrong', () => {
@@ -864,12 +879,18 @@ test('a second prize in the same night mints a second, separate voucher', () => 
   const game = stagedGame(3); // a line, then two lines, then a full house
   game.state.rewards = ['A round of drinks', 'A bar tab'];
   const p = game.join({ name: 'Sharon' });
+  const q = game.join({ name: 'Dave' });
   game.start();
   completeLine(game, p, 0);
   game.claim(p.id);
   game.playOn();
-  completeLine(game, p, 1); // genuinely two lines now, marked over the first
-  game.claim(p.id);
+  // The second prize goes to Dave: one prize each per round is absolute, so
+  // "a second prize in the same night" is now two winners rather than one
+  // player winning twice. The point of the test is unchanged — two prizes
+  // mint two separate codes with their own places.
+  completeLine(game, q, 0);
+  completeLine(game, q, 1); // stage two is TWO lines, so Dave needs both
+  game.claim(q.id);
 
   const vouchers = Object.values(game.state.vouchers);
   assert.equal(vouchers.length, 2);
@@ -914,10 +935,22 @@ test('the winning player sees their own vouchers, and nobody else does', () => {
   completeLine(game, a, 0);
   game.claim(a.id);
 
+  // HELD until the round is over — the codes all appear together, so that
+  // the room goes to the bar in one go rather than trickling out.
+  assert.equal(game.playerView(a.id).vouchers, undefined,
+    'a code is not shown while the round is still being played for');
+
+  game.playOn();
+  playWholeCard(game, b.id); // two prizes is a line then a FULL HOUSE
+  game.claim(b.id);
+  assert.equal(game.allPrizesGone, true, 'both prizes have gone, so the round is over');
+
   const mine = game.playerView(a.id).vouchers;
   assert.equal(mine.length, 1);
   assert.equal(mine[0].reward, 'A round of drinks');
-  assert.equal(game.playerView(b.id).vouchers, undefined, 'nobody else holds one yet');
+  const theirs = game.playerView(b.id).vouchers;
+  assert.equal(theirs.length, 1, 'and the other winner sees only their own');
+  assert.equal(theirs[0].reward, 'A bar tab');
 });
 
 test('the host sees every voucher issued so far, across every winner', () => {
@@ -1063,7 +1096,7 @@ test('a player holding a prize cannot take the next one while anybody is still w
   assert.equal(game.state.prizeWinners[1].playerId, sue.id);
 });
 
-test('and the rule LIFTS once everybody has won something, or a small room stalls', () => {
+test('the rule NEVER lifts, and a small room is told the prize cannot be won', () => {
   const game = new BingoGame({ pack: makePack(), now: () => Date.parse('2026-09-04T21:00:00.000Z') });
   const dave = game.join({ name: 'Dave' });
   const sue = game.join({ name: 'Sue' });
@@ -1079,10 +1112,23 @@ test('and the rule LIFTS once everybody has won something, or a small room stall
   game.claim(sue.id);
   game.playOn();
 
+  /*
+   * THIS REVERSES WHAT THIS TEST USED TO ASSERT, DELIBERATELY. The rule used
+   * to lift once everybody held a prize, which meant a BINGO button went
+   * live, dead, then live again with nothing explaining either change —
+   * reported off a live night as a "weird block midway through". One prize
+   * each is absolute now, so the third prize here can never be claimed.
+   */
   const third = game.claim(dave.id);
-  assert.equal(third.valid, true);
-  assert.notEqual(third.prize, false, 'with nobody left waiting, the last prize must be winnable');
-  assert.equal(game.state.prizeWinners.length, 3, 'the round could not finish');
+  assert.equal(third.valid, true, 'his call was right and is recorded as right');
+  assert.equal(third.prize, false, 'one prize each per round, and it never lifts');
+  assert.equal(game.state.prizeWinners.length, 2, 'nobody could take the third');
+
+  // AND THE HOST IS TOLD, because the alternative is a room being called at
+  // for a prize that cannot land. `noneLeft` is its own flag: the advice for
+  // it ("start a new round") is different from `stalled`'s ("play on").
+  assert.equal(game.hostView().noneLeft, true,
+    'every phone holds a prize, so this one is unwinnable and has to be said');
 });
 
 test('the phone is told to stand down, and the control view says which of three it was', () => {

@@ -219,3 +219,87 @@ It also ended a disagreement with the launch: the picker showed one prize while
 a falsy count launched the pack's own two. **The picker clamps too**, or a
 count carried onto a smaller card names an option that no longer exists and the
 select goes silently blank.
+
+---
+
+## The rule became absolute, and the codes now wait for the end of the round
+
+Both asked for after a live night on 10 September 2026, and both REVERSE
+something this repo had deliberately built. The reversals are recorded here so
+nobody re-derives the old answer from first principles and puts it back.
+
+### `stillWithoutAPrize()` is deleted
+
+The one-prize-each rule used to lift the moment every phone in the room held a
+prize. The reasoning was sound on paper — by then the rule had done its job,
+and the alternative is a prize nobody can win. It was still wrong, and the
+reason is not in the logic at all:
+
+> *"Right now a single person can win but it has weird block midway through
+> and its not as smooth as I'd like."*
+
+From the room's side the valve is a BINGO button that goes **live, then dead,
+then live again**, with nothing on screen explaining either change. Nobody in a
+pub is tracking how many other tables hold a prize, so the second transition
+arrives from nowhere. A rule that is correct and unreadable is a rule that
+reads as the app being broken.
+
+So it is absolute: win once and you are out of the running for the rest of that
+round. One state change per phone, forwards only.
+
+**The cost is real and is deliberately not automated away.** Five prizes among
+three phones now leaves prizes four and five unwinnable for ever. Lifting the
+rule automatically to fix that is the rig running backwards — it takes back
+something the room was told a minute earlier, which is the exact fault this
+whole area exists to avoid. What the app owes the host instead is *knowing*:
+
+- **`view.stalled`** — everybody who has completed the card already holds a
+  prize. Playing on may still turn up a new card, so the advice is "play on,
+  new round, or hand it over".
+- **`view.noneLeft`** — every phone in the room holds a prize. Nothing can
+  ever land. The advice is "new round or finish", and **it must not say play
+  on**: that would be a quizmaster calling songs at a room that cannot answer.
+
+Two flags rather than one, because the wrong advice is worse than none.
+
+### The codes are held until the round is over
+
+> *"The QR codes should all appear at the end."*
+
+This reverses an answer of *"both — now and again at the end"* given before he
+had seen it working. A trickle of people getting up as each prize lands is the
+thing the shared break was meant to replace, so a code won at the line now
+waits for the last prize of that round.
+
+**Minted at the win, held from the phone.** Losing the mint would be the
+original *"my bingo winners didn't receive a QR code"* complaint rebuilt from
+scratch, so `issueVoucher()` is untouched and only `playerView()` filters.
+
+**Three ways a held code is released, and all three are load-bearing:**
+
+| Way out | Why it has to be there |
+|---|---|
+| `allPrizesGone` | the ordinary path — the round finished |
+| phase `FINISHED` | a host pressing *Finish* on a round that can never pay out its last prize must not take a real drink off somebody |
+| an earlier `round`, or `carried` | `newRound()` bumps `state.round` and deliberately does NOT clear `vouchers`, and a part boundary carries them — without the stamp, round two would hold round one's code back for ever |
+
+A voucher written before the `round` stamp existed has no `round` and is
+treated as an earlier one, so it shows. **Every unsure case shows**: a held
+code is a prize somebody standing at a bar cannot prove.
+
+**The host's own panel is never held.** They are the person a phone with
+nothing on it asks, and they need the code in front of them to answer.
+
+### And the phone has to say the code is coming
+
+Otherwise a winner sees a blank where a QR used to be, which is the very
+complaint that started all of this. The sentence rides on the line that already
+names what they hold — a clause, not a panel — and it goes the moment the
+banner says it better.
+
+**It was missed on the `won` branch, and only a real browser found it.** That
+branch replaces the whole status line, so the clause never reached the screen
+at the one moment it matters: the beat straight after somebody wins. The
+payload was correct throughout. `scripts/bingo-round-ends.mjs` drives three
+phones through a three-prize round and asserts a QR is **painted** — not
+present, painted — before and after the last prize.

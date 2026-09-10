@@ -223,11 +223,33 @@ function paintCard(root, s, me) {
     // What they have already won stays on screen beside what is being played
     // for now, so somebody who took the first prize can still see how close
     // they are to the next one.
+    /*
+     * AND WHERE THEIR CODE HAS GOT TO, because it no longer arrives with the
+     * win. The codes are held until the end of the round now, so without this
+     * line a winner sees nothing at all where a QR used to be — which is the
+     * exact complaint that started this (*"my bingo winners didn't receive a
+     * QR code"*) reproduced deliberately. Saying it is what makes the wait a
+     * plan rather than a fault.
+     *
+     * It rides on the line that already names what they hold, so this adds a
+     * clause and not a panel — and it goes the moment `prizesAllGone` turns
+     * the codes on, when the banner below says the same thing better.
+     */
     const already = (s.yourPrizes || []).length
-      ? `<span class="yours">You have won ${esc(s.yourPrizes.join(' and '))}</span>`
+      ? `<span class="yours">You have won ${esc(s.yourPrizes.join(' and '))}${
+        s.prizesAllGone ? '' : ' — your code comes up at the end of the round'}</span>`
       : '';
     if (s.won) {
-      status.innerHTML = '<span class="won">You got it. Well done.</span>';
+      /*
+       * AND THE `won` BRANCH NEEDS IT MOST, which is where it was missed.
+       * This replaces the whole status line, so the `already` clause built
+       * above never reached the screen at the one moment it matters — the
+       * beat straight after somebody wins, when they are looking for a QR
+       * code that is now deliberately not there. Found by driving a real
+       * browser: the payload was right and the sentence was not drawn.
+       */
+      status.innerHTML = `<span class="won">You got it. Well done.</span>${
+        s.prizesAllGone ? '' : '<span class="yours">Your code comes up at the end of the round</span>'}`;
     } else if (s.stage && s.stage.needs === 'full') {
       status.innerHTML = `<span>Playing for a <b>full house</b></span><span class="away">${away} to go</span>${already}`;
     } else {

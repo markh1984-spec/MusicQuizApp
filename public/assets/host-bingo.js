@@ -187,11 +187,22 @@ function playersPanel(s, act) {
    * land. The host has *Play on*, *New round* and *Finish*; what they did not
    * have was knowing.
    */
-  const stalled = s.stalled
-    ? `<div class="tiny" style="color:var(--gold);padding:6px 0">${s.stalled} ${
-      s.stalled === 1 ? 'card is' : 'cards are'} complete and already holding a prize — nobody
-      else can claim this one. Play on, start a new round, or hand it over yourself.</div>`
-    : '';
+  /*
+   * `noneLeft` OUTRANKS `stalled`, AND IT MUST NOT SAY "play on".
+   * One prize each is absolute now, so when every phone in the room holds one
+   * this prize can never be claimed — and the advice that fits `stalled`
+   * ("play on, a card may still land") is then a host calling songs at a room
+   * that cannot answer. Two states, two sentences, one line drawn.
+   */
+  const stalled = s.noneLeft
+    ? `<div class="tiny" style="color:var(--gold);padding:6px 0">Everybody has a prize, so
+      nobody can claim this one — one each per round. Start a new round to open it up, or
+      finish here.</div>`
+    : s.stalled
+      ? `<div class="tiny" style="color:var(--gold);padding:6px 0">${s.stalled} ${
+        s.stalled === 1 ? 'card is' : 'cards are'} complete and already holding a prize — nobody
+        else can claim this one. Play on, start a new round, or hand it over yourself.</div>`
+      : '';
   const el = node(`
     <div>
     <div class="joinq-slot"></div>

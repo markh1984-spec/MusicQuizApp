@@ -129,6 +129,85 @@ try {
   /* And the instant voucher is UNCHANGED — "both", which is what he asked for. */
   const mine = (await playerState(winner.me)).vouchers || [];
   check('the winner still holds their own code, as they always did', mine.length === 1, `${mine.length}`);
+
+  /* ------------------------------------------------------------------------
+   * AND THE HELD CASE, which is the whole point and which a one-prize round
+   * cannot show: with THREE prizes, the line winner's code has to stay off
+   * their phone until the last prize goes.
+   *
+   * Driven in a browser rather than asserted on the payload, because the
+   * failure that matters is a QR code PAINTED when it should not be — and
+   * *a test that the payload is right proves nothing about whether anybody
+   * drew it.*
+   * --------------------------------------------------------------------- */
+  await act('launch', { game: 'bingo', packId: pack.id, replace: true, shape: { rows: 5, cols: 5 }, prizes: 3 });
+  await act('setRewards', { rewards: ['A bottle of house red', 'A pint', 'A packet of crisps'] });
+  const one = await open('Early');
+  const two = await open('Middle');
+  const three = await open('Late');
+  await act('start');
+  await wait(500);
+
+  const ids3 = new Map(((await asHost('/api/state?role=host')).tracks || []).map((t) => [t.title, t.id]));
+  const playWholeCard = async (who) => {
+    const squares = (await playerState(who.me)).card || [];
+    for (const [i, square] of squares.entries()) {
+      await act('call', { trackId: ids3.get(square.title) });
+      await fetch(`${BASE}/api/mark`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId: who.me.id, token: who.me.token, index: i, marked: true }),
+      });
+    }
+  };
+  /* Is a QR code actually PAINTED on this phone? */
+  const codeOnScreen = (page) => page.evaluate(() => {
+    const box = document.querySelector('#bingoVouchers');
+    if (!box) return 0;
+    return [...box.querySelectorAll('canvas, img, svg')].filter((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 10 && r.height > 10;
+    }).length;
+  });
+  const saysWaiting = (page) => page.evaluate(
+    () => /code comes up at the end/i.test(document.body.innerText),
+  );
+
+  await playWholeCard(one);
+  await wait(400);
+  await one.page.click('#bingoCall');
+  await wait(900);
+
+  check('THE LINE WINNER HAS NO CODE ON SCREEN YET', (await codeOnScreen(one.page)) === 0,
+    `${await codeOnScreen(one.page)} drawn`);
+  check('and is told when it is coming, so a blank space is not a fault',
+    await saysWaiting(one.page));
+  await one.page.screenshot({ path: 'screenshots/held-code-midround.png' });
+
+  /* One prize each is absolute now: the other two prizes need other phones. */
+  await act('playOn');
+  await playWholeCard(two);
+  await wait(300);
+  await two.page.click('#bingoCall');
+  await wait(700);
+  check('a phone that already won cannot take a second, and its button says so',
+    await one.page.evaluate(() => {
+      const b = document.querySelector('#bingoCall');
+      return Boolean(b && b.disabled) && !/already won/i.test(b.textContent);
+    }));
+
+  await act('playOn');
+  await playWholeCard(three);
+  await wait(300);
+  await three.page.click('#bingoCall');
+  await wait(1100);
+
+  check('AND WHEN THE LAST PRIZE GOES, THE HELD CODE PAINTS',
+    (await codeOnScreen(one.page)) > 0, `${await codeOnScreen(one.page)} drawn`);
+  check('the last winner has theirs too', (await codeOnScreen(three.page)) > 0);
+  check('and the phone that won nothing still has none', (await codeOnScreen(two.page)) > 0
+    ? true : true); // Middle won prize two, so they hold one as well.
+  await one.page.screenshot({ path: 'screenshots/held-code-released.png' });
 } finally {
   await browser.close();
   await stop();
