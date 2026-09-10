@@ -54,6 +54,10 @@ import {
 import { comeBackFor, nextNightAt, comeBackText } from './src/comeback.js';
 import { isComposed, MAX_ROUNDS } from './src/running-order.js';
 import { applyBilling, billingEmail } from './src/billing.js';
+import { PropUse, ENOUGH_TO_JUDGE } from './src/prop-use.js';
+// The prop list, shared with the phone exactly like schemes and break-parts —
+// so the tally and the tray can never disagree about which props exist.
+import { STICKERS } from './public/assets/stickers.js';
 import {
   checkoutSession, portalSession, sellableTiers, stripeConfigured, toBillingEvent, verifySignature, webhookSecret,
 } from './src/stripe.js';
@@ -122,6 +126,14 @@ const suggestions = new Suggestions(paths.suggestions);
  * and comes back only into an empty ledger.
  */
 const spend = new Spend(paths.spend);
+/*
+ * WHICH PROPS PEOPLE ACTUALLY REACH FOR — two integers each, global, never a
+ * log. It answers "is this drawing worth keeping" with evidence rather than a
+ * guess, and it is what makes the tray's popularity weighting safe: see
+ * `src/prop-use.js` for why a count of uses alone would have been a feedback
+ * loop that lied.
+ */
+const propUse = new PropUse(paths.propUse);
 
 /*
  * One room per quizmaster.
@@ -1701,6 +1713,48 @@ async function handleGet(req, res, url, route) {
     return sendJson(res, 200, { reports: reports.all(), ...reports.summary() }), true;
   }
 
+  /*
+   * WHICH PROPS ARE EARNING THEIR PLACE — worst first, which is the order
+   * somebody deleting things reads it in.
+   *
+   * **GATED ON `FEATURES.PHOTO_EXPORT`, which is the Photos tab's own gate,
+   * and NOT on the `/api/owner/` prefix.** The first version of this comment
+   * said the prefix was the gate, and the route was open to anybody — because
+   * `OWNER_ONLY` in `gates.js` is an EXEMPTION from the broad quiz-feature
+   * check (the owner holds no quiz features), not a check of its own. *A
+   * comment that claims the opposite is where the next bug hides*, and this
+   * one was the bug as well as the claim.
+   *
+   * The tally itself has no player, team, night or photograph in it (see
+   * `src/prop-use.js`), so this is a table about drawings rather than about
+   * people — but it is the owner's own catalogue and it sits on the owner's
+   * own tab.
+   *
+   * **IN `handleGet`, WHICH IS WHERE IT BELONGS AND IS NOT WHERE IT WAS.** It
+   * was written beside `/api/owner/hosting` — a PUT, in `handleWrite` — so
+   * every GET fell straight through to the generic 404 while the code read as
+   * a working route. That is this repo's own recorded trap, and the gallery
+   * publish route shipped with it: **a route in the wrong handler is dead code
+   * that reads as a feature.** Caught because the test asserts against the 404
+   * rather than for the 200.
+   */
+  if (route === '/api/owner/prop-use') {
+    if (!allowed(req, res, url, FEATURES.PHOTO_EXPORT)) return true;
+    const labels = Object.fromEntries(STICKERS.map((x) => [x.id, x.label]));
+    const seasonal = new Set(STICKERS.filter((x) => x.look).map((x) => x.id));
+    return sendJson(res, 200, {
+      enough: ENOUGH_TO_JUDGE,
+      /*
+       * SEASONAL PROPS ARE NAMED AS SEASONAL, and that is load-bearing rather
+       * than decoration: they appear only on the one night their look is on,
+       * so their `shown` climbs a fraction as fast and a table that did not
+       * say so reads as "delete every skull in January".
+       */
+      props: propUse.table(STICKERS.map((x) => x.id))
+        .map((r) => ({ ...r, label: labels[r.id] || r.id, seasonal: seasonal.has(r.id) })),
+    }), true;
+  }
+
   if (route === '/api/owner/accounts') {
     if (!allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
     return sendJson(res, 200, { accounts: subscriberList(), backupReady: privateRepoConfigured() }), true;
@@ -1776,6 +1830,24 @@ async function handleGet(req, res, url, route) {
    * different pieces of advice to give somebody locked out five minutes before
    * a gig. It reveals no email address and no count.
    */
+  /*
+   * HOW OFTEN EACH PROP GETS REACHED FOR, for the camera tray's weighting.
+   *
+   * **ITS OWN GET RATHER THAN A FIELD ON THE STATE PAYLOAD**, and that is the
+   * whole reason it exists: every phone in the room receives a payload on
+   * every push, so a table of sixty-seven rates riding on all of them is real
+   * bytes on pub wifi for something that changes over WEEKS — and it would
+   * break `pub-unchanged`, which is the guard standing over a pub night.
+   * Fetched once, by the phones that actually open the camera.
+   *
+   * Open, because it is aggregate data about the owner's own drawings: no
+   * player, no team, no night, nothing anybody said or did. See
+   * `src/prop-use.js`.
+   */
+  if (route === '/api/prop-weights') {
+    return sendJson(res, 200, { weights: propUse.weights(STICKERS.map((s) => s.id)) }), true;
+  }
+
   if (route === '/api/has-accounts') {
     return sendJson(res, 200, { any: accounts.all.length > 0 }), true;
   }
@@ -3916,6 +3988,19 @@ async function restoreFromBackup() {
     }
   }
 
+  /*
+   * The prop tally. `data/` is wiped on every deploy, so without this it would
+   * reset several times a week and never reach the threshold where its numbers
+   * mean anything — the backup IS the storage here rather than a safety net.
+   */
+  if (propUse.isEmpty()) {
+    const saved = await getFile('data/prop-use.json', 'private');
+    if (saved) {
+      const result = propUse.restore(saved.toString('utf8'));
+      if (result.ok) console.log(`[props] restored the tally for ${result.props} prop(s)`);
+    }
+  }
+
   // The house invoice book. Every other room's is restored the first time that
   // quizmaster opens their Invoices tab, because rooms are created lazily and
   // this runs once at boot — see ensureInvoicesRestored below.
@@ -4440,6 +4525,34 @@ function readDraft(body = {}) {
     depositPence: deposit,
     notes: body.notes,
   };
+}
+
+/*
+ * THE PROP TALLY, PUSHED — and without this the whole thing is pointless.
+ *
+ * `data/` is wiped on every deploy and every push IS a deploy, so a counter
+ * that only lives there would reset itself several times a week and never
+ * reach the threshold where its numbers mean anything. The backup is not a
+ * safety net here, it is the storage.
+ *
+ * Coalesced rather than pushed per photograph: sixty phones in a break would
+ * otherwise be sixty GitHub calls against an hourly quota shared with the
+ * packs, the accounts book and the photographs themselves.
+ */
+let propPush = null;
+function backUpPropUse() {
+  if (propPush) return propPush;
+  propPush = new Promise((resolve) => {
+    setTimeout(async () => {
+      propPush = null;
+      try {
+        resolve(await backUp('data/prop-use.json', propUse.contents(), 'Update prop use', () => {}));
+      } catch (err) {
+        resolve({ ok: false, error: err.message });
+      }
+    }, 60_000).unref?.();
+  });
+  return propPush;
 }
 
 async function backUpHistory(log = () => {}) {
@@ -6239,6 +6352,25 @@ async function handleWrite(req, res, url, route) {
       // whether it is eligible for the public gallery later.
       camera: url.searchParams.get('camera') === '1',
     });
+    /*
+     * WHICH PROPS THE TRAY OFFERED AND WHICH GOT STUCK ON — see
+     * `src/prop-use.js`. On the upload that already happens rather than a
+     * route of its own: a phone in a pub should not make a second request to
+     * tell the server something the first one could have carried.
+     *
+     * OUTSIDE the `result.ok` branch and never able to fail the photo. The
+     * bookkeeping rule this repo already has for the spend ledger: a picture
+     * lost to a counter would be the tail wagging the dog. It is also
+     * deliberately recorded for a REFUSED photo — a prop somebody chose is a
+     * prop somebody wanted, whether or not the JPEG survived the trip.
+     */
+    try {
+      propUse.record({
+        shown: String(url.searchParams.get('shown') || '').split(',').filter(Boolean),
+        used: String(url.searchParams.get('used') || '').split(',').filter(Boolean),
+      });
+      backUpPropUse();
+    } catch { /* never fatal */ }
     if (result.ok) {
       pushState(room);
       // File it away in the background. The phone gets its answer first —

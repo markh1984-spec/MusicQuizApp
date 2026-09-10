@@ -74,6 +74,10 @@ export const paths = {
   // What the AI has cost, written down as it happens — the number the whole
   // tier structure is built on, and until now it existed nowhere.
   spend: path.join(config.dataDir, 'spend.json'),
+  // Which props get reached for. Global rather than per room — the props are
+  // the OWNER'S catalogue, so "should this drawing exist" is one question
+  // however many quizmasters were running nights. See src/prop-use.js.
+  propUse: path.join(config.dataDir, 'prop-use.json'),
 };
 
 /**

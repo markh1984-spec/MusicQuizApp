@@ -814,6 +814,126 @@ export function stickersFor(look) {
   };
 }
 
+/*
+ * ---- THE TRAY ROTATES, AND WHY IT HAD TO
+ *
+ * Reported off the live app: *"there's about fifty or sixty icons in there and
+ * I feel like some might be getting underused because they're probably not
+ * appearing."* He is right and the arithmetic is brutal — forty-two props on
+ * an ordinary night, **four above the fold on a 320px phone**, so nine rows in
+ * ten are only ever seen by somebody who scrolls for the fun of it.
+ *
+ * **THE HEAD IS FIXED AND ONLY THE TAIL ROTATES.** The first row was composed
+ * deliberately — three band shirts that are ONE JOKE IN THREE PIECES, plus the
+ * googly eyes — and shuffling that turns a joke into a shirt. So `HEAD_KEPT`
+ * props hold their place and everything after them moves.
+ *
+ * **RE-ROLLED WHEN THE SHEET OPENS, NEVER ON A RENDER.** The camera sheet is
+ * rebuilt on state pushes like every other panel here, so ordering inside the
+ * render would reshuffle the tray under a thumb mid-scroll — the same fault
+ * this codebase has already recorded for the bay, the launch bar and the
+ * who-picked-what list. `trayOrder()` is called once, on open, and the result
+ * is held.
+ *
+ * **WEIGHTED TOWARDS WHAT GETS USED, WITH A FLOOR THAT IS LOAD-BEARING.**
+ * Asked for: *"rotate on every render with a bias towards more popular
+ * icons?"* — and the bias is safe ONLY because `src/prop-use.js` counts how
+ * often a prop was SHOWN as well as used, so popularity is a RATE. Without
+ * that, weighting by a raw count is a feedback loop that starves the very
+ * props the exercise exists to judge. **Never remove the floor**: a prop with
+ * no data has to keep appearing or it can never earn any.
+ */
+
+/** How many keep their place at the front. Four is the first row at 320px. */
+export const HEAD_KEPT = 4;
+
+/**
+ * The worst odds any prop may have against the best, as a share. A popular
+ * prop is worth `1 + BIAS` and an unused one `1`, so the spread is deliberately
+ * gentle: this is a nudge towards the funnier ones, not a ranking. Turn it to
+ * 0 and the tray is an honest shuffle, which is the fallback whenever there is
+ * no usage data at all.
+ */
+export const BIAS = 1.5;
+
+/**
+ * A shuffle that leans towards what people reach for.
+ *
+ * @param {object[]} list     props, in their written order
+ * @param {object} weights    `{id: rate|null}` from the server; null means
+ *   "not judged yet", which weighs the same as an average prop rather than
+ *   the same as an unpopular one — an unknown is not a verdict.
+ * @param {function} random   injected, like every other random in this app,
+ *   so a test can pin it.
+ */
+export function trayOrder(list, weights = {}, random = Math.random) {
+  const items = [...list];
+  const head = items.slice(0, HEAD_KEPT);
+  const tail = items.slice(HEAD_KEPT);
+
+  /*
+   * The weight of one prop. A null rate sits at the MIDDLE rather than the
+   * bottom, so a brand new drawing is not buried before anybody has had the
+   * chance to like it — which would be the loop again, wearing a default.
+   */
+  const rates = tail.map((s) => weights[s.id]).filter((r) => typeof r === 'number');
+  const middle = rates.length ? rates.reduce((a, b) => a + b, 0) / rates.length : 0;
+  const best = rates.length ? Math.max(...rates, middle) : 0;
+  const weigh = (s) => {
+    const rate = typeof weights[s.id] === 'number' ? weights[s.id] : middle;
+    if (!best) return 1;
+    return 1 + BIAS * Math.max(0, Math.min(1, rate / best));
+  };
+
+  /*
+   * A WEIGHTED DRAW WITHOUT REPLACEMENT, rather than a sort by weight — a sort
+   * puts the same prop first every time, which is not rotation at all. Each
+   * pick is proportional to what is left, so a heavy prop is LIKELY near the
+   * front and never guaranteed to be, and a light one is rare rather than
+   * impossible.
+   */
+  const pool = tail.map((s) => ({ s, w: weigh(s) }));
+  const out = [];
+  let total = pool.reduce((sum, p) => sum + p.w, 0);
+  while (pool.length) {
+    let roll = random() * total;
+    let i = 0;
+    while (i < pool.length - 1 && roll > pool[i].w) { roll -= pool[i].w; i += 1; }
+    total -= pool[i].w;
+    out.push(pool.splice(i, 1)[0].s);
+  }
+  return [...head, ...out];
+}
+
+/**
+ * The few they reached for last time, floated to the top — chosen over a PIN.
+ *
+ * *"Can we do it so that people can actually pin their favourites?"* — and the
+ * answer that got built is the derived one rather than the declared one, for
+ * three reasons that all point the same way. A pin needs a FOURTH gesture on a
+ * tile that is a quarter of a 320px screen, where tap-to-place, hold-to-drag
+ * and double-tap-to-remove are already spoken for. A pin only starts paying on
+ * somebody's SECOND night, while this works on their first. And *clarity beats
+ * everything*: nobody has to be told what this is, because it is simply where
+ * they left off.
+ *
+ * **NOT A SETTING AND NOT SYNCED.** It lives in the phone's own storage beside
+ * the team name, so it is per handset, and losing it costs nothing.
+ */
+export const RECENT_KEPT = 4;
+
+export function withRecent(list, recent = []) {
+  if (!recent.length) return list;
+  const first = [];
+  for (const id of recent.slice(0, RECENT_KEPT)) {
+    const found = list.find((s) => s.id === id);
+    // A prop that has since been deleted is skipped rather than left as a gap.
+    if (found && !first.includes(found)) first.push(found);
+  }
+  if (!first.length) return list;
+  return [...first, ...list.filter((s) => !first.includes(s))];
+}
+
 export function stickerSvg(id) {
   const art = ART[id];
   if (!art) return '';

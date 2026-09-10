@@ -16,13 +16,48 @@
 import { esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam, rememberRoom } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { drawFiltered, toJpeg, looksCameraTaken } from './filters.js';
-import { stickersFor, stickerSvg, drawStickers, stickerAt, placed, preloadStickers } from './stickers.js';
+import { stickersFor, stickerSvg, drawStickers, stickerAt, placed, preloadStickers, trayOrder, withRecent } from './stickers.js';
 import { paintLook, DEFAULT_LOOK, LOOKS } from './looks.js';
 import { paintScheme } from './schemes.js';
 import { paintChatButton } from './chat.js';
 import { arcadeCard, wireArcade, stopArcade } from './lobby-menu.js';
 
 const STORE_KEY = 'musicquiz.player';
+/** What they reached for last time, on this handset. See stickers.js. */
+const RECENT_KEY = 'musicquiz.props';
+
+/*
+ * HOW OFTEN EACH PROP GETS REACHED FOR, fetched once and held.
+ *
+ * In a module binding rather than inside the render, because the camera sheet
+ * is rebuilt on every state push — which during a break is every time somebody
+ * joins. Fetching per rebuild would be a request per phone per push, and
+ * re-rolling the tray per rebuild would reshuffle it under a thumb mid-scroll.
+ */
+let propWeights = null;
+let propWeightsAsked = false;
+
+/** The tray as it was actually offered, so `shown` is the truth and not a guess. */
+let trayShown = [];
+/** Everything reached for since this sheet opened, whether or not it stayed on. */
+const trayUsed = new Set();
+
+function recentProps() {
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]').filter((x) => typeof x === 'string'); } catch { return []; }
+}
+
+/** One prop, reached for: remembered on this phone and counted for the owner. */
+function reachedFor(id) {
+  trayUsed.add(id);
+  rememberProp(id);
+}
+
+function rememberProp(id) {
+  try {
+    const next = [id, ...recentProps().filter((x) => x !== id)].slice(0, 8);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+  } catch { /* a private window, and it simply does not remember */ }
+}
 
 /*
  * How long a thumb has to rest on a prop before it lifts.
@@ -442,7 +477,40 @@ function openCamera() {
     seasonProps.hidden = false;
     seasonName.textContent = (LOOKS.find((l) => l.id === look) || {}).label || 'Tonight';
   }
-  for (const s of [...seasonal, ...always]) {
+  /*
+   * THE TRAY ROTATES, AND IT IS ROLLED HERE — ONCE, WHERE THE SHEET IS BUILT.
+   *
+   * Forty-two props on an ordinary night and four above the fold on a 320px
+   * phone, so nine rows in ten were only ever seen by somebody scrolling for
+   * the fun of it: *"some might be getting underused because they're probably
+   * not appearing."*
+   *
+   * Weighted towards what people actually reach for, which is only safe
+   * because the server counts how often a prop was SHOWN as well — so
+   * popularity is a RATE and the weighting cannot starve the very props the
+   * counting exists to judge. See `src/prop-use.js`.
+   *
+   * **THE SEASONAL ROW IS NOT ROTATED.** It is a handful of props on the one
+   * night they belong to, all of them already above the fold — there is
+   * nothing to surface and shuffling it would only make it hard to find the
+   * skull you saw a minute ago.
+   *
+   * **AND WHAT THEY REACHED FOR LAST TIME LEADS** — the favourites, derived
+   * rather than pinned: no fourth gesture on a tile that is a quarter of a
+   * 320px screen, and it works on somebody's FIRST night.
+   */
+  if (!propWeightsAsked) {
+    propWeightsAsked = true;
+    fetch('/api/prop-weights')
+      .then((r) => r.json())
+      .then((d) => { propWeights = (d && d.weights) || {}; })
+      // A tray that cannot reach the server is an honest shuffle rather than a
+      // broken sheet — the weighting is a nicety and the props are the feature.
+      .catch(() => { propWeights = {}; });
+  }
+  const rotated = withRecent(trayOrder(always, propWeights || {}), recentProps());
+  trayShown = [...seasonal, ...rotated].map((s) => s.id);
+  for (const s of [...seasonal, ...rotated]) {
     const tray = s.look ? seasonProps : props;
     const chip = node(`
       <button class="cam-prop" data-id="${s.id}" title="${esc(s.label)}" aria-label="${esc(s.label)}">
@@ -472,6 +540,10 @@ function openCamera() {
     let from = null;
     const lift = (e) => {
       hold = 0;
+      // REACHED FOR — counted here rather than at the upload, so a prop tried
+      // and taken off again still counts as one somebody wanted. The question
+      // is what people go for, not what survived the edit.
+      reachedFor(s.id);
       const prop = placed(s.id);
       stuckOn.push(prop);
       dragging = prop;
@@ -498,6 +570,7 @@ function openCamera() {
       // tap still puts it in the middle exactly as it always has.
       if (!hold) return;
       drop();
+      reachedFor(s.id);
       stuckOn.push(placed(s.id));
       if (navigator.vibrate) navigator.vibrate(12);
       repaint();
@@ -752,7 +825,14 @@ function openCamera() {
       drawFiltered(canvas, source, PLAIN, 1080, { flip: flipped });
       await drawStickers(canvas, stuckOn);
       const blob = await toJpeg(canvas);
-      const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(PLAIN)}${cameraLikely ? '&camera=1' : ''}${roomParam()}`, {
+      /*
+       * WHAT THE TRAY OFFERED AND WHAT GOT REACHED FOR, on the request that
+       * was already going — a phone in a pub should not make a second one to
+       * tell the server something this could carry. See `src/prop-use.js` for
+       * why both halves are needed and neither is a log.
+       */
+      const tally = `&shown=${encodeURIComponent(trayShown.join(','))}&used=${encodeURIComponent([...trayUsed].join(','))}`;
+      const res = await fetch(`/api/photo?playerId=${encodeURIComponent(me.id)}&filter=${encodeURIComponent(PLAIN)}${cameraLikely ? '&camera=1' : ''}${tally}${roomParam()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'image/jpeg' },
         body: blob,

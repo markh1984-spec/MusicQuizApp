@@ -206,3 +206,68 @@ async function sharePhotos(list) {
     URL.revokeObjectURL(a.href);
   }
 }
+
+/* ============================================================= PROP USE
+ *
+ * WHICH PROPS ARE EARNING THEIR PLACE — the delete list, worst first.
+ *
+ * Asked for directly: *"track which ones just don't get used, because if
+ * people don't like those icons then they're bloat and they need to go, and
+ * then we can replace them with other ones."*
+ *
+ * **THE COLUMN THAT DECIDES IS THE RATE, NEVER THE COUNT.** The tray is
+ * weighted towards popular props, so a raw count of uses measures how often
+ * something was OFFERED at least as much as whether anybody wanted it — and
+ * deleting artwork on that is irreversible. `src/prop-use.js` counts both
+ * halves for exactly this table.
+ *
+ * **AND "NOT ENOUGH YET" IS PRINTED AS ITSELF, never as 0%** — a prop shown
+ * three times and used none is not evidence of anything, and a table that
+ * renders it as 0% at the top of a delete list gets a good drawing binned.
+ *
+ * Here rather than on the Money tab because it is about the photographs, and
+ * this is the photographs' page.
+ */
+export function propUsePanel() {
+  const el = node(`
+    <div class="panel">
+      <h3>Which props people reach for</h3>
+      <div class="tiny status">Loading…</div>
+      <div class="own-rows prop-rows" style="margin-top:10px"></div>
+    </div>`);
+
+  const rows = el.querySelector('.prop-rows');
+  const status = el.querySelector('.status');
+
+  fetch('/api/owner/prop-use').then((r) => r.json()).then((data) => {
+    const props = (data && data.props) || [];
+    if (!props.length) { status.textContent = 'No props to report on.'; return; }
+
+    const judged = props.filter((p) => p.enough);
+    const waiting = props.length - judged.length;
+    status.textContent = judged.length
+      ? `${judged.length} of ${props.length} have been shown enough to judge`
+        + `${waiting ? ` · ${waiting} still gathering` : ''}. Worst first.`
+      /*
+       * THE EMPTY STATE SAYS WHAT TO DO, which here is "nothing yet" — and it
+       * says WHY, because a table that is blank for a fortnight otherwise
+       * reads as a feature that does not work.
+       */
+      : `Nothing has been shown ${data.enough} times yet, so there is nothing`
+        + ' safe to judge. Come back after a few nights.';
+
+    rows.replaceChildren(...props.map((p) => node(`
+      <div class="own-row">
+        <div class="own-row-main">
+          <b>${esc(p.label)}</b>
+          ${p.seasonal ? ' <span class="tiny">seasonal</span>' : ''}
+          <span class="tiny">shown ${p.shown} · used ${p.used}</span>
+        </div>
+        <div class="own-row-num">${p.enough
+    ? `<b>${Math.round(p.rate * 100)}%</b>`
+    : '<span class="tiny">not enough yet</span>'}</div>
+      </div>`)));
+  }).catch(() => { status.textContent = 'Could not read the prop tally.'; });
+
+  return el;
+}

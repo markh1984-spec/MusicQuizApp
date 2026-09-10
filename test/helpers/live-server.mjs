@@ -114,7 +114,10 @@ export async function withServer(run, { seed, hostKey = 'live-test-key', env = {
       if (!base) { child.kill('SIGKILL'); child = null; }
     }
     if (!base) throw new Error('the app never came up on any free port');
-    await run(base, seeded);
+    // `dir` third: several checks need to read what the server WROTE, and
+    // deriving it from `seeded` only works for tests that seeded a file.
+    // Existing callers take two arguments and are untouched.
+    await run(base, seeded, dir);
   } finally {
     child?.kill('SIGKILL');
     fs.rmSync(dir, { recursive: true, force: true });

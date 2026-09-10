@@ -10,7 +10,7 @@
 import { esc, node, brandLink, paintNav, paintIdentity, menuRights, postJson } from './client.js';
 import { TIERS, tierFor, findTier, KINDS, KIND_LABEL, kindOf,
   FEATURE_TIER, FEATURE_META, tierOf, setTierOverrides, NOT_BUILT } from './plans.js';
-import { photosSection } from './photos-tab.js';
+import { photosSection, propUsePanel } from './photos-tab.js';
 
 const mainEl = document.getElementById('main');
 const whoEl = document.getElementById('whoami');
@@ -1175,7 +1175,7 @@ const OWNER_TABS = [
    * projector are on the control view, where they are wanted with a mic in one
    * hand rather than on a page.
    */
-  { id: 'photos', label: 'Photos', body: () => [photosSection()], count: () => 0 },
+  { id: 'photos', label: 'Photos', body: () => [photosSection(), propUsePanel()], count: () => 0 },
   {
     id: 'inbox',
     label: 'Inbox',
