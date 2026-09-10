@@ -311,3 +311,33 @@ into `console-breaks.js` behind `breakPlumbing({ night, segmentsNow, repaint
 that module is still a leaf. **The destructuring sits above every paint
 function that reads it**: a `const` read in its temporal dead zone throws when
 the line RUNS, and the console's own catch swallows it.
+
+## Tonight pins where it already is, never at a fixed line
+
+Moved out of `CLAUDE.md` on 10 September 2026 to pay for a new rule rather
+than raise the budget again. **The rule itself stays there**; this is the
+reasoning behind it.
+
+Tonight goes sticky the moment a drag starts, so the panel you are dropping
+onto cannot scroll away underneath you. The first version pinned it at
+`--topbar-h`, which sounds like the obvious place and is wrong for a reason
+worth keeping: **pinning at a fixed line only ever MOVES a panel that has
+already scrolled past that line — and it always has**, because the way you
+reach the library is by scrolling DOWN past Tonight to get to it. So the
+panel lurched about 90px upward the instant a card was picked up, and every
+tile in the running order slid out from under the cursor that was aiming at
+one of them.
+
+**A sticky top may be NEGATIVE**, which is the whole fix.
+`pinTonightWhereItIs()` measures the panel's own offset at `dragstart` and
+freezes it exactly where the eye last saw it — so nothing moves at all when
+you pick a card up, which is the only behaviour a hand can aim at.
+
+The floor asks for **ENOUGH** of the drop row rather than all of it
+(`KEEP_OF_DROP_ROW`). Demanding the whole row back was tried and left a safe
+zone narrower than the scroll people actually do, so the panel started
+lurching again at the bottom of the shelf — the same fault the negative top
+had just removed, arriving from the other end.
+
+**The topbar is measured, never written out.** It wraps on a phone, so a
+hard-coded height is right at 1280 and wrong at 390, silently.

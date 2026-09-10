@@ -102,10 +102,49 @@ function paintVouchers(root, s) {
   const box = root.querySelector('#bingoVouchers');
   if (!box) return;
   const list = s.vouchers || [];
-  const seen = JSON.stringify(list);
+  /*
+   * THE BREAK IS PART OF THE KEY, or it never draws.
+   *
+   * This function returns early when the vouchers have not changed — and at
+   * the end of a round they have NOT. **A card key is a fingerprint of what
+   * it DRAWS, never one field of it** — the fifth sighting of that here.
+   *
+   * **AND IT IS INVISIBLE ON THE ONE PHONE ANYBODY WOULD TEST.** With the
+   * fault reinstated in a real browser, the WINNER still saw the banner: the
+   * prize they had just been handed changed the list in the same instant, so
+   * the key moved anyway and the banner rode in on the back of it. Every
+   * OTHER phone in the room — empty list before, empty list after, identical
+   * key — drew nothing at all. So it works perfectly for one person and
+   * fails for the sixty the moment is for, which is why it is checked from
+   * outside: `node scripts/bingo-round-ends.mjs`.
+   */
+  const seen = JSON.stringify([list, Boolean(s.prizesAllGone)]);
   if (seen === lastVouchersSeen) return;
   lastVouchersSeen = seen;
-  box.replaceChildren(...list.map((v) => node(voucherCard(v))));
+
+  /*
+   * ALL THE PRIZES ARE GONE — one moment the room reaches together.
+   *
+   * *"I'd prefer they all get them once the full house is claimed at the same
+   * time, so there's an obvious break where they can all get their drinks at
+   * the same time."*
+   *
+   * The banner is drawn for EVERYBODY, not only winners: a room where half
+   * the phones say the round is over and the rest say nothing does not get up
+   * together, which is the whole thing being asked for. A winner gets the
+   * line about their own code; everybody else is simply told the round is
+   * done, so nobody is left wondering whether to sit back down.
+   */
+  const done = Boolean(s.prizesAllGone);
+  const banner = done
+    ? [node(`<div class="bingo-allgone">
+        <b>That's all the prizes gone.</b>
+        <span>${list.length
+    ? 'Show the code below at the bar.'
+    : 'Nothing for this one \u2014 stay put, there is more to come.'}</span>
+      </div>`)]
+    : [];
+  box.replaceChildren(...banner, ...list.map((v) => node(voucherCard(v))));
 }
 
 /**

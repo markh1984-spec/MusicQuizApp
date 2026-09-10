@@ -1737,31 +1737,30 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   TRAVELS WITH THE ROW.**
 - **ONE ROOM FOR THE WHOLE PHOTO STORY — `galleryRoomFor()`.** The gallery
   reads the OWNER'S OWN QUIZMASTER ROOM, never `HOUSE`; the console wrote
-  through `roomForHost()`, so a night could be published into a folder the page
-  never looks at, be told it worked, and read back as *"Not published"*. **The
-  hazard was written down above `galleryRoomId()` and left** — which is how a
-  noted hazard becomes a bug report.
+  through `roomForHost()`, so a night published into a folder the page never
+  looks at read back as *"Not published"*. **The hazard was written down above
+  `galleryRoomId()` and left** — how a noted hazard becomes a bug report.
 - **THE PRIVATE REPO IS TESTABLE NOW** — `photo-repo-stub.mjs`: real server,
   fixture network. **Publishing lived behind a token the suite must never
   need.**
 - **`published.json` HAS ONE WRITER AT A TIME, PER ROOM — `inOrder()` in
-  `src/gallery.js`.** Two callers each read the file whole and write it back,
-  so a lamp write begun before a publish finished **silently un-published the
+  `src/gallery.js`.** Two callers read the file whole and write it back, so a
+  lamp write begun before a publish finished **silently un-published the
   night**. **THE BROWSER'S QUEUE CANNOT COVER IT** — order it where the FILE
   is
 - **A READ THAT FAILED IS NOT AN EMPTY FOLDER — `tryGetFile()` /
   `tryListDir()`.** `getFile()`/`listDir()` answer `null`/`[]` for a 404, a 403
-  and a dropped connection alike — right for ninety callers, **data loss for the
-  four that LATCH**: one 403 after a deploy marked a room restored with nothing
-  restored, nothing logged. **A 404 is an ANSWER; anything else is a failure to
-  LOOK.** `restoreOnce()` latches on the way OUT. **ONE IMPLEMENTATION.** A
-  failed listing is not cached; **no TTL, which would serve the wrong answer for
-  its length.**
-- **A READ-BACK SHA CAN BE STALE — `GitHub 409` reached a live console.** The
-  Contents API is served from a replica, so a `GET` after a 200 `PUT` can hand
-  back the version before it. **The sha a `PUT` HANDS BACK cannot be served
-  stale**, so `putFile()` remembers it. **It is a CACHE, so it must be able to
-  be wrong**: forgotten, re-read past the caches, retried once, said in WORDS
+  and a dropped connection alike — **data loss for the four callers that
+  LATCH**: one 403 after a deploy marked a room restored with nothing restored,
+  nothing logged. **A 404 is an ANSWER; anything else is a failure to LOOK.**
+  `restoreOnce()` latches on the way OUT. **ONE IMPLEMENTATION.** A failed
+  listing is not cached; **no TTL, which serves the wrong answer for its
+  length.**
+- **A READ-BACK SHA CAN BE STALE — `GitHub 409` reached a live console**, the
+  Contents API being served from a replica. **The sha a `PUT` HANDS BACK
+  cannot be served stale**, so `putFile()` remembers it. **It is a CACHE, so
+  it must be able to be wrong**: forgotten, re-read past the caches, retried
+  once, said in WORDS
 - **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT, GROUPED BY PUB** —
   `coverPhotos()`. **Pins lead, the rest is a SPREAD**, seeded off the date.
   **BUILT FROM THE SAME FILTERED LIST THE NIGHT'S PAGE SHOWS.** **A pin is a
@@ -1776,9 +1775,9 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   one**: the one place *present and inert* does not apply, that rule being
   about a page driven weekly rather than one a stranger sees once.
 - **THE LEAGUE IS EXPORTED TO TWO AUDIENCES AND THEY WANTED DIFFERENT THINGS**
-  — the landlord wants EVIDENCE, so the season table joined the post-night
-  report he already receives; the teams want the table on a WALL, so `/league`
-  is a public page per quizmaster. One thing for both would serve neither.
+  — the landlord wants EVIDENCE (the season table on the post-night report),
+  the teams want it on a WALL (`/league`, per quizmaster). **One thing for
+  both would serve neither.**
   - **A REPORT SAYS WHAT THE ROOM SAW THAT NIGHT, not what is true today** —
     `leagueAfter()` winds the night list AND the season window back.
   - **A PUBLIC PAGE IS A PUBLISH, PER VENUE, FAILING CLOSED** —
@@ -2158,6 +2157,13 @@ the prizes."*
   If everyone who has completed the card already holds a prize, the round waits
   for a card that may never land. **The rule is NOT lifted** — the host already
   has *Play on*, *New round* and *Finish*. What was missing is being told.
+- **AND WHEN THE LAST PRIZE GOES THE WHOLE ROOM IS TOLD — `allPrizesGone`**,
+  one break everybody reaches at once. **The instant voucher is UNCHANGED** —
+  *both*. **IT IS NOT THE `WON` PHASE**, which fires on EVERY claim: it is
+  `onLastStage && stageTaken()`, neither half alone. **DRAWN ON EVERY PHONE,
+  not only the winners'** — and the card key broke it on every phone BUT the
+  winner's, so `bingo-round-ends.mjs` is the check.
+
 - **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS — it reads `quizzes/`
   only.** IDENTICAL on a bingo change is the guard answering confidently about
   something it is not looking at. `node scripts/bingo-prizes.mjs` drives three
@@ -3024,7 +3030,6 @@ public/                the screens; *-bingo.js files hold the bingo variants
   assets/stickers.js   props to drag onto a photo: dog ears, a clown nose
   assets/schemes.js    a quizmaster's own two colours, shared with the server
   assets/break-parts.js  what happens in each gap of a night, shared with the server
-  assets/pileup.js     Pile Up — the fifth lobby game: stack the crates
   assets/console-breaks.js  the gap dial in each pack tile's corner
   assets/console-community.js  the Community door: leagues, photos, what they asked for
   assets/console-pick.js   a dropdown that is narrow shut and wide open
@@ -3317,15 +3322,10 @@ buttons STAY** — drag is the fast way and every drag has a way round it.
 - **Mixing rounds from two packs belongs to the NIGHT, not the editor, and is
   deliberately NOT BUILT.** If it is picked up, start from Tonight.
 - **TONIGHT PINS WHERE IT ALREADY IS WHEN A DRAG STARTS, never at a fixed
-  line.** It goes sticky so the drop target cannot scroll away — but pinning at
-  `--topbar-h` only ever MOVES a panel that has already scrolled past it, and it
-  always has, because you scroll DOWN to reach the library. So the panel lurched
-  90px the instant a card was picked up and the tiles slid out from under the
-  cursor. **A sticky top may be NEGATIVE**: `pinTonightWhereItIs()` measures at
-  `dragstart` and freezes it where the eye last saw it. The floor asks for
-  ENOUGH of the drop row (`KEEP_OF_DROP_ROW`), not all of it — demanding all of
-  it left a safe zone narrower than the scroll people actually do. **The topbar
-  is measured, never written out**: it wraps on a phone.
+  line** — `pinTonightWhereItIs()` measures at `dragstart`, and **a sticky top
+  may be NEGATIVE**. The floor asks for ENOUGH of the drop row
+  (`KEEP_OF_DROP_ROW`), not all of it. **The topbar is measured, never written
+  out**: it wraps on a phone.
 - **`moveWithin()` must allow for the source already being removed**, and the
   drop marker is ABOVE or BELOW depending on which half of the row you are in.
 
@@ -4034,6 +4034,7 @@ npm start       # then /console?key=... from the printed log
 node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. card-reload
 node scripts/bingo-prizes.mjs          # does a bingo prize reach who won it?
+node scripts/bingo-round-ends.mjs      # is the whole room told the prizes have gone?
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break a pub night?
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
 node scripts/tonight-resolves.mjs       # does the bar offer real games, and find every pack?

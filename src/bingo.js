@@ -217,9 +217,35 @@ export class BingoGame {
     return this.stages[Math.min(this.state.stageIndex || 0, this.stages.length - 1)];
   }
 
-  /** True once the last prize has been won. */
+  /**
+   * True once the round has REACHED its last prize — not once that prize has
+   * been won. The comment here said "once the last prize has been won" for
+   * months, which is a different fact and the one `allPrizesGone` below
+   * actually answers. *A comment that claims the opposite is where the next
+   * bug hides*, and this one nearly became it.
+   */
   get onLastStage() {
     return (this.state.stageIndex || 0) >= this.stages.length - 1;
+  }
+
+  /**
+   * EVERY PRIZE IN THIS ROUND HAS BEEN CLAIMED — the moment the night has a
+   * natural break in it, and the whole point of the flag.
+   *
+   * Asked for in these words: *"they get it once they get the bingo, but I'd
+   * prefer they all get them once the full house is claimed at the same time,
+   * so there's an obvious break where they can all get their drinks at the
+   * same time."*
+   *
+   * **IT IS NOT THE `WON` PHASE, and that is the trap this exists to avoid.**
+   * `WON` is set by EVERY successful claim — three times on a three-prize
+   * round — so a phone keying off the phase would announce the break after
+   * the first line, twice too early, and send the room to the bar mid-game.
+   * The round is over when the LAST stage has been taken, which is these two
+   * facts together and neither on its own.
+   */
+  get allPrizesGone() {
+    return this.onLastStage && this.stageTaken();
   }
 
   /**
@@ -1098,6 +1124,20 @@ export class BingoGame {
         redeemedAt: v.redeemedAt,
       }));
     if (mine.length) view.vouchers = mine;
+    /*
+     * AND WHETHER THAT IS THE LOT — so the phone can turn the codes people are
+     * already holding into one shared moment.
+     *
+     * **The voucher still arrives the instant it is won and that is
+     * unchanged**: nobody loses their proof at the bar, and *"you got it"* goes
+     * on meaning the prize on the table. This is the SECOND half he asked for
+     * — *both* — a break the whole room reaches at once rather than a trickle
+     * of people leaving their seats.
+     *
+     * SPREAD IN ONLY WHEN TRUE, like the draw and the comeback band, so a
+     * phone's payload during play is byte-for-byte what it was.
+     */
+    if (this.allPrizesGone) view.prizesAllGone = true;
     if (this.state.lastWin) view.win = { name: this.state.lastWin.name, pattern: this.state.lastWin.pattern, label: this.state.lastWin.label };
     /*
      * THE LOBBY GAME — only in the lobby, and only ever these two numbers.
