@@ -919,6 +919,21 @@ export function trayOrder(list, weights = {}, random = Math.random) {
  *
  * **NOT A SETTING AND NOT SYNCED.** It lives in the phone's own storage beside
  * the team name, so it is per handset, and losing it costs nothing.
+ *
+ * **AND IT FLOATS ABOVE THE FIXED HEAD, WHICH IS DELIBERATE AND LOOKS LIKE A
+ * BUG.** `trayOrder()` pins the first four so the three band shirts — one joke
+ * in three pieces — are seen together; this then puts somebody's own recents
+ * in front of them, and with four recents on a 320px phone the shirts drop to
+ * the second row entirely.
+ *
+ * That is right, and the reason is who each rule is for. **The head exists for
+ * somebody seeing the tray for the FIRST time**, and anybody with recents is
+ * by definition not that person — they have already seen the joke and have
+ * told the app what they actually reach for. Their own choices outrank it.
+ *
+ * Do not "fix" this by making the head win. Measured in a real browser at
+ * 390x844: with no recents the first four are the shirts and the googly eyes,
+ * every time, across seven opens.
  */
 export const RECENT_KEPT = 4;
 

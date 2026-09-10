@@ -123,3 +123,21 @@ test('…capped, and a prop that has since been DELETED is skipped not gapped', 
 test('no recents is the tray untouched', () => {
   assert.deepEqual(withRecent(STICKERS, []).map((s) => s.id), STICKERS.map((s) => s.id));
 });
+
+test('RECENTS OUTRANK THE FIXED HEAD, and that is deliberate', () => {
+  /*
+   * It looks like a bug: the head is pinned so the three band shirts are seen
+   * together, and this puts somebody's own recents in front of them. Pinned
+   * here so a future session reading the head rule does not "fix" it.
+   *
+   * The head is for somebody seeing the tray for the FIRST time. Anybody with
+   * recents has already seen the joke and has told the app what they reach
+   * for, so their own choices win.
+   */
+  const ids = STICKERS.map((s) => s.id);
+  const mine = ids[40];
+  const out = withRecent(trayOrder(STICKERS, {}, () => 0.5), [mine]).map((s) => s.id);
+  assert.equal(out[0], mine, 'the head swallowed a recent, which is the wrong way round');
+  // And the head is still intact behind it, in order.
+  assert.deepEqual(out.slice(1, 1 + HEAD_KEPT), ids.slice(0, HEAD_KEPT));
+});
