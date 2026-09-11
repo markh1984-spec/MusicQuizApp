@@ -24,6 +24,8 @@ import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
 import { breakNow, offersGame, offersPhotos } from '../public/assets/break-parts.js';
 
+import { noteForPlayer, notesForHost } from './notes.js';
+
 export const BINGO_PHASES = {
   LOBBY: 'lobby',
   PLAYING: 'playing',
@@ -1148,6 +1150,12 @@ export class BingoGame {
      * they were paying attention was the only one who could no longer see how
      * close they were.
      */
+    /*
+     * A WORD FROM THE HOST, to this phone and no other. Never in
+     * `screenView()` — see `src/notes.js`, and rule 1.
+     */
+    const note = noteForPlayer(this.state, playerId);
+    if (note) view.note = note;
     view.won = this.state.phase === BINGO_PHASES.WON
       && Boolean(this.state.lastWin) && this.state.lastWin.playerId === playerId;
     // What they have already taken, so the phone can keep score of their night.
@@ -1364,6 +1372,9 @@ export class BingoGame {
     }
     // `standDown` rides with each row: a correct call that took no prize is a
     // third outcome and the control view has to say which — see `claimsPanel`.
+    // What has been said to whom, and whether it landed. Host only.
+    const notes = notesForHost(this.state);
+    if (Object.keys(notes).length) view.notes = notes;
     view.claims = this.state.claims.slice(-6).reverse();
     if (this.state.lastWin) view.win = this.state.lastWin;
     // The prize panel — same shape as the quiz's, so host.js's existing

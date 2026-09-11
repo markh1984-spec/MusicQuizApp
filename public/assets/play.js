@@ -947,6 +947,24 @@ function draw(next) {
   }
 
   paintCameraButton(state);
+  /*
+   * A WORD FROM THE HOST, if there is one.
+   *
+   * OUTSIDE the build/update branch above, deliberately — it must survive
+   * every redraw and must not wait for a phase change, which is exactly the
+   * reasoning the camera button above already runs on. A card that only
+   * appeared when the screen happened to rebuild would arrive minutes late, or
+   * not at all on a bingo card, which rebuilds once a round.
+   *
+   * AND IT GOES HERE RATHER THAN AT THE TOP OF `draw()`, which is where it was
+   * first written — inside the `state.kicked` branch, which RETURNS. It
+   * painted for a phone that had been thrown out and for nothing else, and
+   * every check passed: the payload was right on both engines, over real HTTP,
+   * on a quiz night and a bingo night. *A test that the payload is right
+   * proves nothing about whether anybody drew it* — found by taking the
+   * screenshot.
+   */
+  paintHostNote(state);
   // Online only, and it survives every redraw for the same reason the camera
   // button does — it lives on the body rather than inside the page.
   paintChatButton(state, me);
@@ -1672,6 +1690,53 @@ function paintChoice(index) {
   });
   const hint = document.getElementById('pHint');
   if (hint) hint.textContent = 'Locked in. No changing your mind.';
+}
+
+/**
+ * THE HOST HAS SAID SOMETHING TO THIS PHONE AND NOBODY ELSE.
+ *
+ * *"Say someone is being a bit cheeky I can send them a message saying 'stop
+ * being a cheeky dickhead' and it appears on their bingo screen."*
+ *
+ * **IT STAYS UNTIL THEY TAP IT AWAY**, which is what he asked for, and the OK
+ * button is the only way out — no timeout, nothing that clears it on the next
+ * push. A phone face down on a table still has it waiting when they pick it
+ * up, and that is the point of a private word rather than a shout.
+ *
+ * **AND TAPPING IT TELLS THE HOST.** The receipt is the half that makes this
+ * worth having: a message you cannot tell has landed is one you send twice.
+ * The card comes down straight away rather than waiting for the round trip —
+ * a phone that waits for the network feels broken — and the server's own copy
+ * stops being sent once it is marked read, so nothing puts it back up.
+ *
+ * **KEYED ON `at`, NOT ON THE TEXT.** Sending the same words twice is a host
+ * repeating themselves at somebody who ignored it the first time, and that
+ * second one has to appear.
+ */
+let noteShowing = 0;
+
+function paintHostNote(s) {
+  const n = s.note;
+  const up = document.getElementById('hostNote');
+  if (!n) { if (up) { up.remove(); noteShowing = 0; } return; }
+  if (up && noteShowing === n.at) return;
+  if (up) up.remove();
+  noteShowing = n.at;
+  const el = node(`
+    <div id="hostNote" class="hostnote-wrap">
+      <div class="hostnote">
+        <div class="sub">From the quizmaster</div>
+        <p class="hostnote-text">${esc(n.text)}</p>
+        <button class="btn" id="hostNoteOk">OK</button>
+      </div>
+    </div>`);
+  el.querySelector('#hostNoteOk').addEventListener('click', () => {
+    el.remove();
+    postJson('/api/note-read', {
+      playerId: me.id, token: me.token, joinCode: roomCode(),
+    }).catch(() => {});
+  });
+  document.body.appendChild(el);
 }
 
 function updateScreen(s) {

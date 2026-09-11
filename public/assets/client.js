@@ -485,6 +485,59 @@ export function node(markup) {
  * @returns {Node|null}  null when nobody is waiting, so the panel does not
  *   exist rather than sitting there saying nothing.
  */
+/**
+ * HAS THIS PHONE BEEN SENT SOMETHING, AND DID THEY LOOK AT IT?
+ *
+ * *"Until they tap it away but also let me know when they did."* An envelope
+ * once it is sent, a ticked one once it has been read — and **the ticked one
+ * STAYS**, because the whole value is being able to glance down a minute later
+ * and know it landed. A mark that vanished at the moment it became good news
+ * would be the app hiding the only thing that was asked for.
+ *
+ * The words ride in the `title` so the host can check what they actually sent
+ * without re-opening anything.
+ *
+ * **HERE RATHER THAN IN `host.js`, and that was the second half of one bug.**
+ * It was written into the quiz's control view alone, and `host-bingo.js` has a
+ * player panel of its OWN — so on a bingo night the host saw no envelope, sent
+ * or read, on the very screen the feature was asked for. *A decision taken for
+ * both engines needs an assertion in both*, and the way this file already
+ * keeps that promise for `joinQueuePanel()` is by being the one copy: a page
+ * module may not be imported by another page, so shared control-view furniture
+ * lives here.
+ */
+export function noteMark(s, p) {
+  const n = (s.notes || {})[p.id];
+  if (!n) return '';
+  const seen = Boolean(n.seenAt);
+  return `<span class="notemark ${seen ? 'seen' : ''}" title="${
+    esc(n.text)}${seen ? ' — read' : ' — not read yet'}">${seen ? '✉✓' : '✉'}</span>`;
+}
+
+/**
+ * ASK FOR THE WORDS AND SEND THEM.
+ *
+ * The browser's own `prompt`, like Rename beside it on the quiz's menu — a
+ * second kind of dialog on one screen is the label collision wearing a dialog.
+ *
+ * **NOTHING IS FILTERED.** This is the host speaking to one person on his own
+ * night; the app has no profanity filter in the room by decision, and the
+ * request for this feature was literally *"stop being a cheeky dickhead"*.
+ *
+ * A refusal is SAID. `sendNote()` turns an empty message down rather than
+ * quietly doing nothing, and a Send that reports success it did not have is
+ * this repo's commonest fault.
+ *
+ * @param {function} act  the page's own `act()`
+ */
+export async function askAndSendNote(act, playerId, name) {
+  const words = prompt(`Message to ${name} — only they see it`, '');
+  if (!words || !words.trim()) return false;
+  const out = await act('messagePlayer', { playerId, text: words });
+  if (out && out.ok === false) { alert('That did not send.'); return false; }
+  return true;
+}
+
 export function joinQueuePanel(s, act) {
   const waiting = s.joinsWaiting || 0;
   if (!waiting) return null;

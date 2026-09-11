@@ -11106,3 +11106,33 @@ input, textarea, [contenteditable] { caret-color: var(--hot); }
   font-size: 13px; white-space: nowrap;
 }
 .stingrow .sting-ic { font-size: 17px; }
+
+/* A WORD FROM THE QUIZMASTER — one phone, never the projector. It sits over
+   whatever is on screen because it has to be read, and the only way out is the
+   button: no timeout, so a phone face down on a table still has it waiting. */
+.hostnote-wrap {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
+  padding: 20px; background: rgba(6, 6, 12, 0.72);
+}
+/*
+ * AN OPAQUE GROUND, and `--panel` is NOT one.
+ *
+ * It is `rgba(255,255,255,.06)` — six per cent white, which over a dimmed
+ * bingo card is no surface at all: the squares read straight through the
+ * words, and "From the quizmaster" landed on top of a track title. The same
+ * fault `body.console`'s own surfaces are opaque to avoid, hit in the one
+ * place it matters most, because this card is the whole point of the feature.
+ * `--bg-2` is what the camera sheet beside it already uses.
+ */
+.hostnote {
+  width: 100%; max-width: 420px; display: grid; gap: 12px; text-align: center;
+  padding: 22px 20px; border-radius: var(--r-card, 14px);
+  background: var(--bg-2); border: 1px solid var(--panel-line);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
+}
+.hostnote .sub { font-size: 13px; color: var(--ink-dim); letter-spacing: .04em; }
+.hostnote-text { font-size: 20px; font-weight: 700; margin: 0; overflow-wrap: anywhere; }
+
+/* Sent, and whether they looked at it. The ticked one STAYS. */
+.notemark { font-size: 13px; opacity: .65; }
+.notemark.seen { opacity: 1; color: var(--good, #48d17a); }

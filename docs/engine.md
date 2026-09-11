@@ -935,3 +935,83 @@ reorders a podium the room has already watched.
 `TEAM_CHANGE_PHASES` is the lobby, the rules, a round intro and a round board —
 the moments the room is milling about anyway, which is when somebody actually
 moves tables, and every one of them a point at which nothing is half-scored.
+
+---
+
+## A word in one ear — the host messages one phone
+
+Asked for on 11 September 2026: *"Is it possible for me to send a message to a
+specific phone? Say someone is being a bit cheeky I can send them a message
+saying 'stop being a cheeky dickhead' and it appears on their bingo screen?"*
+Then, on how it should behave: *"until they tap it away but also let me know
+when they did."*
+
+`src/notes.js` holds the whole model — send, mark read, what the phone is told,
+what the host is told — and both engines import it. That is `src/arcade.js`'s
+shape and it is here for the same reason: both engines keep players in
+`state.players` with the same fields, so two copies of this would be two rules,
+and the day one is fixed is the day a bingo night quietly behaves differently
+from a quiz night for no reason anybody chose.
+
+### Why it is not filtered
+
+Because the app has no profanity filter in the room by decision, and this is
+the one direction where the words are entirely the host's own: one person
+speaking to one person on his own night. What is done to the text is a length
+cap and stripping control characters — hygiene, not judgement. A newline is the
+only way markup-free text can change the shape of what is drawn, so it goes.
+
+### Why the receipt is half the feature
+
+*"Also let me know when they did"* is not a nicety. A message you cannot tell
+has landed is one you send twice, or one you assume worked while the phone is
+face down on a table. So the host's row carries an envelope from the moment it
+is sent and a ticked one once it has been read — **and the ticked one stays**.
+A mark that vanished at the moment it became good news would be the app hiding
+the only thing that was asked for.
+
+The receipt sits behind `ownsPlayer` like every other player action. One
+anybody could post would make the tick a lie, which is rule 3 applied to a new
+route rather than a new rule.
+
+### Two faults, both invisible to every check that existed
+
+`scripts/a-word-in-your-ear.mjs` went green first time on both engines, over
+real HTTP, on a quiz night and a bingo night: the message reached the phone it
+was aimed at, was absent from the phone beside it, never appeared anywhere in
+the projector's payload, and the read receipt worked and could not be forged.
+
+The phone drew nothing at all.
+
+`paintHostNote(state)` had landed inside `draw()`'s `state.kicked` branch,
+which returns — so the card painted for a phone that had been thrown out of the
+game and for no other. At the same moment the host's envelope was written into
+`host.js` alone, and `host-bingo.js` has a player panel of its own: on a bingo
+night, the screen the request actually named, the host had no mark and no way
+to send one. Both were found by taking the screenshot, which is why the rule
+about screenshotting every UI change is a rule.
+
+So `noteMark()` and `askAndSendNote()` live in `client.js` now, which has no
+page of its own — the same channel `joinQueuePanel()` already uses, and for the
+same reason. And the guard has a real-browser leg that puts a finger on the
+card, on the host's mark and on the bingo row's ✉ button.
+
+### The twelve, and the way past it
+
+The bingo control view's player panel lists the closest twelve, which is right
+for what it is for: who is about to win, readable at a glance while a record is
+playing. It was wrong the moment that row grew a **control** — because then the
+cap was hiding people from something the host needs to do rather than from a
+readout. *A cap with no way past it is the only kind this app must not have*,
+so the default is unchanged and there is one button that shows the lot.
+
+The row gets one ✉ rather than the quiz's whole menu. Three quarters of that
+menu is score buttons, and a bingo player has no score to nudge.
+
+### The card needs an opaque ground
+
+`--panel` is `rgba(255,255,255,.06)` — six per cent white. Built on it, the
+card let the bingo squares read straight through the words, and "From the
+quizmaster" landed on top of a track title. `--bg-2`, which the camera sheet
+beside it already uses. This is the same reason `body.console`'s surfaces are
+opaque, hit in the one place it matters most.

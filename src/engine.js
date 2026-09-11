@@ -29,6 +29,7 @@ import { ALPHABET, answerLetter, answerLetterIndex, revealMode } from './quizzes
 import * as chat from './chat.js';
 import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
+import { noteForPlayer, notesForHost } from './notes.js';
 import { breakNow, offersGame, offersPhotos, showsScores, showsAdverts } from '../public/assets/break-parts.js';
 import { dealInto, MAX_TEAMS } from './teams.js';
 // For faceKey — a player's public handle, derived one way from their id.
@@ -3049,6 +3050,19 @@ export class Engine {
      * the FINAL: that is the headline card on the last screen, and this is
      * the wallet underneath it.
      */
+    /*
+     * A WORD FROM THE HOST, to this phone and no other.
+     *
+     * At EVERY phase including a live question — unlike the wallet below,
+     * which stands aside for twenty seconds and four options. The whole point
+     * of a quiet word is that it arrives when the host sends it, and *"stop
+     * being a cheeky dickhead"* is most useful in the middle of the thing
+     * somebody is being cheeky about. Never in `screenView()` — see
+     * `src/notes.js`, and rule 1.
+     */
+    const note = noteForPlayer(s, playerId);
+    if (note) view.note = note;
+
     const VOUCHER_PHASES = new Set([PHASES.LOBBY, PHASES.RULES, PHASES.ROUND_INTRO,
       PHASES.ROUND_BOARD, PHASES.FINAL]);
     if (VOUCHER_PHASES.has(s.phase) && s.vouchers) {
@@ -3233,6 +3247,9 @@ export class Engine {
      * credential. Empty on every night that set no reward, so the panel does
      * not exist rather than sitting there saying nothing.
      */
+    // What has been said to whom, and whether it landed. Host only.
+    const notes = notesForHost(s);
+    if (Object.keys(notes).length) view.notes = notes;
     view.vouchers = Object.values(s.vouchers || {});
     view.rewards = this.rewardList();
 

@@ -14,6 +14,7 @@
  */
 
 import path from 'node:path';
+import { sendNote, markNoteRead } from './notes.js';
 
 import { Engine, PHASES, MAX_WINNERS, winnersOf, isSafeId, ownsPlayer, newToken } from './engine.js';
 import { JoinGate } from './joins.js';
@@ -1548,6 +1549,16 @@ export class Session {
       join: () => this.engine.join({ playerId: body.playerId, name: body.name }),
       removePlayer: () => this.engine.removePlayer(String(body.playerId)),
       renamePlayer: () => this.engine.renamePlayer(String(body.playerId), String(body.name)),
+      /*
+       * A word in one person's ear, and the tick that says it landed.
+       * SHARED because `src/notes.js` works on `state.players`, which both
+       * engines keep in the same shape — one rule rather than two that drift.
+       */
+      messagePlayer: () => {
+        const out = sendNote(this.engine.state, String(body.playerId), body.text, Date.now());
+        if (out.ok) this.engine.changed();
+        return out;
+      },
       resetAll: () => { this.joins.reset(); return this.engine.resetAll(); },
       // "18 phones waiting to join — Let them in." One tap, and the number on
       // the button is what tells the host whether it is a room or mischief.
@@ -1748,6 +1759,19 @@ export class Session {
      * beside it: each engine decides for itself which phase counts as waiting
      * (`src/arcade.js`), so there is nothing here to keep in step.
      */
+    /*
+     * "I'VE READ IT." The phone tapping the host's message away.
+     *
+     * A PLAYER action rather than a host one, and therefore behind
+     * `ownsPlayer` above like every other — the read receipt is a fact about
+     * that phone, and one somebody else could post would make the tick a lie.
+     * Shared by both games, because the note is.
+     */
+    if (action === 'note-read') {
+      const out = markNoteRead(this.engine.state, String(body.playerId || ''), Date.now());
+      if (out.ok) this.engine.changed();
+      return out;
+    }
     if (action === 'arcade') {
       return this.engine.arcadeScore(String(body.playerId || ''), body.score, String(body.game || ''));
     }

@@ -741,28 +741,19 @@ quizmaster, so the control does not exist on anybody else's account.
 
 ### GIGS IS EVIDENCE. CALENDAR IS ORGANISATION.
 
-The host's own framing, reasoned aloud on 14 August 2026 while working out
-whether the two tabs should be one: *"Gigs is where you would store
-information on what happened in the past… it's gonna store statistics and
-photographs and all this other stuff you can send. So Gigs is all about
-EVIDENCE, and Calendar is all about ORGANISATION. They're actually
-fundamentally different."*
+The host's own framing: *"Gigs is all about EVIDENCE, and Calendar is all about
+ORGANISATION. They're actually fundamentally different."*
 
 **Keep this as the test, because it decides where a new thing goes without
-re-arguing it.** Anything that is proof of work belongs to Gigs — headcounts,
-photos, who won, the post-night report, what a landlord is shown. Anything
-that is a plan belongs to Calendar — residencies, one-offs, nights off, what
-is on next Thursday.
-
-It also explains why merging them felt wrong the moment he tried it: **one is
-a record you SHOW somebody, the other is a list you ACT on.** Those are read
-at different moments, by a different half of the brain, and a tab that does
-both is a tab you scroll past looking for the half you wanted.
+re-arguing it.** Proof of work belongs to Gigs — headcounts, photos, who won,
+the report, what a landlord is shown. A plan belongs to Calendar —
+residencies, one-offs, nights off, what is on next Thursday. **One is a record
+you SHOW somebody, the other is a list you ACT on**, and a tab that does both
+is a tab you scroll past looking for the half you wanted.
 
 **Invoices stays its own tab and is the honest edge case**: billing is
-past-facing like evidence, chasing is organisation. It is separate for a third
-reason already recorded above — on a Monday it is a destination you want to
-land on rather than scroll to, and its badge counts what you are still owed.
+past-facing like evidence, chasing is organisation — and on a Monday it is a
+destination you land on rather than scroll to.
 
 ### THE MONTH IS ON THE LEFT AND WHAT YOU DO ABOUT A DATE IS ON THE RIGHT
 
@@ -904,6 +895,41 @@ they say next.
 - **Derived on the CLIENT from state the host already has**, so no payload
   changed and the guard stayed byte-identical. It is host-only by construction:
   a note to one person about everybody else.
+
+### A WORD IN ONE EAR — `src/notes.js`, one phone and never the room
+
+*"Say someone is being a bit cheeky I can send them a message saying 'stop
+being a cheeky dickhead' and it appears on their bingo screen?"*, and
+*"until they tap it away but also let me know when they did."*
+
+- **ONE FILE FOR BOTH ENGINES**, `arcade.js`'s shape. **NEVER THE PROJECTOR**
+  (rule 1) and never the phone beside them — the same sentence six feet wide is
+  humiliating a customer in front of sixty people.
+- **NOT FILTERED, DELIBERATELY.** A length cap and control characters stripped;
+  the words are the host's own. That is the in-the-room rule applied to the one
+  direction where they are entirely his.
+- **A NEW ONE REPLACES THE OLD** and clears `seenAt`; **an EMPTY one is
+  REFUSED**, never silently dropped.
+- **THE RECEIPT IS BEHIND `ownsPlayer`** (rule 3) — one anybody could post
+  makes the tick a lie — and **the mark STAYS ONCE READ**: vanishing at the
+  moment it becomes good news hides the only thing that was asked for.
+- **THE MARK AND THE SEND LIVE IN `client.js`, NOT `host.js`.**
+  `host-bingo.js` has a player panel of its OWN, so the quiz's copy left the
+  host with no envelope and no way to send one **on the very screen this was
+  asked for**. A page module may not be imported by another page.
+- **THE BINGO LIST'S TWELVE GREW A WAY PAST IT.** The cap is right for *who is
+  about to win* and was wrong the moment the row grew a CONTROL — **a cap with
+  no way past it is the only kind this app must not have.** **One ✉, never the
+  quiz's whole menu**: a bingo player has no score to nudge.
+- **THE CARD NEEDS AN OPAQUE GROUND, AND `--panel` IS SIX PER CENT WHITE** —
+  the bingo squares read straight through the words.
+- **AND EVERY HTTP CHECK PASSED WHILE NOTHING DREW IT.** `paintHostNote()` sat
+  in `draw()`'s `state.kicked` branch, which RETURNS, so it painted for a phone
+  that had been thrown out and for nothing else. **`a-word-in-your-ear.mjs` has
+  a REAL BROWSER leg now**, because *a test that the payload is right proves
+  nothing about whether anybody drew it.*
+
+Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### THE CONSOLE'S POLISH PASS — the rules from one sweep, 25 August 2026
 
@@ -1544,39 +1570,35 @@ round 1' both fill the same function, don't really need both"*, then *"it
 could just be a symbol you click to cycle… and this would live in the bottom
 right of the pack ONCE LOADED."*
 
-- **THE DUPLICATION WAS REAL** — one `chip()`, one plan, one setter, drawn
-  twice and neither beside the thing it acted on.
+- **THE DUPLICATION WAS REAL** — one plan, drawn twice, neither beside the
+  thing it acted on.
 - **A TILE'S DIAL OWNS THE GAP AFTER ITS OWN ROUND — `gapIdsOfSlot()`.** It
   owned *every gap the pack makes*, so **pressing the last tile's dial changed
   the first.** A BINGO slot owns the gap BEFORE it, never `p0:lobby`; **the
   FINAL is not a gap.** **`drag-check` asserts ONE face moved** — **a guard
   aimed at whatever happens to be first is measuring the shelf, not the row.**
 - **THE TILE'S SIZE DECIDED THE SHAPE, MEASURED FIRST**: 179 x 76 with 58px
-  clear. That is ONE 44px control and never two — so the dial is the PHONES and
-  the big screen became a night-level picker. **The plan on disk is
-  unchanged.**
-- **A DIAL IS SAFE HERE because every state is a real answer, and the order is
-  a SCALE**: photos, game, both, nothing. A dial whose steps are not on a scale
-  has to be memorised.
+  clear — ONE 44px control and never two, so the dial is the PHONES and the big
+  screen became a night-level picker. **The plan on disk is unchanged.**
+- **A DIAL IS SAFE HERE because every state is a real answer and the order is a
+  SCALE** — one whose steps are not has to be memorised.
 - **THE LIT EDGE HAD TO BE MADE HONEST** — `cleanPlan()` runs on the way OUT
-  too, or a gap cycled back to its default still claims a change.
-- **DOORS KEEPS A DIAL, the one gap with no tile.** Phone-only: the join code
-  owns the lobby's screen.
-- **THE ERA WORD MOVED 52px LEFT** — **the control wins and the decoration
-  moves.**
-- **A LOST `import` DREW A BAR WITH NO DIALS AND EVERY CHECK PASSED** —
-  swallowed `ReferenceError`s, `node --check` happy, the suite green.
-  **`test/imports-present.test.js`** asserts every module imports the shared
-  helpers it calls.
+  too, or a gap back at its default still claims a change.
+- **DOORS KEEPS A DIAL, the one gap with no tile** — phone-only, the join code
+  owning the lobby's screen.
+- **A LOST `import` DREW A BAR WITH NO DIALS AND EVERY CHECK PASSED** — a
+  swallowed `ReferenceError`, `node --check` happy, the suite green.
+  **`test/imports-present.test.js`** asserts every module imports what it
+  calls.
 - **A TILE IS NOT A PART** — several quiz packs are welded into ONE quiz, so
-  mapping a tile to a part gave tile 1 every gap in the night and tile 2 no
-  dial. `gapsOfPack()` reads the part's `order`.
+  `gapsOfPack()` reads the part's `order`.
 - **THE SLOT NUMBER GOES WHEN A PACK LANDS IN IT**; **it stays on an EMPTY
-  slot**, where it is the whole label.
+  slot**, its label.
 - **THE TILE IS 90px BECAUSE 30 + 44 DOES NOT FIT IN 76** — moving the × puts
   "remove this" where the eye lands first.
 - **THE ERA WORD IS GONE FROM A TONIGHT TILE** — it overlapped the round ticks
-  and there is no third place. **It stays on the shelf CARD.**
+  and there is no third place: **the control wins and the decoration moves.**
+  **It stays on the shelf CARD.**
 - **`.lb-tiles:has(.lb-doors-slot)` OUT-SPECIFIED THE PHONE RULE** — a class
   more specific than `.lb-tiles` beat the 560px layout, and 390 came out as four
   50px columns. The specificity trap wearing `:has()`.
@@ -1669,56 +1691,40 @@ right of the pack ONCE LOADED."*
 ### FIVE DOORS: CONSOLE · WORKSHOP · POST GIG · COMMUNITY · MY ACCOUNT
 
 `DOORS`, `navMenu()`, `doors` on every `TABS` entry. The first three name
-MOMENTS of a night; **Community names the thing that SPANS nights**; **My
-account names the one thing that is not a night at all**, so it stays on the
-end rather than in the sequence.
+MOMENTS of a night; **Community names what SPANS nights**; **My account is not
+a night at all**, so it stays on the end rather than in the sequence.
 
 **COMMUNITY IS THE FIFTH, and it holds THE PEOPLE — the league, the photos and
-what the room voted for.** Asked for directly:
-*"a fifth menu pill at the top entitled 'community', which is for things like
-quiz leagues, and all the controls for that functionality will live there."*
-A league belongs to the ROOM over a season rather than to the quizmaster on a
-night, which is exactly why it fitted under none of the other four and had
-been living as a block on a venue card — one venue at a time, behind the
-Workshop door, found only by going looking. **Nothing new is collected**:
-`src/league.js` has built these out of the archive all along and
-`library.leagues` was already in the payload. `console-community.js` is a
-PLACE to read them. **The bay answers "is anything running" and the tab
-answers "who is winning"** — the same head/section split every other door has.
-**Ungated door, gated tab** (`needs: FEATURES.LEAGUE`), so somebody can see
-what they could buy; a door that vanishes sells nothing.
+what the room voted for.** A league belongs to the ROOM over a season rather
+than to the quizmaster on a night. **Nothing new is collected** —
+`console-community.js` is a PLACE to read what `src/league.js` already built.
+**The bay answers "is anything running" and the tab answers "who is winning"**.
+**Ungated door, gated tab** (`needs: FEATURES.LEAGUE`): a door that vanishes
+sells nothing.
 
-**AND THEN EVERYTHING ELSE ABOUT THE PLAYERS FOLLOWED, on 23 August 2026** —
-*"photos can actually migrate to community as well now, and anything else to do
-with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
-**What they asked for**. Settled by asking, and each answer is a rule:
+**AND THEN EVERYTHING ELSE ABOUT THE PLAYERS FOLLOWED** — *"photos can migrate
+to community as well now, and anything else to do with the people who do the
+quizzing."* Three tabs: **Quiz league**, **Photos**, **What they asked for**:
 
-- **ORGANISED BY VENUE, because a venue IS a community.** The Tuesday and
-  Thursday crowds are different people, and the page is then something you can
-  show one landlord.
+- **ORGANISED BY VENUE, because a venue IS a community** — the Tuesday and
+  Thursday crowds are different people.
 - **THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — not a duplicate.** On Past
   gigs a photo is EVIDENCE; on Community it is the room itself. **What is not
-  duplicated is the CODE** — `nightPhotos()`, from both, so **the publish
-  control keeps its safeguard for free.**
-- **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** The headcount sits on
-  three pages from one server-side figure. **"What the room asked for" is a
-  QUEUE — Yes keeps it, No bins it — so it MOVED off the Music Quiz tab rather
-  than being copied**, leaving a link that shows only when something waits.
+  duplicated is the CODE** — `nightPhotos()`, so **the publish control keeps
+  its safeguard for free.**
+- **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** **"What the room asked
+  for" is a QUEUE — Yes keeps it, No bins it — so it MOVED off the Music Quiz
+  tab rather than being copied.**
 - **A night's photos are fetched when the night is OPENED.**
-- **`asksPanel({ whenEmpty })` — the same panel answers two pages.** Drawing
-  NOTHING was right above the quiz generator and wrong on a tab whose job is
-  the list. One argument, so the triage keeps one definition.
-- **AND ONE POINT FOR EVERY NIGHT PLAYED, ON TOP OF THE BEST SIX.** Under
-  best-six alone a team near the bottom stops gaining anything after six weeks
-  — a retention hole in the feature built for retention. **THE LADDER
-  THEREFORE PAYS NOTHING BELOW SEVENTH**, or one point is paid twice under two
-  names.
-- **A TEAM'S BEST SIX NIGHTS COUNT — a running total is not the league.** A
-  cumulative table punishes absence ABSOLUTELY, so the team works out the season
-  is gone and stops coming. **AND A PLAIN AVERAGE BREAKS THE OTHER HALF**: mean
-  points per night puts a team that played ONCE AND WON above one that won five
-  of ten. **SUMMED, NOT DIVIDED.** `COUNTING_NIGHTS = 6` is a constant with a
-  note, like the season.
+- **`asksPanel({ whenEmpty })` — the same panel answers two pages**, one
+  argument, so the triage keeps one definition.
+- **AND ONE POINT FOR EVERY NIGHT PLAYED, ON TOP OF THE BEST SIX.** **THE
+  LADDER THEREFORE PAYS NOTHING BELOW SEVENTH**, or one point is paid twice
+  under two names.
+- **A TEAM'S BEST SIX NIGHTS COUNT — a running total is not the league**, which
+  punishes absence absolutely. **AND A PLAIN AVERAGE BREAKS THE OTHER HALF**: it
+  puts a team that played ONCE AND WON above one that won five of ten.
+  **SUMMED, NOT DIVIDED.** `COUNTING_NIGHTS = 6` is a constant with a note.
 - **A NAME IS FILTERED AT THE DOOR, NEVER IN THE ROOM** — `clean-names.js`,
   off a live table with a racial slur ninth in it. The projector, the phones
   and the console are UNCHANGED; only the public page and the report mask
@@ -1727,8 +1733,8 @@ with the people who do the quizzing."* Three tabs: **Quiz league**, **Photos**,
   and lies about the season. **IT ERRS STRICT.** **WHOLE WORDS FOR ORDINARY
   PROFANITY**, or it eats Scunthorpe; the SLUR list is matched AGAIN with the
   spaces stripped — **never do that pass on the ordinary list.** **THE CONSOLE
-  SHOWS THE REAL NAME AND MARKS IT**, or a name vanishes off a published table
-  with no way to tell which.
+  SHOWS THE REAL NAME AND MARKS IT**, or a name vanishes off a table with no
+  way to tell which.
 - **AND A HUMAN OVERRULES THE LIST, IN BOTH DIRECTIONS** — it hides "The Pen
   Is Mightier" and publishes a spoonerism it cannot see. Keyed by `teamKey()`,
   so a ruling follows the team all season. **A RULING THAT ONLY RESTATES THE
@@ -2207,7 +2213,7 @@ gig actually takes.
   it. `dealt: true` is the app's own way in.
 - **AND THERE IS A CEILING — `MAX_TEAMS`.** There was none: **1,200 teams in
   1.3 seconds** from one phone. **Forty, not `RANDOM_TEAM_MAX`** — six is a
-  DESIGN number for what the app deals; this is a SAFETY number.
+  DESIGN number; this is a SAFETY number.
 - **A TEAM MAY ONLY CHANGE AT A BOUNDARY — `TEAM_CHANGE_PHASES`.** The rule was
   `QUESTION && !closed`, leaving the seconds after the clock runs out, the whole
   REVEAL and the FINAL open. **Scores are AVERAGED**, so a table that sheds its
@@ -4046,6 +4052,7 @@ node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. card-reload
 node scripts/bingo-prizes.mjs          # does a bingo prize reach who won it?
 node scripts/bingo-round-ends.mjs      # is the whole room told the prizes have gone?
+node scripts/a-word-in-your-ear.mjs     # does a message reach one phone and no other?
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break a pub night?
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
 node scripts/tonight-resolves.mjs       # does the bar offer real games, and find every pack?

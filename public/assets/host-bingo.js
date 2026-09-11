@@ -6,9 +6,20 @@
  * a record is playing.
  */
 
-import { esc, node, rewardsEditorPopover, joinQueuePanel } from './client.js';
+import {
+  esc, node, rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote,
+} from './client.js';
 
 let filter = '';
+/*
+ * THE CAP ON THE PLAYER LIST, AND THE WAY PAST IT.
+ *
+ * Module level rather than inside the panel, because this view is rebuilt on
+ * every state push — during a round that is every mark from every phone, so a
+ * fold held in the function would shut itself the moment anybody tapped a
+ * square. The same reasoning `host.js` records for `whoPicked`'s open lists.
+ */
+let showEveryPhone = false;
 
 export function bingoPanels(s, act) {
   const panels = [];
@@ -179,7 +190,20 @@ function callerPanel(s, act) {
  * keeps its wording and its reasoning in one place.
  */
 function playersPanel(s, act) {
-  const closest = (s.players || []).slice(0, 12);
+  /*
+   * TWELVE, AND A WAY PAST IT — because messaging one phone arrived on this
+   * panel and the cap then hid people from a control rather than from a
+   * readout.
+   *
+   * The twelve is right for what this panel is FOR: who is about to win,
+   * closest first, readable at a glance while a record is playing. It was
+   * wrong the moment the row grew a control, and *a cap with no way past it is
+   * the only kind this app must not have* — the rule already written here for
+   * the pack shelf. So the default is unchanged and the fold is one button.
+   */
+  const everyone = s.players || [];
+  const closest = showEveryPhone ? everyone : everyone.slice(0, 12);
+  const hidden = everyone.length - closest.length;
   /*
    * AND WHEN THE ROUND HAS STALLED, SAY SO. `stalled` is the engine's own
    * count of people who have completed the card and already hold a prize — so
@@ -211,17 +235,45 @@ function playersPanel(s, act) {
       ${stalled}
       <div class="plist">
         ${closest.map((p) => `
-          <div class="prow">
+          <div class="prow" data-id="${esc(p.id)}" data-name="${esc(p.name)}">
             <span class="nm">${esc(p.name)}</span>
             ${p.won ? '<span class="tick">WON</span>' : ''}
             ${p.falseCalls ? `<span class="off">${p.falseCalls} false</span>` : ''}
+            ${noteMark(s, p)}
             <span class="sc ${p.away === 1 ? 'hot' : ''}">${p.away === 0 ? '✓' : p.away}</span>
+            <button data-act="note" title="Send this phone a message — only they see it">✉</button>
           </div>`).join('') || '<div class="tiny">Nobody has joined yet.</div>'}
       </div>
+      ${everyone.length > 12 ? `<button class="minor tidy" id="showEveryPhone">${hidden > 0
+    ? `Show all ${everyone.length} phones` : 'Back to the closest twelve'}</button>` : ''}
     </div>
     </div>`);
   const queue = joinQueuePanel(s, act);
   if (queue) el.querySelector('.joinq-slot').replaceWith(queue);
+
+  el.querySelector('#showEveryPhone')?.addEventListener('click', () => {
+    showEveryPhone = !showEveryPhone;
+    /*
+     * REBUILT IN PLACE, because this panel is not the page's to re-render.
+     * Waiting for the next state push would mean the fold opened whenever the
+     * next phone happened to mark a square — which during a quiet stretch is
+     * a control that does nothing when pressed, the exact fault this repo
+     * records for the rail's own folds.
+     */
+    el.replaceWith(playersPanel(s, act));
+  });
+
+  /*
+   * ONE BUTTON, NOT THE QUIZ'S WHOLE MENU. A bingo player has no score to
+   * nudge and the quiz's menu is three quarters score buttons — so this row
+   * gets the one action that means anything here, and the quiz keeps its menu.
+   */
+  el.querySelectorAll('[data-act="note"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('.prow');
+      askAndSendNote(act, row.dataset.id, row.dataset.name);
+    });
+  });
   return el;
 }
 

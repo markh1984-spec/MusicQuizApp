@@ -12,7 +12,7 @@
 
 import {
   esc, node, ServerClock, Live, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights,
-  rewardsEditorPopover, joinQueuePanel,
+  rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote,
 } from './client.js';
 import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
@@ -805,6 +805,7 @@ function playersPanel(s) {
             ${p.answeredThisQuestion ? '<span class="tick">✓</span>' : ''}
             ${p.connected ? '' : '<span class="off">off</span>'}
             ${wanderMark(p)}
+            ${noteMark(s, p)}
             <span class="sc">${p.score.toLocaleString('en-GB')}</span>
             <button data-act="menu">···</button>
           </div>`).join('') || '<div class="tiny">Nobody has joined yet.</div>'}
@@ -847,6 +848,7 @@ function openPlayerMenu(playerId, name) {
         <button class="minor" data-a="-100">−100</button>
         <button class="minor" data-a="+100">+100</button>
         <button class="minor" data-a="+240">+240</button>
+        <button class="minor" data-a="message">Message</button>
         <button class="minor" data-a="rename">Rename</button>
         <button class="minor danger" data-a="remove">Remove</button>
         <button class="minor" data-a="close">Close</button>
@@ -858,6 +860,9 @@ function openPlayerMenu(playerId, name) {
     if (!a) return;
     if (a === 'remove') {
       if (confirm(`Remove ${name} from the quiz?`)) await act('removePlayer', { playerId });
+    } else if (a === 'message') {
+      // Shared with the bingo control view — see `askAndSendNote` in client.js.
+      await askAndSendNote(act, playerId, name);
     } else if (a === 'rename') {
       const newName = prompt('New name', name);
       if (newName) await act('renamePlayer', { playerId, name: newName });
