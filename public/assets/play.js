@@ -882,6 +882,23 @@ function reasonText(reason) {
 
 function draw(next) {
   state = next;
+  /*
+   * TONIGHT'S DRINKS AND THE ONES STILL OWED FROM BEFORE, AS ONE LIST.
+   *
+   * Merged HERE rather than in each renderer, so `wallet()` on the quiz and
+   * `paintVouchers()` on the bingo card both draw them with no change of their
+   * own — one list, two engines, the rule this repo already follows for
+   * anything decided for both.
+   *
+   * Tonight's copy WINS on a clash: it is the live game's own record of a code
+   * minted minutes ago, where `fromBefore` is a snapshot taken at page load.
+   */
+  rememberVouchers(state);
+  if (fromBefore.length) {
+    const tonight = new Set((state.vouchers || []).map((v) => v && v.code));
+    const older = fromBefore.filter((v) => v && !tonight.has(v.code));
+    if (older.length) state.vouchers = (state.vouchers || []).concat(older);
+  }
   clock.sync(state.serverNow);
   paintBrand(state.brand, state.appName);
 
@@ -1962,6 +1979,116 @@ function voucherCard(s) {
  * the same prize twice on one screen is the app looking broken, and it is
  * the one place these two renderers meet.
  */
+/**
+ * THE DRINKS THIS PHONE IS STILL OWED FROM EARLIER NIGHTS.
+ *
+ * *"The app already remembers phones from previous weeks including their name,
+ * so I don't understand why it can't just remember the drinks they've won as
+ * well?"* — and it is the right question. The phone has kept its id, its token
+ * and its team name in `localStorage` since rule 3 existed, and comes back
+ * weeks later with all three. A code is one more string.
+ *
+ * **ONLY THE CODE IS REMEMBERED, NEVER THE DRINK.** The words on the card, the
+ * name, the venue and whether it has been collected all come back from
+ * `/api/voucher` on every page load, so a phone cannot show a drink that has
+ * been taken, a prize that was corrected, or a voucher the host took back. A
+ * local copy of any of that would be a lie somebody carries to a bar.
+ *
+ * **ITS OWN KEY, NOT `STORE_KEY` — and that is rule 5.** Being removed from
+ * tonight's quiz wipes `musicquiz.player`, deliberately. It must not also
+ * destroy a drink won last Thursday: the host threw a phone out of a GAME, not
+ * out of a prize the pub already owes them.
+ *
+ * **THE ROOM RIDES WITH THE CODE**, because a voucher is looked up in the room
+ * it was won in — somebody who plays at two pubs would otherwise have each
+ * one's code refused by the other and quietly dropped.
+ */
+const WALLET_KEY = 'musicquiz.drinks';
+
+/** Codes this phone has been shown, with the room each was won in. */
+function heldCodes() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(WALLET_KEY) || '[]');
+    return Array.isArray(raw) ? raw.filter((v) => v && v.code) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHeld(list) {
+  try {
+    localStorage.setItem(WALLET_KEY, JSON.stringify(list.slice(-20)));
+  } catch {
+    /* private browsing: tonight still works, next week will not. */
+  }
+}
+
+/**
+ * Write down anything the server just showed us.
+ *
+ * Called from `draw()`, so a code is remembered the first time it appears and
+ * never has to be caught at the moment it is minted.
+ */
+function rememberVouchers(s) {
+  const seen = (s.vouchers || []).map((v) => v && v.code).filter(Boolean);
+  if (!seen.length) return;
+  const held = heldCodes();
+  const have = new Set(held.map((h) => h.code));
+  let added = false;
+  for (const code of seen) {
+    if (have.has(code)) continue;
+    held.push({ code, g: roomCode() || '' });
+    added = true;
+  }
+  if (added) saveHeld(held);
+}
+
+/**
+ * Earlier nights' drinks, re-checked against the server. A module binding
+ * because `draw()` runs on every state push and this is fetched once.
+ */
+let fromBefore = [];
+
+/**
+ * Ask the server about every code this phone is holding.
+ *
+ * **A 404 IS AN ANSWER; ANYTHING ELSE IS A FAILURE TO LOOK.** The repo's own
+ * rule, and it matters here: a dropped connection must not quietly delete
+ * somebody's drink, so only a definite "that code is not a voucher here" takes
+ * one off the phone.
+ */
+async function refreshHeldDrinks() {
+  const held = heldCodes();
+  if (!held.length) return;
+  const keep = [];
+  const live = [];
+  for (const h of held) {
+    try {
+      const res = await fetch(`/api/voucher?c=${encodeURIComponent(h.code)}${
+        h.g ? `&g=${encodeURIComponent(h.g)}` : ''}`);
+      if (res.status === 404) continue;          // gone for good
+      if (!res.ok) { keep.push(h); continue; }   // could not look — keep it
+      keep.push(h);
+      live.push(await res.json());
+    } catch {
+      keep.push(h);
+    }
+  }
+  saveHeld(keep);
+  fromBefore = live;
+  if (state && fromBefore.length) {
+    /*
+     * FORCE THE REBUILD. `screenKey()` has not changed — the phone is sitting
+     * on the same screen it was — so without this the drinks would appear
+     * whenever the next phase happened to turn over, which at a lobby is
+     * never. The bingo card repaints on its own because `paintVouchers()`
+     * keys on the list, and the list just changed.
+     */
+    currentKey = null;
+    draw(state);
+  }
+}
+
 function wallet(s, skip = '') {
   const list = (s.vouchers || []).filter((v) => v.code !== skip);
   if (!list.length) return '';
@@ -2116,6 +2243,13 @@ async function boot() {
     paintScheme(d.scheme);
   }).catch(() => {});
   watchForWandering();
+  /*
+   * WHAT THIS PHONE IS STILL OWED FROM EARLIER NIGHTS.
+   *
+   * Not awaited: a drink from last Thursday must never stand between somebody
+   * and tonight's join box. It repaints itself when the answers land.
+   */
+  refreshHeldDrinks().catch(() => {});
 
   if (me && me.id) {
     try {

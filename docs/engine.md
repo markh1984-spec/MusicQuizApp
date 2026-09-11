@@ -1072,3 +1072,85 @@ counting elements, because *"in the document" and "somebody can see it" are
 different questions* — and it walks both engines, because they draw these in
 two different files and *a decision taken for both engines needs an assertion
 in both.*
+
+---
+
+## …and they stay there next week
+
+The section above is what I said when asked for drinks that survive the night:
+that the phone has no account, so "just tonight" was the honest scope. The push
+back was one sentence and it was right:
+
+> *"But the app already remembers phones from previous weeks including their
+> name, so I don't understand why it can't just remember the drinks they've won
+> as well?"*
+
+It can. "A phone has no account" was a true sentence answering a question
+nobody asked. A phone has kept its id, its token and its team name in
+`localStorage` since rule 3 existed, and hands all three back weeks later — a
+voucher code is one more string beside them, and redeeming needs no identity at
+all because **the code is the credential**. The bar scans it; nobody logs in.
+
+### The real reason, which is much smaller
+
+`/api/voucher` and `/api/voucher/redeem` read
+`room.session.engine.state.vouchers`. That state is replaced the moment the
+next night launches. So the code was never forgotten — the only two routes that
+could resolve one simply stopped being able to see it, and the pub still owed
+the drink.
+
+`src/wallet.js` is the fallback: the live game is asked first, exactly as
+before, and only a code it has never heard of is looked for among the room's
+filed nights.
+
+### Nothing new is stored, and that is what made it small
+
+`results()` has filed `vouchers: Object.values(state.vouchers)` into every
+archived night since the bar started scanning them, and `updateArchivedNight()`
+exists precisely because a drink is handed over minutes *after* the night is
+filed. The archive is already backed up off the ephemeral disk, so it already
+survives the deploys that wipe `data/` — a new voucher store would have had to
+earn that from scratch, and would have been the fourth thing in this app
+needing its own backup path.
+
+Two orderings are load-bearing:
+
+- **The live game is asked first in both routes.** A scan on the night takes
+  the path it always took, and a directory read never lands in front of it.
+- **Archive-first would be a bug, not a slower version of the same thing.** A
+  filed copy of tonight's voucher could be redeemed while the live one still
+  read as owed — two drinks for one win. For the same reason `already` is not a
+  reason to fall through: a voucher the live game has already spent is answered
+  by the live game.
+
+### The limit, stated plainly
+
+**A voucher reaches the archive when the night is filed, and a night is filed
+when it ends.** An evening abandoned by launching the next thing over the top
+has no record — which is already true of its scores, its headcount and its
+league contribution. The guard finds this the moment you write it the other
+way round: the first version of `drinks-keep.mjs` relaunched without finishing
+and got a 404, which is the app being correct about a night that never
+happened.
+
+### The phone's half
+
+It remembers the **code** and nothing else. The words on the card, the venue,
+the name and whether it has been collected all come back from `/api/voucher` on
+every page load, so a phone physically cannot carry a stale prize to a bar.
+
+Three details worth keeping:
+
+- **`musicquiz.drinks`, not `STORE_KEY`.** Being removed from a game wipes
+  `musicquiz.player` by design — rule 5. The host threw a phone out of a
+  *quiz*, not out of a drink the pub already owes them.
+- **The room rides with the code**, so somebody who plays at two pubs does not
+  have each one's voucher refused by the other and quietly deleted.
+- **A 404 drops it; a request that failed does not.** The repo's own rule — a
+  read that failed is not an empty folder — applied to somebody's drink.
+
+They are merged into `state.vouchers` once, in `draw()`, so `wallet()` on the
+quiz and `paintVouchers()` on the bingo card both draw them with no change of
+their own. Tonight's copy wins on a clash: it is the live game's record of a
+code minted minutes ago, where the remembered list is a snapshot from page
+load.

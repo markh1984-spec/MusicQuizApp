@@ -30,6 +30,7 @@ import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarn
 import { recueQuiz } from './src/recue.js';
 import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, defaultPrizes, stagePlan, stageLabel } from './src/bingo.js';
 import { fullLibrary, listArchive, venuesUsed, rewardsUsed, rewardsByVenue, serialiseArchive, restoreArchive, saveBingoPack, loadBingoPack, deleteBingoPack, readStats } from './src/library.js';
+import { findInArchive, redeemInArchive } from './src/wallet.js';
 import { generateBingoPack } from './src/generate-bingo.js';
 import { generateQuizPack, buildIntroPlaylists, claudeAsker, roundPlan, TOPICAL_ROUNDS, TOPICAL_DAYS, topicalNaming } from './src/generate-quiz.js';
 import { portraitPath } from './src/portraits.js';
@@ -1673,7 +1674,20 @@ async function handleGet(req, res, url, route) {
   if (route === '/api/voucher' && req.method === 'GET') {
     const room = roomForPhone(req, url);
     const code = String(url.searchParams.get('c') || '').toUpperCase();
-    const found = (room.session.engine?.state?.vouchers || {})[code];
+    /*
+     * TONIGHT'S GAME FIRST, THEN THE NIGHTS ALREADY FILED.
+     *
+     * A drink is won on one night and collected whenever the person fancies
+     * it — and the live state is replaced the moment the next night launches,
+     * so a code from last week used to come back "not a voucher here" while
+     * the pub still owed the drink. See `src/wallet.js`; nothing new is
+     * stored, the codes have been in the archive all along.
+     *
+     * The live lookup is untouched and runs first, so a scan on the night
+     * takes exactly the path it always took.
+     */
+    const found = (room.session.engine?.state?.vouchers || {})[code]
+      || findInArchive(room.paths.archive, code)?.voucher;
     // Says nothing about the room, the night or any other voucher — a bad code
     // is simply not a voucher here.
     if (!found) return sendJson(res, 404, { error: 'That code is not a voucher here.' }), true;
@@ -6298,9 +6312,22 @@ async function handleWrite(req, res, url, route) {
   if (route === '/api/voucher/redeem' && req.method === 'POST') {
     const body = await readJson(req);
     const room = roomForPhone(req, url, body);
-    const out = room.session.engine?.redeemVoucher
+    const live = room.session.engine?.redeemVoucher
       ? room.session.engine.redeemVoucher(String(body.code || ''), { by: 'scan' })
       : { ok: false, reason: 'unknown' };
+    /*
+     * The same fallback as the lookup above, and it must be the same ORDER:
+     * the live game answers first, and the archive is asked only when it has
+     * never heard of the code. Asking the archive first would let a stale
+     * filed copy of tonight's voucher be taken while the live one still reads
+     * as owed — two drinks for one win.
+     *
+     * `already` is NOT a reason to fall through: a voucher the live game has
+     * already redeemed is answered by the live game.
+     */
+    const out = live.reason === 'unknown'
+      ? redeemInArchive(room.paths.archive, String(body.code || ''), Date.now())
+      : live;
     if (!out.ok && out.reason === 'unknown') {
       return sendJson(res, 404, { error: 'That code is not a voucher here.' }), true;
     }

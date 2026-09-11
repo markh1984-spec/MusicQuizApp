@@ -896,22 +896,46 @@ they say next.
   changed and the guard stayed byte-identical. It is host-only by construction:
   a note to one person about everybody else.
 
-### THE DRINKS ARE ALREADY IN THEIR POCKET — do not build a wallet button
+### THE DRINKS STAY IN THEIR POCKET — across nights, and with no login
 
 *"Give them drinks that they keep in their account on their phone so they can
-redeem them throughout the night whenever they fancy it."*
+redeem them throughout the night whenever they fancy it"*, then the correction
+that mattered: *"the app already remembers phones from previous weeks including
+their name, so I don't understand why it can't just remember the drinks they've
+won as well?"*
 
-- **IT ALREADY DOES, AND THAT WAS MEASURED RATHER THAN READ.** A standing
-  wallet chip was BUILT and DELETED: `drinks-in-your-pocket.mjs` walked a whole
-  quiz-and-bingo night and **a held code was on the screen at every phase**, so
-  the chip had no moment to exist in. **Do not rebuild it** without running that
-  guard and finding a gap first.
-- **A PHONE HAS NO ACCOUNT — rule 3 is a TOKEN, not a password.** "Their
-  account" is the game they are in; anything longer-lived wants somewhere to
-  sign in, which a phone deliberately does not have here.
-- **THE GUARD ONLY EVER ASSERTS THE DIRECTION THAT FAILS SILENTLY** — sent and
-  not drawn. **It never asserts a code SHOULD be up**: the hold at `won` and the
-  refusal over a live question are decisions, and are pinned as decisions.
+- **HE WAS RIGHT, AND "A PHONE HAS NO ACCOUNT" WAS THE WRONG ANSWER** — it is
+  written here because it was written here wrongly first. A phone has kept its
+  id, its token and its team name in `localStorage` since rule 3 existed. The
+  real reason was narrower and fixable: **`/api/voucher` and
+  `/api/voucher/redeem` read the LIVE game's state, which the next launch
+  replaces.** `src/wallet.js` falls back to the room's filed nights.
+- **NOTHING NEW IS STORED.** `results()` has filed the vouchers into every
+  archived night since the bar started scanning, and `updateArchivedNight()`
+  already exists for a drink handed over after the night is filed. **The
+  archive already survives the deploys that wipe `data/`; a new store would
+  have had to earn that from scratch.**
+- **THE LIVE GAME IS ASKED FIRST, IN BOTH ROUTES AND IN THAT ORDER.** A pub
+  night takes the path it always took — and archive-first would let a filed
+  copy be taken while the live one still reads as owed: two drinks for one win.
+  **`already` is NOT a reason to fall through.**
+- **A VOUCHER REACHES THE ARCHIVE WHEN THE NIGHT IS FILED.** A night abandoned
+  by launching the next thing over the top has no record and never had one —
+  the same deal the scores, the headcounts and the league have always had.
+- **THE PHONE REMEMBERS THE CODE AND NOTHING ELSE.** The words, the venue and
+  whether it is spent come back from the server on every load, so it cannot
+  carry a lie to a bar. **`musicquiz.drinks`, NEVER `STORE_KEY`, and that is
+  rule 5**: being removed from tonight's quiz must not destroy last Thursday's
+  drink. **The room rides with the code**, or somebody playing two pubs has
+  each one's code refused by the other. **A 404 drops it; a request that
+  FAILED does not.**
+- **MERGED IN `draw()`, so `wallet()` and `paintVouchers()` both draw them**
+  with no change of their own — one list, two engines. **Tonight's copy wins on
+  a clash.**
+- **AND THE WALLET BUTTON STAYS DELETED.** `drinks-in-your-pocket.mjs` still
+  says a held code is drawn at every phase of a night, so a chip has no moment
+  to exist in. **Do not build one without running that guard and finding a
+  gap.** `drinks-keep.mjs` is the across-nights half, and it relaunches.
 
 ### A WORD IN ONE EAR — `src/notes.js`, one phone and never the room
 
@@ -2340,9 +2364,9 @@ his own. His framing: *"I have no ego whatsoever about this being my app, my
 rules — if I have to make changes to make the app as good as possible for the
 customers I will."*
 
-**That sentence is load-bearing.** It means a proposal of his that hurts
-clarity should be argued with rather than built, and that "the host asked for
-it" is not on its own a reason. He would rather be told.
+**That sentence is load-bearing.** A proposal of his that hurts clarity should
+be argued with rather than built, and "the host asked for it" is not on its own
+a reason. He would rather be told.
 
 Four rules, in order:
 
@@ -2356,12 +2380,10 @@ never have to work anything out.
 ### 2. As little clutter as possible
 
 **A control nobody uses is clutter, even a good one.** Every switch, filter,
-badge and note has to earn the pixels — and "it might be handy" is not
-earning them. When in doubt, leave it out and wait for somebody to miss it.
-
-This is the rule that decides most arguments about adding something, and it
-cuts against the instinct to be helpful: a page with an answer to every
-question is a page nobody can scan.
+badge and note has to earn the pixels — "it might be handy" is not earning
+them. When in doubt, leave it out and wait for somebody to miss it. It cuts
+against the instinct to be helpful: a page with an answer to every question is
+a page nobody can scan.
 
 ### 3. Ease of use
 
@@ -2371,12 +2393,10 @@ the common job slower to make a rare job easier is the wrong way round.
 
 ### 4. Build what helps a quizmaster SELL
 
-The one that sets priorities rather than settling arguments. This app has two
-kinds of feature: things that run a night, and things that win the next
-booking. The second kind is the differentiator against a generic quiz app, and
-it is what somebody is really buying.
-
-It promotes, in order:
+The one that sets priorities rather than settling arguments. Two kinds of
+feature: things that run a night, and things that win the next booking. The
+second is the differentiator against a generic quiz app and what somebody is
+really buying. It promotes, in order:
 
 - **Past gigs** — the evidence somebody shows a venue. Already built and
   currently thin: it should carry the venue, the numbers and the photos.
@@ -2394,13 +2414,9 @@ And it demotes anything that only makes the app cleverer.
 inbox is read, the replies go out, the topical pack is generated and read
 through, and app changes get made.
 
-**It is a boundary that BUYS the turnaround rather than costing it** — *"it's
-not a function of laziness. It's a function of wanting to be as good as
-possible."* What makes it keepable is not working harder on Monday; it is
-Monday not being swamped.
-
-So the rule that falls out, and it is the one to apply when weighing anything
-new:
+**It is a boundary that BUYS the turnaround rather than costing it.** What
+makes it keepable is not working harder on Monday; it is Monday not being
+swamped. So the rule that falls out:
 
 > **A feature's real price is the ADMIN IT CREATES ON A MONDAY, not the code it
 > takes to write.**
@@ -2430,18 +2446,14 @@ admin burden off. It's essentially applying what I'm doing from within the app
 to them as a quizmaster on their side as well."*
 
 **Every Monday-load reducer in this file was built for the OWNER. A quizmaster
-has the identical problem and nobody has built it for them.** They finish at
-half eleven and owe a venue an invoice, a thank-you and a nudge about next
-month — and none of it happens, because the blank page is the expensive part
-rather than the sending.
+has the identical problem and nobody has built it for them.**
 
 **THE SHAPE IS ALWAYS THE SAME AND IT IS THE ONE `reply-draft.js` ALREADY
 USES: the app prepares, the human reads, the human sends.** Four reasons:
 
 - **The blank page is where the time goes**, not the pressing of send.
 - **The human stays accountable for what goes out**, so nothing goes publicly
-  wrong in their name — the whole reason `reply-draft.js` drafts and never
-  sends.
+  wrong in their name.
 - **It needs no email service**: the share sheet and the clipboard are already
   how invoices leave this app.
 - **It is dual-purpose**, which is the guard rail below.
@@ -2451,14 +2463,10 @@ goes out unread is the one that names the wrong headcount, or bills a night
 that was cancelled — and it lands on the relationship the quizmaster is being
 paid to keep.
 
-**AND THE GUARD RAIL, which keeps the rule honest: every one of those is
-dual-purpose, and an admin reducer that makes the customer's experience worse
-is the WRONG reducer.** They exist to make the admin burden as small as
-possible *and* to give the customer the most value, not one at the expense of
-the other. Each is two-ended: the draft reply means a thirty-second answer AND
-that they get an answer at all; the queue position means not being chased AND
-knowing when; "one open at a time" protects the time AND replaces a silent
-refusal with a stated rule.
+**AND THE GUARD RAIL: an admin reducer that makes the customer's experience
+worse is the WRONG reducer.** Each is two-ended — the draft reply means a
+thirty-second answer AND that they get an answer at all; "one open at a time"
+protects the time AND replaces a silent refusal with a stated rule.
 
 **The load comes down by making the work FASTER AND MORE CERTAIN, never by
 doing less of it.** That is the line between this and a software company nobody
@@ -2510,11 +2518,9 @@ feature row in the app:
 > **A title that names the thing, and one short line that finishes the sentence
 > "this gives me…" in a breath. Anything longer needs a reason.**
 
-It came from looking at the ladder: fourteen features, each with two or three
-sentences under it, is a wall — and a wall gets scrolled past, so the page
-whose entire job is to say what you get was saying nothing at all. The same
-had happened to the account page, the suggestion box and the own-packs panel,
-each of which had grown an explanation of itself.
+It came from the ladder: fourteen features with three sentences each is a
+wall, and a wall gets scrolled past — so the page whose whole job is to say
+what you get was saying nothing.
 
 **"Invoicing — bill a venue before you leave the car park"** is the shape.
 Not *"Bill for a night before you have left the car park, with your own
@@ -2548,30 +2554,27 @@ itself is wrong.
 
 ## Where the reasoning lives
 
-**Every RULE is in this file. The WHY is in `docs/`.** Split three times —
-14 and 15 August 2026 — because it had reached ~90,000 tokens and loaded in
-full at the start of every session, and grew back to ~50,000 as each feature
-landed with its reasoning inline. The decisions TABLE alone was 43,034 bytes
-and moved whole to **[`docs/decisions.md`](docs/decisions.md)**, leaving every
-decision NAME and every sentence that FORBIDS something, verbatim. Nothing was
-summarised: whole sections moved by line number, so nothing could be quietly
-reworded on the way through. Open the one you are touching; do not read them
+**Every RULE is in this file. The WHY is in `docs/`.** Split three times,
+because it had reached ~90,000 tokens and loaded in full every session. The
+decisions TABLE alone was 43,034 bytes and moved whole to
+**[`docs/decisions.md`](docs/decisions.md)**, leaving every decision NAME and
+every sentence that FORBIDS something, verbatim. Nothing was summarised: whole
+sections moved by line number. Open the one you are touching; do not read them
 all.
 
 **A WRITTEN RULE TO KEEP THIS FILE SHORT HAS NOW FAILED TWICE**, so
 `test/claude-md-budget.test.js` asserts the byte count, that every `docs/` link
 resolves, and that no decision exists in the doc without being named here.
 **Pay for a new rule by trimming an old one to its prohibition** before raising
-the budget; the diff will then say which you did. **And the index below names
-only what is NOT already a heading here** — 27 lines restated a section this
-file carries, with its own *Full reasoning* link at the foot of it.
+the budget. **And the index below names only what is NOT already a heading
+here.**
 
-**And a mechanical split is only safe where the boundary is STRUCTURAL.** Moving
-table rows worked — a row is a row. The same script pointed at prose, keeping
-"the heading and the first paragraph", quietly threw away the Owner/Parent/Child
-table and every rule under the lobby-games heading: in this file the first
-paragraph is often the CONTEXT and the rule is below it. **If more has to come
-out, move whole named sections by hand and read what is left.**
+**And a mechanical split is only safe where the boundary is STRUCTURAL.** The
+same script pointed at prose, keeping "the heading and the first paragraph",
+quietly threw away the Owner/Parent/Child table and every rule under the
+lobby-games heading — in this file the first paragraph is often the CONTEXT and
+the rule is below it. **If more has to come out, move whole named sections by
+hand and read what is left.**
 
 **[`docs/engine.md`](docs/engine.md)** — phases, scoring, and what each screen is told
 
@@ -2786,12 +2789,11 @@ been working: *"I realised adding too many things to the to-do list was
 actually the reason that everything got so big. So what we need to do is just
 build things, and then if we don't need them, we just delete them later."*
 
-**He is right, and the evidence is in this repo's own history.** `TODO.md` had
-reached 124KB, `docs/business.md` 170KB with 89% of it under one heading, and
-the single largest entry in either — a 66KB quizmaster directory — is a thing
-nobody has ever built. **A list is where ideas go to be paid for repeatedly**:
-every session loads it, every session reads past it, and an entry costs
-context on every one of them until somebody either builds it or deletes it.
+**He is right, and the evidence is this repo's own history.** `TODO.md` had
+reached 124KB and its single largest entry — a 66KB quizmaster directory — is
+a thing nobody has ever built. **A list is where ideas go to be paid for
+repeatedly**: an entry costs context every session until somebody builds it or
+deletes it.
 
 So, for anything the host asks for directly:
 
@@ -2886,10 +2888,9 @@ documentation.
 
 The split was called impossible in one session and then done in one session.
 The wrong assumption was not about SIZE — it was that every section had to be
-read and written out again, which would have been ~50,000 tokens of output.
-What actually did it was a script moving whole sections **by line number**,
-never touching the prose. **A 4,000-line move costs the same as a 40-line one
-when nothing reads the content.**
+read and written out again. What did it was a script moving whole sections **by
+line number**, never touching the prose. **A 4,000-line move costs the same as
+a 40-line one when nothing reads the content.**
 
 So when a job looks too big, the question to ask first is not "can I do half
 of it" but **"is there a version of this that a script does and I only
@@ -2897,10 +2898,9 @@ supervise?"** Moving, renaming, reordering, extracting, counting and checking
 are all in that category. Judgement — which rule matters, what a control
 should be called — is not, and should stay slow.
 
-It has a safety side too, which is the better argument: a script cannot
-quietly reword something on the way through. The hand-written half of that
-split was both the expensive part AND the only part that could have lost a
-rule.
+It has a safety side too, and it is the better argument: **a script cannot
+quietly reword something on the way through.** The hand-written half was both
+the expensive part AND the only part that could have lost a rule.
 
 **And a cleanup frees nothing in the session that performs it.** This file was
 already loaded before the split began; that cost was spent and unrecoverable.
@@ -2929,8 +2929,8 @@ be stable and definitely working is the quiz launch capability for pubs.
 Everything else that changes doesn't affect me tonight."*
 
 **This is as useful for what it FREES as for what it protects.** Without it
-every change gets treated as equally dangerous, which is slow and, worse,
-spreads the care thinly over things that cannot end a night.
+every change is treated as equally dangerous, which spreads the care thinly
+over things that cannot end a night.
 
 **PROTECTED — the path from "the room is sitting down" to "the quiz is
 running":**
@@ -4055,6 +4055,7 @@ node scripts/bingo-prizes.mjs          # does a bingo prize reach who won it?
 node scripts/bingo-round-ends.mjs      # is the whole room told the prizes have gone?
 node scripts/a-word-in-your-ear.mjs     # does a message reach one phone and no other?
 node scripts/drinks-in-your-pocket.mjs  # is a drink they won ever off their phone?
+node scripts/drinks-keep.mjs            # is the drink still there next week?
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break a pub night?
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
 node scripts/tonight-resolves.mjs       # does the bar offer real games, and find every pack?
@@ -4166,15 +4167,14 @@ you: real iOS Safari, pub wifi, a projector, and the photo round trip.
 
 ## The host key rotates on every deploy unless HOST_KEY is set
 
-This locked him out of his own console, on his phone, the first time he went to
-make an account — so it is worth knowing before anything else on the live app.
+This locked him out of his own console, on his phone, the first time he went
+to make an account.
 
-`hostKey()` in `src/config.js` uses `HOST_KEY` when it is set, and otherwise
-**invents one and writes it to `data/`** — which on Render's free tier is empty
-again after every deploy. So each deploy silently hands out a different key and
-every bookmark stops working, with nothing on screen explaining why. The startup
-banner now says so (`hostKeyIsTemporary()`), because "failure messages have to
-name the cause" applies to setup as much as to generation.
+`hostKey()` in `src/config.js` uses `HOST_KEY` when set, and otherwise
+**invents one and writes it to `data/`** — empty again after every deploy on
+the free tier. So each deploy silently hands out a different key and every
+bookmark stops working, with nothing on screen explaining why. The startup
+banner now says so (`hostKeyIsTemporary()`).
 
 **If he says his bookmark stopped working, this is why.** The current key is in
 the Render startup banner on the `Host key:` line. The fix is one environment
@@ -4190,8 +4190,8 @@ variable and it is step A of TODO.md.
 
 Render's newer UI nests the service inside a project. `/project/prj-…` is the
 wrong level and its "environment groups" are unrelated to environment
-variables; `/web/srv-…` is the right level. This cost the host a lot of
-clicking — do not send him to the project page.
+variables; `/web/srv-…` is the right one. **Do not send him to the project
+page.**
 
 ---
 
