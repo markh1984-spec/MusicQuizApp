@@ -192,10 +192,30 @@ export function venuesSection() {
      * "Venues" twice: once in the mic-icon `.tab-head`, once again here,
      * immediately under it — the exact thing the shared heading was built to
      * stop happening tab by tab.
+     *
+     * **AND IT IS AN `h2`, NOT AN `h3`.** It was the tab's own NAME drawn at
+     * SECTION size: 13px white, where *Prepare a night* three rows up on the
+     * same door is 19px. Reported as *"slight UI issue"* and measured rather
+     * than guessed — one door, two tabs, two different steps of the ladder,
+     * which is the drift the shared heading exists to prevent. A tab's own
+     * label is a title wherever it is drawn. A BARE `h2`, which is what
+     * `console-shows.js` two tabs away already uses for the same job — the fix
+     * is to match the existing pattern, not to invent a class beside it.
+     *
+     * **AND THE LINE UNDER IT IS A LINK, because the card here says something
+     * it gives you no way to change.** *"It's saying Station Tap Wokingham
+     * isn't a regular night, but I also can't seem to edit that anywhere."*
+     * He could not, from this door: the name is a span rather than a button,
+     * deliberately, because a tap here PICKS the pub for tonight. So the
+     * editing lives behind the Workshop and this said so nowhere — naming
+     * another tab and leaving somebody to find it is the thing `goTo()` is
+     * for, and the empty state on this very panel was already doing it.
      */
     el.replaceChildren(node(`
       <div class="panel">
-        ${findOnly ? '<h3>Venues</h3>' : ''}
+        ${findOnly ? `<h2>Venues</h2>
+          <div class="tiny">Tap a pub to make it tonight's. To set its usual night,
+            its prizes or where to send them, open it in ${goTo('workshop', 'venues', 'the Workshop')}.</div>` : ''}
         ${findOnly ? '' : `<div class="tiny">Set the prizes here and they fill themselves in when you
           launch a night at this venue. Give a venue its usual night and the
           launch bar knows whose night tonight is — and the big screen ends the

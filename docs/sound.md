@@ -125,3 +125,68 @@ It caught two real faults and one of its own:
 3. **Stings fired 150ms apart** while applause (2.4s) was still ringing, so
    every peak was a measurement of the sum. A peak measured over somebody
    else's sound is not a measurement of anything.
+
+---
+
+## The boo came back, and one of them is a voice
+
+*"Can you add a 'your mum' sound and a boo?"*
+
+The header of `stings.js` said there would be no boo, on this reasoning: *a
+convincing human crowd noise cannot be synthesised — what comes out is a
+kazoo.* That was written about **laughter** and applied to a boo by assumption,
+and the two are not the same problem.
+
+A laugh is a fast train of sharp, pitched transients with articulation in every
+one of them. That is exactly what synthesises badly, and it is why the original
+note was right about laughter. A boo is the opposite: one long, low, almost
+unchanging vowel, held by a lot of people slightly out of tune with each other.
+Nothing about that is hard.
+
+So `boo()` is six sawtooth voices, and the two things that make it a crowd
+rather than a synth chord are that **they start at different moments** —
+spread over about a fifth of a second — and that **each sags by a different
+amount** as it runs out of breath. The vowel is a lowpass: bright for 90ms so
+there is something like a "b", then closed down to 330Hz, which is roughly
+where "oo" lives. A little band-passed noise underneath stops it sounding like
+it was recorded in an anechoic chamber.
+
+The gain is divided by the voice count. Six overlapping envelopes at full
+strength is the `GainNode` lesson this file already records, arriving as a sum
+rather than as one node — it measures at 0.23 against applause's 0.26, well
+under the 0.95 ceiling.
+
+**Whether it is good enough for a real room is the host's judgement.** It is a
+synthesised crowd and it will never be a recording of one.
+
+### "Your mum" is the browser's own voice
+
+A sentence cannot be made out of oscillators, so the choice was an audio file
+or `speechSynthesis`. A file breaks the rule at the top of `stings.js` for the
+reasons written there — bytes in a public repo, a fetch on a venue's wifi,
+something to 404 mid-gig.
+
+`speechSynthesis` is neither a file nor a dependency. It is in the browser
+already, ships nothing, fetches nothing, and comes out of the same sound card
+as everything else — so on the projector laptop it goes down the decks with the
+rest of the soundboard. It is set deliberately slow and low, because the joke
+is the deadpan delivery; a cartoon voice would be the kazoo problem again.
+
+A browser with no voice is a silent no-op rather than a throw. The soundboard
+is pressed mid-gig, and a control that takes the page down with it is worse
+than one that does nothing.
+
+### What the guard cannot tell you about it
+
+Every other sting runs through the `AudioContext` that `soundboard.mjs` splices
+an analyser onto, so the guard can measure whether a noise actually happened
+and how loud it was. `speechSynthesis` does not: it is handed to the platform
+and comes out somewhere the page cannot see. The peak reads a flat zero however
+well it works.
+
+So the guard asserts the press reached the right function and the platform was
+asked to say the right words — and nothing more than that. Asserting on the
+peak would have been a guard confidently answering a question it was not
+looking at, which is the fault this repo records against `pub-unchanged` five
+times over. **That it makes an audible noise on a given laptop is something a
+person has to hear.**

@@ -968,6 +968,24 @@ being a cheeky dickhead' and it appears on their bingo screen?"*, and
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
+### A TAB'S OWN LABEL IS A TITLE WHEREVER IT IS DRAWN
+
+Reported as *"slight UI issue"* and MEASURED: the Console's Venues heading was
+an `h3` at **13px**, *Prepare a night* three rows up **19px**.
+
+- **`tabBody()` DRAWS THE SHARED HEADING ON EVERY DOOR BUT THE CONSOLE**, so a
+  Console tab wanting one draws its OWN — and the two that do had drifted apart.
+  **A tab's own label takes `--fs-title`.** **A bare `h2`, matching
+  `console-shows.js`** — the pattern already there, never a new class.
+- **AND A LINE SAYING WHAT A TAP DOES, LINKING TO THE EDITOR** — *"it's saying
+  Station Tap Wokingham isn't a regular night, but I can't seem to edit that
+  anywhere."* On the Console a venue's name is a SPAN, deliberately, a tap
+  PICKING the pub for tonight — so the card stated a fact it gave no way to
+  change. **"Do it over there" must be a link to there.**
+- **`Prepare a night` IS STILL 19px**, its `h2` inside a `.game-head`. Left
+  alone: nobody reported it, and **a restyle is the cheapest change and the
+  easiest to get wrong silently.**
+
 ### THE CONSOLE'S POLISH PASS — the rules from one sweep, 25 August 2026
 
 Measured and written up in
@@ -2286,9 +2304,17 @@ with `lobby-sound.js`), the `Sounds` panel in `host.js`, `POST
 - **THE LAPTOP WITH THE HDMI IS THE ONE WIRED TO THE PA** — *"my sound outputs
   via my dj decks which is picked up as a sound card on my laptop."* **The
   panel SAYS where the sound comes out.**
-- **SYNTHESISED, NEVER SHIPPED.** **AND THAT IS WHY THERE IS NO BOO AND NO
-  LAUGHTER** — a human crowd noise comes out a kazoo, the yeehaw lesson again.
-  Applause is the exception because it IS filtered noise.
+- **SYNTHESISED, NEVER SHIPPED. STILL NO LAUGHTER — BUT THE BOO CAME BACK**,
+  the old rule having ruled out both on one argument that fits only one. A laugh
+  is fast pitched transients, which is the kazoo; a boo is one low vowel held by
+  a crowd out of tune, so it is **several DETUNED voices started at DIFFERENT
+  moments** (all at once is a synth chord) under a closing lowpass, sagging.
+  **Anything with ARTICULATION still needs a recording.**
+- **AND "YOUR MUM" IS THE BROWSER'S OWN `speechSynthesis`** — neither a file nor
+  a dependency, so the rule above holds. **Deadpan, slow and low.** **A missing
+  voice is a silent no-op, never a throw.** **The guard CANNOT measure it**: it
+  never enters the `AudioContext` the analyser is spliced into, so
+  `soundboard.mjs` asserts it was SPOKEN rather than reading zero as a pass.
 - **ONE AUDIO LAYER — `audio-kit.js`.** **The POLICY stays with each caller**:
   the lobby is gated on a phone's preference and the host's switch, the
   soundboard on nothing — **the press IS the decision**.
@@ -2411,28 +2437,23 @@ And it demotes anything that only makes the app cleverer.
 inbox is read, the replies go out, the topical pack is generated and read
 through, and app changes get made.
 
-**It is a boundary that BUYS the turnaround rather than costing it.** What
-makes it keepable is not working harder on Monday; it is Monday not being
-swamped. So the rule that falls out:
+**It BUYS the turnaround rather than costing it**, and what makes it keepable
+is Monday not being swamped. So:
 
 > **A feature's real price is the ADMIN IT CREATES ON A MONDAY, not the code it
 > takes to write.**
 
-That is the thread through a lot of what is already built — the draft-reply
-button, the inbox that gets shorter when you answer something, the queue
-position on pack requests, the been-opened receipt, the "one open request at a
-time" limit, the refusal to add an email service. **Every one is a Monday-load
-reducer.**
-
-Two things follow:
+That is the thread through the draft-reply button, the inbox that shortens as
+you answer it, the queue position on pack requests, the been-opened receipt,
+"one open request at a time", and the refusal to add an email service. **Every
+one is a Monday-load reducer.** Two things follow:
 
 - **Anything needing DAILY attention is a bad fit for this business**, however
-  good the idea. The weekly topical pack fits because its cadence already IS
-  Monday's. An emergency support channel does not — see the suggestion-box
-  notes, where that was argued and turned down.
+  good the idea. The weekly topical pack fits because its cadence IS Monday's;
+  an emergency support channel does not.
 - **A feature that generates a QUEUE somebody has to work is expensive; one
-  that serves itself is cheap.** When a new proposal creates a pile, the first
-  question is whether the pile can be made to shrink on its own.
+  that serves itself is cheap.** When a proposal creates a pile, ask first
+  whether the pile can shrink on its own.
 
 ### And the same rule points at the QUIZMASTER'S admin, not only the owner's
 
@@ -2815,8 +2836,7 @@ ideas.** An idea nobody is building this month belongs in `docs/`, or nowhere.
 ### Which accounts a change is FOR — the words to take literally
 
 Set by the host on 14 August 2026, so a request never has to say it twice.
-**Take these literally**, and note that the fourth is the one most changes
-actually mean:
+**Take these literally** — the fourth is what most changes actually mean:
 
 | He says | It applies to |
 |---|---|
@@ -2827,16 +2847,12 @@ actually mean:
 | **"venues"** | accounts with `kind: 'venue'`, parent or child |
 
 **THE TRAP IS THAT "CHILD" AND "QUIZMASTER" ARE DIFFERENT AXES**, and mixing
-them silently builds the right feature for the wrong people:
-
-- **what you ARE** is the `kind` — quizmaster or venue;
-- **how you are ORGANISED** is on your own, a parent, or a child.
-
-So "change the child accounts" means *change something about being in a group*,
-which is rare — while "change what a quizmaster sees" is almost always solo
-accounts AND children together, because both run nights and both get the same
-app. Build the first when he means the second and the change lands on a handful
-of people; build the second when he means the first and it lands on everybody.
+them silently builds the right feature for the wrong people: **what you ARE** is
+the `kind`, **how you are ORGANISED** is solo/parent/child. So "change the child
+accounts" means *change something about being in a group*, which is rare — while
+"change what a quizmaster sees" is almost always solo accounts AND children
+together. Get it backwards and the change lands on a handful of people, or on
+everybody.
 
 **His own quizmaster account is ON ITS OWN, not a child.** It is linked to the
 owner account by `ownedBy` — one login, two hats — and it has no parent,
@@ -2862,21 +2878,18 @@ the ordinary way.
 | **4. Does not benefit Claude** | do not do it |
 
 **"Negatively affects the host" means** it touches his data or the live app's
-behaviour, restructures something he relies on, costs him time or attention,
-or reduces his oversight of what is being done.
+behaviour, restructures something he relies on, costs him time or attention, or
+reduces his oversight.
 
-**AND THE TEST THAT MAKES IT WORK, in his own words: *"if you are
-rationalising a 3 into a 2 then it's probably a 3 and just ask."*** That is
-the whole rule, because the failure mode is not confusion about the
-categories — it is a large upside making a 3 feel like a 2. The effort spent
-arguing that something is really a 2 IS the signal.
+**AND THE TEST THAT MAKES IT WORK: *"if you are rationalising a 3 into a 2 then
+it's probably a 3 and just ask."*** The failure mode is not confusion about the
+categories — it is a large upside making a 3 feel like a 2, so the effort spent
+arguing something is really a 2 IS the signal.
 
-**It caught its first case the moment it was written.** Splitting this file up
-to save context was classified as a 1 — genuine benefit both ways — when
-"restructures something you rely on" is sitting in the definition of a 3.
-
-Category 4 is worth its own line: **inventing a small job to round a session
-off is a 4.** Doing nothing and saying so is correct.
+**It caught its first case the moment it was written**: splitting this file to
+save context was called a 1, when "restructures something you rely on" is in
+the definition of a 3. And **inventing a small job to round a session off is a
+4** — doing nothing and saying so is correct.
 
 ### Prefer the MECHANICAL transform to the model-mediated one
 
@@ -2889,21 +2902,18 @@ read and written out again. What did it was a script moving whole sections **by
 line number**, never touching the prose. **A 4,000-line move costs the same as
 a 40-line one when nothing reads the content.**
 
-So when a job looks too big, the question to ask first is not "can I do half
-of it" but **"is there a version of this that a script does and I only
-supervise?"** Moving, renaming, reordering, extracting, counting and checking
-are all in that category. Judgement — which rule matters, what a control
-should be called — is not, and should stay slow.
+So when a job looks too big, ask not "can I do half of it" but **"is there a
+version a script does and I only supervise?"** Moving, renaming, reordering,
+extracting, counting and checking all are. Judgement — which rule matters, what
+a control should be called — is not, and should stay slow.
 
 It has a safety side too, and it is the better argument: **a script cannot
 quietly reword something on the way through.** The hand-written half was both
 the expensive part AND the only part that could have lost a rule.
 
-**And a cleanup frees nothing in the session that performs it.** This file was
-already loaded before the split began; that cost was spent and unrecoverable.
-The saving lands on the NEXT session. Tidying compounds across sessions, never
-within one — so "clean up a bit to make room" does not work, and the reason to
-do it is the sessions after this one.
+**And a cleanup frees nothing in the session that performs it** — this file was
+already loaded, and that cost is unrecoverable. Tidying compounds across
+sessions, never within one, so "clean up a bit to make room" does not work.
 
 ### "GSD mode" — Get Shit Done
 
@@ -2925,9 +2935,9 @@ Stated by the host on 14 August 2026, on a gig day: *"The thing that needs to
 be stable and definitely working is the quiz launch capability for pubs.
 Everything else that changes doesn't affect me tonight."*
 
-**This is as useful for what it FREES as for what it protects.** Without it
-every change is treated as equally dangerous, which spreads the care thinly
-over things that cannot end a night.
+**This is as useful for what it FREES as for what it protects**: without it
+every change is equally dangerous, which spreads the care thinly over things
+that cannot end a night.
 
 **PROTECTED — the path from "the room is sitting down" to "the quiz is
 running":**
@@ -2938,10 +2948,10 @@ running":**
 4. Next / Reveal / Back on the control view
 5. Crash recovery brings the same question and every score back
 
-**Everything else may move**, and on a gig day that is most of the app: the
+**Everything else may move**, and on a gig day that is most of the app — the
 owner page, the editor, Past gigs, invoices, adverts, the shop, chat, teams,
-online mode, the account work. None of them is reachable from a pub night, and
-breaking one costs a Monday rather than an evening.
+online mode, the account work. None is reachable from a pub night, and breaking
+one costs a Monday rather than an evening.
 
 **THE TWO GUARDS COVER EXACTLY THAT PATH, and both should run before anything
 lands on a gig day:**
@@ -2954,21 +2964,19 @@ lands on a gig day:**
   The engine is rarely the hazard; **the console's launch form is**, and no
   unit test presses a button.
 
-The second gets skipped, and it is the one that would stop a night. A
-`node --check` passing means the file parses, not that Launch still launches.
+The second gets skipped and is the one that would stop a night: `node --check`
+passing means the file parses, not that Launch still launches.
 
 **AND ON 15 AUGUST 2026 IT WAS SKIPPED, AND LAUNCH WENT TO THE LIVE APP
 BROKEN FOR EVERY GAME.** A function was called in `server.js` and never
-imported — a ReferenceError when the line runs, so `node --check` was happy.
-**1,150 tests passed**, because every one of them either calls
-`session.launch()` directly or reads `server.js` as TEXT: **nothing here had
-ever executed the file.** Found by a browser agent clicking the button, which
-is what the paragraph above says to do and what had not been done.
+imported — a ReferenceError when the line runs, so `node --check` was happy, and
+**1,150 tests passed** because every one either calls `session.launch()` or
+reads `server.js` as TEXT: **nothing had ever executed the file.** Found by a
+browser agent clicking the button.
 
-`test/launch-route.test.js` is that advice with an assertion on it: the real
-server on its own port, a real launch, a projector with a quiz on it after.
-**Keep it shallow** — it guards the protected surface, not the feature, and a
-slow suite is one people stop running before a gig.
+`test/launch-route.test.js` is that advice with an assertion on it. **Keep it
+shallow** — it guards the protected surface, not the feature, and a slow suite
+is one people stop running before a gig.
 
 **The general lesson is bigger than the import: A TEST THAT NEVER RUNS THE
 ARTEFACT PROVES NOTHING ABOUT IT** — see *Checks*.
@@ -2988,11 +2996,10 @@ before it**, and it is his call to make: he is the only person who knows
 whether a room is sitting down, and asking every time put a question in front
 of him on every change instead of the two that mattered.
 
-**What does NOT change is why a deploy is the risk.** Say it in one line when
-a push could land badly — a lobby open on his phone, a gig in an hour — and
-push anyway unless he says hold. **The note is the value, not the delay**: he
-restarts a lobby in ten seconds knowing that is what happened, and cannot
-diagnose it at all if nobody said.
+**What does NOT change is why a deploy is the risk.** Say it in one line when a
+push could land badly and push anyway unless he says hold. **The note is the
+value, not the delay**: he restarts a lobby in ten seconds knowing what
+happened, and cannot diagnose it at all if nobody said.
 
 ### "Sweep mode" — find everything, change nothing
 
@@ -4079,84 +4086,75 @@ account is in [`docs/checks.md`](docs/checks.md):**
   `public/` for two years; a stray backtick in an HTML comment made
   `console.js` a syntax error and `/console` did not load at all, with the
   suite green. `browser-parses.test.js` closes it.
-- **PUT A FINGER ON IT — `console-frame.mjs`.** Three bugs in one week were one
-  bug: a control in the DOM, with a size, passing every test, not on the
-  screen. **`elementFromPoint()` at a control's middle sees clipped, off-screen
-  and painted-over at once** — *in the document*, *has a size* and *can be
-  pressed* are three questions, and the gap has bitten five times. **It may
-  only scroll what a FINGER could** — `auto`/`scroll`, never `hidden`, never
-  `body` (its overflow propagates to the viewport). **It launches a quiz and
-  puts a banner up**: an idle bar is narrower than the one that broke. Six
-  sizes; verified by reintroducing four real faults.
+- **PUT A FINGER ON IT — `console-frame.mjs`.** Three bugs in one week were one:
+  a control in the DOM, with a size, passing every test, not on the screen.
+  **`elementFromPoint()` at a control's middle sees clipped, off-screen and
+  painted-over at once** — *in the document*, *has a size* and *can be pressed*
+  are three questions, and the gap has bitten five times. **It may only scroll
+  what a FINGER could** — `auto`/`scroll`, never `hidden`, never `body`. **It
+  launches a quiz and puts a banner up**: an idle bar is narrower than the one
+  that broke.
 - **`pub-unchanged.mjs` is the one to run before a gig week**, and **compare
   against the branch you are merging into, not `HEAD`** — on a clean checkout
   `HEAD` IS the working tree, so it can only print IDENTICAL. Quoted as a pass
   twice while proving nothing.
-- **When it says IDENTICAL, ask what it did not compare.** Five separate faults
-  in that one script each made it answer confidently about something it was not
-  looking at — in `docs/checks.md`. **A guard that quietly tests nothing is
-  worse than no guard, because it is believed.** The fifth was the biggest: it
-  only ever ran `engine.js`, so `viewFor()` in `server.js` and the whole of
-  `session.js` were outside it — deleting `view.joinCode` said IDENTICAL.
-  **It starts both apps and drives a night over HTTP now.**
+- **When it says IDENTICAL, ask what it did not compare.** Five faults in that
+  one script each made it answer confidently about something it was not looking
+  at — in `docs/checks.md`. **A guard that quietly tests nothing is worse than
+  no guard, because it is believed.** The fifth was the biggest: it only ran
+  `engine.js`, so `viewFor()` and all of `session.js` were outside it — deleting
+  `view.joinCode` said IDENTICAL. **It drives a night over HTTP now.**
 - **A SYNTHESISED `DragEvent` IS NOT A DRAG.** The browser's own preconditions
   are where this bar keeps breaking: no `drop` fires unless `dragover` called
-  `preventDefault()`, and none fires if `dropEffect` is one the source's
-  `effectAllowed` forbids. A dispatched event enforces neither, so a test built
-  from them passes while every pack drop is dead. `scripts/drag-check.mjs`
-  drives the real mouse; run it after touching a drag handler.
+  `preventDefault()`, and none fires if `dropEffect` is one `effectAllowed`
+  forbids. A dispatched event enforces neither, so a test built from them passes
+  while every pack drop is dead. **`drag-check.mjs` drives the real mouse.**
 - **THE MIDDLE OF A PACK CARD WAS A ROUND SQUARE — the cause was WRAPPING.**
-  `drag-check.mjs` drags from the CENTRE of `.pack-card`, and
-  `elementFromPoint()` there returned `button.lb-rd`: it lifted ONE ROUND and
-  asserted a pack had burst, so it called a working bar broken. Four 28px
-  ticks with 4px gaps are 124px in 114px of inner width and wrap to a row
-  whose top edge is y=67 against a centre of y=73. **ONE ROW, NEVER WRAPPING**
-  — bottom-anchoring two rows reaches y=70 against 73, which is not a fix. So
-  **24px on the SHELF card only**; the 28px rule is the Tonight tile's, where
-  a tick is a SWITCH, and is untouched. Verified by clicking every card's
-  centre at five widths — 45/45.
+  `drag-check.mjs` drags from the CENTRE of `.pack-card` and
+  `elementFromPoint()` returned `button.lb-rd`: it lifted ONE ROUND and asserted
+  a pack had burst, calling a working bar broken. Four 28px ticks with 4px gaps
+  are 124px in 114px of inner width. **ONE ROW, NEVER WRAPPING** — so **24px on
+  the SHELF card only**; the 28px rule is the Tonight tile's, where a tick is a
+  SWITCH, and is untouched.
 - **A TEST THAT NEVER RUNS THE ARTEFACT PROVES NOTHING ABOUT IT.** Reading
   `server.js` as a string to check a route exists is how a broken Launch reached
   the live app, 1,150 tests green.
 - **A GREP WITH THE COMMENTS LEFT IN GOES GREEN THE BETTER A FILE IS
   DOCUMENTED.** Deleting the `/api/past-gigs` gate and leaving a comment saying
-  `FEATURES.PAST_GIGS` kept `gates.test.js` 22/22. Every such search goes
-  through `withoutComments()` now, and the claims that matter are FIRED too.
-- **EVERY GUARD AND EVERY TEST THAT SPAWNS THE APP GOES THROUGH THE HELPERS —
+  `FEATURES.PAST_GIGS` kept `gates.test.js` 22/22. Every such search goes through
+  `withoutComments()`, and the claims that matter are FIRED too.
+- **EVERY GUARD AND TEST THAT SPAWNS THE APP GOES THROUGH THE HELPERS —
   `scripts/helpers/live-app.mjs`, `test/helpers/live-server.mjs`.** A guessed
   port fails to bind SILENTLY, so every measurement is then about somebody
-  else's process — and a fixed one made the suite flaky, a different file each
-  run, all passing alone. `unref()` is why four guards could exit at all.
-  `live-server.mjs` seeds the accounts book BEFORE the spawn — `Accounts`
-  reads it once.
+  else's process; a fixed one made the suite flaky. `unref()` is why four guards
+  could exit at all. **`live-server.mjs` seeds the accounts book BEFORE the
+  spawn** — `Accounts` reads it once.
 - **A CONTROL THAT REPORTS SUCCESS IT DID NOT HAVE is this repo's commonest
-  fault, and `console-controls.mjs` presses one.** Five at once, all green
-  under every other guard — including a rename that DELETED the night. **It
-  makes its own accounts rather than driving the host key.**
+  fault, and `console-controls.mjs` presses one.** Five at once, all green under
+  every other guard — including a rename that DELETED the night. **It makes its
+  own accounts, never the host key.**
 - **AND 94 UNIT TESTS ACROSS THE FIVE LOBBY GAMES HAD NEVER DRAWN A PIXEL** —
   `lobby-games-play.mjs`. **PAINTED AND MOVING ARE TWO QUESTIONS and a canvas
-  answers neither by existing**: sample the pixels twice with input between,
-  or a blank canvas and a FROZEN one look identical. **Reach each game by
-  SWITCHING to it**, the path that can leak a loop.
+  answers neither by existing**: sample the pixels twice with input between, or
+  a blank canvas and a FROZEN one look identical. **Reach each game by SWITCHING
+  to it.**
 - **NOTHING HERE PRESSED A CONTROL, and a dead one draws perfectly.** A gap
   dial died twice in a week — a lost `import`, then a moved body calling the
-  bar's `paintOrder()` from a module without one. Both a `ReferenceError` on
-  the PRESS, eaten by the click handler's catch. **`drag-check.mjs` presses the
-  dial TWICE** — once proves the handler runs, twice proves it steps — and
-  `imports-present.test.js` forbids any module but the bar naming a `paint*`.
-  **A general "every call resolves" test was thrown away**: it cannot see
-  destructured callbacks, so it found sixty falsehoods and one truth.
+  bar's `paintOrder()` from a module without one; both a `ReferenceError` on the
+  PRESS, eaten by the click handler's catch. **`drag-check.mjs` presses the dial
+  TWICE** — once proves the handler runs, twice proves it steps. **A general
+  "every call resolves" test was thrown away**: it cannot see destructured
+  callbacks, so it found sixty falsehoods and one truth.
 - **IMPORTING FROM A PAGE'S OWN MODULE RUNS THAT PAGE'S OWN BOOT CODE.**
   `console-packs.js` importing helpers from `editor.js` ran its top-level
-  `#quizPick` listener on `/console`, where it does not exist — the console
-  hung on "Loading your library…" for every account, and `node --check` saw
-  nothing. Shared code belongs in `client.js`, which has no page of its own.
+  `#quizPick` listener on `/console`, where it does not exist — the console hung
+  on "Loading your library…" for every account and `node --check` saw nothing.
+  **Shared code belongs in `client.js`**, which has no page of its own.
 
-Beyond the unit tests, these were run by hand and are worth repeating after
-anything structural: 60 phones with live SSE connections all answering at once;
-`SIGKILL` mid-quiz and mid-bingo, checking the right question and every score,
-card and mark comes back; and QR output decoded with a real scanner across
-versions 1–10.
+Beyond the unit tests, run by hand and worth repeating after anything
+structural: 60 phones with live SSE connections all answering at once; `SIGKILL`
+mid-quiz and mid-bingo, checking every score, card and mark comes back; and QR
+output decoded with a real scanner across versions 1–10.
 
 **A full software audit was run before handing out a second login — see
 `AUDIT.md`**, which also records what an audit from a container CANNOT tell

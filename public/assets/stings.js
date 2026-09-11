@@ -1,5 +1,5 @@
 /**
- * THE SOUNDBOARD — six noises the quizmaster fires at the room, synthesised.
+ * THE SOUNDBOARD — eight noises the quizmaster fires at the room.
  *
  * Asked for on 11 September 2026: *"a little sound board that I can access as
  * the quiz master… if someone puts an answer that's a bit silly I can have a
@@ -21,12 +21,20 @@
  * trombone is a pitch slide with vibrato; applause is a few hundred noise
  * bursts. Both are a dozen lines of Web Audio.
  *
- * **AND THAT IS WHY THERE IS NO BOO AND NO LAUGHTER.** A convincing human
- * crowd noise cannot be synthesised — what comes out is a kazoo, which is the
- * lesson `lobby-sound.js` already learned about the yeehaw. Applause is the
- * exception and only because it genuinely IS filtered noise: hundreds of
- * uncorrelated claps with no pitch in them. Anything needing a human voice is
- * an asset, and an asset is the thing this file exists to avoid.
+ * **THERE IS STILL NO LAUGHTER, AND THE BOO CAME BACK.** This paragraph used
+ * to rule out both on one argument — *a convincing human crowd noise cannot be
+ * synthesised, what comes out is a kazoo* — and that argument is only true of
+ * one of them. A laugh is a fast train of sharp pitched transients, which is
+ * exactly what synthesises badly. A boo is one long low vowel held by a lot of
+ * people slightly out of tune, which is within reach and is what `boo()` does.
+ * Applause was always the other exception, because it genuinely IS filtered
+ * noise. **Do not read this as the rule being lifted**: anything with
+ * ARTICULATION in it still needs a recording, and a recording is the thing
+ * this file exists to avoid.
+ *
+ * **AND ONE OF THEM IS NOT SYNTHESISED AT ALL.** `yourMum()` is a sentence, so
+ * it uses the browser's own `speechSynthesis` — not an oscillator and not a
+ * file either, which is what keeps the rule above intact. See its own note.
  *
  * **THESE ARE LONGER AND LOUDER THAN THE LOBBY'S**, deliberately. Those are
  * garnish on a phone in a pocket and stay under a fifth of a second; these
@@ -284,9 +292,134 @@ function fanfare(c) {
  * somebody has said something daft come first, because that is the moment the
  * host asked about.
  */
+/**
+ * A CROWD BOO — and this file used to say it could not be done.
+ *
+ * *"Can you add a 'your mum' sound and a boo?"* The note at the top of this
+ * file said there would be no boo because *"a convincing human crowd noise
+ * cannot be synthesised — what comes out is a kazoo"*. That was written about
+ * LAUGHTER and applied to a boo by assumption, and the two are not the same
+ * problem: a laugh is a fast train of sharp transients with pitch and
+ * articulation in every one of them, which is what comes out as a kazoo. A boo
+ * is the opposite — one long, low, almost unchanging vowel, held by a lot of
+ * people slightly out of tune with each other. That is within reach.
+ *
+ * So: **a crowd is SEVERAL DETUNED VOICES STARTING AT DIFFERENT MOMENTS**,
+ * which is the only thing separating a crowd from one person. All of them at
+ * once is a synth chord; spread over a fifth of a second with a few cents
+ * between them, it is a room.
+ *
+ * **THE VOWEL IS THE LOWPASS, and "oo" is the easiest one there is** — almost
+ * nothing above 500Hz. It opens very slightly at the front for the "b" and
+ * closes over the first tenth of a second, which is the difference between
+ * *booo* and a drone.
+ *
+ * **AND IT SAGS.** A real boo falls in pitch as it runs out of breath, and
+ * every voice falls by a slightly different amount, which is most of why it
+ * does not sound like a machine.
+ *
+ * Still the host's judgement whether it is good enough to use in a room — it
+ * is a synthesised crowd and it will never be a recording of one.
+ */
+function boo(c) {
+  const at = c.currentTime;
+  const len = 1.5;
+  /* Six voices: enough to stop it being a chord, few enough that the peaks do
+     not stack into clipping. Cents rather than hertz, or the low voices drift
+     further than the high ones and it reads as out of tune instead of human. */
+  const voices = [
+    { hz: 116, when: 0.00, drop: 0.86 },
+    { hz: 121, when: 0.05, drop: 0.83 },
+    { hz: 109, when: 0.09, drop: 0.88 },
+    { hz: 131, when: 0.14, drop: 0.81 },
+    { hz: 104, when: 0.19, drop: 0.87 },
+    { hz: 126, when: 0.23, drop: 0.84 },
+  ];
+  for (const v of voices) {
+    const t = at + v.when;
+    const mine = len - v.when;
+    const o = c.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(v.hz, t);
+    o.frequency.exponentialRampToValueAtTime(v.hz * v.drop, t + mine);
+
+    /* The "oo". Bright for 90ms so there is a consonant, then shut. */
+    const lp = c.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(900, t);
+    lp.frequency.exponentialRampToValueAtTime(330, t + 0.09);
+    lp.Q.value = 6;
+    o.connect(lp);
+
+    /* Divided by the voice count, or six overlapping envelopes clip — the
+       `GainNode` lesson this file already carries, arriving as a sum. */
+    env(lp, t, (VOL * 1.35) / voices.length, mine);
+    o.start(t);
+    o.stop(t + mine + 0.02);
+  }
+  /* A breath of room under it. Without this a crowd sounds like it is in an
+     anechoic chamber, which is exactly the synthetic tell being avoided. */
+  const air = noise(len);
+  const bp = c.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 420;
+  bp.Q.value = 0.7;
+  air.connect(bp);
+  env(bp, at, VOL * 0.05, len);
+  air.start(at);
+}
+
+/**
+ * "YOUR MUM" — the one that is a VOICE, and it uses the browser's own.
+ *
+ * Asked for by name. There is no way to synthesise a sentence out of
+ * oscillators, so the choice was an audio file or `speechSynthesis` — and a
+ * file breaks the rule at the top of this page for the reasons written there:
+ * bytes in a public repo, a fetch on a venue's wifi, something to 404 mid-gig.
+ *
+ * **`speechSynthesis` IS NEITHER A FILE NOR A DEPENDENCY.** It is in the
+ * browser already, ships nothing, fetches nothing, and comes out of the same
+ * sound card as everything else — so on the projector laptop it goes down the
+ * decks like the rest of the soundboard.
+ *
+ * **IT IS DELIBERATELY DEADPAN.** Slowed down and pitched low, because the joke
+ * is the delivery: a robot saying it flatly over a PA is funnier than the app
+ * trying to be funny, and a cartoon voice is the kazoo problem again.
+ *
+ * **IT CANNOT BE MEASURED BY `soundboard.mjs`.** Every other sting runs through
+ * the `AudioContext` the guard samples; this one is handed to the platform and
+ * comes out somewhere the page cannot see. So the guard asserts it was SPOKEN
+ * rather than that a noise happened — and that difference is written down here
+ * because a check that quietly proves nothing is worse than no check.
+ *
+ * **IT TAKES THE CONTEXT IT DOES NOT USE**, so the list stays one shape.
+ */
+function yourMum() {
+  const speech = typeof window !== 'undefined' && window.speechSynthesis;
+  /* No voice on this browser is a quiet no-op, never a throw: the soundboard
+     is pressed mid-gig and a control that takes the page down with it is worse
+     than one that does nothing. */
+  if (!speech || typeof window.SpeechSynthesisUtterance !== 'function') return;
+  try {
+    /* Anything still queued is dropped. Pressed twice in a row, the second
+       press should land now rather than after the first has finished — the
+       host is reacting to a room. */
+    speech.cancel();
+    const say = new window.SpeechSynthesisUtterance('Your mum');
+    say.rate = 0.85;
+    say.pitch = 0.6;
+    say.volume = 1;
+    speech.speak(say);
+  } catch {
+    /* Same reasoning as the guard above. */
+  }
+}
+
 export const STINGS = [
   { id: 'trombone', label: 'Sad trombone', icon: '🎺', play: trombone },
   { id: 'rimshot', label: 'Ba-dum-tss', icon: '🥁', play: rimshot },
+  { id: 'boo', label: 'Boo', icon: '👎', play: boo },
+  { id: 'yourmum', label: 'Your mum', icon: '💅', play: yourMum },
   { id: 'applause', label: 'Applause', icon: '👏', play: applause },
   { id: 'ding', label: 'Ding', icon: '🔔', play: ding },
   { id: 'drumroll', label: 'Drum roll', icon: '🪘', play: drumroll },

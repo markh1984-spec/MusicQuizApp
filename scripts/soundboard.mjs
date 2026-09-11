@@ -179,6 +179,41 @@ try {
     await wait(3000);
     const settled = await peakAfter();
     check(`the room is quiet before ${t.label}`, settled < 0.02, `peak ${settled}`);
+
+    /*
+     * ONE OF THEM IS A VOICE, AND IT CANNOT BE MEASURED HERE.
+     *
+     * `yourMum()` hands a sentence to the browser's own `speechSynthesis`,
+     * which comes out of the platform's mixer rather than through the
+     * `AudioContext` this analyser is spliced into. So the peak is a flat
+     * zero however well it works, and asserting on it would be a guard
+     * confidently answering a question it is not looking at — the fault this
+     * repo records against `pub-unchanged` five times over.
+     *
+     * What CAN be established from here is that the press reached the right
+     * function and the platform was asked to speak. That it made an audible
+     * noise is a thing a person has to hear, and the reply that ships this
+     * says so rather than implying the guard covered it.
+     */
+    if (t.id === 'yourmum') {
+      await page.evaluate(() => {
+        window.__spoke = [];
+        const real = window.speechSynthesis && window.speechSynthesis.speak;
+        if (!real) return;
+        window.speechSynthesis.speak = function spy(u) {
+          window.__spoke.push(String((u && u.text) || ''));
+          try { return real.call(window.speechSynthesis, u); } catch { return undefined; }
+        };
+      });
+      await act('sting', { id: t.id });
+      await wait(900);
+      const spoke = await page.evaluate(() => window.__spoke || []);
+      check(`${t.label} asks the browser to say it`,
+        spoke.length === 1 && /your mum/i.test(spoke[0]), JSON.stringify(spoke));
+      check(`${t.label} says the right words`, spoke[0] === 'Your mum', JSON.stringify(spoke));
+      continue;
+    }
+
     await act('sting', { id: t.id });
     const lvl = await peakAfter();
     check(`${t.label} makes a sound`, lvl > 0.02, `peak ${lvl}`);
