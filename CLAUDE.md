@@ -1287,8 +1287,8 @@ board), `src/arcade.js` (the scores, shared by both engines),
   is banked at the CATCH.**
 - **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER.** **The HOST
   can switch it off; the host's switch wins and does not wipe the phone's
-  own.** **Every noise is tied to something the player DID**, and it never
-  carries information, a pub phone being on silent.
+  own.** **Every noise is tied to something the player DID** and never carries
+  information — a pub phone is on silent.
 - **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — inside the white QR
   panel and UNDER the code, which nothing may dim. **It was computed and never
   drawn for as long as the feature existed**, and **a test that the payload is
@@ -2248,6 +2248,36 @@ throwing.
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
+### THE SOUNDBOARD PLAYS ON THE PROJECTOR, NEVER ON THE HOST'S PHONE
+
+`public/assets/stings.js` (six noises), `audio-kit.js` (the primitives, shared
+with `lobby-sound.js`), the `Sounds` panel in `host.js`, `POST
+/api/host/sting`, `room.sting`, `node scripts/soundboard.mjs`.
+
+- **THE LAPTOP WITH THE HDMI IS THE ONE WIRED TO THE PA** — *"my sound outputs
+  via my dj decks which is picked up as a sound card on my laptop."* **The
+  panel SAYS where the sound comes out.**
+- **SYNTHESISED, NEVER SHIPPED.** **AND THAT IS WHY THERE IS NO BOO AND NO
+  LAUGHTER** — a human crowd noise comes out a kazoo, the yeehaw lesson again.
+  Applause is the exception because it IS filtered noise.
+- **ONE AUDIO LAYER — `audio-kit.js`.** **The POLICY stays with each caller**:
+  the lobby is gated on a phone's preference and the host's switch, the
+  soundboard on nothing — **the press IS the decision**.
+- **IT IS AN EVENT, NOT A FLAG AND NOT A PHASE.** `room.sting` in MEMORY like
+  `room.introPlay`, **never `state.json`** — a restart would replay a noise
+  into a quiet room. Screen view only, **and it EXPIRES** (`STING_TTL_MS`); the
+  projector also remembers the last press time. **Played before `draw()` draws.**
+- **THE ID IS VALIDATED AGAINST `stings.js`'S OWN LIST** — the `packId` trap.
+- **A BROWSER IS SILENT UNTIL THE PAGE IS TAPPED, and reports no error.** The
+  arm chip is bottom LEFT, never near the join code, and any click arms it.
+- **A `GainNode` DEFAULTS TO 1.0 — NEVER START A NODE BEFORE ITS ENVELOPE.** A
+  ding set to 0.04 peaked at 1.08 and clipped. **`soundboard.mjs` measures a
+  peak CEILING**: a laptop speaker cannot reach 1.0, so nothing else finds it.
+- **SILENCE AND A WORKING SOUND LOOK IDENTICAL FROM THE DOM**, so the guard
+  samples the SIGNAL — and lets each sting die first, or it measures the sum.
+
+Full reasoning: **[`docs/sound.md`](docs/sound.md)**.
+
 ### A PAGE SCROLLS. THE PROJECTOR IS THE ONE THAT DOES NOT
 
 `body { overflow: auto }`, with `body.screen { overflow: hidden }` naming the
@@ -2578,37 +2608,31 @@ costs. Both split off at the 100,000-byte cap.
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 - **THE CAMERA GATE IS GONE — every photograph is on the gallery unless a
   human switches it off** (`showsByDefault()`). The EXIF check failed on EVERY
-  photograph of a real night, and the index drops a published night with
-  nothing showing, so the gallery was empty and silent. `isCameraFile()`
-  survives as a NOTE on the lamp, **never a gate**. **THE DEFAULT IS WRITTEN
-  OUT ONCE** — a second copy in `/api/gallery-photo/` made a RED lamp put the
-  photo straight back on. **The projector is untouched**
-- **A LAMP PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH** —
-  *"green for on and red for off, no text needed but it must be clickable."*
+  photograph of a real night. `isCameraFile()` survives as a NOTE on the lamp,
+  **never a gate**. **THE DEFAULT IS WRITTEN OUT ONCE** — a second copy in
+  `/api/gallery-photo/` made a RED lamp put the photo straight back on. **The
+  projector is untouched**
+- **A LAMP PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH.**
   **NO WORDS**, so `title` and `aria-label` are load-bearing and the 18px dot
   gets a 44px hit area. **FILLED, which is not a break of
-  outlined-never-filled** — a lamp, not a button that destroys.
-  **`showsOnGallery()` is the ONE decision and all FOUR readers ask it.** **A
-  ruling that only restates the DEFAULT is CLEARED, not stored**
-- **SENDING IT IS THE CONSENT. THERE IS NO PER-PHOTO OPT-OUT AND ONE WAS BUILT
-  AND REMOVED** — *"I simply shouldn't have access to photos if there's no
-  consent behind them in the first place."* A flag the quizmaster has to
-  respect is a rule he has to REMEMBER, on a Monday, about a photograph he did
-  not take. **Do not rebuild a sender-side switch.** The gate that exists is
-  the publish control drawn UNDER the photographs, and the lamp is the
-  quizmaster's own.
-- **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** **AND
-  WITH THE FAULT PUT BACK THE GUARD STILL PASSED: it matched the COMMENT
-  explaining the fix.** A source check strips comments first, or it goes green
-  the better a file is documented
+  outlined-never-filled.** **`showsOnGallery()` is the ONE decision and all
+  FOUR readers ask it.** **A ruling that only restates the DEFAULT is CLEARED,
+  not stored**
+- **SENDING IT IS THE CONSENT. THERE IS NO PER-PHOTO OPT-OUT AND ONE WAS
+  BUILT AND REMOVED** — a flag the quizmaster has to respect is a rule he has
+  to REMEMBER, on a Monday, about a photograph he did not take. **Do not
+  rebuild a sender-side switch.** The gate is the publish control under the
+  photographs; the lamp is the quizmaster's own.
+- **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** **WITH
+  THE FAULT PUT BACK THE GUARD STILL PASSED: it matched the COMMENT explaining
+  the fix.** A source check strips comments first
 - **IT FLIPS NOW AND SAVES LATER.** A failed write puts the lamp BACK and says
   why on the count line — never an `alert` for something that happened in the
   background, never a silent revert. **It settles before it sends** (600ms)
 - **THE PUBLISH LAMP ASKS FIRST, AND THE QUESTION NAMES THE NIGHT** — the
-  browser's own `confirm()`, like the other twelve here: **a second kind of
-  dialog is the label collision wearing a dialog**, so it reads OK/Cancel, not
-  Yes/No. **It says the CONSEQUENCE**, which a coloured P cannot. **AND SAYING
-  NO MUST CHANGE NOTHING** — the guard answers NO before yes
+  browser's own `confirm()`: **a second kind of dialog is the label collision
+  wearing a dialog.** **It says the CONSEQUENCE.** **AND SAYING NO MUST CHANGE
+  NOTHING** — the guard answers NO before yes
 - **A ROW READS ITS STATE WHEN BUILT, AND THIS RAIL IS NEVER REBUILT** — the
   press must ask AGAIN (`upNow()`), never close over `up`, or every press after
   the first re-sends *publish*. **The FIRST press was right, which is why only
@@ -2616,67 +2640,54 @@ costs. Both split off at the 100,000-byte cap.
 - **THE PIN IS A DRAWING PIN, NEVER A MAP PIN**: a map pin says *location*
 - **THE LAST SLIDE POINTS AT THE PHOTOGRAPHS, AND THE ADDRESS EXISTS BEFORE
   THEY DO** — `galleryPath()` in `slugs.js`, one builder, both sides.
-  **DERIVED, not stored**: publishing happens afterwards, so the code sixty
-  people photograph at eleven opens a real gallery on Tuesday.
-- **A SLIDE OF ITS OWN, BECAUSE THE FINAL WAS ALREADY CLIPPING.** **The band's
-  QR is 86px at 720p**, hopeless as the only thing on a slide; 34vh here. **A
-  flag at the FINAL only** (rule 9), refused with no address, never on a phone.
-- **AND THE FINAL FITS NOW, IN TWO PARTS — `.endband` AND `fitWinner()`.**
-  **The draw and the comeback go SIDE BY SIDE**; **`fitWinner()` shrinks to fit
-  as a backstop**, and **it measures the CHILDREN, not `scrollHeight`**, which
-  clamps to the container and under-reports exactly when the content is too
-  tall. **`final-fits.mjs`** checks the QR **actually paints**, not that it is
-  placed
+  **DERIVED, not stored**, so the code sixty people photograph at eleven opens
+  a real gallery on Tuesday.
+- **A SLIDE OF ITS OWN, BECAUSE THE FINAL WAS ALREADY CLIPPING** — the band's
+  QR is 86px at 720p, 34vh here. **A flag at the FINAL only** (rule 9), refused
+  with no address, never on a phone.
+- **AND THE FINAL FITS NOW — `.endband` AND `fitWinner()`.** **The draw and
+  the comeback go SIDE BY SIDE**; **`fitWinner()` measures the CHILDREN, not
+  `scrollHeight`**, which clamps and under-reports exactly when the content is
+  too tall. **`final-fits.mjs`** checks the QR **actually paints**
 - **`view.photos` WAS ALREADY TAKEN, AND IT COST THE BUTTON** — the field
   existed, held somebody else's data, the control was never drawn, nothing
   threw. **Found by pressing it in a real browser.**
 - **A PHONE THAT SCANS EARLY IS TOLD "not up yet", AND THE WORDING IS THE ONLY
-  CHANGE** — the server still answers ONE 404 for every refusal, so a night
-  that never happened reads identically to a real unpublished one. **A
-  `pending` state leaks which dates exist and was turned down for that**
+  CHANGE** — the server still answers ONE 404 for every refusal. **A `pending`
+  state leaks which dates exist and was turned down for that**
 - **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — the INDEX
   drops a night whose whole set is held back. **A number right about the wrong
   question is how a working app looks broken.** Silent when they all show
 - **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE HAS TO SAY
-  SO LOUDLY** — *"on my phone it's showing nothing but on my laptop it's
-  showing two"*, both right: `whoIs()` reads a COOKIE. **THE PREVIEW STAYS** —
-  do not level the page for everybody. A panel, full ink, **not red** (nothing
-  has gone wrong). **A banner says how many, only a card says WHICH**
-  (*"Only you"*)
-- **AND `?as=visitor` STANDS THE PREVIEW DOWN, so the check is possible at
-  all.** **ON THE SERVER**: a browser-side filter proves the page can hide a
-  draft, not that the server refuses one. **IT ONLY EVER SUBTRACTS, which is
-  why it needs no gate** — nothing in this app grants a permission from a query
-  string. **It rides on every request and link**, or the next page in is the
-  preview again. **PRESENT AND INERT**
+  SO LOUDLY** — `whoIs()` reads a COOKIE. **THE PREVIEW STAYS.** A panel, full
+  ink, **not red**. **A banner says how many, only a card says WHICH**
+- **AND `?as=visitor` STANDS THE PREVIEW DOWN.** **ON THE SERVER**: a
+  browser-side filter proves the page can hide a draft, not that the server
+  refuses one. **IT ONLY EVER SUBTRACTS, which is why it needs no gate.** **It
+  rides on every request and link.** **PRESENT AND INERT**
 - **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — **the pub's own
   row is `The table`, INSIDE the fold, never the heading**: a heading that both
   folds and picks is one control doing two jobs. **A night row is the DATE and
-  nothing else.** `evenings` **carries the POINTS**, so the browser needs no
-  second copy of the ladder. **A board with no `position` scores nobody**
+  nothing else.** `evenings` **carries the POINTS**. **A board with no
+  `position` scores nobody**
 - **`node()` KEEPS THE FIRST ELEMENT AND DROPS THE REST, SILENTLY** — a grep
   cannot find these, so `node()` `console.error`s when it drops one.
-- **A VENUE HAS ITS OWN ADDRESS** — `/station-tap-wokingham/gallery/20-august`,
-  from `public/assets/slugs.js`, **shared by the server and the page**: two
-  implementations of one slug is a link that works in the browser and 404s on
-  the server. **DERIVED, never stored.** **A ONE-SEGMENT PREFIX AT THE ROOT IS
-  A CATCH-ALL AND THE FIRST VERSION ATE `/api/gallery`** — two segments,
-  `RESERVED` refuses the first, and `test/slugs.test.js` walks `server.js` for
-  every literal top-level route. **An address is not a key**
+- **A VENUE HAS ITS OWN ADDRESS** — from `public/assets/slugs.js`, **shared by
+  the server and the page**: two implementations of one slug is a link that
+  works in the browser and 404s on the server. **DERIVED, never stored.** **A
+  ONE-SEGMENT PREFIX AT THE ROOT IS A CATCH-ALL AND THE FIRST VERSION ATE
+  `/api/gallery`** — two segments, `RESERVED` refuses the first, and
+  `test/slugs.test.js` walks `server.js`. **An address is not a key**
 - **A LEAGUE IS A THING YOU RUN, AND IT IS OFF UNTIL SOMEBODY SAYS SO.** **The
-  table is ARITHMETIC; a league is a DECISION** — printing one in the report of
-  a pub that never mentioned a league is the app asserting something about
-  somebody else's night. **It gates what LEAVES and nothing the quizmaster
-  sees.** **Switching it off takes the public page down with it.** **The
-  controls under it are ABSENT, not greyed** — the one deliberate exception to
-  *present and inert*. **The report asks under BOTH venue keys**
-  (`leagueRunsAt()`)
+  table is ARITHMETIC; a league is a DECISION.** **It gates what LEAVES and
+  nothing the quizmaster sees.** **Switching it off takes the public page down
+  with it.** **The controls under it are ABSENT, not greyed** — the one
+  deliberate exception to *present and inert*. **The report asks under BOTH
+  venue keys** (`leagueRunsAt()`)
 - **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — `POST
   /api/past-photo/<night>`, **filed against the night in the URL and never
-  against today**: the live store dates a picture by the clock, so a Friday
-  upload files a Thursday quiz under Friday. **A POST written beside GETs is
-  the 404 this repo already shipped once**, so the test asserts against the
-  404, not the 400
+  against today**. **A POST written beside GETs is the 404 this repo already
+  shipped once**, so the test asserts against the 404, not the 400
 - **A picture is keyed on the MUSICIAN and the STYLE, and nothing else.**
   Never on the question's `imagePrompt` — those are written by Claude, so two
   quizzes wanting Madonna would produce two keys and two bills, and the host
@@ -3617,12 +3628,11 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 I think about it."* The reason written for the cap had expired twice over.
 
 - **THE CAP WAS THE DRAG'S, AND THE DRAG IS NEITHER THE ONLY WAY IN NOR STILL
-  CONSTRAINED** — **a TAP places a pack** through the drop's own path, and the
-  fixed frame keeps the doorhead on screen from 900px.
+  CONSTRAINED** — **a TAP places a pack** through the drop's own path.
 - **A CAP WITH NO WAY PAST IT IS THE ONLY KIND THIS APP MUST NOT HAVE.** The
   Console has no search box by decision, so six of thirty-three left the rest
-  reachable only by pinning in the Workshop and coming back — and that shelf is
-  now the ONLY way onto the bench. **`PACK_SHELF` is deleted, not left at 6.**
+  reachable only by pinning in the Workshop. **`PACK_SHELF` is deleted, not
+  left at 6.**
 - **PINS STILL RANK IT**, and **there is still no See all**: a shelf that is
   sometimes two rows is what makes a drag target unlearnable.
 - **AND THE LABELS NAME THE TAP.** *"Drag a pack in to launch"* named the one
@@ -3633,14 +3643,12 @@ I think about it."* The reason written for the cap had expired twice over.
 
 Taking the rail off left the bench 142px of content in a 362px bay.
 
-- **THE PACK IS A SQUARE POSTER, AND THE SQUARE COMES FROM A COLUMN WIDTH.** A
-  bench drawing the thing you are working on at 92px with 220px of nothing
-  under it has the emphasis backwards. **`--bench-poster`, two numbers like
-  `--bay-h`** — each is the bay less the head, the pack-actions row and the gap.
+- **THE PACK IS A SQUARE POSTER, AND THE SQUARE COMES FROM A COLUMN WIDTH.**
+  **`--bench-poster`, two numbers like `--bay-h`** — the bay less the head, the
+  pack-actions row and the gap.
 - **NEITHER `auto` NOR THE ROW'S HEIGHT MAY DECIDE IT.** An `auto` track sizes
-  to MAX-CONTENT — the pack's NAME — so a long title made a tall square;
-  height-first needs a definite height, which only exists under the FIXED
-  FRAME. **Width-first has one answer at every size.**
+  to MAX-CONTENT — the pack's NAME — so a long title made a tall square.
+  **Width-first has one answer at every size.**
 - **THE BUTTONS KEEP THEIR OWN SIZE**, **never one 800px-wide button**: *a
   button's width should say how big the action is*. **As many columns as there
   are buttons**, or the packs with no picture round leave a hole.
@@ -3664,33 +3672,32 @@ Launch, and nine identical cards make that a reading task.
 - **A WASH, NEVER A FILL AND NEVER A BORDER**, capped low — which is why it can
   coexist with gold/green/red: a Christmas pack IS red and green, and `broken`
   is a BORDER, so the two never speak in the same place. Test on the alpha.
-- **The same colours and the same trimmed name on the card and in the Tonight
-  slot**, from one function. **The same pack is the same colour on every device
-  and reload** — a shelf that reshuffles is worse than one with no colour.
+- **The same colours and trimmed name on the card and the Tonight slot**, from
+  one function. **The same pack is the same colour on every device and
+  reload.**
 - **THE EDGE IS THE KIND OF PACK; THE BACKGROUND IS THE ERA.** Two channels,
   two questions, one glance. Quiz green, bingo purple, **adding a kind is one
   line** in `KIND_EDGE`. **The Tonight tile takes its kind from the PACK, not
   the tab** — Tonight holds both at once, and two TABS can share one kind.
-- **A SHUT CARD IS A SQUARE POSTER — the era fills it, the name on a dark fade
-  at the bottom.** **`aspect-ratio` is on `.shut` ALONE**, or the shape decides
-  what an open card may carry. **The fade is a `::before`, never a wrapper.**
+- **A SHUT CARD IS A SQUARE POSTER.** **`aspect-ratio` is on `.shut` ALONE**,
+  or the shape decides what an open card may carry. **The fade is a
+  `::before`, never a wrapper.**
 - **THE DRAWN TITLE IS TRIMMED AND THE STORED ONE IS NOT** (`shortTitle()`).
-  **Nothing writes anything — SEARCH LOOKS INSIDE TITLES.** **Falls back to the
-  full title when the trim empties it.** Three sizes by length, calibrated to
-  the REAL 146px card: **a design measured against invented content is measured
-  against nothing**, and the first ones clipped two real names.
-- **THE ERA IN THE CORNER RAN THROUGH THE TITLES** — centred under a fade it
-  cannot; the Tonight tile keeps the corner. **Only printed when short enough to
-  read**, with a test on the length. Gradient text behind an `@supports` with a
-  SOLID colour first. It needed `position: relative` on `.pack-card` — the
-  **Yours** badge had been positioning against the wrong ancestor.
-- **THE EDGE IS THE KIND AND THE WASH IS THE ERA; the difference in strength is
-  the job.** **On the bottom because an ordinary button already carries the
-  account colour there** — a stripe down the LEFT was rendered and turned down.
-  **`:not(.broken)` is load-bearing**: the tint rule comes later in the sheet
-  and would overwrite the red on a broken card. **And the TILE needs `.lb-tile.is-pack` named in its rule**: **a shorthand
-  `border` lower in the sheet beats a longhand `border-bottom` higher up at
-  equal specificity, and nothing throws.**
+  **Nothing writes anything — SEARCH LOOKS INSIDE TITLES.** **Falls back to
+  the full title when the trim empties it.** Three sizes by length, calibrated
+  to the REAL 146px card: **a design measured against invented content is
+  measured against nothing**.
+- **THE ERA IN THE CORNER RAN THROUGH THE TITLES** — the Tonight tile keeps
+  the corner. **Only printed when short enough to read.** Gradient text behind
+  an `@supports` with a SOLID colour first. It needed `position: relative` on
+  `.pack-card` — the **Yours** badge was positioning against the wrong
+  ancestor.
+- **THE EDGE IS THE KIND AND THE WASH IS THE ERA.** **On the bottom because an
+  ordinary button already carries the account colour there** — a LEFT stripe
+  was rendered and turned down. **`:not(.broken)` is load-bearing**: the tint
+  rule comes later and would overwrite the red. **The TILE needs
+  `.lb-tile.is-pack` named in its rule** — **a shorthand `border` lower in the
+  sheet beats a longhand `border-bottom` higher up, and nothing throws.**
 - **CARTOON FIGURES WERE TRIED AND DO NOT READ — do not re-propose them
   without new evidence.** At the real card size a whole person is a blob.
   **And never a named person** — this app is sold, and a decoration is a far
@@ -3841,9 +3848,9 @@ Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
 - **IT DOES NOT PUBLISH AND MUST NOT BE MADE TO** — `PHOTO_PHASES` includes
   `final`, so the room is still sending. **Nor back to a console prompt.**
-- **The night rides in the URL on the 6am key**, never `host.js` writing the
-  console's store. **The bench is set WITHOUT rendering**: a render at boot
-  beats `load()`, so `library` is null and the paint throws.
+- **The night rides in the URL on the 6am key.** **The bench is set WITHOUT
+  rendering**: a render at boot beats `load()`, so `library` is null and the
+  paint throws.
 - **ARRIVING OPENS THE ROW**, via the row's own head. One shot.
 - **THE BENCH'S PUBLISH BUTTON OPENS THE PHOTOGRAPHS, not publishes** — it was
   a way round the safeguard under the photos.
@@ -4054,6 +4061,7 @@ node scripts/reaches-the-wall.mjs       # does a correction reach the projector?
 node scripts/lobby-games-play.mjs       # do the five games draw, run and score?
 node scripts/pack-shapes.mjs            # which quiz packs are short?
 node scripts/pack-repeats.mjs           # does one night ask the same thing twice?
+node scripts/soundboard.mjs             # do the host's sounds actually make a noise?
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 ```
 

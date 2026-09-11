@@ -11083,3 +11083,26 @@ input, textarea, [contenteditable] { caret-color: var(--hot); }
 /* A round tick carrying its TYPE as a glyph. The colour still means on/off —
    see roundGlyph() for why the type may not have it. */
 .lb-rd.has-glyph { font-size: 13px; line-height: 1; }
+
+/* TAP FOR SOUND — the projector's one-press arm for the soundboard.
+   Bottom LEFT and small, deliberately: the join code owns the other corner
+   and nothing may dim it. It removes itself on the first press of the night. */
+.sound-arm {
+  position: fixed; left: 14px; bottom: 14px; z-index: 40;
+  padding: 8px 14px; border-radius: var(--r-pill, 999px);
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  color: var(--ink); background: rgba(12, 12, 20, 0.82);
+  border: 1px solid color-mix(in srgb, var(--hot) 55%, transparent);
+}
+
+/* THE SOUNDBOARD on the control view. A wrapping row of ordinary buttons —
+   never the account gradient, which means "this is the night" and belongs to
+   Launch. Each is a full touch target: this is pressed on reflex, in the dark,
+   with a microphone in the other hand. */
+.stingrow { display: flex; flex-wrap: wrap; gap: 8px; }
+.stingrow .sting {
+  flex: 1 1 30%; min-height: 44px; display: flex;
+  align-items: center; justify-content: center; gap: 6px;
+  font-size: 13px; white-space: nowrap;
+}
+.stingrow .sting-ic { font-size: 17px; }

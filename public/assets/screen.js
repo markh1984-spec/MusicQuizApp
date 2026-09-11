@@ -16,6 +16,8 @@ import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
 import { faceFor } from './avatar.js';
 import { arcadeSlot, paintArcadeBoard } from './lobby-board.js';
+import { playSting } from './stings.js';
+import { audio, audioReady } from './audio-kit.js';
 
 const cardEl = document.getElementById('card');
 const quizTitleEl = document.getElementById('quizTitle');
@@ -144,9 +146,74 @@ const cards = {
   },
 };
 
+/*
+ * THE LAST STING THIS PAGE PLAYED.
+ *
+ * The server puts one in the payload for a few seconds (see `STING_TTL_MS`),
+ * which is what lets a push already in flight still carry it — so the payload
+ * arrives on several consecutive pushes and this is what makes it ONE noise.
+ * Keyed on the press time rather than the id, or pressing the same button
+ * twice in a row would be silent the second time.
+ */
+let lastSting = 0;
+
+/**
+ * "TAP FOR SOUND" — the one press that lets this page make a noise at all.
+ *
+ * **Every browser starts an `AudioContext` suspended until the page has had a
+ * real user gesture**, and a context made without one is silent for ever and
+ * reports no error whatsoever. So the soundboard would be a row of buttons
+ * that do nothing, with nothing on either screen saying why — which is the
+ * fault this repo keeps recording, arriving through the speakers.
+ *
+ * It is a SMALL CHIP IN THE BOTTOM CORNER and it goes the moment it is
+ * pressed. It is deliberately nowhere near the join code, which nothing may
+ * dim — and **any click anywhere on the page arms it too**, so a host who
+ * clicks the projector window to focus it has already done the job without
+ * reading anything.
+ *
+ * Drawn only when there is something to arm: once the context is running this
+ * returns nothing for the rest of the night.
+ */
+function paintSoundArm() {
+  const had = document.getElementById('soundArm');
+  if (audioReady()) { if (had) had.remove(); return; }
+  if (had) return;
+  const chip = node(`<button id="soundArm" class="sound-arm" type="button">🔈 Tap for sound</button>`);
+  const arm = () => {
+    audio();
+    const el = document.getElementById('soundArm');
+    if (el) el.remove();
+  };
+  chip.addEventListener('click', arm);
+  // Any press anywhere counts — the chip is the explanation, not the only way.
+  document.addEventListener('pointerdown', arm, { once: true });
+  document.addEventListener('keydown', arm, { once: true });
+  document.body.appendChild(chip);
+}
+
 function draw(next) {
   state = next;
   clock.sync(state.serverNow);
+
+  /*
+   * THE SOUNDBOARD, FIRST — before anything is drawn.
+   *
+   * A sting is the host reacting to something that just happened in the room,
+   * so every millisecond between the press and the noise is a millisecond the
+   * joke is dying in. Nothing below this line can make it faster and a slow
+   * card build could make it slower.
+   *
+   * Wrapped because this is the PROJECTOR: an exception here is a blank screen
+   * in front of sixty people, and a comedy trombone is not worth that risk.
+   */
+  try {
+    if (state.sting && state.sting.at > lastSting) {
+      lastSting = state.sting.at;
+      playSting(state.sting.id);
+    }
+  } catch { /* a silent sting is the correct failure */ }
+  paintSoundArm();
 
   // The brand sits in the corner all night; the quiz title sits next to it.
   if (state.brand && !document.getElementById('brandSlot').dataset.done) {

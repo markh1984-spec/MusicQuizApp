@@ -58,6 +58,23 @@ import { PropUse, ENOUGH_TO_JUDGE } from './src/prop-use.js';
 // The prop list, shared with the phone exactly like schemes and break-parts —
 // so the tally and the tray can never disagree about which props exist.
 import { STICKERS } from './public/assets/stickers.js';
+/*
+ * The soundboard's own list, shared with the projector for the same reason.
+ * **A sting id is one word in a request body**, which is the shape of trap
+ * this file already records for pack ids and tier names, so the list the
+ * browser draws from IS the list the route validates against.
+ */
+import { isSting } from './public/assets/stings.js';
+
+/**
+ * How long a pressed sting stays in the projector's payload.
+ *
+ * Long enough that a push already in flight, or a projector a second behind,
+ * still gets it; short enough that a screen opened late never plays a noise
+ * the room has forgotten. Four seconds is the longest sting (the drum roll)
+ * plus room to spare.
+ */
+const STING_TTL_MS = 4000;
 import {
   checkoutSession, portalSession, sellableTiers, stripeConfigured, toBillingEvent, verifySignature, webhookSecret,
 } from './src/stripe.js';
@@ -246,6 +263,29 @@ function viewFor(client) {
   // Auto-play could not start the track. Host view only — it is a note to tap
   // the link, and it is nobody else's business.
   if (client.role === 'host' && room.introPlay) view.introPlay = room.introPlay;
+  /*
+   * THE SOUNDBOARD — the projector's, and only for a few seconds.
+   *
+   * It rides on the ordinary state push rather than a channel of its own,
+   * because that stream already carries the question clock and is therefore
+   * the fastest thing this app has: a comedy sting that lands two seconds
+   * after the laugh is worse than no sting at all.
+   *
+   * **HELD IN MEMORY ON THE ROOM, NEVER IN THE GAME STATE.** `room.introPlay`
+   * three lines up is the same shape and the same reasoning. A sting changes
+   * no phase and no score, so writing it to `state.json` would put an event
+   * into a crash-recovery file — and a restart would then replay a noise from
+   * an hour ago into a quiet room.
+   *
+   * **AND IT EXPIRES**, which is the half that matters. A projector opened
+   * late, or reconnecting after a wifi blip, gets whatever the current payload
+   * says — so without a fuse it would blast the last sting on arrival. The
+   * projector ALSO remembers the last `at` it played, so the two halves
+   * together mean exactly one noise per press.
+   */
+  if (client.role === 'screen' && room.sting && Date.now() - room.sting.at < STING_TTL_MS) {
+    view.sting = room.sting;
+  }
   // Which game this is, so a phone that was handed a code can tell it reached
   // the right one and the projector can print it for latecomers.
   view.joinCode = room.code;
@@ -7519,6 +7559,31 @@ async function handleWrite(req, res, url, route) {
       });
       if (result.ok) backUpReports();
       return sendJson(res, 200, result), true;
+    }
+
+    /*
+     * THE SOUNDBOARD. One press, one noise, out of the projector laptop.
+     *
+     * **THE ID IS VALIDATED AGAINST `stings.js`'S OWN LIST**, not trusted: it
+     * arrives as one word in a request body, which is exactly the shape of
+     * `packId` and `wantedTier`. An unknown one is refused rather than
+     * ignored, because a button that reports success it did not have is this
+     * repo's commonest fault.
+     *
+     * **NOT GATED ON A SUBSCRIPTION FEATURE.** It is asked with `live` like
+     * every other control on this view — a card that failed on Tuesday must
+     * not take a noise away from somebody mid-round on Wednesday — and it is
+     * a garnish rather than a thing to sell.
+     *
+     * It writes to the ROOM and never to the game state (see `viewFor`), so
+     * nothing here can move a quiz, and a restart replays nothing.
+     */
+    if (action === 'sting') {
+      const id = String(body.id || '');
+      if (!isSting(id)) return sendJson(res, 400, { error: 'Unknown sound: ' + id }), true;
+      room.sting = { id, at: Date.now() };
+      pushState(room);
+      return sendJson(res, 200, { ok: true, id }), true;
     }
 
     // The photo controls: the switch, and the bin. Deliberately as immediate

@@ -18,6 +18,7 @@ import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 import { cueOffsetMs, formatOffset } from './cue.js';
 import { phonesAre } from './phones.js';
+import { STINGS } from './stings.js';
 
 const KEY_STORE = 'musicquiz.hostkey';
 
@@ -445,6 +446,19 @@ function buildPanels(s) {
   if (s.phase === 'lobby' || s.phase === 'round_intro') {
     panels.push(nextUpPanel(s));
   }
+
+  /*
+   * THE SOUNDBOARD, AT EVERY PHASE — asked for *"while running a quiz and
+   * music bingo"*, so it is not gated on a phase the way Setup is.
+   *
+   * BELOW the question and the answer key, ABOVE the players. The key is what
+   * the host reads off the microphone and must not move down the page for a
+   * garnish; the player list is long and scrolls, so anything under it is
+   * effectively gone. This is the one band that is always in the same place
+   * and always one thumb-scroll away, which is what a control pressed on
+   * reflex in a dark pub needs.
+   */
+  panels.push(soundboardPanel());
 
   panels.push(playersPanel(s));
 
@@ -942,6 +956,43 @@ function startsRow(s) {
       ${mins.map((m) => `<button class="minor starts-set" data-mins="${m}">${m} min</button>`).join('')}
       ${s.startsAt ? '<button class="minor starts-off">Off</button>' : ''}
     </div>`;
+}
+
+/**
+ * SIX NOISES, ONE ROW, NO CONFIRMATIONS.
+ *
+ * *"A little sound board that I can access as the quiz master… a comedy wrong
+ * answer sound… maybe a crowd's clapping sound."*
+ *
+ * **IT SAYS WHERE THE SOUND COMES OUT**, because that is the one thing that
+ * will surprise somebody: it plays on the PROJECTOR laptop, which is the
+ * machine wired to the PA, and not out of the phone in their hand. A control
+ * whose output is somewhere else has to say so, or the first press reads as a
+ * dead button.
+ *
+ * **NO CONFIRM ON ANY OF THEM.** A sting changes no score and no phase, and a
+ * dialog between the joke and the trombone is the joke gone. The worst case is
+ * a noise nobody wanted, which lasts a second and a half.
+ *
+ * **THE BUTTONS ARE ORDINARY, never the gradient** — that is the night's own
+ * colour and belongs to Launch. Six small ones in a row say "pick one"; six
+ * filled ones would be the loudest thing on the control view.
+ */
+function soundboardPanel() {
+  const el = node(`
+    <div class="panel">
+      <h3>Sounds</h3>
+      <p class="tiny">Out of the projector laptop, so whatever that is plugged into.</p>
+      <div class="stingrow">
+        ${STINGS.map((t) => `<button class="minor sting" data-sting="${esc(t.id)}"
+          title="${esc(t.label)}"><span class="sting-ic">${t.icon}</span>${esc(t.label)}</button>`).join('')}
+      </div>
+    </div>
+  `);
+  for (const b of el.querySelectorAll('.sting')) {
+    b.addEventListener('click', () => act('sting', { id: b.dataset.sting }));
+  }
+  return el;
 }
 
 function toolsPanel(s) {

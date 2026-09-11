@@ -71,6 +71,15 @@
 
 const KEY = 'qp.lobbySound';
 
+import { audio, env as kitEnv, noise as kitNoise } from './audio-kit.js';
+
+/*
+ * THE PRIMITIVES LIVE IN `audio-kit.js` NOW — the context, the envelope and
+ * the noise source, shared with the soundboard (`stings.js`). Only this
+ * module's POLICY stayed: whether this phone wants a noise at all, and
+ * whether tonight allows one. See the kit's own note for why the split is
+ * there rather than one file doing both.
+ */
 let ctx = null;
 let on = null;
 /*
@@ -116,14 +125,7 @@ export function toggleSound() {
  * real tap — never on load — and everything else checks `ctx` before assuming.
  */
 function resume() {
-  try {
-    if (!ctx) {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return;
-      ctx = new Ctx();
-    }
-    if (ctx.state === 'suspended') ctx.resume();
-  } catch { ctx = null; }
+  ctx = audio();
 }
 
 /** Called on the game's first tap, so the context is alive before it is used. */
@@ -140,26 +142,8 @@ export function wakeSound() {
  */
 const VOL = 0.18;
 
-function env(node, at, peak, len) {
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(0.0001, at);
-  g.gain.exponentialRampToValueAtTime(peak, at + 0.008);
-  g.gain.exponentialRampToValueAtTime(0.0001, at + len);
-  node.connect(g);
-  g.connect(ctx.destination);
-  return g;
-}
-
-/** White noise, which is the raw material of anything percussive. */
-function noise(len) {
-  const n = Math.max(1, Math.floor(ctx.sampleRate * len));
-  const buf = ctx.createBuffer(1, n, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
-  const src = ctx.createBufferSource();
-  src.buffer = buf;
-  return src;
-}
+const env = kitEnv;
+const noise = kitNoise;
 
 /**
  * A SHOT. A short burst of noise through a low-pass that shuts as it decays,
