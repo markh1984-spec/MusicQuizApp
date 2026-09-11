@@ -970,21 +970,22 @@ Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### A TAB'S OWN LABEL IS A TITLE WHEREVER IT IS DRAWN
 
-Reported as *"slight UI issue"* and MEASURED: the Console's Venues heading was
-an `h3` at **13px**, *Prepare a night* three rows up **19px**.
+*"Slight UI issue"*, MEASURED: Venues was an `h3` at **13px**, *Prepare a
+night* three rows up, 19px.
 
 - **`tabBody()` DRAWS THE SHARED HEADING ON EVERY DOOR BUT THE CONSOLE**, so a
   Console tab wanting one draws its OWN — and the two that do had drifted apart.
-  **A tab's own label takes `--fs-title`.** **A bare `h2`, matching
-  `console-shows.js`** — the pattern already there, never a new class.
+  **A tab's own label takes `--fs-title`, and `.tab-own-head` NAMES that** on
+  both: a bare `h2` got it by accident on one and a `.game-head` override took
+  it away on the other, so neither size was a decision anybody made. **The
+  selector must out-rank `.console .game-section .game-head h2`.**
 - **AND A LINE SAYING WHAT A TAP DOES, LINKING TO THE EDITOR** — *"it's saying
   Station Tap Wokingham isn't a regular night, but I can't seem to edit that
-  anywhere."* On the Console a venue's name is a SPAN, deliberately, a tap
-  PICKING the pub for tonight — so the card stated a fact it gave no way to
-  change. **"Do it over there" must be a link to there.**
-- **`Prepare a night` IS STILL 19px**, its `h2` inside a `.game-head`. Left
-  alone: nobody reported it, and **a restyle is the cheapest change and the
-  easiest to get wrong silently.**
+  anywhere."* On the Console a venue's name is a SPAN, a tap PICKING the pub for
+  tonight — so the card stated a fact it gave no way to change. **"Do it over
+  there" must be a link to there.**
+- **BOTH ARE 22px NOW, and MEASURE AFTER** — the first fix read 24px off a
+  generic `h2` rule, a third number rather than the ladder's.
 
 ### THE CONSOLE'S POLISH PASS — the rules from one sweep, 25 August 2026
 
@@ -1613,13 +1614,13 @@ Full reasoning: **[`docs/console/launch-bar.md`](docs/console/launch-bar.md)**.
 on the settings row. The strip of chips lasted a day: *"it could just be a
 symbol you click to cycle… in the bottom right of the pack ONCE LOADED."*
 
-- **THE DUPLICATION WAS REAL** — one plan, drawn twice, neither beside the
-  thing it acted on.
+- **THE DUPLICATION WAS REAL** — one plan drawn twice, neither beside the thing
+  it acted on.
 - **A TILE'S DIAL OWNS THE GAP AFTER ITS OWN ROUND — `gapIdsOfSlot()`.** It
   owned *every gap the pack makes*, so **pressing the last tile's dial changed
-  the first.** A BINGO slot owns the gap BEFORE it, never `p0:lobby`; **the
-  FINAL is not a gap.** **`drag-check` asserts ONE face moved** — **a guard
-  aimed at whatever happens to be first is measuring the shelf, not the row.**
+  the first.** A BINGO slot owns the gap BEFORE it, never `p0:lobby`; **the FINAL
+  is not a gap.** **`drag-check` asserts ONE face moved** — a guard aimed at
+  whatever is first measures the shelf, not the row.
 - **THE TILE'S SIZE DECIDED THE SHAPE, MEASURED FIRST**: 179 x 76 with 58px
   clear — ONE 44px control and never two, so the dial is the PHONES and the big
   screen became a night-level picker. **The plan on disk is unchanged.**
@@ -1643,11 +1644,11 @@ symbol you click to cycle… in the bottom right of the pack ONCE LOADED."*
   and there is no third place: **the control wins and the decoration moves.**
   **It stays on the shelf CARD.**
 - **`.lb-tiles:has(.lb-doors-slot)` OUT-SPECIFIED THE PHONE RULE** — a class
-  more specific than `.lb-tiles` beat the 560px layout, and 390 came out as four
+  more specific than `.lb-tiles` beat the 560px layout and 390 came out as four
   50px columns. The specificity trap wearing `:has()`.
-- **DOORS IS A MINI SLOT AT THE HEAD OF THE ROW** — half width, no number,
-  never a drop target. **The big screen is not offered there**: the lobby's
-  projector is the join code and nothing may dim it.
+- **DOORS IS A MINI SLOT AT THE HEAD OF THE ROW** — half width, no number, never
+  a drop target. **The big screen is not offered there**: the lobby's projector
+  is the join code and nothing may dim it.
 - **EVERY NIGHT SETTING IS ON ONE ROW, AND A BOX IS NEVER NARROWER THAN ITS
   OWN HEADING.** `justify-items: stretch` makes the BOX the wider one every
   time. **It does not undo *narrow shut, wide open***: the cell is still only as
@@ -1675,8 +1676,8 @@ symbol you click to cycle… in the bottom right of the pack ONCE LOADED."*
   so the reason goes on the control (*"Add a quiz round"*).
 - **THE ROUND CEILING IS CHECKED ON THE ROW THE NIGHT IS BUILT ON.** A
   thirteen-round night launched as twelve with **nothing said anywhere**.
-  Measured against the SEGMENTS (`longestQuiz()`), never the tiles. **The
-  server still slices** — a refusal costs the night.
+  Measured against the SEGMENTS (`longestQuiz()`), never the tiles. **The server
+  still slices**: a refusal costs the night.
 - **📵 RATHER THAN A DOT for "nothing on the phones".** Asked outright — *"what
   does this mean? the . ?"* — which is the *clarity beats everything* test
   failing. The other three states are pictures; punctuation on a button reads
@@ -1684,24 +1685,23 @@ symbol you click to cycle… in the bottom right of the pack ONCE LOADED."*
 - **THE PACK LIFTS FROM ITS GRIP; A ROUND LIFTS FROM ITS OWN SQUARE.** A tick
   with no drag handlers lets the browser walk up to the nearest draggable
   ancestor and take the whole pack; **a `draggable` child stops the walk.** The
-  tile refuses a `dragstart` that did not begin on `.lb-tile-head`.
+  tile refuses a `dragstart` not begun on `.lb-tile-head`.
 - **A `dropEffect` THE SOURCE DID NOT ALLOW KILLS THE DROP SILENTLY.** Set the
   wrong one and the browser treats the target as REFUSING, so **no `drop` fires
   at all** — hard-coding `'move'` in a handler serving both killed every pack
   drop while rounds kept working. **A synthesised `DragEvent` does not enforce
   it**: `drag-check.mjs` drives the real mouse.
 - **THE SLOT YOU DROP ON IS THE SLOT IT GOES IN — for a whole PACK too.** `at`
-  is honoured only when that slot is genuinely EMPTY: **a slot you can destroy
-  by letting go over it is a hazard**, so a drop onto a full tile appends. **A
+  is honoured only when that slot is genuinely EMPTY — **a slot you can destroy
+  by letting go over it is a hazard** — so a drop onto a full tile appends. **A
   drop that MISSES every square means "the next free slot".**
-- **A DESCRIPTOR IS NOT THE THING IT DESCRIBES.** `packDrag` is `{ id, kind }`
-  and the empty slot's drop handed it on as the pack — **the slot lit, the drop
-  was taken, nothing appeared.**
+- **A DESCRIPTOR IS NOT THE THING IT DESCRIBES.** `packDrag` is `{id, kind}` and
+  the empty slot's drop handed it on as the pack — **the slot lit, the drop was
+  taken, nothing appeared.**
 - **A KIND THAT DISAGREES WITH THE NIGHT'S OWN IS A MIXED NIGHT** — a quiz pack
-  added to a bingo night went into `lbExtra` and was never found again.
-  **Nothing threw — the state was consistent and the READER could not resolve
-  it.**
-- **A PACK CARD ASKS WHETHER IT IS IN TONIGHT; IT IS NOT PAINTED AFTERWARDS.**
+  added to a bingo night went into `lbExtra` and was never found again. **Nothing
+  threw: the state was consistent and the READER could not resolve it.**
+- **A PACK CARD ASKS WHETHER IT IS IN TONIGHT; IT IS NOT PAINTED AFTERWARDS** —
   `render()` assembles the page OFF the document, so a later paint finds the
   PREVIOUS page's cards.
 - **THE BREAK PLUMBING MOVED INTO `console-breaks.js`** rather than the line
@@ -1709,21 +1709,20 @@ symbol you click to cycle… in the bottom right of the pack ONCE LOADED."*
   `const` in its temporal dead zone throws when the line RUNS and the catch
   swallows it. **A moved body keeps the names of the home it left.**
 - **A PACK TILE LIGHTS UP TOO — AND ONLY WHERE THE DROP WILL BE TAKEN.** One
-  that lit and did nothing promised. A refusal also STOPS the event, or the
-  round lands somewhere the pointer never was. **The inset ring alone was
-  invisible.**
-- **A FILLED MIXED TILE HAS TWO WIRINGS AND THEY RACED.** The one registered
+  that lit and did nothing promised. A refusal also STOPS the event, or the round
+  lands where the pointer never was. **The inset ring alone was invisible.**
+- **A FILLED MIXED TILE HAS TWO WIRINGS AND THEY RACED** — the one registered
   LAST won, so a bingo tile lit for a round it would refuse. **One handler
-  decides and the other stands down.**
-- **AN EMPTY SLOT TAKES A ROUND AND LIGHTS UP WHILE YOU ARE OVER IT** — with
-  no `dragover` of its own **nothing lit up**, and an inert square reads as one
-  that refuses; `orderEl`'s drop APPENDS, so a round let go over slot 5 landed
-  in slot 2. `stopPropagation` makes the slot's answer count.
-- **AND MY OWN TEST HAD MISSED IT** by dispatching `drop` directly — a browser
-  fires no `drop` unless `dragover` called `preventDefault()`. **Measure
+  decides, the other stands down.**
+- **AN EMPTY SLOT TAKES A ROUND AND LIGHTS UP WHILE YOU ARE OVER IT** — with no
+  `dragover` of its own **nothing lit up**, and an inert square reads as one that
+  refuses; `orderEl`'s drop APPENDS, so a round let go over slot 5 landed in slot
+  2. `stopPropagation` makes the slot's answer count.
+- **AND MY OWN TEST HAD MISSED IT** by dispatching `drop` directly: a browser
+  fires none unless `dragover` called `preventDefault()`. **Measure
   `defaultPrevented` on the dragover.**
-- **A CHILD'S `dragend` BUBBLES TO THE TILE, and the tile's removes the pack**
-  — dragging a round out emptied Tonight. The round's drag travels the SHELF
+- **A CHILD'S `dragend` BUBBLES TO THE TILE, and the tile's removes the pack** —
+  dragging a round out emptied Tonight. The round's drag travels the SHELF
   channel so `moveRoundToSlot()` MOVES rather than duplicates.
 - **A ROUND IS A ROUNDED SQUARE AT 28px ON A TONIGHT TILE, AND ITS HOVER
   LIFTS.** *"Square shaped with round edges… I need to see when mousing over

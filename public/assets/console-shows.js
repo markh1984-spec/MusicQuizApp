@@ -178,7 +178,7 @@ export function showsSection() {
       <div class="game-section">
         <div class="game-head">
           <div>
-            ${findOnly ? '<h2>Prepare a night</h2>' : `<div class="tiny">A whole evening kept as one thing —
+            ${findOnly ? '<h2 class="tab-own-head">Prepare a night</h2>' : `<div class="tiny">A whole evening kept as one thing —
               the packs, which rounds are on, the look and the lobby game.
               The venue is left open, so you can run the same night anywhere.
               Set one up on Tonight and press <b>Save for another night</b>.</div>`}

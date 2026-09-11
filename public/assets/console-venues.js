@@ -198,9 +198,11 @@ export function venuesSection() {
      * same door is 19px. Reported as *"slight UI issue"* and measured rather
      * than guessed — one door, two tabs, two different steps of the ladder,
      * which is the drift the shared heading exists to prevent. A tab's own
-     * label is a title wherever it is drawn. A BARE `h2`, which is what
-     * `console-shows.js` two tabs away already uses for the same job — the fix
-     * is to match the existing pattern, not to invent a class beside it.
+     * label is a title wherever it is drawn. `.tab-own-head`, which
+     * `console-shows.js` now carries too: the size was arriving by accident on
+     * one and by a `.game-head` override on the other, so the class is there to
+     * NAME the decision in both rather than leave it to where the markup
+     * happens to sit.
      *
      * **AND THE LINE UNDER IT IS A LINK, because the card here says something
      * it gives you no way to change.** *"It's saying Station Tap Wokingham
@@ -213,7 +215,7 @@ export function venuesSection() {
      */
     el.replaceChildren(node(`
       <div class="panel">
-        ${findOnly ? `<h2>Venues</h2>
+        ${findOnly ? `<h2 class="tab-own-head">Venues</h2>
           <div class="tiny">Tap a pub to make it tonight's. To set its usual night,
             its prizes or where to send them, open it in ${goTo('workshop', 'venues', 'the Workshop')}.</div>` : ''}
         ${findOnly ? '' : `<div class="tiny">Set the prizes here and they fill themselves in when you

@@ -11186,3 +11186,24 @@ input, textarea, [contenteditable] { caret-color: var(--hot); }
 /* Inside the section the card has already been framed once — a second border
    and a second ground is a box in a box. */
 .prizes-body .win-card { border: 0; background: none; padding: 0; }
+
+/* ------------------------------------------------- a tab's own label
+ *
+ * THE CONSOLE DOOR'S TABS DRAW THEIR OWN HEADING, because `tabBody()` draws the
+ * shared one on every door but this — its bay is the launch bar. Two tabs do,
+ * and they had drifted to two different steps: Venues at 13px (an `h3`, the
+ * tab's NAME at section size) and Prepare a night at 19px, its `h2` inside a
+ * `.game-head` that drops to `--fs-head`.
+ *
+ * A tab's own label is a TITLE wherever it is drawn, so this names that in one
+ * place rather than leaving it to where the markup happens to sit. The long
+ * selector is not decoration: `.console .game-section .game-head h2` is what it
+ * has to out-rank, and equal specificity later in the sheet is what wins.
+ */
+.console h2.tab-own-head,
+.console .game-section .game-head h2.tab-own-head {
+  font-size: var(--fs-title);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
