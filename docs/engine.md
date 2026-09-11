@@ -1015,3 +1015,60 @@ card let the bingo squares read straight through the words, and "From the
 quizmaster" landed on top of a track title. `--bg-2`, which the camera sheet
 beside it already uses. This is the same reason `body.console`'s surfaces are
 opaque, hit in the one place it matters most.
+
+---
+
+## The drinks are already in their pocket
+
+Asked for on 11 September 2026: *"What would be AMAZING is if the app can give
+them drinks that they keep in their account on their phone so they can redeem
+them throughout the night whenever they fancy it."* Asked which scope, the
+answer was **"just tonight — tidy up what's there"**.
+
+The tidy-up turned out to be nothing, and the way that was established is the
+part worth keeping.
+
+### What was built, and why it was deleted
+
+A wallet: a standing chip in the bottom corner of the phone, opposite the
+camera button, carrying a count and opening a sheet with every code the phone
+was holding. Body-level furniture surviving every redraw, exactly like the
+camera button and the quizmaster's note.
+
+Before shipping it, `scripts/drinks-in-your-pocket.mjs` walked a whole
+quiz-and-bingo running order and asked at every phase: *is this phone holding a
+code that is not on its screen?* The answer was never once yes. The chip's own
+"only appear when nothing already shows a code" condition was false at every
+phase of both games, so it would have been a control with no moment to exist
+in — and *a control nobody uses is clutter, even a good one*.
+
+That is because two separate renderers already cover the whole night.
+`wallet()` in `play.js` draws every live code on the lobby, the rules, a round
+intro, a round board and the final; `paintVouchers()` in `play-bingo.js` draws
+them above the bingo card itself and repaints on every state push. The only
+phases with nothing are the question and the reveal — where the server
+deliberately withholds them, because a code has no business on a phone during
+a twenty-second question.
+
+### "Their account" is the game they are in
+
+A phone has no login. Rule 3 is a token, not a password, and the token is
+issued at join and belongs to that game. So "keep them in their account"
+resolves to "keep them for the night", and anything longer-lived would need
+somewhere to sign in — which this app does not have on a phone, deliberately.
+That is what the "just tonight" answer settles.
+
+### What the guard actually asserts
+
+Only the direction that fails silently: **the server sent a code and nobody
+drew it.** It never asserts that a code should be up, because when a code may
+show is the server's decision and there are two deliberate refusals — the hold
+at `won` until the whole round's prizes have gone, and the refusal over a live
+question. Both are pinned as decisions, so a later change that released them
+early would fail rather than pass as an improvement.
+
+It measures with `getBoundingClientRect()` and `elementFromPoint()` rather than
+counting elements, because *"in the document" and "somebody can see it" are
+different questions* — and it walks both engines, because they draw these in
+two different files and *a decision taken for both engines needs an assertion
+in both.*

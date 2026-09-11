@@ -896,6 +896,23 @@ they say next.
   changed and the guard stayed byte-identical. It is host-only by construction:
   a note to one person about everybody else.
 
+### THE DRINKS ARE ALREADY IN THEIR POCKET — do not build a wallet button
+
+*"Give them drinks that they keep in their account on their phone so they can
+redeem them throughout the night whenever they fancy it."*
+
+- **IT ALREADY DOES, AND THAT WAS MEASURED RATHER THAN READ.** A standing
+  wallet chip was BUILT and DELETED: `drinks-in-your-pocket.mjs` walked a whole
+  quiz-and-bingo night and **a held code was on the screen at every phase**, so
+  the chip had no moment to exist in. **Do not rebuild it** without running that
+  guard and finding a gap first.
+- **A PHONE HAS NO ACCOUNT — rule 3 is a TOKEN, not a password.** "Their
+  account" is the game they are in; anything longer-lived wants somewhere to
+  sign in, which a phone deliberately does not have here.
+- **THE GUARD ONLY EVER ASSERTS THE DIRECTION THAT FAILS SILENTLY** — sent and
+  not drawn. **It never asserts a code SHOULD be up**: the hold at `won` and the
+  refusal over a live question are decisions, and are pinned as decisions.
+
 ### A WORD IN ONE EAR — `src/notes.js`, one phone and never the room
 
 *"Say someone is being a bit cheeky I can send them a message saying 'stop
@@ -1235,7 +1252,7 @@ board), `src/arcade.js` (the scores, shared by both engines),
 - **NO PHOTO GATE, AND ONE WAS PROPOSED AND TURNED DOWN** — **it prices
   consent**; *sending it is the consent*.
 - **THE BOARD SAYS WHICH GAME EACH SCORE WAS ON — `state.arcadeGame`, a map
-  BESIDE the scores. Never folded into `state.arcade`** — that is
+  BESIDE the scores, never folded into `state.arcade`**, which is
   `{id: number}` in every state file there is. **The id is a LABEL.**
 - **QUICK DRAW'S OUTLAW RAISES ITS GUN** — *how close is this one to shooting
   me* was information the schedule held and the canvas never drew. **It changes
@@ -1481,42 +1498,35 @@ Reported off a screenshot: *"starting to look a bit messy — can we utilise
 space where possible."* Four placements and one real bug:
 
 - **A CONTROL SITS WITH WHAT IT ACTS ON.** *Stop* read as a control over the
-  whole panel. It is **Unlaunch**, beside the sentence naming what it stops.
-- **THE HEAD MAY NOT WRAP ABOVE 1150px EITHER — `flex-wrap: nowrap`.** The
-  control below moved the threshold from ~1050 to 1150, measured against the
-  previous commit at seven widths, dropping the mode switch a row. **What gives
-  ground is the SENTENCE, never a control**: `.lb-live` ellipsises.
+  whole panel; it is **Unlaunch**, beside the sentence naming what it stops.
+- **THE HEAD MAY NOT WRAP ABOVE 1150px EITHER — `flex-wrap: nowrap`.** **What
+  gives ground is the SENTENCE, never a control**: `.lb-live` ellipsises.
 - **AND `.lb-warn-slot` HAD TO LEAVE THE HEAD FIRST.** `flex: 1 0 100%` got it
-  a line only because the head WRAPPED, so under `nowrap` it took the whole
-  row and **every control in the head collapsed to zero width** — all in the
-  DOM, all unclickable, nothing thrown, and only on a night with a warning up.
-  **A block that depends on its parent wrapping is borrowing a line, not owning
-  one.**
-- **AND THE WAY BACK IN SITS THERE TOO** — *"a button next to the explainer at
-  the top saying what quiz was loaded."* The line said a night was on the big
+  a line only because the head WRAPPED, so under `nowrap` **every control in
+  the head collapsed to zero width** — all in the DOM, all unclickable, nothing
+  thrown, only on a night with a warning up. **A block that depends on its
+  parent wrapping is borrowing a line, not owning one.**
+- **AND THE WAY BACK IN SITS THERE TOO** — the line said a night was on the big
   screen and **the only control beside it ENDED the night**. **ORDINARY, never
-  the gradient**: the panel below wears the account's fill, and two on a screen
-  means neither is the one to press. **Same words as the panel**
-  (`nowPlaying()`), or one destination has two names. **Before Unlaunch.**
+  the gradient**: two fills on a screen means neither is the one to press.
+  **Same words as the panel** (`nowPlaying()`). **Before Unlaunch.**
 - **AND THE PANEL NO LONGER PRINTS ITS HEADING TWICE** — `running.at` repeats
   the `h3` at the lobby, so it is dropped when it only repeats.
 - **KEEPING A NIGHT IS A NIGHT-LEVEL QUESTION, so it moved into the head**
   beside the venue. **The label has to outrank the adjacency**: a show never
   keeps the venue, so "Save" alone beside a venue picker says the opposite of
-  what it does — the words stay *"for another night"*. **IN TENSION WITH THE
-  SHORTENING RULE ABOVE, BOTH HIS**: he asked for the bare verb when the row
-  ran out of room, then asked *"what is the save button even for?"* — this rule
-  coming true. **The label is written by `paintSettings()`, not the markup**;
-  editing the template changes nothing and was shipped once. **Left as "Save".**
+  what it does — the words stay *"for another night"*. **The label is written by
+  `paintSettings()`, not the markup**; editing the template changes nothing and
+  was shipped once. **Left as "Save".**
 - **THE REASON A CONTROL IS OFF GOES ON THE CONTROL** — *"Nothing in Tonight
-  to keep yet"* floated beside a greyed button; it is on the button now.
+  to keep yet"* floated beside a greyed button; it is ON the button now.
 - **A BIGGER TARGET IS NOT A HITTABLE ONE.** The tile's × grew to 30px and the
-  pack NAME painted over it: `z-index` AND `padding-right`.
+  pack NAME painted over it — `z-index` AND `padding-right`.
 - **EVERY DRAG NEEDS ITS TAP, and a shelf round dot never had one** — the
   first thing anybody tries did nothing and a touchscreen had no way in.
   `addRoundToTonight()` is that tap, through the drop's own path.
-- **FIVE SETTINGS ON ONE ROW ABOVE 1150px, LABELS ABOVE THEIR CONTROLS.** Side
-  by side, two of five labels wrapped and three did not.
+- **FIVE SETTINGS ON ONE ROW ABOVE 1150px, LABELS ABOVE THEIR CONTROLS** —
+  side by side, two of five labels wrapped and three did not.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
@@ -1529,11 +1539,10 @@ directly: *"the while they wait section needs to assign games and/or photo
 upload per break… and the screen itself needs to be able to show ads as
 well."*
 
-- **TWO OF THE THREE THINGS ASKED FOR ALREADY EXISTED.** Photos always ran at
-  every break, so that half is making something SWITCHABLE rather than adding
-  it; the game ran at the lobby only. **An advert only ever went up because
-  somebody pressed a button** — the genuinely new capability, and the one that
-  pays.
+- **TWO OF THE THREE THINGS ASKED FOR ALREADY EXISTED** — photos at every
+  break, the game at the lobby, so that half is making something SWITCHABLE.
+  **An advert only ever went up because somebody pressed a button** — the
+  genuinely new capability, and the one that pays.
 - **A BREAK IS A PLACE, NOT A NUMBER** — `p0:lobby`, `p1:r2`. Derived from the
   part and round indexes already on the state, so a restart resolves it for
   free. **A stored list of five breaks would be wrong the first time a round was
@@ -1541,21 +1550,19 @@ well."*
 - **THE PLAN IS SPARSE AND EMPTY MEANS "AS IT WAS".** `DEFAULTS` reproduces the
   app as it behaved before breaks existed — `cleanPlan()` drops anything that
   only restates one, which is what lets `pub-unchanged.mjs` say IDENTICAL.
-- **THE THREE LOBBY-ONLY GUARDS CHANGED SUBJECT, THEY DID NOT GO AWAY.** The
-  seed in the payload and the refusal at the score route now read "a break that
-  offers a game"; outside a break `breakNow()` is null, so **a question is as
-  unreachable as it ever was**. **The arcade BOARD deliberately stayed
-  lobby-only** — it draws inside the white QR panel.
-- **THE FINAL IS NOT A BREAK, AND THE LOBBY HAS NO SCREEN CHOICE.** A plan
-  that could hide the winner would take away the moment the night is built
-  towards; the lobby's screen belongs to the join code, which nothing may dim.
+- **THE THREE LOBBY-ONLY GUARDS CHANGED SUBJECT, THEY DID NOT GO AWAY** — they
+  read "a break that offers a game" now, and outside a break `breakNow()` is
+  null, so **a question is as unreachable as it ever was**. **The arcade BOARD
+  deliberately stayed lobby-only.**
+- **THE FINAL IS NOT A BREAK, AND THE LOBBY HAS NO SCREEN CHOICE** — a plan
+  that could hide the winner takes away the moment the night is built towards,
+  and the lobby's screen belongs to the join code.
 - **SCORES FIRST, THEN THE SLIDES ROTATE** — the room gets what it looked up
-  for, and the venue gets the screen once it has. **THE PROJECTOR ROTATES, NOT
-  THE ENGINE** — an engine timer would push state to every phone on each change
-  and need restoring mid-cycle. **The teardown lives in `draw()`**, where every
+  for. **THE PROJECTOR ROTATES, NOT THE ENGINE**, which would push state to
+  every phone on each change. **The teardown lives in `draw()`**, where every
   card change passes.
 - **NOTHING IS A REAL ANSWER**, asked for by name — the round still names
-  itself, because a projector with literally nothing on it reads as broken.
+  itself, a projector with nothing on it reading as broken.
 - **`listAdvertPacks()` RETURNS A SUMMARY, NOT THE PACK.** Its slides have no
   body, link or image; a projector slide built from them is a heading over an
   empty card, and nothing throws. Third sighting of the picks-fields trap.
@@ -1565,10 +1572,8 @@ Full reasoning: **[`docs/console/launch-bar.md`](docs/console/launch-bar.md)**.
 ### THE GAPS ARE A DIAL ON THE PACK, NOT A STRIP UNDER IT
 
 `gapDial()` / `gapsOfPart()` in `console-breaks.js`, the `In the gaps` picker
-on the settings row. The strip of chips lasted a day: *"'doors' and 'after
-round 1' both fill the same function, don't really need both"*, then *"it
-could just be a symbol you click to cycle… and this would live in the bottom
-right of the pack ONCE LOADED."*
+on the settings row. The strip of chips lasted a day: *"it could just be a
+symbol you click to cycle… in the bottom right of the pack ONCE LOADED."*
 
 - **THE DUPLICATION WAS REAL** — one plan, drawn twice, neither beside the
   thing it acted on.
@@ -1710,12 +1715,11 @@ quizzing."* Three tabs: **Quiz league**, **Photos**, **What they asked for**:
   Thursday crowds are different people.
 - **THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — not a duplicate.** On Past
   gigs a photo is EVIDENCE; on Community it is the room itself. **What is not
-  duplicated is the CODE** — `nightPhotos()`, so **the publish control keeps
-  its safeguard for free.**
+  duplicated is the CODE** — `nightPhotos()`, so **the publish control keeps its
+  safeguard free.**
 - **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** **"What the room asked
   for" is a QUEUE — Yes keeps it, No bins it — so it MOVED off the Music Quiz
   tab rather than being copied.**
-- **A night's photos are fetched when the night is OPENED.**
 - **`asksPanel({ whenEmpty })` — the same panel answers two pages**, one
   argument, so the triage keeps one definition.
 - **AND ONE POINT FOR EVERY NIGHT PLAYED, ON TOP OF THE BEST SIX.** **THE
@@ -1768,9 +1772,9 @@ quizzing."* Three tabs: **Quiz league**, **Photos**, **What they asked for**:
   it must be able to be wrong**: forgotten, re-read past the caches, retried
   once, said in WORDS
 - **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT, GROUPED BY PUB** —
-  `coverPhotos()`. **Pins lead, the rest is a SPREAD**, seeded off the date.
-  **BUILT FROM THE SAME FILTERED LIST THE NIGHT'S PAGE SHOWS.** **A pin is a
-  PREFERENCE; the lamp is the GATE.**
+  `coverPhotos()`. **Pins lead, the rest is a SPREAD. BUILT FROM THE SAME
+  FILTERED LIST THE NIGHT'S PAGE SHOWS.** **A pin is a PREFERENCE; the lamp is
+  the GATE.**
 - **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor. Nothing
   deciding who may see a photo is cached with it**; **the browser window is NOT
   lengthened past a day.**
@@ -2032,15 +2036,13 @@ metal, the ones above locked; pressing one opens a card naming what it holds.
 
 - **IT IS SHAPED LIKE THE OWNER'S AND IS THE OPPOSITE OF IT.** `tierPreview()`
   DOWNGRADES; this one only sells, so **pressing Gold on a Bronze account must
-  stay inert**, or Gold is free. The owner sees both, so his keeps INITIALS and
-  this spells WORDS.
+  stay inert**, or Gold is free. His keeps INITIALS and this spells WORDS.
 - **A LOCKED RUNG IS PRESSABLE** — `disabled` swallows the press and the sell
-  is the point. **NOT A NATIVE `title`**: a card, outside-click close, one
-  listener for all rows.
+  is the point. **NOT A NATIVE `title`**: a card, one listener for all rows.
 - **THE OWNER'S OWN RUNGS ARE 30 x 34 WITH 5px BETWEEN THEM**, the hat switch
   beside them 34px, and **the 560px diet must take BOTH down together** — it
-  shrank the switch and not the rungs, and the owner's bar ran off a 390px
-  screen. **Not the 44px touch floor**: a mouse presses this.
+  shrank the switch alone and the owner's bar ran off a 390px screen. **Not the
+  44px touch floor**: a mouse presses this.
 - **BUILT FROM `ladderFor()`, never written out**, and **`NOT_BUILT` says "not
   yet"**. **NO SUBSCRIBE BUTTON UNTIL THERE IS A PROCESSOR.**
 - **`.tier-row` WAS ALREADY `owner.js`'S** and won at equal specificity from
@@ -3896,9 +3898,8 @@ pay."*
   `useLastNight()` is idempotent per day.
 - **AND THE DAY ROLLS AT 6am, NOT MIDNIGHT** — `nightDay()`, the boundary Past
   gigs, the photos, the league and the headcounts already use. He said midnight
-  and meant *"not the next day"*; 6am is that sentence as this app already
-  defines a day, and the only version that cannot refuse a second game at ten
-  past twelve to somebody still in the pub.
+  and meant *"not the next day"*; 6am is the only version that cannot refuse a
+  second game at ten past twelve to somebody still in the pub.
 - **STAMPED BY THE LAUNCH ROUTES ALONE, never by the check** —
   `mayStartSomething()` runs on every gated route, so spending it there burns
   Thursday by opening the console on Wednesday. **Both launch routes spend it**
@@ -4053,6 +4054,7 @@ node scripts/shot-bingo.mjs            # bingo, incl. card-reload
 node scripts/bingo-prizes.mjs          # does a bingo prize reach who won it?
 node scripts/bingo-round-ends.mjs      # is the whole room told the prizes have gone?
 node scripts/a-word-in-your-ear.mjs     # does a message reach one phone and no other?
+node scripts/drinks-in-your-pocket.mjs  # is a drink they won ever off their phone?
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break a pub night?
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
 node scripts/tonight-resolves.mjs       # does the bar offer real games, and find every pack?
