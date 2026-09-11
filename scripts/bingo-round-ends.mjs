@@ -161,10 +161,17 @@ try {
     }
   };
   /* Is a QR code actually PAINTED on this phone? */
+  /*
+   * ANY QR ON THE PAGE, not one inside the bingo card's own box. The quiz
+   * page draws the same cards from `wallet()` in `play.js` and has no
+   * `#bingoVouchers` at all — a probe aimed at the bingo box reported 0 on a
+   * quiz screen whatever was on it, which is a guard measuring the wrong
+   * element and would have called this feature broken either way.
+   */
   const codeOnScreen = (page) => page.evaluate(() => {
-    const box = document.querySelector('#bingoVouchers');
+    const box = document.querySelector('.win-qr') ? document : document.querySelector('#bingoVouchers');
     if (!box) return 0;
-    return [...box.querySelectorAll('canvas, img, svg')].filter((el) => {
+    return [...box.querySelectorAll('.win-qr, #bingoVouchers canvas, #bingoVouchers img')].filter((el) => {
       const r = el.getBoundingClientRect();
       return r.width > 10 && r.height > 10;
     }).length;
@@ -208,6 +215,53 @@ try {
   check('and the phone that won nothing still has none', (await codeOnScreen(two.page)) > 0
     ? true : true); // Middle won prize two, so they hold one as well.
   await one.page.screenshot({ path: 'screenshots/held-code-released.png' });
+
+  /* ------------------------------------------------------------------------
+   * AND IT SURVIVES THE QUIZ STARTING — on the phone, not just on the wire.
+   *
+   * *"Not disappear until the bar has scanned them — that's the whole
+   * point!"* On a bingo-then-quiz night the code used to leave the screen the
+   * moment *Continue to the quiz* was pressed and come back only at the final
+   * scores, and even then only one of them.
+   *
+   * `pub-unchanged.mjs` cannot see any of this: it sets no venue and no
+   * rewards, so **no voucher is ever minted in its walk** and its IDENTICAL is
+   * about a night with no prizes in it. Sixth sighting of *when it says
+   * IDENTICAL, ask what it did not compare.*
+   * --------------------------------------------------------------------- */
+  const quizPack = (library.quizzes || [])[0];
+  if (quizPack) {
+    await act('launchOrder', {
+      segments: [
+        { kind: 'bingo', packId: pack.id, shape: { rows: 3, cols: 3 }, prizes: 1 },
+        { kind: 'quiz', order: [{ packId: quizPack.id, round: 0 }] },
+      ],
+      venue: 'The Guard Dog', rewards: ['A bottle of house red'], replace: true,
+    });
+    const mixed = await open('Carried');
+    await act('start');
+    await wait(400);
+    const ids2 = new Map(((await asHost('/api/state?role=host')).tracks || []).map((t) => [t.title, t.id]));
+    const squares = (await playerState(mixed.me)).card || [];
+    for (const [i, square] of squares.entries()) {
+      await act('call', { trackId: ids2.get(square.title) });
+      await fetch(`${BASE}/api/mark`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId: mixed.me.id, token: mixed.me.token, index: i, marked: true }),
+      });
+    }
+    await wait(500);
+    await mixed.page.click('#bingoCall');
+    await wait(800);
+    check('the bingo code paints before the boundary', (await codeOnScreen(mixed.page)) > 0);
+
+    await act('advanceOrder');
+    await wait(1200);
+    const drawn = await codeOnScreen(mixed.page);
+    check('AND IT IS STILL PAINTED ONCE THE QUIZ HAS STARTED', drawn > 0, `${drawn} drawn`);
+    await mixed.page.screenshot({ path: 'screenshots/code-survives-the-quiz.png' });
+  }
 } finally {
   await browser.close();
   await stop();

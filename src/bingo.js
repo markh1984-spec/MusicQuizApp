@@ -648,6 +648,13 @@ export class BingoGame {
     const stageIndex = this.state.stageIndex || 0;
     if (!this.state.prizeWinners.some((w) => w.stageIndex === stageIndex)) {
       this.state.prizeWinners.push({ stageIndex, playerId, name: p.name, stage: this.stage, at });
+      /*
+       * AND AGAINST THE WHOLE GAME, which is the list `newRound()` keeps.
+       * `prizeWinners` answers "has THIS prize gone"; this answers "has this
+       * phone had one tonight" and must outlive a fresh set of cards.
+       */
+      if (!Array.isArray(this.state.wonThisGame)) this.state.wonThisGame = [];
+      if (!this.state.wonThisGame.includes(playerId)) this.state.wonThisGame.push(playerId);
       this.issueVoucher(stageIndex, playerId, p.name);
     }
     this.state.phase = BINGO_PHASES.WON;
@@ -720,8 +727,27 @@ export class BingoGame {
     return (this.state.prizeWinners || []).some((w) => w.stageIndex === stageIndex);
   }
 
-  /** Has this player already taken a prize in the round being played? */
+  /**
+   * Has this player already taken a prize in this BINGO GAME?
+   *
+   * **THE SCOPE IS THE GAME, NOT THE ROUND — asked for after a live night:**
+   * *"when I run, say, a quiz and a music bingo … the same person can't win
+   * multiple prizes per quiz or music bingo."* It was per-round, and
+   * `newRound()` clears `prizeWinners`, so the table that took the line in
+   * round one was fully eligible again in round two — which is the same
+   * person hoovering up prizes across an evening, the complaint this whole
+   * area exists for, arriving one level up.
+   *
+   * So it reads `wonThisGame`, which `newRound()` deliberately does NOT
+   * clear. `prizeWinners` is still consulted because a state written before
+   * this existed has no `wonThisGame`, and the safe direction is to
+   * REMEMBER a win rather than forget one.
+   *
+   * A fresh bingo PART is a fresh game and starts empty — two bingo games in
+   * one evening are two games, which is what "per music bingo" says.
+   */
   holdsAPrize(playerId) {
+    if ((this.state.wonThisGame || []).includes(playerId)) return true;
     return (this.state.prizeWinners || []).some((w) => w.playerId === playerId);
   }
 
@@ -870,6 +896,14 @@ export class BingoGame {
     this.state.claims = [];
     this.state.winners = { line: [], full: [] };
     this.state.prizeWinners = [];
+    /*
+     * `wonThisGame` IS NOT CLEARED HERE, AND THAT IS THE POINT OF IT.
+     * One prize per phone per BINGO GAME, so the table that took round one's
+     * line is out of the running for round two as well. Clearing it here
+     * would quietly put the rule back to per-round — which is the thing that
+     * was reported. `resetAll()` builds a fresh state and so starts empty,
+     * which is correct: that is a new game.
+     */
     this.state.lastWin = null;
     this.state.stageIndex = 0;
     this.syncTarget();

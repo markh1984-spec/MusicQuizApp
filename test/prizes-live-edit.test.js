@@ -229,26 +229,52 @@ test('a second bingo round still pays its own line winner', () => {
   let clock = Date.parse('2026-09-03T21:00:00.000Z');
   const game = new BingoGame({ pack: makeBingoPack(), now: () => clock });
   const sharon = game.join({ name: 'Sharon' });
+  /*
+   * ROUND TWO IS WON BY SOMEBODY ELSE, and it has to be: one prize per phone
+   * per BINGO GAME is absolute and `newRound()` does not reopen it. Sharon
+   * winning both rounds is what this test used to do and is now the thing the
+   * rule exists to stop. What is under test is unchanged — the catch-up keys
+   * on the ROUND as well as the stage, so round two's line winner is paid
+   * even though stage 1 was already paid in round one.
+   */
+  const dave = game.join({ name: 'Dave' });
   game.state.rewards = ['A free drink', 'A bottle of wine'];
 
-  const winALine = () => {
+  const winALine = (who) => {
     game.start();
-    const player = game.state.players[sharon.id];
+    const player = game.state.players[who.id];
     player.card.forEach((trackId, i) => {
       game.call(trackId);
-      game.mark({ playerId: sharon.id, index: i, marked: true });
+      game.mark({ playerId: who.id, index: i, marked: true });
     });
-    assert.equal(game.claim(sharon.id).valid, true);
+    assert.equal(game.claim(who.id).valid, true);
   };
 
-  winALine();
+  winALine(sharon);
   assert.equal(Object.values(game.state.vouchers).length, 1);
 
   clock += 60 * 60 * 1000;
   game.newRound();
-  winALine();
+  winALine(dave);
   assert.equal(Object.values(game.state.vouchers).length, 2,
     'the second round line winner was refused because round one had already been paid for stage 1');
+
+  /*
+   * AND SHARON IS STILL OUT WITH A GENUINE FULL CARD OF HER OWN — the rule
+   * spans the GAME, which is the half `newRound()` must never quietly undo.
+   * She has to really have the pattern, or this passes for the boring reason
+   * that she had nothing marked.
+   */
+  const sharonsCard = game.state.players[sharon.id];
+  sharonsCard.card.forEach((trackId, i) => {
+    game.call(trackId);
+    game.mark({ playerId: sharon.id, index: i, marked: true });
+  });
+  game.playOn();
+  const second = game.claim(sharon.id);
+  assert.equal(second.valid, true, 'her call was right and must be recorded as right');
+  assert.equal(second.prize, false, 'a new round handed round one’s winner a second prize');
+  assert.equal(Object.values(game.state.vouchers).length, 2, 'and no third code was minted');
 
   // And a Save in the middle of round two must still not duplicate either.
   game.setRewards(['A free drink', 'A bottle of wine']);

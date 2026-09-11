@@ -303,3 +303,68 @@ at the one moment it matters: the beat straight after somebody wins. The
 payload was correct throughout. `scripts/bingo-round-ends.mjs` drives three
 phones through a three-prize round and asserts a QR is **painted** — not
 present, painted — before and after the last prize.
+
+## The scope widened to the game, and the codes stopped vanishing
+
+Asked for on 11 September 2026, after a quiz-and-bingo night:
+
+> *"Need to make it so when I run, say, a quiz and a music bingo that the same
+> person can't win multiple prizes per quiz or music bingo, also need the QR
+> codes to all appear at the end and not disappear until the bar has scanned
+> them — that's the whole point!"*
+
+### One prize per phone per GAME
+
+One prize each was scoped to the ROUND, and `newRound()` clears
+`prizeWinners` — so the table that took round one's line was fully eligible
+again in round two with a fresh card. Over an evening of three rounds that is
+the same person hoovering up prizes, which is the exact complaint this whole
+area was built for, arriving one level up.
+
+`state.wonThisGame` is the game-long list. **`newRound()` must never clear
+it** — that single line puts the fault straight back, and it looks like
+tidying. `resetAll()` builds a fresh state and therefore starts empty, which
+is right: that is a new game. A fresh bingo PART is likewise a fresh game,
+which is what *"per music bingo"* says.
+
+`prizeWinners` is still consulted by `holdsAPrize()`, for states written
+before `wonThisGame` existed: the safe direction is to remember a win rather
+than forget one.
+
+### A code stays until the bar scans it
+
+Three things were wrong on a quiz-and-bingo night, none visible from the
+console:
+
+1. **The quiz engine gated vouchers on `phase === FINAL`.** A code won in the
+   bingo went off the phone the instant *Continue to the quiz* was pressed and
+   came back only at the final scores — with the break, which is when somebody
+   actually walks to the bar, in the gap.
+2. **`view.voucher` is singular.** A table holding a bingo line code and then
+   a quiz prize saw one card; the other drink was unprovable all night.
+3. **There was nowhere to draw a second one**, because `voucherCard(s)` reads
+   `s.voucher`.
+
+So `view.vouchers` carries every live code, at every phase with room for it,
+and `wallet()` in `play.js` draws them. Never over a live QUESTION: twenty
+seconds and four options, and a QR over them is the room looking down.
+
+**A redeemed code is kept and drawn as a receipt**, which is what the bingo
+card has always done — *"Collected. Already redeemed. If that is wrong, ask
+the quizmaster."* One that vanishes the moment a barman scans it leaves the
+one person who needs to query it with nothing to point at. The two engines may
+not disagree about this.
+
+### Neither guard could see any of it
+
+`pub-unchanged.mjs` sets no venue and no rewards, so **no voucher is ever
+minted in its walk**. Its IDENTICAL is a true statement about a night with no
+prizes in it and says nothing whatever about vouchers — the sixth time in this
+repo that guard has answered confidently about something outside its view.
+
+And the first browser probe written for it looked inside `#bingoVouchers`,
+which the quiz page does not have: it read 0 on a quiz screen whatever was
+drawn there, and called a working feature broken. `scripts/bingo-prizes.mjs`
+now asks the phone's own payload across the boundary, and
+`scripts/bingo-round-ends.mjs` drives a real bingo-then-quiz order and checks
+a QR is still **painted** after the part changes.

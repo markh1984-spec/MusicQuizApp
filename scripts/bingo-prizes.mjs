@@ -223,7 +223,7 @@ try {
     }
     await phone('/api/claim', { playerId: a.playerId || a.id, token: a.token, joinCode: jc });
     const hv = (await host(`/api/state?role=host${jc ? `&g=${jc}` : ''}`)).body;
-    return { code: (hv.vouchers || [])[0] && (hv.vouchers || [])[0].code, jc };
+    return { code: (hv.vouchers || [])[0] && (hv.vouchers || [])[0].code, jc, who: a };
   })();
 
   check('the interlude issued a voucher', Boolean(code2.code));
@@ -242,6 +242,42 @@ try {
   const hostAfter = (await host(`/api/state?role=host${g3}`)).body;
   check("and the host's own voucher panel is not empty", (hostAfter.vouchers || []).length >= 1,
     `${(hostAfter.vouchers || []).length}`);
+
+  /* ------------------------------------------------------------------------
+   * AND THE PHONE CAN STILL SHOW IT — which is a different question from the
+   * bar being able to scan it, and the one that was broken.
+   *
+   * `/api/voucher` resolving proves the CODE survived the part boundary. It
+   * says nothing about whether the person holding the phone can produce it:
+   * the quiz engine sent vouchers at `phase === FINAL` only, so a code won in
+   * the bingo went off the screen the moment *Continue to the quiz* was
+   * pressed and did not come back until the final scores — with the break, the
+   * moment somebody actually walks to the bar, in the gap.
+   *
+   * Reported in these words: *"need the QR codes to all appear at the end and
+   * not disappear until the bar has scanned them — that's the whole point!"*
+   * --------------------------------------------------------------------- */
+  const mePath = (extra = '') => `/api/state?role=player&playerId=${
+    code2.who.playerId || code2.who.id}&token=${encodeURIComponent(code2.who.token)}${g3}${extra}`;
+  const onPhone = (await phone(mePath())).body || {};
+  check('THE WINNER CAN STILL SEE THEIR CODE ONCE THE QUIZ HAS STARTED',
+    (onPhone.vouchers || []).length >= 1,
+    `phase ${onPhone.phase}, ${(onPhone.vouchers || []).length} on the phone`);
+  check('and it is the one the bar would scan',
+    (onPhone.vouchers || []).some((v) => v.code === code2.code),
+    JSON.stringify((onPhone.vouchers || []).map((v) => v.code)));
+
+  /* A live question is the one screen it must NOT be on: twenty seconds and
+     four options, and a QR code over them is the room looking down. */
+  let midQuestion = {};
+  for (let i = 0; i < 6 && midQuestion.phase !== 'question'; i += 1) {
+    await act('next');
+    midQuestion = (await phone(mePath())).body || {};
+  }
+  check('a question is actually up, or the next check proves nothing',
+    midQuestion.phase === 'question', `stuck at ${midQuestion.phase}`);
+  check('but NOT over a live question', !(midQuestion.vouchers || []).length,
+    `phase ${midQuestion.phase}, ${(midQuestion.vouchers || []).length} drawn`);
 } finally {
   stop();
 }

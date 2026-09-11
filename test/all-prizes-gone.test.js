@@ -297,3 +297,60 @@ test('a voucher written before the round stamp existed still shows', () => {
   assert.equal((game.playerView(a.id).vouchers || []).length, 1,
     'an older state file lost its winner their code');
 });
+
+/*
+ * ONE PRIZE PER PHONE PER *GAME*, ACROSS ROUNDS — and every live code stays
+ * on the phone until the bar scans it.
+ *
+ * Both off a live night: *"the same person can't win multiple prizes per quiz
+ * or music bingo"*, and *"need the QR codes to all appear at the end and not
+ * disappear until the bar has scanned them — that's the whole point!"*
+ */
+
+test('a fresh round does NOT reopen the rule for somebody who has won', () => {
+  const game = threePrizeGame();
+  const a = game.join({ name: 'Table One' });
+  const b = game.join({ name: 'Table Two' });
+  game.start();
+  winLine(game, a);
+  game.claim(a.id);
+
+  game.newRound();
+  assert.equal(game.state.prizeWinners.length, 0, 'a new round clears the per-STAGE list');
+  assert.equal(game.holdsAPrize(a.id), true,
+    'a new round handed round one’s winner a clean slate — the per-GAME list was cleared');
+  assert.equal(game.holdsAPrize(b.id), false, 'and it did not tar anybody else');
+
+  winHouse(game, a);
+  const again = game.claim(a.id);
+  assert.equal(again.valid, true, 'the call was right and is recorded as right');
+  assert.equal(again.prize, false, 'the same phone took a prize in two rounds of one game');
+
+  // Table Two is still free to win it, which is the whole point of the rule.
+  winHouse(game, b);
+  const theirs = game.claim(b.id);
+  assert.equal(theirs.valid, true);
+  assert.equal(theirs.prize, undefined, 'a successful claim carries no refusal');
+  assert.equal(game.state.prizeWinners.length, 1, 'round two paid its own winner');
+  assert.equal(game.state.prizeWinners[0].playerId, b.id);
+});
+
+test('a bingo code stays on the phone after a new round, until it is scanned', () => {
+  const game = threePrizeGame();
+  const a = game.join({ name: 'Table One' });
+  game.start();
+  winLine(game, a);
+  game.claim(a.id);
+
+  game.newRound();
+  const held = game.playerView(a.id).vouchers || [];
+  assert.equal(held.length, 1, 'the code vanished when the next round started');
+  assert.ok(held[0].code);
+  assert.equal(held[0].redeemedAt, null);
+
+  // Scanned at the bar: it stays, as a receipt, exactly as it always has.
+  game.redeemVoucher(held[0].code);
+  const after = game.playerView(a.id).vouchers || [];
+  assert.equal(after.length, 1, 'a scanned code left the phone with nothing to point at');
+  assert.ok(after[0].redeemedAt, 'and it has to say it has been collected');
+});

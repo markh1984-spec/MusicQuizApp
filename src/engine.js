@@ -3017,6 +3017,57 @@ export class Engine {
       if (offersGame(gap)) Object.assign(view, arcadeFields(s));
     }
 
+    /*
+     * EVERY LIVE CODE THIS PHONE HOLDS, AT EVERY PHASE WITH ROOM FOR IT, AND
+     * IT STAYS UNTIL THE BAR SCANS IT.
+     *
+     * Asked for in these words: *"need the QR codes to all appear at the end
+     * and not disappear until the bar has scanned them — that's the whole
+     * point!"* Three separate things were wrong on a quiz-and-bingo night,
+     * all of them invisible from the console:
+     *
+     *  1. **The gate was `phase === FINAL`**, so a code won in the bingo went
+     *     off the phone the moment *Continue to the quiz* was pressed and did
+     *     not come back until the final scores. The break — which is when
+     *     somebody actually walks to the bar — is exactly the window it was
+     *     missing.
+     *  2. **`view.voucher` is ONE voucher.** A table holding a bingo line
+     *     code and then a quiz prize saw a single card: the other drink was
+     *     unprovable for the rest of the night.
+     * So `view.vouchers` carries the LOT, and it is sent at every phase a
+     * person could leave their seat in — never during a live QUESTION, where
+     * the screen is four options and twenty seconds.
+     *
+     * **A REDEEMED ONE IS KEPT AND DRAWN AS A RECEIPT, not dropped.** The
+     * bingo card has said *"Collected — already redeemed. If that is wrong,
+     * ask the quizmaster"* since vouchers existed, and a code that vanishes
+     * the instant a barman scans it leaves the one person who needs to query
+     * it with nothing to point at. The two engines may not disagree about
+     * this.
+     *
+     * **`view.voucher` IS UNCHANGED** and still names the quiz's own prize at
+     * the FINAL: that is the headline card on the last screen, and this is
+     * the wallet underneath it.
+     */
+    const VOUCHER_PHASES = new Set([PHASES.LOBBY, PHASES.RULES, PHASES.ROUND_INTRO,
+      PHASES.ROUND_BOARD, PHASES.FINAL]);
+    if (VOUCHER_PHASES.has(s.phase) && s.vouchers) {
+      const live = Object.values(s.vouchers)
+        .filter((v) => v.winnerId === this.boardIdFor(playerId))
+        /* This part's own first, then what was carried in from earlier. */
+        .sort((a, b) => Number(Boolean(a.carried)) - Number(Boolean(b.carried)))
+        .map((v) => ({
+          code: v.code,
+          name: v.name,
+          ...(v.draw ? { draw: true, place: null } : { place: v.place || 1 }),
+          reward: v.reward,
+          venue: v.venue,
+          ...(s.venueLogo ? { logo: s.venueLogo } : {}),
+          issuedAt: v.issuedAt,
+          redeemedAt: v.redeemedAt,
+        }));
+      if (live.length) view.vouchers = live;
+    }
     if (s.phase === PHASES.FINAL && s.vouchers) {
       /*
        * TONIGHT'S QUIZ PRIZE BEATS ONE CARRIED FROM EARLIER IN THE EVENING.

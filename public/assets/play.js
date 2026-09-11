@@ -1115,6 +1115,11 @@ function buildWaiting(s, kicker, title, sub) {
       <h1 class="grad-text">${esc(title)}</h1>
       ${sub ? `<p class="wait-sub">${esc(sub)}</p>` : ''}
       <div class="wait-count" hidden></div>
+      <!-- WHAT THEY ARE HOLDING, above everything they could be doing. A code
+           won earlier in the evening used to be off the phone entirely once
+           the quiz began, so the break — the moment somebody actually walks to
+           the bar — was the one window it was missing. -->
+      ${wallet(s)}
       ${teamPicker(s)}
       <!-- SOMETHING TO DO WHILE THEY WAIT. Behind a button and BELOW the photo
            card, deliberately: the photos are what reach the projector and what
@@ -1758,6 +1763,7 @@ function buildBoard(s) {
       <h2>${isFinal ? 'Final scores' : `After round ${s.roundIndex + 1}`}</h2>
       ${isFinal && winner ? `<div class="result good"><div class="sub">Winner</div><div class="big">${esc(winner.name)}</div><div class="pts">${winner.score.toLocaleString('en-GB')}</div></div>` : ''}
       ${voucherCard(s)}
+      ${wallet(s, s.voucher ? s.voucher.code : '')}
       ${askCard(s)}
       <div class="mini-board">
         ${rows.map((p) => `
@@ -1874,7 +1880,30 @@ function wireAsk() {
  * "you are not Quizteam Aguilera" without needing a system at all.
  */
 function voucherCard(s) {
-  const v = s.voucher;
+  return voucherCardFor(s.voucher);
+}
+
+/**
+ * EVERY LIVE CODE THIS PHONE IS HOLDING — the wallet, under whatever screen
+ * is up.
+ *
+ * *"Need the QR codes to all appear at the end and not disappear until the
+ * bar has scanned them — that's the whole point!"* On a quiz-and-bingo night
+ * a code won in the bingo used to go off the phone the moment the quiz
+ * started and come back only at the final scores, and even then only ONE of
+ * them: `view.voucher` is singular. The engine sends `view.vouchers` now.
+ *
+ * `skip` is the code the final slide has already drawn as its headline —
+ * the same prize twice on one screen is the app looking broken, and it is
+ * the one place these two renderers meet.
+ */
+function wallet(s, skip = '') {
+  const list = (s.vouchers || []).filter((v) => v.code !== skip);
+  if (!list.length) return '';
+  return `<div class="bingo-vouchers">${list.map((v) => voucherCardFor(v)).join('')}</div>`;
+}
+
+function voucherCardFor(v) {
   if (!v) return '';
   /*
    * `roomCode()` rather than a new field on the payload — the phone already
