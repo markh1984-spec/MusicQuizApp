@@ -1737,10 +1737,9 @@ MOMENTS of a night; **Community names what SPANS nights**; **My account is not
 a night at all**, so it stays on the end rather than in the sequence.
 
 **COMMUNITY IS THE FIFTH, and it holds THE PEOPLE — the league, the photos and
-what the room voted for.** A league belongs to the ROOM over a season rather
-than to the quizmaster on a night. **Nothing new is collected** —
+what the room voted for.** A league belongs to the ROOM over a season, not to
+the quizmaster on a night. **Nothing new is collected** —
 `console-community.js` is a PLACE to read what `src/league.js` already built.
-**The bay answers "is anything running" and the tab answers "who is winning"**.
 **Ungated door, gated tab** (`needs: FEATURES.LEAGUE`): a door that vanishes
 sells nothing.
 
@@ -1748,15 +1747,13 @@ sells nothing.
 to community as well now, and anything else to do with the people who do the
 quizzing."* Three tabs: **Quiz league**, **Photos**, **What they asked for**:
 
-- **ORGANISED BY VENUE, because a venue IS a community** — the Tuesday and
-  Thursday crowds are different people.
+- **ORGANISED BY VENUE, because a venue IS a community.**
 - **THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — not a duplicate.** On Past
   gigs a photo is EVIDENCE; on Community it is the room itself. **What is not
   duplicated is the CODE** — `nightPhotos()`, so **the publish control keeps its
   safeguard free.**
-- **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT.** **"What the room asked
-  for" is a QUEUE — Yes keeps it, No bins it — so it MOVED off the Music Quiz
-  tab rather than being copied.**
+- **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT** — *"what the room asked
+  for"* MOVED off the Music Quiz tab rather than being copied.
 - **`asksPanel({ whenEmpty })` — the same panel answers two pages**, one
   argument, so the triage keeps one definition.
 - **AND ONE POINT FOR EVERY NIGHT PLAYED, ON TOP OF THE BEST SIX.** **THE
@@ -1784,49 +1781,44 @@ quizzing."* Three tabs: **Quiz league**, **Photos**, **What they asked for**:
   TRAVELS WITH THE ROW.**
 - **ONE ROOM FOR THE WHOLE PHOTO STORY — `galleryRoomFor()`.** The gallery
   reads the OWNER'S OWN QUIZMASTER ROOM, never `HOUSE`; the console wrote
-  through `roomForHost()`, so a night published into a folder the page never
-  looks at read back as *"Not published"*. **The hazard was written down above
-  `galleryRoomId()` and left** — how a noted hazard becomes a bug report.
-- **THE PRIVATE REPO IS TESTABLE NOW** — `photo-repo-stub.mjs`: real server,
-  fixture network. **Publishing lived behind a token the suite must never
-  need.**
+  through `roomForHost()`, so a published night read back as *"Not published"*.
+  **The hazard was written down and left** — how a noted hazard becomes a bug.
+- **THE SUITE MUST NEVER NEED THE PHOTO TOKEN** — `photo-repo-stub.mjs`, real
+  server and fixture network.
 - **`published.json` HAS ONE WRITER AT A TIME, PER ROOM — `inOrder()` in
   `src/gallery.js`.** Two callers read the file whole and write it back, so a
   lamp write begun before a publish finished **silently un-published the
-  night**. **THE BROWSER'S QUEUE CANNOT COVER IT** — order it where the FILE
-  is
+  night**. **THE BROWSER'S QUEUE CANNOT COVER IT** — order it where the FILE is
 - **A READ THAT FAILED IS NOT AN EMPTY FOLDER — `tryGetFile()` /
   `tryListDir()`.** `getFile()`/`listDir()` answer `null`/`[]` for a 404, a 403
   and a dropped connection alike — **data loss for the four callers that
-  LATCH**: one 403 after a deploy marked a room restored with nothing restored,
-  nothing logged. **A 404 is an ANSWER; anything else is a failure to LOOK.**
-  `restoreOnce()` latches on the way OUT. **ONE IMPLEMENTATION.** A failed
-  listing is not cached; **no TTL, which serves the wrong answer for its
-  length.**
+  LATCH**: one 403 after a deploy marked a room restored with nothing restored.
+  **A 404 is an ANSWER; anything else is a failure to LOOK.** `restoreOnce()`
+  latches on the way OUT. **ONE IMPLEMENTATION**, and a failed listing is not
+  cached: **no TTL, which serves the wrong answer for its length.**
 - **A READ-BACK SHA CAN BE STALE — `GitHub 409` reached a live console**, the
-  Contents API being served from a replica. **The sha a `PUT` HANDS BACK
-  cannot be served stale**, so `putFile()` remembers it. **It is a CACHE, so
-  it must be able to be wrong**: forgotten, re-read past the caches, retried
-  once, said in WORDS
+  Contents API being served from a replica. **The sha a `PUT` HANDS BACK cannot
+  be stale**, so `putFile()` remembers it. **It is a CACHE, so it must be able
+  to be wrong**: forgotten, re-read past the caches, retried once, said in
+  WORDS
 - **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT, GROUPED BY PUB** —
   `coverPhotos()`. **Pins lead, the rest is a SPREAD. BUILT FROM THE SAME
   FILTERED LIST THE NIGHT'S PAGE SHOWS.** **A pin is a PREFERENCE; the lamp is
   the GATE.**
 - **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor. Nothing
-  deciding who may see a photo is cached with it**; **the browser window is NOT
-  lengthened past a day.**
+  deciding who may see a photo is cached with it**, and **the browser window is
+  NOT lengthened past a day.**
 - **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
   nights, rulings, pins; a test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
   **decided on the SERVER**. **An end of the run is an ABSENT link, not a dead
-  one**: the one place *present and inert* does not apply, that rule being
+  one** — the one place *present and inert* does not apply, that rule being
   about a page driven weekly rather than one a stranger sees once.
-- **THE LEAGUE IS EXPORTED TO TWO AUDIENCES AND THEY WANTED DIFFERENT THINGS**
-  — the landlord wants EVIDENCE (the season table on the post-night report),
-  the teams want it on a WALL (`/league`, per quizmaster). **One thing for
-  both would serve neither.**
+- **THE LEAGUE IS EXPORTED TO TWO AUDIENCES WHO WANTED DIFFERENT THINGS** —
+  the landlord wants EVIDENCE (the season table on the report), the teams want
+  it on a WALL (`/league`). **One thing for both would serve neither.**
   - **A REPORT SAYS WHAT THE ROOM SAW THAT NIGHT, not what is true today** —
-    `leagueAfter()` winds the night list AND the season window back.
+    `leagueAfter()` winds the nights AND the season window back.
   - **A PUBLIC PAGE IS A PUBLISH, PER VENUE, FAILING CLOSED** —
     `league-publish.js`, the gallery's shape exactly, in the private repo
     because `data/` is wiped on every deploy. **NAMES AND POINTS, NEVER
@@ -1872,19 +1864,17 @@ right, controls on the left. How can we utilise this for all of the
 sections?"* `bayRail()` / `bayColumns()` / `bayHead()`, drawn by Post gig
 (your nights) and Community (venues, and the nights with photographs).
 
-- **THE CONSOLE DOOR IS THE EXCEPTION, DELIBERATELY.** Its bay is the launch
-  bar — the protected surface, and the REFERENCE every other bay is sized
-  against. **Do not give it a rail.**
+- **THE CONSOLE DOOR IS THE EXCEPTION, DELIBERATELY** — its bay is the launch
+  bar, the REFERENCE every other bay is sized against. **Do not give it a
+  rail.**
 - **AND THE WORKSHOP IS THE SECOND EXCEPTION — it had a rail for a fortnight
-  and that was the mistake.** *"The workshop bench is literally only meant to be
-  for whatever you drag to it to be currently worked on — not sure why there is
-  a dropdown list of different things, they're selected from the bottom, dragged
-  or clicked to the top."* **The shelf below IS the picker**, so a rail beside
-  the bench was a second answer to one question on the one door where the first
-  answer is the whole bottom half of the page — and the two disagreed, the rail
-  listing every pack while the shelf showed six. **The rule is not reversed, its
-  scope is.** **Do not put one back on the Workshop**; `community-bay.mjs`
-  asserts it in BOTH directions.
+  and that was the mistake.** *"The workshop bench is only meant to be for
+  whatever you drag to it — not sure why there is a dropdown list of different
+  things."* **The shelf below IS the picker**, so a rail was a second answer to
+  one question on the one door where the first answer is the whole bottom half
+  of the page — and the two disagreed. **The rule is not reversed, its scope
+  is. Do not put one back on the Workshop**; `community-bay.mjs` asserts it
+  BOTH ways.
 - **ONE DEFINITION, because each door had invented its own.** The rail is the
   TAB COLUMN one region higher: same 190px, same stack, same lit edge.
 - **A RAIL PICKS; IT NEVER ACTS — with ONE lamp as the stated exception.**
@@ -1894,20 +1884,19 @@ sections?"* `bayRail()` / `bayColumns()` / `bayHead()`, drawn by Post gig
   per item**, and **the tab body's panel GOES**. **The night's address is in
   the bay HEAD, from one `galleryAddress()`.**
 - **COMPARTMENTALISED BY PUB, AND THE PUB FOLDS. Group by the pub FIRST, then
-  order within it**, or "The Crown" prints twice with another pub between.
-  **FOUR TO A GROUP.**
+  order within it**, or "The Crown" prints twice with another pub between. **Four
+  to a group.**
 - **WHAT IS REMEMBERED WINS, ALWAYS — the first build had it the other way and
-  the control was DEAD.** Forcing a group open whenever it held the picked row
-  meant pressing its heading put it straight back. **A control that does
-  nothing when pressed is worse than the problem it was avoiding**, so
-  `holdsPicked` is a DEFAULT. **The folds live in a module Map keyed by rail
-  AND group** — the bay is rebuilt on every push.
+  the control was DEAD**: forcing a group open whenever it held the picked row
+  meant pressing its heading put it straight back. **A control that does nothing
+  when pressed is worse than the problem it was avoiding**, so `holdsPicked` is
+  a DEFAULT. **The folds live in a module Map keyed by rail AND group.**
 - **NO `title` ANYWHERE IN THE RAIL — the names WRAP instead.** A native
   tooltip is an unstyled box landing over the rows beneath it.
 - **`.bay-rail > * { flex: 0 0 auto }` IS LOAD-BEARING.** A flex column shrinks
-  its children and the rail always overflows. The rows survived on
-  `min-height: 44px`; the pub headings had no floor and rendered at **2px with
-  their text in the DOM**.
+  its children and the rail always overflows. The rows survived on `min-height:
+  44px`; the pub headings had no floor and rendered at **2px with their text in
+  the DOM**.
 - **THE DRAGS SURVIVED because they were on the PANEL, not a slot inside it**
   — and each empty state keeps its drop zone.
 
@@ -2012,18 +2001,18 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
 `hostingPence` in `src/spend.js`, `PUT /api/owner/hosting`, `hostingPanel()` on
 the owner's Money tab, which compared revenue against the AI bill ALONE — so
-*"more than is coming in"* flattered itself by the hosting fee, worst in a
-quiet month, when the AI is cheap and the server is not.
+*"more than is coming in"* flattered itself by the hosting fee, worst in a quiet
+month when the AI is cheap and the server is not.
 
 - **TYPED, NOT FETCHED**, and **NOT A LEDGER ROW** — the ledger records what a
-  JOB cost, so folding hosting in lands it in *what the money went on* and in
-  the per-pack average, which would then move when a server is resized.
+  JOB cost, so folding hosting in lands it in *what the money went on* and in the
+  per-pack average, which would move when a server is resized.
 - **NAMED IN THE TOTAL** — a total silently absorbing a number you set months
   ago is one you stop trusting.
 - **`restore()` NAMES IT — the whitelist trap for the FOURTH time.** It runs at
   boot, so on the free tier a field in `contents()` but not `restore()` is
-  written, read back, dropped and saved as dropped, every deploy, in silence.
-  A figure on disk WINS over the backup.
+  written, read back, dropped and saved as dropped, every deploy, in silence. A
+  figure on disk WINS over the backup.
 - **ABSENT WHEN UNSET**, like the budget: an older ledger is byte-identical.
 - **The owner's Money tab, NOT My account**, which every quizmaster sees.
 
@@ -2037,16 +2026,16 @@ first fifty people to open a gallery after one each spent a GitHub call against
 5,000 an hour SHARED with the packs, the accounts book and every backup.
 
 - **A PAID INSTANCE DOES NOT GIVE YOU A DISK.** Render's filesystem is
-  ephemeral on EVERY tier; only an attached disk changes it. The $7 Starter
-  bought no SLEEP, not a surviving `data/`. **`DATA_DIR` is the whole wiring.**
-- **AND A DISK REMOVES ZERO-DOWNTIME DEPLOYS**, single instance only. Worth it:
-  today's overlap hands over an EMPTY `data/` that must restore from GitHub.
+  ephemeral on EVERY tier; only an attached disk changes it — the $7 Starter
+  bought no SLEEP, not a surviving `data/`. **`DATA_DIR` is the whole wiring**,
+  and **a disk removes zero-downtime deploys** (single instance only), which is
+  worth it: today's overlap hands over an EMPTY `data/`.
 - **IT IS A CACHE OF WHAT GITHUB HAS, NEVER A SECOND STORE** — losing the disk
   costs speed and nothing else.
 - **THE KEY MAPPING MUST BE INJECTIVE, AND THE FIRST ONE WAS NOT.** `/` → `~`
   put `a/b/c.jpg` and `a/b~c.jpg` on ONE file — **one photograph served in place
   of another**. `encodeURIComponent`, hashed past 200 chars. **Do not lean on
-  `safePhotoName()`**: a guarantee held elsewhere is how it comes back.
+  `safePhotoName()`** — a guarantee held elsewhere is how it comes back.
 - **A `..` MAY NOT WALK OUT.** The test writes a sentinel OUTSIDE the
   folder.
 - **NOTHING DECIDING WHO MAY SEE A PHOTO IS CACHED WITH IT**, as before.
@@ -2056,13 +2045,12 @@ first fifty people to open a gallery after one each spent a GitHub call against
 ### THE CONTENTS API SENDS ZERO BYTES FOR A FILE OVER 1MB, AND CALLS IT 200
 
 `tryGetFile()` / `rawGet()` in `src/github.js`. Above the inline limit GitHub
-answers 200 with `content: ''` — a perfectly good string, so the type check
-passed and `Buffer.from('', 'base64')` returned an **empty buffer as a
-success**: a broken photograph with `ok: true`, nothing logged, nothing
-retried. **`size` tells them apart**, and the raw media type has no ceiling, so
-it asks AGAIN rather than giving up; a failure there is `ok: false`, a failure
-to LOOK. Both uploads shrink first, so it is unlikely — **but `MAX_BYTES` is
-3MB and a crowded pub is the densest thing you can hand a JPEG encoder.**
+answers 200 with `content: ''` — a good string, so the type check passed and
+`Buffer.from('', 'base64')` returned an **empty buffer as a success**: a broken
+photograph with `ok: true`, nothing logged, nothing retried. **`size` tells them
+apart**, and the raw media type has no ceiling so it asks AGAIN; a failure there
+is `ok: false`. Both uploads shrink first — **but `MAX_BYTES` is 3MB and a
+crowded pub is the densest thing you can hand a JPEG encoder.**
 
 Full reasoning: **[`docs/gigs/photos.md`](docs/gigs/photos.md)**.
 
@@ -2072,15 +2060,15 @@ Full reasoning: **[`docs/gigs/photos.md`](docs/gigs/photos.md)**.
 metal, the ones above locked; pressing one opens a card naming what it holds.
 
 - **IT IS SHAPED LIKE THE OWNER'S AND IS THE OPPOSITE OF IT.** `tierPreview()`
-  DOWNGRADES; this one only sells, so **pressing Gold on a Bronze account must
-  stay inert**, or Gold is free. His keeps INITIALS and this spells WORDS.
+  DOWNGRADES; this only sells, so **pressing Gold on a Bronze account must stay
+  inert**, or Gold is free. His keeps INITIALS and this spells WORDS.
 - **A LOCKED RUNG IS PRESSABLE** — `disabled` swallows the press and the sell
   is the point. **NOT A NATIVE `title`**: a card, one listener for all rows.
 - **THE OWNER'S OWN RUNGS ARE 30 x 34 WITH 5px BETWEEN THEM**, the hat switch
   beside them 34px, and **the 560px diet must take BOTH down together** — it
   shrank the switch alone and the owner's bar ran off a 390px screen. **Not the
   44px touch floor**: a mouse presses this.
-- **BUILT FROM `ladderFor()`, never written out**, and **`NOT_BUILT` says "not
+- **BUILT FROM `ladderFor()`, never written out**; **`NOT_BUILT` says "not
   yet"**. **NO SUBSCRIBE BUTTON UNTIL THERE IS A PROCESSOR.**
 - **`.tier-row` WAS ALREADY `owner.js`'S** and won at equal specificity from
   3,300 lines lower, silently. It is `.rung-row`.
@@ -2324,6 +2312,11 @@ with `lobby-sound.js`), the `Sounds` panel in `host.js`, `POST
 - **THE ID IS VALIDATED AGAINST `stings.js`'S OWN LIST** — the `packId` trap.
 - **A BROWSER IS SILENT UNTIL THE PAGE IS TAPPED, and reports no error.** The
   arm chip is bottom LEFT, never near the join code, and any click arms it.
+- **THE PANEL IS SHUT BY DEFAULT** — eight buttons above the player list push
+  who-is-playing off a phone: **the board is the job, the soundboard the
+  garnish.** **The open flag is a module binding**, or a view rebuilt on every
+  answer shuts itself mid-press. **The guard OPENS it and presses a real
+  button** — the API path proves the noise and not the thumb.
 - **A `GainNode` DEFAULTS TO 1.0 — NEVER START A NODE BEFORE ITS ENVELOPE.** A
   ding set to 0.04 peaked at 1.08 and clipped. **`soundboard.mjs` measures a
   peak CEILING**: a laptop speaker cannot reach 1.0, so nothing else finds it.
@@ -2634,12 +2627,11 @@ costs. Both split off at the 100,000-byte cap.
 - **A deleted photo leaves the repo but NOT git history — never imply
   otherwise.**
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
-- **THE CAMERA GATE IS GONE — every photograph is on the gallery unless a
-  human switches it off** (`showsByDefault()`). The EXIF check failed on EVERY
-  photograph of a real night. `isCameraFile()` survives as a NOTE on the lamp,
-  **never a gate**. **THE DEFAULT IS WRITTEN OUT ONCE** — a second copy in
-  `/api/gallery-photo/` made a RED lamp put the photo straight back on. **The
-  projector is untouched**
+- **THE CAMERA GATE IS GONE — every photograph is on the gallery unless a human
+  switches it off** (`showsByDefault()`); the EXIF check failed on EVERY photo
+  of a real night. `isCameraFile()` survives as a NOTE on the lamp, **never a
+  gate**. **THE DEFAULT IS WRITTEN OUT ONCE** — a second copy in
+  `/api/gallery-photo/` made a RED lamp put the photo straight back on.
 - **A LAMP PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH.**
   **NO WORDS**, so `title` and `aria-label` are load-bearing and the 18px dot
   gets a 44px hit area. **FILLED, which is not a break of
@@ -2651,9 +2643,9 @@ costs. Both split off at the 100,000-byte cap.
   to REMEMBER, on a Monday, about a photograph he did not take. **Do not
   rebuild a sender-side switch.** The gate is the publish control under the
   photographs; the lamp is the quizmaster's own.
-- **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** **WITH
-  THE FAULT PUT BACK THE GUARD STILL PASSED: it matched the COMMENT explaining
-  the fix.** A source check strips comments first
+- **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** **WITH THE
+  FAULT PUT BACK THE GUARD STILL PASSED: it matched the COMMENT explaining the
+  fix.** A source check strips comments first
 - **IT FLIPS NOW AND SAVES LATER.** A failed write puts the lamp BACK and says
   why on the count line — never an `alert` for something that happened in the
   background, never a silent revert. **It settles before it sends** (600ms)
@@ -2686,9 +2678,9 @@ costs. Both split off at the 100,000-byte cap.
 - **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — the INDEX
   drops a night whose whole set is held back. **A number right about the wrong
   question is how a working app looks broken.** Silent when they all show
-- **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE HAS TO SAY
-  SO LOUDLY** — `whoIs()` reads a COOKIE. **THE PREVIEW STAYS.** A panel, full
-  ink, **not red**. **A banner says how many, only a card says WHICH**
+- **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE HAS TO SAY SO
+  LOUDLY** — `whoIs()` reads a COOKIE. **THE PREVIEW STAYS.** A panel, full ink,
+  **not red**. **A banner says how many, only a card says WHICH**
 - **AND `?as=visitor` STANDS THE PREVIEW DOWN.** **ON THE SERVER**: a
   browser-side filter proves the page can hide a draft, not that the server
   refuses one. **IT ONLY EVER SUBTRACTS, which is why it needs no gate.** **It
@@ -2712,10 +2704,10 @@ costs. Both split off at the 100,000-byte cap.
   with it.** **The controls under it are ABSENT, not greyed** — the one
   deliberate exception to *present and inert*. **The report asks under BOTH
   venue keys** (`leagueRunsAt()`)
-- **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — `POST
-  /api/past-photo/<night>`, **filed against the night in the URL and never
-  against today**. **A POST written beside GETs is the 404 this repo already
-  shipped once**, so the test asserts against the 404, not the 400
+- **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — `POST /api/past-photo/<night>`,
+  **filed against the night in the URL, never against today**. **A POST written
+  beside GETs is the 404 this repo already shipped once**, so the test asserts
+  against the 404, not the 400
 - **A picture is keyed on the MUSICIAN and the STYLE, and nothing else.**
   Never on the question's `imagePrompt` — those are written by Claude, so two
   quizzes wanting Madonna would produce two keys and two bills, and the host
@@ -3559,8 +3551,8 @@ the tab, not the rules under it.
   the sub's line rather than a third one, and **keeps the pack name only when
   the night holds more than one pack**, a row of four subs all reading "2000s
   Metal" being the same emptiness the tile's own naming rule already forbids.
-- **AND THE SEVENTH TAB MAKES `console-frame.mjs`'S KNOWN BANNER-STATE FAILURE
-  ONE TAB WORSE AGAIN** — see the foot of the section below.
+- **AND EACH NEW TAB SQUEEZES THE RAIL FURTHER** — seven tabs is 310px in a
+  column whose floor is 200. It scrolls; see *the guard was the thing at fault*.
 
 ### IMAGE ROUNDS IS A VIEW OF ROUNDS, NEVER A COPY OF THEM — `console-rounds.js`
 
@@ -3605,12 +3597,16 @@ pack is theoretically just an amalgamation of the other three."*
   PACK would be a descriptor that lies about what is in your hand. The bench
   learns `shelfRoundDrag` and benches the round's PACK, which is what its TAP
   already does.
-- **AND EACH NEW TAB MAKES A KNOWN FRAME FAULT ONE TAB WORSE.**
-  `console-frame.mjs` already failed *"every tab is still reachable with one
-  up"* at 1500x900 **with a banner above the doorhead**: `.consolecols` clamps
-  to its 200px floor, is `overflow: visible`, and the tab column is not
-  constrained to it, so the overflow escapes the frame with no scroller to
-  reach it. **No-accounts state only.**
+- **AND THE GUARD WAS THE THING AT FAULT, both times.** `REACH` scrolled the
+  NEAREST scroller and stopped — with a banner up AND a night running the rail
+  gives 110px of a 220px drop and the frame scrolls the rest. **A finger does
+  not stop at the first box**, so it walks out through every `auto`/`scroll`
+  one now, never an `overflow: hidden` one — verified by making the rail
+  unscrollable. And **the one-row rule was gated on a WIDTH while the cost it
+  protects is a PINNED-FRAME cost**: at 960x760 the page scrolls and the
+  owner's bar is ~936px in 960, so it demanded one row where two are right.
+  **Gated on `framed`** — *keep the gate at the CONTAINER's number*. It checks
+  less, deliberately.
 
 ### A TAB ID IS NOT A GAME KIND, AND A SHELF IS NOT THE LIBRARY
 

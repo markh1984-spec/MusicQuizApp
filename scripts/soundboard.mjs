@@ -42,6 +42,8 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? '  ok  ' : '  FAIL'} ${name}${detail ? `  — ${detail}` : ''}`);
 };
 
+const asHostJson = (route) => fetch(`${BASE}${route}`, { headers: { 'X-Host-Key': KEY } })
+  .then((r) => r.json()).catch(() => null);
 const act = (action, body = {}) => fetch(`${BASE}/api/host/${action}`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json', 'X-Host-Key': KEY },
@@ -219,6 +221,65 @@ try {
     check(`${t.label} makes a sound`, lvl > 0.02, `peak ${lvl}`);
     check(`${t.label} does not clip`, lvl < CEILING, `peak ${lvl}, ceiling ${CEILING}`);
   }
+  /*
+   * AND THE HOST CAN STILL REACH THE BUTTONS — the panel FOLDS now.
+   *
+   * Everything above fires a sting over HTTP, which proves the route and the
+   * noise and says nothing about whether a thumb can get to a button. *"Those
+   * sound controls should be collapsible"* put them behind a press, and a fold
+   * whose body cannot be opened is a soundboard nobody can use.
+   */
+  console.log('\n--- and on the control view');
+  const host = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await host.goto(`${BASE}/host?key=${KEY}`, { waitUntil: 'domcontentloaded' });
+  await wait(1800);
+
+  const look = () => host.evaluate(() => {
+    const box = document.querySelector('.panel.sounds');
+    if (!box) return { there: false };
+    const btn = box.querySelector('.sting');
+    const r = btn && btn.getBoundingClientRect();
+    let pressable = false;
+    if (r && r.height > 0) {
+      btn.scrollIntoView({ block: 'center' });
+      const rr = btn.getBoundingClientRect();
+      const hit = document.elementFromPoint(rr.left + rr.width / 2, rr.top + rr.height / 2);
+      pressable = Boolean(hit && (btn === hit || btn.contains(hit)));
+    }
+    return {
+      there: true,
+      shut: box.classList.contains('shut'),
+      buttonDrawn: Boolean(r && r.height > 0),
+      pressable,
+      head: (box.querySelector('.sounds-head') || {}).innerText || '',
+    };
+  });
+
+  const shut = await look();
+  check('the Sounds panel is there', shut.there === true, JSON.stringify(shut));
+  check('AND IT STARTS SHUT, so the player list is not pushed down',
+    shut.shut === true && shut.buttonDrawn === false, JSON.stringify(shut));
+  check('with a row that says what it is', /Sounds/.test(shut.head), JSON.stringify(shut.head));
+
+  await host.click('.sounds-head');
+  await wait(400);
+  const open = await look();
+  check('PRESSING IT OPENS THE BUTTONS', open.shut === false && open.buttonDrawn === true,
+    JSON.stringify(open));
+  check('AND A BUTTON CAN ACTUALLY BE PRESSED', open.pressable === true, JSON.stringify(open));
+
+  /* THE REAL PRESS, on the real button — not the API. */
+  await host.evaluate(() => { window.__fired = 0; });
+  await host.click('.panel.sounds .sting');
+  await wait(600);
+  const played = await asHostJson('/api/state?role=screen');
+  check('and the real press reaches the room', Boolean(played && played.sting),
+    JSON.stringify((played || {}).sting || null));
+
+  await host.click('.sounds-head');
+  await wait(300);
+  const again = await look();
+  check('and pressing it again folds it away', again.shut === true, JSON.stringify(again));
 } finally {
   await browser.close();
   await stop();

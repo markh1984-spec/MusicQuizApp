@@ -194,8 +194,24 @@ const REACH = (sel) => {
   const restoreX = [];
   const out = [];
   for (const el of document.querySelectorAll(sel)) {
-    const box = scroller(el);
-    if (box) {
+    /*
+     * EVERY SCROLLER ON THE WAY OUT, NOT JUST THE NEAREST ONE.
+     *
+     * A finger does not stop at the first box. The tab column is `auto` and so
+     * is the frame around it, and with a banner up AND a night running the
+     * column is at its 200px floor while the whole frame overflows — so the
+     * last tab sits 220px below the fold and the rail can only give 110 of it.
+     * Scrolling the rail alone left it off screen and this reported a tab that
+     * two ordinary flicks reach as one that "does not exist".
+     *
+     * It still scrolls ONLY `auto`/`scroll` boxes, which is the whole point of
+     * `scroller()` — an `overflow: hidden` box is the thing a person cannot
+     * move, and quietly moving one would report the fault this script exists
+     * for as fine.
+     */
+    let box = scroller(el);
+    let guard = 0;
+    while (box && guard++ < 6) {
       restore.push([box, box.scrollTop]);
       restoreX.push([box, box.scrollLeft]);
       const r0 = el.getBoundingClientRect();
@@ -204,7 +220,14 @@ const REACH = (sel) => {
       else if (r0.bottom > b.bottom) box.scrollTop += r0.bottom - b.bottom;
       if (r0.left < b.left) box.scrollLeft -= b.left - r0.left;
       else if (r0.right > b.right) box.scrollLeft += r0.right - b.right;
-    } else if (docScrolls) {
+      /* Done the moment it is actually in the window — otherwise carry on out
+         to the next box a finger could move. */
+      const now = el.getBoundingClientRect();
+      if (now.top >= 0 && now.bottom <= window.innerHeight
+        && now.left >= 0 && now.right <= window.innerWidth) break;
+      box = scroller(box);
+    }
+    if (!scroller(el) && docScrolls) {
       const r0 = el.getBoundingClientRect();
       if (r0.top < 0) window.scrollBy(0, r0.top);
       else if (r0.bottom > window.innerHeight) window.scrollBy(0, r0.bottom - window.innerHeight);
@@ -421,15 +444,21 @@ try {
      * wordmark goes, the mark stays) exists precisely to keep this true, and
      * `flex-wrap: wrap` is only the fallback behind it.
      *
-     * **900 rather than 431, and the number is the reasoning rather than a
-     * concession.** The cost of a second row is a fact about the two-column,
-     * pinned layout, which does not exist below 900px — there the page scrolls
-     * and a header row costs nothing. 431 was asserted and never tested: no
-     * size here fell between 431 and 899 until the tablet was added, and at
-     * 768 the owner's bar (mark, five doors, the hat switch, four rungs and
-     * Sign out) genuinely needs two rows and is right to take them.
+     * **GATED ON `framed`, NOT ON A WIDTH — and that is this repo's own rule
+     * about keeping the gate at the CONTAINER's number.** The cost of a second
+     * row is that it comes off the tab column inside a PINNED frame; where the
+     * page scrolls, a header row costs nothing. The gate said `width >= 900`
+     * while `framed` is `(1150 x 850)` or `(900 x 965)` — so at 960x760 this
+     * demanded one row on a page that scrolls, and the owner's bar there is
+     * mark, five doors, the hat switch, four rungs and Sign out: ~936px of
+     * content in 960, which genuinely needs two and is right to take them.
+     *
+     * **It narrows what is checked, deliberately.** 1280x800 is not framed
+     * either and is no longer asserted. Asserting it was asserting a cost that
+     * is not paid at that size — and a guard that demands something for a
+     * reason that does not apply is how a working layout gets "fixed".
      */
-    if (width >= 900) {
+    if (framed) {
       check(`${label}: the menu items all sit on one row`, bar.rows === 1, `${bar.rows} rows`);
     }
 

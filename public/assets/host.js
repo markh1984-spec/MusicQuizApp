@@ -983,17 +983,52 @@ function startsRow(s) {
  * colour and belongs to Launch. Six small ones in a row say "pick one"; six
  * filled ones would be the loudest thing on the control view.
  */
+/**
+ * SHUT BY DEFAULT, because eight buttons is a wall on the screen you drive a
+ * night from.
+ *
+ * *"Those sound controls should be collapsible imo."* The panel sits above the
+ * player list at every phase, and eight buttons across two rows push the thing
+ * the host actually reads — who is playing, who has answered — down the page
+ * on a phone. A soundboard is a garnish; the board underneath it is the job.
+ *
+ * **THE STATE IS A MODULE BINDING, NOT THE MARKUP.** This view is rebuilt on
+ * every state push — during a question that is every time a team answers — so
+ * a panel holding its own open flag would shut itself mid-press. The same rule
+ * `whoPicked`'s folds already follow a few hundred lines up, and the same one
+ * the phone's *My prizes* section follows.
+ *
+ * **IT REMEMBERS ACROSS THE NIGHT but not across a reload**, which is the right
+ * way round: a host who opens it for one gag wants it open for the next one
+ * five minutes later, and a host opening the control view at the start of a
+ * night wants the board.
+ */
+let soundsOpen = false;
+
 function soundboardPanel() {
   const el = node(`
-    <div class="panel">
-      <h3>Sounds</h3>
-      <p class="tiny">Out of the projector laptop, so whatever that is plugged into.</p>
-      <div class="stingrow">
-        ${STINGS.map((t) => `<button class="minor sting" data-sting="${esc(t.id)}"
-          title="${esc(t.label)}"><span class="sting-ic">${t.icon}</span>${esc(t.label)}</button>`).join('')}
+    <div class="panel sounds${soundsOpen ? '' : ' shut'}">
+      <button class="sounds-head" type="button" aria-expanded="${soundsOpen}">
+        <span class="sounds-name">Sounds</span>
+        <span class="sounds-caret" aria-hidden="true">▾</span>
+      </button>
+      <div class="sounds-body">
+        <p class="tiny">Out of the projector laptop, so whatever that is plugged into.</p>
+        <div class="stingrow">
+          ${STINGS.map((t) => `<button class="minor sting" data-sting="${esc(t.id)}"
+            title="${esc(t.label)}"><span class="sting-ic">${t.icon}</span>${esc(t.label)}</button>`).join('')}
+        </div>
       </div>
     </div>
   `);
+  el.querySelector('.sounds-head').addEventListener('click', () => {
+    soundsOpen = !soundsOpen;
+    /* Toggled on the element rather than left to the next push: at the lobby
+       the next one may be a long way off, and a control that does nothing when
+       pressed is worse than the problem it was avoiding. */
+    el.classList.toggle('shut', !soundsOpen);
+    el.querySelector('.sounds-head').setAttribute('aria-expanded', String(soundsOpen));
+  });
   for (const b of el.querySelectorAll('.sting')) {
     b.addEventListener('click', () => act('sting', { id: b.dataset.sting }));
   }

@@ -11207,3 +11207,28 @@ input, textarea, [contenteditable] { caret-color: var(--hot); }
   letter-spacing: -0.02em;
   margin: 0 0 4px;
 }
+
+/* ------------------------------------------------------------ the soundboard
+ *
+ * SHUT BY DEFAULT. Eight buttons across two rows sit above the player list at
+ * every phase, and on a phone that pushes who-is-playing off the screen — the
+ * board is the job and the soundboard is a garnish.
+ *
+ * The same shape as the phone's `.prizes`: a 44px row, a caret that turns, and
+ * the body hidden rather than removed so the buttons keep their listeners.
+ */
+.panel.sounds { padding: 0; overflow: hidden; }
+.sounds-head {
+  width: 100%;
+  min-height: 44px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 16px;
+  border: 0; background: none; color: var(--ink);
+  font: inherit; font-size: 15px; font-weight: 700;
+  cursor: pointer; text-align: left;
+}
+.sounds-name { flex: 1 1 auto; }
+.sounds-caret { flex: 0 0 auto; color: var(--ink-dim); transition: transform .15s ease; }
+.panel.sounds.shut .sounds-caret { transform: rotate(-90deg); }
+.sounds-body { padding: 0 16px 14px; }
+.panel.sounds.shut .sounds-body { display: none; }
