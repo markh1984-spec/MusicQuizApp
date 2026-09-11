@@ -436,11 +436,105 @@ export function isSting(id) {
  * rather than a throw, because this runs on the PROJECTOR and an exception
  * there is a blank screen in front of a room.
  */
+/**
+ * A REAL RECORDING BEATS ANYTHING THIS FILE CAN SYNTHESISE, AND IT DROPS IN.
+ *
+ * *"The functionality is great but the sounds are awful, can I replace them?"*
+ * — and they were. Six oscillators do a passable low crowd; they do not do a
+ * sad trombone anybody would put through a PA, and no amount of them says
+ * "your mum". The synthesis was the right way to SHIP SOMETHING with no assets
+ * and it is the wrong way to ship something good.
+ *
+ * **A FILE PER STING, NAMED AFTER ITS ID, AND THAT IS THE WHOLE INTERFACE.**
+ * Drop `public/assets/stings/trombone.mp3` in and the trombone plays it; take
+ * it away and the oscillators come back. No list to edit, no build step, and
+ * **adding a sound is still one line in `STINGS` plus a file.**
+ *
+ * **THE SYNTHESISED ONE IS THE FALLBACK, NEVER DELETED.** A missing file, a
+ * venue's wifi, a format a browser will not decode, a deploy that dropped the
+ * folder — every one of those is a press that has to make a noise anyway,
+ * because the host has already said the line and is waiting for it. **Silence
+ * is the one outcome a soundboard may not have.**
+ *
+ * **FETCHED ONCE WHEN THE PAGE IS ARMED, not on the press.** A sting that
+ * arrives half a second late has missed the joke, and the 404s for sounds
+ * nobody has supplied yet happen at the start of a night instead of in the
+ * middle of one. `loadStingFiles()` is called from the projector's own arming.
+ */
+const files = new Map();
+let loading = null;
+
+/**
+ * Where a sting's recording lives, if somebody has put one there.
+ *
+ * **`.mp3`, because it is the one format every browser this app runs on
+ * decodes** — Safari included, which rules out `.ogg`, and without the licence
+ * question `.m4a` used to carry.
+ */
+export function stingFile(id) {
+  return `/assets/stings/${encodeURIComponent(id)}.mp3`;
+}
+
+/**
+ * Pull in whatever recordings exist. Safe to call twice; the second call gets
+ * the first one's promise.
+ *
+ * **A FAILURE HERE IS NOT AN ERROR.** Almost every id will 404 until somebody
+ * supplies a file, which is the ordinary state of this folder rather than a
+ * fault — so nothing is logged and nothing is thrown. The one thing it must
+ * not do is leave a half-decoded buffer in the map, or a press plays a click.
+ */
+export function loadStingFiles(c) {
+  if (loading) return loading;
+  const ctx = c || audio();
+  if (!ctx) return Promise.resolve(files);
+  loading = Promise.all(STINGS.map(async (t) => {
+    try {
+      const res = await fetch(stingFile(t.id), { cache: 'force-cache' });
+      if (!res.ok) return;
+      const bytes = await res.arrayBuffer();
+      if (!bytes || bytes.byteLength < 64) return;
+      const buf = await ctx.decodeAudioData(bytes);
+      if (buf && buf.length) files.set(t.id, buf);
+    } catch {
+      /* No file, a bad file, or a browser that will not decode it — the
+         oscillators are still there and that is the whole point. */
+    }
+  })).then(() => files);
+  return loading;
+}
+
+/** Has a recording been supplied for this one? For the guard, and for tests. */
+export function stingIsRecorded(id) {
+  return files.has(String(id || ''));
+}
+
 export function playSting(id) {
   const found = STINGS.find((s) => s.id === id);
   if (!found) return false;
   const c = audio();
   if (!c) return false;
+  /*
+   * THE RECORDING FIRST. It goes through a gain node at the same `VOL` the
+   * synthesised ones use, so a file mastered hot cannot arrive twice as loud
+   * as the ding next to it — the levels in this file were measured against
+   * each other and a stranger's export was not.
+   */
+  const buf = files.get(found.id);
+  if (buf) {
+    try {
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      const g = c.createGain();
+      g.gain.value = VOL;
+      src.connect(g);
+      g.connect(c.destination);
+      src.start();
+      return true;
+    } catch {
+      /* Fall through to the oscillators rather than saying nothing. */
+    }
+  }
   try { found.play(c); } catch { return false; }
   return true;
 }

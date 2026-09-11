@@ -16,7 +16,7 @@ import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
 import { faceFor } from './avatar.js';
 import { arcadeSlot, paintArcadeBoard } from './lobby-board.js';
-import { playSting } from './stings.js';
+import { playSting, loadStingFiles } from './stings.js';
 import { audio, audioReady } from './audio-kit.js';
 
 const cardEl = document.getElementById('card');
@@ -182,6 +182,15 @@ function paintSoundArm() {
   const chip = node(`<button id="soundArm" class="sound-arm" type="button">🔈 Tap for sound</button>`);
   const arm = () => {
     audio();
+    /*
+     * AND PULL IN ANY RECORDINGS THE MOMENT THE PAGE IS ARMED.
+     *
+     * A sting that has to be fetched on the press arrives after the joke, and
+     * the 404s for ids nobody has supplied a file for belong at the start of a
+     * night rather than in the middle of one. Not awaited: arming is a click
+     * during setup and the oscillators cover anything that has not landed.
+     */
+    loadStingFiles().catch(() => {});
     const el = document.getElementById('soundArm');
     if (el) el.remove();
   };

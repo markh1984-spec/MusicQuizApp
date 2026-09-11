@@ -229,6 +229,74 @@ try {
    * sound controls should be collapsible"* put them behind a press, and a fold
    * whose body cannot be opened is a soundboard nobody can use.
    */
+  /*
+   * A DROPPED-IN RECORDING REPLACES THE SYNTHESISED ONE — and a missing one
+   * still makes a noise.
+   *
+   * *"The sounds are awful, can I replace them?"* They are replaced by putting
+   * an `.mp3` in `public/assets/stings/` named after the sting's id, so the two
+   * things worth pinning are that the file WINS when it is there and that the
+   * oscillators COME BACK when it is not. Silence is the one outcome a
+   * soundboard may not have, and it is the outcome a wrong path gives you.
+   *
+   * The fixture is a WAV written here rather than an `.mp3` committed to the
+   * repo: the point under test is "a decodable file at that URL wins", and a
+   * binary in the tree to prove it is an asset this app does not want. It is
+   * served from the same folder by intercepting the request, which is also the
+   * only way to be sure the PATH is the one the app asks for.
+   */
+  console.log('\n--- a recording replaces the synthesised one');
+  {
+    /* One second of a 440Hz sine as 8-bit mono WAV — loud, obviously not the
+       trombone, and something every browser decodes. */
+    const rate = 8000;
+    const n = rate;
+    const head = Buffer.alloc(44);
+    head.write('RIFF', 0); head.writeUInt32LE(36 + n, 4); head.write('WAVE', 8);
+    head.write('fmt ', 12); head.writeUInt32LE(16, 16); head.writeUInt16LE(1, 20);
+    head.writeUInt16LE(1, 22); head.writeUInt32LE(rate, 24); head.writeUInt32LE(rate, 28);
+    head.writeUInt16LE(1, 32); head.writeUInt16LE(8, 34);
+    head.write('data', 36); head.writeUInt32LE(n, 40);
+    const body = Buffer.alloc(n);
+    for (let i = 0; i < n; i += 1) {
+      body[i] = Math.round(128 + 100 * Math.sin((2 * Math.PI * 440 * i) / rate));
+    }
+    const wav = Buffer.concat([head, body]);
+
+    const wanted = [];
+    const fresh = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+    await fresh.route('**/assets/stings/*.mp3', async (route) => {
+      wanted.push(new URL(route.request().url()).pathname);
+      /* Only the trombone gets a file. Everything else 404s, which is the
+         ordinary state of that folder and must stay silent-but-working. */
+      if (/trombone/.test(route.request().url())) {
+        await route.fulfill({ status: 200, contentType: 'audio/mpeg', body: wav });
+      } else {
+        await route.fulfill({ status: 404, body: '' });
+      }
+    });
+    await fresh.goto(`${BASE}/screen`, { waitUntil: 'domcontentloaded' });
+    await fresh.waitForTimeout(900);
+    await fresh.mouse.click(640, 360);
+    await fresh.waitForTimeout(1500);
+
+    check('THE PROJECTOR ASKS FOR A FILE PER STING, ONCE IT IS ARMED',
+      wanted.length >= 8, `${wanted.length} asked for`);
+    check('and it asks at the path the folder actually is',
+      wanted.some((u) => u === '/assets/stings/trombone.mp3'), wanted.slice(0, 2).join(', '));
+
+    const recorded = await fresh.evaluate(async () => {
+      const m = await import('/assets/stings.js');
+      await m.loadStingFiles();
+      return { trombone: m.stingIsRecorded('trombone'), ding: m.stingIsRecorded('ding') };
+    });
+    check('A SUPPLIED RECORDING IS THE ONE THAT WILL PLAY',
+      recorded.trombone === true, JSON.stringify(recorded));
+    check('AND A STING WITH NO FILE FALLS BACK TO THE OSCILLATORS',
+      recorded.ding === false, JSON.stringify(recorded));
+    await fresh.close();
+  }
+
   console.log('\n--- and on the control view');
   const host = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await host.goto(`${BASE}/host?key=${KEY}`, { waitUntil: 'domcontentloaded' });

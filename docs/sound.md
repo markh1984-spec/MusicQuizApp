@@ -190,3 +190,62 @@ peak would have been a guard confidently answering a question it was not
 looking at, which is the fault this repo records against `pub-unchanged` five
 times over. **That it makes an audible noise on a given laptop is something a
 person has to hear.**
+
+---
+
+## Replacing them with real recordings
+
+*"The functionality is great but the sounds are awful, can I replace them?"*
+
+They were. Six oscillators do a passable low crowd; they will never do a sad
+trombone worth putting through a PA, and no arrangement of them says "your
+mum". Synthesis was the right way to ship something with no assets and the
+wrong way to ship something good — and the thing that made it worse is that
+**nobody involved in writing them could hear them.** The guard measures whether
+a noise happened and how loud it was. It cannot measure whether it is funny.
+
+### The interface is a filename
+
+Drop `public/assets/stings/<id>.mp3` in and that sting plays the recording.
+Take it away and the oscillators come back. There is no list to edit and no
+build step; adding a new sound is still one line in `STINGS` plus a file.
+
+Four things are load-bearing:
+
+- **The synthesised one is the fallback and is never deleted.** A missing file,
+  a venue's wifi, a format a browser will not decode, a deploy that dropped the
+  folder — every one of those is a press the host has already set up with a
+  line, so it has to make a noise anyway. Silence is the one outcome a
+  soundboard may not have.
+- **Fetched when the page is armed, not on the press.** A sting that arrives
+  half a second late has missed the joke, and the 404s for ids nobody has
+  supplied a file for happen during setup rather than mid-gag.
+- **Played through the same `VOL` as the synthesised ones.** The levels in
+  `stings.js` were measured against each other; a stranger's export was not, and
+  a file mastered hot would arrive twice as loud as the ding beside it.
+- **`.mp3` alone, and `MIME` in `server.js` has to name it.** Without the media
+  type the file is served as a download and `decodeAudioData` never sees it —
+  which fails exactly like a missing file, silently, back to the oscillators.
+
+### What the guard can and cannot say
+
+It intercepts the folder, serves a real WAV for one sting and a 404 for the
+rest, and asserts that the projector asks for a file per sting once armed, at
+the path the folder actually is, that the supplied one wins and that the
+others fall back. Both halves were verified by putting the fault back: a wrong
+path and a missing preload each fail it.
+
+What it cannot say is whether the recording is any good. That is the whole
+reason this section exists.
+
+### Before adding one
+
+**The repo is public and the app is sold.** A sound effect off a free-downloads
+site is the same legal shape as naming a lobby game after somebody else's
+arcade cabinet: the licence has to cover commercial use *and* redistribution,
+not just personal use. Own recordings, something with a commercial licence, or
+genuine CC0.
+
+`yourmum.mp3` is worth recording rather than sourcing. It is funnier in the
+voice of the person holding the microphone, and it settles the licence question
+outright.

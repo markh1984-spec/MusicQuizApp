@@ -1208,6 +1208,11 @@ const MIME = {
   '.webp': 'image/webp',
   '.woff2': 'font/woff2',
   '.ico': 'image/x-icon',
+  /* The soundboard's recordings. `.mp3` alone, because it is the one format
+     every browser this app runs on decodes — Safari included, which is what
+     rules `.ogg` out. Without this the file is served as a download and
+     `decodeAudioData` never sees it. */
+  '.mp3': 'audio/mpeg',
 };
 
 /**
