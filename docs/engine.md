@@ -1154,3 +1154,66 @@ quiz and `paintVouchers()` on the bingo card both draw them with no change of
 their own. Tonight's copy wins on a clash: it is the live game's record of a
 code minted minutes ago, where the remembered list is a snapshot from page
 load.
+
+### My prizes — the section that folds
+
+Two follow-ups, a few minutes apart: *"the QR code needs to be collapsible so
+they can still interact with the app even when they have drinks"*, then *"maybe
+call the section 'My prizes' or something, and as they redeem them they
+disappear?"*
+
+Both are the same problem seen twice, and it is one the previous change
+created. A voucher card is mostly a QR and a QR is square, so it is the
+tallest thing on the phone. For as long as a code only lived for one night that
+was fine — it appeared at the end and the night ended. Now that it survives to
+the following week, it sits on top of every screen that person sees: the lobby
+game and the camera pushed below the fold, and on a bingo card it is worse,
+because `#bingoVouchers` is above the grid and pushes the squares somebody is
+playing off the bottom.
+
+**Shut is the resting state, and the section opens itself exactly once — when a
+prize is won.** That keeps the moment (the screen fills with the code the
+instant it lands) without the moment becoming furniture. `noteDrinks()` in
+`client.js` is what tells the two apart: the first call of a page seeds the set
+of codes already held and opens nothing, and any code arriving after that is a
+prize that has just been won.
+
+That rule is also why the on-the-night guards did not need rewriting.
+`bingo-round-ends.mjs` and `drinks-in-your-pocket.mjs` both count visible
+voucher cards, and both still find them, because on the night the prize opens
+itself. The only two assertions that had to move were in `drinks-keep.mjs`,
+which is the one that reloads a week later — it asked for a visible card and
+the right answer is now a shut row. A guard aimed at the old shape calls the
+new one broken, which is worth remembering the next time a fold lands anywhere.
+
+**One section, not one fold per prize.** Three carets is three decisions to
+make at a bar, and somebody at the till holding three prizes wants all three
+codes, not one. The count sits in the shut row, because shut it is the only
+thing said about what is behind it.
+
+**A collected prize disappears, and that reverses a rule this repo had
+pinned** — *"a redeemed one is KEPT as a receipt, the two engines may not
+disagree"*. That was right when a code lived for one night: the struck-through
+card said "that worked" for the rest of the evening. Kept for ever it is a dead
+card sitting above a live one, which is the exact complaint the fold exists to
+answer. Nothing that settles a dispute moved: the host's own panel and the
+filed night hold every voucher, redeemed or not, and the filed night is what a
+landlord is shown. The phone forgets the code as well, or it would spend a
+request per page load on something nobody will ever see again.
+
+**The fold state is a module binding in `client.js`, never the markup.** The
+bingo card repaints whenever anybody in the room marks a square, so a section
+holding its own open state would shut itself under somebody's thumb — the same
+fault `host.js` records for `whoPicked`'s folds, on a screen where the cost is
+a QR vanishing while somebody is holding it up at a bar. It is also part of
+`paintVouchers()`'s cache key, or opening the section and then marking a square
+closes it again.
+
+One document listener serves every card, for the reason `console-pick.js`
+already records, and the press toggles the element rather than waiting for a
+render — at a lobby the next state push may be a long way off, and a control
+that does nothing when pressed is worse than the problem it was avoiding.
+
+**They never expire, by decision.** The card carries the date it was won, so a
+bar can judge a code from October turning up in March. The app does not make
+that call on the venue's behalf.

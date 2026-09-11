@@ -136,13 +136,80 @@ try {
      localStorage. This is the phone being taken out of a pocket a week on. */
   await page.goto(`${BASE}/play${jc2 ? `?g=${jc2}` : ''}`, { waitUntil: 'domcontentloaded' });
   await wait(2500);
-  const later = await drawnNow();
-  check('AND IT IS STILL DRAWN ON THE PHONE, a week and a relaunch later',
-    later.count > 0, JSON.stringify(later.text));
-  check('and it is the drink they actually won',
-    later.text.includes('house red'), JSON.stringify(later.text));
+  /*
+   * STILL ON THE PHONE — but SHUT, which is the point of the section, so this
+   * asks for the row rather than for a visible card. It was written the other
+   * way when a prize was always open, and it failed the moment the fold
+   * landed: a guard aimed at the old shape calls the new one broken.
+   */
+  const later = await page.evaluate(() => {
+    const box = document.querySelector('.prizes');
+    return { there: Boolean(box), head: box ? box.innerText.replace(/\s+/g, ' ').trim() : '' };
+  });
+  check('AND IT IS STILL ON THE PHONE, a week and a relaunch later',
+    later.there === true, JSON.stringify(later));
 
-  if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/d1-still-owed.png` });
+  /*
+   * AND THE APP UNDERNEATH STILL WORKS — the whole reason the section folds.
+   *
+   * *"The QR code needs to be collapsible so they can still interact with the
+   * app even when they have drinks."* A QR is square, so one at a lobby used
+   * to push the game and the camera below the fold on a 390px screen. This is
+   * that complaint as an assertion: with a prize held, put a finger on the
+   * thing underneath it.
+   */
+  const shut = await page.evaluate(() => {
+    const box = document.querySelector('.prizes');
+    const qr = document.querySelector('.prizes .win-qr');
+    return {
+      there: Boolean(box),
+      shut: Boolean(box && box.classList.contains('shut')),
+      /* IN THE DOCUMENT IS NOT ON THE SCREEN — a `display: none` QR is still
+         an element, so the question is its SIZE. */
+      qrDrawn: Boolean(qr && qr.getBoundingClientRect().height > 0),
+      head: box ? box.innerText.replace(/\s+/g, ' ').trim() : '',
+    };
+  });
+  check('A PRIZE FROM AN EARLIER NIGHT ARRIVES SHUT', shut.there && shut.shut, JSON.stringify(shut));
+  check('so its QR is not taking up the screen', shut.qrDrawn === false, JSON.stringify(shut));
+  check('and the row says what it is and how many', /My prize/i.test(shut.head) && /1/.test(shut.head),
+    JSON.stringify(shut.head));
+
+  const belowIt = await page.evaluate(() => {
+    /* The camera button is the app carrying on underneath — a control that
+       was genuinely pushed off the bottom by a voucher card. */
+    const btn = [...document.querySelectorAll('.wait-menu button, .wait-menu a, #cameraBtn')]
+      .filter((el) => el.getBoundingClientRect().height > 0);
+    if (!btn.length) return { none: true };
+    const el = btn[btn.length - 1];
+    const r = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return {
+      onScreen: r.bottom <= window.innerHeight,
+      pressable: Boolean(hit && (el === hit || el.contains(hit))),
+      text: el.innerText.replace(/\s+/g, ' ').trim().slice(0, 40),
+    };
+  });
+  check('AND THE APP UNDERNEATH IS STILL REACHABLE WITH A PRIZE IN HAND',
+    belowIt.pressable === true && belowIt.onScreen === true, JSON.stringify(belowIt));
+
+  if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/d1-shut.png` });
+
+  /* AND IT OPENS WHEN PRESSED — once proves the handler runs. */
+  await page.click('.prizes-head');
+  await wait(400);
+  const opened = await page.evaluate(() => {
+    const qr = document.querySelector('.prizes .win-qr');
+    const body = document.querySelector('.prizes-body');
+    return {
+      qrDrawn: Boolean(qr && qr.getBoundingClientRect().height > 0),
+      words: body ? body.innerText.replace(/\s+/g, ' ').trim() : '',
+    };
+  });
+  check('TAPPING IT SHOWS THE CODE', opened.qrDrawn === true, JSON.stringify(opened));
+  check('and it is the prize they actually won',
+    opened.words.includes('house red'), JSON.stringify(opened.words));
+  if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/d2-open.png` });
 
   /* ------------------------------------------------------ the bar takes it */
   const take = await fetch(`${BASE}/api/voucher/redeem`, {
@@ -158,12 +225,22 @@ try {
   });
   check('AND NOT TWICE', twice.status === 409, `HTTP ${twice.status}`);
 
-  if (process.env.SHOT_DIR) {
-    await page.goto(`${BASE}/play${jc2 ? `?g=${jc2}` : ''}`, { waitUntil: 'domcontentloaded' });
-    await wait(2500);
-    await page.screenshot({ path: `${process.env.SHOT_DIR}/d2-collected.png` });
-  }
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  /*
+   * AND ONCE THE BAR HAS SCANNED IT, IT IS GONE. *"As they redeem them they
+   * disappear."* This reverses the pinned rule that kept a redeemed voucher on
+   * the phone as a receipt — see `client.js`. The evidence is unchanged: the
+   * host's panel and the filed night still hold it.
+   */
+  await page.goto(`${BASE}/play${jc2 ? `?g=${jc2}` : ''}`, { waitUntil: 'domcontentloaded' });
+  await wait(2500);
+  const after = await page.evaluate(() => ({
+    section: Boolean(document.querySelector('.prizes')),
+    cards: [...document.querySelectorAll('.win-card')]
+      .filter((el) => el.getBoundingClientRect().height > 0).length,
+  }));
+  check('A COLLECTED PRIZE DISAPPEARS FROM THE PHONE',
+    after.section === false && after.cards === 0, JSON.stringify(after));
+  if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/d3-collected.png` });
 
 } finally {
   await browser.close();

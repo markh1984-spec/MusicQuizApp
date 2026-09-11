@@ -13,7 +13,10 @@
  *    makes googling an answer that bit harder.
  */
 
-import { esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam, rememberRoom } from './client.js';
+import {
+  esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam,
+  rememberRoom, noteDrinks, prizesShowing, prizesHead, wireDrinks,
+} from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { drawFiltered, toJpeg, looksCameraTaken } from './filters.js';
 import { stickersFor, stickerSvg, drawStickers, stickerAt, placed, preloadStickers, trayOrder, withRecent } from './stickers.js';
@@ -894,6 +897,7 @@ function draw(next) {
    * minted minutes ago, where `fromBefore` is a snapshot taken at page load.
    */
   rememberVouchers(state);
+  noteDrinks((state.vouchers || []).filter((v) => v && !v.redeemedAt).map((v) => v.code));
   if (fromBefore.length) {
     const tonight = new Set((state.vouchers || []).map((v) => v && v.code));
     const older = fromBefore.filter((v) => v && !tonight.has(v.code));
@@ -2068,8 +2072,17 @@ async function refreshHeldDrinks() {
         h.g ? `&g=${encodeURIComponent(h.g)}` : ''}`);
       if (res.status === 404) continue;          // gone for good
       if (!res.ok) { keep.push(h); continue; }   // could not look — keep it
+      const v = await res.json();
+      /*
+       * AND A PRIZE THAT HAS BEEN COLLECTED IS FORGOTTEN. It disappears from
+       * the phone the moment the bar scans it, so remembering the code would
+       * only buy a request per page load for something nobody will ever see
+       * again. The filed night keeps it; this is the phone's pocket, not the
+       * record.
+       */
+      if (v.redeemedAt) continue;
       keep.push(h);
-      live.push(await res.json());
+      live.push(v);
     } catch {
       keep.push(h);
     }
@@ -2090,9 +2103,17 @@ async function refreshHeldDrinks() {
 }
 
 function wallet(s, skip = '') {
-  const list = (s.vouchers || []).filter((v) => v.code !== skip);
+  /*
+   * A REDEEMED PRIZE IS GONE FROM THE PHONE. Kept, it is a dead card sitting
+   * above a live one — see `client.js`. The host's panel and the filed night
+   * still hold every voucher, so nothing that settles a dispute was lost.
+   */
+  const list = (s.vouchers || []).filter((v) => v.code !== skip && !v.redeemedAt);
   if (!list.length) return '';
-  return `<div class="bingo-vouchers">${list.map((v) => voucherCardFor(v)).join('')}</div>`;
+  return `<div class="prizes${prizesShowing() ? '' : ' shut'}">
+      ${prizesHead(list.length)}
+      <div class="prizes-body">${list.map((v) => voucherCardFor(v)).join('')}</div>
+    </div>`;
 }
 
 function voucherCardFor(v) {
@@ -2249,6 +2270,7 @@ async function boot() {
    * Not awaited: a drink from last Thursday must never stand between somebody
    * and tonight's join box. It repaints itself when the answers land.
    */
+  wireDrinks();
   refreshHeldDrinks().catch(() => {});
 
   if (me && me.id) {

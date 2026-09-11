@@ -506,6 +506,126 @@ export function node(markup) {
  * module may not be imported by another page, so shared control-view furniture
  * lives here.
  */
+/**
+ * MY PRIZES — a section that folds, so the app underneath still works.
+ *
+ * *"The QR code needs to be collapsible so they can still interact with the app
+ * even when they have drinks"*, then: *"maybe call the section 'My prizes' or
+ * something, and as they redeem them they disappear?"*
+ *
+ * A voucher card is mostly a QR and a QR is square, so two stacked above a
+ * bingo card push the card off a 390px screen and one at a lobby pushes the
+ * game and the camera below the fold. Now that a prize survives to the
+ * following week that is not a moment at the end of a night — it is every
+ * screen this person sees from then on.
+ *
+ * **ONE SECTION, NOT A FOLD PER PRIZE.** Asked for as a section and it is the
+ * right shape: three separate carets is three decisions to make at a bar, and
+ * somebody holding three prizes at the till wants all three codes, not one.
+ *
+ * **SHUT BY DEFAULT, AND IT OPENS ITSELF WHEN A PRIZE IS WON.** That keeps the
+ * moment — the screen fills with the code the instant it lands — without the
+ * moment becoming furniture: come back next Thursday and it is one line with
+ * the app working underneath. `seenAlready` tells the two apart and is seeded
+ * on the FIRST draw rather than from a stored list, because at that point the
+ * phone has not asked the server about anything yet.
+ *
+ * **A REDEEMED PRIZE IS GONE, AND THAT REVERSES A PINNED RULE.** *"A redeemed
+ * one is KEPT as a receipt — the two engines may not disagree"* was written
+ * when a code lived for one night; keeping it made the list honest for an hour.
+ * Kept for ever it is a dead card in the way of a live one, which is the exact
+ * complaint this section exists to answer. **The evidence did not go anywhere**
+ * — the host's own panel and the filed night both keep every voucher, redeemed
+ * or not, which is what a dispute is settled from and what a landlord is shown.
+ *
+ * **HERE RATHER THAN IN EITHER PAGE.** `play.js` and `play-bingo.js` each draw
+ * their own voucher markup — deliberately, the note above `voucherCard()` says
+ * why — but whether the section is open is ONE rule, and two copies of a rule
+ * is one rule that gets fixed once. The same reason `joinQueuePanel()` is here.
+ *
+ * **A MODULE BINDING, NEVER THE MARKUP.** The bingo card repaints whenever
+ * anybody in the room marks a square, so a section holding its own open state
+ * would shut itself under somebody's thumb — the fault `host.js` records for
+ * `whoPicked`'s folds, on a screen where the cost is a QR vanishing at a bar.
+ */
+let prizesOpen = false;
+let seenAlready = null;
+
+/** Is the prizes section open? */
+export function prizesShowing() {
+  return prizesOpen;
+}
+
+/**
+ * Decide what a newly-arrived list should do.
+ *
+ * Called from `draw()` on every push. The FIRST call records what the phone was
+ * already holding and opens nothing — those are last week's, and the whole
+ * point is that they do not sit in the way. Any call after that sees a code it
+ * has not seen before, which is a prize that has just been won, and opens up.
+ */
+export function noteDrinks(codes) {
+  const list = (codes || []).map((c) => String(c || '')).filter(Boolean);
+  if (seenAlready === null) {
+    seenAlready = new Set(list);
+    return;
+  }
+  for (const code of list) {
+    if (seenAlready.has(code)) continue;
+    seenAlready.add(code);
+    prizesOpen = true;
+  }
+}
+
+/**
+ * The section's own head — one builder, so both pages say the same words.
+ *
+ * **IT SAYS HOW MANY**, because shut it is the only thing on screen about them
+ * and "My prizes" alone cannot say whether there is one drink behind it or
+ * three. **A caret rather than words**: the row is already a sentence and
+ * *"Show"/"Hide"* beside a count reads as two controls.
+ */
+export function prizesHead(count) {
+  const n = Number(count) || 0;
+  return `<button class="prizes-head" data-prizes aria-expanded="${prizesOpen}">
+      <span class="prizes-name">My prize${n === 1 ? '' : 's'}</span>
+      <span class="prizes-n">${n}</span>
+      <span class="prizes-caret" aria-hidden="true">▾</span>
+    </button>`;
+}
+
+/**
+ * One listener for every prizes section, ever.
+ *
+ * Per-render listeners leak with the room: `paintVouchers()` rebuilds its box
+ * on every change and `wallet()` is rebuilt on every phase. The rule
+ * `console-pick.js` already follows, on a page that redraws far more often.
+ *
+ * `closest()` rather than the target, because the head carries three elements
+ * and a thumb lands on the words.
+ */
+let drinksWired = false;
+export function wireDrinks() {
+  if (drinksWired) return;
+  drinksWired = true;
+  document.addEventListener('click', (e) => {
+    const head = e.target.closest && e.target.closest('[data-prizes]');
+    if (!head) return;
+    prizesOpen = !prizesOpen;
+    /*
+     * TOGGLED ON THE ELEMENT, not left to the next render — at a lobby a
+     * redraw may be a long way off, and a control that does nothing when
+     * pressed is worse than the problem it was avoiding.
+     */
+    for (const box of document.querySelectorAll('.prizes')) {
+      box.classList.toggle('shut', !prizesOpen);
+    }
+    for (const h of document.querySelectorAll('[data-prizes]')) {
+      h.setAttribute('aria-expanded', String(prizesOpen));
+    }
+  });
+}
+
 export function noteMark(s, p) {
   const n = (s.notes || {})[p.id];
   if (!n) return '';

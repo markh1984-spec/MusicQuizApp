@@ -6,7 +6,7 @@
  * refresh into a better card. Reloading just fetches the same one back.
  */
 
-import { esc, node, postJson, roomCode } from './client.js';
+import { esc, node, postJson, roomCode, prizesShowing, prizesHead } from './client.js';
 import { arcadeCard, wireArcade } from './lobby-menu.js';
 
 let marking = new Set(); // squares tapped but not yet confirmed by the server
@@ -101,7 +101,12 @@ let lastVouchersSeen = '';
 function paintVouchers(root, s) {
   const box = root.querySelector('#bingoVouchers');
   if (!box) return;
-  const list = s.vouchers || [];
+  /*
+   * A COLLECTED PRIZE IS GONE FROM THE PHONE — see `client.js`. On a bingo
+   * card this matters most: the box sits ABOVE the grid, so a spent voucher
+   * pushes the squares somebody is playing off the bottom of the screen.
+   */
+  const list = (s.vouchers || []).filter((v) => v && !v.redeemedAt);
   /*
    * THE BREAK IS PART OF THE KEY, or it never draws.
    *
@@ -118,7 +123,9 @@ function paintVouchers(root, s) {
    * fails for the sixty the moment is for, which is why it is checked from
    * outside: `node scripts/bingo-round-ends.mjs`.
    */
-  const seen = JSON.stringify([list, Boolean(s.prizesAllGone)]);
+  /* The fold is part of the fingerprint too, or opening the section and then
+     marking a square would shut it again on the repaint. */
+  const seen = JSON.stringify([list, Boolean(s.prizesAllGone), prizesShowing()]);
   if (seen === lastVouchersSeen) return;
   lastVouchersSeen = seen;
 
@@ -144,7 +151,13 @@ function paintVouchers(root, s) {
     : 'Nothing for this one \u2014 stay put, there is more to come.'}</span>
       </div>`)]
     : [];
-  box.replaceChildren(...banner, ...list.map((v) => node(voucherCard(v))));
+  const prizes = list.length
+    ? [node(`<div class="prizes${prizesShowing() ? '' : ' shut'}">
+        ${prizesHead(list.length)}
+        <div class="prizes-body">${list.map((v) => voucherCard(v)).join('')}</div>
+      </div>`)]
+    : [];
+  box.replaceChildren(...banner, ...prizes);
 }
 
 /**

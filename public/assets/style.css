@@ -11136,3 +11136,53 @@ input, textarea, [contenteditable] { caret-color: var(--hot); }
 /* Sent, and whether they looked at it. The ticked one STAYS. */
 .notemark { font-size: 13px; opacity: .65; }
 .notemark.seen { opacity: 1; color: var(--good, #48d17a); }
+
+/* ------------------------------------------------------------- My prizes
+ *
+ * *"The QR code needs to be collapsible so they can still interact with the app
+ * even when they have drinks"* — and a QR is square, so one at a lobby pushes
+ * the game and the camera below the fold, and on a bingo card the box sits
+ * ABOVE the grid and pushes the squares off a 390px screen.
+ *
+ * SHUT IS THE RESTING STATE, so this is styled as a row first and a panel
+ * second: 44px, the touch floor, and nothing taller until somebody asks.
+ */
+.prizes {
+  border: 1px solid var(--panel-line);
+  border-radius: var(--r-card);
+  background: var(--bg-2);
+  overflow: hidden;
+}
+.prizes-head {
+  width: 100%;
+  min-height: 44px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 14px;
+  border: 0; background: none; color: var(--ink);
+  font: inherit; font-size: 15px; font-weight: 700;
+  cursor: pointer; text-align: left;
+}
+.prizes-name { flex: 1 1 auto; }
+/* The count is the only thing the shut row can say about what is behind it,
+   so it is a pill rather than a bare digit — gold, because a prize is the one
+   thing in this app that colour has always meant. */
+.prizes-n {
+  flex: 0 0 auto;
+  min-width: 22px; padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 199, 74, 0.16);
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+  color: var(--gold);
+  font-size: 13px; text-align: center;
+}
+.prizes-caret {
+  flex: 0 0 auto;
+  color: var(--ink-dim);
+  transition: transform .15s ease;
+}
+.prizes.shut .prizes-caret { transform: rotate(-90deg); }
+.prizes-body { display: grid; gap: 12px; padding: 0 12px 12px; }
+.prizes.shut .prizes-body { display: none; }
+/* Inside the section the card has already been framed once — a second border
+   and a second ground is a box in a box. */
+.prizes-body .win-card { border: 0; background: none; padding: 0; }

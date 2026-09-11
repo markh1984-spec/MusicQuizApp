@@ -78,10 +78,9 @@ one word in it would have undone the distinction drawn the message before:
 
 **Parent and owner must stay different words, and this is the whole reason the
 group work is safe.** "Owner" already means the APP owner — one account,
-global, sees every subscriber, the catalogue and the AI ledger. A pub group's
-head office is not that and must never be able to become it. Calling both of
-them "owner" is how a scoped power quietly turns into an unscoped one, six
-months later, in a route somebody wrote in a hurry.
+global. A pub group's head office is not that and must never be able to become
+it. Calling both "owner" is how a scoped power quietly turns into an unscoped
+one, six months later, in a route somebody wrote in a hurry.
 
 | Word | What it is | What it can see |
 |---|---|---|
@@ -95,32 +94,26 @@ free.** Proposed, reasonably: *"every entity has one parent and one child…
 because even a solo quizmaster wants stats."*
 
 **The goal is right and it should be one mechanism.** What does not follow is a
-second ACCOUNT per person. A solo quizmaster wanting headcounts needs a PAGE,
-and they already have one: Past gigs. Giving them a parent as well means a
-second login or a hat switch for one person, a bill question about an account
-that buys nothing, and an entity invented at every sign-up whose only job is to
-look at its owner's own data.
-
-So put the generalisation in the QUERY, where it costs nothing:
+second ACCOUNT per person: a solo quizmaster wanting headcounts needs a PAGE,
+and Past gigs already is one. A parent as well means a second login for one
+person, a bill question about an account that buys nothing, and an entity
+invented at every sign-up whose only job is to read its owner's own data. So
+put the generalisation in the QUERY, where it costs nothing:
 
 > **One function takes a SET of accounts and returns the nights across them. A
 > solo's set is themselves; a parent's set is its children.** Same code, same
 > page, N of one or N of five.
 
-That is the uniformity being asked for, and it arrives without a phantom
-account. Build the aggregation that way FROM THE START — the real risk here is
-shipping "past gigs for one person" and later "stats across venues" as two
-features that then drift.
+Build the aggregation that way FROM THE START — the real risk is shipping
+"past gigs for one person" and later "stats across venues" as two features that
+then drift.
 
 **AND THEREFORE THE HAT DOES NOT BECOME UNIVERSAL.** **A hat switches between
-IDENTITIES, not between pages** — if the stats are a view, a solo quizmaster
-has one identity with an extra tab on it, and a switch offering nothing on the
-other side is the fault this file keeps recording. It would also break the
-host's own hard rule that the switch must never appear on anybody else's
-account.
-
-A hat is right when one login genuinely holds TWO identities with different
-powers and different rooms. That is:
+IDENTITIES, not between pages** — a solo quizmaster has one identity with an
+extra tab on it, and a switch offering nothing on the other side is the fault
+this file keeps recording. It would also break the host's hard rule that the
+switch never appears on anybody else's account. A hat is right when one login
+genuinely holds TWO identities with different powers and different rooms:
 
 - **the owner**, who is the app owner and a quizmaster — built, and the reason
   the switch exists;
@@ -165,12 +158,11 @@ add a first seat and stops the moment the last is removed. No nesting,
 enforced at creation: a parent must not carry a `parentId`.
 
 **A seat gets its parent's tier, minus streaming — `accounts.effective()`.**
-`plans.js` only ever sees one account and cannot look another one up, so the
-substitution happens in `accounts.js`, the one place that has both, at a SINGLE
-choke point: `whoIs()` wraps every real account through `effective()`, so every
-`can()` / `featuresFor()` call downstream needed no changes. `parentId`
-survives the substitution purely so `featuresFor()` has something to ask when
-withholding `FEATURES.STREAM`.
+`plans.js` only ever sees one account, so the substitution happens in
+`accounts.js` at a SINGLE choke point: `whoIs()` wraps every real account
+through `effective()`, so every `can()`/`featuresFor()` downstream needed no
+change. `parentId` survives it purely so `featuresFor()` can withhold
+`FEATURES.STREAM`.
 
 **Scoped exactly like a room**: `/api/group` resolves from `whoIs()`, never
 from an id in the request — the rule `/api/host/*` already follows.
@@ -179,9 +171,8 @@ are untouched.
 
 **Reachable from My account, as a small panel** (`groupPanel()` in
 `console-account.js`) — and this IS the group-admin screen, not a stand-in.
-Each seat's row carries a `Running` badge and the note says how many are live
-now — the scoped "Tonight" view, on the page a group admin already hosts
-from.
+Each seat's row carries a `Running` badge: the scoped "Tonight" view, on the
+page a group admin already hosts from.
 
 **THE HAT SWITCH DOES NOT NEED TO GENERALISE — resolved, not parked.** It
 exists for the owner because `/owner` and `/console` are separate routes; a
@@ -195,19 +186,18 @@ specifics. Full reasoning:
 
 ## The words: a quiz is a product, a round is part of one
 
-Settled deliberately, because the two were used interchangeably for months and
-it stopped being harmless the moment packs became something to sell.
+Settled because the two were used interchangeably for months, and it stopped
+being harmless the moment packs became something to sell.
 
 | | The whole product | A part of it |
 |---|---|---|
 | **Music quiz** | a **quiz** — a night's worth, several rounds of questions | a **round** — ten general knowledge questions, *or* five pictures. All one type |
 | **Music bingo** | a **bingo game** — one theme, forty-odd tracks, the cards built from them | a **round** — `newRound()`, fresh cards, played until the last prize goes |
 
-And a third word, because the code leans on it: a **pack** is either of those
-as a file on disk — `quizzes/eighties.json` and `bingo/disco-funk.json` are both
-packs. It is the umbrella term for "a whole product, whichever game it is", and
-it is what `packId`, `packCard()` and `loadBingoPack()` all mean. Use it when a
-sentence has to cover both; use "quiz" or "bingo game" when it does not.
+And a third word: a **pack** is either of those as a file on disk — the
+umbrella term for "a whole product, whichever game it is", and what `packId`,
+`packCard()` and `loadBingoPack()` all mean. Use it when a sentence has to cover
+both.
 
 **A round is all one type.** `round.type` is a single string, not a list — so
 "fifteen general knowledge and five pictures" is TWO rounds, not one mixed one.
@@ -216,9 +206,8 @@ for. There is no such thing as a round with a couple of pictures in the middle
 of it.
 
 **A bingo pack has no rounds inside it on disk** — it is a title and a track
-list. The rounds are a thing that happens while it is being played. That is
-exactly why the console used to say "New bingo round" on a button that makes a
-whole game, which is the confusion this section exists to end.
+list, and the rounds happen while it is played. That is why the console used to
+say "New bingo round" on a button that makes a whole game.
 
 **What is bought and sold is a QUIZ or a BINGO GAME, never a round.** Pricing,
 the catalogue and anything a subscriber's library shows are in whole products.
@@ -258,21 +247,17 @@ team under the option they chose, plus who let it go by — the counts said four
 got it wrong, this says which four, which is what the host reads off the mic.
 It is not in `screenView()` or `playerView()`, and there are tests for both.
 
-It shows **live as well as on the reveal**, folded away behind the count with a
-caret. The first version hid it during the question in case a mirrored control
-view gave the popular answer away — but the COUNTS are already on that screen
-and give it away first, so hiding the names bought nothing. Closed by default
-while the clock runs so it is not a moving list to read, open by default on the
-reveal, which is when you are talking about it.
+It shows **live as well as on the reveal**, folded behind the count with a
+caret — hiding the names during the question bought nothing, the COUNTS being
+on that screen already. Closed while the clock runs, open on the reveal.
 
 The open ones are remembered in a module-level Map in `host.js`, keyed by
-**phase**, round, question and option. It has to be outside the render: this
-panel is rebuilt on every state push, which during a question is every time
-somebody answers, so a list you had just opened would shut itself the moment the
-next team pressed a button. The phase is in the key because the first attempt
-stored "the opposite of the default" — and since the default flips at the
-reveal, the list you had opened closed itself and one you had never touched
-sprang open.
+**phase**, round, question and option. **It has to be outside the render**: the
+panel is rebuilt on every state push, so a list you had just opened would shut
+itself the moment the next team pressed a button. The PHASE is in the key
+because the first attempt stored "the opposite of the default" — and the
+default flips at the reveal, so the list you opened closed itself and one you
+had never touched sprang open.
 
 ### 2. The server owns the clock
 Every timestamp used for scoring comes from an injected `now()`. Phones send
@@ -287,11 +272,9 @@ them (the wrong answer lands first, and their real one comes back "already
 answered", costing them the question) and rename them, which puts arbitrary
 words on the projector where there is deliberately no filter.
 
-It was fully reachable from the back table: the join code is on the big screen
-and read out on the mic, and `/api/state?role=screen&g=CODE` published the
-fastest finger's id. **The person WINNING was the person the room could
-sabotage.** Found by joining a game as two phones and playing one against the
-other.
+It was fully reachable from the back table: the join code is read out on the
+mic and `/api/state?role=screen&g=CODE` published the fastest finger's id.
+**The person WINNING was the person the room could sabotage.**
 
 So: a token is issued at join, kept on the player, saved in the state file, and
 sent in exactly one place — that player's own join reply. Every player action
@@ -336,14 +319,11 @@ seconds looks exactly like a flood, and holding them would be a self-inflicted
 outage mid-quiz.
 
 **The threshold errs LOOSE, and the asymmetry is the whole reason.** Too tight
-and a real room gets a "just a moment" screen while the host is on a mic and
-not looking at their phone, which is the show stopping and this app's fault.
-Too loose and some junk teams reach the scoreboard — which no player sees, and
-which "remove the ones who answered nothing" clears in one tap.
-
-The gap makes that free: a pub peaks at two to six joins a second, two hundred
-people online clicking a link is five to ten, and a script does six hundred.
-The threshold is twelve.
+and a real room gets a "just a moment" screen while the host is on a mic —
+the show stopping, this app's fault. Too loose and some junk teams reach a
+scoreboard no player sees, which one tap clears. A pub peaks at two to six
+joins a second, two hundred people online is five to ten, a script does six
+hundred. **The threshold is twelve.**
 
 **Per-IP limiting is the obvious answer and it is wrong**: a pub puts the whole
 room behind one router, so it refuses the actual customers first. One rule that
@@ -354,25 +334,21 @@ holds in both modes beats two that each work in one.
 A phone whose id the server does not recognise is asked to **rejoin silently**
 (`view.rejoin`). It is told it was removed (`view.kicked`) **only** if the host
 actually removed it — which is why removals are written into `state.removed`
-rather than inferred from the player being absent.
+rather than inferred from the player being absent. Absent has many causes and
+only one is a kick: a redeploy, a restart with no permanent disk, a fresh game
+over a full lobby. `kicked` wipes localStorage on the phone, so getting this
+wrong is not cosmetic. **Do not reintroduce "no player found, therefore
+kicked".**
 
-Absent has many causes and only one of them is a kick: a redeploy, a restart on
-a host with no permanent disk, a fresh game launched over a full lobby. Those
-used to throw the whole room out mid-question and wipe their team names.
-`kicked` wipes localStorage on the phone, so getting this wrong is not
-cosmetic. Do not reintroduce "no player found, therefore kicked".
-
-Related, and the thing that made it recur: a `Live` carries the player id in
-its URL, so replacing one **must** call `live.stop()` first. It used to only
-close the stream and leave the keep-alive timer running, which reopened the
-old stream under the old id forty seconds later. Every rejoin left another one
-behind, all of them claiming to be someone the server no longer had.
+Related, and what made it recur: a `Live` carries the player id in its URL, so
+replacing one **must** call `live.stop()` first. It used to only close the
+stream and leave the keep-alive running, which reopened the old stream under
+the old id forty seconds later.
 
 **AND `boot()` MUST CHECK THE JOIN GATE'S 202 LIKE THE OTHER TWO DO.**
 Reopening a held phone did `saveMe({ waiting: true, … })` — **over its stored
 id, token and team name** — then opened a stream on an id the server never
-issued. A bare join box with the name gone reads as being thrown out, which is
-this rule exactly.
+issued. A bare join box with the name gone reads as being thrown out.
 
 **AND AN ANSWER THAT DID NOT SEND PUTS THE BUTTONS BACK — `paintUnlocked()`.**
 The catch's comment said the buttons come back on the next update; nothing did
@@ -390,11 +366,11 @@ phone. Refresh, reopen, clear the browser, rejoin — same card. Do not add a
 ### 7. Crash recovery
 State is one JSON object written atomically. Anything that **moves a game
 forward** flushes to disk immediately (new question, reveal, round change, a
-team joining, a bingo track called, a bingo square marked). Only high-frequency
-low-stakes things are debounced.
+team joining, a bingo track called, a bingo square marked). Only high-frequency low-stakes
+things are debounced.
 
-Bingo marks are deliberately immediate: a lost quiz answer is recoverable with
-Redo, but nobody can re-tap ten songs they heard half an hour ago.
+Bingo marks are immediate: a lost quiz answer is recoverable with Redo, but
+nobody can re-tap ten songs they heard half an hour ago.
 
 **AND A COMPOSED NIGHT CARRIES ITS OWN ORDER — `state.order`, written at
 launch.** Every night from a saved show, and every night with a round unticked
@@ -432,9 +408,9 @@ state, so correcting a price on a venue's slide changes the projector without
 taking it down and putting it back. The host's mic line (`say`) is host-view
 only, like a round 3 cue.
 
-**AND THE THIRD FLAG IS THE PHOTOS SLIDE, WHICH ONLY CLEARED ONE WAY** — so
-the room looked at the photographs while the host's button said the scores were
-up, and pressing it did nothing.
+**AND THE THIRD FLAG IS THE PHOTOS SLIDE, WHICH ONLY CLEARED ONE WAY** — the
+room looked at the photographs while the host's button said the scores were up,
+and pressing it did nothing.
 
 **AND A CARD KEY IS A FINGERPRINT OF WHAT IT DRAWS, NEVER ONE FIELD OF IT.**
 A key is STABLE on purpose, so naming one field — or nothing at all — lets
@@ -464,16 +440,14 @@ generates: *"if someone tells me a question is wrong or the answer is wrong it
 must update the library and all copies everywhere"*, and *"I must maintain high
 standards for the things I am distributing to them."*
 
-**It already holds, and the reason it holds is that nothing is ever copied.**
-There is exactly ONE file per catalogue pack, in `quizzes/` or `bingo/`, and
-every quizmaster's console reads that same file. `packDir()` in `own-packs.js`
-resolves own-first and falls through to the catalogue, so a subscriber is not
-handed a duplicate at any point — there is no per-account copy to go stale.
+**It already holds, and the reason is that nothing is ever copied.** There is
+exactly ONE file per catalogue pack and every quizmaster's console reads that
+same file; `packDir()` in `own-packs.js` resolves own-first and falls through to
+the catalogue, so there is no per-account copy to go stale.
 
-**Nothing is cached, so there is nothing to refresh.** `listQuizzes()` reads
-the directory and every file on each call and `loadQuiz()` reads the file — so
-a pack that is not being played is read off disk at the moment it is launched
-and is therefore always current.
+**Nothing is cached, so there is nothing to refresh.** `listQuizzes()` and
+`loadQuiz()` read off disk on each call, so a pack not being played is always
+current.
 
 **WHICH LEAVES EXACTLY ONE COPY IN THE WHOLE SYSTEM: `session.pack`, held in
 memory by a game that is running**, because the engine needs it every second
@@ -483,9 +457,8 @@ precisely what `reloadPackEverywhere()` in `server.js` exists to replace — it
 walks every room, re-reads the pack and pushes the new state, so a fix saved at
 nine o'clock reaches a quiz already on question four.
 
-Worth holding both halves at once, because stated separately they sound like a
-contradiction — *"read when it is loaded"* and *"corrected instantly"*. They
-are the same fact seen from either side of the one in-memory copy.
+Worth holding both halves at once: *"read when it is loaded"* and *"corrected
+instantly"* are the same fact from either side of the one in-memory copy.
 
 **DO NOT REPLACE THIS WITH MASTER-AND-SLAVE COPIES, however natural the words
 are.** A hundred copies plus a sync is a hundred chances for one to miss an
@@ -503,10 +476,9 @@ untouched.
 
 **AND A TEST MAY NOT WRITE THE SHIPPED CATALOGUE.** `QUIZ_DIR`/`BINGO_DIR`
 default to the repository's own folders, so `live-server.mjs` hands every live
-test a COPY. Verifying the refusal above meant taking it out for one run, and
-that run replaced `1980s-pop-music.json` with the stub in the working tree.
-**A guard that can damage the thing it guards is one nobody should have to
-remember to be careful around.**
+test a COPY — verifying the refusal above once replaced `1980s-pop-music.json`
+with the stub in the working tree. **A guard that can damage the thing it
+guards is one nobody should have to remember to be careful around.**
 
 **Which means an own-pack must never be able to SHADOW a catalogue id**, or
 that quizmaster silently stops receiving corrections for ever. `saveOwn()`
@@ -514,17 +486,16 @@ refuses it — *"There is already a pack called … in the catalogue. Give yours
 different name."* That error is load-bearing, not a nicety: it is the only
 thing standing between this rule and a fork nobody knows exists.
 
-**And the rule is one-directional, deliberately.** The owner maintains what the
-owner distributes; a quizmaster's own packs are their IP and the owner cannot
-read or correct them — enforced by there being **no room parameter on any
-route**, so an owner's id resolves against the house room and finds nothing.
-See `own-packs.js`. High standards on what is sold, hands off what they wrote.
+**And the rule is one-directional, deliberately.** A quizmaster's own packs are
+their IP and the owner cannot read or correct them — enforced by there being
+**no room parameter on any route**, so an owner's id resolves against the house
+room and finds nothing. High standards on what is sold, hands off what they
+wrote.
 
-**If mix-and-match packs are ever built** — pulling rounds from two catalogue
-packs into a quizmaster's own — that creates the first thing this rule does not
-cover, because the new pack is theirs rather than a copy of a master. Decide
-then whether a borrowed question stays linked to its source; do not let it be
-settled by accident in the first implementation.
+**If mix-and-match packs are ever built**, that creates the first thing this
+rule does not cover — the new pack is theirs rather than a copy of a master.
+Decide then whether a borrowed question stays linked to its source; do not let
+it be settled by accident in the first implementation.
 
 ---
 
@@ -544,7 +515,7 @@ opening a second file.
   filtering to the projector, the phones or the console.** The public league
   page and the landlord's report are the one exception, and it is a SCOPE
   rather than a reversal — see *filtered at the door, never in the room*.
-- **Photo uploads auto-publish** — Do not add one.
+- **Photo uploads auto-publish** — do not add one.
 - **Photos go in a SEPARATE PRIVATE repo** — Never the main repo: it is public (checked), and git history is forever.
 - **Filters are pixel maths, not `ctx.filter`**
 - **"Filters" means PROPS, and the colour grading is GONE** — positions are a **fraction** of the canvas, never pixels.
@@ -936,6 +907,31 @@ won as well?"*
   says a held code is drawn at every phase of a night, so a chip has no moment
   to exist in. **Do not build one without running that guard and finding a
   gap.** `drinks-keep.mjs` is the across-nights half, and it relaunches.
+- **THEY NEVER EXPIRE, BY DECISION** — *"have them to never expire at the
+  moment."* The card carries the date won, so a bar can judge an old one; the
+  app does not decide for the venue.
+- **IT IS A SECTION CALLED *My prizes*, AND IT IS SHUT.** A QR is square, so
+  one at a lobby pushed the game and the camera below the fold and on a bingo
+  card pushed the squares off the screen — *"it needs to be collapsible so they
+  can still interact with the app even when they have drinks."* **ONE fold, not
+  one per prize**: three carets is three decisions at a bar, and somebody at the
+  till wants all their codes. **The count is in the shut row**, the only
+  thing said about what is behind it.
+- **IT OPENS ITSELF WHEN A PRIZE IS WON AND NEVER AGAIN** — `noteDrinks()`
+  seeds on the FIRST draw, so what the phone arrived holding stays shut and what
+  lands while you are watching fills the screen. **That is what keeps the
+  on-the-night guards honest**, and why they still see a card drawn.
+- **A COLLECTED PRIZE DISAPPEARS, WHICH REVERSES THE PINNED RECEIPT RULE.**
+  Keeping it was right when a code lived one night; kept for ever it is a dead
+  card above a live one. **The evidence did not move** — the host's panel and
+  the filed night hold every voucher, redeemed or not. **The phone forgets the
+  code too**, or it fetches it every load for something nobody will see.
+- **THE FOLD IS A MODULE BINDING IN `client.js`, NEVER THE MARKUP.** The bingo
+  card repaints whenever anybody in the room marks a square, so a section
+  holding its own state shuts itself under a thumb. **ONE document listener**,
+  and **the press toggles the ELEMENT** rather than waiting for a render that
+  at a lobby may be a long way off. **The fold is part of `paintVouchers()`'s
+  key**, or opening it and marking a square shuts it again.
 
 ### A WORD IN ONE EAR — `src/notes.js`, one phone and never the room
 
@@ -1126,9 +1122,9 @@ be handed over explicitly. Every one of these failed silently.
 
 **AND `moreToCome()` EXISTS NOW.** `host.js` had said *"the server refuses it
 as well"* since running orders were built and there was no such function — **a
-comment that claims the opposite is where the next bug hides.** Any stale
-control view still draws *Stop the quiz*: night filed two hours early, a real
-voucher to whoever led after round one. **Bingo's `Finish` is deliberately NOT
+comment that claims the opposite is where the next bug hides.** A stale control
+view still draws *Stop the quiz*: night filed two hours early, a real voucher to
+whoever led after round one. **Bingo's `Finish` is deliberately NOT
 guarded** — it is the stated escape hatch and its confirm names what it costs.
 
 ### EVERY READER AND WRITER OF `leagues-published.json` USES `galleryRoomFor`
@@ -2195,8 +2191,9 @@ the prizes."*
 - **A CODE STAYS ON THE PHONE UNTIL THE BAR SCANS IT — `view.vouchers` on the
   QUIZ engine too.** Gated on `phase === FINAL` and sending ONE, a bingo code
   left the screen at *Continue to the quiz*. **Every live code, at every phase
-  with room, NEVER over a live QUESTION.** **A redeemed one is KEPT as a
-  receipt** — the two engines may not disagree. **`view.voucher` UNCHANGED.**
+  with room, NEVER over a live QUESTION.** **A REDEEMED one now DISAPPEARS from
+  the phone** — reversed 11 September 2026, see *My prizes*; the two engines may
+  not disagree. **`view.voucher` UNCHANGED.**
 - **`pub-unchanged.mjs` SETS NO VENUE AND NO REWARDS, SO IT MINTS NO VOUCHER**
   — IDENTICAL there says nothing about any of this. **A probe aimed at
   `#bingoVouchers` reads 0 on a QUIZ screen** whatever is drawn.
