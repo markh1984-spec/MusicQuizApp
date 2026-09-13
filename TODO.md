@@ -17,8 +17,78 @@ decision from the host first.
 **DELETE AN ITEM FROM HERE THE MOMENT IT IS BUILT.**
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
+### 0. TURN THE MONEY ON — five environment variables, about forty minutes
 
-### 0. DECIDE WHAT GETS FIXED OFF THE SWEEPS — the list is written, nothing is actioned
+**Nothing else on the money path matters until this is done, and nobody but you
+can do it.** Stripe is wired end to end and tested; the keys are not set, so
+`stripeConfigured()` is false, every Subscribe button is absent and the rungs
+are a price list. Test mode first — every key has a test twin and the whole loop
+is provable with a 4242 card before real money moves.
+
+On the **service** page, never the project one:
+🔗 https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env
+
+```
+STRIPE_SECRET_KEY        sk_test_…  (Developers → API keys)
+STRIPE_PRICE_BRONZE      a recurring £10/mo price
+STRIPE_PRICE_SILVER      £20/mo
+STRIPE_PRICE_GOLD        £30/mo
+STRIPE_WEBHOOK_SECRET    whsec_…
+```
+
+The webhook endpoint is `https://musicquizapp.onrender.com/api/stripe/webhook`,
+subscribed to `checkout.session.completed`, `invoice.paid`,
+`invoice.payment_failed` and `customer.subscription.deleted`.
+
+**Two things in the Stripe dashboard as well, and the second is easy to miss:**
+
+- **Switch the billing portal on** (Settings → Billing → Customer portal).
+  Cancelling is the portal by decision, so without it the one control that stops
+  somebody paying opens a 500 — and `refunds.html` now names that button.
+- **Check how the endpoint's API version reports an invoice line's price.**
+  `src/stripe.js:182` reads `lines.data[0].price.id`; recent versions moved it to
+  `lines.data[0].pricing.price_details.price`. Harmless for a plain renewal (an
+  unknown price leaves the tier alone) and it would silently break a tier CHANGE
+  delivered on `invoice.paid`. **Not checkable from here** — `docs.stripe.com` is
+  blocked by this environment's egress proxy.
+
+The three prices are read from the environment rather than minted by a script,
+deliberately: a script that mints prices can mint the wrong one on a rerun, and
+there are three of them, made once, in a form that shows you what you are
+charging before you save it.
+
+### 1. ONE EMAIL KEY, and a new signup stops being silent
+
+**Twenty minutes, same page, and it is the difference between a signup and a
+person.** Today the app sends nothing: no welcome, no password link in their
+inbox, no receipt, no card-failed notice — and **you are not told anybody signed
+up**. `src/email.js` is live with two providers behind one interface; it needs
+one key and a from-address.
+
+```
+BREVO_API_KEY   or   RESEND_API_KEY
+EMAIL_FROM      Quizporium <no-reply@quizporium.co.uk>
+```
+
+**Until it is set, a signup from the live app is told to get in touch** — the
+password link no longer comes back in the page, because on a deployed app that
+let anybody activate an account on an address they do not own.
+
+### 2. TWO FACTS FOR THE LEGAL PAGES, and they are on screen right now
+
+`[your trading name]` and `[support email]` render **live** on terms, privacy and
+refunds, to somebody deciding whether to pay:
+
+- **your trading name** — or your own name, if you trade as yourself
+- **the support email address** you want on them
+
+They are marked `class="ld-legal-todo"` so they are greppable, and
+`test/legal-pages.test.js` asserts a placeholder can never go unmarked. It
+deliberately does **not** fail while one is unfilled: a suite left red until you
+answer is one people learn to ignore.
+
+
+### 2. DECIDE WHAT GETS FIXED OFF THE SWEEPS — the list is written, nothing is actioned
 
 **Blocked on the host, which is why it is above everything else.** Two passes on
 5-7 September 2026 found roughly 160 faults between them; **none has been
@@ -37,7 +107,7 @@ shapes worth knowing before starting: fixing the symptom rather than the
 neighbour, fixing one path and missing the parallel one, and believing the diff
 instead of the screen. **One fix, one check that fails first, one push.**
 
-### 1. PLAY FOUR LOBBY GAMES ON A REAL PHONE — the only thing left on them
+### 3. PLAY FOUR LOBBY GAMES ON A REAL PHONE — the only thing left on them
 
 **Nothing else here is blocked on the host; this is.** Rally, Tailback, Quick
 Draw and **Pile Up** have never been touched by a human thumb — every check on
@@ -58,6 +128,50 @@ touchscreen — **a reaction game puts input latency in the score, and that is
 the one limit no test here can see.**
 
 **DELETE THIS ENTRY once he has played all four and said what is wrong.**
+
+### 4. A DOMAIN, because the shop window is `musicquizapp.onrender.com`
+
+The code already talks about `quizporium.co.uk` in four places — the gallery
+addresses, the league pages, the email from-address — and a quizmaster being
+asked for £30 a month reads that Render address. **Buy it and point it at the
+service** (Render → Settings → Custom domains); then set `PUBLIC_URL`, which is
+what `fromAddress()` falls back to and what every emailed link is built from.
+
+**One domain setup serves the email too** — SPF, DKIM and DMARC go on the
+domain once, so doing this before item 1 saves doing the DNS twice.
+
+### 5. EIGHT `.mp3` FILES, whenever you have made them
+
+The soundboard's synthesised noises are the FALLBACK and are never deleted, so
+this is a drop-in: `public/assets/stings/` with these exact names, any subset,
+one at a time if you like.
+
+```
+trombone.mp3  rimshot.mp3  boo.mp3      yourmum.mp3
+applause.mp3  ding.mp3     drumroll.mp3 fanfare.mp3
+```
+
+**The licence has to cover redistribution inside a sold product, not just
+commercial use** — this repo is public and the app is sold. If whatever you use
+is murkier than that, say so and they can be served from the private repo
+instead (about an hour's work, same filenames).
+
+### 6. THE CATALOGUE IS THINNER THAN THE LADDER PROMISES — and only you can fix it
+
+Counted on 13 September 2026: **10 multi-round quizzes**, 24 single rounds, 8
+bingo games. Silver's promise is *"every pack there is, and every new one
+free"* — so Silver buys ten nights, which a weekly host is through in ten weeks.
+Gold promises a fresh topical quiz every week, which is a treadmill landing on a
+Monday.
+
+**This is the retention problem and it is content, not code.** It is in this
+list rather than being built because Claude writing a pack is owner-only and
+costs money, so it waits to be asked for. The decision is how many full quizzes
+Silver needs to be worth £20 before anybody is sold it.
+
+**`node scripts/pack-shapes.mjs`** says which existing packs are short of the
+20 GK / 10 pictures / 10 intros standard, which is the cheaper half: a pack that
+needs one more round is less work than a pack that needs writing.
 
 ---
 

@@ -85,10 +85,11 @@ sees why. The evidence half (headcounts, the report, the gallery, the league,
 the comeback slide, advert scans) is the demo to one and the proof to the other,
 which is what stops either pitch being diluted.
 
-**STILL NOT BUILT: the payment processor.** The page is built around a real
-button per rung (`/signup?tier=…`) and the rung is recorded as `wantedTier` —
-a note of intent, never a grant — so signing up works today on the trial and
-Stripe swaps in behind it without the page being redesigned.
+**STRIPE IS WIRED — 9 September 2026**, so this entry's old warning that the
+processor did not exist is gone. The page's button per rung (`/signup?tier=…`)
+records `wantedTier` — a note of intent, never a grant — and Checkout sits behind
+the ladder on My account. **What is left is five environment variables, which is
+item 0 of `../TODO.md`.**
 
 What a prospective subscriber needs to see before they will pay:
 
@@ -102,9 +103,9 @@ What a prospective subscriber needs to see before they will pay:
   a refund and a bad review: they cannot generate their own packs, and the
   starter set is eight.
 
-Note what this implies and is NOT built: a signup flow, a payment processor
-and a public marketing page. See "Pay-per-pack is deliberately NOT built" in
-CLAUDE.md — the data model is ready, the money is not.
+**All three of those are now built** — the signup flow, Checkout, and this page.
+**What is NOT built is pay-per-pack**: the £3 Buy button in the Shop, which is
+the Bronze upsell and the only thing on the ladder that is not a subscription.
 
 ### 4. An FAQ, so the app can stay short
 
