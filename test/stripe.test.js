@@ -19,7 +19,7 @@ import crypto from 'node:crypto';
 
 import {
   TOLERANCE_SECONDS, formEncode, priceForTier, sellableTiers, stripeConfigured,
-  tierForPrice, toBillingEvent, verifySignature,
+  packCheckoutSession, tierForPrice, toBillingEvent, toPackPurchase, verifySignature,
 } from '../src/stripe.js';
 
 const SECRET = 'whsec_a_test_signing_secret';
@@ -272,4 +272,156 @@ test('the form encoder writes the nested shape Stripe actually reads', () => {
   assert.match(readable, /line_items\[0\]\[price\]=price_gold/);
   assert.match(readable, /subscription_data\[metadata\]\[accountId\]=acc_1/);
   assert.equal(body.includes('skipped'), false, 'an empty value was sent');
+});
+
+/*
+ * ====================================================== BUYING ONE PACK
+ *
+ * A one-off pack purchase arrives as the SAME event type as a new subscription
+ * — `checkout.session.completed` — and that is the whole hazard: its price is
+ * not a tier, so `toBillingEvent()` returned `{ kind: 'started', tier: '' }`,
+ * which `applyBilling()` turns into `status: 'active'` with the tier left where
+ * it was. **A cancelled account would have bought itself back into good
+ * standing for three pounds.**
+ *
+ * `mode` is what tells them apart, and each reader takes only its own.
+ */
+
+const packSession = (over = {}) => ({
+  id: 'evt_pack',
+  type: 'checkout.session.completed',
+  created: 1_757_000_000,
+  data: {
+    object: {
+      id: 'cs_pack_1',
+      mode: 'payment',
+      payment_status: 'paid',
+      amount_total: 300,
+      client_reference_id: 'acc_rob',
+      metadata: { accountId: 'acc_rob', packId: '1990s-pop-music', packKind: 'quiz' },
+      ...over,
+    },
+  },
+});
+
+test('a £3 pack cannot buy somebody back into good standing', () => {
+  assert.equal(
+    toBillingEvent(packSession()), null,
+    'a payment-mode session is not a subscription event — it would have read as "started"',
+  );
+});
+
+test('and a real subscription session still is one', () => {
+  const asSub = packSession({
+    mode: 'subscription',
+    metadata: { accountId: 'acc_rob' },
+    lines: { data: [{ price: { id: 'price_silver_test' } }] },
+  });
+  const event = toBillingEvent(asSub);
+  assert.equal(event && event.kind, 'started', 'the subscription half must be untouched');
+});
+
+test('a session with no mode at all is still taken as a subscription', () => {
+  /*
+   * OLDER EVENTS AND ANY REPLAY FROM BEFORE THIS EXISTED. Every subscription
+   * Checkout this app creates sets `mode: 'subscription'`, but a payload without
+   * the field must not silently stop granting a tier somebody paid for — the
+   * same reasoning as a state file written before a field existed.
+   */
+  const noMode = packSession({ mode: undefined, metadata: { accountId: 'acc_rob' } });
+  const event = toBillingEvent(noMode);
+  assert.equal(event && event.kind, 'started');
+});
+
+test('the pack purchase names the account, the pack and what was paid', () => {
+  const bought = toPackPurchase(packSession());
+  assert.deepEqual(bought, {
+    accountId: 'acc_rob',
+    packId: '1990s-pop-music',
+    kind: 'quiz',
+    at: 1_757_000_000_000,
+    reference: 'cs_pack_1',
+    pence: 300,
+  });
+});
+
+test('an unpaid session buys nothing, however complete it looks', () => {
+  assert.equal(toPackPurchase(packSession({ payment_status: 'unpaid' })), null);
+});
+
+test('a subscription session is not a pack purchase', () => {
+  assert.equal(toPackPurchase(packSession({ mode: 'subscription' })), null);
+});
+
+test('a session missing the account OR the pack grants nothing', () => {
+  /*
+   * BOTH OR NOTHING. Guessing which account or which pack is how somebody
+   * else's library grows, and there is no safe half-answer here.
+   */
+  assert.equal(toPackPurchase(packSession({ client_reference_id: '', metadata: { packId: 'x' } })), null);
+  assert.equal(toPackPurchase(packSession({ metadata: { accountId: 'acc_rob' } })), null);
+});
+
+test('the pack id is read off the session, never off a price', () => {
+  /*
+   * The id is the one this SERVER put on the session, having checked it against
+   * the catalogue before charging anybody — so a caller cannot be granted a pack
+   * it was not charged for. This pins where it is read from.
+   */
+  const withPrice = packSession({
+    metadata: { accountId: 'acc_rob', packId: 'the-one-paid-for' },
+    lines: { data: [{ price: { id: 'price_gold_test' } }] },
+  });
+  const bought = toPackPurchase(withPrice);
+  assert.equal(bought.packId, 'the-one-paid-for');
+  assert.equal(bought.kind, '', 'and an unnamed kind is empty rather than guessed');
+});
+
+test('the pack Checkout is a one-off, priced by this server, naming the pack twice', async () => {
+  /*
+   * WHAT STRIPE ACTUALLY RECEIVES, through the injected fetch — because the body
+   * is where this can go wrong invisibly. `mode: 'payment'` is what keeps it off
+   * the subscription path; the metadata on BOTH the session and the payment is
+   * what lets the webhook say what was bought whichever object it hands back.
+   */
+  let sent = null;
+  const doFetch = async (url, init) => {
+    sent = { url, body: init.body };
+    return { ok: true, status: 200, json: async () => ({ id: 'cs_x', url: 'https://checkout/x' }) };
+  };
+  const made = await packCheckoutSession({
+    accountId: 'acc_rob',
+    email: 'rob@example.com',
+    packId: '1990s-pop-music',
+    packKind: 'quiz',
+    title: '1990s Pop Music',
+    pence: 300,
+    successUrl: 'https://app/ok',
+    cancelUrl: 'https://app/no',
+  }, { key: 'sk_test_x', doFetch });
+
+  assert.equal(made.ok, true);
+  assert.equal(made.url, 'https://checkout/x');
+  const form = new URLSearchParams(sent.body);
+  assert.match(sent.url, /\/checkout\/sessions$/);
+  assert.equal(form.get('mode'), 'payment', 'a subscription mode here would bill them monthly for a pack');
+  assert.equal(form.get('line_items[0][price_data][unit_amount]'), '300');
+  assert.equal(form.get('line_items[0][price_data][currency]'), 'gbp');
+  assert.equal(form.get('line_items[0][price_data][product_data][name]'), '1990s Pop Music');
+  assert.equal(form.get('client_reference_id'), 'acc_rob');
+  assert.equal(form.get('metadata[packId]'), '1990s-pop-music');
+  assert.equal(form.get('payment_intent_data[metadata][packId]'), '1990s-pop-music',
+    'the payment carries it too — a webhook may hand back either object');
+  assert.equal(form.get('customer_email'), 'rob@example.com');
+  assert.equal(form.get('price'), null, 'there is no dashboard price for a pack, by decision');
+});
+
+test('a pack with no price, or a silly one, is refused before Stripe is called', async () => {
+  const never = async () => { throw new Error('Stripe must not be called'); };
+  const opts = { key: 'sk_test_x', doFetch: never };
+  assert.equal((await packCheckoutSession({ accountId: 'a', packId: '', pence: 300 }, opts)).ok, false);
+  assert.equal((await packCheckoutSession({ accountId: 'a', packId: 'x', pence: 0 }, opts)).ok, false);
+  // Under 30p is below what a card processor will take, so it can only be a bug
+  // in whatever worked the number out.
+  assert.equal((await packCheckoutSession({ accountId: 'a', packId: 'x', pence: 5 }, opts)).ok, false);
 });

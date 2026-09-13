@@ -365,9 +365,49 @@ export function isTopical(pack) {
 export function packFilter(account = {}) {
   const allowed = packsFor(account);
   if (allowed === 'all') return () => true;
-  if (allowed === 'evergreen') return (pack) => !isTopical(pack);
+  /*
+   * WHAT THEY BOUGHT IS ADDED, NEVER SUBSTITUTED — and this is the whole reason
+   * a purchase does not land in `account.packs`.
+   *
+   * That field is an OVERRIDE: `packsFor()` returns it INSTEAD of the tier's
+   * scope. So writing a bought id there would have taken a Bronze account's
+   * eight starter packs away and left it holding the one it had just paid for,
+   * and worse — a literal list keeps winning after an UPGRADE, so paying £20 for
+   * Silver would have handed somebody FEWER packs than the £10 rung. The note
+   * above `packsFor()` anticipated a shop and assumed the whole resolved list
+   * would be written; a second field that only ever ADDS cannot get that wrong.
+   *
+   * `account.packs` stays exactly what it was — the owner's explicit override.
+   * This is the one place either is consulted, so there is one answer to "may
+   * this account play this pack".
+   */
+  const bought = new Set(boughtBy(account));
+  const paidFor = (pack) => bought.has(String(pack && pack.id));
+  // Silver holds every evergreen pack, so what is left to sell it is a TOPICAL
+  // one — which is exactly the pack somebody wants the week it is news.
+  if (allowed === 'evergreen') return (pack) => !isTopical(pack) || paidFor(pack);
   const set = new Set(allowed);
-  return (pack) => set.has(String(pack && pack.id));
+  return (pack) => set.has(String(pack && pack.id)) || paidFor(pack);
+}
+
+/**
+ * WHICH PACKS THIS ACCOUNT HAS BOUGHT OUTRIGHT.
+ *
+ * One reader, so "did they buy this" has one definition. Written only by
+ * `accounts.grantPack()`, which is reachable only from the Stripe webhook — the
+ * same rule as the tier: **the browser names a pack, the server turns that into
+ * a price, and what is granted comes back off whatever Stripe says was paid
+ * for.** A pack id out of a request body grants nothing.
+ */
+export function boughtBy(account = {}) {
+  if (!Array.isArray(account.bought)) return [];
+  /*
+   * DROPPED BEFORE IT IS STRINGIFIED, not after: `String(null)` is `'null'`, a
+   * perfectly truthy pack id, so filtering on the way out let a blank entry
+   * become a pack called "null". Nothing would ever match it — but a list that
+   * quietly invents an id is one somebody reads later and believes.
+   */
+  return account.bought.filter((id) => id || id === 0).map((id) => String(id)).filter(Boolean);
 }
 
 /**

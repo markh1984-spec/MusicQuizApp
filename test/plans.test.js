@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import {
   FEATURES, TIERS, FEATURE_TIER, DEFAULT_TIER,
   can, featuresFor, activeFeatures, whyNot, entitlements,
-  tierFor, tierInUse, tierRank, featuresAt, ladderFor, packsFor, FEATURE_META, switchable, SWITCHABLE, NOT_BUILT } from '../public/assets/plans.js';
+  tierFor, tierInUse, tierRank, featuresAt, ladderFor, packsFor, packFilter, boughtBy, TIER_PACKS, FEATURE_META, switchable, SWITCHABLE, NOT_BUILT } from '../public/assets/plans.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -636,4 +636,56 @@ test('WHAT IS PAID FOR AND WHAT IS RUNNING ARE TWO QUESTIONS — tierInUse', asy
   assert.equal(tierInUse({ role: 'quizmaster', status: 'active', tier: 'bronze', comped: false }), 'bronze');
   // The owner's own hat holds everything by a different route, and says so.
   assert.equal(tierInUse({ role: 'owner' }), 'owner');
+});
+
+/*
+ * ====================================================== A PACK SOMEBODY BOUGHT
+ *
+ * `account.packs` is an OVERRIDE — `packsFor()` returns it INSTEAD of the tier's
+ * scope — so a bought id written there would have taken a Bronze account's eight
+ * starter packs away and left it holding the one it had just paid for. Worse, a
+ * literal list keeps winning after an UPGRADE, so paying £20 for Silver would
+ * have handed somebody FEWER packs than the £10 rung.
+ *
+ * `account.bought` is UNIONED and can only ever add. These four pin that.
+ */
+
+test('a bought pack is ADDED to the tier, never substituted for it', () => {
+  const bronze = { role: 'quizmaster', status: 'active', tier: 'bronze', bought: ['2000s-metal'] };
+  const may = packFilter(bronze);
+  assert.equal(may({ id: '2000s-metal' }), true, 'the pack they paid for');
+  assert.equal(
+    may({ id: TIER_PACKS.bronze[0] }), true,
+    'AND the starter set — writing this into account.packs would have wiped it',
+  );
+  assert.equal(may({ id: 'never-bought-this' }), false);
+});
+
+test('and an upgrade still gives everything, which a literal list would not', () => {
+  const silver = { role: 'quizmaster', status: 'active', tier: 'silver', bought: ['2000s-metal'] };
+  const may = packFilter(silver);
+  assert.equal(
+    may({ id: 'some-other-evergreen-pack' }), true,
+    'paying more must never hand somebody less than the rung below',
+  );
+});
+
+test('what is left to sell SILVER is a topical pack, and buying one works', () => {
+  /*
+   * Silver's scope is 'evergreen', so a dated pack is the one thing it cannot
+   * play — and the one somebody wants the week it is news. Without the bought
+   * union in packFilter's evergreen branch there would be nothing to sell them.
+   */
+  const dated = { id: 'this-month-in-music', freshUntil: '2020-01-01' };
+  const plain = { role: 'quizmaster', status: 'active', tier: 'silver' };
+  assert.equal(packFilter(plain)(dated), false, 'Silver cannot play a topical pack');
+  const paid = { ...plain, bought: ['this-month-in-music'] };
+  assert.equal(packFilter(paid)(dated), true, 'and buying that one must reach it');
+});
+
+test('boughtBy is the one definition, and a junk value is not a pack', () => {
+  assert.deepEqual(boughtBy({ bought: ['a', 'b'] }), ['a', 'b']);
+  assert.deepEqual(boughtBy({ bought: 'a-string-not-a-list' }), [], 'not a list, so nothing');
+  assert.deepEqual(boughtBy({}), []);
+  assert.deepEqual(boughtBy({ bought: ['ok', '', null] }), ['ok'], 'blanks are dropped');
 });

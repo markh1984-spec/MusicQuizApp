@@ -206,3 +206,116 @@ test('the checkout route refuses a rung that is not on sale', async () => {
     }
   });
 });
+
+/*
+ * ====================================================== BUYING ONE PACK
+ *
+ * The £3 on-ramp, over real HTTP, because two halves of it cannot be seen any
+ * other way: whether the webhook's pack branch actually writes to the accounts
+ * book, and whether the route refuses before it charges anybody.
+ */
+
+const boughtPack = (packId, over = {}) => ({
+  type: 'checkout.session.completed',
+  created: Math.floor(Date.now() / 1000),
+  data: { object: {
+    id: 'cs_pack_1',
+    mode: 'payment',
+    payment_status: 'paid',
+    amount_total: 300,
+    client_reference_id: accountId,
+    metadata: { accountId, packId, packKind: 'quiz' },
+    ...over,
+  } },
+});
+
+test('a paid pack lands in the account, and does NOT move its standing', async () => {
+  await withServer(async (base, file) => {
+    const before = book(file);
+    assert.equal(before.status, 'cancelled', 'the fixture is a lapsed account on purpose');
+
+    const res = await post(base, boughtPack('2000s-metal'));
+    assert.equal(res.status, 200);
+
+    const after = book(file);
+    assert.deepEqual(after.bought, ['2000s-metal'], 'the pack they paid for');
+    /*
+     * THE WHOLE REASON THIS IS A SEPARATE BRANCH. A payment-mode session carries
+     * no tier price, so through `applyBilling()` it read as `started` and turned
+     * a cancelled account `active` — **£3 buying back a subscription.**
+     */
+    assert.equal(after.status, 'cancelled', 'three pounds must not buy good standing');
+    assert.equal(after.tier, 'bronze', 'nor a rung');
+    assert.equal(after.packs, undefined, 'and the owner override is untouched');
+  });
+});
+
+test('and Stripe retrying it does not buy it twice', async () => {
+  await withServer(async (base, file) => {
+    await post(base, boughtPack('2000s-metal'));
+    await post(base, boughtPack('2000s-metal'));
+    assert.deepEqual(book(file).bought, ['2000s-metal'],
+      'Stripe retries anything it did not get a 200 for, so the grant has to be idempotent');
+  });
+});
+
+test('a pack session naming no pack is answered 200 and grants nothing', async () => {
+  await withServer(async (base, file) => {
+    // 200 because an endpoint that errors on an event it does not care about
+    // gets disabled by Stripe, silently — see the note on the route.
+    const res = await post(base, boughtPack('', { metadata: { accountId } }));
+    assert.equal(res.status, 200);
+    assert.equal(book(file).bought, undefined);
+  });
+});
+
+test('buying is refused for a pack that is not in the catalogue', async () => {
+  await withServer(async (base) => {
+    const cookie = await signIn(base);
+    const res = await fetch(`${base}/api/buy-pack`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', cookie },
+      body: JSON.stringify({ packId: 'a-pack-nobody-wrote', kind: 'quiz' }),
+    });
+    assert.equal(res.status, 404, 'an id out of a request body must never reach a charge');
+  });
+});
+
+test('and for one they can already play', async () => {
+  await withServer(async (base) => {
+    const cookie = await signIn(base);
+    // The fixture is Bronze, so a starter pack is one they hold. Taking money for
+    // it is the one outcome here worth refusing outright.
+    const res = await fetch(`${base}/api/buy-pack`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', cookie },
+      body: JSON.stringify({ packId: '1980s-pop-music', kind: 'quiz' }),
+    });
+    assert.equal(res.status, 400);
+    const said = await res.json();
+    assert.match(said.error, /already have that one/i);
+  });
+});
+
+test('and with no cookie at all', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/buy-pack`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ packId: '2000s-metal', kind: 'quiz' }),
+    });
+    assert.equal(res.status, 401);
+  });
+});
+
+/** Sign in for real, so the route is reached the way a browser reaches it. */
+async function signIn(base) {
+  const res = await fetch(`${base}/api/sign-in`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
+  });
+  assert.equal(res.status, 200, 'the fixture account must be able to sign in');
+  return (res.headers.getSetCookie ? res.headers.getSetCookie() : [res.headers.get('set-cookie')])
+    .filter(Boolean).map((c) => c.split(';')[0]).join('; ');
+}

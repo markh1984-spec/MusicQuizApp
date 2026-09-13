@@ -393,3 +393,93 @@ inbox for a message nobody sent.
   would silently break a tier CHANGE delivered that way. **Not verified from
   here** — `docs.stripe.com` is blocked by this environment's egress proxy, so it
   wants checking against the endpoint's own API version in the dashboard.
+
+### Pack sales — the £3 on-ramp, wired 13 September 2026
+
+*Bronze buys packs, Silver includes them* is the whole ladder, and the Buy button
+in the Shop was an `alert()` saying there was no way to pay. It is a one-off
+Stripe Checkout now. Four decisions in it are worth not re-arguing.
+
+#### A bought pack goes in `account.bought`, NEVER in `account.packs`
+
+`packs` is the owner's OVERRIDE: `packsFor()` returns it **instead of** the
+tier's scope. So writing a bought id there would have taken a Bronze account's
+eight starter packs away and left it holding the one it had just paid for — and
+worse, a literal list keeps winning after an UPGRADE, so **paying £20 for Silver
+would have handed somebody fewer packs than the £10 rung.**
+
+The note above `packsFor()` had anticipated a shop and assumed the whole resolved
+list would be written. That works and it freezes the tier; a second field that
+only ever ADDS cannot get either wrong. `boughtBy()` is the one reader and
+`packFilter()` the one place either field is consulted, so "may this account play
+this pack" keeps one answer.
+
+**Which also means there is something to sell SILVER**: its scope is
+`'evergreen'`, so a topical pack is the one thing it cannot play — and the one
+somebody wants the week it is news. The evergreen branch of `packFilter()` takes
+the bought union too, or that sale would have been impossible.
+
+#### A £3 pack must not buy somebody back into good standing
+
+The hazard, and the reason this is a separate branch rather than a new billing
+event: a one-off purchase arrives as the **same** webhook event type as a new
+subscription — `checkout.session.completed` — carrying a price this app does not
+know as a tier. Through `toBillingEvent()` that returned
+`{ kind: 'started', tier: '' }`, which `applyBilling()` turns into
+`status: 'active'` with the tier left alone. **A cancelled account would have
+bought itself back into good standing for three pounds.**
+
+`mode` is what tells them apart. `toBillingEvent()` takes only
+`mode: 'subscription'`; `toPackPurchase()` takes only `mode: 'payment'`. **A
+session with NO mode at all still reads as a subscription**, deliberately — every
+one this app creates sets it, but a replay from before this existed must not stop
+granting a tier somebody paid for.
+
+And the grant does **not** go through `applyBilling()`. That function is a pure
+translation of a billing event into a status and a tier, with a hard rule that it
+writes nothing else and a test pinning the list — so a one-off purchase gets its
+own door rather than a hole in the one thing keeping the webhook safe to leave
+open. **`accounts.grantPack()` is the only writer of `bought`**, it is idempotent
+(Stripe retries anything it did not get a 200 for), and a paid session the app
+cannot attribute is logged as `PAID BUT NOT GRANTED` rather than swallowed.
+
+#### The price is built from `PACK_PENCE`, not from a fourth Stripe price
+
+`price_data` with a `unit_amount`, so the number lives in `plans.js` beside the
+reasoning for why it is £3, the shop card prints the same one, and there is no
+object in the dashboard that can disagree with what the customer was shown. It
+also means selling packs needs no setup beyond the secret key.
+
+**And the pack id is validated against the real CATALOGUE before anybody is
+charged** — `fullLibrary(config, HOUSE)`, not their own shelf. `onlyTheirPacks()`
+and `withShop()` both hide or strip what somebody cannot play, so resolving
+against either would have refused the very packs this route exists to sell: the
+shelf-is-not-the-library trap that emptied Tonight once. A pack somebody can
+already play is refused outright, and so is one they wrote.
+
+#### The button is present and inert where there is no way to pay
+
+`me.canBuy` is the server's answer and is the same field the tier rungs read, so
+the shop and the ladder cannot disagree about whether this app can take money.
+Disabled and saying *"Not on sale yet"*, never absent and never an `alert()`: a
+control that comes and goes is one you cannot learn the position of. A refusal
+lands **on the card** rather than in a dialog — *"You already have that one"* and
+Stripe's own words are both sentences somebody can act on.
+
+`shopCard()` moved to its own `console-shop.js` rather than the line budget being
+raised, which is `console-breaks.js`'s shape: buying is not launching, and it is
+the one thing on that shelf that talks to a processor.
+
+#### What the guards see, and what only one of them can
+
+- `test/stripe.test.js` — the mode split both ways, the purchase fields, and the
+  Checkout body through an injected fetch.
+- `test/stripe-route.test.js` — the webhook writing to the accounts book over
+  real HTTP, a retry not buying twice, and the route's three refusals. Verified by
+  putting each fault back.
+- **`node scripts/buy-a-pack.mjs` presses the button in a real browser** and reads
+  the request body the server receives, because the click handler's catch would
+  swallow a `ReferenceError` exactly as a gap dial's did twice in one week — and
+  because *a test that the payload is right proves nothing about whether anybody
+  drew it*. It also checks the button is genuinely pressable rather than merely in
+  the DOM, and that the no-keys server draws it disabled.

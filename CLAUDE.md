@@ -181,8 +181,7 @@ real second destination first.
 
 **NOT built, deliberately parked**: pack sharing (~17 call sites on the
 protected launch path, zero real users yet), agency invoicing, venue-account
-specifics. Full reasoning:
-**[`docs/business/groups.md`](docs/business/groups.md)**.
+specifics — **[`docs/business/groups.md`](docs/business/groups.md)**.
 
 ## The words: a quiz is a product, a round is part of one
 
@@ -2054,14 +2053,13 @@ metal, the ones above locked; pressing one opens a card naming what it holds.
 - **SHAPED LIKE THE OWNER'S AND THE OPPOSITE OF IT.** `tierPreview()`
   DOWNGRADES; this only sells, so **pressing Gold on a Bronze account must stay
   inert**, or Gold is free. His keeps INITIALS and this spells WORDS.
-- **A LOCKED RUNG IS PRESSABLE** — `disabled` swallows the press and the sell
-  is the point. **NOT A NATIVE `title`**: a card, one listener for all rows.
+- **A LOCKED RUNG IS PRESSABLE** — `disabled` swallows the press and the sell is
+  the point. **NOT A NATIVE `title`**: a card, one listener for all rows.
 - **THE OWNER'S OWN RUNGS ARE 30 x 34 WITH 5px BETWEEN THEM**, the hat switch
   beside them 34px, and **the 560px diet must take BOTH down together** — it
   shrank the switch alone and the owner's bar ran off a 390px screen. **Not the
   44px touch floor**: a mouse presses this.
-- **BUILT FROM `ladderFor()`, never written out**; **`NOT_BUILT` says "not
-  yet"**. **NO SUBSCRIBE BUTTON UNTIL THERE IS A PROCESSOR.**
+- **BUILT FROM `ladderFor()`, never written out**; **`NOT_BUILT` says "not yet"**.
 - **`.tier-row` WAS ALREADY `owner.js`'S** and won at equal specificity from
   3,300 lines lower, silently. It is `.rung-row`.
 
@@ -2597,86 +2595,35 @@ costs. Both split off at the 100,000-byte cap.
   otherwise.**
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 - **THE CAMERA GATE IS GONE — every photograph is on the gallery unless a human
-  switches it off** (`showsByDefault()`); the EXIF check failed on EVERY photo
-  of a real night. `isCameraFile()` survives as a NOTE on the lamp, **never a
-  gate**. **THE DEFAULT IS WRITTEN OUT ONCE** — a second copy in
-  `/api/gallery-photo/` made a RED lamp put the photo straight back on.
-- **A LAMP PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH.**
-  **NO WORDS**, so `title` and `aria-label` are load-bearing and the 18px dot
-  gets a 44px hit area. **FILLED, which is not a break of
-  outlined-never-filled.** **`showsOnGallery()` is the ONE decision and all
-  FOUR readers ask it.** **A ruling that only restates the DEFAULT is CLEARED,
-  not stored**
-- **SENDING IT IS THE CONSENT. THERE IS NO PER-PHOTO OPT-OUT AND ONE WAS
-  BUILT AND REMOVED** — a flag the quizmaster has to respect is a rule he has
-  to REMEMBER, on a Monday, about a photograph he did not take. **Do not
-  rebuild a sender-side switch.** The gate is the publish control under the
-  photographs; the lamp is the quizmaster's own.
-- **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** **WITH THE
-  FAULT PUT BACK THE GUARD STILL PASSED: it matched the COMMENT explaining the
-  fix.** A source check strips comments first
-- **IT FLIPS NOW AND SAVES LATER.** A failed write puts the lamp BACK and says
-  why on the count line — never an `alert` for something that happened in the
-  background, never a silent revert. **It settles before it sends** (600ms)
-- **THE PUBLISH LAMP ASKS FIRST, AND THE QUESTION NAMES THE NIGHT** — the
-  browser's own `confirm()`: **a second kind of dialog is the label collision
-  wearing a dialog.** **It says the CONSEQUENCE.** **AND SAYING NO MUST CHANGE
-  NOTHING** — the guard answers NO before yes
-- **A ROW READS ITS STATE WHEN BUILT, AND THIS RAIL IS NEVER REBUILT** — the
-  press must ask AGAIN (`upNow()`), never close over `up`, or every press after
-  the first re-sends *publish*. **The FIRST press was right, which is why only
-  pressing twice sees it**
-- **THE PIN IS A DRAWING PIN, NEVER A MAP PIN**: a map pin says *location*
-- **THE LAST SLIDE POINTS AT THE PHOTOGRAPHS, AND THE ADDRESS EXISTS BEFORE
-  THEY DO** — `galleryPath()` in `slugs.js`, one builder, both sides.
-  **DERIVED, not stored**, so the code sixty people photograph at eleven opens
-  a real gallery on Tuesday.
-- **A SLIDE OF ITS OWN, BECAUSE THE FINAL WAS ALREADY CLIPPING** — the band's
-  QR is 86px at 720p, 34vh here. **A flag at the FINAL only** (rule 9), refused
-  with no address, never on a phone.
-- **AND THE FINAL FITS NOW — `.endband` AND `fitWinner()`.** **The draw and
-  the comeback go SIDE BY SIDE**; **`fitWinner()` measures the CHILDREN, not
-  `scrollHeight`**, which clamps and under-reports exactly when the content is
-  too tall. **`final-fits.mjs`** checks the QR **actually paints**
-- **`view.photos` WAS ALREADY TAKEN, AND IT COST THE BUTTON** — the field
-  existed, held somebody else's data, the control was never drawn, nothing
-  threw. **Found by pressing it in a real browser.**
-- **A PHONE THAT SCANS EARLY IS TOLD "not up yet", AND THE WORDING IS THE ONLY
-  CHANGE** — the server still answers ONE 404 for every refusal. **A `pending`
-  state leaks which dates exist and was turned down for that**
-- **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — the INDEX
-  drops a night whose whole set is held back. **A number right about the wrong
-  question is how a working app looks broken.** Silent when they all show
-- **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE HAS TO SAY SO
-  LOUDLY** — `whoIs()` reads a COOKIE. **THE PREVIEW STAYS.** A panel, full ink,
-  **not red**. **A banner says how many, only a card says WHICH**
-- **AND `?as=visitor` STANDS THE PREVIEW DOWN.** **ON THE SERVER**: a
-  browser-side filter proves the page can hide a draft, not that the server
-  refuses one. **IT ONLY EVER SUBTRACTS, which is why it needs no gate.** **It
-  rides on every request and link.** **PRESENT AND INERT**
-- **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — **the pub's own
-  row is `The table`, INSIDE the fold, never the heading**: a heading that both
-  folds and picks is one control doing two jobs. **A night row is the DATE and
-  nothing else.** `evenings` **carries the POINTS**. **A board with no
-  `position` scores nobody**
-- **`node()` KEEPS THE FIRST ELEMENT AND DROPS THE REST, SILENTLY** — a grep
-  cannot find these, so `node()` `console.error`s when it drops one.
-- **A VENUE HAS ITS OWN ADDRESS** — from `public/assets/slugs.js`, **shared by
-  the server and the page**: two implementations of one slug is a link that
-  works in the browser and 404s on the server. **DERIVED, never stored.** **A
-  ONE-SEGMENT PREFIX AT THE ROOT IS A CATCH-ALL AND THE FIRST VERSION ATE
-  `/api/gallery`** — two segments, `RESERVED` refuses the first, and
-  `test/slugs.test.js` walks `server.js`. **An address is not a key**
-- **A LEAGUE IS A THING YOU RUN, AND IT IS OFF UNTIL SOMEBODY SAYS SO.** **The
-  table is ARITHMETIC; a league is a DECISION.** **It gates what LEAVES and
-  nothing the quizmaster sees.** **Switching it off takes the public page down
-  with it.** **The controls under it are ABSENT, not greyed** — the one
-  deliberate exception to *present and inert*. **The report asks under BOTH
-  venue keys** (`leagueRunsAt()`)
-- **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — `POST /api/past-photo/<night>`,
-  **filed against the night in the URL, never against today**. **A POST written
-  beside GETs is the 404 this repo already shipped once**, so the test asserts
-  against the 404, not the 400
+  switches it off** (`showsByDefault()`), and **`showsOnGallery()` is the ONE
+  decision all FOUR readers ask.** `isCameraFile()` survives as a NOTE, **never a
+  gate**; **the default is written out ONCE.**
+- **SENDING IT IS THE CONSENT. THERE IS NO PER-PHOTO OPT-OUT AND ONE WAS BUILT
+  AND REMOVED** — a flag the quizmaster has to respect is a rule he has to
+  REMEMBER, on a Monday, about a photograph he did not take. **Do not rebuild a
+  sender-side switch.** The gate is the publish control under the photographs.
+- **A LAMP PER PHOTO IS A SWITCH, WITH NO WORDS** — `title`/`aria-label` are
+  load-bearing and an 18px dot gets a 44px hit area. **A ruling that only restates
+  the DEFAULT is CLEARED, not stored.**
+- **THE PUBLISH LAMP ASKS FIRST, THE QUESTION NAMES THE NIGHT AND THE
+  CONSEQUENCE, AND SAYING NO CHANGES NOTHING** — the browser's own `confirm()`,
+  because a second kind of dialog is the label collision wearing a dialog.
+- **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — **a number
+  right about the wrong question is how a working app looks broken.**
+- **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE SAYS SO
+  LOUDLY**; **`?as=visitor` stands the preview down ON THE SERVER** and **only
+  ever SUBTRACTS**, which is why it needs no gate.
+- **NAMES AND POINTS, NEVER FACES** on anything public, **named on the way out
+  rather than spread** — or the next field added is a photograph on a public page.
+- **A DELETED PHOTO LEAVES THE REPO BUT NOT GIT HISTORY — never imply
+  otherwise.**
+- **AND THE OTHER TWENTY-ODD PHOTO RULES MOVED WHOLE** into
+  **[`docs/gigs/photos.md`](docs/gigs/photos.md)** — the lamps, the pins, the
+  night page's prev/next, the slug fold, the publish plumbing, `inOrder()`,
+  `tryGetFile()`, the read-back sha, the cover fan. **Nothing was summarised**;
+  they were living in this INDEX, which is meant to name what is not already a
+  heading. **Read that page before touching any of it.**
+
 - **A picture is keyed on the MUSICIAN and the STYLE, and nothing else.**
   Never on the question's `imagePrompt` — those are written by Claude, so two
   quizzes wanting Madonna would produce two keys and two bills, and the host
@@ -3141,8 +3088,9 @@ against a board marking "Psychosocial" right, and nothing threw.
 - **`from` IS ALWAYS `0:00`, NEVER GUESSED**, and **an id that exists is
   REFUSED** — importing twice lands on one file and `reloadPackEverywhere()`
   pushes the replacement into a running game.
-- **IT MAKES A ONE-ROUND PACK**, which lives on Music Rounds and which
-  Tonight bursts into a tile — no new composing UI.
+- **IT MAKES A ONE-ROUND PACK**, which lands on the tab for its own round TYPE
+  and which Tonight bursts into a tile — no new composing UI. (It said *Music
+  Rounds*, a tab deleted three sections down.)
 - **THE SPOTIFY HALF IS INJECTED** (`readPlaylist`/`configured`): **an ES
   module namespace is READ-ONLY**, so a test cannot stub the import.
 - **AND THE GENERATED PATH GETS THE SAME GUARANTEE — THE CUE WINS.**
@@ -3457,8 +3405,8 @@ of 20 questions, a 10 question image round and a 10 question intros round."*
   night. **Do not delete rounds to fit the shape.**
 - **COUNTED BY TYPE ACROSS THE PACK, not per round** — twenty GK in two rounds
   of ten is the same night, and half the library is written that way.
-- **A ONE-ROUND PACK IS EXEMPT** — a component on Music Rounds; holding it to
-  the shape of a night is the round/product confusion again.
+- **A ONE-ROUND PACK IS EXEMPT** — a component, not a night; holding it to the
+  shape of one is the round/product confusion again.
 - **AN INTRO CUE NEEDS ONLY A TITLE OR ARTIST** — no Spotify URI — so an intro
   round is writable by hand and played off the DJ app. **A PICTURE QUESTION
   NEEDS ITS `image` FILE**, so that round cannot be written ahead of the
@@ -3949,6 +3897,24 @@ descriptor, the branding, the receipts and the payouts are all per account.
   password link only comes back in the body on a LOCAL run** — it came back
   whenever no provider was set, deployed included, so **anybody could activate an
   account on an address they do not own**. **Loopback, never an env var.**
+- **A BOUGHT PACK GOES IN `account.bought`, NEVER IN `account.packs`** — that
+  field is the owner's OVERRIDE, returned INSTEAD of the tier's scope, so a bought
+  id there takes Bronze's eight starter packs away and keeps winning after an
+  UPGRADE: **paying £20 would hand somebody fewer packs than £10.** `bought` only
+  ADDS; **`packFilter()` is the one place either is consulted.** Its evergreen
+  branch takes the union too, which is **what leaves anything to sell SILVER** —
+  a TOPICAL pack.
+- **AND A £3 PACK MAY NOT BUY GOOD STANDING.** A purchase arrives as the SAME
+  event as a subscription with no tier price, so it read as `started` →
+  `active`. **`mode` splits them**, and **no mode at all still reads as a
+  subscription** or a replay stops granting a paid tier. **The grant does NOT go
+  through `applyBilling()`**, which stays a pure translation; **`grantPack()` is
+  the only writer and is IDEMPOTENT**, and a paid session with no account is
+  logged, never swallowed.
+- **THE PACK PRICE IS `price_data` FROM `PACK_PENCE`, never a dashboard price** —
+  one number, and the card prints the same one. **The id is validated against the
+  CATALOGUE, never their own shelf** (which strips exactly what this sells), and
+  **a pack they can already play is refused.** `buy-a-pack.mjs` presses it.
 - **AND THE RUNG YOU ARE ON IS ONLY "YOURS" WHILE SOMEBODY IS PAYING FOR IT.**
   Rank alone meant an **expired trial** saw Bronze marked *"the one you are
   on"* with **no Subscribe on it** while Silver and Gold were buyable — the
@@ -4054,6 +4020,7 @@ node scripts/pack-repeats.mjs           # does one night ask the same thing twic
 node scripts/soundboard.mjs             # do the host's sounds actually make a noise?
 node scripts/buy-your-own-rung.mjs      # can somebody who wants to pay actually pay?
 node scripts/owner-money.mjs            # is the money tab telling the truth?
+node scripts/buy-a-pack.mjs             # can somebody buy one pack for £3?
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 ```
 

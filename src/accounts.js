@@ -373,6 +373,44 @@ export class Accounts {
     return Math.round(pence * REFERRAL_DISCOUNT);
   }
 
+  /**
+   * A PACK SOMEBODY PAID FOR OUTRIGHT — the only writer of `account.bought`.
+   *
+   * **Separate from `update()`'s `packs` on purpose, and separate from
+   * `applyBilling()` too.** `packs` is the owner's OVERRIDE, returned instead of
+   * the tier's scope — see the note in `packFilter()`; writing a bought id there
+   * would take a Bronze account's eight starter packs away and would keep
+   * winning after an upgrade, so paying for Silver would hand somebody less.
+   * `bought` is UNIONED and can only ever add.
+   *
+   * And it is not `applyBilling()`'s because that function is a pure translation
+   * of a billing event into a status and a tier, with a hard rule that it may
+   * write NOTHING else — `packs` included, with a test pinning it. A one-off
+   * purchase is a different act, so it gets a different door rather than a hole
+   * in that one.
+   *
+   * **Idempotent.** Stripe retries a webhook it did not get a 200 for, and a
+   * list is the wrong shape to pay twice into.
+   *
+   * @param {string} id      the account
+   * @param {string} packId  validated against the real catalogue by the CALLER —
+   *   this method cannot see the shelf, and an id out of a request body is the
+   *   trap this codebase already records.
+   * @returns {object|null}  the account, or null if there is no such account
+   */
+  grantPack(id, packId) {
+    const account = this.find(id);
+    if (!account) return null;
+    const wanted = String(packId || '').slice(0, 120).trim();
+    if (!wanted) return safe(account);
+    const held = new Set(Array.isArray(account.bought) ? account.bought.map((p) => String(p)) : []);
+    if (held.has(wanted)) return safe(account);
+    held.add(wanted);
+    account.bought = [...held];
+    this.save();
+    return safe(account);
+  }
+
   /** Change a password, checking the old one first unless the owner is resetting it. */
   setPassword(id, password, { requireOld = null } = {}) {
     const account = this.find(id);

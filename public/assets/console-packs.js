@@ -7,6 +7,7 @@ import { tonightsVenue, whenish } from './console-gigs.js';
 import { field, money, sheet } from './console-invoices.js';
 import { renderBingoPreview, renderQuizPreview } from './console-preview.js';
 import { library, me, setPackDrag, setShelfRoundDrag } from './console-state.js';
+import { shopCard } from './console-shop.js';
 import { addRoundToTonight, addToTonight, dragging, heardHere, heardHereIsLocal, night, packIsInTonight, putOnBench } from './console-tonight.js';
 import { can, canPin, doorNow, goTo, hostKey, isPinned, keyed, linkTo, load, packWord, pinIcon, pinRank, pinnedPacks, render, reorderPins, showDone, togglePin } from './console.js';
 import { tonight } from './diary.js';
@@ -1721,59 +1722,6 @@ export async function doLaunchOrder(segments, { winners = 0, look = '', question
     breakPlan: breaks || {},
     ...(replace ? { replace: true } : {}),
   }), button);
-}
-
-/**
- * A pack on the shelf rather than in the library.
- *
- * It shows the title, how big it is and what it costs — and deliberately not a
- * word of what is inside. That is enforced on the SERVER, which strips the
- * search blob and the playlist link out of a locked summary before it is sent,
- * because a padlock drawn over a payload that still contained every question
- * and answer would be decoration rather than a lever.
- *
- * **Buy takes no money yet and says so plainly.** There is no payment flow
- * wired up, and a button that looked like it charged you and then did nothing
- * is a worse first impression than an honest one. This is here so the shop can
- * be LOOKED at before a processor is committed to — whether it reads as fair
- * or as grabby is a judgement about wording and layout, and it is much cheaper
- * to change now than after the money is plumbed in.
- */
-function shopCard(kind, pack) {
-  const roundCount = (pack.rounds || []).length;
-  const detail = kind === 'quiz'
-    ? `${pack.questionCount} question${pack.questionCount === 1 ? '' : 's'} · ${roundCount} round${roundCount === 1 ? '' : 's'}`
-    : `${pack.trackCount} track${pack.trackCount === 1 ? '' : 's'}`;
-
-  /*
-   * A dated pack says so on the shelf, and that is the one thing the shop
-   * window genuinely needs to tell you.
-   *
-   * Every other locked card is worth the same in a month's time; a topical one
-   * is worth the most this week and nothing much after it. Leaving that off
-   * makes the strongest card in the shop look like the weakest — an unfamiliar
-   * title with no theme anybody recognises.
-   */
-  const { topical, expired } = freshness(pack);
-
-  const el = node(`
-    <div class="pack-card locked">
-      <div class="pack-title">${esc(pack.title)}</div>
-      <div class="tiny">${esc(detail)}</div>
-      ${topical ? `<div class="tiny fresh ${expired ? 'gone' : ''}">${esc(freshLabel(pack))}</div>` : ''}
-      <!-- GREEN, because money is green everywhere in this app — the same
-           language as "paying" on an account and "makes something" on a
-           button. It is a marker rather than a control: the whole card is
-           already about buying, and a price you can press as well as a Buy
-           button underneath it is two controls for one job. -->
-      <div class="shop-price">${esc(packPrice())}</div>
-      <button class="go buy">Buy it</button>
-    </div>`);
-
-  el.querySelector('.buy').addEventListener('click', () => {
-    alert(`There is no way to pay yet.\n\n"${pack.title}" would be ${packPrice()}, and it would be in your library straight away — same as the ones you already have.\n\nOr Silver includes every pack in the catalogue and each new one as it is written — the tiers are on My Account.\n\nThis is here so the shop can be looked at before the payments are wired up.`);
-  });
-  return el;
 }
 
 /**

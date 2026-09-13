@@ -205,6 +205,16 @@ export function toBillingEvent(raw = {}) {
   if (type === 'checkout.session.completed') {
     // `paid` is the one that matters — a session can complete unpaid.
     if (object.payment_status && object.payment_status !== 'paid') return null;
+    /*
+     * **AND ONLY A SUBSCRIPTION SESSION IS A BILLING EVENT.** A one-off pack
+     * purchase arrives as this same event type with `mode: 'payment'` and a
+     * price this app does not know as a tier — so without this line buying a £3
+     * pack returned `{ kind: 'started', tier: '' }`, which `applyBilling()`
+     * turns into `status: 'active'`. **A cancelled account would have bought
+     * itself back into good standing for three pounds.** `toPackPurchase()`
+     * reads the other half.
+     */
+    if (object.mode && object.mode !== 'subscription') return null;
     return { kind: 'started', tier, ...base };
   }
   if (type === 'invoice.paid' || type === 'invoice.payment_succeeded') {
@@ -217,6 +227,99 @@ export function toBillingEvent(raw = {}) {
     return { kind: 'cancelled', ...base };
   }
   return null;
+}
+
+/**
+ * A ONE-OFF PACK PURCHASE, read out of the same webhook.
+ *
+ * **A SEPARATE FUNCTION BECAUSE IT IS A DIFFERENT ACT.** `toBillingEvent()`
+ * answers *has this account paid, and for which rung*; this answers *which pack
+ * did somebody just buy*. Folding them would mean `applyBilling()` — a pure
+ * translation with a hard rule that it writes only a status, a tier and the
+ * billing reference — gaining a way to write `account.bought`, and that rule is
+ * what makes the webhook safe to leave open.
+ *
+ * **The pack id comes off the SESSION'S metadata, which this server put there**
+ * when it created the Checkout session, having validated the id against the real
+ * catalogue first. Stripe hands it straight back, so a caller cannot name a pack
+ * it was never charged for — the same shape as the tier coming off the price.
+ *
+ * @returns {{accountId, packId, at, reference, pence}|null}  null for anything
+ *   that is not a paid one-off pack session, which is almost everything.
+ */
+export function toPackPurchase(raw = {}) {
+  if (String(raw.type || '') !== 'checkout.session.completed') return null;
+  const object = (raw.data && raw.data.object) || {};
+  if (object.mode !== 'payment') return null;
+  // A session can complete unpaid, exactly as above.
+  if (object.payment_status && object.payment_status !== 'paid') return null;
+
+  const at = Number(raw.created) * 1000;
+  if (!Number.isFinite(at) || at <= 0) return null;
+
+  const meta = object.metadata || {};
+  const accountId = String(object.client_reference_id || meta.accountId || '').trim();
+  const packId = String(meta.packId || '').trim();
+  // BOTH or nothing. A session missing either is not something to act on, and
+  // guessing which account or which pack is how somebody else's library grows.
+  if (!accountId || !packId) return null;
+
+  return {
+    accountId,
+    packId,
+    kind: String(meta.packKind || '').trim(),
+    at,
+    reference: String(object.id || '').slice(0, 120),
+    pence: Number(object.amount_total) || 0,
+  };
+}
+
+/**
+ * THE PAGE SOMEBODY IS SENT TO IN ORDER TO BUY ONE PACK.
+ *
+ * `mode: 'payment'`, so there is nothing recurring and nothing to cancel.
+ *
+ * **THE PRICE IS BUILT FROM `PACK_PENCE` RATHER THAN A FOURTH STRIPE PRICE**,
+ * which is a decision worth keeping: the number already lives in `plans.js` with
+ * the reasoning for why it is £3, the shop card prints it from there, and a
+ * price object in the dashboard would be a second copy that can disagree with
+ * what the customer was shown. It also means selling packs needs no extra setup
+ * beyond the secret key.
+ *
+ * **The pack id travels on the SESSION and on the payment**, the same reasoning
+ * as the account id on a subscription: whichever object the webhook hands back
+ * has to be able to say what was bought.
+ */
+export async function packCheckoutSession({
+  accountId, email, packId, packKind = '', title, pence, successUrl, cancelUrl, customerId = '',
+}, opts = {}) {
+  const id = String(packId || '').trim();
+  if (!id) return { ok: false, reason: 'No pack named.' };
+  const amount = Math.round(Number(pence) || 0);
+  if (!amount || amount < 30) return { ok: false, reason: 'That price is not sellable.' };
+
+  const metadata = { accountId, packId: id, packKind: String(packKind || '') };
+  const res = await call('/checkout/sessions', {
+    mode: 'payment',
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    client_reference_id: accountId,
+    ...(customerId ? { customer: customerId } : { customer_email: email }),
+    line_items: [{
+      quantity: 1,
+      price_data: {
+        currency: 'gbp',
+        unit_amount: String(amount),
+        // What appears on their card statement and on Stripe's own receipt, so
+        // it names the pack rather than saying "Quizporium" twice.
+        product_data: { name: String(title || id).slice(0, 250) },
+      },
+    }],
+    metadata,
+    payment_intent_data: { metadata },
+  }, opts);
+  if (!res.ok) return res;
+  return { ok: true, url: res.data.url, id: res.data.id };
 }
 
 /** Stripe's API is form-encoded, and nested keys are `a[b][c]`. */

@@ -1359,3 +1359,102 @@ the four assertions fail on a zero-length buffer.
 That is unchanged, it is the one issue here with an ethical rather than an
 operational edge, and it is the whole reason to consider moving photographs to
 object storage (R2) one day. The rule stands: never imply otherwise.
+
+
+## THE RULES THAT WERE LIVING IN `CLAUDE.md`'S INDEX — moved whole, 13 September 2026
+
+**Every one of these is a RULE and none of them is summarised.** They moved
+because of where they were, not because they stopped mattering: they had grown
+inside the `docs/` INDEX at the foot of `CLAUDE.md` — a list whose stated job is
+to *name what is not already a heading there* — until it was a second rules
+section nested inside a table of contents. That is the same drift the gallery
+entry in `TODO.md` reached at 65KB, and `test/claude-md-budget.test.js` had
+already written down that the next payment must come out of a `docs/` move rather
+than another raise.
+
+**So `CLAUDE.md` keeps the ones a session could break BLIND** — the consent
+model, the one-decision rule, the count question — and this page holds the lot.
+**Read it before touching the lamps, the publish control, the gallery page or the
+photo cache.**
+
+- **THE CAMERA GATE IS GONE — every photograph is on the gallery unless a human
+  switches it off** (`showsByDefault()`); the EXIF check failed on EVERY photo
+  of a real night. `isCameraFile()` survives as a NOTE on the lamp, **never a
+  gate**. **THE DEFAULT IS WRITTEN OUT ONCE** — a second copy in
+  `/api/gallery-photo/` made a RED lamp put the photo straight back on.
+- **A LAMP PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH.**
+  **NO WORDS**, so `title` and `aria-label` are load-bearing and the 18px dot
+  gets a 44px hit area. **FILLED, which is not a break of
+  outlined-never-filled.** **`showsOnGallery()` is the ONE decision and all
+  FOUR readers ask it.** **A ruling that only restates the DEFAULT is CLEARED,
+  not stored**
+- **SENDING IT IS THE CONSENT. THERE IS NO PER-PHOTO OPT-OUT AND ONE WAS
+  BUILT AND REMOVED** — a flag the quizmaster has to respect is a rule he has
+  to REMEMBER, on a Monday, about a photograph he did not take. **Do not
+  rebuild a sender-side switch.** The gate is the publish control under the
+  photographs; the lamp is the quizmaster's own.
+- **THE COUNT AND THE PAGE ARE ONE QUESTION — `galleryPhotosOf()`.** **WITH THE
+  FAULT PUT BACK THE GUARD STILL PASSED: it matched the COMMENT explaining the
+  fix.** A source check strips comments first
+- **IT FLIPS NOW AND SAVES LATER.** A failed write puts the lamp BACK and says
+  why on the count line — never an `alert` for something that happened in the
+  background, never a silent revert. **It settles before it sends** (600ms)
+- **THE PUBLISH LAMP ASKS FIRST, AND THE QUESTION NAMES THE NIGHT** — the
+  browser's own `confirm()`: **a second kind of dialog is the label collision
+  wearing a dialog.** **It says the CONSEQUENCE.** **AND SAYING NO MUST CHANGE
+  NOTHING** — the guard answers NO before yes
+- **A ROW READS ITS STATE WHEN BUILT, AND THIS RAIL IS NEVER REBUILT** — the
+  press must ask AGAIN (`upNow()`), never close over `up`, or every press after
+  the first re-sends *publish*. **The FIRST press was right, which is why only
+  pressing twice sees it**
+- **THE PIN IS A DRAWING PIN, NEVER A MAP PIN**: a map pin says *location*
+- **THE LAST SLIDE POINTS AT THE PHOTOGRAPHS, AND THE ADDRESS EXISTS BEFORE
+  THEY DO** — `galleryPath()` in `slugs.js`, one builder, both sides.
+  **DERIVED, not stored**, so the code sixty people photograph at eleven opens
+  a real gallery on Tuesday.
+- **A SLIDE OF ITS OWN, BECAUSE THE FINAL WAS ALREADY CLIPPING** — the band's
+  QR is 86px at 720p, 34vh here. **A flag at the FINAL only** (rule 9), refused
+  with no address, never on a phone.
+- **AND THE FINAL FITS NOW — `.endband` AND `fitWinner()`.** **The draw and
+  the comeback go SIDE BY SIDE**; **`fitWinner()` measures the CHILDREN, not
+  `scrollHeight`**, which clamps and under-reports exactly when the content is
+  too tall. **`final-fits.mjs`** checks the QR **actually paints**
+- **`view.photos` WAS ALREADY TAKEN, AND IT COST THE BUTTON** — the field
+  existed, held somebody else's data, the control was never drawn, nothing
+  threw. **Found by pressing it in a real browser.**
+- **A PHONE THAT SCANS EARLY IS TOLD "not up yet", AND THE WORDING IS THE ONLY
+  CHANGE** — the server still answers ONE 404 for every refusal. **A `pending`
+  state leaks which dates exist and was turned down for that**
+- **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — the INDEX
+  drops a night whose whole set is held back. **A number right about the wrong
+  question is how a working app looks broken.** Silent when they all show
+- **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE HAS TO SAY SO
+  LOUDLY** — `whoIs()` reads a COOKIE. **THE PREVIEW STAYS.** A panel, full ink,
+  **not red**. **A banner says how many, only a card says WHICH**
+- **AND `?as=visitor` STANDS THE PREVIEW DOWN.** **ON THE SERVER**: a
+  browser-side filter proves the page can hide a draft, not that the server
+  refuses one. **IT ONLY EVER SUBTRACTS, which is why it needs no gate.** **It
+  rides on every request and link.** **PRESENT AND INERT**
+- **THE LEAGUE BAY IS A VENUE THAT FOLDS INTO ITS NIGHTS** — **the pub's own
+  row is `The table`, INSIDE the fold, never the heading**: a heading that both
+  folds and picks is one control doing two jobs. **A night row is the DATE and
+  nothing else.** `evenings` **carries the POINTS**. **A board with no
+  `position` scores nobody**
+- **`node()` KEEPS THE FIRST ELEMENT AND DROPS THE REST, SILENTLY** — a grep
+  cannot find these, so `node()` `console.error`s when it drops one.
+- **A VENUE HAS ITS OWN ADDRESS** — from `public/assets/slugs.js`, **shared by
+  the server and the page**: two implementations of one slug is a link that
+  works in the browser and 404s on the server. **DERIVED, never stored.** **A
+  ONE-SEGMENT PREFIX AT THE ROOT IS A CATCH-ALL AND THE FIRST VERSION ATE
+  `/api/gallery`** — two segments, `RESERVED` refuses the first, and
+  `test/slugs.test.js` walks `server.js`. **An address is not a key**
+- **A LEAGUE IS A THING YOU RUN, AND IT IS OFF UNTIL SOMEBODY SAYS SO.** **The
+  table is ARITHMETIC; a league is a DECISION.** **It gates what LEAVES and
+  nothing the quizmaster sees.** **Switching it off takes the public page down
+  with it.** **The controls under it are ABSENT, not greyed** — the one
+  deliberate exception to *present and inert*. **The report asks under BOTH
+  venue keys** (`leagueRunsAt()`)
+- **THE QUIZMASTER ADDS THEIR OWN ROOM PHOTOS** — `POST /api/past-photo/<night>`,
+  **filed against the night in the URL, never against today**. **A POST written
+  beside GETs is the 404 this repo already shipped once**, so the test asserts
+  against the 404, not the 400
