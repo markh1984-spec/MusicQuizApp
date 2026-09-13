@@ -46,6 +46,7 @@ import { recentTracks, forgetAll } from './src/history.js';
 import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
 import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig, venueKeyOf, sameVenue, setNightVenue, noteNightVenue } from './src/past-gigs.js';
 import { venueHeadcounts, nightHeadcount } from './src/headcounts.js';
+import { galleryNumbers, bookingOf } from './src/gallery-about.js';
 import { playedByVenue } from './src/heard.js';
 import { nightReportPdf, nightReportFilename } from './src/report-pdf.js';
 import { leaguesByVenue, leagueAfter, teamKey } from './src/league.js';
@@ -2244,6 +2245,20 @@ async function handleGet(req, res, url, route) {
       // What this account has chosen to look at. Cosmetic, and read ONLY by
       // the browser — nothing here decides what anybody is allowed to do.
       prefs: (me && me.prefs) || {},
+      /*
+       * AND WHAT A STRANGER WILL ACTUALLY SEE OF IT.
+       *
+       * `prefs` carries what was TYPED; this is what `bookingOf()` will put on
+       * the public page, which is not the same thing — a link the server cannot
+       * read is stored and then silently absent from a page the quizmaster is
+       * not looking at. The account panel echoes this back, the way the intro
+       * round's editor echoes the cue offset it understood.
+       *
+       * Sent from here rather than recomputed in the browser, so there is one
+       * definition of what is publishable — a second copy in `console-*.js`
+       * would be a rule that can disagree with the page it describes.
+       */
+      booking: bookingOf(me),
       // Every colour on offer, so the console can draw the picker without
       // keeping its own copy of the list and drifting from the stylesheet.
       schemes: SCHEMES,
@@ -3378,6 +3393,71 @@ async function handleGet(req, res, url, route) {
       }
     }
     return sendJson(res, 200, { nights: out, preview }), true;
+  }
+
+  /*
+   * THE NUMBERS AND THE BOOKING LINE — the other two thirds of the public page.
+   * The arithmetic and the reasoning are in `src/gallery-about.js`; the two
+   * gates are here, because they are about what may be PUBLISHED rather than
+   * about sums.
+   *
+   * **ITS OWN ROUTE RATHER THAN A FIELD ON `/api/brand`.** That endpoint is on
+   * the protected surface — the projector and every phone fetch it — and this
+   * costs an archive read. One page wants it; four do not.
+   *
+   * **AND ITS OWN PREFIX, `-about` rather than `/about`.** Under
+   * `/api/gallery/` it would have been read as a night called "about" and
+   * answered the generic "Nothing here." — a 404 indistinguishable from a
+   * working route refusing a bad date, which is the prefix trap the publish
+   * route above already records.
+   */
+  if (route === '/api/gallery-about') {
+    const roomId = galleryRoomId();
+    const preview = galleryPreview();
+    /*
+     * THEIR OWN WORDS ARE NOT GATED ON A PUBLISHED NIGHT, and the numbers are.
+     *
+     * Two rules, each obvious on its own: what the APP worked out about
+     * somebody's nights needs a night they chose to make public; what they
+     * TYPED needs only them having typed it — they wrote it in order to be
+     * read, and a quizmaster who wants to hand the link out before their first
+     * photographs go up should be able to.
+     */
+    const book = bookingOf(whoseRoom(rooms.get(roomId)));
+    const live = await publishedNights(roomId);
+    const wantVenue = String(url.searchParams.get('venue') || '').trim().toLowerCase();
+    let numbers = null;
+    if (live.length || preview) {
+      const aboutRoom = rooms.get(roomId);
+      // Before the archive is read, like every other reader of it — on the
+      // free tier `data/` is empty after every deploy, and a page built from
+      // it would swear nobody had ever played.
+      await ensureArchiveRestored(aboutRoom);
+      const nights = mergeGigs(listArchive(aboutRoom.paths.archive), []);
+      /*
+       * A PUB'S OWN NUMBERS NEED A PUBLISHED NIGHT AT THAT PUB.
+       *
+       * Without this, typing `/some-pub/gallery` would confirm that this
+       * quizmaster works there, with a headcount — and the venue name is the
+       * one thing on this page that is somebody ELSE'S business. The index
+       * only ever names pubs that already have a night up, so this is the same
+       * question that page already answers, asked before any arithmetic.
+       *
+       * `sameVenueSlug()` rather than `===`: one pub filed under two spellings
+       * has two addresses and both are legitimate — see `slugs.js`.
+       */
+      if (!wantVenue) numbers = galleryNumbers(nights);
+      else if (nights.some((n) => (preview || live.includes(n.night))
+        && n.venue && sameVenueSlug(venueSlug(n.venue), wantVenue))) {
+        numbers = galleryNumbers(nights, { venue: wantVenue });
+      }
+    }
+    // Absent rather than null when there is nothing true to say, so the page
+    // can draw nothing without asking twice what an empty object means.
+    return sendJson(res, 200, {
+      ...(numbers ? { numbers } : {}),
+      ...(book ? { book } : {}),
+    }), true;
   }
 
   if (route.startsWith('/api/gallery/')) {
@@ -6288,7 +6368,12 @@ async function handleWrite(req, res, url, route) {
     const saved = accounts.setPrefs(account.id, body);
     if (!saved) return sendJson(res, 404, { error: 'No such account' }), true;
     await backUpAccounts();
-    return sendJson(res, 200, { ok: true, prefs: saved.prefs || {} }), true;
+    // `booking` for the same reason the library payload carries it: the panel
+    // echoes what the server UNDERSTOOD, and a save is exactly the moment a
+    // mistyped link should become visible.
+    return sendJson(res, 200, {
+      ok: true, prefs: saved.prefs || {}, booking: bookingOf(saved),
+    }), true;
   }
 
   /*

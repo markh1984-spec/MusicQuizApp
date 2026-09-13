@@ -283,8 +283,69 @@ function visitorSwitch(previewing) {
       <a href="${esc(asVisitor(true))}">See it as a visitor</a>.</p>`);
 }
 
+/**
+ * THE NUMBERS, AND SOMEWHERE TO PRESS — the two thirds of this page that were
+ * never built.
+ *
+ * A shareable link was asked for as *"nights, numbers, and 'book me' — the
+ * thing that goes in an Instagram bio or a cold email"*, and for a fortnight
+ * it was nights alone. A landlord looking at a wall of photographs cannot tell
+ * whether the room was busy, and has nothing to press when he decides he wants
+ * one — so the page was evidence with the verdict and the contact details
+ * removed.
+ *
+ * **ABOVE THE PHOTOGRAPHS, because it is the pitch and they are the proof.**
+ * A venue reads the numbers and then looks for the picture that backs them up;
+ * a person who was in the room scrolls straight past to find their own face.
+ * Both orders work this way round, and only this one works for the venue.
+ *
+ * **THE NUMBERS ARE FOR THE PUB YOU ARE LOOKING AT.** On `/the-crown/gallery`
+ * they are The Crown's, and the growth line — *"the room went from 22 to 58"* —
+ * only exists there, because across four pubs a first night and a latest night
+ * are two different rooms. One function answers both, N of one or N of all;
+ * see `src/gallery-about.js`.
+ *
+ * **SILENT WHEN THERE IS NOTHING TRUE TO SAY**, half at a time: a quizmaster
+ * who has typed no booking line gets the figures alone, and one whose nights
+ * are all still drafts gets their own words alone. Neither half is an empty
+ * box with a heading over it.
+ */
+function aboutPanel(about) {
+  const numbers = about && about.numbers;
+  const book = about && about.book;
+  if (!numbers && !book) return null;
+  const fig = (n, what) => `<span class="gal-fig"><b>${esc(String(n))}</b>
+    <span>${esc(what)}</span></span>`;
+  return node(`
+    <section class="gal-about">
+      ${numbers ? `
+        <div class="gal-figs">
+          ${fig(numbers.nights, numbers.nights === 1 ? 'night' : 'nights')}
+          ${fig(numbers.average, 'players a night')}
+          ${fig(numbers.best, 'biggest room')}
+          ${numbers.venues ? fig(numbers.venues, numbers.venues === 1 ? 'venue' : 'venues') : ''}
+        </div>
+        ${numbers.grew ? `<p class="gal-grew">The room here has gone from
+          <b>${esc(String(numbers.grew.from))}</b> to
+          <b>${esc(String(numbers.grew.to))}</b>.</p>` : ''}
+      ` : ''}
+      ${book ? `
+        <p class="gal-book">
+          ${book.words ? `<span>${esc(book.words)}</span>` : ''}
+          ${book.link ? `<a class="gal-book-link" href="${esc(book.link)}"
+            rel="noopener noreferrer">Book me</a>` : ''}
+        </p>` : ''}
+    </section>`);
+}
+
 async function showNights() {
-  const data = await get('/api/gallery');
+  /*
+   * TOGETHER, NOT ONE AFTER ANOTHER — the same reason the night listings are
+   * fetched with `Promise.all` below. Two sequential round trips on the page
+   * whose whole job is being the way in is a page that feels slow for no
+   * reason; neither request needs the other's answer.
+   */
+  const [data, about] = await Promise.all([get('/api/gallery'), get('/api/gallery-about')]);
   const nights = (data && data.nights) || [];
   title.textContent = 'Photos';
   sub.textContent = nights.length ? 'Pick a night.' : '';
@@ -297,6 +358,14 @@ async function showNights() {
     body.replaceChildren();
     const sw = visitorSwitch(Boolean(data && data.preview));
     if (sw) body.appendChild(sw);
+    /*
+     * THEIR OWN WORDS SURVIVE THE EMPTY PAGE, and the numbers do not — which
+     * is the server's own split, drawn. Somebody who has typed a booking line
+     * and published nothing yet still has a link worth handing out; what the
+     * app worked out about their nights waits for a night they made public.
+     */
+    const intro = aboutPanel(about);
+    if (intro) body.appendChild(intro);
     body.appendChild(node(`
       <p class="muted gal-empty">No photos are up yet. They go up after the night.</p>`));
     return;
@@ -362,6 +431,10 @@ async function showNights() {
           : (drafts === 1 ? 'it is missing' : 'they are missing')}.
         <a href="${esc(consoleLink())}">Put ${drafts === 1 ? 'it' : 'them'} up in the console</a>.</p>`));
   }
+  // The pitch above the proof — see `aboutPanel()`. Below the drafts warning,
+  // which is the one thing on this page that outranks it.
+  const intro = aboutPanel(about);
+  if (intro) body.appendChild(intro);
   body.appendChild(node(`
     <div class="gal-groups">
       ${groups.map((g) => `

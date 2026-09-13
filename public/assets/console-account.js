@@ -9,6 +9,7 @@ import { money } from './console-invoices.js';
 import { TABS, can, currentTab, hostKey, keyed, load, render } from './console.js';
 import { FEATURES, FEATURE_META, NOT_BUILT, SWITCHABLE } from './plans.js';
 import { subscribeSlot } from './console-subscribe.js';
+import { pagePanel } from './console-page.js';
 import { priceLabel } from './console-tiers.js';
 import { paintScheme } from './schemes.js';
 
@@ -251,6 +252,13 @@ export function accountSection() {
   // borders around what is plainly one answer to "what is my account".
   wrap.appendChild(youPanel());
   wrap.appendChild(roomPanel());
+  // Where the PLAYERS go, then where a LANDLORD goes. Silent on the owner hat,
+  // which has no public page of its own — see `console-page.js`.
+  const page = pagePanel({
+    me, prefs: library.prefs || {}, keyed, hostKey,
+    onSaved: (d) => { library.prefs = d.prefs; library.booking = d.booking || null; },
+  });
+  if (page) wrap.appendChild(page);
   // Silent for the owner, who has no subscription of their own to refer
   // anybody into.
   const ref = referralPanel();

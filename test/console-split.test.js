@@ -402,7 +402,19 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * before that. A comment claiming the opposite of the code is not something
  * to keep paying for.
  */
-const BUDGET = { 'console-tonight.js': 4200, 'console.js': 2000, 'console-packs.js': 1890 };
+/*
+ * `console-account.js` 1600 -> 1620 on 13 September 2026, AFTER the seam was
+ * taken rather than instead of it. *Your public page* went to its own module,
+ * `console-page.js`, which is where all 113 lines of the panel live; what is
+ * left here is the import and a six-line call site on a file that was sitting
+ * ONE line under the default. The alternative was shaving somebody's reasoning
+ * off an unrelated paragraph to pay for a call, which is the trade this budget
+ * exists to make visible rather than to force.
+ */
+const BUDGET = {
+  'console-tonight.js': 4200, 'console.js': 2000, 'console-packs.js': 1890,
+  'console-account.js': 1620,
+};
 const DEFAULT_BUDGET = 1600;
 
 test('no console module has grown back', () => {

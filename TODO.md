@@ -289,57 +289,34 @@ that list, in the order it should be built, worked out on 12 August 2026.
 - **The post-night report for the venue** — a PDF through the share sheet,
   reusing `src/pdf.js` — headcount, podium, photo count, advert opens.
 
-### 1. A public page per quizmaster — and the consent line
+### 1. A public page per quizmaster — BUILT. What is left is the address
 
 A shareable link, no login: nights, numbers, and "book me". The thing that goes
 in an Instagram bio or a cold email.
 
-**THE GALLERY HALF IS BUILT, 20 August 2026.** `/gallery` was single-tenant —
-hardcoded to the owner's own room, because it was built when Mark was the only
-real subscriber. `?q=<accountId>` now asks for any quizmaster's — the
-underlying `src/gallery.js` was already written generically, so this was a
-matter of removing the hardcoding rather than a rebuild. **The owner-preview
-shortcut does NOT extend to `?q=`** — it would otherwise have let the owner
-preview every subscriber's unpublished, private photos with nothing consented
-and nothing logged, which is exactly the cross-room read the own-packs
-guarantee refuses everywhere else. Tested at the route level: an unrelated
-account gets `preview: false` on somebody else's gallery even by naming their
-id directly; the host key does too.
+**ALL THREE THIRDS ARE BUILT.** The gallery half landed 20 August 2026 (`?q=`
+on `/gallery`, so it is any quizmaster's rather than only the owner's); the
+numbers and the booking line landed 13 September 2026 —
+`src/gallery-about.js`, `/api/gallery-about`, and *Your public page* on My
+account. The rules are in CLAUDE.md and the reasoning in
+**[`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)**.
 
-**Still open, and this is genuinely the rest of the feature:** the "numbers"
-(headcount/nights aggregate — reusing `headcounts.js`) and "book me" (a
-contact line) halves of the page, plus the sender's own photo-consent tick
-described below — none of that is built, only the photo-viewing mechanism
-underneath it.
+**THE SENDER'S CONSENT TICK THAT USED TO BE PLANNED HERE IS DELETED, NOT
+FORGOTTEN.** One was built and removed, and *"sending it is the consent — do
+not rebuild a sender-side switch"* is now a rule in CLAUDE.md: a flag the
+quizmaster has to respect is a rule he has to REMEMBER, on a Monday, about a
+photograph he did not take. The gate is the publish control under the
+photographs, and the per-photo lamps beside them. The reasoning that stands —
+that a tick from the sender does not cover the four people in frame with them,
+so what protects anybody is the quizmaster choosing what gets published and
+taking it down quickly if asked — is in `docs/gigs/photos.md`.
 
-**This is where photo consent actually starts to matter, and the line is
-narrower than it looks.** The projector is fine exactly as it is: the room can
-see the screen, they chose to send it, and it is gone in three seconds — which
-is why the no-approve-step rule is right and should not be touched. Publishing
-to the internet is a different act: permanent, indexable, and reaching people
-who were never in the room.
-
-So: **the consent question belongs at the PUBLISH boundary, not the send
-boundary.** A tick at the moment of sending adds friction to the common job
-for a page that does not exist yet. When the page exists: photos private by
-default, publishing is the quizmaster's deliberate act, and the sender's tick
-is one line — "happy for this to go on my page too?", off by default.
-
-**The bit no tick box solves: group shots — and they are NOT to be avoided.**
-They are the good photos and they are most of them. The point is narrower than
-"selfies only": a tick from the sender does not cover the four people in frame
-with them, so the tick is not what protects anybody. What does is the
-quizmaster choosing what gets published and taking something down quickly if
-asked — the per-photo bin, which already exists.
-
-So do not build a consent flow that pretends to solve it. **One tick at the
-moment of sending, off by default, remembered for the night so nobody is asked
-twice.** That is about as light as real consent gets; less is not consent and
-more is a grind, and the host's constraint is explicit: tick the legal boxes
-without making the app a grind to use.
-
-Another app doing none of this is not a defence — it means they are carrying
-the risk too.
+**WHAT IS ACTUALLY LEFT, and it is small:** the pretty `/<venue>/gallery`
+address only resolves for the room `publicRoomId()` returns, so today every
+account other than the owner's own quizmaster hat has `?q=<id>` and no venue
+form — which means the per-venue growth line ("the room here has gone from 21
+to 58") is reachable on one account. Generalising venue addresses is the
+change; the numbers themselves need nothing.
 
 ---
 

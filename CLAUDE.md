@@ -2546,12 +2546,10 @@ resolves, and that no decision exists in the doc without being named here.
 the budget. **And the index below names only what is NOT already a heading
 here.**
 
-**And a mechanical split is only safe where the boundary is STRUCTURAL.** The
-same script pointed at prose, keeping "the heading and the first paragraph",
-threw away the Owner/Parent/Child table and every rule under the lobby-games
-heading — here the first paragraph is often the CONTEXT and the rule is below it.
-**If more has to come out, move whole named sections by hand and read what is
-left.**
+**A mechanical split is only safe where the boundary is STRUCTURAL** — pointed
+at prose it threw away the Owner/Parent/Child table and every lobby-games rule,
+the first paragraph here being the CONTEXT and the rule below it. **If more has
+to come out, move whole named sections by hand and read what is left.**
 
 **[`docs/engine.md`](docs/engine.md)** — phases, scoring, and what each screen is told
 
@@ -2572,9 +2570,8 @@ left.**
 plus **[`docs/console/launch-bar.md`](docs/console/launch-bar.md)**, which is
 the launch bar's own half: Tonight, the running order, the pack tiles, the
 settings row and the break dials, and
-**[`docs/console/drag.md`](docs/console/drag.md)**, the drags. Both split off
-when the file above them crossed its 100,000-byte cap. **Read the second
-before touching a drag handler.**
+**[`docs/console/drag.md`](docs/console/drag.md)**, the drags. **Read the
+second before touching a drag handler.**
 
 - A launch must say what it is about to destroy
 - The restart notice, and the one state that made it a lie
@@ -2584,7 +2581,7 @@ getting paid; **[`docs/gigs/photos.md`](docs/gigs/photos.md)** is the
 photographs' own half, and
 **[`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)** the public
 page's — its address, its index, what a stranger sees and what serving it
-costs. Both split off at the 100,000-byte cap.
+costs.
 
 - The winner's prize, on their phone
 - The diary — a calendar that maintains itself
@@ -2606,8 +2603,7 @@ costs. Both split off at the 100,000-byte cap.
   load-bearing and an 18px dot gets a 44px hit area. **A ruling that only restates
   the DEFAULT is CLEARED, not stored.**
 - **THE PUBLISH LAMP ASKS FIRST, THE QUESTION NAMES THE NIGHT AND THE
-  CONSEQUENCE, AND SAYING NO CHANGES NOTHING** — the browser's own `confirm()`,
-  because a second kind of dialog is the label collision wearing a dialog.
+  CONSEQUENCE, AND SAYING NO CHANGES NOTHING** — the browser's own `confirm()`.
 - **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — **a number
   right about the wrong question is how a working app looks broken.**
 - **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE SAYS SO
@@ -2615,14 +2611,10 @@ costs. Both split off at the 100,000-byte cap.
   ever SUBTRACTS**, which is why it needs no gate.
 - **NAMES AND POINTS, NEVER FACES** on anything public, **named on the way out
   rather than spread** — or the next field added is a photograph on a public page.
-- **A DELETED PHOTO LEAVES THE REPO BUT NOT GIT HISTORY — never imply
-  otherwise.**
-- **AND THE OTHER TWENTY-ODD PHOTO RULES MOVED WHOLE** into
-  **[`docs/gigs/photos.md`](docs/gigs/photos.md)** — the lamps, the pins, the
-  night page's prev/next, the slug fold, the publish plumbing, `inOrder()`,
-  `tryGetFile()`, the read-back sha, the cover fan. **Nothing was summarised**;
-  they were living in this INDEX, which is meant to name what is not already a
-  heading. **Read that page before touching any of it.**
+- **THE OTHER TWENTY-ODD PHOTO RULES ARE IN
+  [`docs/gigs/photos.md`](docs/gigs/photos.md)** — the lamps, the pins, the
+  prev/next, the slug fold, `inOrder()`, `tryGetFile()`, the read-back sha, the
+  cover fan. **Read it before touching any of them.**
 
 - **A picture is keyed on the MUSICIAN and the STYLE, and nothing else.**
   Never on the question's `imagePrompt` — those are written by Claude, so two
@@ -3714,6 +3706,20 @@ test that the route works proves nothing about whether anybody can reach it.
   itself.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
+
+### THE PUBLIC PAGE SAYS THE NUMBERS AND HOW TO BOOK YOU — `gallery-about.js`
+
+- **NOTHING NEW IS COLLECTED** — the archive has held every headcount for months.
+- **THE NUMBERS NEED A PUBLISHED NIGHT; THE TYPED LINE DOES NOT. A PUB'S OWN
+  NUMBERS NEED ONE AT THAT PUB**, or a guessed slug confirms they work there.
+- **THE AVERAGE, NEVER THE TOTAL** — a sum counts the same forty regulars fifty
+  times. **NO PUB IS NAMED BY THE TOTALS**, which makes totalling every filed
+  night safe. **A ROOM THAT SHRANK IS NOT PRINTED AS A SENTENCE.**
+- **NOTHING IS DERIVED** — not the sign-in address, not the invoice email. **An
+  EMAIL is handled BEFORE the http fallback**: `new URL('https://a@b.com')`
+  parses, as a host with a username on it.
+
+Full reasoning: **[`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)**.
 
 ### WHERE A PAST NIGHT WAS IS SAID AFTERWARDS — `console-night-venue.js`
 

@@ -922,3 +922,183 @@ would have caught the arrows on the first pass. Verified by putting each fault
 back in turn: the one-directional fold fails two tests, dropping the hyphen
 boundary fails one, and restoring `===` at any call site fails the source
 check.
+
+---
+
+## THE NUMBERS AND THE BOOKING LINE — the other two thirds of the page
+
+Built 13 September 2026. `src/gallery-about.js`, `GET /api/gallery-about`, the
+panel above the nights in `public/assets/gallery.js`, and **Your public page**
+on My account (`public/assets/console-page.js`).
+
+The page was asked for as *"a shareable link, no login: nights, numbers, and
+'book me' — the thing that goes in an Instagram bio or a cold email"*, and for
+three weeks it was **nights alone**. A landlord looking at a wall of
+photographs cannot tell whether the room was busy, and has nothing to press
+when he decides he wants one: it was evidence with the verdict and the contact
+details taken out.
+
+**Nothing new is collected.** The headcount of every night has been in the
+archive since `headcounts.js` was written, and `venueHeadcounts()` has done
+this arithmetic for the console for months. This is the same function, read by
+somebody with no account.
+
+### The two gates, and why they are different from each other
+
+They live in `server.js` rather than in the model, because they are about what
+may be PUBLISHED rather than about sums.
+
+**The numbers need a published night.** Without it, `/gallery?q=<id>` would
+report a whole season for a quizmaster who has published nothing — a page they
+never made public, carrying numbers about their work. One published night is
+the deliberate act that says this page exists.
+
+**A pub's own numbers need a published night AT THAT PUB.** This is the gate
+that can hurt somebody who is not the customer. A venue name is the only thing
+on this page that is somebody ELSE'S business, and the index only ever names
+pubs that already have a night up — so without this, typing
+`/some-pub/gallery` would confirm that this quizmaster works there, with a
+headcount attached. It is the same question the index already answers, asked
+before any arithmetic happens.
+
+**Their own typed words are NOT gated, and that asymmetry is deliberate.** What
+the app worked out about somebody's nights needs a night they chose to make
+public; what they typed themselves needs only them having typed it. They wrote
+it in order to be read, and a quizmaster who wants to hand the link out before
+their first photographs go up should be able to.
+
+### Why the totals may cover every filed night
+
+**No pub is named by them.** *"6 nights · 36 players a night · 58 biggest room
+· 2 venues"* is arithmetic over the quizmaster's own work and names nobody. The
+alternative — totalling only published nights — would print *"3 nights"* for
+somebody with three nights of photographs up and two years of work behind them:
+a number that is true of the wrong question, which is how a working app looks
+broken.
+
+### THE AVERAGE, NEVER THE TOTAL
+
+The total is the number that looks better, which is exactly why this needed
+deciding rather than defaulting. Summing every headcount over two years gives
+*"6,200 players"*, and the same forty regulars are in it fifty times. A
+landlord reads that as footfall and it is not; the first time somebody checks
+it against their own till, it is the app caught exaggerating — on the page
+whose whole job is being believed.
+
+The average is also the number he is actually deciding on: *how many will be in
+on a Thursday.*
+
+### A room that shrank is not printed as a sentence
+
+*"The room here has gone from 21 to 58"* only appears for ONE pub — across four
+venues, a first night and a latest night are two different rooms — and only
+when the room grew.
+
+That is not the app hiding a fact from the quizmaster: Past gigs shows them
+every night of it, deliberately without red, and that rule is unchanged. It is
+the app declining to PUBLISH a sentence that argues against the person whose
+page it is. `best` is on the page either way, so nothing is replaced by
+silence.
+
+### One summary function, N of one or N of all
+
+`galleryNumbers(nights, { venue })` — the plain `/gallery` totals every night,
+`/the-crown/gallery` totals that pub's, through the same `summarise()`. The
+rule `headcounts.js` already follows, for the same reason: shipping "the front
+page's numbers" and later "a pub's numbers" as two features is how the two come
+to disagree about a figure somebody is showing a landlord.
+
+**And the venue COUNT folds on the slug** — `distinctPubs()`. This is the
+fourth sighting of the one-pub-two-spellings split and the first where it was
+only a count. `venueHeadcounts()` groups on the lowercased name, which is right
+on the console where each row is a pub somebody typed and might want to
+correct; on a public page the same pub already has ONE set of numbers under
+either address, so counting the rows printed *"3 venues"* over a page that
+treats two of them as one. Overstating how many pubs somebody plays is the app
+exaggerating, in the other direction from the total-versus-average decision and
+for the same reason.
+
+### The booking line — nothing is derived
+
+Two typed fields, `prefs.booking` and `prefs.bookingLink`. Not their sign-in
+address and not the email on their invoices: publishing either would put an
+address they gave the APP onto a page they never asked to carry it. Silence is
+the default, and a quizmaster who types nothing simply has a page of
+photographs and numbers.
+
+**Not word-filtered.** These are the account holder's own words about their own
+business, which is the same decision `notes.js` records for a host's message to
+one phone. The profanity rule in CLAUDE.md is about names the ROOM types.
+
+**AN EMAIL ADDRESS HAD TO BE HANDLED BEFORE THE HTTP FALLBACK.**
+`new URL('https://mark@example.com')` PARSES — as a URL with a username and the
+host `example.com` — so the single most obvious thing to type in a *"how do
+they book you"* box came back as a live link to somebody else's website. No
+error, and it looks right in the box. `bookingLink()` checks for an email
+first, keeps `mailto:`, assumes https for a bare hostname, and refuses
+everything else outright rather than repairing it; `javascript:` and `data:` on
+a page a stranger opens are the two that matter.
+
+### Stored as typed, validated where it is published
+
+`setPrefs()` caps the length and strips control characters and nothing more;
+`bookingOf()` decides what a stranger sees. That split does three things: it
+keeps `accounts.js` a leaf rather than importing the archive to store a string,
+it puts the check against `javascript:` at the point of publication, and it
+leaves what was typed on screen so a typo can be corrected.
+
+**And the panel echoes what the server understood** — the intro round's rule.
+`/api/library` and `PUT /api/me/prefs` both carry `booking`, so the console
+prints *"Your page links to mailto:…"*, or says the link is not one the page
+can use. Recomputing it in the browser would be a second definition of what is
+publishable, able to disagree with the page it describes.
+
+### Where the panel lives, and why it is silent on the owner hat
+
+On **My account**, directly under *Your room*. One is where the players go, the
+other is where a landlord goes, and that adjacency is the reason: **the page
+has existed since 20 August 2026 and nothing in the console ever gave out its
+address.** A publish lamp on the Photos rail put nights up and left the
+quizmaster to work out where they had gone — the arcade-board fault again, a
+gate that works perfectly with no handle on it. So the address is PRINTED, not
+merely linked, the way *Your room* prints the play URL.
+
+Which address comes from `me.ownAddress`, the same fact `galleryAddress()`
+leans on: the plain `/gallery` resolves to ONE room, so only the account it
+resolves to gets the short form and everybody else gets `?q=`. An address that
+looks nicer and shows a stranger somebody else's photographs is the worst kind
+of wrong.
+
+It is silent on the owner hat, like the referral panel. A public page belongs
+to a quizmaster and the owner has their own quizmaster hat for it — `/gallery`
+IS that hat's page, so an address drawn here would be wrong for the one
+identity with no page of its own.
+
+**One caveat worth knowing:** the pretty `/<venue>/gallery` form only resolves
+for the room `publicRoomId()` returns, so today the growth line is reachable
+only on the owner's own quizmaster room. Every other account's page is
+`?q=<id>`, which has no venue form. The code is not owner-specific — it lights
+up for everybody the day venue addresses generalise.
+
+### What the guards prove, and what they cannot
+
+`test/gallery-about.test.js` is two halves. The sums are unit-tested. The two
+gates are driven over real HTTP against the real routes with a real published
+night behind them, which needs `test/helpers/photo-repo-stub.mjs` — the
+published flag lives in a private repo the suite has no token for, and a test
+that never runs the artefact proves nothing about it.
+
+Both gates were verified by putting the fault back: removing the venue check
+fails the disclosure test alone, and removing the published-night check fails
+two.
+
+**It also proves the booking line belongs to the hat whose page it is** — the
+first version of the test typed it on the owner account, which has no public
+page, and the page came back with nothing on it and nothing wrong anywhere. It
+goes through `POST /api/owner/act-as` now, which is the real switch.
+
+**What no test covers:** how the panel READS at the size a landlord opens it.
+That is screenshots, at 1280 and at 390, which is where the figure grid's
+minimum column width was set — 96px gave a phone three across and left *"2
+venues"* alone on a second row; 120px folds it to a two-by-two and still fits
+four on a laptop.

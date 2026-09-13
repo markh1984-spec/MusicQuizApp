@@ -712,6 +712,37 @@ export class Accounts {
     if (patch.askRounds !== undefined) prefs.askRounds = Boolean(patch.askRounds);
 
     /*
+     * HOW A VENUE BOOKS YOU — one line of their own words, and one link.
+     *
+     * A preference rather than a field on `update()` for the usual reason:
+     * `update()` is the SUBSCRIPTION and throws for the owner, who wants a
+     * public page like anybody else.
+     *
+     * **CAPPED HERE AND VALIDATED WHERE IT IS PUBLISHED.** The link is checked
+     * by `bookingLink()` in `gallery-about.js`, on the way OUT to a stranger's
+     * browser — which is where a check against `javascript:` belongs, and it
+     * keeps this file a leaf rather than importing the archive to store a
+     * string. It also means the console can echo back what the server
+     * UNDERSTOOD, so a typo is visible in the box rather than silently absent
+     * from a page the quizmaster is not looking at.
+     *
+     * Not filtered for words: these are the account holder's own words about
+     * their own business — see the note on `cleanBooking()`.
+     */
+    if (patch.booking !== undefined) {
+      prefs.booking = String(patch.booking == null ? '' : patch.booking)
+        .replace(/[\x00-\x1f\x7f]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 160);
+    }
+    if (patch.bookingLink !== undefined) {
+      prefs.bookingLink = String(patch.bookingLink == null ? '' : patch.bookingLink)
+        .replace(/\s+/g, '')
+        .slice(0, 300);
+    }
+
+    /*
      * PINNED PACKS — which packs stay in reach on the shelf.
      *
      * An array of ids, like `hiddenTabs`, and per ACCOUNT rather than per
