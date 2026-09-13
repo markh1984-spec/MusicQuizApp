@@ -61,6 +61,9 @@ const PAGES = [
   { path: '/terms', what: 'the terms' },
   { path: '/privacy', what: 'the privacy policy' },
   { path: '/refunds', what: 'the refund policy' },
+  // The newest long public page, and the class this guard exists for: Terms,
+  // Privacy and Refunds could not be scrolled at all for two years.
+  { path: '/faq', what: 'the FAQ' },
   { path: '/signup', what: 'the sign-up form' },
   { path: '/login', what: 'signing in' },
   { path: '/gallery', what: 'the public gallery' },

@@ -10,6 +10,7 @@ import { TABS, can, currentTab, hostKey, keyed, load, render } from './console.j
 import { FEATURES, FEATURE_META, NOT_BUILT, SWITCHABLE } from './plans.js';
 import { subscribeSlot } from './console-subscribe.js';
 import { pagePanel } from './console-page.js';
+import { faqPanelHtml } from './faq.js';
 import { priceLabel } from './console-tiers.js';
 import { paintScheme } from './schemes.js';
 
@@ -44,6 +45,8 @@ export function helpSection() {
    * least likely to be sent".
    */
   wrap.appendChild(suggestionPanel());
+  // Below the box and above the support door — see `faqPanelHtml()`.
+  wrap.appendChild(node(faqPanelHtml()));
   wrap.appendChild(supportPanel());
   wrap.appendChild(supportLogPanel());
   return wrap;

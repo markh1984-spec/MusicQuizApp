@@ -1643,6 +1643,14 @@ async function handleGet(req, res, url, route) {
   if (route === '/terms') return serveFile(res, config.publicDir, 'terms.html'), true;
   if (route === '/privacy') return serveFile(res, config.publicDir, 'privacy.html'), true;
   if (route === '/refunds') return serveFile(res, config.publicDir, 'refunds.html'), true;
+  /*
+   * THE FAQ — public, and deliberately NOT behind the sign-in.
+   *
+   * It is the page somebody reads BEFORE they pay as much as after, so it sits
+   * with the legal pages rather than inside the console. The console's Help tab
+   * draws the same list from the same module — see `public/assets/faq.js`.
+   */
+  if (route === '/faq') return serveFile(res, config.publicDir, 'faq.html'), true;
   // Open, like the sign-in page. It hands out nothing on its own — the token
   // in the address is what has to be right, and the page asks the server.
   if (route === '/reset') return serveFile(res, config.publicDir, 'reset.html'), true;

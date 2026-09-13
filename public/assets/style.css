@@ -10591,6 +10591,31 @@ body.landing {
 }
 .ld-faq-item[open] summary::after { transform: rotate(180deg); }
 .ld-faq-item p { margin: 0 0 16px; color: var(--ink-dim); line-height: 1.6; }
+.ld-faq-item a { color: var(--ink); }
+/* THE SECTION HEADINGS THE FULL LIST GAINED. The sales page's handful are
+   picked across sections and print none — see `faqHtml({ onlyHome })`. */
+.faq-section {
+  margin: 26px 0 10px; font-size: var(--fs-head); font-weight: 800; color: var(--ink);
+}
+.ld-faq > .faq-section:first-child { margin-top: 0; }
+
+/* ---- THE SAME LIST INSIDE THE CONSOLE — open, because the Help tab is redrawn
+   on every state push and a <details> would shut itself under a thumb.
+
+   A QUESTION IS A HEADING AND AN ANSWER IS BODY COPY, which is this app's own
+   way of telling them apart: full ink against dim, one rung up the ladder,
+   heavy. Not capitals — those are for emphasis, and a question is a label. */
+.faq-list { max-width: 68ch; }
+.faq-list .faq-section { font-size: var(--fs-lead); margin-top: 22px; }
+.faq-list .faq-section:first-child { margin-top: 14px; }
+.faq-item { margin-top: 12px; }
+.faq-item h4 {
+  margin: 0 0 4px; font-size: var(--fs-body); font-weight: 800; color: var(--ink);
+}
+.faq-item p {
+  margin: 0 0 8px; font-size: var(--fs-note); color: var(--ink-dim); line-height: 1.55;
+}
+.faq-item a { color: var(--ink); }
 
 .ld-final { text-align: center; }
 .ld-final-inner { display: flex; flex-direction: column; align-items: center; }

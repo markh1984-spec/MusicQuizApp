@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0a13">
+  <meta name="description" content="Quizporium — questions people ask before they sign up, and after.">
+  <title>Questions — Quizporium</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body class="landing">
+
+  <header class="ld-top">
+    <div class="ld-wrap ld-top-row">
+      <a class="brand" href="/home" id="brandSlot"></a>
+      <nav class="ld-nav">
+        <a href="/login">Sign in</a>
+        <a class="ld-cta ld-nav-cta" href="/signup">Get started</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="ld-section" style="padding-top:32px">
+      <div class="ld-wrap">
+        <h1 class="ld-h2">Questions</h1>
+        <p class="ld-section-lede">What people ask before they sign up, and the
+          things a one-line label could not say.</p>
+
+        <!-- Drawn from public/assets/faq.js, which is the one place any of
+             these answers is written. See the note at the top of that file. -->
+        <div class="ld-faq" id="faqSlot"></div>
+
+        <p class="ld-legal-updated" style="margin-top:26px">Still stuck? The
+          <a href="/login">Help tab</a> inside the app has the same answers and a
+          way to get hold of us.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="ld-foot">
+    <div class="ld-wrap ld-foot-row">
+      <span>Quizporium</span>
+      <nav class="ld-legal-nav" style="margin:0">
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/refunds">Refunds</a>
+        <a href="/login">Sign in</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { brandMark } from '/assets/client.js';
+    import { faqHtml } from '/assets/faq.js';
+    document.getElementById('brandSlot').innerHTML =
+      `${brandMark(28)}<span class="brand-name">Quizporium</span>`;
+    document.getElementById('faqSlot').innerHTML = faqHtml({});
+  </script>
+</body>
+</html>

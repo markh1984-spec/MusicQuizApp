@@ -107,21 +107,6 @@ What a prospective subscriber needs to see before they will pay:
 **What is NOT built is pay-per-pack**: the £3 Buy button in the Shop, which is
 the Bronze upsell and the only thing on the ladder that is not a subscription.
 
-### 4. An FAQ, so the app can stay short
-
-Every blurb in the app is now one line — "Invoicing: bill a venue before you
-leave the car park" — because fourteen of them at two sentences each is a wall
-nobody reads, and a ladder nobody reads is a ladder that sells nothing.
-
-That only works if the detail lives somewhere. It does not yet. An FAQ is
-where "what happens to my packs if I cancel", "can you read my quizzes",
-"what does a pack cost and why" and "what is a night" get answered properly —
-and it is the same content the sales site needs, so write it once.
-
-Note what it is NOT: a manual. The app should not need one. It is the page
-somebody reads before they pay, and the page they are pointed at when a
-one-line blurb was not enough.
-
 ### 5. Four things raised on the console — two are built, two are not
 
 **(a) the launch tab and (b) what a night records are BUILT** — (a) shipped as

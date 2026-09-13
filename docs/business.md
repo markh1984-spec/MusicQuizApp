@@ -666,6 +666,96 @@ Green twice after.
 gig; a flaky one teaches you to ignore red, which is the same failure with more
 steps.
 
+## The FAQ — written once, drawn in three places, 13 September 2026
+
+`public/assets/faq.js`, the page at `/faq`, the handful on `home.html`, and the
+panel on the console's Help tab.
+
+### It exists so the app can stay short
+
+Every blurb in this app is one line by rule — *"Invoicing — bill a venue before
+you leave the car park"* — because fourteen features at three sentences each is
+a wall, and a wall gets scrolled past. The rule has always had a second half:
+*"the detail goes in an FAQ, not on the control"*. That FAQ did not exist. So
+the short labels were doing their job and the detail they displaced had nowhere
+to be, which over time is how helpful paragraphs creep back in beside switches.
+
+**It is not a manual, and must not become one.** This is the page somebody reads
+before they pay, and the page they are pointed at when a one-line label was not
+enough. If an answer here turns out to be the only way to understand a control,
+the control is wrong — that is the house rule, and this file is exactly where a
+bad control would go to hide.
+
+### One list, three renderings
+
+The sales page already carried four hand-typed questions and the console had
+none. Two hand-written copies of an answer is two answers that drift, and the
+one that drifts is the one nobody is looking at — so the markup on `home.html`
+is gone and all three surfaces read the same list:
+
+| Where | What it draws |
+|---|---|
+| `/faq` | the lot, folded |
+| `home.html` | the five marked `home`, folded, under a link to the rest |
+| the Help tab | the lot, open |
+
+**The console's copy is not folded, and that is a fault already paid for
+elsewhere.** `render()` replaces the whole tab on every state push, so a
+`<details>` somebody had just opened would shut itself the moment a phone
+joined. The bingo card's *My prizes* fold survives that by living in a module
+binding; there is nothing here worth holding state for, so the console simply
+prints the answers.
+
+**Five on the sales page rather than seventeen.** It is a shop window, not a
+reference. The section headings are dropped there too — the five are picked
+across four sections and would otherwise print a heading per question.
+
+### The numbers are imported, and the one that cannot be is pinned
+
+A price or a trial length typed out in prose is true the day it is written and
+wrong the day either moves, silently, on the page whose whole job is being
+believed. `PACK_PENCE`, `TRIAL_DAYS` and `REFERRAL_BONUS_DAYS` come from
+`plans.js`.
+
+`MAX_PLAYERS` lives in `src/engine.js`, which a browser module may not reach, so
+the FAQ declares `ROOM_CEILING` and `test/faq.test.js` asserts the two are
+equal. Raising the engine's ceiling now fails a test rather than leaving a
+number on a public page that used to be true.
+
+### Nothing here restates a legal page
+
+Refunds, privacy and the terms have their own pages and their own careful
+wording. A second statement of a refund policy is a second policy, and the two
+will disagree the first time one is edited. The answers link instead, and the
+test checks every link against `server.js` itself — a dead link on the page
+somebody reads before paying is worse than no link.
+
+### `/faq` had to be reserved, and the guard said so
+
+A venue's public address is `/<venue>/<page>`, so a one-segment route is not at
+risk — but `RESERVED` in `slugs.js` is checked against every top-level route the
+app serves, and `test/slugs.test.js` failed the moment `/faq` was added. That
+list exists because the first version of the venue route ate `/api/gallery`;
+this is the second time it has caught a route before anybody noticed.
+
+### An answer may not carry markup
+
+The content is ours and static, but a string that can hold HTML is one somebody
+will paste a fragment into later. Everything is escaped except `[words](/path)`,
+which is the only link form, and a test asserts no answer contains raw markup.
+
+### What the guard proves
+
+`test/faq.test.js`: the ceiling matches the engine, the price and trial length
+are imported rather than typed, every link resolves, `/faq` is reserved, all
+three surfaces draw the shared list, the sales page no longer types its own
+`<summary>`, the console's copy is unfolded and the public one is not, and every
+question ends in a question mark with at most two paragraphs under it.
+
+Verified by putting each fault back: changing `ROOM_CEILING` fails one, breaking
+a link fails two, and replacing the sales page's call with hand-written markup
+fails the caller check.
+
 ## Why the invoice book is not encrypted
 
 Settled on 14 August 2026, kept in full because the instinct to revisit it will

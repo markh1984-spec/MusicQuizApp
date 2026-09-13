@@ -200,31 +200,14 @@
     <section class="ld-section" id="faq">
       <div class="ld-wrap">
         <h2 class="ld-h2">A few questions</h2>
-        <div class="ld-faq">
-          <details class="ld-faq-item">
-            <summary>What do I actually need on the night?</summary>
-            <p>A laptop and a projector or a screen the room can see, plus
-              wifi or a mobile hotspot for phones to join on. Nothing is
-              installed — it runs in a browser.</p>
-          </details>
-          <details class="ld-faq-item">
-            <summary>Can I write my own quizzes?</summary>
-            <p>You can write and edit your own packs in the editor, and they are
-              private to you. What you cannot do is have the app generate one for
-              you — the catalogue is where written quizzes come from, and that is
-              what the price includes.</p>
-          </details>
-          <details class="ld-faq-item">
-            <summary>What happens to my packs if I cancel?</summary>
-            <p>Your account stops launching nights, and your own saved packs and
-              past gigs stay on it. Come back and it all works again. Packs you
-              bought outright stay bought.</p>
-          </details>
-          <details class="ld-faq-item">
-            <summary>Is there a free trial?</summary>
-            <p>Signing up starts you on a trial straight away — a name and an
-              email, no card needed.</p>
-          </details>
+        <!-- EMPTY IN THE MARKUP, ON PURPOSE. These four answers were typed
+             out here AND nowhere else, so the console had none and any fix to
+             one of them had to be remembered twice. They come from
+             public/assets/faq.js now — the one place any answer is written —
+             and /faq draws the rest. -->
+        <div class="ld-faq" id="faqSlot"></div>
+        <p class="ld-section-lede" style="margin-top:18px">
+          <a href="/faq">All the questions people ask</a></p>
         </div>
       </div>
     </section>
@@ -243,6 +226,7 @@
     <div class="ld-wrap ld-foot-row">
       <span>Quizporium</span>
       <nav class="ld-legal-nav" style="margin:0">
+        <a href="/faq">Questions</a>
         <a href="/terms">Terms</a>
         <a href="/privacy">Privacy</a>
         <a href="/refunds">Refunds</a>
@@ -253,8 +237,10 @@
 
   <script type="module">
     import { brandMark } from '/assets/client.js';
+    import { faqHtml } from '/assets/faq.js';
     document.getElementById('brandSlot').innerHTML =
       `${brandMark(28)}<span class="brand-name">Quizporium</span>`;
+    document.getElementById('faqSlot').innerHTML = faqHtml({ onlyHome: true });
   </script>
 </body>
 </html>

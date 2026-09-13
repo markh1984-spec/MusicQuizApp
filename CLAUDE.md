@@ -1975,10 +1975,10 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
   body and granted hands anybody Gold for nothing, the pack-id trap wearing a
   price. Validated against `TIERS`.
 - **`accounts.create()` DROPS WHAT IT DOES NOT DESTRUCTURE, SILENTLY.**
-- **A 113th TEST FILE MADE THE SUITE FLAKY — a different test each run**, each
-  passing alone. **Attribute a flake by stashing INCLUDING UNTRACKED FILES**, or
-  the control proves nothing. **A flaky suite is worse than a slow one**: slow
-  gets skipped, flaky teaches you to ignore red.
+- **A NEW TEST FILE CAN MAKE THE SUITE FLAKY — a different test each run.**
+  **Attribute a flake by stashing INCLUDING UNTRACKED FILES.** **A flaky suite
+  is worse than a slow one**: slow gets skipped, flaky teaches you to ignore
+  red.
 
 - **A fact is on ACCOUNT, a switch is on SETTINGS, a price is in the SHOP** —
   or Settings becomes a bin.
@@ -2030,8 +2030,7 @@ first fifty people to open a gallery after one each spent a GitHub call against
 - **A `..` MAY NOT WALK OUT.** The test writes a sentinel OUTSIDE the
   folder.
 - **NOTHING DECIDING WHO MAY SEE A PHOTO IS CACHED WITH IT**, as before.
-- **A DELETED PHOTO STILL LEAVES GIT HISTORY BEHIND. Unchanged** — that is what
-  moving to object storage would fix, and the reason to consider it.
+- **Object storage would fix the git-history problem**, and is why to consider it.
 
 ### THE CONTENTS API SENDS ZERO BYTES FOR A FILE OVER 1MB, AND CALLS IT 200
 
@@ -2513,9 +2512,11 @@ preference:
   sentences to be understood is usually one that has not been named properly —
   "Your calendar" needs no explaining, "Marketing" needs a paragraph, which is
   the tell.
-- **The detail goes in an FAQ, not on the control.** That is written up in
-  TODO.md and is the same content a sales page needs, so it gets written once
-  rather than scattered as helpful paragraphs next to switches.
+- **The detail goes in an FAQ, not on the control** — `public/assets/faq.js`,
+  drawn at `/faq`, on the sales page and on the Help tab. **WRITTEN ONCE: never
+  type an answer into a page again**, and its numbers are IMPORTED. The
+  console's copy is NOT folded — that tab redraws on every state push.
+  [`docs/business.md`](docs/business.md).
 - **The exceptions are warnings and money.** "Your own packs are not being
   backed up", the lapsed-subscription note, the launch-over-a-live-game
   warning: these are read once, at a moment that matters, and being short
