@@ -109,7 +109,7 @@ function addsOf(tier) {
  * @returns {Element|null}  null when there is no ladder to draw: the OWNER,
  *   whose `ladder` is empty because none of it is for sale to him.
  */
-export function tierRow(ent, { canBuy = [], onBuy = null } = {}) {
+export function tierRow(ent, { canBuy = [], onBuy = null, hasBilling = false } = {}) {
   const ladder = (ent && ent.ladder) || [];
   if (ladder.length < 2) return null;
 
@@ -122,8 +122,68 @@ export function tierRow(ent, { canBuy = [], onBuy = null } = {}) {
    */
   const mine = ladder.reduce((best, t, i) => (t.included ? i : best), -1);
   const previewing = Boolean(ent && ent.previewing);
-  const stateOf = (i) => (i <= mine ? 'yours' : previewing ? 'trial' : 'locked');
-  const words = { yours: 'yours', trial: 'on trial', locked: 'not included' };
+
+  /*
+   * **THE RUNG YOU ARE ON IS ONLY "YOURS" WHILE SOMEBODY IS PAYING FOR IT.**
+   *
+   * This was rank-only, so `i <= mine` read as yours whatever the standing —
+   * and an account whose TRIAL HAD EXPIRED saw Bronze marked *"This is the one
+   * you are on"* with no Subscribe button on it. Silver and Gold were
+   * buyable; the rung they actually wanted was not. **That is the path every
+   * expired trial takes**, so the ladder's one job failed for exactly the
+   * people furthest down the funnel. A `cancelled` account met the same wall.
+   *
+   * `status === 'active'` is paying for real; `comped` is paying by decision.
+   * A live trial is neither, and that is the CONVERSION moment rather than an
+   * error — so it gets the button too, with wording that does not pretend the
+   * money has arrived.
+   */
+  const payingFor = Boolean(ent && (ent.comped || ent.status === 'active'));
+  const onTrial = Boolean(ent && ent.status === 'trialing' && !ent.trialExpired);
+  const stateOf = (i) => {
+    if (i > mine) return previewing ? 'trial' : 'locked';
+    if (payingFor) return 'yours';
+    return onTrial ? 'trialing' : 'unpaid';
+  };
+  const words = {
+    yours: 'yours',
+    trialing: 'on trial',
+    unpaid: 'not paid for',
+    trial: 'on trial',
+    locked: 'not included',
+  };
+
+  /*
+   * **AND SOMEBODY WHO HAS PAID BEFORE IS SENT TO THE PORTAL, NOT TO A SECOND
+   * CHECKOUT.** A `past_due` account already has a subscription at Stripe;
+   * another Checkout would open a SECOND one and bill them twice for the same
+   * thing. `hasBilling` is true the moment a webhook has stored a customer, and
+   * `subscribeSlot()` draws the portal link on exactly that condition — so the
+   * way back in is already on the page for them. Checkout is for the rung of
+   * somebody who has never paid, which is every expired trial.
+   */
+  const sells = (tier, state) => Boolean(onBuy) && canBuy.includes(tier.id)
+    && (state === 'locked' || state === 'trial' || !hasBilling);
+
+  const footFor = (tier, state) => {
+    const buyable = sells(tier, state);
+    if (state === 'yours') return 'This is the one you are on.';
+    if (state === 'trialing') {
+      return buyable ? 'Yours for the rest of your trial.'
+        : 'Yours for the rest of your trial. Get in touch to keep it.';
+    }
+    if (state === 'unpaid') {
+      return buyable ? 'Nothing is being paid for this yet.'
+        : 'Nothing is being paid for this yet. Get in touch to start it.';
+    }
+    if (state === 'trial') return 'Switched on for the rest of your trial.';
+    /*
+     * NOTHING TO PRESS: no live price behind this rung, so a Subscribe would
+     * be a control that opens a 500 at the exact moment somebody is trying to
+     * give you money. The sentence is the better answer until the keys land.
+     */
+    return buyable ? '' : 'Get in touch to move up.';
+  };
 
   const el = node(`
     <div class="rung-row">
@@ -147,17 +207,7 @@ export function tierRow(ent, { canBuy = [], onBuy = null } = {}) {
       </div>
       ${adds.length ? `<ul class="tier-adds">${adds.map((a) => `
         <li>${esc(a.words)}${a.soon ? ' <span class="cmp-soon">not yet</span>' : ''}</li>`).join('')}</ul>` : ''}
-      <div class="tiny tier-card-foot">${
-  state === 'yours' ? 'This is the one you are on.'
-    : state === 'trial' ? 'Switched on for the rest of your trial.'
-      /*
-       * NO BUTTON, BECAUSE THERE IS NOTHING TO PRESS YET — payments are not
-       * wired, so a Subscribe here would be a control that does nothing, which
-       * is worse than the sentence. This is the line that becomes the button
-       * the day the processor lands, and it is the same wording the expired
-       * trial already uses.
-       */
-      : canBuy.includes(tier.id) ? '' : 'Get in touch to move up.'}</div>`;
+      <div class="tiny tier-card-foot">${esc(footFor(tier, state))}</div>`;
 
     /*
      * AND THE BUTTON, ONLY WHERE THE SERVER SAYS THAT RUNG IS ON SALE.
@@ -172,7 +222,7 @@ export function tierRow(ent, { canBuy = [], onBuy = null } = {}) {
      * thing that moves a tier. Pressing Gold on a Bronze account opens
      * Stripe — it does not become Gold, however the reply comes back.
      */
-    if (state !== 'yours' && canBuy.includes(tier.id) && onBuy) {
+    if (state !== 'yours' && sells(tier, state)) {
       const go = node(`<button type="button" class="primary tier-buy">Subscribe \u2014 ${esc(priceLabel(tier.pence))}</button>`);
       go.addEventListener('click', async (ev) => {
         ev.stopPropagation();

@@ -45,7 +45,13 @@ export function subscribeSlot(ent, me) {
     }
   };
 
-  out.append(tierRow(ent, { canBuy: (me && me.canBuy) || [], onBuy: buy })
+  out.append(tierRow(ent, {
+    canBuy: (me && me.canBuy) || [],
+    onBuy: buy,
+    // Paid before? The rung you are on sends you to the portal rather than to a
+    // second Checkout — see the note on `sells` in console-tiers.js.
+    hasBilling: Boolean(me && me.hasBilling),
+  })
     || document.createComment('no ladder'));
 
   /*

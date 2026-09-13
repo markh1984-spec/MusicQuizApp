@@ -2760,27 +2760,19 @@ costs. Both split off at the 100,000-byte cap.
   options based on a UI change — I'm on my phone, and being able to make quick
   decisions on UI increases my productivity massively."* So when a UI decision
   has real forks, put them up as options with a small mock-up of each rather
-  than describing them in a paragraph and asking what he thinks. He is usually
-  on a phone; a paragraph costs him a round trip and a tap costs him nothing.
-  Recommend one and say why — this is not a way of avoiding a view, it is a way
-  of making his answer cheap.
-- **RENDER THE OPTIONS BEFORE ASKING HIM TO CHOOSE.** Set on 14 August 2026 in
-  his own words: *"before asking me to make general decisions about UI, can
-  you render examples to make my choice more informed"*. So a UI question
-  arrives WITH a picture of each option built from the app's own stylesheet —
-  not an ASCII sketch and not a description. It cost a few minutes on the
-  corner-radius decision and turned an argument about which numbers are
-  "correct" into a glance at four blocks. Build the mock from the real
-  `style.css` and the real markup, or the comparison is of something else.
-- **SEND THE SCREENSHOT; DO NOT OPEN IT.** *"Can the screenshots be delivered
-  to me, and then that context reclaimed immediately after? It's usually just a
-  UI decision that I then action and move on from."* **Context cannot be
-  reclaimed** — an image is in the window for the rest of the session once it
-  is read — but it never has to go in: `SendUserFile` costs one line of text,
-  `Read` on a full-page screenshot costs 2–4k tokens. So an agent MEASURES, the
-  file is SENT, and it is opened **only when the judgement is Claude's own**:
-  *"do these figures read at 200px"* needs eyes, *"does this look right to
-  you"* does not.
+  than describing them in a paragraph. He is usually on a phone; a paragraph
+  costs him a round trip and a tap costs nothing. **Recommend one and say
+  why** — that is not avoiding a view, it is making his answer cheap.
+- **RENDER THE OPTIONS BEFORE ASKING HIM TO CHOOSE** — *"render examples to
+  make my choice more informed"*. A UI question arrives WITH a picture of each
+  option, never an ASCII sketch or a description. **Built from the real
+  `style.css` and the real markup**, or the comparison is of something else.
+- **SEND THE SCREENSHOT; DO NOT OPEN IT** — *"delivered to me, and then that
+  context reclaimed immediately after"*. **Context cannot be reclaimed** once an
+  image is read, but it never has to go in: `SendUserFile` costs a line,
+  `Read` on a full-page shot 2–4k tokens. An agent MEASURES, the file is SENT,
+  and it is opened **only when the judgement is Claude's own** — *"do
+  these figures read at 200px"* needs eyes, *"does this look right"* does not.
 - **SHOW A SCREENSHOT FOR EVERY UI CHANGE. This is a rule, not a nicety** —
   set by the host on 14 August 2026: *"whenever you change the UI of anything
   in this app you MUST show me, since the UI of this app is extremely
@@ -2889,20 +2881,18 @@ the definition of a 3. And **inventing a small job to round a session off is a
 Learned on 14 August 2026, splitting this file, and it generalises well past
 documentation.
 
-The split was called impossible in one session and then done in one session.
-The wrong assumption was not about SIZE — it was that every section had to be
-read and written out again. What did it was a script moving whole sections **by
-line number**, never touching the prose. **A 4,000-line move costs the same as
-a 40-line one when nothing reads the content.**
+It was called impossible in one session and then done in one, and the wrong
+assumption was not SIZE but that every section had to be read and written out
+again. **A 4,000-line move costs the same as a 40-line one when nothing reads
+the content** — a script moving whole sections by line number.
 
 So when a job looks too big, ask not "can I do half of it" but **"is there a
 version a script does and I only supervise?"** Moving, renaming, reordering,
 extracting, counting and checking all are. Judgement — which rule matters, what
-a control should be called — is not, and should stay slow.
-
-It has a safety side too, and it is the better argument: **a script cannot
-quietly reword something on the way through.** The hand-written half was both
-the expensive part AND the only part that could have lost a rule.
+a control should be called — is not, and should stay slow. **A script cannot
+quietly reword something on the way through**, which is the better argument: the
+hand-written half was the expensive part AND the only part that could have lost
+a rule.
 
 **And a cleanup frees nothing in the session that performs it** — this file was
 already loaded, and that cost is unrecoverable. Tidying compounds across
@@ -3977,6 +3967,13 @@ descriptor, the branding, the receipts and the payouts are all per account.
   SELLS; `console-subscribe.js` wires. **NO SUBSCRIBE BUTTON WHERE THERE IS NO
   LIVE PRICE** (`me.canBuy`): one that opens a 500 is worse than none at the
   moment somebody is trying to pay.
+- **AND THE RUNG YOU ARE ON IS ONLY "YOURS" WHILE SOMEBODY IS PAYING FOR IT.**
+  Rank alone meant an **expired trial** saw Bronze marked *"the one you are
+  on"* with **no Subscribe on it** while Silver and Gold were buyable — the
+  ladder failing the people furthest down the funnel, on the path every trial
+  takes. A live trial gets the button too: that is the CONVERSION moment.
+  **Somebody who has PAID BEFORE goes to the PORTAL, never a second Checkout**,
+  which would bill a `past_due` account twice. `buy-your-own-rung.mjs`.
 - **A PRETTY-PRINTED FIXTURE IS WHAT MAKES THE RAW-BYTES TEST REAL** — a body
   from `JSON.stringify(x)` survives parse-and-restringify unchanged, so the
   first version passed with the fault put back.
@@ -4073,6 +4070,7 @@ node scripts/lobby-games-play.mjs       # do the five games draw, run and score?
 node scripts/pack-shapes.mjs            # which quiz packs are short?
 node scripts/pack-repeats.mjs           # does one night ask the same thing twice?
 node scripts/soundboard.mjs             # do the host's sounds actually make a noise?
+node scripts/buy-your-own-rung.mjs      # can somebody who wants to pay actually pay?
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 ```
 
