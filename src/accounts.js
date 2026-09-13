@@ -374,6 +374,36 @@ export class Accounts {
   }
 
   /**
+   * MARK A TRIAL NOTICE AS SENT — the only thing that stops it going twice.
+   *
+   * **Every push to `MusicQuizApp` is a deploy and every deploy is a boot**, so
+   * the sweep in `server.js` runs several times on a busy Monday. Without a mark
+   * on the ACCOUNT a quizmaster gets one "your trial ends Thursday" per push.
+   *
+   * On the account rather than in memory for the same reason: `data/` is wiped on
+   * every deploy, and `accounts.json` is the one thing that is backed up and
+   * restored. A `Set` in this process would forget between the pushes it exists
+   * to survive.
+   *
+   * **The stamp goes on BEFORE the send, and is not undone if the send fails.**
+   * That is the honest trade: a provider having a bad morning costs one
+   * quizmaster one notice, where the other way round — stamping after a reply —
+   * costs everybody a duplicate every time a request times out after delivering.
+   * A missed notice is recoverable by a human; a mailbox full is not.
+   *
+   * @param {'warned'|'ended'} which
+   */
+  markTrialNotice(id, which) {
+    const account = this.find(id);
+    if (!account) return null;
+    const field = which === 'ended' ? 'trialEndedAt' : 'trialWarnedAt';
+    if (account[field]) return safe(account);
+    account[field] = new Date(this.now()).toISOString();
+    this.save();
+    return safe(account);
+  }
+
+  /**
    * A PACK SOMEBODY PAID FOR OUTRIGHT — the only writer of `account.bought`.
    *
    * **Separate from `update()`'s `packs` on purpose, and separate from

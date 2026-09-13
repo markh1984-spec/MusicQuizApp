@@ -2938,6 +2938,7 @@ src/portraits.js       the shared portrait library: one picture per musician
 src/branding.js        "Mark's Quizporium" — the app name and whose night it is
 src/gates.js           which routes are the owner's, as two testable lists
 src/own-packs.js       a quizmaster's own packs — theirs, and private from the owner
+src/trials.js          who is due a trial-is-ending email, and who must never get one
 src/spend.js           what Claude and OpenAI have actually cost, written down as it happens
 src/chat.js            online chat: what a room is, who is in it, what may be said mid-question
 public/                the screens; *-bingo.js files hold the bingo variants
@@ -3931,8 +3932,33 @@ descriptor, the branding, the receipts and the payouts are all per account.
 `receiptEmail()`/`cardFailedEmail()` in `src/email.js`, `billingEmail()` in
 `src/billing.js` — kept OUT of `applyBilling()`, which stays a pure translation
 with no network call. Only `started`/`renewed` and `payment_failed` say
-anything. **Called from the webhook route**, never from `applyBilling()`. A
-card-failed notice must never say a night is at risk.
+anything. **Called from the webhook route**, never from `applyBilling()`.
+
+- **AND A TRIAL THAT RUNS OUT IS THE THIRD** — `src/trials.js`, two templates
+  and a twice-daily sweep. It ended in SILENCE: the only sign was a line on My
+  account, then a launch refused **on a day they had a gig booked**, with no
+  grace night. **This one MAY say a night is at risk and `cardFailedEmail()` may
+  not** — a lapse gets one more night so a booked quiz is safe; an expired trial
+  gets none, so it genuinely will not launch. **The ended notice LEADS with what
+  still works**, or it reads as an account being closed. **One notice each and no
+  chase** — two is pressure, and a chase is a queue somebody works.
+- **`src/trials.js` HOLDS NO CLOCK AND SENDS NOTHING** — it answers *who is due
+  what* from a list and a `now`, so all of it is testable without a timer.
+- **THE MARK GOES ON THE ACCOUNT, BEFORE THE SEND** (`markTrialNotice`). Every
+  push is a deploy and every deploy is a boot, so a `Set` in memory would forget
+  between the pushes it exists to survive, and a busy Monday sends one notice per
+  push. **Stamped first, deliberately**: a duplicate is worse than a miss, and
+  only a miss is recoverable by a human.
+- **A GROUP SEAT IS NEVER TOLD** — it carries its PARENT'S `trialEndsAt` through
+  `effective()`, so a company of five would get five copies of one warning, four
+  going to people who cannot act on it.
+- **AND NOT CONFIGURED MAY NOT BURN THE NOTICE** — with no provider the sweep
+  stamps nothing, or the day a key is finally set nobody is ever told.
+- **IT IS AN AUTOMATIC SEND, AND THAT IS NOT A BREAK OF *do not build a send that
+  skips the reading*.** That rule is about the QUIZMASTER'S admin, where the risk
+  is naming the wrong headcount and a human must stay accountable. **There is
+  nothing here for a human to read and correct**: a trial ends on the 20th or it
+  does not.
 
 Full reasoning for both: **[`docs/business/plumbing.md`](docs/business/plumbing.md)**.
 
@@ -4021,6 +4047,7 @@ node scripts/soundboard.mjs             # do the host's sounds actually make a n
 node scripts/buy-your-own-rung.mjs      # can somebody who wants to pay actually pay?
 node scripts/owner-money.mjs            # is the money tab telling the truth?
 node scripts/buy-a-pack.mjs             # can somebody buy one pack for £3?
+node --test test/trial-emails.test.js   # does a trial ending actually tell anybody?
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 ```
 

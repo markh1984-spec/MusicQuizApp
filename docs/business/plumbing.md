@@ -483,3 +483,113 @@ the one thing on that shelf that talks to a processor.
   because *a test that the payload is right proves nothing about whether anybody
   drew it*. It also checks the button is genuinely pressable rather than merely in
   the DOM, and that the no-keys server draws it disabled.
+
+### A trial that runs out — the two emails, 13 September 2026
+
+`src/trials.js`, `trialEndingEmail()`/`trialEndedEmail()` in `src/email.js`, and
+`sweepTrials()` in `server.js`.
+
+**It ended in total silence for as long as trials existed.** `trialEndsAt` is
+written once at sign-up and `trialExpired()` is evaluated on READ — right for a
+gate, useless as a notice. The only sign was a line on My account, a page
+somebody who has stopped opening the console is by definition not looking at, and
+then `/api/host/launch` simply refused. **On a day they had a gig booked**, with
+no grace night — an expired trial deliberately gets none, because a grace there
+is a free gig for anyone who signs up and walks away.
+
+So: the biggest hole in the funnel, and it is two emails and a clock.
+
+#### This one may say a night is at risk, where the card-failed notice may not
+
+The difference is real rather than a tone choice, and it is worth holding both
+halves at once. A failed card moves the STATUS and never the tier, and a lapse
+gets one more night — so a booked quiz genuinely is safe, and `cardFailedEmail()`
+is forbidden from implying otherwise. **A trial that ends gets nothing**, so a gig
+on the Friday genuinely will not launch. Softening that would be the app being
+reassuring about the one thing it is about to do.
+
+The ending email therefore names the consequence *and* what is untouched. The
+**ended** notice reverses the order and leads with what still works — the same
+discipline `lastNightWarning()` follows on the console, because an email that
+opens with a refusal reads as an account being closed. **One notice each and no
+chase**: two is pressure, and a chase sequence is a queue somebody has to work,
+which the Monday rule prices as expensive.
+
+It also names the DATE beside the count. "3 days" read on a Wednesday evening and
+acted on at the weekend is a sentence that has stopped being true.
+
+#### Who is due what, and the four accounts that are never told
+
+`src/trials.js` **holds no clock and sends nothing** — it answers *who is due
+what* from an accounts list and a `now`, so the whole of it is testable without a
+timer, a provider or a server. `server.js` owns the WHEN. The same split
+`src/comeback.js` uses.
+
+`onTrial()` excludes four, and each is a real case:
+
+- **the owner**, who has no subscription;
+- **anybody not `trialing`** — a payer, a lapse or a cancellation is a different
+  conversation and `applyBilling()` owns it;
+- **a comped account**, on the house by decision, whose `trialEndsAt` is never
+  even written;
+- **a GROUP SEAT**, and this is the one worth the test. A seat carries its
+  parent's `trialEndsAt` through `effective()`, so without that line a company of
+  five gets five copies of one warning and four go to people who cannot act on it
+  — their standing is not theirs to fix.
+
+`WARN_DAYS` is **3**: long enough to act on the Monday most people would, short
+enough to still be true when it lands. A constant with a note rather than a
+setting — nobody has asked, and a panel for a number the owner would touch once is
+the clutter rule failing. `daysLeft()` rounds **up**, so thirty hours reads as two
+days rather than one; rounding down is the app being wrong in the direction that
+costs somebody the chance to act.
+
+#### The mark is on the account, and it goes on before the send
+
+**Every push to `MusicQuizApp` is a deploy and every deploy is a boot**, so the
+sweep runs several times on a busy Monday. `markTrialNotice()` writes
+`trialWarnedAt` / `trialEndedAt` onto the account — **not into a `Set` in this
+process**, because `data/` is wiped on every deploy and `accounts.json` is the one
+thing backed up and restored, so an in-memory record would forget between exactly
+the pushes it exists to survive.
+
+**Stamped BEFORE the send, and not undone on a failure.** That is the honest
+trade: a provider having a bad morning costs one quizmaster one notice, where
+stamping after a reply costs everybody a duplicate every time a request times out
+after delivering. **A missed notice is recoverable by a human; a mailbox full is
+not.**
+
+**The warning having gone is not a precondition for the ended one.** Somebody who
+signed up eleven days before a deploy that happened after their trial ended never
+got a warning, and the second email is the useful one anyway — it is the one that
+says what to do about it.
+
+**And not-configured may not burn the notice.** With no mail provider the sweep
+returns before stamping anything, so the day a key is finally set those people
+still get told. *Not configured is a STATE, not a failure* — `src/email.js`'s own
+rule, applied one level up.
+
+#### Where the link goes, and why it only works now
+
+Straight to the ladder — `/console?door=account&tab=account` — rather than the
+console's front door. And **it only became a real destination earlier the same
+day**: until the rung you are ON became buyable when nobody is paying for it, an
+expired trial arriving there found Bronze marked *"this is the one you are on"*
+with no Subscribe button. Worth remembering if anybody ever reverts that.
+
+#### The guards, and what only one of them can see
+
+- `test/trials.test.js` — who is due what, against an injected clock, including
+  all four exclusions and the rounding.
+- **`test/trial-emails.test.js` spawns the REAL server and stubs only the network
+  behind it** (`test/helpers/mail-stub.mjs`, the `photo-repo-stub.mjs` pattern,
+  every send appended to a JSONL file the test reads). The sweep runs at BOOT
+  against the real accounts book, so nothing else can answer whether it sends
+  anything at all — and **checking the marks alone would not do it**: a sweep that
+  stamped every account and sent nothing passes that, which is this repo's oldest
+  fault wearing a mail provider. It also kills the server and starts it again to
+  prove a restart does not re-send.
+
+Verified by putting four faults back: the missing mark (re-sends on every boot),
+a sweep that stamps and never sends, a group seat warned about its parent's
+trial, and the notice being burned with no provider configured.

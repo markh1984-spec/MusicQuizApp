@@ -293,6 +293,73 @@ export function cardFailedEmail({ label }) {
   };
 }
 
+/**
+ * "YOUR TRIAL RUNS OUT ON THURSDAY."
+ *
+ * **AND THIS ONE MAY SAY A NIGHT IS AT RISK, WHERE `cardFailedEmail()` MAY
+ * NOT** — the difference is real rather than a tone choice. A failed card moves
+ * the STATUS and never the tier, and a lapse gets one more night, so a booked
+ * quiz genuinely is safe. **A trial that ends gets no grace night at all**, by
+ * decision, so a gig on the Friday genuinely will not launch. Softening that
+ * would be the app being reassuring about the one thing it is about to do.
+ *
+ * It names the DATE as well as the count, because "3 days" read on Wednesday
+ * evening and acted on Saturday is a sentence that has stopped being true.
+ */
+export function trialEndingEmail({ name, days, when, link }) {
+  const app = String(name || '').trim() || 'Quizporium';
+  const left = Math.max(1, Math.round(Number(days) || 1));
+  const day = left === 1 ? 'tomorrow' : `in ${left} days`;
+  return {
+    subject: `Your ${app} trial ends ${day}`,
+    text: [
+      `Your free trial ends ${day}${when ? ` — ${when}` : ''}.`,
+      '',
+      'Everything still works until then. After that a new quiz will not launch,',
+      'so if you have a night booked it is worth sorting before it.',
+      '',
+      'Pick a plan from My account:',
+      link,
+      '',
+      'Your own packs, your venues, your past gigs and your invoices all stay',
+      'exactly where they are either way — nothing is deleted.',
+    ].join('\n'),
+  };
+}
+
+/**
+ * AND THE ONE AFTER IT HAS ENDED.
+ *
+ * **It leads with what still works**, which is the same discipline
+ * `lastNightWarning()` follows on the console: everything they have made is
+ * theirs and untouched, and only STARTING something new is refused. An email
+ * that opens with a refusal reads as an account being closed.
+ *
+ * **No date, no deadline and no second chase.** One notice is information; two
+ * is pressure, and the Monday-load rule cuts both ways — a queue of chasing
+ * emails is a thing somebody has to work, and this one serves itself.
+ */
+export function trialEndedEmail({ name, link }) {
+  const app = String(name || '').trim() || 'Quizporium';
+  return {
+    subject: `Your ${app} trial has ended`,
+    text: [
+      'Your free trial has ended.',
+      '',
+      'Everything you made is still there — your own packs, your venues, your',
+      'past gigs, your photos and your invoice book. Nothing has been deleted',
+      'and nothing will be.',
+      '',
+      'What has stopped is starting a new quiz or bingo game. Picking a plan',
+      'turns that straight back on:',
+      link,
+      '',
+      'If you tried it and it is not for you, that is genuinely fine — there is',
+      'nothing to cancel and you will not hear from us again about it.',
+    ].join('\n'),
+  };
+}
+
 function money(pence) {
   const n = Math.round(Number(pence) || 0);
   return `£${(n / 100).toFixed(2)}`;

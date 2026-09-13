@@ -108,7 +108,11 @@ import {
   leaguesRunning, setLeagueRunning, isVenueKey,
 } from './src/league-publish.js';
 import { publicTable, publicName, isCleanForPublic } from './src/clean-names.js';
-import { sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail, welcomeEmail } from './src/email.js';
+import {
+  sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail, welcomeEmail,
+  trialEndingEmail, trialEndedEmail,
+} from './src/email.js';
+import { dueWarning, dueEnded, daysLeft, WARN_DAYS } from './src/trials.js';
 import { Suggestions, KINDS, PACK_REQUEST_KIND } from './src/suggestions.js';
 import { Spend, spendRecorder, imagePrices } from './src/spend.js';
 // The pack id a generation is going to produce, so a cost has a subject from
@@ -8579,6 +8583,18 @@ server.listen(config.port, () => {
     setInterval(() => { keepKeyAlive().catch(() => {}); }, 7 * 86_400_000).unref();
   }
 
+  /*
+   * AND TELL ANYBODY WHOSE TRIAL IS ABOUT TO RUN OUT — see `sweepTrials()`.
+   *
+   * `unref()` for the same reason as above: it may never hold the process open,
+   * and a mail provider is nothing to do with whether tonight's quiz runs.
+   * Nothing awaited here either — boot must not wait on an outbound request.
+   */
+  sweepTrials().catch((err) => console.warn('[trials] sweep failed:', err.message));
+  setInterval(() => {
+    sweepTrials().catch((err) => console.warn('[trials] sweep failed:', err.message));
+  }, TRIAL_SWEEP_MS).unref();
+
   if (!accounts.all.length) {
     console.log('');
     console.log('  No accounts yet. The host key above is the way in, and it can');
@@ -8587,6 +8603,77 @@ server.listen(config.port, () => {
   }
   console.log('');
 });
+
+/*
+ * ====================================================== TRIALS THAT RUN OUT
+ *
+ * A trial ended in total SILENCE until 13 September 2026: nothing told anybody,
+ * the only sign was a line on My account, and then a launch simply refused — on
+ * a day they had a gig booked, with no grace night, which an expired trial
+ * deliberately does not get. It was the biggest hole in the funnel and it is two
+ * emails and a clock.
+ *
+ * **`src/trials.js` decides WHO and this decides WHEN.** That file holds no clock
+ * and sends nothing, so the whole of it is testable with an injected `now`.
+ *
+ * **Twice a day, and at boot.** Every push is a deploy and every deploy is a
+ * boot, so the cadence barely matters for delivery — what matters is that the
+ * mark is on the ACCOUNT (`markTrialNotice`), or a busy Monday sends one notice
+ * per push. Twelve hours means a trial expiring overnight is answered by lunch
+ * rather than a week later on a quiet stretch with no deploys.
+ *
+ * **Nothing is awaited and nothing throws upward.** A mail provider having a bad
+ * morning has nothing to do with whether a quiz can run tonight — the same rule
+ * `keepKeyAlive()` follows above.
+ */
+const TRIAL_SWEEP_MS = 12 * 3_600_000;
+
+async function sweepTrials() {
+  if (!emailConfigured()) return { warned: 0, ended: 0, skipped: 'no mail provider' };
+  const base = (config.publicUrl || '').replace(/\/+$/, '') || 'https://musicquizapp.onrender.com';
+  /*
+   * STRAIGHT TO THE LADDER, not to the console's front door. The rungs on My
+   * account are where a plan is picked — and since the rung you are ON became
+   * buyable when nobody is paying for it, an expired trial pressing Bronze there
+   * actually works. Before that fix this link led to a dead end, which is worth
+   * remembering if anybody ever reverts it.
+   */
+  const link = `${base}/console?door=account&tab=account`;
+  const brandName = brandForRoom(rooms.get(HOUSE));
+  const now = Date.now();
+  let warned = 0;
+  let ended = 0;
+
+  for (const account of dueWarning(accounts.all, now)) {
+    const when = new Date(Date.parse(account.trialEndsAt))
+      .toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    // STAMPED FIRST — see the note on markTrialNotice. A duplicate is worse than
+    // a miss, and only one of the two is recoverable by a human.
+    accounts.markTrialNotice(account.id, 'warned');
+    warned += 1;
+    sendEmail({
+      to: account.email,
+      ...trialEndingEmail({ name: brandName, days: daysLeft(account, now), when, link }),
+    }).catch((err) => console.warn('[trials] could not warn', account.email, err.message));
+  }
+
+  for (const account of dueEnded(accounts.all, now)) {
+    accounts.markTrialNotice(account.id, 'ended');
+    ended += 1;
+    sendEmail({
+      to: account.email,
+      ...trialEndedEmail({ name: brandName, link }),
+    }).catch((err) => console.warn('[trials] could not tell', account.email, err.message));
+  }
+
+  if (warned || ended) {
+    // Said out loud, because it is the only place the owner finds out that a
+    // trial ended at all — the Money tab counts them, this names the moment.
+    console.log(`[trials] ${warned} warned (${WARN_DAYS} days out), ${ended} told it has ended`);
+    await backUpAccounts();
+  }
+  return { warned, ended };
+}
 
 /** Save on the way out, so even a deliberate restart loses nothing. */
 function shutdown(signal) {
