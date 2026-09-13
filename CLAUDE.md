@@ -553,12 +553,12 @@ opening a second file.
 
 ## The GUI rules — what a control looks like is decided by what it DOES
 
-Settled on 14 August 2026, because the host was about to design the interface
-once per feature: *"I want to make sure that when I build future features, I'm
-not designing the GUI after every feature."* Right to stop and do it once —
-measured before the conversation, the same primary gradient appeared **72
-times at four different angles**, and there were **eight different corner
-radii**. The system existed in his head and drifted on screen.
+Settled because the host was about to design the interface once per feature:
+*"I want to make sure that when I build future features, I'm not designing the
+GUI after every feature."* Right to stop and do it once — measured first, the
+same primary gradient appeared **72 times at four different angles**, and there
+were **eight different corner radii**. The system existed in his head and
+drifted on screen.
 
 ### Five roles, and every control is exactly one of them
 
@@ -869,23 +869,20 @@ they say next.
 
 ### THE DRINKS STAY IN THEIR POCKET — across nights, and with no login
 
-*"Give them drinks that they keep in their account on their phone so they can
-redeem them throughout the night whenever they fancy it"*, then the correction
-that mattered: *"the app already remembers phones from previous weeks including
-their name, so I don't understand why it can't just remember the drinks they've
-won as well?"*
+*"Drinks that they keep in their account on their phone so they can redeem them
+throughout the night"*, then the correction that mattered: *"the app already
+remembers phones from previous weeks including their name, so I don't understand
+why it can't just remember the drinks they've won as well?"*
 
-- **HE WAS RIGHT, AND "A PHONE HAS NO ACCOUNT" WAS THE WRONG ANSWER** — it is
-  written here because it was written here wrongly first. A phone has kept its
-  id, its token and its team name in `localStorage` since rule 3 existed. The
-  real reason was narrower and fixable: **`/api/voucher` and
-  `/api/voucher/redeem` read the LIVE game's state, which the next launch
-  replaces.** `src/wallet.js` falls back to the room's filed nights.
+- **HE WAS RIGHT, AND "A PHONE HAS NO ACCOUNT" WAS THE WRONG ANSWER** — written
+  here because it was written here wrongly first. A phone has kept its id, token
+  and team name in `localStorage` since rule 3. The real reason was narrower:
+  **`/api/voucher` and `/api/voucher/redeem` read the LIVE game's state, which
+  the next launch replaces.** `src/wallet.js` falls back to the filed nights.
 - **NOTHING NEW IS STORED.** `results()` has filed the vouchers into every
   archived night since the bar started scanning, and `updateArchivedNight()`
-  already exists for a drink handed over after the night is filed. **The
-  archive already survives the deploys that wipe `data/`; a new store would
-  have had to earn that from scratch.**
+  covers a drink handed over afterwards. **The archive already survives the
+  deploys that wipe `data/`; a new store would have earned that from scratch.**
 - **THE LIVE GAME IS ASKED FIRST, IN BOTH ROUTES AND IN THAT ORDER.** A pub
   night takes the path it always took — and archive-first would let a filed
   copy be taken while the live one still reads as owed: two drinks for one win.
@@ -2000,8 +1997,8 @@ the owner's Money tab, which compared revenue against the AI bill ALONE — so
 month when the AI is cheap and the server is not.
 
 - **TYPED, NOT FETCHED**, and **NOT A LEDGER ROW** — the ledger records what a
-  JOB cost, so folding hosting in lands it in *what the money went on* and in the
-  per-pack average, which would move when a server is resized.
+  JOB cost, so folding hosting in lands it in *what the money went on* and in
+  the per-pack average, which moves when a server is resized.
 - **NAMED IN THE TOTAL** — a total silently absorbing a number you set months
   ago is one you stop trusting.
 - **`restore()` NAMES IT — the whitelist trap for the FOURTH time.** It runs at
@@ -2054,7 +2051,7 @@ Full reasoning: **[`docs/gigs/photos.md`](docs/gigs/photos.md)**.
 `console-tiers.js`, on My account. Bronze / Silver / Gold, yours lit in its
 metal, the ones above locked; pressing one opens a card naming what it holds.
 
-- **IT IS SHAPED LIKE THE OWNER'S AND IS THE OPPOSITE OF IT.** `tierPreview()`
+- **SHAPED LIKE THE OWNER'S AND THE OPPOSITE OF IT.** `tierPreview()`
   DOWNGRADES; this only sells, so **pressing Gold on a Bronze account must stay
   inert**, or Gold is free. His keeps INITIALS and this spells WORDS.
 - **A LOCKED RUNG IS PRESSABLE** — `disabled` swallows the press and the sell
@@ -2376,14 +2373,13 @@ labelling.** "Tonight" at the top of a panel is a label and does not need
 them; the name of the team that just won a quiz in front of a room is the
 emphasis and does.
 
-Set deliberately on 12 August 2026, and they outrank preference — including
-his own. His framing: *"I have no ego whatsoever about this being my app, my
-rules — if I have to make changes to make the app as good as possible for the
-customers I will."*
+They outrank preference — including his own: *"I have no ego whatsoever about
+this being my app, my rules — if I have to make changes to make the app as good
+as possible for the customers I will."*
 
-**That sentence is load-bearing.** A proposal of his that hurts clarity should
-be argued with rather than built, and "the host asked for it" is not on its own
-a reason. He would rather be told.
+**That sentence is load-bearing.** A proposal of his that hurts clarity should be
+argued with rather than built, and "the host asked for it" is not on its own a
+reason. He would rather be told.
 
 Four rules, in order:
 
@@ -2397,10 +2393,9 @@ never have to work anything out.
 ### 2. As little clutter as possible
 
 **A control nobody uses is clutter, even a good one.** Every switch, filter,
-badge and note has to earn the pixels — "it might be handy" is not earning
-them. When in doubt, leave it out and wait for somebody to miss it. It cuts
-against the instinct to be helpful: a page with an answer to every question is
-a page nobody can scan.
+badge and note has to earn the pixels — "it might be handy" is not earning them.
+When in doubt, leave it out and wait for somebody to miss it. A page with an
+answer to every question is a page nobody can scan.
 
 ### 3. Ease of use
 
@@ -2411,78 +2406,52 @@ the common job slower to make a rare job easier is the wrong way round.
 ### 4. Build what helps a quizmaster SELL
 
 The one that sets priorities rather than settling arguments. Two kinds of
-feature: things that run a night, and things that win the next booking. The
+feature: things that run a night, and things that win the next booking — the
 second is the differentiator against a generic quiz app and what somebody is
-really buying. It promotes, in order:
-
-- **Past gigs** — the evidence somebody shows a venue. Already built and
-  currently thin: it should carry the venue, the numbers and the photos.
-- **A night as a real object, with a venue on it.** Nothing else on this list
-  works properly without it. See the terminology section in TODO.md.
-- **Advert slides** — the quizmaster's own revenue, and the reason a venue
-  books them over somebody cheaper.
-- **Invoicing** — getting paid without leaving the car park.
-
-And it demotes anything that only makes the app cleverer.
+really buying. It promotes, in order: **Past gigs** (the evidence shown to a
+venue), **a night as a real object with a venue on it** (nothing else works
+without it), **advert slides** (the quizmaster's own revenue, and why a venue
+books them over somebody cheaper), and **invoicing**. **And it demotes anything
+that only makes the app cleverer.**
 
 ### The fifth constraint: MONDAY, and what a feature actually costs
 
-**He runs three businesses and has one admin day a week.** Monday is when the
-inbox is read, the replies go out, the topical pack is generated and read
-through, and app changes get made.
-
-**It BUYS the turnaround rather than costing it**, and what makes it keepable
-is Monday not being swamped. So:
+**He runs three businesses and has one admin day a week** — the inbox, the
+replies, the topical pack, and app changes, all on a Monday. So:
 
 > **A feature's real price is the ADMIN IT CREATES ON A MONDAY, not the code it
 > takes to write.**
 
-That is the thread through the draft-reply button, the inbox that shortens as
-you answer it, the queue position on pack requests, the been-opened receipt,
-"one open request at a time", and the refusal to add an email service. **Every
-one is a Monday-load reducer.** Two things follow:
+That is the thread through the draft-reply button, the shrinking inbox, the
+queue position on pack requests, the been-opened receipt and "one open request
+at a time". Two things follow:
 
 - **Anything needing DAILY attention is a bad fit for this business**, however
-  good the idea. The weekly topical pack fits because its cadence IS Monday's;
-  an emergency support channel does not.
-- **A feature that generates a QUEUE somebody has to work is expensive; one
-  that serves itself is cheap.** When a proposal creates a pile, ask first
-  whether the pile can shrink on its own.
+  good the idea. The weekly topical pack fits, its cadence being Monday's; an
+  emergency support channel does not.
+- **A feature that generates a QUEUE somebody has to work is expensive; one that
+  serves itself is cheap.** When a proposal creates a pile, ask first whether the
+  pile can shrink on its own.
 
 ### And the same rule points at the QUIZMASTER'S admin, not only the owner's
 
-Stated by the host on 14 August 2026, and it is the generalisation of
-everything above: *"semi-automated is always going to be better, because they
-could just read through, click send, read through, click send. It takes the
-admin burden off. It's essentially applying what I'm doing from within the app
-to them as a quizmaster on their side as well."*
+*"Semi-automated is always going to be better… read through, click send. It
+takes the admin burden off."* **Every Monday-load reducer in this file was built
+for the OWNER; a quizmaster has the identical problem.**
 
-**Every Monday-load reducer in this file was built for the OWNER. A quizmaster
-has the identical problem and nobody has built it for them.**
+**THE SHAPE IS ALWAYS `reply-draft.js`'S: the app prepares, the human reads, the
+human sends.** The blank page is where the time goes, not the send; the human
+stays accountable for what goes out in their name; it needs no email service,
+the share sheet already being how invoices leave here.
 
-**THE SHAPE IS ALWAYS THE SAME AND IT IS THE ONE `reply-draft.js` ALREADY
-USES: the app prepares, the human reads, the human sends.** Four reasons:
+**Do not build a send that skips the reading.** An invoice that goes out unread
+is the one naming the wrong headcount, or billing a cancelled night — and it
+lands on the relationship the quizmaster is paid to keep.
 
-- **The blank page is where the time goes**, not the pressing of send.
-- **The human stays accountable for what goes out**, so nothing goes publicly
-  wrong in their name.
-- **It needs no email service**: the share sheet and the clipboard are already
-  how invoices leave this app.
-- **It is dual-purpose**, which is the guard rail below.
-
-**Do not build a send that skips the reading.** An invoice or a thank-you that
-goes out unread is the one that names the wrong headcount, or bills a night
-that was cancelled — and it lands on the relationship the quizmaster is being
-paid to keep.
-
-**AND THE GUARD RAIL: an admin reducer that makes the customer's experience
-worse is the WRONG reducer.** Each is two-ended — the draft reply means a
-thirty-second answer AND that they get an answer at all; "one open at a time"
-protects the time AND replaces a silent refusal with a stated rule.
-
-**The load comes down by making the work FASTER AND MORE CERTAIN, never by
-doing less of it.** That is the line between this and a software company nobody
-can get hold of.
+**AND THE GUARD RAIL: an admin reducer that makes the CUSTOMER'S experience
+worse is the WRONG reducer.** Each is two-ended — a draft reply is a
+thirty-second answer AND the fact they get one at all. **The load comes down by
+making the work FASTER AND MORE CERTAIN, never by doing less of it.**
 
 ---
 
@@ -2566,13 +2535,11 @@ itself is wrong.
 
 ## Where the reasoning lives
 
-**Every RULE is in this file. The WHY is in `docs/`.** Split three times,
-because it had reached ~90,000 tokens and loaded in full every session. The
-decisions TABLE alone was 43,034 bytes and moved whole to
+**Every RULE is in this file. The WHY is in `docs/`.** Split three times, from
+~90,000 tokens; the decisions TABLE alone was 43,034 bytes and moved whole to
 **[`docs/decisions.md`](docs/decisions.md)**, leaving every decision NAME and
-every sentence that FORBIDS something, verbatim. Nothing was summarised: whole
-sections moved by line number. Open the one you are touching; do not read them
-all.
+every sentence that FORBIDS something, verbatim. **Open the one you are
+touching; do not read them all.**
 
 **A WRITTEN RULE TO KEEP THIS FILE SHORT HAS NOW FAILED TWICE**, so
 `test/claude-md-budget.test.js` asserts the byte count, that every `docs/` link
@@ -2583,10 +2550,10 @@ here.**
 
 **And a mechanical split is only safe where the boundary is STRUCTURAL.** The
 same script pointed at prose, keeping "the heading and the first paragraph",
-quietly threw away the Owner/Parent/Child table and every rule under the
-lobby-games heading — in this file the first paragraph is often the CONTEXT and
-the rule is below it. **If more has to come out, move whole named sections by
-hand and read what is left.**
+threw away the Owner/Parent/Child table and every rule under the lobby-games
+heading — here the first paragraph is often the CONTEXT and the rule is below it.
+**If more has to come out, move whole named sections by hand and read what is
+left.**
 
 **[`docs/engine.md`](docs/engine.md)** — phases, scoring, and what each screen is told
 
@@ -2918,12 +2885,10 @@ Stated by the host on 14 August 2026, on a gig day: *"The thing that needs to
 be stable and definitely working is the quiz launch capability for pubs.
 Everything else that changes doesn't affect me tonight."*
 
-**This is as useful for what it FREES as for what it protects**: without it
-every change is equally dangerous, which spreads the care thinly over things
-that cannot end a night.
+**It is as useful for what it FREES as for what it protects**: without it every
+change is equally dangerous, spreading the care thinly.
 
-**PROTECTED — the path from "the room is sitting down" to "the quiz is
-running":**
+**PROTECTED — "the room is sitting down" to "the quiz is running":**
 
 1. The console loads, the pack cards draw, **Tonight's Launch works**
 2. The projector shows the game and the join code
@@ -2933,36 +2898,31 @@ running":**
 
 **Everything else may move**, and on a gig day that is most of the app — the
 owner page, the editor, Past gigs, invoices, adverts, the shop, chat, teams,
-online mode, the account work. None is reachable from a pub night, and breaking
-one costs a Monday rather than an evening.
+online mode, the account work. None is reachable from a pub night: breaking one
+costs a Monday rather than an evening.
 
-**THE TWO GUARDS COVER EXACTLY THAT PATH, and both should run before anything
-lands on a gig day:**
+**TWO GUARDS COVER EXACTLY THAT PATH, both before anything lands on a gig day:**
 
 - **`node scripts/pub-unchanged.mjs <commit> --ignore <new fields>`** — every
-  payload a projector and a phone receive, at every phase of every pack,
-  against a commit you trust, plus one night over HTTP on both apps.
+  payload a projector and a phone receive, at every phase of every pack, against
+  a commit you trust, plus one night over HTTP on both apps.
 - **Press Launch in a real browser** and check a game is actually running
-  afterwards — for a quiz AND for a bingo pack, which take different fields.
-  The engine is rarely the hazard; **the console's launch form is**, and no
-  unit test presses a button.
+  afterwards — for a quiz AND for a bingo pack, which take different fields. The
+  engine is rarely the hazard; **the console's launch form is**, and no unit test
+  presses a button.
 
 The second gets skipped and is the one that would stop a night: `node --check`
 passing means the file parses, not that Launch still launches.
 
 **AND ON 15 AUGUST 2026 IT WAS SKIPPED, AND LAUNCH WENT TO THE LIVE APP
 BROKEN FOR EVERY GAME.** A function was called in `server.js` and never
-imported — a ReferenceError when the line runs, so `node --check` was happy, and
-**1,150 tests passed** because every one either calls `session.launch()` or
-reads `server.js` as TEXT: **nothing had ever executed the file.** Found by a
-browser agent clicking the button.
-
-`test/launch-route.test.js` is that advice with an assertion on it. **Keep it
-shallow** — it guards the protected surface, not the feature, and a slow suite
-is one people stop running before a gig.
-
-**The general lesson is bigger than the import: A TEST THAT NEVER RUNS THE
-ARTEFACT PROVES NOTHING ABOUT IT** — see *Checks*.
+imported — a ReferenceError when the line RUNS, so `node --check` was happy and
+**1,150 tests passed**: every one either calls `session.launch()` or reads
+`server.js` as TEXT, so **nothing had ever executed the file.** Found by a
+browser agent clicking the button. `test/launch-route.test.js` is that advice
+with an assertion on it — **keep it shallow**, a slow suite being one people stop
+running before a gig. **A TEST THAT NEVER RUNS THE ARTEFACT PROVES NOTHING ABOUT
+IT.**
 
 ### A PUSH IS A DEPLOY, AND A DEPLOY ON A GIG NIGHT IS AN OUTAGE
 
@@ -2972,12 +2932,11 @@ stops resolving, and a tab left open shows a lobby that no longer exists.
 **A docs file is as dangerous as an engine rewrite when the cost is the
 restart rather than the diff.**
 
-**PUSH AS SOON AS IT IS READY. HE SAYS WHEN NOT TO** — set by the host on 5
-September 2026 in his own words: *"can you please just always push ASAP I'll
-let you know otherwise."* **This REVERSES the ask-first rule that stood here
-before it**, and it is his call to make: he is the only person who knows
-whether a room is sitting down, and asking every time put a question in front
-of him on every change instead of the two that mattered.
+**PUSH AS SOON AS IT IS READY. HE SAYS WHEN NOT TO** — *"can you please just
+always push ASAP I'll let you know otherwise."* **This REVERSES the ask-first
+rule that stood here before it**, and it is his call: he is the only person who
+knows whether a room is sitting down, and asking every time put a question in
+front of him on every change instead of the two that mattered.
 
 **What does NOT change is why a deploy is the risk.** Say it in one line when a
 push could land badly and push anyway unless he says hold. **The note is the
@@ -2994,9 +2953,9 @@ the owner reaching into a quizmaster's), and **label collisions** — two contro
 on one screen using one word for two different things, which no test, no 500 and
 no visual defect will ever show you. **REPORT THE PAIR, NOT THE BUTTON.**
 
-**Testing is allowed; leaving anything behind is not.** And **verify before
-reporting** — a false finding costs him time and teaches him to skim the next
-report. **Say what HELD as well as what failed.**
+**Testing is allowed; leaving anything behind is not.** **Verify before
+reporting** — a false finding teaches him to skim the next report. **Say what
+HELD as well as what failed.**
 
 **The full mode is in [`docs/modes.md`](docs/modes.md) — open it when he types
 it.** `.claude/agents/sweeper.md` runs it in its own context, which is where a
@@ -3967,6 +3926,29 @@ descriptor, the branding, the receipts and the payouts are all per account.
   SELLS; `console-subscribe.js` wires. **NO SUBSCRIBE BUTTON WHERE THERE IS NO
   LIVE PRICE** (`me.canBuy`): one that opens a 500 is worse than none at the
   moment somebody is trying to pay.
+- **A TRIAL IS NOT REVENUE.** `moneyTab()` folded `trialing` into `active`, so
+  the total and the "more than is coming in" flag were inflated by every free
+  trial; comped counted as paying AND as on-the-house in one sentence. **The
+  trial COUNT stays and NO FIGURE goes beside it** — that panel's rule is *what
+  HAS happened*, so a projection is out. **A trial that ran OUT is a job**,
+  nothing else telling them it ended.
+- **A LEGAL PAGE MAY NOT NAME A CONTROL THAT IS NOT THERE.** `refunds.html` said
+  *"cancel from your account settings"*, where there is none — **the page somebody
+  opens IN ORDER to stop paying**. `legal-pages.test.js` reads the button's label
+  out of the app, so a rename fails rather than making a page lie, and **a
+  placeholder must stay MARKED** or nobody greps it.
+- **`findTier()` FALLS BACK TO BRONZE FOR AN UNKNOWN ID** — `wantedTier` read
+  through it printed *"wanted Bronze"* against five accounts that pressed
+  nothing. **Ask whether they said anything FIRST.** Stored since the sales page
+  and drawn by nothing: *a field on a view is a promise that something draws it.*
+  **Only where it DIFFERS from their rung, and never in gold.**
+- **A SIGNUP MAY BE REFUSED AND A JOIN MAY NOT — the asymmetry is the opposite
+  of rule 4's**, nobody signing up being mid-gig. **`SIGNUPS_PER_HOUR` is a
+  SAFETY number** like `MAX_TEAMS`, **refusing BEFORE it writes** (it RESERVES an
+  address), and **it does not cover a distributed flood and says so**. **The
+  password link only comes back in the body on a LOCAL run** — it came back
+  whenever no provider was set, deployed included, so **anybody could activate an
+  account on an address they do not own**. **Loopback, never an env var.**
 - **AND THE RUNG YOU ARE ON IS ONLY "YOURS" WHILE SOMEBODY IS PAYING FOR IT.**
   Rank alone meant an **expired trial** saw Bronze marked *"the one you are
   on"* with **no Subscribe on it** while Silver and Gold were buyable — the
@@ -4071,6 +4053,7 @@ node scripts/pack-shapes.mjs            # which quiz packs are short?
 node scripts/pack-repeats.mjs           # does one night ask the same thing twice?
 node scripts/soundboard.mjs             # do the host's sounds actually make a noise?
 node scripts/buy-your-own-rung.mjs      # can somebody who wants to pay actually pay?
+node scripts/owner-money.mjs            # is the money tab telling the truth?
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 ```
 

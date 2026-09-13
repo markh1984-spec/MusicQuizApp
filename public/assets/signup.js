@@ -51,12 +51,21 @@ form.addEventListener('submit', async (ev) => {
     const trialLine = body.referred
       ? `You were referred, so your trial is ${body.trialDays} days.`
       : `Your trial runs for ${body.trialDays} days.`;
-    // Only present when there is no email service configured to send the
-    // link the ordinary way — a dev/local fallback, not something the live
-    // app hands out in the response body.
+    /*
+     * THREE ANSWERS, and the middle one used to be missing.
+     *
+     * `devLink` now only comes back on a LOCAL run — handing a password link out
+     * in the response body on the deployed app meant anybody could activate an
+     * account on an address they do not own. `noEmail` is the case that was
+     * silently falling through to "check your email" for a message nobody sent:
+     * the account IS made, so the honest line says to get in touch rather than
+     * leaving somebody watching an inbox.
+     */
     doneText.innerHTML = body.devLink
       ? `${trialLine} No email is set up here — <a href="${body.devLink}">set your password</a> to finish.`
-      : `${trialLine} Check your email for a link to set a password — it lasts 30 minutes.`;
+      : body.noEmail
+        ? `${trialLine} Your account is made, but email is not set up on this app yet — get in touch and we will send you a link to set a password.`
+        : `${trialLine} Check your email for a link to set a password — it lasts 30 minutes.`;
     formState.hidden = true;
     doneState.hidden = false;
   } catch {

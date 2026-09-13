@@ -414,6 +414,72 @@ async function readBody(req, limitBytes) {
  * the wrong answer: it tells a phone nothing, and it is indistinguishable in
  * the log from a real fault on a night when something IS wrong.
  */
+/**
+ * WHERE A REQUEST CAME FROM, for the one route that counts them.
+ *
+ * Behind Render there is a proxy, so the socket's own address is the proxy's
+ * and the caller is the first entry of `x-forwarded-for`. That header is
+ * spoofable, and it does not matter here: this feeds a courtesy limit on
+ * signups, not an authorisation decision. **Nothing in this app authorises by
+ * address** — a token does that (rule 3), and a pub puts the whole room behind
+ * one router anyway (rule 4).
+ */
+function callerOf(req) {
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return forwarded || req.socket?.remoteAddress || 'unknown';
+}
+
+/**
+ * IS THIS A LOCAL RUN RATHER THAN THE DEPLOYED APP?
+ *
+ * A forwarding header at all means something is in front of us, so this is
+ * deployed; without one, only loopback counts. Used to decide whether a
+ * password link may come back in a response body at all — see `/api/signup`.
+ * Deliberately NOT an environment variable: one somebody forgets to set fails
+ * in the insecure direction.
+ */
+function isLocalRequest(req) {
+  if (String(req.headers['x-forwarded-for'] || '').trim()) return false;
+  const at = req.socket?.remoteAddress || '';
+  return at === '127.0.0.1' || at === '::1' || at === '::ffff:127.0.0.1';
+}
+
+/*
+ * HOW MANY ACCOUNTS ONE PLACE MAY CREATE IN AN HOUR.
+ *
+ * **A SAFETY NUMBER, like `MAX_TEAMS` and `MAX_SEATS`, not a design one.** Five
+ * is far above anything honest — a quiz company signing its hosts up one by one
+ * is the busiest real case and that is a handful over a Monday, not five in an
+ * hour — and far below what a script does. It is in memory on purpose: a
+ * restart forgiving everybody is the right failure for a courtesy limit.
+ */
+const SIGNUPS_PER_HOUR = 5;
+const SIGNUP_WINDOW_MS = 3_600_000;
+const signupsSeen = new Map();
+
+function signupAllowed(req) {
+  const who = callerOf(req);
+  const now = Date.now();
+  const recent = (signupsSeen.get(who) || []).filter((at) => now - at < SIGNUP_WINDOW_MS);
+  if (recent.length >= SIGNUPS_PER_HOUR) {
+    signupsSeen.set(who, recent);
+    return false;
+  }
+  recent.push(now);
+  signupsSeen.set(who, recent);
+  /*
+   * AND THE MAP MAY NOT GROW WITH THE INTERNET. `rooms.get()` never evicting
+   * turned an open URL into a memory leak once; a counter keyed on a spoofable
+   * header is the same shape, so anything with nothing left in its window goes.
+   */
+  if (signupsSeen.size > 5000) {
+    for (const [key, seen] of signupsSeen) {
+      if (!seen.some((at) => now - at < SIGNUP_WINDOW_MS)) signupsSeen.delete(key);
+    }
+  }
+  return true;
+}
+
 async function readJson(req, limitBytes = 1024 * 1024) {
   const chunks = [];
   let total = 0;
@@ -5712,9 +5778,10 @@ async function handleWrite(req, res, url, route) {
    * is a job for the account itself, once they are in it, not a form standing
    * between a visitor and trying the app.
    *
-   * There is still no live payment route (see `todo/marketing-app.md`), so
-   * this cannot take money — it creates the account on Bronze, `trialing`,
-   * exactly the shape `accounts.create()` already defaults to. THE PASSWORD
+   * **It does not take money and must not start to.** Payment is Stripe
+   * Checkout, reached from the ladder on My account once somebody is in — so
+   * this creates the account on Bronze, `trialing`, exactly the shape
+   * `accounts.create()` already defaults to. THE PASSWORD
    * IS NEVER TYPED HERE: a random one is set at creation and immediately
    * thrown away, then the same magic-link mechanism a forgotten password
    * uses (`startReset` / `/reset`) sends them a link to set a real one. One
@@ -5723,6 +5790,29 @@ async function handleWrite(req, res, url, route) {
    * could drift from it.
    */
   if (route === '/api/signup' && req.method === 'POST') {
+    /*
+     * HELD AT THE DOOR, AND UNLIKE A JOIN THIS ONE MAY BE REFUSED.
+     *
+     * Account creation was unbounded, and each signup fires TWO emails off the
+     * owner's provider quota — the welcome and the "somebody signed up" note.
+     * A script could fill the accounts book, burn the quota, and RESERVE
+     * addresses it does not own, because `create()` throws on a duplicate.
+     *
+     * **The asymmetry is the OPPOSITE of the join gate's, which is why a
+     * refusal is right here and wrong there.** A phone joining is standing in a
+     * room with the host on a mic, so being asked to wait stops a show — rule 4
+     * holds it rather than turning it away. Nobody signing up is mid-gig: "try
+     * again shortly" costs a stranger a minute and costs the business nothing.
+     *
+     * **What it does NOT cover, said rather than implied**: a flood from many
+     * addresses. That wants the email provider's own limits and a captcha,
+     * neither of which is worth adding before there is a first subscriber.
+     */
+    if (!signupAllowed(req)) {
+      return sendJson(res, 429, {
+        error: 'That is a lot of new accounts from one place. Try again shortly.',
+      }), true;
+    }
     const body = await readJson(req);
     const name = String(body.name || '').trim();
     const email = String(body.email || '').trim();
@@ -5796,10 +5886,25 @@ async function handleWrite(req, res, url, route) {
       ok: true,
       referred: Boolean(made.referredBy),
       trialDays: made.referredBy ? TRIAL_DAYS + REFERRAL_BONUS_DAYS : TRIAL_DAYS,
-      // Only when there is no email service to hand the link to somebody the
-      // ordinary way — the same fallback the console's own dev setup relies
-      // on elsewhere, and it is this visitor's own new account either way.
-      ...(!emailConfigured() && link ? { devLink: link } : {}),
+      /*
+       * THE LINK ONLY COMES BACK IN THE BODY ON A LOCAL RUN.
+       *
+       * It used to come back whenever no provider was configured — including on
+       * the deployed app, where it meant **anybody could create AND activate an
+       * account on an address they do not own**, the magic link being the only
+       * thing standing in for verifying it. `signup.js`'s own comment said this
+       * was "not something the live app hands out", which is the third sighting
+       * of a comment claiming the opposite of the code.
+       *
+       * A deployed app has a proxy in front of it, so `isLocalRequest()` is the
+       * honest test rather than an env var somebody can forget to set. When
+       * there is no provider AND this is not local the account is still MADE —
+       * losing it would reserve the address with nothing to show for it — and
+       * `noEmail` tells them to get in touch instead of leaving them on a
+       * "check your inbox" screen for a message nobody sent.
+       */
+      ...(!emailConfigured() && link && isLocalRequest(req) ? { devLink: link } : {}),
+      ...(!emailConfigured() && !isLocalRequest(req) ? { noEmail: true } : {}),
     }), true;
   }
 

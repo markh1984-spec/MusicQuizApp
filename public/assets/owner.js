@@ -606,10 +606,38 @@ function tiersPanel() {
 }
 
 function moneyTab() {
-  const paying = subscribers.filter((a) => !a.comped && (a.status === 'active' || a.status === 'trialing'));
+  /*
+   * A TRIAL IS NOT REVENUE, AND THIS SUM SAID IT WAS.
+   *
+   * `paying` folded `trialing` in with `active`, so **"£X a month coming in" was
+   * inflated by every free trial** — and so was the "more than is coming in"
+   * flag underneath it, which is the one question this page exists to answer.
+   * Worst at the only moment it matters: the month somebody launches a tier and
+   * a dozen people start trials, the page says the business turned a corner.
+   *
+   * Same fault as the hosting fee noted below — a figure that flatters itself —
+   * so the same remedy: count only what is real and NAME the rest beside it.
+   * Trials are worth knowing about, they are just not money yet.
+   */
+  const earning = subscribers.filter((a) => !a.comped && a.status === 'active');
+  const trialing = subscribers.filter((a) => !a.comped && a.status === 'trialing');
+  const onTrial = trialing.filter((a) => !(a.entitlements || {}).trialExpired);
+  /*
+   * AND A TRIAL THAT HAS RUN OUT WITHOUT SUBSCRIBING IS A JOB, not a statistic.
+   * Nothing tells them it ended — see the note in plans.js — so this is the only
+   * place anybody finds out, and it is the list worth having a look at.
+   */
+  const ranOut = trialing.filter((a) => (a.entitlements || {}).trialExpired);
   const comped = subscribers.filter((a) => a.comped);
   const lapsed = subscribers.filter((a) => !a.comped && (a.status === 'past_due' || a.status === 'cancelled'));
-  const monthly = paying.reduce((n, a) => n + (findTier(tierFor(a)).pence || 0), 0);
+  const monthly = earning.reduce((n, a) => n + (findTier(tierFor(a)).pence || 0), 0);
+  /*
+   * AND THE TRIAL LINE CARRIES NO FIGURE, DELIBERATELY. A first version printed
+   * "£X a month if every one of them subscribes" — which is a FORECAST, and the
+   * note above this panel says everything on it is what has happened. That rule
+   * is right and it is the reason the page is worth reading, so the count stays
+   * and the projection goes.
+   */
   /* What the lapsed ones were worth. Not added to the total — it is what is
    * NOT arriving, which is the useful half of knowing about them. */
   const lost = lapsed.reduce((n, a) => n + (findTier(tierFor(a)).pence || 0), 0);
@@ -640,7 +668,7 @@ function moneyTab() {
       <div class="own-figures">
         <div class="own-fig">
           <b>${esc(money(monthly))}</b>
-          <span>a month, from ${paying.length} paying account${paying.length === 1 ? '' : 's'}</span>
+          <span>a month, from ${earning.length} paying account${earning.length === 1 ? '' : 's'}</span>
         </div>
         <div class="own-fig">
           <b>${esc(money(spend.total))}</b>
@@ -660,6 +688,13 @@ function moneyTab() {
           <span>the average pack, written and drawn</span>
         </div>
       </div>
+      ${onTrial.length ? `<div class="tiny" style="margin-top:10px">
+        <b>${onTrial.length} on trial</b> — not in the total above, because nothing has arrived
+        from them yet.</div>` : ''}
+      ${ranOut.length ? `<div class="tiny warn" style="margin-top:8px">
+        <b>${ranOut.length} trial${ranOut.length === 1 ? '' : 's'} run out</b> without subscribing —
+        ${ranOut.map((a) => esc(a.name || a.email)).join(', ')}. Nothing told them it ended, so this is
+        the only place it shows.</div>` : ''}
       ${lapsed.length ? `<div class="tiny warn" style="margin-top:10px">
         <b>${lapsed.length} lapsed</b> — ${lapsed.map((a) => esc(a.name || a.email)).join(', ')}.
         ${lost
@@ -679,7 +714,9 @@ function moneyTab() {
   // What each tier is bringing in. The lever the whole ladder is, as a number.
   const byTier = TIERS.map((tier) => ({
     tier,
-    on: paying.filter((a) => tierFor(a) === tier.id).length,
+    // EARNING, not everybody on the rung: this row multiplies by a price, so a
+    // trial in it is the same overstatement as the headline had.
+    on: earning.filter((a) => tierFor(a) === tier.id).length,
   }));
   parts.push(node(`
     <div class="panel">
@@ -1226,7 +1263,14 @@ function peopleTab() {
         <div>
           <h2>Quizmasters</h2>
           <div class="tiny">${subscribers.length} account${subscribers.length === 1 ? '' : 's'} ·
-            ${subscribers.filter((a) => a.status === 'active' || a.status === 'trialing').length} paying ·
+            ${/* PAYING, TRIALING AND COMPED ARE THREE COUNTS.
+                 Folding trials in said "12 paying" about a month in which nobody
+                 had paid anything — the same overstatement the Money tab's total
+                 had. And `comped` must come OUT of paying: a comped account is
+                 `active`, so it was counted here AND again as "on the house" two
+                 words later, in one sentence that then did not add up. */''}
+            ${subscribers.filter((a) => a.status === 'active' && !a.comped).length} paying ·
+            ${subscribers.filter((a) => a.status === 'trialing').length} on trial ·
             ${subscribers.filter((a) => a.comped).length} on the house ·
             tap a name for their room, their messages and the support log</div>
         </div>
@@ -1504,6 +1548,36 @@ function peopleFilters() {
   return el;
 }
 
+/**
+ * WHICH RUNG THEY PRESSED ON THE WAY IN — collected since the sales page was
+ * built, stored on every account, and drawn by NOTHING.
+ *
+ * `wantedTier` is a note of intent and must never become `tier` (see
+ * `accounts.create()`), which is why it was written carefully and then
+ * forgotten: it rides out to this page inside `subscriberList()` and no row
+ * printed it. **Before payments existed it was the only signal about what
+ * people actually want**, and it was being thrown away at the one moment it
+ * was cheapest to read — a field on a view is a promise that something draws
+ * it.
+ *
+ * **ONLY WHEN IT DIFFERS FROM WHERE THEY ARE.** Somebody who pressed Bronze and
+ * is on Bronze tells you nothing; somebody sitting on Bronze who pressed GOLD
+ * is a conversation worth having, and that is the whole value of the field.
+ */
+function wantedNote(account) {
+  /*
+   * **`findTier()` FALLS BACK TO BRONZE FOR AN UNKNOWN ID**, so asking it
+   * directly would print *"wanted Bronze"* against every Silver account that
+   * never pressed anything at all — a fact invented out of an empty field, on
+   * the page decisions get made from. Ask whether they said ANYTHING first.
+   */
+  const said = String(account.wantedTier || '');
+  if (!said) return '';
+  const wanted = TIERS.find((t) => t.id === said);
+  if (!wanted || wanted.id === tierFor(account)) return '';
+  return ` · <span class="inv-wanted">wanted ${esc(wanted.label)}</span>`;
+}
+
 function subscriberRow(account) {
   const row = node(`
     <div class="inv-row status-${account.status === 'active' || account.status === 'trialing' ? 'paid' : ''}" data-account="${esc(account.id)}">
@@ -1515,7 +1589,7 @@ function subscriberRow(account) {
         </div>
         <div class="tiny">
           ${kindOf(account) === 'venue' ? 'Venue · ' : ''}${esc(findTier(tierFor(account)).label)} — ${esc(findTier(tierFor(account)).plan)}
-          · ${esc(moneyState(account).word)}
+          · ${esc(moneyState(account).word)}${wantedNote(account)}
         </div>
       </div>
       <div class="inv-actions">

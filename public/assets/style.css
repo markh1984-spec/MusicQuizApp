@@ -5083,6 +5083,12 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .inv-main { flex: 1 1 220px; min-width: 0; }
 .inv-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .inv-who { font-weight: 700; }
+/*
+ * WHICH RUNG SOMEBODY PRESSED ON THE WAY IN, on the owner's subscriber row.
+ * `--hot` rather than `--gold`: gold is the trophy colour and means winning, and
+ * a note about a tier somebody wanted is neither a prize nor a warning.
+ */
+.inv-wanted { color: var(--hot); font-weight: 700; }
 .inv-status {
   font-size: var(--fs-tag);
   font-weight: 800;

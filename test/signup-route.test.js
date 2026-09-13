@@ -293,3 +293,90 @@ test('and the sales page offers a way in at every rung', async () => {
     }
   });
 });
+
+/*
+ * ====================================================== HELD AT THE DOOR
+ *
+ * Account creation was unbounded, and each signup fires TWO emails off the
+ * owner's provider quota. A script could fill the accounts book, burn the
+ * quota, and RESERVE addresses it does not own — `create()` throws on a
+ * duplicate, so a reserved address is one a real customer then cannot use.
+ *
+ * A fresh server per test is what makes this measurable: the window lives in
+ * memory, so the count starts at nothing.
+ */
+test('one place may open a few accounts, and then is asked to come back later', async () => {
+  await withServer(async (base, dir) => {
+    const open = (n) => fetch(`${base}/api/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: `Rob ${n}`, email: `rob${n}@example.com` }),
+    });
+
+    // Five is the cap and the fifth must still work — a limit that bites at
+    // four would refuse the busiest honest case, a quiz company signing its
+    // own hosts up one at a time.
+    for (let i = 0; i < 5; i += 1) {
+      const res = await open(i);
+      assert.equal(res.status, 200, `signup ${i + 1} of 5 should be allowed`);
+    }
+
+    const sixth = await open(99);
+    assert.equal(sixth.status, 429, 'the sixth in an hour from one place is a script, not a customer');
+    const said = await sixth.json();
+    assert.match(said.error, /try again shortly/i,
+      'and it says when to come back — a bare 429 reads as the app being broken');
+
+    /*
+     * AND IT REFUSES BEFORE IT WRITES. The whole point is that the address is
+     * not reserved, so a real customer can still use it afterwards.
+     */
+    const book = JSON.parse(readFileSync(join(dir, 'accounts.json'), 'utf8'));
+    assert.equal(
+      book.accounts.filter((a) => a.email === 'rob99@example.com').length, 0,
+      'a refused signup must leave no account behind, or it has reserved the address anyway',
+    );
+  });
+});
+
+/*
+ * AND THE PASSWORD LINK MAY NOT COME BACK IN THE BODY ON THE DEPLOYED APP.
+ *
+ * It used to come back whenever no mail provider was configured — anywhere —
+ * which on the live app meant **anybody could create AND activate an account on
+ * an address they do not own**, the magic link being the only thing standing in
+ * for verifying it. `signup.js`'s own comment claimed this never happened.
+ *
+ * A forwarding header is what a proxy in front of the app adds, so it is the
+ * honest test for "this is deployed" and cannot be forgotten the way an
+ * environment variable can.
+ */
+test('a signup from behind a proxy gets no password link in the response', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-forwarded-for': '203.0.113.7' },
+      body: JSON.stringify({ name: 'Deployed Dave', email: 'dave@example.com' }),
+    });
+    assert.equal(res.status, 200, 'the account is still made — losing it reserves the address for nothing');
+    const body = await res.json();
+    assert.equal(body.devLink, undefined,
+      'a deployed app handing out a password link lets anybody activate somebody else’s address');
+    assert.equal(body.noEmail, true,
+      'and it must SAY so, or they watch an inbox for a message nobody sent');
+  });
+});
+
+/* The loopback case is unchanged, and that is what keeps every test above working. */
+test('a local run still gets the link, so there is a way in with no mail provider', async () => {
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Local Local', email: 'local@example.com' }),
+    });
+    const body = await res.json();
+    assert.match(String(body.devLink), /\/reset\?t=/, 'a local run with no mail provider must still hand the link over');
+    assert.equal(body.noEmail, undefined, 'and must not also claim there is no way in');
+  });
+});

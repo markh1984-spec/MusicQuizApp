@@ -217,3 +217,179 @@ charging before you save it.
   parse-and-restringify unchanged, so the first version of that file passed
   with the fault deliberately put back. Two spaces of indentation is what makes
   it a real check.
+
+### The money path audited, 13 September 2026 — five faults, none of them config
+
+Run once Stripe was wired, asking the narrow question *"what stands between a
+quizmaster arriving and money arriving repeatedly"*. The plumbing held; what
+did not was everything around it, and **not one of these would have been fixed
+by setting the environment variables.**
+
+#### 1. An expired trial could not buy the rung it was on
+
+`tierRow()` decided which rung was "yours" from RANK alone — `i <= mine` — and
+never asked whether anybody was paying. So an account on Bronze whose trial had
+run out, every capability switched off, standing at the exact moment it had
+decided to subscribe, read **"Bronze: this is the one you are on"** with no
+Subscribe button. Silver and Gold were buyable. The rung it wanted was not.
+
+That is the path *every* expired trial takes, so the ladder's one job failed for
+the people furthest down the funnel. `cancelled` hit the same wall, and so did
+anybody mid-trial who simply wanted to commit early.
+
+**A live trial gets the button too, and that is deliberate**: it is the
+conversion moment rather than an error. The wording changes rather than the
+control — *"Yours for the rest of your trial"*, not a pretence that money has
+arrived.
+
+**But somebody who has PAID BEFORE is sent to the portal, never to a second
+Checkout.** A `past_due` account already has a subscription at Stripe; another
+Checkout opens a second one and bills them twice. `hasBilling` is true the
+moment a webhook has stored a customer, and `subscribeSlot()` already draws the
+portal link on exactly that condition — so the way back in was on the page for
+them all along.
+
+`scripts/buy-your-own-rung.mjs` drives five standings through a real browser and
+presses the rung. A unit test cannot see any of it: `tierRow()` builds DOM, the
+button is conditional on `/api/me`, and the fault lived in a boolean nobody had
+written down.
+
+#### 2. The Money tab counted free trials as revenue
+
+`moneyTab()`'s `paying` folded `trialing` in with `active`, so **"£X a month
+coming in" was inflated by every trial** — and so was the "more than is coming
+in" flag under it, which is the one question the page exists to answer. Worst at
+the only moment it matters: the month a tier goes on sale and a dozen people
+start trials, the page says the business turned a corner.
+
+Three parts to the fix, and the second is the interesting one:
+
+- **`earning` is `active` and not comped.** "Where it comes from" multiplies by a
+  price, so it takes the same set.
+- **The trial line carries a COUNT and no figure.** A first version printed *"£X
+  a month if every one of them subscribes"* — a forecast, and the note above that
+  panel says *everything here is what HAS happened, never a forecast*. That rule
+  is why the page is worth reading, so the projection went rather than the rule.
+- **A trial that has RUN OUT is named as a job, not a statistic.** Nothing tells
+  those people their trial ended, so the owner page is the only place it shows —
+  and it is now also the list of people who can, since fault 1, actually pay.
+
+And the People tab said **"3 paying"** where a comped account was counted as
+paying AND as on-the-house, two words apart, in one sentence that did not add
+up. Paying, on trial and on the house are three counts.
+
+`scripts/owner-money.mjs` does the arithmetic in a browser against a fixture
+book whose right answer nobody could reach by accident: two paying (£20 + £30),
+three trials, one comped, one cancelled.
+
+#### 3. `wantedTier` was collected since the sales page and drawn by nothing
+
+The rung somebody presses on `/home` rides through signup as `wantedTier` — a
+note of intent that must never become `tier` — and it reaches the owner page
+inside `subscriberList()`. **No row printed it.** Before payments existed it was
+the only signal about what people actually want, thrown away at the one moment
+it was cheapest to read: *a field on a view is a promise that something draws
+it*.
+
+**It shows only where it DIFFERS from the rung they are on** — somebody who
+pressed Bronze and is on Bronze tells you nothing; somebody sitting on Bronze
+who pressed Gold is a conversation.
+
+**And `findTier()` FALLS BACK TO BRONZE for an unknown id**, so reading it
+directly printed *"wanted Bronze"* against **five** fixture accounts that had
+pressed nothing at all — a fact invented out of an empty field, on the page
+decisions get made from. Caught before it shipped by the guard above, which is
+the value of a fixture with a known answer.
+
+#### 4. `refunds.html` named a control that does not exist
+
+*"Cancel from your account settings"* — and cancelling is Stripe's portal by
+decision, reached through one button on My account that is only drawn after a
+first payment. **The page somebody opens in order to stop paying sent them to a
+screen with nothing on it.** A never-paid account found nothing at all.
+
+That is the *"do it over there" must be a link to there* rule failing in its
+worst place, and a LABEL COLLISION of the kind a sweep exists to find: no test,
+no 500, no visual defect.
+
+`test/legal-pages.test.js` is the first thing ever to read these three pages. It
+asserts four things, each verified by putting the fault back:
+
+- every legal page links to the other two;
+- **an unfinished `[placeholder]` is always inside an `ld-legal-todo` span** —
+  the bracketed form is what a human notices while writing, the span is what a
+  grep finds six weeks later, and the marking was a convention nothing enforced;
+- **the cancel sentence names the control as the app actually labels it**, read
+  out of `console-subscribe.js` and `client.js` rather than typed into the test,
+  so a rename fails here instead of silently making a legal page lie. Whitespace
+  is collapsed first: the page wraps at eighty columns, so a four-word label is
+  split across two lines and an exact `includes()` on the raw file fails for the
+  wrong reason;
+- **no legal page states a price of its own** — the prices are `TIERS` and
+  nothing else, or terms can disagree with what Stripe charges, which is the
+  argument you cannot win with a customer.
+
+It deliberately does **not** fail while a placeholder is unfilled. That is
+information only the host can supply, and a suite left red until he does is one
+people learn to ignore — which this project already records as worse than a slow
+one.
+
+#### 5. Signup was unbounded, and handed the password link out in the body
+
+Account creation had no limit at all, and each signup fires two emails off the
+owner's provider quota. A script could fill the accounts book, burn the quota,
+and **reserve email addresses it does not own** — `create()` throws on a
+duplicate, so a reserved address is one a real customer then cannot use.
+
+**The asymmetry is the opposite of the join gate's, and that is why a refusal is
+right here and wrong there.** A phone joining is standing in a room with the
+host on a mic, so being asked to wait stops a show — rule 4 holds it rather than
+turning it away. Nobody signing up is mid-gig: *"try again shortly"* costs a
+stranger a minute and costs the business nothing.
+
+`SIGNUPS_PER_HOUR` is **5**, a SAFETY number like `MAX_TEAMS` and `MAX_SEATS`
+rather than a design one: far above the busiest honest case (a quiz company
+signing its own hosts up one at a time, which is a handful over a Monday) and
+far below what a script does. In memory on purpose — a restart forgiving
+everybody is the right failure for a courtesy limit. **It refuses before it
+writes**, which is the whole point: the address is not reserved either.
+
+**What it does not cover is said rather than implied**: a flood from many
+addresses. That wants the provider's own limits and a captcha, neither worth
+adding before there is a first subscriber.
+
+And the other half. `/api/signup` returned the password-setup link in its own
+response body whenever no mail provider was configured — **including on the
+deployed app**, where the magic link is the only thing standing in for verifying
+an address. So anybody could create *and activate* an account on an address they
+do not own. `signup.js`'s own comment said this was *"not something the live app
+hands out in the response body"*, which is the fourth sighting in this codebase
+of a comment claiming the opposite of the code.
+
+**`isLocalRequest()` is the test rather than an environment variable**: a
+deployed app has a proxy in front of it, so a forwarding header means this is
+not local, and an env var somebody forgets to set fails in the insecure
+direction. When there is no provider and the request is not local the account is
+still MADE — losing it would reserve the address with nothing to show for it —
+and `noEmail` tells them to get in touch instead of leaving them watching an
+inbox for a message nobody sent.
+
+#### What was found and deliberately NOT changed
+
+- **Pack sales are an `alert()`.** `shopCard()`'s Buy button says there is no way
+  to pay, and there is no route that grants a pack at all — only the owner, by
+  hand. The £3 on-ramp is Bronze's whole reason to exist and it is a build, not a
+  fix.
+- **Gold's only live exclusive is `packs.request`** — `MARKETING` and `STREAM`
+  are both in `NOT_BUILT`. Worth knowing before anybody prices it again.
+- **A trial ends in silence.** No email, no warning; the only sign is a line on
+  My account. An expired trial also gets no grace night, which is correct — a
+  grace there would be a free gig for anyone who signs up and walks away.
+- **`referralCredit()` is computed and never deducted**, which `accounts.js`
+  already says out loud. `checkoutSession()` passes no coupon.
+- **`invoice.paid`'s price is read from `lines.data[0].price.id`**, and recent
+  Stripe API versions moved that to `lines.data[0].pricing.price_details.price`.
+  Harmless for a plain renewal, since an unknown price leaves the tier alone; it
+  would silently break a tier CHANGE delivered that way. **Not verified from
+  here** — `docs.stripe.com` is blocked by this environment's egress proxy, so it
+  wants checking against the endpoint's own API version in the dashboard.
