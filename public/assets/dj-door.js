@@ -64,12 +64,27 @@ function shell(inner) {
   return root.querySelector('.dj-door');
 }
 
+/*
+ * SIGNING IN COMES BACK HERE, AND THAT IS THE WHOLE POINT OF `next`.
+ *
+ * The first version linked to a bare `/login`, which lands a quizmaster on
+ * the console and the OWNER on `/owner` — so pressing *Sign in* on the DJ
+ * door put you in the quiz app and never brought you back. Reported in those
+ * words: *"that just signed me into my quiz app."*
+ *
+ * **It is a separate app to the person using it**, so every way in has to end
+ * up here. `/login` already takes `?next=` and only ever honours a path on
+ * this site, so this needs no second password form — a second place a
+ * password is typed is the last thing this app should grow.
+ */
+const BACK_HERE = `/login?next=${encodeURIComponent('/dj')}`;
+
 function drawSignIn() {
   shell(`
     <h1 class="ld-h2">Sign in first</h1>
     <p class="ld-section-lede">It runs on your own account, in your own room —
-      the same one your quiz nights use.</p>
-    <a class="ld-cta" href="/login">Sign in</a>`);
+      the same one your quiz nights use. You will come straight back here.</p>
+    <a class="ld-cta" href="${esc(BACK_HERE)}">Sign in</a>`);
 }
 
 function drawRunning(s) {

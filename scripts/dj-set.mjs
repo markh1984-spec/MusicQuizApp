@@ -27,6 +27,7 @@
  * rule in this project is that a UI change is SHOWN.
  */
 
+import path from 'node:path';
 import { createRequire } from 'node:module';
 import { withApp } from './helpers/live-app.mjs';
 
@@ -35,6 +36,7 @@ const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 
 const KEY = 'dj-shot-key';
 const SHOTS = process.env.SHOT_DIR || '/tmp';
+const PW = 'a dj passphrase here';
 const A_JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(4000, 7)]);
 
 const fails = [];
@@ -160,6 +162,34 @@ await withApp(async ({ base }) => {
     await phone.waitForTimeout(600);
     ok(/played/i.test(await phone.locator('body').innerText()), 'the phone was never told it got played');
 
+    // ------------------------------------------- SIGNING IN COMES BACK HERE
+    /*
+     * REPORTED IN THESE WORDS: *"that just signed me into my quiz app."* The
+     * door's Sign in was a bare `/login`, which lands a quizmaster on the
+     * console and the OWNER on `/owner` — so the one press somebody makes on
+     * a page they have never seen took them into the quiz app and left them
+     * there. It is a SEPARATE APP to the person using it, so every way in has
+     * to end up back on the door.
+     *
+     * Driven as a real sign-in rather than checked as an href, because the
+     * bug was never in the link: it was in where the journey ENDED.
+     */
+    const out = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await out.goto(`${base}/dj`);          // no key, no cookie — a cold arrival
+    await out.waitForTimeout(700);
+    ok(/Sign in/i.test(await out.locator('body').innerText()), 'a signed-out arrival is not offered a sign-in');
+    await out.locator('a.ld-cta').click();
+    await out.waitForTimeout(700);
+    ok(/\/login/.test(out.url()), `Sign in did not reach the sign-in page (${out.url()})`);
+
+    await out.fill('input[type=email]', 'dj@example.com');
+    await out.fill('input[type=password]', PW);
+    await out.evaluate(() => document.querySelector('form')?.requestSubmit());
+    await out.waitForTimeout(2000);
+    ok(out.url().includes('/dj'), `signing in from the door landed on ${out.url()} instead of the door`);
+    ok(!/\/owner|\/console/.test(out.url()), `signing in from the door went into the quiz app: ${out.url()}`);
+    await out.screenshot({ path: `${SHOTS}/dj-door-signedin.png`, fullPage: true });
+
     // The desk at a laptop width too — this is the screen with the buttons on.
     await desk.setViewportSize({ width: 1280, height: 800 });
     await desk.waitForTimeout(400);
@@ -167,7 +197,15 @@ await withApp(async ({ base }) => {
   } finally {
     await browser.close();
   }
-}, { key: KEY });
+}, {
+  key: KEY,
+  async seed(dir) {
+    const { Accounts } = await import(new URL('../src/accounts.js', import.meta.url).href);
+    const book = new Accounts(path.join(dir, 'accounts.json'));
+    book.create({ email: 'dj@example.com', password: PW, name: 'A DJ', role: 'quizmaster', tier: 'gold', status: 'active' });
+    book.save();
+  },
+});
 
 if (fails.length) {
   console.error('\nA DJ SET IS BROKEN:\n');
