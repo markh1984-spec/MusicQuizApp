@@ -285,6 +285,53 @@ export class DjSet {
    * throws, and none of them silently reports success it did not have.
    */
 
+  /**
+   * A PHONE SAYING HELLO, AND THE LIVE CONNECTION ITSELF DEPENDS ON IT.
+   *
+   * `/api/stream` calls this for every phone that opens a stream, on every
+   * engine — so without it the SSE route threw and every phone on a DJ set got
+   * a **500 instead of a connection**. Not a control anybody presses: the
+   * whole game was dead, silently, with every payload correct when asked for
+   * directly. Found by opening the page in a real browser, which is the only
+   * thing that would have.
+   *
+   * Deliberately no `changed()`, exactly as both other engines have it: a
+   * phone reconnecting is not news to push to the room.
+   */
+  touch(id) {
+    const player = this.state.players[String(id || '')];
+    if (!player) return null;
+    player.lastSeenAt = this.now();
+    player.connected = true;
+    return player;
+  }
+
+  /**
+   * WHO IS IN THE ROOM — what `inProgress()` counts before it lets anything
+   * launch over the top of a running set.
+   *
+   * Without it, pressing start on a set that is already running threw inside
+   * `session.inProgress()` — and so did launching a QUIZ over one, which is
+   * the protected launch path reaching into a game it knows nothing about.
+   *
+   * A DJ set has no organisers and nobody is filtered out, so this and
+   * `everyone()` are the same list; they are both here because the two names
+   * mean different things elsewhere and a caller that asks for the right one
+   * should not have to know this engine cannot tell them apart.
+   */
+  playerList() {
+    return Object.values(this.state.players);
+  }
+
+  everyone() {
+    return Object.values(this.state.players);
+  }
+
+  /** Where the night has got to, for the "this would end what is running" line. */
+  where() {
+    return this.state.phase === DJ_PHASES.FINISHED ? 'requests closed' : 'taking requests';
+  }
+
   renamePlayer(id, name) {
     const player = this.state.players[id];
     if (!player) return false;

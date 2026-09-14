@@ -48,6 +48,17 @@ export function phonesAre(s) {
   if (s.advert && s.advert.showing) return 'The advert';
   if (s.scoreboard && s.scoreboard.on) return 'The scores';
 
+  /*
+   * A DJ SET, WHERE THE PHONE'S JOB DOES NOT CHANGE ALL NIGHT — there being
+   * no phases to move through. It still answers, because a host who says
+   * something the phones are not offering has said it out loud to a room.
+   */
+  if (s.game === 'dj') {
+    return s.phase === 'finished'
+      ? 'A thank-you — requests are closed'
+      : 'The camera, and a box to ask for a song';
+  }
+
   if (s.game === 'bingo') {
     switch (s.phase) {
       // The one moment a bingo phone has something to do besides its card.

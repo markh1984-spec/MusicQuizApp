@@ -1651,6 +1651,13 @@ async function handleGet(req, res, url, route) {
    * draws the same list from the same module — see `public/assets/faq.js`.
    */
   if (route === '/faq') return serveFile(res, config.publicDir, 'faq.html'), true;
+  /*
+   * THE DJ SET'S FRONT DOOR. Open like every other page here — what is behind
+   * it is not: `/api/dj/start` asks who you are, and the page draws a sign-in
+   * when the state route says 401. A door that 401s is a door somebody thinks
+   * is broken.
+   */
+  if (route === '/dj') return serveFile(res, config.publicDir, 'dj.html'), true;
   // Open, like the sign-in page. It hands out nothing on its own — the token
   // in the address is what has to be right, and the page asks the server.
   if (route === '/reset') return serveFile(res, config.publicDir, 'reset.html'), true;
@@ -6660,10 +6667,19 @@ async function handleWrite(req, res, url, route) {
    */
   if (route.startsWith('/api/dj/') && req.method === 'POST'
       && (route === '/api/dj/request' || route === '/api/dj/search')) {
-    const room = roomForPhone(req, url);
+    /*
+     * THE BODY IS READ FIRST SO THE ROOM CAN BE RESOLVED FROM IT.
+     *
+     * `roomForPhone(req, url)` with no body falls back to the HOUSE room, so
+     * a phone at somebody else's DJ set would have searched and requested
+     * into the owner's room — which is the join-code half of *a room id is a
+     * path*. The phone sends `joinCode` on every one of these, the same way
+     * `/api/join` does.
+     */
+    const body = await readJson(req);
+    const room = roomForPhone(req, url, body);
     const { session } = room;
     if (session.kind !== 'dj') return sendJson(res, 409, { error: 'No DJ set is running.' }), true;
-    const body = await readJson(req);
     const player = session.engine.state.players[String(body.playerId || '')];
 
     /*

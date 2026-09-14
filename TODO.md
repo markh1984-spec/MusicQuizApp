@@ -17,6 +17,26 @@ decision from the host first.
 **DELETE AN ITEM FROM HERE THE MOMENT IT IS BUILT.**
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
+### 0a. NAME THE DJ APP — one word, thirty seconds
+
+**Only you can do this and everything else about it is built.** A DJ set runs
+end to end: the code on the screen, the photo wall, the unlock, the request
+box with Spotify search and a typed fallback, and the queue on the desk with a
+copy button. `node scripts/dj-set.mjs` drives the lot in a real browser.
+
+The name is in **one** constant, marked as a placeholder — `APP_NAME` in
+`public/assets/dj-door.js`, currently **Requests**. Say a word and it is one
+edit, plus the `<title>` in `public/dj.html`.
+
+Two smaller things that also want you rather than me, neither blocking:
+
+- **What it costs.** `/api/dj/*` asks only that somebody is signed in. Nothing
+  gates it on a tier, deliberately — putting it behind `FEATURES.QUIZ` would
+  answer the pricing question by accident, in the hardest place to find later.
+- **Its own address.** It is at `/dj` on the quiz app today. A domain of its
+  own is a Render setting, not a code change, and the reasoning for staying on
+  one service is in [`docs/dj.md`](docs/dj.md).
+
 ### 0. TURN THE MONEY ON — five environment variables, about forty minutes
 
 **Nothing else on the money path matters until this is done, and nobody but you

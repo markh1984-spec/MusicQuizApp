@@ -62,6 +62,7 @@ const fingerprint = (value) => JSON.stringify(value ?? null);
 
 const cards = {
   lobby: { key: () => 'lobby', render: renderLobby, update: updateLobby },
+  dj: { key: (s) => `dj:${s.phase}`, render: renderDj, update: updateDj },
   rules: { key: () => 'rules', render: renderRules },
   // A stable key: the card is built once when the scoreboard opens, and the
   // rows are refreshed in place. Keying on the version would rebuild it on
@@ -231,19 +232,33 @@ function draw(next) {
     slot.dataset.done = '1';
     document.title = `${state.brand} — Big Screen`;
   }
-  quizTitleEl.textContent = state.quizTitle || state.title || 'Music Quiz';
+  /*
+   * AND A DJ SET IS NOT A MUSIC QUIZ. The fallback here is the app's oldest
+   * line and it was right for two years; a third game arriving made it print
+   * "Music Quiz" across the top of a DJ night. Nothing is the honest answer —
+   * the brand in the corner already says whose night it is.
+   */
+  quizTitleEl.textContent = state.game === 'dj' ? '' : (state.quizTitle || state.title || 'Music Quiz');
   /*
    * PEOPLE, NOT BOARD ROWS. `playerCount` is the number of rows on the
    * leaderboard, which on a team night is the number of TABLES — so a room of
    * sixty was told "6 playing". `phoneCount` rides only when the two differ.
    */
-  playerPillEl.textContent = `${state.phoneCount ?? state.playerCount} playing`;
+  // "Playing" is a quiz word. On a DJ set nobody is playing anything — they
+  // are in the room with a phone, which is what the number actually counts.
+  playerPillEl.textContent = state.game === 'dj'
+    ? `${state.playerCount} joined`
+    : `${state.phoneCount ?? state.playerCount} playing`;
 
   // Which game is running decides which set of cards to draw from. Everything
   // else on this page — the connection, the clock, the swap animation — is
   // shared, so a new game only has to bring its own cards.
   const isBingo = state.game === 'bingo';
-  roundPillEl.textContent = isBingo
+  // A DJ set has no rounds and nothing to count, so the pill says what the
+  // room is being asked for rather than printing "Round 1 of undefined".
+  roundPillEl.textContent = state.game === 'dj'
+    ? (state.phase === 'finished' ? 'That’s the set' : 'Requests open')
+    : isBingo
     ? bingoTopbar(state)
     : state.phase === 'lobby'
       ? 'Join now'
@@ -268,7 +283,8 @@ function draw(next) {
       // repeated here — one decision, made where the state is.
       : state.photoSlide
         ? cards.photos
-        : isBingo ? bingoCard(state) : (cards[state.phase] || cards.lobby);
+        : state.game === 'dj' ? cards.dj
+          : isBingo ? bingoCard(state) : (cards[state.phase] || cards.lobby);
   const key = card.key(state);
   if (key !== currentKey) {
     currentKey = key;
@@ -524,7 +540,16 @@ function paintJoinUrls() {
 const NO_JOIN_CORNER = new Set(['lobby', 'rules', 'question', 'reveal', 'final', 'won', 'finished']);
 
 function paintJoinCorner(s) {
+  /*
+   * AND NEVER ON A DJ SET, FOR THE REASON THE LOBBY IS EXEMPT ABOVE: the code
+   * is already half the screen, all night. The list next to it is of PHASES,
+   * and a DJ set's phase is its own — so the corner drew itself over the top
+   * right of the very QR panel it was pointing at. **The list answers "is
+   * there room", the question is "is the code already up"**, and a third game
+   * is what made the two come apart.
+   */
   const wanted = !NO_JOIN_CORNER.has(s.phase)
+    && s.game !== 'dj'
     && !s.scoreboard
     && !(s.advert && s.advert.heading !== undefined);
 
@@ -573,7 +598,13 @@ function paintJoinCorner(s) {
  * Newest first, so a photo taken thirty seconds ago is the one on the left
  * where everybody is looking.
  */
-const PHOTO_PHASES = new Set(['lobby', 'round_board', 'final', 'won', 'finished']);
+/*
+ * AND `set` IS THE DJ'S. On a DJ night the photographs are not something that
+ * fits between two questions — they are what is on the screen, all night,
+ * beside the code that lets somebody send one. There is no question for them
+ * to wait behind, so the phase that has no room for them does not exist here.
+ */
+const PHOTO_PHASES = new Set(['lobby', 'round_board', 'final', 'won', 'finished', 'set']);
 
 /** Whether a photograph may be on this screen at all, right now. */
 function photosAllowed(s) {
@@ -883,6 +914,50 @@ function paintStartsIn(s) {
     // watching and when somebody turns round and says "it's starting".
     ? `Starting in <b>${secs}</b> second${secs === 1 ? '' : 's'}`
     : `Starting in <b>${mins + 1}</b> minute${mins + 1 === 1 ? '' : 's'}`;
+}
+
+/* ------------------------------------------------------------------ a DJ set
+ *
+ * THE CODE AND THE PHOTOGRAPHS, AND NOTHING ELSE. There is no queue on this
+ * screen and there must never be one — rule 1, and its sharpest case in the
+ * app: a list of requests on the wall is a list of songs the room can watch
+ * the DJ not play, and the first rude title somebody types is six feet wide
+ * in front of everybody. `screenView()` in `src/dj.js` does not send them, so
+ * this card could not draw one if it tried.
+ *
+ * It is the lobby's own shape rather than a new one — same grid, same QR
+ * panel, same rules about what may dim the code — because it is the same job:
+ * get the room's phones pointed at a thing. What changes is the words and
+ * what is NOT there: no countdown to a kick-off that is not coming, no prize,
+ * no arcade board, no player strip.
+ */
+function renderDj(s) {
+  return node(`
+    <div class="lobby dj-screen" style="display:flex;flex-direction:column;height:100%">
+      <div class="lobby-grid" style="flex:1 1 auto;min-height:0">
+        <div>
+          <h1 class="grad-text">${esc(s.invite || 'Send a photo to ask for a song')}</h1>
+          <div class="sub">Your photo goes straight up here.</div>
+          <ol class="join-steps">
+            <li><span class="n">1</span><span>Point your camera at the code</span></li>
+            <li><span class="n">2</span><span>Send a photo</span></li>
+            <li><span class="n">3</span><span>Ask for a song</span></li>
+          </ol>
+        </div>
+        <div class="qr-panel">
+          <img src="${joinQr}" alt="Scan to send a photo">
+          <div class="url" data-join-url>${esc(joinUrl)}</div>
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+function updateDj() {
+  // The join address is filled in after the card is built, exactly as the
+  // lobby's is — see `paintJoinUrls()`, and the rules slide that once never
+  // got one.
+  paintJoinUrls();
 }
 
 function updateLobby(s) {

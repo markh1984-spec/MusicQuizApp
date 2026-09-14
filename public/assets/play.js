@@ -18,6 +18,7 @@ import {
   rememberRoom, noteDrinks, prizesShowing, prizesHead, wireDrinks,
 } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
+import { buildDj, djKey, djHead } from './play-dj.js';
 import { drawFiltered, toJpeg, looksCameraTaken } from './filters.js';
 import { stickersFor, stickerSvg, drawStickers, stickerAt, placed, preloadStickers, trayOrder, withRecent } from './stickers.js';
 import { paintLook, DEFAULT_LOOK, LOOKS } from './looks.js';
@@ -271,7 +272,12 @@ async function silentRejoin() {
  * nothing else, and a phone that guessed differently from the big screen would
  * promise the room something it cannot see.
  */
-const PHOTO_PHASES_PHONE = new Set(['lobby', 'round_board', 'final', 'won', 'finished']);
+/*
+ * AND `set` IS THE DJ'S, WHERE THE WALL IS THE WHOLE SCREEN ALL NIGHT — there
+ * being no question for a photograph to wait behind. Without it the phone
+ * said "it goes up at the next break" on a set that has no breaks.
+ */
+const PHOTO_PHASES_PHONE = new Set(['lobby', 'round_board', 'final', 'won', 'finished', 'set']);
 
 /* ------------------------------------------------------------------ camera
  *
@@ -854,11 +860,23 @@ function openCamera() {
        * up at a screen that is showing them a question.
        */
       const upNow = PHOTO_PHASES_PHONE.has(state && state.phase);
+      /*
+       * AND ON A DJ SET IT SAYS WHAT THE PHOTOGRAPH JUST BOUGHT.
+       *
+       * The photo is the ticket — *"that unlocks the ability for them to give
+       * requests"* — so the one moment somebody is certain to be reading this
+       * screen is the moment to say the box below has opened. Only on the
+       * FIRST one, because every one after it opens nothing and a line
+       * claiming otherwise is a promise the engine does not keep.
+       */
+      const dj = state && state.game === 'dj';
+      const opened = dj && !state.unlocked;
       sheet.querySelector('.cam-sheet').replaceChildren(node(`
         <div style="text-align:center;padding:22px 6px">
           <div style="font-size:44px">🎉</div>
           <b>${upNow ? 'It is on the screen' : 'Sent'}</b>
-          <p class="tiny">${upNow ? 'Have a look up.' : 'It goes up on the big screen at the next break.'}</p>
+          <p class="tiny">${opened ? 'Have a look up — and you can ask for a song now.'
+            : upNow ? 'Have a look up.' : 'It goes up on the big screen at the next break.'}</p>
         </div>`));
       setTimeout(close, 1800);
     } catch (err) {
@@ -945,7 +963,14 @@ function draw(next) {
   if (state.you) {
     headEl.hidden = false;
     teamNameEl.textContent = state.you.name;
-    if (state.game === 'bingo') {
+    if (state.game === 'dj') {
+      // No score and no card on a DJ set — what the head is for is how many
+      // requests are left, and before the first photograph, that a photograph
+      // is what buys one.
+      const head = djHead(state);
+      teamScoreEl.textContent = head.score;
+      teamRankEl.textContent = head.rank;
+    } else if (state.game === 'bingo') {
       // No score in bingo — what matters is how close you are.
       teamScoreEl.textContent = state.you.squaresAway === 0 ? '✓' : state.you.squaresAway;
       teamRankEl.textContent = state.you.squaresAway === 0 ? 'line complete' : 'squares to go';
@@ -1035,7 +1060,13 @@ function paintCameraButton(s) {
    * still one tap away in the corner — the setting would look like it had
    * done nothing, which is worse than not having it.
    */
-  const menuIsUp = s.phase === 'lobby' || s.phase === 'round_board';
+  /*
+   * AND A DJ SET DRAWS ITS OWN, IN THE BODY. The camera is not a corner
+   * afterthought there — it is the first control on the page and the thing
+   * that buys a request — so a floating duplicate would be the two-controls-
+   * for-one-job fault this rule already names, with the worse one floating.
+   */
+  const menuIsUp = s.phase === 'lobby' || s.phase === 'round_board' || s.game === 'dj';
   const wanted = Boolean(gapWants(s).photos && s.you && s.phase !== 'question' && !menuIsUp);
   let btn = document.getElementById('cameraBtn');
   if (!wanted) {
@@ -1051,6 +1082,7 @@ function paintCameraButton(s) {
 }
 
 function screenKey(s) {
+  if (s.game === 'dj') return djKey(s);
   if (s.game === 'bingo') return bingoKey(s);
   if (s.phase === 'question' || s.phase === 'reveal') return `q:${s.roundIndex}:${s.questionIndex}:${s.phase}`;
   return `${s.phase}:${s.roundIndex}`;
@@ -1075,6 +1107,9 @@ function buildScreen(s) {
   // and therefore a full house nobody can get. This tells the stylesheet to
   // move it down beside the BINGO button instead.
   document.body.classList.toggle('bingo-card', s.game === 'bingo' && s.phase !== 'lobby');
+  // So the head can stop painting its number gold — see the rule below.
+  document.body.classList.toggle('dj', s.game === 'dj');
+  if (s.game === 'dj') return buildDj(s, { openCamera, player: me });
   if (s.game === 'bingo') return renderBingo(s, me);
   switch (s.phase) {
     case 'question': return buildAnswers(s);

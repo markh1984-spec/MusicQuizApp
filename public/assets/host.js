@@ -16,6 +16,7 @@ import {
 } from './client.js';
 import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
+import { djPanels, djActions, djWhere } from './host-dj.js';
 import { cueOffsetMs, formatOffset } from './cue.js';
 import { phonesAre } from './phones.js';
 import { STINGS } from './stings.js';
@@ -129,6 +130,27 @@ async function act(action, body = {}) {
   }
 }
 
+/**
+ * THE DJ DESK'S OWN BUTTONS, WHICH ARE NOT `/api/host/*`.
+ *
+ * `/api/dj/*` is deliberately a separate prefix — see the comment above those
+ * routes in `server.js`: the quiz's launch and host paths are the most
+ * protected thing in this app, and a third game must not be one ternary away
+ * from them. So the PATH differs and everything else about a press does not:
+ * the same double-tap guard, the same key header, the same refusal worded in
+ * words. Two posters is one poster with a prefix, not two rules.
+ */
+async function djAct(action, body = {}) {
+  const at = Date.now();
+  if (action === lastAct.action && at - lastAct.at < DOUBLE_TAP_MS) return;
+  lastAct = { action, at };
+  try {
+    await postJson(`/api/dj/${action}`, body, { 'X-Host-Key': hostKey });
+  } catch (err) {
+    toast(whyRefused(err));
+  }
+}
+
 /*
  * WHAT A REFUSAL ACTUALLY MEANS, said in words.
  *
@@ -207,9 +229,16 @@ function draw(next) {
    * back of the room meant turning round to read their own big screen. The
    * house room has none, so it simply says the player count as before.
    */
-  connEl.textContent = state.joinCode
-    ? `${state.playerCount} playing · code ${state.joinCode}`
+  /*
+   * "Playing" is a quiz word, and on a DJ set nobody is playing anything —
+   * they are in the room with a phone, which is what the number counts. Same
+   * correction as the projector's own pill, and it has to be made in both:
+   * one screen saying it right does not make the other true.
+   */
+  const inRoom = state.game === 'dj'
+    ? `${state.playerCount} ${state.playerCount === 1 ? 'phone' : 'phones'} in`
     : `${state.playerCount} playing`;
+  connEl.textContent = state.joinCode ? `${inRoom} · code ${state.joinCode}` : inRoom;
   mainEl.replaceChildren(...restartNotice(state), ...advertPanel(state), ...voucherPanel(state), ...buildPanels(state), ...photoPanel(state));
   actionsEl.replaceChildren(...buildActions(state));
   /*
@@ -263,6 +292,7 @@ function restartNotice(s) {
 }
 
 function whereLabel(s) {
+  if (s.game === 'dj') return djWhere(s);
   if (s.game === 'bingo') {
     return s.phase === 'lobby'
       ? 'Bingo — waiting to start'
@@ -426,6 +456,7 @@ function buildPanels(s) {
   // than forty rows down a 720px column. The quiz's panels are read, not
   // scanned, so they keep the narrower measure.
   document.body.classList.toggle('bingo', s.game === 'bingo');
+  if (s.game === 'dj') return djPanels(s, djAct);
   if (s.game === 'bingo') return bingoPanels(s, act);
   const panels = [];
 
@@ -1101,6 +1132,7 @@ function minorButton(text, handler, danger = false) {
 }
 
 function buildActions(s) {
+  if (s.game === 'dj') return djActions(s, djAct, minorButton);
   if (s.game === 'bingo') return bingoActions(s, act, minorButton);
 
   /*
@@ -1536,6 +1568,14 @@ function showScores() {
 function tick() {
   requestAnimationFrame(tick);
   if (!state) return;
+  // A DJ set has no clock and no call count — how many are waiting is the
+  // number that matters, and it is the one thing on this screen that changes
+  // while nobody is pressing anything.
+  if (state.game === 'dj') {
+    clockEl.textContent = String((state.requests || []).length);
+    clockEl.classList.remove('urgent');
+    return;
+  }
   if (state.game === 'bingo') {
     clockEl.textContent = state.calledCount ?? '';
     clockEl.classList.remove('urgent');

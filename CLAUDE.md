@@ -1090,6 +1090,48 @@ on sending `{ id, name }` for months.
   assertion, verified by putting the fault back. Same argument `src/arcade.js`
   exists for: two copies of one rule is one rule that gets fixed once.
 
+### A DJ SET IS THE THIRD GAME, AND THE PHOTOGRAPH IS THE TICKET
+
+`src/dj.js`, `play-dj.js`, `host-dj.js`, `dj-door.js`, `/dj`, `/api/dj/*`,
+`dj-set.mjs`. *"When I'm DJing I just have a QR code on the screen. People
+upload their photos, and that unlocks the ability to give requests."*
+
+- **ONE CODEBASE BECAUSE PHOTOGRAPHS LIVE ON THE ROOM, NOT ON THE GAME** —
+  `POST /api/photo` needed NO CHANGE, so the camera, the wall, the gallery and
+  the private repo arrived free. The PRODUCT is still standalone: its own
+  door, its own screen, no quizzes on it. **The hook is a CAPABILITY check
+  (`typeof notePhoto === 'function'`), never a branch on kind** — `engine.js`
+  and `bingo.js` untouched.
+- **A REQUEST IS NEVER ON THE BIG SCREEN — rule 1's sharpest case.** A queue on
+  the wall is songs the room can watch him not play, and the first rude title
+  is six feet wide where this app deliberately has no filter. `screenView()`
+  does not carry them, so it is STRUCTURAL. **Do not add a queue or a "now
+  playing" to the projector.**
+- **A PHOTOGRAPH IS A GATE, NOT A CURRENCY**, and **no screen may say
+  otherwise** — the phone said *"send another for more"* first, which the
+  engine does not do. Three requests WAITING, freed as they are played.
+- **TYPED IS FIRST-CLASS, NOT DEGRADED** — his DJ software reads off the
+  TITLE. **Search is a POST because it carries the TOKEN**, behind the same
+  proof as a request — every phone searches through his ONE Spotify token —
+  and **not configured is SAID OUT LOUD**, never a silent empty list.
+- **THE LINE THE DJ PASTES IS WORDED ON THE SERVER**, and **the copy button
+  says *Selected* when it could not** — a venue laptop may not be secure.
+- **IT IS NOT ON THE CONSOLE'S GAME PICKER, and `game-kinds.test.js` NAMES
+  that exception** rather than dropping the equality: there is no DJ pack to
+  play, and the quiz's launch path is item 1 on the protected surface.
+- **EVERY ENGINE MUST ANSWER THE SHARED CONTRACT —
+  `test/engine-contract.test.js`.** Four went missing in one afternoon:
+  **`touch()`, which `/api/stream` calls, so every phone got a 500 instead of
+  a live connection** — the game dead, every payload correct when asked for
+  directly; `playerList()`, which `inProgress()` counts before ANY launch;
+  and six off the shared dispatch, as `bingo.js` paid for once. **`perGame` read `quiz ? … : bingo` — two games is the only
+  arrangement in which "the other one" names anything.**
+- **NO PRICE AND NO GATE YET, deliberately** — signed in is the whole check,
+  and gating on `FEATURES.QUIZ` would answer a pricing question by accident.
+  **`APP_NAME` in `dj-door.js` is ONE constant, MARKED as a placeholder.**
+
+Full reasoning: **[`docs/dj.md`](docs/dj.md)**.
+
 ### WHAT A PART BOUNDARY CARRIES — `nightWideOpts()`, and nine things it did not
 
 A running order builds a FRESH engine per part, so anything night-wide has to
@@ -1612,34 +1654,19 @@ symbol you click to cycle… in the bottom right of the pack ONCE LOADED."*
   the first.** A BINGO slot owns the gap BEFORE it, never `p0:lobby`; **the FINAL
   is not a gap.** **`drag-check` asserts ONE face moved** — a guard aimed at
   whatever is first measures the shelf, not the row.
-- **THE TILE'S SIZE DECIDED THE SHAPE, MEASURED FIRST**: 179 x 76 with 58px
-  clear — ONE 44px control and never two, so the dial is the PHONES and the big
-  screen became a night-level picker. **The plan on disk is unchanged.**
-- **A DIAL IS SAFE HERE because every state is a real answer and the order is a
-  SCALE** — one whose steps are not has to be memorised.
-- **THE LIT EDGE HAD TO BE MADE HONEST** — `cleanPlan()` runs on the way OUT
-  too, or a gap back at its default still claims a change.
-- **DOORS KEEPS A DIAL, the one gap with no tile** — phone-only, the join code
-  owning the lobby's screen.
-- **A LOST `import` DREW A BAR WITH NO DIALS AND EVERY CHECK PASSED** — a
-  swallowed `ReferenceError`, `node --check` happy, the suite green.
-  **`test/imports-present.test.js`** asserts every module imports what it
-  calls.
-- **A TILE IS NOT A PART** — several quiz packs are welded into ONE quiz, so
-  `gapsOfPack()` reads the part's `order`.
-- **THE SLOT NUMBER GOES WHEN A PACK LANDS IN IT**; **it stays on an EMPTY
-  slot**, its label.
-- **THE TILE IS 90px BECAUSE 30 + 44 DOES NOT FIT IN 76** — moving the × puts
-  "remove this" where the eye lands first.
-- **THE ERA WORD IS GONE FROM A TONIGHT TILE** — it overlapped the round ticks
-  and there is no third place: **the control wins and the decoration moves.**
-  **It stays on the shelf CARD.**
-- **`.lb-tiles:has(.lb-doors-slot)` OUT-SPECIFIED THE PHONE RULE** — a class
-  more specific than `.lb-tiles` beat the 560px layout and 390 came out as four
-  50px columns. The specificity trap wearing `:has()`.
-- **DOORS IS A MINI SLOT AT THE HEAD OF THE ROW** — half width, no number, never
-  a drop target. **The big screen is not offered there**: the lobby's projector
-  is the join code and nothing may dim it.
+- **THE TILE'S SHAPE, THE DIAL'S PLACE AND THE SPECIFICITY TRAP ARE IN
+  [`docs/console/gap-dial.md`](docs/console/gap-dial.md) NOW.** Not to be
+  undone: **ONE 44px control on a tile and never two** — the dial is the
+  PHONES, the big screen is night-level, **the plan on disk is unchanged**; **a
+  dial is safe only where every state is a real answer and the order is a
+  SCALE**; **`cleanPlan()` runs on the way OUT too**; **Doors keeps a dial**,
+  phone-only, and **is a mini slot — half width, no number, never a drop
+  target**; **a tile is not a PART**; **the slot number stays on an EMPTY slot
+  only**; **the tile is 90px**; **the era word stays on the shelf CARD** — *the
+  control wins and the decoration moves*; **a class more specific than
+  `.lb-tiles` beats the 560px layout**; **`test/imports-present.test.js`**
+  asserts every module imports what it calls; **a moved body keeps the names of
+  the home it left**, **destructured ABOVE every reader**.
 - **EVERY NIGHT SETTING IS ON ONE ROW, AND A BOX IS NEVER NARROWER THAN ITS
   OWN HEADING.** `justify-items: stretch` makes the BOX the wider one every
   time. **It does not undo *narrow shut, wide open***: the cell is still only as
@@ -1673,53 +1700,24 @@ symbol you click to cycle… in the bottom right of the pack ONCE LOADED."*
   does this mean? the . ?"* — which is the *clarity beats everything* test
   failing. The other three states are pictures; punctuation on a button reads
   as a control that failed to load.
-- **THE PACK LIFTS FROM ITS GRIP; A ROUND LIFTS FROM ITS OWN SQUARE.** A tick
-  with no drag handlers lets the browser walk up to the nearest draggable
-  ancestor and take the whole pack; **a `draggable` child stops the walk.** The
-  tile refuses a `dragstart` not begun on `.lb-tile-head`.
-- **A `dropEffect` THE SOURCE DID NOT ALLOW KILLS THE DROP SILENTLY.** Set the
-  wrong one and the browser treats the target as REFUSING, so **no `drop` fires
-  at all** — hard-coding `'move'` in a handler serving both killed every pack
-  drop while rounds kept working. **A synthesised `DragEvent` does not enforce
-  it**: `drag-check.mjs` drives the real mouse.
-- **THE SLOT YOU DROP ON IS THE SLOT IT GOES IN — for a whole PACK too.** `at`
-  is honoured only when that slot is genuinely EMPTY — **a slot you can destroy
-  by letting go over it is a hazard** — so a drop onto a full tile appends. **A
-  drop that MISSES every square means "the next free slot".**
-- **A DESCRIPTOR IS NOT THE THING IT DESCRIBES.** `packDrag` is `{id, kind}` and
-  the empty slot's drop handed it on as the pack — **the slot lit, the drop was
-  taken, nothing appeared.**
-- **A KIND THAT DISAGREES WITH THE NIGHT'S OWN IS A MIXED NIGHT** — a quiz pack
-  added to a bingo night went into `lbExtra` and was never found again. **Nothing
-  threw: the state was consistent and the READER could not resolve it.**
-- **A PACK CARD ASKS WHETHER IT IS IN TONIGHT; IT IS NOT PAINTED AFTERWARDS** —
-  `render()` assembles the page OFF the document, so a later paint finds the
-  PREVIOUS page's cards.
-- **THE BREAK PLUMBING MOVED INTO `console-breaks.js`** rather than the line
-  budget being raised a fifth time. **Destructured ABOVE every reader**: a
-  `const` in its temporal dead zone throws when the line RUNS and the catch
-  swallows it. **A moved body keeps the names of the home it left.**
-- **A PACK TILE LIGHTS UP TOO — AND ONLY WHERE THE DROP WILL BE TAKEN.** One
-  that lit and did nothing promised. A refusal also STOPS the event, or the round
-  lands where the pointer never was. **The inset ring alone was invisible.**
-- **A FILLED MIXED TILE HAS TWO WIRINGS AND THEY RACED** — the one registered
-  LAST won, so a bingo tile lit for a round it would refuse. **One handler
-  decides, the other stands down.**
-- **AN EMPTY SLOT TAKES A ROUND AND LIGHTS UP WHILE YOU ARE OVER IT** — with no
-  `dragover` of its own **nothing lit up**, and an inert square reads as one that
-  refuses; `orderEl`'s drop APPENDS, so a round let go over slot 5 landed in slot
-  2. `stopPropagation` makes the slot's answer count.
-- **AND MY OWN TEST HAD MISSED IT** by dispatching `drop` directly: a browser
-  fires none unless `dragover` called `preventDefault()`. **Measure
-  `defaultPrevented` on the dragover.**
-- **A CHILD'S `dragend` BUBBLES TO THE TILE, and the tile's removes the pack** —
-  dragging a round out emptied Tonight. The round's drag travels the SHELF
-  channel so `moveRoundToSlot()` MOVES rather than duplicates.
-- **A ROUND IS A ROUNDED SQUARE AT 28px ON A TONIGHT TILE, AND ITS HOVER
-  LIFTS.** *"Square shaped with round edges… I need to see when mousing over
-  them."* `--r-field` only reads as a square on a box with sides — at 22px it
-  is nearly a circle — and `filter: brightness(1.25)` is a change you cannot
-  find on a faint dot.
+- **THE DRAGS ON THE TONIGHT ROW ARE IN
+  [`docs/console/drag.md`](docs/console/drag.md) NOW — read it before touching
+  a drag handler.** Not to be undone: **the pack lifts from its GRIP and a
+  round from its own SQUARE**; **a `dropEffect` the source did not allow kills
+  the drop SILENTLY**, so never hard-code one in a shared handler, and **a
+  synthesised `DragEvent` does not enforce it** — `drag-check.mjs` drives the
+  real mouse and **measures `defaultPrevented` on the dragover**; **the slot
+  you drop on is the slot it goes in**, only when genuinely EMPTY — **a slot
+  you can destroy by letting go over it is a hazard** — and **a drop that
+  MISSES every square means "the next free slot"**; **a descriptor is not the
+  thing it describes**; **a kind that disagrees with the night's own is a MIXED
+  night**, never `lbExtra`; **a pack card is not painted after `render()`
+  assembles off the document**; **a tile lights up only where the drop will be
+  TAKEN**, a refusal STOPS the event, and **one handler decides while the other
+  stands down**; **an empty slot needs its own `dragover`**; **a child's
+  `dragend` bubbles to the tile**, so a round's drag takes the SHELF channel
+  and MOVES rather than duplicates; **a round is a rounded square at 28px on a
+  Tonight tile, with a hover that lifts.**
 
 ### FIVE DOORS: CONSOLE · WORKSHOP · POST GIG · COMMUNITY · MY ACCOUNT
 
@@ -4055,6 +4053,7 @@ node scripts/buy-your-own-rung.mjs      # can somebody who wants to pay actually
 node scripts/owner-money.mjs            # is the money tab telling the truth?
 node scripts/buy-a-pack.mjs             # can somebody buy one pack for £3?
 node --test test/trial-emails.test.js   # does a trial ending actually tell anybody?
+node scripts/dj-set.mjs                 # a DJ set — and is the queue off the wall?
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 ```
 

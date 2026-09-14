@@ -11344,3 +11344,150 @@ input, textarea, [contenteditable] { caret-color: var(--hot); }
 .panel.sounds.shut .sounds-caret { transform: rotate(-90deg); }
 .sounds-body { padding: 0 16px 14px; }
 .panel.sounds.shut .sounds-body { display: none; }
+
+/* ------------------------------------------------------------- a DJ set
+ * The phone on a DJ night: a camera, then a box to ask for a song. Two
+ * controls, in that order, because the photograph is what buys the request.
+ *
+ * It borrows the phone's own card shape (`.wait-item`) rather than inventing
+ * one — same radius, same top-lit face, same account-coloured bottom edge —
+ * so a DJ set looks like the app it is part of. Three radii, one angle.
+ */
+/* GOLD IS THE TROPHY COLOUR AND NOTHING ELSE. The phone's head paints its
+   number gold because on a quiz that number is the SCORE; on a DJ set it is
+   how many requests are left, which is not winning anything. */
+body.dj .head .score { color: var(--ink); }
+
+.dj-phone { display: grid; gap: 14px; }
+
+.dj-card {
+  display: grid; gap: 10px;
+  padding: 14px; border-radius: var(--r-card);
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--panel-line);
+  border-bottom: 2px solid var(--hot);
+}
+/* The reason a control is off goes ON the control, so the card stays put and
+   dims rather than disappearing — *a control never appears out of nothing*. */
+.dj-card.is-off { opacity: .72; border-bottom-color: var(--panel-line); }
+.dj-card-what { display: grid; gap: 2px; min-width: 0; }
+.dj-card-what b { font-size: var(--fs-head); }
+.dj-card-what .tiny { color: var(--ink-dim); }
+.dj-why { color: var(--ink-dim); }
+
+/* THE CAMERA IS THE ONE FILLED CONTROL ON THIS SCREEN, and only until it has
+   been used: fill means commitment, and on a DJ set the photograph is the
+   commitment being asked for. Afterwards it drops to an ordinary button so
+   the request box is the loudest thing left. */
+.dj-shoot {
+  min-height: 48px; border-radius: var(--r-field);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--panel-line); border-bottom: 2px solid var(--hot);
+  color: var(--ink); font: inherit; font-weight: 800; cursor: pointer;
+}
+.dj-camera-first .dj-shoot {
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  border: 0; color: #fff;
+}
+.dj-shoot:active { transform: translateY(1px); }
+
+.dj-search, .dj-manual { display: grid; gap: 10px; }
+.dj-row { display: flex; gap: 8px; }
+.dj-q { flex: 1 1 auto; min-width: 0; }
+.dj-go, .dj-send {
+  flex: 0 0 auto; min-height: 44px; padding: 0 16px;
+  border-radius: var(--r-field);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--panel-line); border-bottom: 2px solid var(--hot);
+  color: var(--ink); font: inherit; font-weight: 800; cursor: pointer;
+}
+.dj-go:disabled, .dj-send:disabled { opacity: .6; cursor: default; }
+.dj-say { color: var(--ink-dim); margin: 0; }
+
+.dj-tracks { display: grid; gap: 6px; }
+/* A whole row is the target, not the words in it — 52px, above the touch
+   floor, because this is the one control somebody uses in the dark. */
+.dj-track {
+  display: grid; gap: 1px; min-height: 52px; padding: 8px 12px;
+  border-radius: var(--r-field); text-align: left;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-line);
+  color: var(--ink); font: inherit; cursor: pointer;
+}
+.dj-track:active { transform: translateY(1px); }
+.dj-track-title { font-weight: 800; }
+.dj-track-artist { color: var(--ink-dim); }
+.dj-swap { justify-self: start; }
+
+.dj-mine-list { display: grid; gap: 6px; }
+.dj-mine-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: var(--r-field);
+  background: rgba(255, 255, 255, 0.04);
+}
+.dj-mine-what { flex: 1 1 auto; min-width: 0; }
+.dj-mine-what .tiny { color: var(--ink-dim); }
+.dj-mine-state { flex: 0 0 auto; color: var(--ink-dim); }
+/* Played is the good news, so it is the one thing on this list that is not
+   grey — and it is GREEN rather than gold, gold being the trophy colour. */
+.dj-mine-row.is-played .dj-mine-state { color: var(--good); }
+
+/* ------------------------------------------------ the DJ desk, in the booth
+ * Read in a dark booth with a record running out, so the LINE is the biggest
+ * thing in a row and the buttons sit under it on a phone rather than beside
+ * it — a three-button row and a song title do not share 390px.
+ */
+.djq-list, .djq-done { display: grid; gap: 8px; }
+.djq-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 10px; border-radius: var(--r-field);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--panel-line);
+}
+.djq-what { flex: 1 1 220px; min-width: 0; display: grid; gap: 2px; }
+.dj-line { font-weight: 800; font-size: var(--fs-note); }
+.djq-who { color: var(--ink-dim); }
+.djq-buttons { flex: 0 0 auto; display: flex; gap: 6px; }
+.djq-buttons .minor { min-height: 40px; padding: 0 12px; }
+.djq-done-row {
+  display: flex; justify-content: space-between; gap: 10px;
+  padding: 6px 10px; border-radius: var(--r-field);
+  color: var(--ink-dim); font-size: var(--fs-note);
+}
+@media (max-width: 520px) {
+  /* The line gets the row to itself and the buttons get a full one under it —
+     at 390px the three of them beside a title left 40px for the song. */
+  .djq-what { flex: 1 1 100%; }
+  .djq-buttons { flex: 1 1 100%; }
+  .djq-buttons .minor { flex: 1 1 0; }
+}
+
+/* --------------------------------------------------------- the DJ set's door
+ * Three things: start it, put it on the screen, drive it. Nothing else belongs
+ * on this page, so it is centred and short rather than laid out like a console.
+ */
+.dj-door { max-width: 560px; margin: 0 auto; text-align: center; display: grid; gap: 14px; }
+.dj-door-brand { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: var(--fs-head); }
+.dj-door-links { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+/*
+ * THE ORDINARY BUTTON IS SPELT OUT HERE BECAUSE `.minor` IS SCOPED.
+ *
+ * Every `.minor` rule in this sheet is under `.host` or `.console`, so on a
+ * page that is neither the class means nothing and an `<a class="minor">`
+ * rendered as a bare underlined link — *nothing clickable is a flat grey
+ * box*, and a naked link beside a filled gradient is exactly that fault
+ * wearing the browser's own default. Caught by looking at the screenshot.
+ *
+ * The treatment is the ordinary role's, unchanged: a top-lit face, and the
+ * account's own colour on the EDGE rather than the face.
+ */
+.dj-door-links a.minor {
+  min-height: 44px; padding: 0 18px;
+  display: inline-flex; align-items: center;
+  border-radius: var(--r-field);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--panel-line); border-bottom: 2px solid var(--hot);
+  color: var(--ink); font-weight: 800; text-decoration: none;
+}
+.dj-door-note { color: var(--ink-dim); }
+.dj-door-warn { color: var(--ink-dim); }

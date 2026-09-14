@@ -341,3 +341,61 @@ had just removed, arriving from the other end.
 
 **The topbar is measured, never written out.** It wraps on a phone, so a
 hard-coded height is right at 1280 and wrong at 390, silently.
+
+
+---
+
+## The Tonight row's own drags — moved here whole, 14 September 2026
+
+Moved out of `CLAUDE.md` to pay for the DJ set's section, under that file's
+own standing instruction: *"THE NEXT ONE HAS TO COME OUT OF `docs/` MOVES,
+NOT A RAISE."* Every prohibition in here is still named in `CLAUDE.md`; what
+came out is the account of how each was found.
+
+- **THE PACK LIFTS FROM ITS GRIP; A ROUND LIFTS FROM ITS OWN SQUARE.** A tick
+  with no drag handlers lets the browser walk up to the nearest draggable
+  ancestor and take the whole pack; **a `draggable` child stops the walk.** The
+  tile refuses a `dragstart` not begun on `.lb-tile-head`.
+- **A `dropEffect` THE SOURCE DID NOT ALLOW KILLS THE DROP SILENTLY.** Set the
+  wrong one and the browser treats the target as REFUSING, so **no `drop` fires
+  at all** — hard-coding `'move'` in a handler serving both killed every pack
+  drop while rounds kept working. **A synthesised `DragEvent` does not enforce
+  it**: `drag-check.mjs` drives the real mouse.
+- **THE SLOT YOU DROP ON IS THE SLOT IT GOES IN — for a whole PACK too.** `at`
+  is honoured only when that slot is genuinely EMPTY — **a slot you can destroy
+  by letting go over it is a hazard** — so a drop onto a full tile appends. **A
+  drop that MISSES every square means "the next free slot".**
+- **A DESCRIPTOR IS NOT THE THING IT DESCRIBES.** `packDrag` is `{id, kind}` and
+  the empty slot's drop handed it on as the pack — **the slot lit, the drop was
+  taken, nothing appeared.**
+- **A KIND THAT DISAGREES WITH THE NIGHT'S OWN IS A MIXED NIGHT** — a quiz pack
+  added to a bingo night went into `lbExtra` and was never found again. **Nothing
+  threw: the state was consistent and the READER could not resolve it.**
+- **A PACK CARD ASKS WHETHER IT IS IN TONIGHT; IT IS NOT PAINTED AFTERWARDS** —
+  `render()` assembles the page OFF the document, so a later paint finds the
+  PREVIOUS page's cards.
+- **THE BREAK PLUMBING MOVED INTO `console-breaks.js`** rather than the line
+  budget being raised a fifth time. **Destructured ABOVE every reader**: a
+  `const` in its temporal dead zone throws when the line RUNS and the catch
+  swallows it. **A moved body keeps the names of the home it left.**
+- **A PACK TILE LIGHTS UP TOO — AND ONLY WHERE THE DROP WILL BE TAKEN.** One
+  that lit and did nothing promised. A refusal also STOPS the event, or the round
+  lands where the pointer never was. **The inset ring alone was invisible.**
+- **A FILLED MIXED TILE HAS TWO WIRINGS AND THEY RACED** — the one registered
+  LAST won, so a bingo tile lit for a round it would refuse. **One handler
+  decides, the other stands down.**
+- **AN EMPTY SLOT TAKES A ROUND AND LIGHTS UP WHILE YOU ARE OVER IT** — with no
+  `dragover` of its own **nothing lit up**, and an inert square reads as one that
+  refuses; `orderEl`'s drop APPENDS, so a round let go over slot 5 landed in slot
+  2. `stopPropagation` makes the slot's answer count.
+- **AND MY OWN TEST HAD MISSED IT** by dispatching `drop` directly: a browser
+  fires none unless `dragover` called `preventDefault()`. **Measure
+  `defaultPrevented` on the dragover.**
+- **A CHILD'S `dragend` BUBBLES TO THE TILE, and the tile's removes the pack** —
+  dragging a round out emptied Tonight. The round's drag travels the SHELF
+  channel so `moveRoundToSlot()` MOVES rather than duplicates.
+- **A ROUND IS A ROUNDED SQUARE AT 28px ON A TONIGHT TILE, AND ITS HOVER
+  LIFTS.** *"Square shaped with round edges… I need to see when mousing over
+  them."* `--r-field` only reads as a square on a box with sides — at 22px it
+  is nearly a circle — and `filter: brightness(1.25)` is a change you cannot
+  find on a faint dot.
