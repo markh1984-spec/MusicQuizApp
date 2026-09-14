@@ -196,6 +196,66 @@ export async function me() {
 }
 
 /**
+ * SEARCH, FOR SOMEBODY TO PICK FROM — the DJ set's request box.
+ *
+ * `findTrack()` above answers *"which record is this"* and returns ONE, which
+ * is what an intro round needs. This answers *"what might they have meant"* and
+ * returns several, because the person choosing is standing in the room and
+ * knows which one they meant better than any matcher does.
+ *
+ * **CACHED BY QUERY, SHORT AND SMALL.** Two hundred phones typing at a wedding
+ * all reach Spotify through ONE refresh token, and they type the same handful
+ * of songs — so the cache is the difference between a search box that works
+ * all night and one that starts 429ing at the busiest moment. Thirty seconds
+ * is long enough to absorb a room typing the same thing and short enough that
+ * nothing here is ever really stale.
+ *
+ * **IT NEVER THROWS FOR THE CALLER.** A search that fails is an empty list and
+ * a phone that falls back to typing, which is the whole reason typing stayed.
+ */
+const SEARCH_TTL_MS = 30_000;
+const SEARCH_CACHE_MAX = 200;
+const searchCache = new Map();
+
+export async function searchTracks(query, { limit = 6, market = 'GB' } = {}) {
+  const q = String(query || '').trim().slice(0, 100);
+  if (q.length < 2) return [];
+
+  const key = `${market}:${limit}:${q.toLowerCase()}`;
+  const hit = searchCache.get(key);
+  if (hit && hit.until > Date.now()) return hit.tracks;
+
+  let tracks = [];
+  try {
+    const data = await api(`/search?${new URLSearchParams({
+      q, type: 'track', limit: String(Math.min(10, Math.max(1, limit))), market,
+    })}`);
+    tracks = (data?.tracks?.items || []).map((t) => ({
+      id: t.id,
+      title: t.name,
+      artist: t.artists.map((a) => a.name).join(', '),
+      year: (t.album?.release_date || '').slice(0, 4),
+    }));
+  } catch {
+    // Said by the CALLER, not here — a request box that goes quiet is worse
+    // than one that says "type it instead", and only the caller knows which
+    // screen is asking.
+    return [];
+  }
+
+  /*
+   * A PLAIN MAP WITH A CEILING, evicted oldest-first. Nothing here is worth a
+   * dependency, and an unbounded cache on a long-running server is the memory
+   * leak the room-id work already records once.
+   */
+  if (searchCache.size >= SEARCH_CACHE_MAX) {
+    searchCache.delete(searchCache.keys().next().value);
+  }
+  searchCache.set(key, { tracks, until: Date.now() + SEARCH_TTL_MS });
+  return tracks;
+}
+
+/**
  * Find a track. Tries the precise field search first, then a plain one, so a
  * slightly-off artist name still resolves rather than silently dropping a
  * song from the night.

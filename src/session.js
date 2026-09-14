@@ -19,6 +19,7 @@ import { sendNote, markNoteRead } from './notes.js';
 import { Engine, PHASES, MAX_WINNERS, winnersOf, isSafeId, ownsPlayer, newToken } from './engine.js';
 import { JoinGate } from './joins.js';
 import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes } from './bingo.js';
+import { DjSet, DJ_PHASES } from './dj.js';
 // ONE cap on how many prizes a night can carry, shared with the venue record
 // that authors them — two copies of a number like this drift, and the one that
 // drifts is the one nobody is looking at.
@@ -71,6 +72,31 @@ const LAUNCHERS = {
     },
     isOver: (s) => s.phase === BINGO_PHASES.FINISHED,
     empty: { id: 'empty', title: 'No bingo pack loaded', tracks: [], cardSize: 4 },
+  },
+  /*
+   * A DJ SET — the photo wall and a request queue. See `src/dj.js`.
+   *
+   * **THERE IS NO PACK, AND THAT IS THE ONLY UNUSUAL THING HERE.** A quiz
+   * loads questions and a bingo game a track list; a set loads nothing,
+   * because what it plays is whatever is on the decks. `load` answers with a
+   * title so the dispatcher, the console and the archive all have the one
+   * thing they actually read off a pack, rather than the contract growing an
+   * exception for one game.
+   */
+  dj: {
+    load: () => ({ id: 'dj', title: 'DJ set' }),
+    list: () => [{ id: 'dj', title: 'DJ set' }],
+    make: (pack, opts) => new DjSet(opts),
+    /*
+     * A REQUEST IS A MILESTONE — rule 7's test is "does this move the night
+     * forward", and somebody asking for a song is the only thing that happens
+     * on a DJ set besides a photograph. Losing one to a restart means the DJ
+     * never plays it and the person who asked watches the night end without
+     * it, which is not recoverable by pressing anything.
+     */
+    milestone: (s) => `${s.phase}:${(s.requests || []).length}:${Object.keys(s.players || {}).length}`,
+    isOver: (s) => s.phase === DJ_PHASES.FINISHED,
+    empty: { id: 'dj', title: 'DJ set' },
   },
 };
 
@@ -1646,13 +1672,23 @@ export class Session {
       finish: () => (this.moreToCome()
         ? { ok: false, reason: 'more_to_come' }
         : this.engine.finish()),
-    } : {
+    } : this.kind === 'bingo' ? {
       start: () => this.engine.start(),
       call: () => this.engine.call(String(body.trackId)),
       uncall: () => this.engine.uncall(String(body.trackId)),
       undoCall: () => this.engine.undoLastCall(),
       playOn: () => this.engine.playOn(body.target),
       newRound: () => this.engine.newRound(),
+      finish: () => this.engine.finish(),
+    } : {
+      /*
+       * A DJ SET, AND THE BRANCH ABOVE HAD TO BE NAMED RATHER THAN LEFT AS
+       * THE `else`. It was `quiz ? … : <bingo>`, so a third game inherited
+       * bingo's whole control view — `call`, `newRound`, `playOn` — every one
+       * of them a method `DjSet` does not have and therefore a **500** from a
+       * button. **Two games is the only arrangement in which "the other one"
+       * names anything**, and this app now has three.
+       */
       finish: () => this.engine.finish(),
     };
 

@@ -43,7 +43,7 @@ import {
 } from './src/generate-images.js';
 import { STYLES, findStyle, QUALITIES, DEFAULT_QUALITY } from './src/portraits.js';
 import { recentTracks, forgetAll } from './src/history.js';
-import { spotifyConfigured, missingSpotifyConfig, playTrack } from './src/spotify.js';
+import { spotifyConfigured, missingSpotifyConfig, playTrack, searchTracks } from './src/spotify.js';
 import { photoFolder, mergeGigs, safePhotoName, isNightFolder, nightOfGig, venueKeyOf, sameVenue, setNightVenue, noteNightVenue } from './src/past-gigs.js';
 import { venueHeadcounts, nightHeadcount } from './src/headcounts.js';
 import { galleryNumbers, bookingOf } from './src/gallery-about.js';
@@ -6647,6 +6647,63 @@ async function handleWrite(req, res, url, route) {
   }
 
   // ---- players (open to anyone with the join link)
+  /*
+   * ---- A DJ SET'S TWO PHONE ROUTES ----------------------------------------
+   *
+   * **UP HERE WITH `/api/join`, AND THAT PLACEMENT IS THE WHOLE POINT.** Every
+   * write below line 6887 goes through the broad `FEATURES.QUIZ` gate, so
+   * written beside the desk routes these answered *"Sign in first"* to a phone
+   * in a room — which is the route-in-the-wrong-place trap this file already
+   * records for the gallery publish route, wearing a gate instead of a verb.
+   *
+   * Found by driving the path over HTTP rather than by reading the diff.
+   */
+  if (route.startsWith('/api/dj/') && req.method === 'POST'
+      && (route === '/api/dj/request' || route === '/api/dj/search')) {
+    const room = roomForPhone(req, url);
+    const { session } = room;
+    if (session.kind !== 'dj') return sendJson(res, 409, { error: 'No DJ set is running.' }), true;
+    const body = await readJson(req);
+    const player = session.engine.state.players[String(body.playerId || '')];
+
+    /*
+     * SEARCHING IS A POST, AND THAT IS ABOUT THE CREDENTIAL rather than about
+     * REST. It carries the phone's token, and a token in a query string is a
+     * token in a log, in browser history and in a `Referer` header.
+     *
+     * **BEHIND THE SAME PROOF AS A REQUEST, minus the unlock.** Every phone in
+     * the room searches through the DJ's ONE Spotify token, so a route open to
+     * anybody is a free Spotify proxy with his name on the bill — and the box
+     * is drawn present-and-inert before a photo lands, so gating the SEARCH on
+     * the unlock too would only mean a control that looks live and refuses.
+     */
+    if (route === '/api/dj/search') {
+      if (!player || !ownsPlayer(player, String(body.token || ''))) {
+        return sendJson(res, 200, { ok: false, reason: 'not_you', tracks: [] }), true;
+      }
+      if (!spotifyConfigured()) {
+        // SAID OUT LOUD, never a silent empty list — the phone falls back to
+        // typing and needs to know that is what happened, which is
+        // `import-intro.js`'s `fellBack` rule wearing another hat.
+        return sendJson(res, 200, { ok: true, configured: false, tracks: [] }), true;
+      }
+      return sendJson(res, 200, {
+        ok: true, configured: true, tracks: await searchTracks(String(body.q || '')),
+      }), true;
+    }
+
+    // The engine flushes and pushes through `onChange`; this is the phone's
+    // own answer, and a refusal carries its reason in one word so the box can
+    // say which of the four it was.
+    return sendJson(res, 200, session.engine.request({
+      playerId: String(body.playerId || ''),
+      token: String(body.token || ''),
+      artist: body.artist,
+      title: body.title,
+      source: body.source,
+    })), true;
+  }
+
   if (route === '/api/join' && req.method === 'POST') {
     const body = await readJson(req);
     const room = roomForPhone(req, url, body);
@@ -6745,6 +6802,21 @@ async function handleWrite(req, res, url, route) {
       backUpPropUse();
     } catch { /* never fatal */ }
     if (result.ok) {
+      /*
+       * A PHOTOGRAPH IS THE KEY ON A DJ SET — see `src/dj.js`.
+       *
+       * **A CAPABILITY CHECK, NEVER A BRANCH ON THE GAME KIND.** `engine.js`
+       * and `bingo.js` have no `notePhoto` and are therefore untouched by
+       * this line — a pub night's payload stays byte-for-byte what it was,
+       * and a third game that wants the same unlock gets it by having the
+       * method rather than by this route learning its name.
+       *
+       * Only on `result.ok`: a refused upload must not unlock anything, or
+       * the lock is one a big enough file walks through.
+       */
+      if (typeof session.engine.notePhoto === 'function') {
+        session.engine.notePhoto(playerId);
+      }
       pushState(room);
       // File it away in the background. The phone gets its answer first —
       // nobody should watch a spinner while GitHub thinks about it — and the
@@ -6867,9 +6939,22 @@ async function handleWrite(req, res, url, route) {
     return sendJson(res, 401, { error: 'Sign in first', signIn: '/login' }), true;
   }
 
+  /*
+   * A DJ SET IS NOT A QUIZ FEATURE — see `/api/dj/*` below.
+   *
+   * Left to the broad gate the desk would be behind `FEATURES.QUIZ`, which
+   * would decide what a DJ set costs by accident, in the hardest place to find
+   * it later. Signed in is the whole check, and the pricing decision stays
+   * un-taken until somebody takes it.
+   */
+  const djRoute = route.startsWith('/api/dj/');
+  if (djRoute && !whoIs(req, url)) {
+    return sendJson(res, 401, { error: 'Sign in first', signIn: '/login' }), true;
+  }
+
   // The owner has no quiz features by design, so anything they alone may do has
   // to skip the broad gate below — the third time that has caught something.
-  if (!changesLibrary && !advertRoute && !checkRoute
+  if (!changesLibrary && !advertRoute && !checkRoute && !djRoute
       && !OWNER_ONLY.some((prefix) => route.startsWith(prefix))) {
     if (!allowed(req, res, url, FEATURES.QUIZ, { live: true })) return true;
   }
@@ -7427,6 +7512,78 @@ async function handleWrite(req, res, url, route) {
       return sendJson(res, 200, { ok: true, cleared: n }), true;
     }
     return sendJson(res, 404, { error: 'Unknown action: ' + what }), true;
+  }
+
+  /*
+   * ---- A DJ SET — its own routes, deliberately not `/api/host/*` -----------
+   *
+   * **THE QUIZ'S LAUNCH ROUTE IS THE MOST PROTECTED THING IN THIS APP** — item
+   * 1 on the protected surface — and threading a third game through it would
+   * put every pub night one ternary away from a feature that has nothing to do
+   * with pub nights. `/api/dj/*` leaves it byte-for-byte untouched, which is
+   * also why `pub-unchanged` can still answer honestly about this change.
+   *
+   * It is the same reasoning the separate front door rests on, one layer down:
+   * share the room, the photos and the phone; share nothing that decides what
+   * happens on a Thursday.
+   *
+   * **NOT GATED ON A QUIZ SUBSCRIPTION, and that is a decision rather than an
+   * omission.** What a DJ set costs is a pricing question nobody has answered;
+   * gating it on `FEATURES.QUIZ` today would answer it by accident, in the
+   * hardest place to find later. Signed in is the whole check for now.
+   */
+  if (route.startsWith('/api/dj/') && req.method === 'POST') {
+    const what = route.slice('/api/dj/'.length);
+
+    /*
+     * EVERYTHING ELSE IS THE DESK, and the room comes from WHO YOU ARE — the
+     * rule `/api/host/*` follows and for the identical reason: there is no
+     * room parameter, so none of these can be pointed at somebody else's set.
+     */
+    const me = whoIs(req, url);
+    if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    const room = roomForHost(req, url);
+    const { session } = room;
+    const body = await readJson(req);
+
+    if (what === 'start') {
+      /*
+       * A set replaces whatever is in the room, which is what launching has
+       * always meant — and the console's own "this would end the night
+       * running" warning is the quiz's, so this route asks for `replace`
+       * explicitly rather than inheriting a guard written for a different
+       * screen.
+       */
+      if (!body.replace && session.inProgress()) {
+        return sendJson(res, 409, { error: 'Something is already running in your room.' }), true;
+      }
+      session.launch('dj', 'dj', {
+        venue: String(body.venue || ''),
+        venueId: String(body.venueId || ''),
+        look: String(body.look || ''),
+      });
+      pushState(room);
+      return sendJson(res, 200, { ok: true, joinCode: room.joinCode || '' }), true;
+    }
+
+    if (session.kind !== 'dj') return sendJson(res, 409, { error: 'No DJ set is running.' }), true;
+
+    if (what === 'played') {
+      const ok = session.engine.played(String(body.id || ''));
+      if (ok) pushState(room);
+      return sendJson(res, 200, { ok }), true;
+    }
+    if (what === 'bin') {
+      const ok = session.engine.bin(String(body.id || ''));
+      if (ok) pushState(room);
+      return sendJson(res, 200, { ok }), true;
+    }
+    if (what === 'finish') {
+      session.engine.finish();
+      pushState(room);
+      return sendJson(res, 200, { ok: true }), true;
+    }
+    return sendJson(res, 404, { error: 'No such action.' }), true;
   }
 
   if (route.startsWith('/api/host/') && req.method === 'POST') {

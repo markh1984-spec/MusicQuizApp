@@ -58,13 +58,36 @@ test('every GAME_KINDS entry is a kind the server can actually launch', () => {
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
+/*
+ * AND ONE GAME IS DELIBERATELY NOT ON THE QUIZ CONSOLE'S PICKER.
+ *
+ * A DJ set is a launcher with its own front door: the quizmaster's game
+ * dropdown picks what tonight's PACK is played as, and there is no DJ pack to
+ * play — offering it there would put a third option on the protected launch
+ * path that nobody at a pub quiz wants.
+ *
+ * So the two lists are still checked in BOTH directions, with the exception
+ * NAMED rather than the equality dropped — and the name is itself asserted,
+ * so an entry that stops being a real launcher fails here rather than sitting
+ * in a list excusing nothing. **One named entry with a reason is not an
+ * exceptions list**; a second one arriving is the moment to ask whether the
+ * console's picker and the server's launchers have genuinely come apart.
+ */
+const NOT_ON_THE_CONSOLE = ['dj'];
+
 test('and the server can launch every kind the console offers — both ways', () => {
   const src = fs.readFileSync(new URL('../src/session.js', import.meta.url), 'utf8');
   const block = src.slice(src.indexOf('const LAUNCHERS = {'));
   const kinds = [...block.slice(0, block.indexOf('\n};')).matchAll(/^ {2}(\w+): \{$/gm)].map((m) => m[1]);
   assert.ok(kinds.length, 'could not read LAUNCHERS at all — this guard is measuring nothing');
+
+  for (const kind of NOT_ON_THE_CONSOLE) {
+    assert.ok(kinds.includes(kind), `${kind} is excused from the console's picker and is not a launcher at all`);
+    assert.ok(!GAME_KINDS.includes(kind), `${kind} is on the console's picker, so it needs no excusing`);
+  }
+
   assert.deepEqual(
-    [...kinds].sort(),
+    kinds.filter((k) => !NOT_ON_THE_CONSOLE.includes(k)).sort(),
     [...GAME_KINDS].sort(),
     'LAUNCHERS and GAME_KINDS disagree: a game the console cannot offer, or one it offers and the server refuses',
   );

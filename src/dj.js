@@ -269,6 +269,60 @@ export class DjSet {
     return true;
   }
 
+  // ------------------------------------- what the shared dispatch also asks
+
+  /*
+   * EVERY ACTION `Session.run()` SHARES BETWEEN ENGINES HAS TO EXIST HERE,
+   * AND THIS REPO HAS ALREADY PAID FOR FORGETTING IT ONCE: `removeIdle` is
+   * one dispatch for both engines, `bingo.js` had no `removeIdlePlayers()`,
+   * and the host's button was a **500**.
+   *
+   * The control view a DJ drives is its own page, so none of this is on the
+   * path anybody presses on purpose. What reaches it is a QUIZ control view
+   * left open in another tab — same account, same room, every button still
+   * drawn — which is exactly how a night once got filed two hours early. So
+   * each one either does the obvious thing or REFUSES IN WORDS; none of them
+   * throws, and none of them silently reports success it did not have.
+   */
+
+  renamePlayer(id, name) {
+    const player = this.state.players[id];
+    if (!player) return false;
+    player.name = cleanTeamName(name) || player.name;
+    this.changed();
+    return true;
+  }
+
+  /** Everybody who joined and then never sent a photograph or asked for a song. */
+  removeIdlePlayers() {
+    const idle = Object.values(this.state.players)
+      .filter((p) => !p.photos && !this.state.requests.some((r) => r.playerId === p.id));
+    for (const p of idle) this.removePlayer(p.id);
+    return idle.length;
+  }
+
+  /** A fresh set: the room stays, what they asked for goes. */
+  resetAll() {
+    this.state.requests = [];
+    this.state.phase = DJ_PHASES.SET;
+    this.changed();
+    return true;
+  }
+
+  /*
+   * A DJ SET HAS NO PRIZES AND MINTS NO VOUCHERS, so these three say so
+   * rather than pretending. A refusal the host can read beats a 500, and
+   * beats `{ ok: true }` about a drink nobody can collect.
+   */
+  setRewards() { return { ok: false, reason: 'no_prizes' }; }
+
+  redeemVoucher() { return { ok: false, reason: 'no_prizes' }; }
+
+  reinstateVoucher() { return { ok: false, reason: 'no_prizes' }; }
+
+  /** No lobby game on a DJ night — the phone's job is the camera. */
+  arcadeScore() { return { ok: false, reason: 'no_game' }; }
+
   // -------------------------------------------------------------- the views
 
   /**
