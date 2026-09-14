@@ -110,7 +110,7 @@ import {
 } from './src/league-publish.js';
 import { publicTable, publicName, isCleanForPublic } from './src/clean-names.js';
 import {
-  sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail, welcomeEmail,
+  sendEmail, emailConfigured, emailProvider, keepKeyAlive, resetEmail, magicEmail, welcomeEmail,
   trialEndingEmail, trialEndedEmail,
 } from './src/email.js';
 import { dueWarning, dueEnded, daysLeft, WARN_DAYS } from './src/trials.js';
@@ -1704,6 +1704,9 @@ async function handleGet(req, res, url, route) {
    * is broken.
    */
   if (route === '/dj') return serveFile(res, config.publicDir, 'dj.html'), true;
+  // The sign-in link's landing page. Open, like `/reset` — it hands out
+  // nothing on its own, the token in the address is what has to be right.
+  if (route === '/magic') return serveFile(res, config.publicDir, 'magic.html'), true;
   // Open, like the sign-in page. It hands out nothing on its own — the token
   // in the address is what has to be right, and the page asks the server.
   if (route === '/reset') return serveFile(res, config.publicDir, 'reset.html'), true;
@@ -5827,18 +5830,30 @@ async function handleWrite(req, res, url, route) {
    * a way to ask who has a login here. The reply says what WILL happen if the
    * address is known, and promises nothing about whether it is.
    */
-  if (route === '/api/reset/request' && req.method === 'POST') {
-    const body = await readJson(req);
-    const email = String(body.email || '').trim();
+  /*
+   * ---- POST SOMEBODY A ONE-TIME LINK ---------------------------------------
+   *
+   * The half `/api/reset/request` and `/api/magic/request` share, lifted out
+   * when the second one arrived rather than copied into it: the refusal when
+   * no mail provider is set, the identical reply for a known and an unknown
+   * address, the throttle, the honest scheme, and reporting a send failure
+   * instead of swallowing it. Every one of those is a decision with a reason
+   * written against it, and **two copies is one of them getting fixed.**
+   *
+   * What differs is three things and they are the arguments: which KIND of
+   * link it is (checked when it is spent), which page it lands on, and what
+   * the email says.
+   */
+  async function postALink(req, res, { email, kind, path, template }) {
     const said = { ok: true, sent: 'If that address has an account, a link is on its way. It lasts 30 minutes.' };
     // Said plainly rather than pretending: without a key nothing is going to
     // arrive, and "check your inbox" for an email that will never come is the
     // worst answer there is.
     if (!emailConfigured()) {
       return sendJson(res, 200, { ...said, ok: false, unconfigured: true,
-        error: 'Password reset by email is not set up on this server yet.' }), true;
+        error: 'Email is not set up on this server yet.' }), true;
     }
-    const started = accounts.startReset(email);
+    const started = accounts.startReset(email, { kind });
     // Throttled or unknown: same reply, no email. A held-down button must not
     // post somebody a hundred emails at the owner's expense.
     if (!started || started.throttled || !started.token) return sendJson(res, 200, said), true;
@@ -5855,14 +5870,14 @@ async function handleWrite(req, res, url, route) {
      */
     const base = (config.publicUrl || '').replace(/\/+$/, '')
       || `${(req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim()}://${req.headers.host}`;
-    const link = `${base}/reset?t=${encodeURIComponent(started.token)}`;
+    const link = `${base}${path}?t=${encodeURIComponent(started.token)}`;
     // `brandForRoom`, not `brandFor` — the second takes a person's NAME and
     // returns a string, so `brandFor(rooms.house).name` was a room passed as a
     // name and then `.name` read off a string. It came out as "Set a new
     // password for undefined", which is a phishing email as far as anybody
     // reading it is concerned.
     const name = brandForRoom(rooms.get(HOUSE));
-    const out = await sendEmail({ to: email, ...resetEmail({ name, link }) });
+    const out = await sendEmail({ to: email, ...template({ name, link }) });
     /*
      * The failure is REPORTED rather than swallowed, and that is a weighed
      * trade-off rather than an oversight.
@@ -5886,6 +5901,59 @@ async function handleWrite(req, res, url, route) {
     if (!out.ok) return sendJson(res, 200, { ...said, ok: false, error: out.reason }), true;
     await backUpAccounts();
     return sendJson(res, 200, said), true;
+  }
+
+  /*
+   * A SIGN-IN LINK, BECAUSE A PASSWORD YOU USE ONCE A WEEK IS A PASSWORD YOU
+   * FORGET. Asked for after exactly that happened.
+   *
+   * **IT IS AN ADDITION AND MUST NOT BECOME A REPLACEMENT.** The password box
+   * stays and stays first: this app is signed into ten minutes before a gig,
+   * in a pub, on somebody else's wifi — and a way in that depends on an email
+   * ARRIVING is the wrong only-way-in at exactly that moment. The link is for
+   * the Monday when you cannot remember; the password is for the Wednesday
+   * when you cannot wait.
+   */
+  if (route === '/api/magic/request' && req.method === 'POST') {
+    const body = await readJson(req);
+    return postALink(req, res, {
+      email: String(body.email || '').trim(),
+      kind: 'magic',
+      path: '/magic',
+      template: magicEmail,
+    });
+  }
+
+  /*
+   * SPENT BY A POST, NEVER BY OPENING THE LINK.
+   *
+   * `/magic` is a page with one button on it, and this is what the button
+   * presses. A GET that signs you in reads as the obvious build and is a trap:
+   * mail clients and corporate scanners FETCH the links in a message before a
+   * human sees it, and a single-use link is then already spent when the person
+   * it was sent to clicks it — locking out the one person it was meant to let
+   * in, which is precisely the situation they were already in.
+   */
+  if (route === '/api/magic/use' && req.method === 'POST') {
+    const body = await readJson(req);
+    const done = accounts.useMagic(String(body.token || ''));
+    if (!done) {
+      return sendJson(res, 200, { ok: false,
+        error: 'That link has been used already, or it has expired. Ask for another.' }), true;
+    }
+    res.setHeader('Set-Cookie', cookieFor(req, SESSION_COOKIE, done.token));
+    await backUpAccounts();
+    return sendJson(res, 200, { ok: true, to: done.account.role === 'owner' ? '/owner' : '/console' }), true;
+  }
+
+  if (route === '/api/reset/request' && req.method === 'POST') {
+    const body = await readJson(req);
+    return postALink(req, res, {
+      email: String(body.email || '').trim(),
+      kind: 'reset',
+      path: '/reset',
+      template: resetEmail,
+    });
   }
 
   /** Is this link still good? Asked by the page before it offers a box. */

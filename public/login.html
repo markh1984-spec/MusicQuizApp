@@ -31,12 +31,28 @@
       <!-- Its own form rather than a second page. Somebody who has just been
            told their password is wrong is already here, already has the
            address typed, and a page change would lose it. -->
+      <!--
+        ONE WAY IN IS OFFERED FIRST, AND IT IS THE ONE THAT CHANGES NOTHING.
+
+        Somebody pressing "forgotten your password" wants to be IN, not to
+        choose a new password and type it twice — so the sign-in link leads and
+        the reset is the quieter second answer underneath it. Both were built
+        together after exactly this: a password used once a week is a password
+        you forget.
+      -->
       <form id="forgotForm" class="forgot" hidden>
         <label>Where shall the link go?
           <input type="email" name="email" autocomplete="username"
                  autocapitalize="none" spellcheck="false" enterkeyhint="go" required>
         </label>
-        <button class="go" type="submit">Email me a link</button>
+        <!--
+          ORDINARY, NOT THE GRADIENT. "Sign in" is still on the screen and the
+          rule is one filled gradient per screen — the moment there are two,
+          neither is the thing to press. This is the loudest control INSIDE its
+          own little form, which is as loud as it needs to be.
+        -->
+        <button class="minor" type="submit" id="wantMagic">Email me a sign-in link</button>
+        <button type="button" class="linky" id="wantReset">Set a new password instead</button>
         <div class="sign-in-problem" id="forgotSaid" role="status"></div>
       </form>
     </div>

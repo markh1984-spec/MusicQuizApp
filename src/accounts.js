@@ -917,7 +917,22 @@ export class Accounts {
       return null;
     }
     if (!verify(account, password)) return null;
+    return this.startSession(account);
+  }
 
+  /**
+   * MINT A SESSION FOR AN ACCOUNT THAT HAS ALREADY PROVEN ITSELF.
+   *
+   * Lifted out of `signIn` when the magic link arrived, because a second way
+   * in must not mean a second definition of what being signed in IS — the
+   * length, the sweep and the `lastSeenAt` stamp are one decision, and two
+   * copies is one of them getting fixed.
+   *
+   * **IT PROVES NOTHING ITSELF, and the name has to keep saying so.** Every
+   * caller has already done the proving: a password verified, or a single-use
+   * link spent. Handing this an account is handing it a signed-in browser.
+   */
+  startSession(account) {
     const token = newToken();
     const at = this.now();
     this.data.sessions.push({
@@ -949,7 +964,7 @@ export class Accounts {
    * host with no permanent disk a reset link that died the moment the app
    * restarted would fail exactly when somebody was already locked out.
    */
-  startReset(email, { minutes = 30 } = {}) {
+  startReset(email, { minutes = 30, kind = 'reset' } = {}) {
     const account = this.byEmail(email);
     if (!account) return null;
     const at = this.now();
@@ -959,8 +974,22 @@ export class Accounts {
     const last = account.reset && Date.parse(account.reset.sentAt || 0);
     if (last && at - last < 60_000) return { account: safe(account), throttled: true };
     const token = newToken();
+    /*
+     * `kind` IS WHAT THE LINK WAS ASKED FOR, AND IT IS CHECKED WHEN IT IS
+     * SPENT. One field on the one live link, rather than a second token store
+     * beside this one — there is still exactly one way back into an account at
+     * a time, so asking for a sign-in link cancels a pending password reset
+     * and vice versa, which is the behaviour somebody would expect anyway.
+     *
+     * **WHY IT IS NOT LEFT UNTYPED:** both links grant the same access in the
+     * end, so this is not a privilege boundary — it is a promise about what
+     * the email SAID. A link posted as *"here is a way to sign in"* should not
+     * also be a way to change the password on that account, because the person
+     * reading the email was not told it was.
+     */
     account.reset = {
       token: hashToken(token),
+      kind,
       sentAt: new Date(at).toISOString(),
       expiresAt: new Date(at + minutes * 60_000).toISOString(),
     };
@@ -968,14 +997,45 @@ export class Accounts {
     return { token, account: safe(account) };
   }
 
-  /** Who a reset token belongs to, or null if it is unknown, used or stale. */
-  whoseReset(token) {
+  /**
+   * Who a link belongs to, or null if it is unknown, used, stale or the wrong
+   * KIND.
+   *
+   * **A TOKEN WRITTEN BEFORE `kind` EXISTED READS AS A RESET**, which is what
+   * every one of them was — a live link in somebody's inbox must not stop
+   * working because this gained a field.
+   */
+  whoseReset(token, kind = 'reset') {
     if (!token) return null;
     const hashed = hashToken(token);
     const account = this.all.find((a) => a.reset && a.reset.token === hashed);
     if (!account) return null;
+    if ((account.reset.kind || 'reset') !== kind) return null;
     if (Date.parse(account.reset.expiresAt) < this.now()) return null;
     return safe(account);
+  }
+
+  /**
+   * SPEND A SIGN-IN LINK AND HAND BACK A SESSION.
+   *
+   * `useReset`'s twin, and single-use for the identical reason: a link that
+   * still worked after it had been used would sit in an inbox for ever being
+   * one forwarded email away from somebody else's account. Cleared BEFORE the
+   * session is minted, so there is no window where both exist.
+   *
+   * **IT DOES NOT DROP OTHER SESSIONS, and that is the difference from a
+   * password reset.** Resetting a password means "somebody may have had this,
+   * sign everything else out"; asking for a link because you forgot your
+   * password on one device means nothing of the kind, and signing the laptop
+   * out of a console mid-gig because the phone asked for a link would be this
+   * app doing damage on its own initiative.
+   */
+  useMagic(token) {
+    const who = this.whoseReset(token, 'magic');
+    if (!who) return null;
+    const account = this.find(who.id);
+    delete account.reset;
+    return this.startSession(account);
   }
 
   /**

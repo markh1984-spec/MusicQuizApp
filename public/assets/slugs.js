@@ -210,7 +210,7 @@ export const RESERVED = [
   'privacy', 'refunds', 'past-photo', 'gallery-photo', 'favicon.svg',
   'robots.txt', 'manifest.webmanifest', 'sw.js',
   // Found by the guard rather than by remembering — which is the point of it.
-  'health', 'photos', 'quiz-images', 'reset', 'qr.svg', 'join-qr.svg', 'faq', 'dj',
+  'health', 'photos', 'quiz-images', 'reset', 'qr.svg', 'join-qr.svg', 'faq', 'dj', 'magic',
 ];
 
 /**

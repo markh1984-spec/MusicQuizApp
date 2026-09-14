@@ -230,6 +230,35 @@ export function resetEmail({ name, link }) {
 }
 
 /**
+ * A WAY IN THAT IS NOT A PASSWORD — asked for because he forgot his own.
+ *
+ * Its own template rather than `resetEmail()` with words swapped, for the
+ * reason the welcome note below gives: the two say genuinely different things
+ * and one editing the other by accident is how an email comes to promise
+ * something the link does not do.
+ *
+ * **IT SAYS THE PASSWORD IS UNCHANGED**, because that is the whole difference
+ * from the reset email above and the one thing somebody might otherwise
+ * assume. The link signs you in; it does not touch anything.
+ */
+export function magicEmail({ name, link }) {
+  const app = String(name || '').trim() || 'Quizporium';
+  return {
+    subject: `Your sign-in link for ${app}`,
+    text: [
+      `Somebody asked for a sign-in link for this address on ${app}.`,
+      '',
+      'Open this link to sign in. It lasts 30 minutes and works once:',
+      link,
+      '',
+      'Your password is not changed and still works.',
+      '',
+      'If it was not you, ignore this — nothing has happened.',
+    ].join('\n'),
+  };
+}
+
+/**
  * What lands after signing up on `/signup` — same LINK mechanism as a
  * password reset (`accounts.startReset()`), worded for somebody who has just
  * asked for an account rather than somebody locked out of one. Kept as its

@@ -65,21 +65,34 @@ function landingFor(account) {
 const forgotForm = document.getElementById('forgotForm');
 const forgotSaid = document.getElementById('forgotSaid');
 
-document.getElementById('forgot').addEventListener('click', () => {
+document.getElementById('forgot').addEventListener('click', (e) => {
   forgotForm.hidden = false;
-  document.getElementById('forgot').hidden = true;
+  /*
+   * THE WHOLE LINE GOES, NOT JUST THE BUTTON IN IT. Hiding the button alone
+   * left its `<p>` behind — an empty paragraph with its own margins, which
+   * renders as a hole between Sign in and the form that just opened.
+   */
+  (e.currentTarget.closest('p') || e.currentTarget).hidden = true;
   forgotForm.elements.email.value = form.elements.email.value.trim();
   forgotForm.elements.email.focus();
 });
 
-forgotForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const button = forgotForm.querySelector('button');
+/**
+ * TWO KINDS OF LINK, ONE FORM AND ONE STATUS LINE.
+ *
+ * A sign-in link and a password reset differ in the route they post to and in
+ * nothing else a person can see — same address box, same throttle, same reply,
+ * same reason a failure is said out loud rather than swallowed. So they share
+ * the form rather than growing a second one beside it, and which button was
+ * pressed is the only thing that varies.
+ */
+async function askForALink(route, button, label) {
   button.disabled = true;
+  const was = button.textContent;
   button.textContent = 'Sending…';
   forgotSaid.textContent = '';
   try {
-    const res = await fetch('/api/reset/request', {
+    const res = await fetch(route, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: forgotForm.elements.email.value.trim() }),
@@ -96,7 +109,27 @@ forgotForm.addEventListener('submit', async (e) => {
     forgotSaid.classList.remove('said');
   }
   button.disabled = false;
-  button.textContent = 'Email me a link';
+  button.textContent = label || was;
+}
+
+/*
+ * The SUBMIT is the sign-in link, because that is the one somebody pressing
+ * "forgotten your password" actually wants: it gets them in and changes
+ * nothing. Pressing Enter in the address box lands here too, which is the
+ * right default.
+ */
+forgotForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (!forgotForm.elements.email.value.trim()) return;
+  askForALink('/api/magic/request', document.getElementById('wantMagic'), 'Email me a sign-in link');
+});
+
+document.getElementById('wantReset').addEventListener('click', () => {
+  // `reportValidity`, because this button is outside the submit path and would
+  // otherwise post an empty address and get the deliberately-identical "if
+  // that address has an account" reply — which reads as working.
+  if (!forgotForm.reportValidity()) return;
+  askForALink('/api/reset/request', document.getElementById('wantReset'), 'Set a new password instead');
 });
 
 form.addEventListener('submit', async (e) => {

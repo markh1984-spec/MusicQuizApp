@@ -1360,51 +1360,24 @@ board), `src/arcade.js` (the scores, shared by both engines),
   saucer, no bunkers**, with a test on the words. **Tap-to-destination and it
   fires itself** — auto-fire makes POSITIONING the game. **Reaching the bar
   ends it outright.**
-- **THREE WAYS A GAME IS MADE THE SAME ON EVERY PHONE, and a new one must use
-  one:** a fixed-step GRID, a capped ACCUMULATOR of whole ticks, or a SCHEDULE
-  pure in the seed and T. **A frame delta is none of them and is always wrong
-  here.** A REACTION game makes input latency part of the score, so its
-  windows stay generous.
-- **ONE SCOREBOARD FOR BOTH, in `src/arcade.js`** — the same clamp, the
-  best-not-latest rule and the refusal outside the lobby. Two copies is two
-  rules and one gets fixed.
-- **RALLY RUNS ON A FIXED TIMESTEP, NEVER A FRAME DELTA** — advanced by `dt` a
-  120Hz phone and a 30Hz one play different games. **Capped**, or a phone face
-  down for two minutes spends the gap in one frame.
-- **EVERY PHONE PLAYS THE SAME GAME**, seeded from `state.gameSeed` at launch,
-  or the board compares two different games.
-- **IT CANNOT REACH A QUIZ**, tested each half: the seed is in the phone's
-  payload at the LOBBY only, and a score is refused at any other phase.
-- **Behind a button, below the photo card** — *"don't want to disincentivise
-  photo uploads"*; imported only when pressed.
-- **No control panel: you tap and it walks there** — a swipe has to be READ
-  and a misread one costs a life. `touch-action: none` is load-bearing. **A
-  fire button plus movement is a control panel too.**
-- **A TURN PRESSED EARLY IS REMEMBERED** — a HEADING plus a buffered WANT, and
-  **a wall stops you facing it and never picks a direction for you**. **The
-  rule lives in `maze.js`, not the canvas file.**
-- **TAILBACK'S TAIL IS FATAL AND ITS WALLS ARE NOT, and that split is the
-  whole game.** `stepToward()` is GREEDY — **it still never returns a cell
-  inside the body**, so a life is never taken for a route the player did not
-  choose. **Six lives at 170ms, not the four asked for.**
-- **THE BIG SCREEN IS ONLY PROMISED WHERE THE BOARD DRAWS** — generalising to
-  *a break that offers a game* moved the guards and not the phone's line, so a
-  break told sixty people *"Top scores go on the big screen"*.
-- **ONE POST LEAVES A PHONE, at game over and at each life lost** — never a
-  stream of positions, and banking per life puts the people who played LONGEST
-  on the board.
-- **THE GAME IS STOPPED IN `buildScreen()`, ON EVERY REBUILD** — torn down
-  inside `wireArcade` it survived the quiz starting. **A teardown belongs where
-  every phase change passes.**
-- **Each moment has a primary: the game before the quiz, photos between the
-  rounds** — the camera button stands down at the lobby.
-- **MAZE MOUTH'S DEATH IS A GULP — NOT the unfurl-and-spin**, which is
-  Namco's and this app is sold. **NOTHING MOVES while it runs**; **the score
-  is banked at the CATCH.**
-- **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER.** **The HOST
-  can switch it off; the host's switch wins and does not wipe the phone's
-  own.** **Every noise is tied to something the player DID** and never carries
-  information — a pub phone is on silent.
+- **THE PER-GAME RULES ARE IN
+  [`docs/lobby-games.md`](docs/lobby-games.md) — read it before touching one.**
+  Not to be undone: **three ways a game is made the same on every phone** — a
+  fixed-step GRID, a capped ACCUMULATOR, or a SCHEDULE pure in the seed and T —
+  and **a frame delta is none of them and is always wrong here**; **one
+  scoreboard for both engines, in `src/arcade.js`**; **every phone plays the
+  same game**, seeded at launch; **it cannot reach a quiz**, tested each half;
+  **no control panel — you tap and it walks there**, and **a fire button plus
+  movement is a control panel too**; **a turn pressed early is remembered** and
+  **a wall never picks a direction for you**; **Tailback's tail is fatal and
+  its walls are not**, and **a life is never taken for a route the player did
+  not choose**; **the big screen is only promised where the board draws**;
+  **one POST leaves a phone**, at game over and at each life lost; **the game
+  is stopped in `buildScreen()`, on every rebuild**; **Maze Mouth's death is a
+  GULP, not the unfurl-and-spin**, and **the score is banked at the CATCH**;
+  **sound is synthesised, on by default and never on a timer**, **the host's
+  switch wins and does not wipe the phone's own**, and **every noise is tied to
+  something the player DID**.
 - **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — inside the white QR
   panel and UNDER the code, which nothing may dim. **It was computed and never
   drawn for as long as the feature existed**, and **a test that the payload is
@@ -3933,6 +3906,31 @@ descriptor, the branding, the receipts and the payouts are all per account.
   from `JSON.stringify(x)` survives parse-and-restringify unchanged, so the
   first version passed with the fault put back.
 
+### A SIGN-IN LINK, AND IT IS AN ADDITION RATHER THAN A REPLACEMENT
+
+`useMagic()`/`startSession()` in `accounts.js`, `postALink()` and
+`/api/magic/*` in `server.js`, `/magic`, `sign-in-link.mjs`. Asked for after he
+forgot his own: *"perhaps the login can just be a magic link instead?"*
+
+- **THE PASSWORD BOX STAYS, AND STAYS FIRST.** This app is signed into ten
+  minutes before a gig, in a pub, on somebody else's wifi — **a way in that
+  depends on an email ARRIVING is the wrong ONLY way in there.** The link is
+  for the Monday you cannot remember. **Do not delete passwords.**
+- **THE LINK IS SPENT BY A BUTTON, NEVER BY OPENING IT.** A GET that signs you
+  in is the obvious build and a trap: **scanners and mail clients FETCH the
+  links in a message before a human sees it**, so a single-use link is spent
+  before the click — locking out the one person it exists to let in.
+- **`kind` SAYS WHAT THE LINK WAS ASKED FOR AND IS CHECKED WHEN SPENT.** Not a
+  privilege boundary — both grant the same access — but **a promise about what
+  the email SAID**: one posted as *"a way to sign in"* may not change the
+  password. **A token written before `kind` reads as a RESET.**
+- **IT DOES NOT DROP THE OTHER SESSIONS, which a reset does** — signing a
+  laptop out mid-gig is damage on the app's own initiative.
+- **ONE `postALink()` AND ONE `startSession()` SERVE BOTH** — the refusal with
+  no provider, the identical reply either way and the throttle are each a
+  decision, and two copies is one getting fixed.
+- **IT NEEDS `BREVO_API_KEY` OR `RESEND_API_KEY` AND SAYS SO.**
+
 ### THE APP SENDS THE MONEY EMAILS, AND NOTHING ELSE
 
 `receiptEmail()`/`cardFailedEmail()` in `src/email.js`, `billingEmail()` in
@@ -4055,6 +4053,7 @@ node scripts/owner-money.mjs            # is the money tab telling the truth?
 node scripts/buy-a-pack.mjs             # can somebody buy one pack for £3?
 node --test test/trial-emails.test.js   # does a trial ending actually tell anybody?
 node scripts/dj-set.mjs                 # a DJ set — and is the queue off the wall?
+node scripts/sign-in-link.mjs           # forgot your password — can you get in?
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 ```
 

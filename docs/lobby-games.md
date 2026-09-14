@@ -567,3 +567,60 @@ which on Quick Draw is a shot, and the shot could be the sheriff.** Under the
 canvas it can overlap nothing and steal no gesture, and it is still on the game
 rather than in a settings page: the moment somebody wants sound is the moment
 they are looking at this.
+
+
+---
+
+## How each game is made fair, and how each one feels — moved here whole, 14 September 2026
+
+Moved out of `CLAUDE.md` to pay for the sign-in link's section, under that
+file's own standing instruction: *"THE NEXT ONE HAS TO COME OUT OF `docs/`
+MOVES, NOT A RAISE."* Every prohibition is still named there; what came out is
+the per-game detail — which is exactly what somebody touching ONE game needs
+and nobody else does.
+
+- **THREE WAYS A GAME IS MADE THE SAME ON EVERY PHONE, and a new one must use
+  one:** a fixed-step GRID, a capped ACCUMULATOR of whole ticks, or a SCHEDULE
+  pure in the seed and T. **A frame delta is none of them and is always wrong
+  here.** A REACTION game makes input latency part of the score, so its
+  windows stay generous.
+- **ONE SCOREBOARD FOR BOTH, in `src/arcade.js`** — the same clamp, the
+  best-not-latest rule and the refusal outside the lobby. Two copies is two
+  rules and one gets fixed.
+- **RALLY RUNS ON A FIXED TIMESTEP, NEVER A FRAME DELTA** — advanced by `dt` a
+  120Hz phone and a 30Hz one play different games. **Capped**, or a phone face
+  down for two minutes spends the gap in one frame.
+- **EVERY PHONE PLAYS THE SAME GAME**, seeded from `state.gameSeed` at launch,
+  or the board compares two different games.
+- **IT CANNOT REACH A QUIZ**, tested each half: the seed is in the phone's
+  payload at the LOBBY only, and a score is refused at any other phase.
+- **Behind a button, below the photo card** — *"don't want to disincentivise
+  photo uploads"*; imported only when pressed.
+- **No control panel: you tap and it walks there** — a swipe has to be READ
+  and a misread one costs a life. `touch-action: none` is load-bearing. **A
+  fire button plus movement is a control panel too.**
+- **A TURN PRESSED EARLY IS REMEMBERED** — a HEADING plus a buffered WANT, and
+  **a wall stops you facing it and never picks a direction for you**. **The
+  rule lives in `maze.js`, not the canvas file.**
+- **TAILBACK'S TAIL IS FATAL AND ITS WALLS ARE NOT, and that split is the
+  whole game.** `stepToward()` is GREEDY — **it still never returns a cell
+  inside the body**, so a life is never taken for a route the player did not
+  choose. **Six lives at 170ms, not the four asked for.**
+- **THE BIG SCREEN IS ONLY PROMISED WHERE THE BOARD DRAWS** — generalising to
+  *a break that offers a game* moved the guards and not the phone's line, so a
+  break told sixty people *"Top scores go on the big screen"*.
+- **ONE POST LEAVES A PHONE, at game over and at each life lost** — never a
+  stream of positions, and banking per life puts the people who played LONGEST
+  on the board.
+- **THE GAME IS STOPPED IN `buildScreen()`, ON EVERY REBUILD** — torn down
+  inside `wireArcade` it survived the quiz starting. **A teardown belongs where
+  every phase change passes.**
+- **Each moment has a primary: the game before the quiz, photos between the
+  rounds** — the camera button stands down at the lobby.
+- **MAZE MOUTH'S DEATH IS A GULP — NOT the unfurl-and-spin**, which is
+  Namco's and this app is sold. **NOTHING MOVES while it runs**; **the score
+  is banked at the CATCH.**
+- **SOUND IS SYNTHESISED, ON BY DEFAULT, AND NEVER ON A TIMER.** **The HOST
+  can switch it off; the host's switch wins and does not wipe the phone's
+  own.** **Every noise is tied to something the player DID** and never carries
+  information — a pub phone is on silent.

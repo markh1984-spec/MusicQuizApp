@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a0a13">
+  <title>Sign in — Quizporium</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <!-- The token is in the address, so keep it out of anybody's referrer log on
+       the way to a stylesheet or a logo. Same reason as /reset. -->
+  <meta name="referrer" content="no-referrer">
+</head>
+<body class="console">
+  <div class="wrap">
+    <div class="sign-in">
+      <div class="sign-in-brand" id="brandSlot"></div>
+      <h1 class="grad-text">Sign in</h1>
+      <!--
+        ONE BUTTON, AND THE LINK IS NOT SPENT UNTIL IT IS PRESSED.
+
+        Signing in on page LOAD is the obvious build and is a trap: mail
+        clients and corporate scanners fetch the links in a message before a
+        human ever sees it, so a single-use link is already spent by the time
+        the person it was sent to clicks it — locking out the one person it was
+        meant to let in.
+      -->
+      <p class="tiny" id="lead">Press the button and you are in. Your password is unchanged.</p>
+      <button class="go" id="go" type="button">Sign me in</button>
+      <div class="sign-in-problem" id="problem" role="alert"></div>
+      <p class="tiny" id="dud" hidden>
+        That link has been used already or has run out.
+        <a href="/login">Ask for another</a>.
+      </p>
+    </div>
+  </div>
+  <script type="module" src="/assets/magic.js"></script>
+</body>
+</html>
