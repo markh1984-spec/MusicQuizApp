@@ -33,9 +33,20 @@ Two smaller things that also want you rather than me, neither blocking:
 - **What it costs.** `/api/dj/*` asks only that somebody is signed in. Nothing
   gates it on a tier, deliberately — putting it behind `FEATURES.QUIZ` would
   answer the pricing question by accident, in the hardest place to find later.
-- **Its own address.** It is at `/dj` on the quiz app today. A domain of its
-  own is a Render setting, not a code change, and the reasoning for staying on
-  one service is in [`docs/dj.md`](docs/dj.md).
+- **Its own address — `dj.pubchampions.co.uk`.** The code is done; what is
+  left is yours, and it is two settings:
+  1. **Render → the service → Settings → Custom Domains → Add**, and type
+     `dj.pubchampions.co.uk`. Render then shows you a CNAME target.
+  2. **At whoever hosts pubchampions.co.uk**, add a CNAME record: name `dj`,
+     value the target Render just gave you. Certificates issue themselves
+     within a few minutes.
+  3. **Render → Environment → Add**: `DJ_HOST` = `dj.pubchampions.co.uk`.
+     Without it the domain still works, but the BARE address redirects into
+     the quiz app; with it, the bare address is the DJ door.
+
+  **It is the same service, so it costs nothing extra.** A second service is
+  only worth it if you want the DJ set to keep running while the quiz app is
+  down. See [`docs/dj.md`](docs/dj.md).
 
 ### 0. TURN THE MONEY ON — five environment variables, about forty minutes
 

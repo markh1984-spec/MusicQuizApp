@@ -145,6 +145,37 @@ is written down and asked of all three prototypes, and every `.engine.X(`
 call site in `session.js` and `server.js` must be on that list or on a named
 per-kind one — so the next one fails a test rather than a projector.
 
+## Its own domain — `DJ_HOST`
+
+Asked for as `dj.pubchampions.co.uk`. **One Render service can answer on
+several domains**, so this is not a second service and does not cost a second
+$7 — it is a CNAME and a custom-domain entry, plus one environment variable.
+
+- **`DJ_HOST` names the host and nothing else** — no scheme, no path, because
+  it is compared against the `Host` header, which carries neither.
+  `config.js` strips all three anyway, so a pasted URL still works.
+- **ON THAT HOST THE BARE DOMAIN IS THE DJ DOOR**, served rather than
+  redirected. Without it, typing the DJ domain redirects to the console or the
+  owner page — *a separate product handing you straight to a different one*,
+  which is the exact fault the door's own sign-in had and was reported for:
+  *"that just signed me into my quiz app."*
+- **AND THE VISITOR'S HOST BEATS `PUBLIC_URL` THERE.** That variable pins the
+  origin, which is right for a service on ONE domain and silently wrong the
+  moment there are two: pinned, the join QR on the DJ screen would send a room
+  standing in front of the DJ domain to the QUIZ domain — somebody else's
+  branding, and on a phone with no cookie a sign-in page. **The QR is the
+  entire product**, so it follows the domain the room is actually looking at.
+- **UNSET IS THE NORMAL CASE and changes nothing.** `/dj` works on every
+  domain either way, the quiz app's front door is untouched, and
+  `pub-unchanged` says IDENTICAL.
+- **Compared against the FORWARDED host**, because behind Render's proxy
+  `req.headers.host` is the internal one — and **the port is stripped**, or a
+  check that only works in production is one nobody can test.
+
+**A second Render service is still the answer to a different question** —
+wanting the DJ set to keep running while the quiz app is down, or to sell it
+to somebody who must never see Quizporium. Neither is true today.
+
 ## Not built, deliberately
 
 - **No pricing and no gate.** `/api/dj/*` asks only that you are signed in.

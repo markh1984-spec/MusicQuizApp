@@ -20,6 +20,23 @@ export const config = {
   // and right on a laptop. Set it only if you put your own domain in front.
   publicUrl: process.env.PUBLIC_URL || '',
 
+  /*
+   * THE DJ SET'S OWN DOMAIN, if it has one — `dj.pubchampions.co.uk`.
+   *
+   * One service can answer on several domains, so this is how it knows which
+   * one it is being asked on. Set it and the bare domain serves the DJ door
+   * instead of redirecting into the quiz app, which is the whole reason a
+   * separate address is worth having: somebody who types it has come for the
+   * DJ set, not for Quizporium.
+   *
+   * UNSET IS THE NORMAL CASE and changes nothing — `/dj` still works on every
+   * domain, and the quiz app's front door is exactly what it always was.
+   *
+   * The HOST only, no scheme and no path: it is compared against the `Host`
+   * header, which carries neither.
+   */
+  djHost: (process.env.DJ_HOST || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, ''),
+
   quizDir: process.env.QUIZ_DIR || path.join(ROOT, 'quizzes'),
   bingoDir: process.env.BINGO_DIR || path.join(ROOT, 'bingo'),
   // Advertising slides, per venue. In the repo like every other pack, because

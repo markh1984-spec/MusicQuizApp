@@ -28,6 +28,7 @@
  */
 
 import path from 'node:path';
+import http from 'node:http';
 import { createRequire } from 'node:module';
 import { withApp } from './helpers/live-app.mjs';
 
@@ -190,6 +191,45 @@ await withApp(async ({ base }) => {
     ok(!/\/owner|\/console/.test(out.url()), `signing in from the door went into the quiz app: ${out.url()}`);
     await out.screenshot({ path: `${SHOTS}/dj-door-signedin.png`, fullPage: true });
 
+    // ------------------------------------------- ITS OWN DOMAIN'S FRONT DOOR
+    /*
+     * `dj.pubchampions.co.uk` and the quiz app are one Render service, so the
+     * only thing telling them apart is the Host header. Asked with a RAW
+     * request because a browser will not let a page set its own Host, and the
+     * decision under test is the SERVER'S — the rendering is already proven
+     * by the legs above.
+     */
+    const askHost = (host) => new Promise((resolve) => {
+      const u = new URL(base);
+      http.get({ host: u.hostname, port: u.port, path: '/', headers: { Host: host } }, (r) => {
+        let body = '';
+        r.on('data', (c) => { body += c; });
+        r.on('end', () => resolve({ status: r.statusCode, to: r.headers.location || '', body }));
+      });
+    });
+
+    const onDj = await askHost('dj.example.test');
+    ok(onDj.status === 200, `the DJ domain's bare address answered ${onDj.status}`);
+    ok(/id="djDoor"/.test(onDj.body), 'the DJ domain\'s bare address is not the DJ door');
+
+    /*
+     * AND THE JOIN QR FOLLOWS THE DOMAIN THE ROOM IS LOOKING AT, even with
+     * `PUBLIC_URL` pinned to the quiz app — otherwise the code on the DJ
+     * screen sends a room to somebody else's branding and a sign-in page.
+     */
+    const qr = await new Promise((resolve) => {
+      const u = new URL(base);
+      http.get({ host: u.hostname, port: u.port, path: '/api/join-url', headers: { Host: 'dj.example.test' } }, (r) => {
+        let b = ''; r.on('data', (c) => { b += c; }); r.on('end', () => resolve(JSON.parse(b || '{}')));
+      });
+    });
+    ok(String(qr.url).includes('dj.example.test'),
+      `the DJ screen's join code points at ${qr.url} instead of the DJ domain`);
+
+    const onQuiz = await askHost('quiz.example.test');
+    ok(onQuiz.status === 302, `the quiz domain's bare address stopped redirecting (${onQuiz.status})`);
+    ok(/^\/(home|console|owner)$/.test(onQuiz.to), `the quiz front door moved: ${onQuiz.to}`);
+
     // The desk at a laptop width too — this is the screen with the buttons on.
     await desk.setViewportSize({ width: 1280, height: 800 });
     await desk.waitForTimeout(400);
@@ -199,6 +239,9 @@ await withApp(async ({ base }) => {
   }
 }, {
   key: KEY,
+  // The DJ set's own domain, so the Host-header decision can be driven.
+  // `PUBLIC_URL` pinned to the OTHER domain, which is the case that breaks it.
+  env: { DJ_HOST: 'dj.example.test', PUBLIC_URL: 'https://quiz.example.test' },
   async seed(dir) {
     const { Accounts } = await import(new URL('../src/accounts.js', import.meta.url).href);
     const book = new Accounts(path.join(dir, 'accounts.json'));

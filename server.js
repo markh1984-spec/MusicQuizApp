@@ -509,7 +509,20 @@ async function readJson(req, limitBytes = 1024 * 1024) {
 
 /** The address the QR code should point at. */
 function publicOrigin(req) {
-  if (config.publicUrl) return config.publicUrl.replace(/\/+$/, '');
+  /*
+   * ON THE DJ SET'S OWN DOMAIN, THE VISITOR'S HOST WINS OVER `PUBLIC_URL`.
+   *
+   * `PUBLIC_URL` pins the origin, which is right when a service answers on
+   * ONE domain — and silently wrong the moment it answers on two. The join QR
+   * on the DJ screen is the entire product: pinned, it would send a room
+   * standing in front of `dj.pubchampions.co.uk` to the QUIZ domain, where
+   * they would land on somebody else's branding and, on a phone with no
+   * cookie, on a sign-in page.
+   *
+   * Nothing changes for a pub night: the check is false on every host but the
+   * one `DJ_HOST` names, and false always when it is unset.
+   */
+  if (config.publicUrl && !onDjHost(req)) return config.publicUrl.replace(/\/+$/, '');
   const proto = (req.headers['x-forwarded-proto'] || '').split(',')[0].trim() || 'http';
   const host = (req.headers['x-forwarded-host'] || req.headers.host || `localhost:${config.port}`).split(',')[0].trim();
   return `${proto}://${host}`;
@@ -523,6 +536,26 @@ function publicOrigin(req) {
  * scanned at gigs, and every one of them says `/play`. Only the extra rooms
  * carry a code.
  */
+/**
+ * IS THIS REQUEST ON THE DJ SET'S OWN DOMAIN?
+ *
+ * One Render service can answer on several domains, and the two products on
+ * it want different front doors. Compared against the FORWARDED host, because
+ * behind Render's proxy `req.headers.host` is the internal one — the same
+ * reasoning `publicOrigin()` above already runs on, and getting it wrong here
+ * would simply mean the flag never fires.
+ *
+ * The port is stripped: a browser sends `host:443` on nothing, but a local
+ * run sends `127.0.0.1:34207`, and a check that only works in production is
+ * one nobody can test.
+ */
+function onDjHost(req) {
+  if (!config.djHost) return false;
+  const host = (req.headers['x-forwarded-host'] || req.headers.host || '')
+    .split(',')[0].trim().toLowerCase().replace(/:\d+$/, '');
+  return Boolean(host) && host === config.djHost;
+}
+
 function joinUrlFor(origin, code) {
   return code ? `${origin}/play?g=${encodeURIComponent(code)}` : `${origin}/play`;
 }
@@ -1531,6 +1564,19 @@ async function handleGet(req, res, url, route) {
    * nothing is further away than it was — the door is just the right way round.
    */
   if (route === '/') {
+    /*
+     * ON THE DJ SET'S OWN DOMAIN, THE BARE DOMAIN IS THE DJ DOOR.
+     *
+     * Without this, typing `dj.pubchampions.co.uk` redirects to the console
+     * or the owner page — a separate product handing you straight to a
+     * different one, which is the exact fault the door's own sign-in had and
+     * was reported for: *"that just signed me into my quiz app."*
+     *
+     * SERVED, NOT REDIRECTED TO `/dj`. A redirect would put the quiz app's
+     * path in the address bar of a product that is not it, and it is one more
+     * round trip on a phone in a venue.
+     */
+    if (onDjHost(req)) return serveFile(res, config.publicDir, 'dj.html'), true;
     const who = whoIs(req, url);
     const to = who ? (who.role === 'owner' ? '/owner' : '/console') : '/home';
     send(res, 302, '', { Location: to, 'Cache-Control': 'no-store' });

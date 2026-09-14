@@ -1095,42 +1095,43 @@ on sending `{ id, name }` for months.
 `src/dj.js`, `play-dj.js`, `host-dj.js`, `dj-door.js`, `/dj`, `/api/dj/*`,
 `dj-set.mjs`. *"When I'm DJing I just have a QR code on the screen. People
 upload their photos, and that unlocks the ability to give requests."*
+Full reasoning: **[`docs/dj.md`](docs/dj.md)**.
 
 - **ONE CODEBASE BECAUSE PHOTOGRAPHS LIVE ON THE ROOM, NOT ON THE GAME** —
   `POST /api/photo` needed NO CHANGE, so the camera, the wall, the gallery and
-  the private repo arrived free. The PRODUCT is still standalone: its own
-  door, its own screen, no quizzes on it. **The hook is a CAPABILITY check
-  (`typeof notePhoto === 'function'`), never a branch on kind** — `engine.js`
-  and `bingo.js` untouched.
+  the private repo arrived free. The PRODUCT is still standalone. **The hook
+  is a CAPABILITY check (`typeof notePhoto === 'function'`), never a branch on
+  kind** — `engine.js` and `bingo.js` untouched.
 - **A REQUEST IS NEVER ON THE BIG SCREEN — rule 1's sharpest case.** A queue on
   the wall is songs the room can watch him not play, and the first rude title
-  is six feet wide where this app deliberately has no filter. `screenView()`
-  does not carry them, so it is STRUCTURAL. **Do not add a queue or a "now
-  playing" to the projector.**
+  is six feet wide where this app has no filter. `screenView()` does not carry
+  them, so it is STRUCTURAL. **Do not add a queue or a "now playing" to the
+  projector.**
 - **A PHOTOGRAPH IS A GATE, NOT A CURRENCY**, and **no screen may say
-  otherwise** — the phone said *"send another for more"* first, which the
-  engine does not do. Three requests WAITING, freed as they are played.
+  otherwise** — the phone said *"send another for more"*, which the engine
+  does not do. Three requests WAITING, freed as they are played.
 - **TYPED IS FIRST-CLASS, NOT DEGRADED** — his DJ software reads off the
-  TITLE. **Search is a POST because it carries the TOKEN**, behind the same
-  proof as a request — every phone searches through his ONE Spotify token —
-  and **not configured is SAID OUT LOUD**, never a silent empty list.
-- **THE LINE THE DJ PASTES IS WORDED ON THE SERVER**, and **the copy button
-  says *Selected* when it could not** — a venue laptop may not be secure.
+  TITLE. **Search is a POST because it carries the TOKEN**, behind a request's
+  own proof — every phone spends his ONE Spotify token — and **not configured
+  is SAID OUT LOUD**, never a silent empty list.
+- **THE LINE THE DJ PASTES IS WORDED ON THE SERVER**; **the copy button says
+  *Selected* when it could not.**
 - **IT IS NOT ON THE CONSOLE'S GAME PICKER, and `game-kinds.test.js` NAMES
-  that exception** rather than dropping the equality: there is no DJ pack to
-  play, and the quiz's launch path is item 1 on the protected surface.
+  that exception** rather than dropping the equality — there is no DJ pack to
+  play.
 - **EVERY ENGINE MUST ANSWER THE SHARED CONTRACT —
-  `test/engine-contract.test.js`.** Four went missing in one afternoon:
+  `test/engine-contract.test.js`.** Four went missing in an afternoon:
   **`touch()`, which `/api/stream` calls, so every phone got a 500 instead of
   a live connection** — the game dead, every payload correct when asked for
-  directly; `playerList()`, which `inProgress()` counts before ANY launch;
-  and six off the shared dispatch, as `bingo.js` paid for once. **`perGame` read `quiz ? … : bingo` — two games is the only
-  arrangement in which "the other one" names anything.**
-- **NO PRICE AND NO GATE YET, deliberately** — signed in is the whole check,
-  and gating on `FEATURES.QUIZ` would answer a pricing question by accident.
-  **`APP_NAME` in `dj-door.js` is ONE constant, MARKED as a placeholder.**
-
-Full reasoning: **[`docs/dj.md`](docs/dj.md)**.
+  directly; `playerList()`, which `inProgress()` counts before ANY launch; and
+  six off the shared dispatch. **`perGame` read `quiz ? … : bingo` — two games
+  is the only arrangement in which "the other one" names anything.**
+- **ITS OWN DOMAIN IS `DJ_HOST` — ONE SERVICE, NO SECOND $7.** There **the
+  bare domain SERVES the door**, and **the visitor's host BEATS `PUBLIC_URL`**
+  — a pin right for one domain, wrong for two. **Unset changes nothing.**
+- **NO PRICE AND NO GATE YET** — signed in is the whole check, and gating on
+  `FEATURES.QUIZ` answers a pricing question by accident. **`APP_NAME` in
+  `dj-door.js` is ONE constant, MARKED as a placeholder.**
 
 ### WHAT A PART BOUNDARY CARRIES — `nightWideOpts()`, and nine things it did not
 
