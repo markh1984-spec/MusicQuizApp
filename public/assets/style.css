@@ -320,6 +320,31 @@ body::after {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  /*
+   * AND THE DESCENDERS NEED A BOX TO BE PAINTED IN.
+   *
+   * `background-clip: text` paints the gradient across the element's own box
+   * and clips it to the glyph shapes — so anything hanging BELOW that box is
+   * simply not painted. Every display heading on the projector sets a
+   * `line-height` under 1 (0.95 on the winner and the round intro, 0.98 on the
+   * lobby), which is exactly what makes the box shorter than the type, so
+   * **every g, y, p, q and j was sliced off at the baseline**: reported off
+   * the DJ screen's own heading, and true since gradient text was introduced.
+   * The worst case is the one nobody had looked at — the WINNER'S NAME, 13vh,
+   * in gold, at the moment the night is built towards.
+   *
+   * **THE PADDING AND THE MARGIN CANCEL, so not one pixel moves.** The box
+   * grows downward by enough to hold a descender and the negative margin takes
+   * the same amount back off the flow, which is what lets one rule serve the
+   * projector, the phones and the public pages without re-measuring six
+   * layouts. `final-fits.mjs` is the check that says so.
+   *
+   * **DO NOT "TIDY" THIS TO A `line-height: 1`** — the tight leading on big
+   * display type is a design decision, and this pays for it rather than
+   * undoing it.
+   */
+  padding-bottom: 0.18em;
+  margin-bottom: -0.18em;
 }
 
 /* =================================================================== SCREEN
