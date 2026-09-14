@@ -1295,10 +1295,25 @@ export function normaliseEmail(email) {
 /**
  * Long enough to be worth having. No rules about punctuation: they make people
  * write the password on the laptop and are worth less than four more letters.
+ *
+ * **EIGHT, NOT TEN — AND THE FOUR CHARACTERS WERE PAID FOR RATHER THAN GIVEN
+ * AWAY.** Asked for on 14 September 2026, because a ten-character minimum
+ * pushed the host off the password he would actually remember and onto one he
+ * then forgot. Length is a poor proxy on its own: `Password1` is nine
+ * characters and has been in every wordlist for twenty years. What replaced
+ * those four characters is `src/breached.js` — **a password already on a
+ * public breach list is refused at every route that sets one, however long it
+ * is** — which is the thing that actually stops the account being taken, and
+ * is what NIST asks for in place of a longer minimum.
+ *
+ * **THIS FUNCTION STAYS SYNCHRONOUS AND MAKES NO NETWORK CALL.** The breach
+ * check is at the ROUTES, for the reason `applyBilling()` has no send in it
+ * and `trials.js` holds no clock: the rule about the SHAPE of a password is
+ * pure and testable without a timer, and the thing that can time out is not.
  */
 export function checkPassword(password) {
   const value = String(password ?? '');
-  if (value.length < 10) throw new Error('A password needs to be at least 10 characters. A short sentence is ideal.');
+  if (value.length < 8) throw new Error('A password needs to be at least 8 characters. A short sentence is ideal.');
   if (value.length > 200) throw new Error('That password is too long.');
   return true;
 }

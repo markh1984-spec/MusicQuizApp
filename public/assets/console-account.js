@@ -1316,7 +1316,7 @@ function youPanel() {
   el.querySelector('#acctPw')?.addEventListener('click', async () => {
     const current = prompt('Your current password');
     if (!current) return;
-    const next = prompt('Your new password — 10 characters or more');
+    const next = prompt('Your new password — 8 characters or more');
     if (!next) return;
     try {
       const res = await fetch('/api/me/password', {
@@ -1511,8 +1511,8 @@ export function firstOwnerPanel() {
     const name = el.querySelector('.ow-name').value.trim();
     const email = el.querySelector('.ow-email').value.trim();
     const password = el.querySelector('.ow-pass').value;
-    if (!email || password.length < 10) {
-      said.textContent = 'An email address and a password of at least 10 characters.';
+    if (!email || password.length < 8) {
+      said.textContent = 'An email address and a password of at least 8 characters.';
       said.style.color = 'var(--bad)';
       return;
     }

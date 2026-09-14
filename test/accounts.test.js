@@ -58,8 +58,19 @@ test('a wrong password is refused, and so is a corrupted record', () => {
 });
 
 test('a short password is refused, with a suggestion rather than a rule', () => {
-  assert.throws(() => checkPassword('short'), /at least 10 characters/);
-  assert.throws(() => checkPassword(''), /at least 10 characters/);
+  /*
+   * EIGHT, NOT TEN — and this is a deliberate reversal, on 14 September 2026.
+   * Ten pushed the host off the password he would actually remember and onto
+   * one he then forgot, which is a real cost. **The four characters were paid
+   * for rather than given away**: `src/breached.js` refuses any password
+   * already on a public breach list at every route that sets one, which is
+   * what actually stops an account being taken and is what NIST asks for in
+   * place of a longer minimum. Do not put ten back without taking that out.
+   */
+  assert.throws(() => checkPassword('short'), /at least 8 characters/);
+  assert.throws(() => checkPassword('sevench'), /at least 8 characters/);
+  assert.throws(() => checkPassword(''), /at least 8 characters/);
+  assert.equal(checkPassword('eightchr'), true);
   assert.equal(checkPassword(PASSWORD), true);
   // No punctuation rules: they get written on the laptop lid.
   assert.equal(checkPassword('correct horse battery'), true);

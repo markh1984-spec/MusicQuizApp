@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { config, paths, hostKey, hostKeyIsTemporary } from './src/config.js';
+import { looksBreached, BREACHED_SAID } from './src/breached.js';
 import { Store } from './src/store.js';
 import { Hub } from './src/sse.js';
 import {
@@ -5844,6 +5845,30 @@ async function handleWrite(req, res, url, route) {
    * link it is (checked when it is spent), which page it lands on, and what
    * the email says.
    */
+  /*
+   * A PASSWORD ALREADY ON A PUBLIC BREACH LIST IS REFUSED — at every route
+   * that sets one, and nowhere else.
+   *
+   * This is what the minimum length came down to eight IN EXCHANGE FOR. Length
+   * on its own is a poor proxy: `Password1` is nine characters and has been in
+   * every wordlist for twenty years, while a password nobody has used before
+   * is fine at eight. What actually takes an account is REUSE, and this is the
+   * check that catches it.
+   *
+   * **IT FAILS OPEN.** `looksBreached()` answers "could not tell" as `false`,
+   * so an outage at the other end lets the password through rather than
+   * locking out somebody who is, very often, already locked out. The trade is
+   * deliberate and is the same shape as every other one on this path.
+   *
+   * **AT THE ROUTE, NEVER IN `accounts.js`.** The rule about the SHAPE of a
+   * password is pure and synchronous and belongs with the book; the thing that
+   * can time out does not — the reason `applyBilling()` has no send in it.
+   */
+  async function refuseBreached(res, password) {
+    if (!(await looksBreached(String(password ?? '')))) return false;
+    return sendJson(res, 400, { error: BREACHED_SAID }), true;
+  }
+
   async function postALink(req, res, { email, kind, path, template }) {
     const said = { ok: true, sent: 'If that address has an account, a link is on its way. It lasts 30 minutes.' };
     // Said plainly rather than pretending: without a key nothing is going to
@@ -5966,6 +5991,7 @@ async function handleWrite(req, res, url, route) {
   /** Spend the link and set the new password. Single use — see `useReset`. */
   if (route === '/api/reset/complete' && req.method === 'POST') {
     const body = await readJson(req);
+    if (await refuseBreached(res, body.password)) return true;
     try {
       const account = accounts.useReset(String(body.token || ''), String(body.password || ''));
       if (!account) {
@@ -6537,6 +6563,7 @@ async function handleWrite(req, res, url, route) {
     const account = whoIs(req, url);
     if (!account || account.bootstrap) return sendJson(res, 401, { error: 'Sign in first' }), true;
     const body = await readJson(req);
+    if (await refuseBreached(res, body.password)) return true;
     try {
       accounts.setPassword(account.id, body.password, { requireOld: body.current ?? '' });
       await backUpAccounts();
@@ -7511,6 +7538,12 @@ async function handleWrite(req, res, url, route) {
     const first = accounts.all.length === 0 && isHostKey(req, url);
     if (!first && !allowed(req, res, url, FEATURES.SUBSCRIBERS)) return true;
     const body = await readJson(req);
+    /*
+     * INCLUDING THE VERY FIRST ACCOUNT, which is the OWNER'S — the one with
+     * the most to lose in the whole system, and the one this check would be
+     * daftest to skip.
+     */
+    if (await refuseBreached(res, body.password)) return true;
     try {
       const made = accounts.create({
         email: body.email,

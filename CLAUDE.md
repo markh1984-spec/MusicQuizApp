@@ -873,15 +873,13 @@ throughout the night"*, then the correction that mattered: *"the app already
 remembers phones from previous weeks including their name, so I don't understand
 why it can't just remember the drinks they've won as well?"*
 
-- **HE WAS RIGHT, AND "A PHONE HAS NO ACCOUNT" WAS THE WRONG ANSWER** — written
-  here because it was written here wrongly first. A phone has kept its id, token
-  and team name in `localStorage` since rule 3. The real reason was narrower:
+- **"A PHONE HAS NO ACCOUNT" WAS THE WRONG ANSWER** — a phone has kept its id,
+  token and team name since rule 3. The real reason was narrower:
   **`/api/voucher` and `/api/voucher/redeem` read the LIVE game's state, which
   the next launch replaces.** `src/wallet.js` falls back to the filed nights.
-- **NOTHING NEW IS STORED.** `results()` has filed the vouchers into every
-  archived night since the bar started scanning, and `updateArchivedNight()`
-  covers a drink handed over afterwards. **The archive already survives the
-  deploys that wipe `data/`; a new store would have earned that from scratch.**
+- **NOTHING NEW IS STORED** — `results()` has filed the vouchers into every
+  archived night since the bar started scanning. **The archive already survives
+  the deploys that wipe `data/`; a new store would earn that from scratch.**
 - **THE LIVE GAME IS ASKED FIRST, IN BOTH ROUTES AND IN THAT ORDER.** A pub
   night takes the path it always took — and archive-first would let a filed
   copy be taken while the live one still reads as owed: two drinks for one win.
@@ -1743,40 +1741,31 @@ quizzing."* Three tabs: **Quiz league**, **Photos**, **What they asked for**:
   cannot reach that name. **ONE CONTROL PER TABLE, FOLDED.** **THE ROW'S KEY
   TRAVELS WITH THE ROW.**
 - **ONE ROOM FOR THE WHOLE PHOTO STORY — `galleryRoomFor()`.** The gallery
-  reads the OWNER'S OWN QUIZMASTER ROOM, never `HOUSE`; the console wrote
-  through `roomForHost()`, so a published night read back as *"Not published"*.
-  **The hazard was written down and left** — how a noted hazard becomes a bug.
-- **THE SUITE MUST NEVER NEED THE PHOTO TOKEN** — `photo-repo-stub.mjs`, real
-  server and fixture network.
+  reads the OWNER'S OWN QUIZMASTER ROOM, never `HOUSE`; through `roomForHost()`
+  a published night read back as *"Not published"*. **The hazard was written
+  down and left** — how a noted hazard becomes a bug.
+- **THE SUITE MUST NEVER NEED THE PHOTO TOKEN** — `photo-repo-stub.mjs`.
 - **`published.json` HAS ONE WRITER AT A TIME, PER ROOM — `inOrder()` in
-  `src/gallery.js`.** Two callers read the file whole and write it back, so a
-  lamp write begun before a publish finished **silently un-published the
-  night**. **THE BROWSER'S QUEUE CANNOT COVER IT** — order it where the FILE is
+  `src/gallery.js`**, or a lamp write begun before a publish finished silently
+  un-publishes the night. **THE BROWSER'S QUEUE CANNOT COVER IT** — order it
+  where the FILE is. **EVERY WRITER CARRIES THE HALVES IT IS NOT CHANGING** —
+  nights, rulings, pins; a test walks them.
 - **A READ THAT FAILED IS NOT AN EMPTY FOLDER — `tryGetFile()` /
-  `tryListDir()`.** `getFile()`/`listDir()` answer `null`/`[]` for a 404, a 403
-  and a dropped connection alike — **data loss for the four callers that
-  LATCH**: one 403 after a deploy marked a room restored with nothing restored.
-  **A 404 is an ANSWER; anything else is a failure to LOOK.** `restoreOnce()`
-  latches on the way OUT. **ONE IMPLEMENTATION**, and a failed listing is not
-  cached: **no TTL, which serves the wrong answer for its length.**
-- **A READ-BACK SHA CAN BE STALE — `GitHub 409` reached a live console**, the
-  Contents API being served from a replica. **The sha a `PUT` HANDS BACK cannot
-  be stale**, so `putFile()` remembers it. **It is a CACHE, so it must be able
-  to be wrong**: forgotten, re-read past the caches, retried once, said in
-  WORDS
-- **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT, GROUPED BY PUB** —
-  `coverPhotos()`. **Pins lead, the rest is a SPREAD. BUILT FROM THE SAME
-  FILTERED LIST THE NIGHT'S PAGE SHOWS.** **A pin is a PREFERENCE; the lamp is
-  the GATE.**
+  `tryListDir()`.** **A 404 is an ANSWER; anything else is a failure to LOOK**,
+  and four callers LATCH on it. **ONE IMPLEMENTATION, and a failed listing is
+  NOT cached** — no TTL, which serves the wrong answer for its length.
+- **A READ-BACK SHA CAN BE STALE AND A `PUT`'S CANNOT**, so `putFile()`
+  remembers it — **a CACHE, so it must be able to be wrong**: forgotten,
+  re-read past the caches, retried once, said in WORDS.
+- **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT — `coverPhotos()`.
+  BUILT FROM THE SAME FILTERED LIST THE NIGHT'S PAGE SHOWS.** **A pin is a
+  PREFERENCE; the lamp is the GATE.**
 - **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor. Nothing
   deciding who may see a photo is cached with it**, and **the browser window is
   NOT lengthened past a day.**
-- **EVERY WRITER OF `published.json` CARRIES THE HALVES IT IS NOT CHANGING** —
-  nights, rulings, pins; a test walks them.
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
-  **decided on the SERVER**. **An end of the run is an ABSENT link, not a dead
-  one** — the one place *present and inert* does not apply, that rule being
-  about a page driven weekly rather than one a stranger sees once.
+  **decided on the SERVER**, and **an end of the run is an ABSENT link, not a
+  dead one** — the one place *present and inert* does not apply.
 - **THE LEAGUE IS EXPORTED TO TWO AUDIENCES WHO WANTED DIFFERENT THINGS** —
   the landlord wants EVIDENCE (the season table on the report), the teams want
   it on a WALL (`/league`). **One thing for both would serve neither.**
@@ -2250,46 +2239,43 @@ with `lobby-sound.js`), the `Sounds` panel in `host.js`, `POST
 /api/host/sting`, `room.sting`, `node scripts/soundboard.mjs`.
 
 - **THE LAPTOP WITH THE HDMI IS THE ONE WIRED TO THE PA** — *"my sound outputs
-  via my dj decks, picked up as a sound card on my laptop."* **The panel SAYS
-  where the sound comes out.**
+  via my dj decks."* **The panel SAYS where the sound comes out.**
 - **AND A DROPPED-IN `.mp3` BEATS ANY OF IT — `public/assets/stings/<id>.mp3`**
   (*"the sounds are awful, can I replace them?"*). **The synthesised one is the
-  FALLBACK and is never deleted**: a missing file, a venue's wifi or a format a
-  browser refuses is still a press the host has set up, and **silence is the one
-  outcome a soundboard may not have.** **Fetched when the page is ARMED, not on
-  the press**, so a sting is never late. **Through the same `VOL`**, or a hot
-  master arrives twice as loud as the ding. **`.mp3` alone** (Safari), and
-  **`MIME` in `server.js` must name it** or it is served as a download and never
-  decodes. **THE REPO IS PUBLIC AND THE APP IS SOLD** — a licence must cover
-  commercial redistribution.
-- **SYNTHESISED IS THE FLOOR, NOT THE CEILING.** The boo is **several DETUNED
-  voices started at DIFFERENT moments** (all at once is a synth chord) under a
-  closing lowpass — a laugh stays out, being fast pitched transients and
-  therefore the kazoo. **Anything with ARTICULATION needs a recording.**
-- **"YOUR MUM" IS THE BROWSER'S OWN `speechSynthesis`** — neither a file nor a
+  FALLBACK and is never deleted**: a missing file or a venue's wifi is still a
+  press the host has set up, and **silence is the one outcome a soundboard may
+  not have.** **Fetched when the page is ARMED, not on the press**, so a sting
+  is never late. **Through the same `VOL`**, or a hot master arrives twice as
+  loud as the ding. **`.mp3` alone** (Safari), and **`MIME` in `server.js` must
+  name it** or it is served as a download and never decodes. **THE REPO IS
+  PUBLIC AND THE APP IS SOLD** — a licence must cover commercial
+  redistribution.
+- **SYNTHESISED IS THE FLOOR, NOT THE CEILING** — the boo is several DETUNED
+  voices started at DIFFERENT moments under a closing lowpass, and a laugh
+  stays out. **Anything with ARTICULATION needs a recording.**
+- **"YOUR MUM" IS THE BROWSER'S OWN `speechSynthesis`** — no file, no
   dependency. **A missing voice is a silent no-op, never a throw.** **The guard
-  CANNOT measure it**: it never enters the `AudioContext` the analyser is on, so
-  `soundboard.mjs` asserts it was SPOKEN rather than reading zero as a pass.
+  CANNOT measure it**, so it asserts it was SPOKEN rather than reading zero as
+  a pass.
 - **ONE AUDIO LAYER — `audio-kit.js`; the POLICY stays with each caller**: the
   lobby is gated on a phone's preference and the host's switch, the soundboard
   on nothing — **the press IS the decision**.
-- **IT IS AN EVENT, NOT A FLAG AND NOT A PHASE.** `room.sting` in MEMORY like
-  `room.introPlay`, **never `state.json`** — a restart would replay a noise into
-  a quiet room. Screen view only, **and it EXPIRES** (`STING_TTL_MS`). **Played
-  before `draw()` draws.**
+- **IT IS AN EVENT, NOT A FLAG AND NOT A PHASE.** `room.sting` in MEMORY,
+  **never `state.json`** — a restart would replay a noise into a quiet room.
+  Screen view only, **and it EXPIRES** (`STING_TTL_MS`). **Played before
+  `draw()` draws.**
 - **THE ID IS VALIDATED AGAINST `stings.js`'S OWN LIST** — the `packId` trap.
 - **A BROWSER IS SILENT UNTIL THE PAGE IS TAPPED, and reports no error.** The
-  arm chip is bottom LEFT, never near the join code; any click arms it.
-- **THE PANEL IS SHUT BY DEFAULT** — eight buttons above the player list push
-  who-is-playing off a phone: **the board is the job, the soundboard the
-  garnish.** **The open flag is a module binding**, or a view rebuilt on every
-  answer shuts itself mid-press. **The guard OPENS it and presses a real
+  arm chip is bottom LEFT, never near the join code.
+- **THE PANEL IS SHUT BY DEFAULT** — **the board is the job, the soundboard
+  the garnish.** **The open flag is a module binding**, or a view rebuilt on
+  every answer shuts itself mid-press. **The guard OPENS it and presses a real
   button** — the API path proves the noise and not the thumb.
 - **A `GainNode` DEFAULTS TO 1.0 — NEVER START A NODE BEFORE ITS ENVELOPE.** A
   ding set to 0.04 peaked at 1.08 and clipped. **`soundboard.mjs` measures a
-  peak CEILING**: a laptop speaker cannot reach 1.0, so nothing else finds it.
+  peak CEILING**, so nothing else finds it.
 - **SILENCE AND A WORKING SOUND LOOK IDENTICAL FROM THE DOM**, so the guard
-  samples the SIGNAL — letting each sting die first, or it measures the sum.
+  samples the SIGNAL, letting each sting die first or it measures the sum.
 
 Full reasoning: **[`docs/sound.md`](docs/sound.md)**.
 
@@ -2586,8 +2572,10 @@ costs.
   rather than spread** — or the next field added is a photograph on a public page.
 - **THE OTHER TWENTY-ODD PHOTO RULES ARE IN
   [`docs/gigs/photos.md`](docs/gigs/photos.md)** — the lamps, the pins, the
-  prev/next, the slug fold, `inOrder()`, `tryGetFile()`, the read-back sha, the
-  cover fan. **Read it before touching any of them.**
+  slug fold, `inOrder()`, `tryGetFile()`, the read-back sha — **and the cover
+  fan and the prev/next in
+  [`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)**. **Read them
+  before touching any of them.**
 
 - **A picture is keyed on the MUSICIAN and the STYLE, and nothing else.**
   Never on the question's `imagePrompt` — those are written by Claude, so two
@@ -3930,6 +3918,19 @@ forgot his own: *"perhaps the login can just be a magic link instead?"*
   no provider, the identical reply either way and the throttle are each a
   decision, and two copies is one getting fixed.
 - **IT NEEDS `BREVO_API_KEY` OR `RESEND_API_KEY` AND SAYS SO.**
+- **AND THE MINIMUM IS EIGHT, BOUGHT WITH A BREACH CHECK — `src/breached.js`.**
+  Ten pushed him off the password he would remember and onto one he forgot,
+  which is what the link above exists to rescue. `Password1` is nine, so
+  **length was never the protection**: a password on a public breach list is
+  **REFUSED at every route that sets one** — change, reset and create,
+  **including the first account, which is the owner's.** **Do not put ten back
+  without taking the check out** — they are one trade.
+- **IT FAILS OPEN, AND ONLY FIVE HEX CHARACTERS LEAVE.** *Could not tell* is
+  `false`: an outage must not lock out somebody already locked out. HIBP's
+  k-anonymity range with `Add-Padding`, so **the padded rows count 0** and the
+  password itself never goes anywhere. **At the ROUTE, never in `accounts.js`**
+  — `checkPassword()` stays pure and synchronous, the reason `applyBilling()`
+  has no send in it. **[`docs/accounts/passwords.md`](docs/accounts/passwords.md)**
 
 ### THE APP SENDS THE MONEY EMAILS, AND NOTHING ELSE
 
@@ -4052,6 +4053,7 @@ node scripts/buy-your-own-rung.mjs      # can somebody who wants to pay actually
 node scripts/owner-money.mjs            # is the money tab telling the truth?
 node scripts/buy-a-pack.mjs             # can somebody buy one pack for £3?
 node --test test/trial-emails.test.js   # does a trial ending actually tell anybody?
+node --test test/breached.test.js       # is a known-breached password refused?
 node scripts/dj-set.mjs                 # a DJ set — and is the queue off the wall?
 node scripts/sign-in-link.mjs           # forgot your password — can you get in?
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
