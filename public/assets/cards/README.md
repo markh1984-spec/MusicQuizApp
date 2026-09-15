@@ -32,6 +32,8 @@ a picture on it needs no new code.
   white card, the rank and the suit around it.
 - **`cards/full/`** — the **whole card**: your own ground, your own border. The
   app draws no card under it, and prints only the rank and suit **on top**.
+- **`cards/asis/`** — the card **exactly as you drew it**. The app adds nothing
+  at all, which is the folder for a design that has its own corner index.
 
 Nothing to rename: the folder you put a file in is the answer. A whole card
 wins if the same id is in both.

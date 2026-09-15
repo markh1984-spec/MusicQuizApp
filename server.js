@@ -1547,10 +1547,11 @@ function cardArt() {
   if (cardArtSeen) return cardArtSeen;
   const ids = new Set(DECK.map((c) => c.id));
   /*
-   * TWO FOLDERS, TWO ANSWERS. `cards/` is a picture for the MIDDLE of the card
-   * the app draws; `cards/full/` is the WHOLE card, border and ground and all.
-   * They are told apart by where they sit rather than by a suffix, so there is
-   * nothing to rename on the way in — see `public/assets/card-face.js`.
+   * THREE FOLDERS, THREE ANSWERS. `cards/` is a picture for the MIDDLE of the
+   * card the app draws; `cards/full/` is the WHOLE card with the app's rank
+   * printed on top; `cards/asis/` is the card EXACTLY as drawn and the app adds
+   * nothing at all. Told apart by where they sit rather than by a suffix, so
+   * there is nothing to rename on the way in — see `card-face.js`.
    */
   const read = (...parts) => {
     const found = {};
@@ -1573,7 +1574,7 @@ function cardArt() {
     }
     return found;
   };
-  cardArtSeen = { art: read(), full: read('full') };
+  cardArtSeen = { art: read(), full: read('full'), asis: read('asis') };
   return cardArtSeen;
 }
 

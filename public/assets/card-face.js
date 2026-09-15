@@ -256,14 +256,15 @@ export function ensureCardArt() {
       // of its own folder against `DECK`, so there is nothing here a caller
       // could have named — but the href is assembled from them rather than
       // sent whole, so the markup can never carry a string somebody chose.
-      const take = (from, full) => Object.keys(from || {}).forEach((id) => {
+      const take = (from, full, asis = false) => Object.keys(from || {}).forEach((id) => {
         if (!REAL_ID.has(id)) return;
-        artFiles.set(id, { ext: String(from[id]).replace(/[^a-z0-9]/gi, ''), full });
+        artFiles.set(id, { ext: String(from[id]).replace(/[^a-z0-9]/gi, ''), full, asis });
       });
       // A whole card wins over a middle for the same id: it is the more
       // deliberate of the two, and it is the one that names its own folder.
       take(j && j.art, false);
       take(j && j.full, true);
+      take(j && j.asis, true, true);
       return artFiles;
     })
     .catch(() => artFiles);
@@ -331,7 +332,8 @@ export function cardFaceSvg(title = '', { plain = false } = {}) {
    */
   const id = ID_OF.get(String(title)) || '';
   const supplied = artFiles.get(id);
-  const href = supplied ? `/assets/cards/${supplied.full ? 'full/' : ''}${id}.${supplied.ext}` : '';
+  const folder = supplied && supplied.asis ? 'asis/' : (supplied && supplied.full ? 'full/' : '');
+  const href = supplied ? `/assets/cards/${folder}${id}.${supplied.ext}` : '';
   const image = (x, y, w, h, fit) => `<image href="${href}" xlink:href="${href}"`
     + ` x="${x}" y="${y}" width="${w}" height="${h}"`
     + (fit ? ` preserveAspectRatio="${fit}"` : '')
@@ -374,8 +376,21 @@ export function cardFaceSvg(title = '', { plain = false } = {}) {
    * A real card prints its ten narrower for exactly this reason. Sized in the
    * stylesheet rather than here, so the two live beside each other.
    */
-  const index = `<text x="8" y="35" class="cf-rank${rank.length > 1 ? ' two' : ''}" text-anchor="start">${rank}</text>`
-    + `<g transform="translate(78 24) scale(0.24) translate(-50 -50)">${art}</g>`;
+  /*
+   * A CARD IN `asis/` GETS NO INDEX AT ALL, AND THAT IS A REVERSAL.
+   *
+   * The rule above — *the index is always the app's and always on top* — was
+   * written for artwork with no corner index on it, and it is still right for
+   * that. But a real deck design draws its OWN index, and printing a second
+   * one over it is the app vandalising the thing somebody paid attention to.
+   * The readability argument does not disappear: a designed index is small and
+   * at 45px it is harder to read than the app's. **It is the quizmaster's
+   * call, and a folder is how they make it** — `full/` keeps the app's rank,
+   * `asis/` keeps theirs. Nothing to switch on, nothing to remember.
+   */
+  const index = supplied && supplied.asis ? ''
+    : `<text x="8" y="35" class="cf-rank${rank.length > 1 ? ' two' : ''}" text-anchor="start">${rank}</text>`
+      + `<g transform="translate(78 24) scale(0.24) translate(-50 -50)">${art}</g>`;
 
   /*
    * A SUPPLIED WHOLE CARD BRINGS ITS OWN GROUND, so the app's white one is not
