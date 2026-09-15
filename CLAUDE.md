@@ -941,8 +941,8 @@ being a cheeky dickhead' and it appears on their bingo screen?"*, and
   moment it becomes good news hides the only thing that was asked for.
 - **THE MARK AND THE SEND LIVE IN `client.js`, NOT `host.js`.**
   `host-bingo.js` has a player panel of its OWN, so the quiz's copy left the
-  host with no envelope and no way to send one **on the very screen this was
-  asked for**. A page module may not be imported by another page.
+  host no way to send one **on the screen this was asked for**. A page module
+  may not be imported by another page.
 - **THE BINGO LIST'S TWELVE GREW A WAY PAST IT.** The cap is right for *who is
   about to win* and was wrong the moment the row grew a CONTROL — **a cap with
   no way past it is the only kind this app must not have.** **One ✉, never the
@@ -1097,26 +1097,22 @@ Full reasoning: **[`docs/dj.md`](docs/dj.md)**.
 
 - **ONE CODEBASE BECAUSE PHOTOGRAPHS LIVE ON THE ROOM, NOT ON THE GAME** —
   `POST /api/photo` needed NO CHANGE, so the camera, the wall, the gallery and
-  the private repo arrived free. The PRODUCT is still standalone. **The hook
-  is a CAPABILITY check (`typeof notePhoto === 'function'`), never a branch on
-  kind** — `engine.js` and `bingo.js` untouched.
+  the private repo arrived free. **The hook is a CAPABILITY check (`typeof
+  notePhoto === 'function'`), never a branch on kind.**
 - **A REQUEST IS NEVER ON THE BIG SCREEN — rule 1's sharpest case.** A queue on
-  the wall is songs the room can watch him not play, and the first rude title
-  is six feet wide where this app has no filter. `screenView()` does not carry
-  them, so it is STRUCTURAL. **Do not add a queue or a "now playing" to the
-  projector.**
+  the wall is songs the room can watch him not play, and the first rude title is
+  six feet wide where this app has no filter. `screenView()` does not carry
+  them, so it is STRUCTURAL. **Do not put a queue on the projector.**
 - **A PHOTOGRAPH IS A GATE, NOT A CURRENCY**, and **no screen may say
-  otherwise** — the phone said *"send another for more"*, which the engine
-  does not do. Three requests WAITING, freed as they are played.
+  otherwise**. Three requests WAITING, freed as they are played.
 - **TYPED IS FIRST-CLASS, NOT DEGRADED** — his DJ software reads off the
-  TITLE. **Search is a POST because it carries the TOKEN**, behind a request's
-  own proof — every phone spends his ONE Spotify token — and **not configured
-  is SAID OUT LOUD**, never a silent empty list.
+  TITLE. **Search is a POST because it carries the TOKEN** — every phone spends
+  his ONE Spotify token — and **not configured is SAID OUT LOUD.**
 - **THE LINE THE DJ PASTES IS WORDED ON THE SERVER**; **the copy button says
-  *Selected* when it could not.**
+  *Selected* when it could not.** **`APP_NAME` in `dj-door.js` is ONE constant,
+  MARKED as a placeholder.**
 - **IT IS NOT ON THE CONSOLE'S GAME PICKER, and `game-kinds.test.js` NAMES
-  that exception** rather than dropping the equality — there is no DJ pack to
-  play.
+  that exception** — there is no DJ pack to play.
 - **EVERY ENGINE MUST ANSWER THE SHARED CONTRACT —
   `test/engine-contract.test.js`.** Four went missing in an afternoon:
   **`touch()`, which `/api/stream` calls, so every phone got a 500 instead of
@@ -1124,12 +1120,11 @@ Full reasoning: **[`docs/dj.md`](docs/dj.md)**.
   directly; `playerList()`, which `inProgress()` counts before ANY launch; and
   six off the shared dispatch. **`perGame` read `quiz ? … : bingo` — two games
   is the only arrangement in which "the other one" names anything.**
-- **ITS OWN DOMAIN IS `DJ_HOST` — ONE SERVICE, NO SECOND $7.** There **the
-  bare domain SERVES the door**, and **the visitor's host BEATS `PUBLIC_URL`**
-  — a pin right for one domain, wrong for two. **Unset changes nothing.**
+- **ITS OWN DOMAIN IS `DJ_HOST` — ONE SERVICE, NO SECOND $7.** **The bare
+  domain SERVES the door**, and **the visitor's host BEATS `PUBLIC_URL`**.
+  **Unset changes nothing.**
 - **NO PRICE AND NO GATE YET** — signed in is the whole check, and gating on
-  `FEATURES.QUIZ` answers a pricing question by accident. **`APP_NAME` in
-  `dj-door.js` is ONE constant, MARKED as a placeholder.**
+  `FEATURES.QUIZ` answers a pricing question by accident.
 
 ### WHAT A PART BOUNDARY CARRIES — `nightWideOpts()`, and nine things it did not
 
@@ -1710,9 +1705,8 @@ quizzing."* Three tabs: **Quiz league**, **Photos**, **What they asked for**:
 
 - **ORGANISED BY VENUE, because a venue IS a community.**
 - **THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — not a duplicate.** On Past
-  gigs a photo is EVIDENCE; on Community it is the room itself. **What is not
-  duplicated is the CODE** — `nightPhotos()`, so **the publish control keeps its
-  safeguard free.**
+  gigs a photo is EVIDENCE; on Community it is the room. **What is not
+  duplicated is the CODE** — `nightPhotos()`.
 - **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT** — *"what the room asked
   for"* MOVED off the Music Quiz tab rather than being copied.
 - **`asksPanel({ whenEmpty })` — the same panel answers two pages**, one
@@ -2066,24 +2060,20 @@ bingo winners on thursday didn't receive a QR code"*.
   the CONSEQUENCE and draws with no venue too** — it began `if (!name) return
   null`, switched off in the case it was for.
 - **SO PRESSING *Prizes* AFTERWARDS PAYS ANYBODY ALREADY OWED.** Both engines
-  said it "takes effect for the NEXT prize onwards" — true, and the bug: the
-  obvious thing a host does about a blank phone did nothing, for ever. **Both
+  said it "takes effect for the NEXT prize onwards" — true, and the bug. **Both
   catch-ups are IDEMPOTENT.**
 - **BINGO KEYS ON THE WIN'S OWN TIMESTAMP, NEVER THE STAGE ALONE** —
-  `newRound()` clears `prizeWinners` and NOT `vouchers`, so *"is stage 1
-  paid"* alone refuses round two's line winner. **AND "PAID" COMPARES THE
-  WORDS**, or a prize changed after it was won never reaches the code in
-  somebody's hand. **Updated in place, never a second voucher**, and **a
-  REDEEMED one is left alone** — rewriting a spent voucher is editing
-  history.
-- **THE CARD SHAPE CHOOSES THE PRIZE COUNT, AND IT IS A NUMBER PER SHAPE
-  RATHER THAN A FORMULA** — `defaultPrizes()`: 3x3 → 1, 4x4 → 2, 5x5 → 5,
-  4x6 → 4, 3x8 → 3. **The table lives BESIDE the shape, never in the console**,
-  so a sixth shape must name its own default in the line that adds it rather
-  than inherit an answer nobody chose. **Clamped**, so it can never promise a
-  prize the geometry cannot pay — and **the picker CLAMPS too**, or a count
-  carried onto a smaller card names an option that no longer exists and the
-  select goes silently blank. Why it is not a formula:
+  `newRound()` clears `prizeWinners` and NOT `vouchers`, so *"is stage 1 paid"*
+  alone refuses round two's line winner. **AND "PAID" COMPARES THE WORDS.**
+  **Updated in place, never a second voucher**, and **a REDEEMED one is left
+  alone** — rewriting a spent voucher is editing history.
+- **THE CARD SHAPE CHOOSES THE PRIZE COUNT, A NUMBER PER SHAPE RATHER THAN A
+  FORMULA** — `defaultPrizes()`: 3x3 → 1, 4x4 → 2, 5x5 → 5, 4x6 → 4, 3x8 → 3.
+  **The table lives BESIDE the shape, never in the console**, so a sixth names
+  its own default rather than inheriting an answer nobody chose. **Clamped**, so
+  it cannot promise a prize the geometry will not pay — and **the picker CLAMPS
+  too**, or a count carried onto a smaller card names an option that no longer
+  exists and the select goes silently blank.
   **[`docs/bingo.md`](docs/bingo.md)**.
 
 ### ONE PRIZE EACH PER BINGO ROUND, WHILE ANYBODY IS STILL WITHOUT ONE
@@ -2171,6 +2161,18 @@ its own kind, tab and name, and `LAUNCHERS.cards` builds a `BingoGame`, so
 - **`node scripts/card-bingo.mjs` FOUND THE UNPLAYABLE BUG ON ITS FIRST RUN.**
   **[`docs/bingo.md`](docs/bingo.md)** — including why forty calls is three
   minutes.
+- **THE CARDS ARE DRAWN — `card-face.js`, SVG so ONE drawing serves a 45px hand
+  and a projector.** **NO SUIT IS EVER THE CHARACTER `♠♥♦♣`** — a phone may
+  draw those as EMOJI, and *drawn, never emoji* is already the rule for the bin
+  icon and the avatars. The card is still NAMED `7♥`. **The pip layout is
+  centuries old and free; the SHAPES are drawn here**, this app being SOLD.
+- **AND THE COURT CARDS GET NO FIGURE — THIS IS THE NEW EVIDENCE THE PACK-CARD
+  RULE ASKED FOR.** Three designs at the real 45px all came out the same
+  dome-and-bar blob. J/Q/K take the ACE's treatment: one big pip under a big
+  index. **A figure would work at 120px and up and is deliberately NOT built** —
+  two drawings to keep in step. **ONE index, where a card has two**: a screen
+  has no other end, and dropping it paid for the size of the one left. **The
+  index may never end up smaller than the text it replaced.**
 
 ### FOUR WAYS A NIGHT'S SCORES AND PRIZES CAME APART
 
@@ -2241,15 +2243,13 @@ with `lobby-sound.js`), the `Sounds` panel in `host.js`, `POST
 
 - **THE LAPTOP WITH THE HDMI IS THE ONE WIRED TO THE PA** — *"my sound outputs
   via my dj decks."* **The panel SAYS where the sound comes out.**
-- **AND A DROPPED-IN `.mp3` BEATS ANY OF IT — `public/assets/stings/<id>.mp3`**
-  (*"the sounds are awful, can I replace them?"*). **The synthesised one is the
-  FALLBACK and is never deleted**: a missing file or a venue's wifi is still a
-  press the host has set up, and **silence is the one outcome a soundboard may
-  not have.** **Fetched when the page is ARMED, not on the press**, so a sting
-  is never late. **Through the same `VOL`**, or a hot master arrives twice as
-  loud as the ding. **`.mp3` alone** (Safari), and **`MIME` in `server.js` must
-  name it** or it is served as a download and never decodes. **THE REPO IS
-  PUBLIC AND THE APP IS SOLD** — a licence must cover commercial
+- **AND A DROPPED-IN `.mp3` BEATS ANY OF IT — `public/assets/stings/<id>.mp3`.**
+  **The synthesised one is the FALLBACK and is never deleted**: a missing file
+  or a venue's wifi is still a press the host set up, and **silence is the one
+  outcome a soundboard may not have.** **Fetched when the page is ARMED**, so a
+  sting is never late; **through the same `VOL`**; **`.mp3` alone** (Safari),
+  and **`MIME` in `server.js` must name it** or it is served as a download.
+  **THE REPO IS PUBLIC AND THE APP IS SOLD** — a licence must cover commercial
   redistribution.
 - **SYNTHESISED IS THE FLOOR, NOT THE CEILING** — the boo is several DETUNED
   voices started at DIFFERENT moments under a closing lowpass, and a laugh
@@ -3760,8 +3760,7 @@ that said no new night starts on a lapse**, on his reasoning: *"it seems a bit
 unnecessarily harsh, and if they like the software the chances are they'll
 pay."*
 
-- **IT IS A DAY, NOT A COUNT.** A quiz and the bingo after it are ONE night —
-  charging the second takes away the half a host is standing in front of.
+- **IT IS A DAY, NOT A COUNT** — a quiz and the bingo after it are ONE night.
   `useLastNight()` is idempotent per day.
 - **AND THE DAY ROLLS AT 6am, NOT MIDNIGHT** — `nightDay()`, the boundary Past
   gigs, the photos, the league and the headcounts already use. He said midnight
@@ -3771,9 +3770,9 @@ pay."*
   `mayStartSomething()` runs on every gated route, so spending it there burns
   Thursday by opening the console on Wednesday. **Both launch routes spend it**
   or the composed half hands out an endless grace.
-- **A GROUP'S LAST NIGHT BELONGS TO THE PARENT** — five seats on one unpaid
-  subscription get one night between them. **AN EXPIRED TRIAL GETS NOTHING**:
-  a grace there is a free gig for anyone who signs up and walks away.
+- **A GROUP'S LAST NIGHT BELONGS TO THE PARENT** — five seats, one night
+  between them. **AN EXPIRED TRIAL GETS NOTHING**: a grace there is a free gig
+  for anyone who signs up and walks away.
 - **PAYING AGAIN CLEARS IT — a CONSEQUENCE of the status, never a field a
   webhook may name.** A processor able to write `lastNight` could hand out a
   night by naming tomorrow.
@@ -3906,13 +3905,12 @@ forgot his own: *"perhaps the login can just be a magic link instead?"*
   depends on an email ARRIVING is the wrong ONLY way in there.** The link is
   for the Monday you cannot remember. **Do not delete passwords.**
 - **THE LINK IS SPENT BY A BUTTON, NEVER BY OPENING IT.** A GET that signs you
-  in is the obvious build and a trap: **scanners and mail clients FETCH the
-  links in a message before a human sees it**, so a single-use link is spent
-  before the click — locking out the one person it exists to let in.
-- **`kind` SAYS WHAT THE LINK WAS ASKED FOR AND IS CHECKED WHEN SPENT.** Not a
-  privilege boundary — both grant the same access — but **a promise about what
-  the email SAID**: one posted as *"a way to sign in"* may not change the
-  password. **A token written before `kind` reads as a RESET.**
+  in is the obvious build and a trap: **scanners and mail clients FETCH links
+  before a human sees them**, so a single-use link is spent before the click.
+- **`kind` SAYS WHAT THE LINK WAS ASKED FOR AND IS CHECKED WHEN SPENT** — not
+  a privilege boundary but **a promise about what the email SAID**: one posted
+  as *"a way to sign in"* may not change the password. **A token written before
+  `kind` reads as a RESET.**
 - **IT DOES NOT DROP THE OTHER SESSIONS, which a reset does** — signing a
   laptop out mid-gig is damage on the app's own initiative.
 - **ONE `postALink()` AND ONE `startSession()` SERVE BOTH** — the refusal with
@@ -4032,6 +4030,7 @@ node scripts/shot-bingo.mjs            # bingo, incl. card-reload
 node scripts/bingo-prizes.mjs          # does a bingo prize reach who won it?
 node scripts/bingo-round-ends.mjs      # is the whole room told the prizes have gone?
 node scripts/card-bingo.mjs             # does a deck reach a room, and can a phone mark it?
+node --test test/card-face.test.js       # does every card draw its own number of pips?
 node scripts/a-word-in-your-ear.mjs     # does a message reach one phone and no other?
 node scripts/drinks-in-your-pocket.mjs  # is a drink they won ever off their phone?
 node scripts/drinks-keep.mjs            # is the drink still there next week?

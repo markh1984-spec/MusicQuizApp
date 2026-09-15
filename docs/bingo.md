@@ -487,3 +487,75 @@ dealer's panel is a different panel rather than a button added to the caller's.
   present and inert.
 - **It is not sold and not gated beyond `FEATURES.LIBRARY`** — pricing is a
   question nobody has answered, and gating it on a guess answers it by accident.
+
+## The cards are DRAWN — `public/assets/card-face.js`
+
+Asked for the day after Card Bingo shipped with each square showing the text
+`K♣`: *"would it be possible to actually draw the face cards?"*
+
+**SVG, like the brandmark and the photo props**, because one drawing has to
+serve a 45px hand square on a 390px phone and the projector's turned card six
+feet wide. A canvas needs a raster per size and is soft at one of them; a
+`viewBox` is exact at both, and `currentColor` means the stylesheet decides what
+red is rather than the drawing carrying a second definition of it.
+
+### It also fixed something already shipped
+
+`♠♥♦♣` live in Unicode's Miscellaneous Symbols, and **a phone is entitled to
+render them as emoji** — a colour heart, and worse a blue-and-orange diamond
+that is not a red suit at all. That is the rule this app already sets for the
+bin icon, the seasonal shapes and the avatars: *drawn, never emoji*, because
+some phones and some projectors render a character as something else entirely
+and this one is six feet wide. The engine still *names* the card `7♥` — that is
+its `title`, unchanged, which is why nothing in any payload moved — but nothing
+draws that character any more. `test/card-face.test.js` pins it.
+
+### Two things the render caught that no unit test would have
+
+- **Every pip below the middle was flying off the card.** A lower pip is turned
+  over the way a real card does it, and the first version wrote
+  `rotate(180 x y)` inside a transform list that had **already translated the
+  origin to that point** — SVG reads the centre in the new local system, so the
+  pip landed twice as far out. A seven drew four pips, a two drew one, the Ace
+  drew none. Nothing threw and all fifty-two cards rendered. It was visible only
+  by drawing the whole deck and **counting**, which is now what the test does.
+- **The index came out smaller than the text it replaced** — a real 7px rank on
+  a 45px card, where the plain `K♣` it replaced had been 20px in the middle.
+  Prettier and harder to read is the wrong trade on the one screen somebody
+  scans against *"seven of hearts"*.
+
+### The court cards do not get a figure, and that was measured
+
+Three designs were drawn at the real 45px: a crowned figure over a collar, then
+three deliberately different silhouettes, then a tilted cap with a plume. **All
+three came out as the same dome-and-bar blob** — indistinguishable from each
+other and reading as kitchenware.
+
+That is the pack cards' own lesson arriving again — *cartoon figures were tried
+and do not read; at the real card size a whole person is a blob* — and the rule
+there says not to re-propose them without new evidence. **This is the evidence,
+and it says no.** A Jack, Queen and King are drawn the way an Ace is: one large
+suit pip under a rank letter big enough to read across a table, which is also
+how anybody reads a court card in a fanned hand — off the index, never off the
+picture.
+
+**A real figure would work at the dealer's 120px and on the projector**, and
+that is the one place worth spending the drawing. Deliberately not built: a card
+that is a portrait on one screen and a letter on another is two drawings to keep
+in step, and nobody has asked for the big one.
+
+### Smaller decisions
+
+- **There is ONE index where a real card has two.** The second, upside down in
+  the far corner, exists so a physical hand can be fanned from either end — a
+  screen has no other end, so it was thirteen little rotated numbers of noise.
+  Dropping it is what paid for the size of the one that is left.
+- **The pip LAYOUT is the standard Anglo-American arrangement**, which is
+  centuries old and belongs to nobody — but **the shapes are drawn here** rather
+  than taken from any modern deck, because this app is SOLD and a published
+  deck's artwork is somebody's copyright even where the arrangement is not.
+- **`cf-plain` against `cf-solid`** is why the caller says which it wants: on a
+  phone the square already has a dark ground so a black suit must be LIGHT; on
+  the dealer's panel and the projector the card prints its own white ground so
+  the same suit must be DARK. One drawing, two grounds, decided in the
+  stylesheet rather than by passing colours in.

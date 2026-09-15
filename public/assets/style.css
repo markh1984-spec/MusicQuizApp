@@ -2075,6 +2075,32 @@ body.bingo-card .bingo-call { margin-right: 72px; }
   border-color: var(--good); color: var(--ink); cursor: pointer;
 }
 .deckcell.done.red { color: #ff9095; }
+
+/*
+ * A DRAWN PLAYING CARD — `public/assets/card-face.js`.
+ *
+ * One SVG serves a 45px hand square, the dealer's 120px and the projector's
+ * card six feet wide, so everything here is a share of the box rather than a
+ * pixel. `currentColor` is what lets the suit take its colour from the class
+ * instead of the drawing carrying a second definition of red.
+ */
+svg.cardface { width: 100%; height: 100%; display: block; }
+svg.cardface path, svg.cardface circle, svg.cardface rect { fill: currentColor; }
+svg.cardface .cf-ground { fill: #fdfdfd; }
+svg.cardface .cf-rank { fill: currentColor; font: 800 34px/1 var(--ui, system-ui), sans-serif; }
+/* Red is the SUIT and never `--bad` — see the note in the hand rules above. */
+.cardface.red { color: #ff6b70; }
+.cardface.cf-plain.black { color: var(--ink); }
+/* On its own white ground a black suit has to be black. */
+.cardface.cf-solid.black { color: #14141c; }
+.cardface.cf-solid.red { color: #d92b33; }
+
+/* A hand square holds a card and nothing else, so the padding goes. */
+.bingo-cell.isCard { padding: 3px; gap: 0; }
+.dealt-card svg.cardface { width: 66px; height: auto; }
+.dealt-card { width: auto; aspect-ratio: auto; border: 0; background: none; padding: 0; }
+/* The projector's turned card: big, but never taller than the panel it sits in. */
+.np-card svg.cardface { width: auto; height: 34vh; max-width: 100%; margin: 0 auto; }
 .bingo-cell .btick {
   position: absolute; inset: 0;
   display: none; place-items: center;

@@ -9,6 +9,7 @@
 import { esc, node, postJson, roomCode, prizesShowing, prizesHead } from './client.js';
 import { arcadeCard, wireArcade } from './lobby-menu.js';
 import { isRed } from './deck.js';
+import { cardFaceSvg } from './card-face.js';
 
 let marking = new Set(); // squares tapped but not yet confirmed by the server
 
@@ -214,6 +215,9 @@ function voucherCard(v) {
 
 function paintCard(root, s, me) {
   const grid = root.querySelector('#bingoGrid');
+  // The same question `buildBingo()` asks, so the two cannot disagree about
+  // whether a square is a playing card or a song title.
+  const hand = s.game === 'cards';
   const card = s.card || [];
 
   // Build the squares once, then only update their state, so tapping never
@@ -221,9 +225,11 @@ function paintCard(root, s, me) {
   if (grid.children.length !== card.length) {
     grid.replaceChildren(...card.map((square) => {
       const cell = node(`
-        <button class="bingo-cell${isRed(square.title) ? ' red' : ''}" data-i="${square.index}">
-          <span class="bt">${esc(square.title)}</span>
-          <span class="ba">${esc(square.artist || '')}</span>
+        <button class="bingo-cell${isRed(square.title) ? ' red' : ''}${hand ? ' isCard' : ''}" data-i="${square.index}">
+          ${hand
+            ? cardFaceSvg(square.title, { plain: true })
+            : `<span class="bt">${esc(square.title)}</span>
+          <span class="ba">${esc(square.artist || '')}</span>`}
           <span class="btick">✓</span>
         </button>`);
       cell.addEventListener('click', () => toggle(cell, square.index, me));

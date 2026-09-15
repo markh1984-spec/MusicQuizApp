@@ -10,6 +10,7 @@ import {
   esc, node, rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote,
 } from './client.js';
 import { SUITS, RANKS, isRed, saidAloud } from './deck.js';
+import { cardFaceSvg } from './card-face.js';
 
 let filter = '';
 /*
@@ -242,8 +243,8 @@ function dealerPanel(s, act) {
     <div class="panel">
       <h3>Turn the cards — ${called.length} of ${(s.tracks || []).length} dealt</h3>
       <div class="dealt-row">
-        <div class="dealt-card ${last && isRed(last.title) ? 'red' : ''} ${last ? '' : 'none'}">
-          ${last ? esc(last.title) : '—'}
+        <div class="dealt-card ${last ? '' : 'none'}">
+          ${last ? cardFaceSvg(last.title) : '<span>&mdash;</span>'}
         </div>
         <div class="dealt-said">
           <div class="dealt-name">${last ? esc(saidAloud(last.title)) : 'Nothing turned yet'}</div>

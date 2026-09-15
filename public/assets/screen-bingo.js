@@ -9,6 +9,8 @@
  * instead of listening.
  */
 
+import { cardFaceSvg } from './card-face.js';
+import { saidAloud } from './deck.js';
 import { comeBackBand, esc, node, roomParam } from './client.js';
 import { arcadeSlot, paintArcadeBoard } from './lobby-board.js';
 
@@ -110,10 +112,20 @@ function updatePlaying(s) {
   const now = document.getElementById('nowPlaying');
   if (now) {
     const t = s.lastCalled;
+    /*
+     * ON A CARD NIGHT THE CARD ITSELF GOES UP, six feet wide — the one screen
+     * with room for the drawing, and the reason it is an SVG rather than a
+     * canvas. A music night is unchanged: there `title` is a song and there is
+     * nothing to draw.
+     */
+    const deck = s.game === 'cards';
     now.innerHTML = t
-      ? `<div class="np-label">Just played</div>
-         <div class="np-title">${esc(t.title)}</div>
-         <div class="np-artist">${esc(t.artist || '')}</div>`
+      ? `<div class="np-label">${deck ? 'Turned over' : 'Just played'}</div>`
+        + (deck
+          ? `<div class="np-card">${cardFaceSvg(t.title)}</div>
+             <div class="np-artist">${esc(saidAloud(t.title))}</div>`
+          : `<div class="np-title">${esc(t.title)}</div>
+             <div class="np-artist">${esc(t.artist || '')}</div>`)
       : `<div class="np-label">Get ready</div><div class="np-title grad-text">First one coming up</div>`;
     // Re-run the entrance animation whenever the track changes.
     if (now.dataset.track !== (t ? t.id : '')) {
