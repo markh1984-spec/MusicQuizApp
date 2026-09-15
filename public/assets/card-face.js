@@ -412,7 +412,31 @@ export function cardFaceSvg(title = '', { plain = false } = {}) {
    * own white ground, so the same suit has to be DARK. One drawing, two
    * grounds, and the stylesheet decides rather than the caller passing colours.
    */
-  const ink = bare || dressed ? 'cf-plain' : 'cf-solid';
+  /*
+   * A DRESSED CARD IS GILT, AND A BARE ONE IS NOT — two classes, not one.
+   *
+   * Both want the light ink a dark ground needs, so the first build gave them
+   * the same class. But a supplied deck is gold and silver on black, and its
+   * black suits should be GILT to match — while the phone's ordinary hand,
+   * which is `plain` on a dark square with no supplied card anywhere, must go
+   * on printing exactly what it always printed. One class for both would have
+   * gilded every card in the app the moment this shipped.
+   */
+  /*
+   * A THEMED DECK IS A GILT DECK, SUPPLIED CARDS INCLUDED — one question, not
+   * two.
+   *
+   * Both `bare` and `dressed` want the light ink a dark ground needs, so the
+   * first build gave them one class and stopped there. That left the SUPPLIED
+   * card's index white beside the drawn cards' gold: two decks on one table.
+   * The gilt therefore follows `themed()` — is there a supplied card ANYWHERE —
+   * rather than following whether this particular card has a file.
+   *
+   * The phone's ordinary hand, `plain` on a dark square with no supplied card
+   * in the deck at all, is untouched and prints exactly what it always did.
+   */
+  const gilt = themed();
+  const ink = bare || dressed ? `cf-plain${gilt ? ' cf-gilt' : ''}` : 'cf-solid';
   return `<svg class="cardface ${red ? 'red' : 'black'} ${ink}" viewBox="0 0 100 140"`
     + ` xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`
     + ` role="img" aria-label="${rank} of ${suit}">`

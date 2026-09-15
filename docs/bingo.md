@@ -720,3 +720,48 @@ currentColor }` is a CSS rule and beats a presentation attribute, so a mock
 that set `fill="#f2e3b0"` on the text drew black-on-black and looked like the
 feature failing. **The card's `color` is what flips**, which is why the light
 treatment is a class rather than a colour passed in.
+
+### And a themed deck is a GILT deck
+
+He then sent a whole sheet of fifty-two in the style he wants — black cards
+with gold pips for the black suits and red for the red ones — and asked
+whether the cards on it could be cut up and used as they are. They cannot, for
+three separate reasons worth keeping apart:
+
+1. **The sheet has the same faults the first one had.** Spades run A, 2, 3, 4,
+   6, 9, 10 — no 5, 7 or 8 — hearts and diamonds each carry two 3s, diamonds
+   carry two Jacks, and on several cards the rotated index in the bottom-right
+   disagrees with the one top-left and with the number of pips drawn. That is
+   what generating fifty-two in one image does, and it is the reason the
+   instruction is **one card per generation**.
+2. **Each card on a sheet is about eighty pixels wide.** Cropped and put on a
+   projector at 245px and up, it is mush. The King he sent on its own was the
+   right thing: full size, one card, its own file.
+3. **Every card on the sheet carries its own corner index**, which is exactly
+   what `cards/full/` assumes is absent — the app prints its own on top, so a
+   supplied one gives every card two.
+
+**BUT THE NUMBER CARDS WERE NEVER THE JOB.** The app already draws forty of
+them, correctly, with the pips where a seven is read off its pattern rather
+than off the corner. What the sheet showed is that they should be **gold**, and
+that is a stylesheet rule rather than forty files.
+
+- **ONE DEFINITION, `--card-gilt`,** used by the dark ground's edge and by the
+  black suits. Two hexes is how a card ends up with two golds on it, which is
+  the lesson `--metal-*` already paid for.
+- **IT IS NOT `--gold` AND NOT `--metal-gold`.** Those mean first place and a
+  tier; this is a deck's own artwork colour, drawn only when somebody has
+  supplied a card that is itself gold. Three jobs, three tokens.
+- **THE RED SUITS KEEP THE PHONE'S LIGHTER RED**, not a printed deck's deep
+  one: legibility at 45px beats matching the artwork, and *red is its own
+  colour* is already the rule here.
+- **THE GILT FOLLOWS `themed()`, NOT WHETHER THIS CARD HAS A FILE.** The first
+  build keyed it to `dressed` — every card WITHOUT a supplied picture — which
+  left the supplied King's index white beside the drawn cards' gold: two decks
+  on one table. It is one question, asked once.
+- **AND IT LOST TO AN EQUAL-SPECIFICITY RULE 16 LINES LOWER.** A dressed card
+  carries `.cf-plain` and `.cf-gilt`, and `.cardface.cf-plain.black` is the same
+  0,3,0 — so source order was the whole decision and the gilt silently did
+  nothing. **Third sighting** of the same trap this repo has recorded for
+  `.tier-row` and for the shorthand `border` on a pack tile. The rule now sits
+  below the one it has to beat, with a comment saying why.
