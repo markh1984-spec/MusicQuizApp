@@ -68,6 +68,11 @@ import { STICKERS } from './public/assets/stickers.js';
  * browser draws from IS the list the route validates against.
  */
 import { isSting } from './public/assets/stings.js';
+/*
+ * The fifty-two cards, so the artwork folder can be read against the ids the
+ * game itself mints rather than against whatever somebody named a file.
+ */
+import { DECK } from './public/assets/deck.js';
 
 /**
  * How long a pressed sting stays in the projector's payload.
@@ -1446,7 +1451,9 @@ const SUPPORT_NEVER = ['/api/host/'];
  */
 const MAX_SEATS = 50;
 
-const SUPPORT_QUIET = ['/api/state', '/api/stream', '/health', '/api/me', '/api/brand', '/api/has-accounts'];
+const SUPPORT_QUIET = ['/api/state', '/api/stream', '/health', '/api/me', '/api/brand', '/api/has-accounts',
+  // Every phone on a card night asks this once. A line each is sixty lines.
+  '/api/card-art'];
 
 /**
  * What a support session did, in words a subscriber would use.
@@ -1528,6 +1535,36 @@ function supportGuard(req, res, url, route) {
     accounts.noteSupport(who.id, supportWords(req.method, route));
   }
   return true;
+}
+
+/*
+ * The pictures somebody has dropped into `public/assets/cards/`, as
+ * `{ id: extension }`. Read once — see the route below for why.
+ */
+const CARD_ART_EXT = ['.webp', '.png', '.jpg', '.jpeg', '.svg'];
+let cardArtSeen = null;
+function cardArt() {
+  if (cardArtSeen) return cardArtSeen;
+  cardArtSeen = {};
+  const ids = new Set(DECK.map((c) => c.id));
+  const rank = {};
+  let names = [];
+  try {
+    names = fs.readdirSync(path.join(config.publicDir, 'assets', 'cards'));
+  } catch {
+    // No folder at all is the ordinary state of this feature, not a fault.
+    return cardArtSeen;
+  }
+  for (const name of names) {
+    const ext = path.extname(name).toLowerCase();
+    const id = name.slice(0, name.length - ext.length);
+    const pref = CARD_ART_EXT.indexOf(ext);
+    if (pref < 0 || !ids.has(id)) continue;
+    if (id in rank && rank[id] <= pref) continue;
+    rank[id] = pref;
+    cardArtSeen[id] = ext.slice(1);
+  }
+  return cardArtSeen;
 }
 
 async function handleGet(req, res, url, route) {
@@ -2205,6 +2242,34 @@ async function handleGet(req, res, url, route) {
    * projector gets Rob's name and Rob's colours without signing in to anything.
    * The console asks with `role=host` to get its own instead.
    */
+  /*
+   * WHICH CARDS SOMEBODY HAS DRAWN A PICTURE FOR.
+   *
+   * The soundboard's interface, applied to the deck: a file in
+   * `public/assets/cards/` named after a card's own id — `sj.png` for the Jack
+   * of Spades — replaces the middle of that card, and taking it away brings the
+   * drawn pip back. The reasoning is in `public/assets/card-face.js`; the two
+   * halves that have to live HERE are that the server is the only thing that
+   * can see its own folder, and that fifty-two speculative 404s from every
+   * phone in a pub is not a way to find out.
+   *
+   * **READ ONCE AND REMEMBERED.** The folder is part of the repository, so it
+   * cannot change without a deploy and every deploy is a fresh process — a
+   * `readdir` per phone per night would be answering a question that has only
+   * one answer for the life of the server.
+   *
+   * **AN ID THE DECK DOES NOT HOLD IS IGNORED**, which is the same rule as a
+   * sting id and a pack id: the list the browser draws from is the list built
+   * from the app's own data, never from a filename. A stray `notes.txt` in
+   * there is silence rather than a card that does not exist.
+   *
+   * **AND `.webp` WINS OVER `.png` WHEN BOTH ARE THERE.** The sales page
+   * already paid for that lesson — 4.6MB of PNG became 180KB — and this is a
+   * picture that goes on a projector, so somebody converting a folder later
+   * must not have to delete the originals to make it take effect.
+   */
+  if (route === '/api/card-art') return sendJson(res, 200, { art: cardArt() }), true;
+
   if (route === '/api/brand') {
     // The public gallery names whose photos these are the same way it picks
     // which room's — `?q=`, an account id, no more secret than the one

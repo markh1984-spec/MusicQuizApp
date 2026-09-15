@@ -568,3 +568,87 @@ in step, and nobody has asked for the big one.
   the dealer's panel and the projector the card prints its own white ground so
   the same suit must be DARK. One drawing, two grounds, decided in the
   stylesheet rather than by passing colours in.
+
+### A dropped-in picture beats the drawing — `public/assets/cards/`
+
+*"I'll go to Nano Banana and I'll get that to draw it, and then I'll import
+those in here for you to use in this system."* Which is the right way round:
+the section above says a drawn court figure does not read at 45px and that a
+real one is worth spending, and nobody was going to draw twelve of them in
+SVG by hand.
+
+**The interface is the SOUNDBOARD'S, deliberately, because that argument has
+already been had once.** A file named after the thing's own id, in a folder,
+and that is the whole of it — `public/assets/cards/sj.png` makes the Jack of
+Spades wear a picture and deleting the file brings the drawn pip back. No list
+to edit, no build step, and no per-card code. The same sentence appears above
+`stingFile()` for the same reason, and it was right there.
+
+**It works for all fifty-two, not only the twelve court cards.** That falls out
+of the interface rather than being designed: the lookup is id → file, and a
+seven of hearts is an id like any other. It is also the honest answer to a
+question nobody has asked yet — if a themed deck ever turns up, it needs no
+code at all.
+
+**THE DRAWN ONE IS THE FALLBACK AND IS NEVER DELETED.** A missing file, a
+deploy that dropped the folder, a format a browser will not decode, a folder
+half converted — every one of those still has to put a playable card on a
+phone, and this runs on the projector where an exception is a blank screen in
+front of a room. A card that draws nothing is a hand nobody can play.
+
+**AND THE INDEX AND THE GROUND ARE NEVER GIVEN AWAY.** This is the half worth
+writing down, because an imported picture is exactly the thing that would take
+them back. The rule at the top of `card-face.js` — the corner is the part that
+is READ, and everything else may simplify — was measured three times getting
+there. Ask an image generator for "the Jack of Spades" and it draws a whole
+card: its own border, its own white, and its own corner index at whatever size
+it fancies, which at the 45px a hand card gets on a 390px phone is a smudge
+over the one thing somebody is scanning for.
+
+So the picture fills the **middle** — the field the pips would have used, 8 to
+92 across and 38 to 132 down, which is clear of the rank's glyph and the corner
+suit — and the app goes on drawing the index and the white ground around it.
+One card per file, two channels for one fact, unchanged. `README.md` beside the
+folder says so in the words somebody generating the art will read.
+
+**`meet`, NEVER `slice`.** An imported file may not be trusted to be the ratio
+it was asked for, and a crop is how a King loses his head. An odd shape is
+letterboxed inside the card: it loses space rather than losing the drawing.
+
+**A MANIFEST, NOT FIFTY-TWO SPECULATIVE 404s.** The obvious build is to point
+an `<image>` at the file and let a miss render nothing — no server change, no
+fetch, no race. It is wrong twice: a transparent picture would let the pip show
+through where it is absent, and every phone in the room would ask for fifty-two
+files that are not there, on pub wifi, repeatedly, because a browser is
+entitled to re-ask for a 404. So `GET /api/card-art` reads the folder once and
+answers `{ id: extension }`, and `ensureCardArt()` asks for it once per page.
+
+**READ ONCE ON THE SERVER, TOO.** The folder is part of the repository, so it
+cannot change without a deploy and every deploy is a fresh process. A `readdir`
+per phone per night is answering a question with one answer for the life of the
+server.
+
+**AND AN ID THE DECK DOES NOT HOLD IS IGNORED** — on the server, against
+`DECK`, and again in the browser. The pack-id trap wearing a filename: the list
+drawn from is built from the app's own data, never from whatever somebody named
+a file, so a stray `notes.txt` is silence rather than a card that does not
+exist. The href is assembled from the id and the extension rather than sent
+whole, so the markup can never carry a string a caller chose.
+
+**`.webp` WINS WHERE BOTH ARE PRESENT.** The sales page already paid for that
+lesson — 4.6MB of PNG became 180KB — and this is a picture bound for a
+projector. Converting a folder later must not mean deleting the originals to
+make it take effect.
+
+**ASKED FOR AT THE LOBBY, NEVER AT THE FIRST CARD.** `ensureCardArt()` is
+called from `renderBingo()`, `bingoPanels()` and `bingoCard()`, all of which run
+on every state push including the lobby, minutes before anybody turns a card.
+Asked for on the first card instead, the projector would draw it with pips and
+correct itself only on the NEXT press — which on a card game can be half a
+minute later. It is gated on `game === 'cards'` rather than `playsACard()`,
+deliberately: music bingo has a card with songs on it and no artwork to fetch.
+
+**`href` AND `xlink:href`, BOTH.** The first is SVG 2 and is what every current
+browser reads; the second is the SVG 1.1 spelling an older iPad needs, and an
+older iPad is what a pub's spare projector laptop is. One duplicated attribute
+against the middle of every card going blank six feet wide is not a close call.

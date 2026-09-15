@@ -102,3 +102,56 @@ test('a hand is thirteen, and rubbish draws nothing rather than half a card', ()
     assert.equal(cardFaceSvg(bad, { plain: true }), '', `${String(bad)} drew something`);
   }
 });
+
+/**
+ * A DROPPED-IN PICTURE REPLACES THE MIDDLE AND LEAVES THE INDEX ALONE.
+ *
+ * The interface is a file named after a card's id, exactly as a sting is
+ * (`public/assets/cards/README.md`), and the two halves that could quietly
+ * break are both here: **the drawn pips are the fallback and are never
+ * deleted**, so a card nobody has supplied a picture for has to go on drawing
+ * itself; and **the corner index survives the picture**, because it is the
+ * part that is read at 45px and an imported drawing is exactly the thing that
+ * would take it back.
+ *
+ * It runs LAST in this file on purpose: `ensureCardArt()` fills a module-level
+ * map that every later call would then see, so the no-artwork assertions above
+ * have to have happened first.
+ */
+test('with no artwork supplied, every card draws its own pips', () => {
+  assert.match(cardFaceSvg('7♥', { plain: true }), /<g transform=/);
+  assert.ok(!cardFaceSvg('7♥', { plain: true }).includes('<image'));
+});
+
+test('a supplied picture takes the middle, and only of that card', async () => {
+  const { ensureCardArt } = await import('../public/assets/card-face.js');
+  const real = globalThis.fetch;
+  let asked = '';
+  globalThis.fetch = async (u) => {
+    asked = String(u);
+    // A junk id and a junk extension, because the browser must never build a
+    // path out of a string it was handed — the pack-id trap, wearing a
+    // filename.
+    return { ok: true, json: async () => ({ art: { sj: 'png', hq: 'webp', 'not-a-card': 'png' } }) };
+  };
+  try {
+    await ensureCardArt();
+  } finally {
+    globalThis.fetch = real;
+  }
+  assert.equal(asked, '/api/card-art');
+
+  const jack = cardFaceSvg('J♠');
+  assert.match(jack, /<image [^>]*href="\/assets\/cards\/sj\.png"/,
+    'the Jack of Spades did not wear its picture');
+  assert.match(jack, /class="cf-rank[^"]*"[^>]*>J<\/text>/,
+    'the picture took the index with it');
+  assert.ok(jack.includes('cf-ground'), 'the picture took the white ground with it');
+
+  assert.match(cardFaceSvg('Q♥'), /href="\/assets\/cards\/hq\.webp"/);
+
+  // Everything else still draws itself.
+  const king = cardFaceSvg('K♠', { plain: true });
+  assert.ok(!king.includes('<image'), 'a card with no file supplied drew a picture');
+  assert.match(king, /<g transform=/, 'a card with no file supplied stopped drawing');
+});

@@ -32,6 +32,8 @@
  * *"seven of hearts"* and a row of pretty blobs.
  */
 
+import { DECK } from './deck.js';
+
 /** One pip, on a 0–100 box. Diamond is a polygon; the rest are curves. */
 const SUIT_ART = {
   hearts: '<path d="M50 90C22 68 9 52 9 35a21 21 0 0 1 41-8 21 21 0 0 1 41 8c0 17-13 33-41 55Z"/>',
@@ -139,6 +141,86 @@ const SUIT_OF = { '♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'c
  * drawings to keep in step, and nobody has asked for the big one.
  */
 
+/*
+ * A DRAWN-IN PICTURE BEATS ANYTHING THIS FILE CAN DRAW, AND IT DROPS IN.
+ *
+ * *"I'll go to Nano Banana and I'll get that to draw it, and then I'll import
+ * those in here for you to use in this system."* — which is the right way
+ * round, and it is the SOUNDBOARD'S interface exactly, because that argument
+ * has already been had once: **a file named after its id, and that is the
+ * whole interface.** Drop `public/assets/cards/sj.png` in and the Jack of
+ * Spades wears it; take it away and the drawn pip comes back. No list to edit,
+ * no build step, and it works for all fifty-two rather than only the twelve
+ * court cards — a seven of hearts with a picture on it needs no new code.
+ *
+ * **THE DRAWN ONE IS THE FALLBACK, NEVER DELETED**, for the sting's reason: a
+ * missing file, a deploy that dropped the folder, a format a browser will not
+ * decode. A card that draws NOTHING is a hand nobody can play, and this runs on
+ * the projector where an exception is a blank screen in front of a room.
+ *
+ * **AND THE INDEX AND THE GROUND ARE NEVER GIVEN AWAY.** The rule at the top of
+ * this file is that the corner is the part that is READ, and it was measured
+ * three times getting there; an imported picture is exactly the thing that
+ * would take it back, because an AI asked for "a Jack of Spades" draws its own
+ * corner index at whatever size it likes and at 45px that is a smudge. So the
+ * picture fills the MIDDLE — the field the pips would have used, clear of the
+ * index — and the app goes on drawing the rank, the suit and the white ground
+ * around it. One drawing per card, two channels for one fact, unchanged.
+ *
+ * **THE MANIFEST IS ASKED FOR, NOT PROBED.** Fifty-two speculative requests
+ * that 404 is a lot of noise on a projector's network and the browser is
+ * entitled to re-ask for every one of them; the server reads its own folder
+ * once instead. `ensureCardArt()` is called from the three pages that draw
+ * cards, at their LOBBY, so the answer has landed long before a card is turned
+ * — the sting's *"fetched when the page is armed, not on the press"*.
+ *
+ * **A FAILURE HERE IS NOT AN ERROR.** An empty folder is the ordinary state of
+ * this feature, not a fault, so nothing is logged and nothing is thrown.
+ */
+
+/** Which of the deck's own ids a title belongs to. One definition, in `deck.js`. */
+const ID_OF = new Map(DECK.map((c) => [c.title, c.id]));
+const REAL_ID = new Set(DECK.map((c) => c.id));
+
+/*
+ * WHERE A PICTURE GOES, ON THE 100x140 BOX.
+ *
+ * Clear of the index: the rank's glyph runs to y 35 and the corner suit pip to
+ * y 36, so the field starts at 38 and stops 8 short of the bottom. `meet`
+ * rather than `slice`, so a picture drawn at any shape is letterboxed inside
+ * the card rather than cropped by it — **an imported file may not be trusted
+ * to be the ratio it was asked for**, and a crop is how a King loses his head.
+ */
+const ART = { x: 8, y: 38, w: 84, h: 94 };
+
+/** id -> the file extension somebody supplied, e.g. `'sj' -> 'webp'`. */
+const artFiles = new Map();
+let artAsked = null;
+
+/**
+ * Pull in the list of pictures somebody has dropped in. Safe to call as often
+ * as you like; every call after the first gets the first one's promise.
+ */
+export function ensureCardArt() {
+  if (artAsked) return artAsked;
+  artAsked = fetch('/api/card-art')
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => {
+      const art = (j && j.art) || {};
+      Object.keys(art).forEach((id) => {
+        // The id and the extension are both built from the server's own reading
+        // of its own folder against `DECK`, so there is nothing here a caller
+        // could have named — but the href is assembled from them rather than
+        // sent whole, so the markup can never carry a string somebody chose.
+        if (!REAL_ID.has(id)) return;
+        artFiles.set(id, String(art[id]).replace(/[^a-z0-9]/gi, ''));
+      });
+      return artFiles;
+    })
+    .catch(() => artFiles);
+  return artAsked;
+}
+
 /** Is this card one of the three that carry a figure? */
 export const isCourt = (rank) => rank === 'J' || rank === 'Q' || rank === 'K';
 
@@ -179,9 +261,25 @@ export function cardFaceSvg(title = '', { plain = false } = {}) {
 
   /* A court card and an Ace are the same drawing: one big pip under the index. */
   const big = isCourt(rank) || rank === 'A';
-  const middle = big
+  const drawn = big
     ? pip(COL.C, FIELD_MID, PIP_SIZE.A)
     : (PIPS[rank] || []).map(([x, y]) => pip(x, y, PIP_SIZE.big)).join('');
+
+  /*
+   * A DROPPED-IN PICTURE INSTEAD OF THE PIPS, WHERE SOMEBODY HAS SUPPLIED ONE.
+   *
+   * `href` AND `xlink:href`, deliberately. The first is SVG 2 and is what every
+   * current browser reads; the second is the SVG 1.1 spelling an older iPad
+   * needs, and one of those is what a pub's spare projector laptop is. The
+   * cost of getting it wrong is the middle of every card blank six feet wide,
+   * which is a worse trade than one duplicated attribute.
+   */
+  const ext = artFiles.get(ID_OF.get(String(title)) || '');
+  const href = ext ? `/assets/cards/${ID_OF.get(String(title))}.${ext}` : '';
+  const middle = href
+    ? `<image href="${href}" xlink:href="${href}" x="${ART.x}" y="${ART.y}"`
+      + ` width="${ART.w}" height="${ART.h}" preserveAspectRatio="xMidYMid meet"/>`
+    : drawn;
 
   /*
    * THE INDEX, AND IT IS THE BIGGEST THING ON THE CARD.
@@ -223,6 +321,7 @@ export function cardFaceSvg(title = '', { plain = false } = {}) {
    * grounds, and the stylesheet decides rather than the caller passing colours.
    */
   return `<svg class="cardface ${red ? 'red' : 'black'} ${plain ? 'cf-plain' : 'cf-solid'}" viewBox="0 0 100 140"`
-    + ` xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${rank} of ${suit}">`
-    + `${ground}${index}${middle}</svg>`;
+    + ` xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`
+    + ` role="img" aria-label="${rank} of ${suit}">`
+    + `${ground}${middle}${index}</svg>`;
 }

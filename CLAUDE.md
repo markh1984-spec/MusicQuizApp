@@ -2159,23 +2159,24 @@ its own kind, tab and name, and `LAUNCHERS.cards` builds a `BingoGame`, so
   colour, never `--bad`**; **no pack file**, so `validateBingoPack()` is
   untouched.
 - **`node scripts/card-bingo.mjs` FOUND THE UNPLAYABLE BUG ON ITS FIRST RUN.**
-  **[`docs/bingo.md`](docs/bingo.md)** — including why forty calls is three
-  minutes.
+  **[`docs/bingo.md`](docs/bingo.md)**.
 - **THE CARDS ARE DRAWN — `card-face.js`, SVG so ONE drawing serves a 45px hand
   and a projector.** **NO SUIT IS EVER THE CHARACTER `♠♥♦♣`** — a phone may
-  draw those as EMOJI, and *drawn, never emoji* is already the rule for the bin
-  icon and the avatars. The card is still NAMED `7♥`. **The pip layout is
-  centuries old and free; the SHAPES are drawn here**, this app being SOLD.
-- **AND THE COURT CARDS GET NO FIGURE — THIS IS THE NEW EVIDENCE THE PACK-CARD
-  RULE ASKED FOR.** Three designs at the real 45px all came out the same
-  dome-and-bar blob. J/Q/K take the ACE's treatment: one big pip under a big
-  index. **A figure would work at 120px and up and is deliberately NOT built.**
-  **ONE index, where a card has two** — a screen has no other end. It still
-  renders ~16px against the 20px text it replaced, and **the PIPS are what pay
-  for that**: a seven is read off its pattern without the corner at all.
-  **The pip field is INSET BELOW the index** (0.30–0.84, so the turn-over pivot
-  is 0.57) — enlarge one and it lands on the other. **Measure after any
-  change.**
+  draw those as EMOJI, which is *drawn, never emoji* again. The card is still
+  NAMED `7♥`. **The pip layout is centuries old and free; the SHAPES are drawn
+  here**, this app being SOLD.
+- **AND THE COURT CARDS GET NO DRAWN FIGURE — THE NEW EVIDENCE THE PACK-CARD
+  RULE ASKED FOR, in [`docs/bingo.md`](docs/bingo.md).** J/Q/K take the ACE's
+  treatment: one big pip under a big index. **ONE index, where a card has
+  two** — a screen has no other end, and **the PIPS pay for the size.** **The pip field is INSET BELOW the
+  index** (0.30–0.84, pivot 0.57) — enlarge one and it lands on the other.
+  **Measure after any change.**
+- **AND A DROPPED-IN PICTURE BEATS THE DRAWING — `public/assets/cards/<id>.png`,
+  the SOUNDBOARD'S interface exactly.** All 52, never only the courts. **The
+  DRAWN one is the FALLBACK, never deleted**; **it takes the MIDDLE only — the
+  index and the white ground are never given away.** **A manifest read ONCE
+  (`/api/card-art`), never 52 speculative 404s per phone**, and **an id the DECK
+  does not hold is ignored.**
 
 ### FOUR WAYS A NIGHT'S SCORES AND PRIZES CAME APART
 

@@ -93,6 +93,23 @@ try {
   check('two phones get different hands',
     (theirs.card || []).map((s) => s.title).join() !== faces.join());
 
+  /* ------------------------------------------- the artwork drop-in answers */
+
+  /*
+   * A picture named after a card's id replaces the middle of that card. The
+   * route is what makes it possible to find out WITHOUT fifty-two speculative
+   * 404s from every phone in the room, so it has to answer even with the
+   * folder empty — which is its ordinary state, and the one a unit test would
+   * be least likely to notice going wrong.
+   */
+  const art = await phone('/api/card-art');
+  check('the artwork manifest answers, empty folder or not',
+    art.status === 200 && art.body && typeof art.body.art === 'object',
+    `${art.status} ${JSON.stringify(art.body)}`);
+  check('and it names nothing that is not a real card',
+    Object.keys((art.body || {}).art || {}).every((id) => DECK.some((c) => c.id === id)),
+    JSON.stringify((art.body || {}).art));
+
   /* ------------------------------------- the console deals, one at a time */
 
   const one = await act('draw');

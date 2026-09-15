@@ -9,7 +9,7 @@
 import { esc, node, postJson, roomCode, prizesShowing, prizesHead } from './client.js';
 import { arcadeCard, wireArcade } from './lobby-menu.js';
 import { isRed } from './deck.js';
-import { cardFaceSvg } from './card-face.js';
+import { cardFaceSvg, ensureCardArt } from './card-face.js';
 
 let marking = new Set(); // squares tapped but not yet confirmed by the server
 
@@ -36,6 +36,21 @@ function lineWording(s) {
 }
 
 export function renderBingo(s, me) {
+  /*
+   * ASK FOR THE PICTURES AT THE LOBBY, NEVER AT THE FIRST CARD.
+   *
+   * `ensureCardArt()` answers instantly after the first call, so this is a
+   * no-op on every push but one — and that one happens minutes before anybody
+   * turns a card, which is the whole point. Asked for on the first card
+   * instead, the projector would draw it with pips and only correct itself on
+   * the NEXT press, which on a card game can be half a minute later.
+   *
+   * `game === 'cards'` rather than `playsACard()` deliberately: music bingo has
+   * a card with SONGS on it and no artwork to fetch.
+   */
+  if (s.game === 'cards') ensureCardArt();
+
+
   if (s.phase === 'lobby') {
     /*
      * SOMETHING TO DO WHILE THEY WAIT — Rally, on a bingo night.
