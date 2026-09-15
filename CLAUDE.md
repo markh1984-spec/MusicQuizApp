@@ -1192,10 +1192,9 @@ guarded** — it is the stated escape hatch and its confirm names what it costs.
   is `publicName()` at the ROUTE, so it keeps one definition and the PDF stays a
   layout.
 - **AND THE THIRD SIGHTING IS PAST GIGS' OWN JOIN — `gigRoomsFor()`.** It
-  joins the archive from `roomForHost()` to photo folders from
-  `galleryRoomFor()`, TWO ROOMS for the owner and the host key: a night hosted
-  under one hat and photographed under the other found no record for its date
-  and came out **with no pub on it**. **The archives are UNIONED, never
+  joined the archive from `roomForHost()` to photo folders from
+  `galleryRoomFor()` — TWO ROOMS for the owner, so a night hosted under one hat
+  and photographed under the other came out **with no pub on it**. **The archives are UNIONED, never
   swapped** — both are his, and picking one moves his history. **The photo
   folders are deliberately NOT unioned**: the per-night read, the lamps, the
   pins and the published flag are ONE room, so a listed night the opener cannot
@@ -1760,9 +1759,9 @@ quizzing."* Three tabs: **Quiz league**, **Photos**, **What they asked for**:
 - **A NIGHT NAMES ITS PUB AND STEPS TO THE ONE EITHER SIDE AT THAT PUB**,
   **decided on the SERVER**, and **an end of the run is an ABSENT link, not a
   dead one** — the one place *present and inert* does not apply.
-- **THE LEAGUE IS EXPORTED TO TWO AUDIENCES WHO WANTED DIFFERENT THINGS** —
-  the landlord wants EVIDENCE (the season table on the report), the teams want
-  it on a WALL (`/league`). **One thing for both would serve neither.**
+- **THE LEAGUE IS EXPORTED TO TWO AUDIENCES** — the landlord wants EVIDENCE
+  (the report's season table), the teams want a WALL (`/league`). **One thing
+  for both would serve neither.**
   - **A REPORT SAYS WHAT THE ROOM SAW THAT NIGHT, not what is true today** —
     `leagueAfter()` winds the nights AND the season window back.
   - **A PUBLIC PAGE IS A PUBLISH, PER VENUE, FAILING CLOSED** —
@@ -2553,26 +2552,30 @@ costs.
 - **A deleted photo leaves the repo but NOT git history — never imply
   otherwise.**
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
-- **THE CAMERA GATE IS GONE — every photograph is on the gallery unless a human
+- **THE CAMERA GATE IS GONE — every photo is on the gallery unless a human
   switches it off** (`showsByDefault()`), and **`showsOnGallery()` is the ONE
   decision all FOUR readers ask.** `isCameraFile()` survives as a NOTE, **never a
   gate**; **the default is written out ONCE.**
 - **SENDING IT IS THE CONSENT. THERE IS NO PER-PHOTO OPT-OUT AND ONE WAS BUILT
-  AND REMOVED** — a flag the quizmaster has to respect is a rule he has to
-  REMEMBER, on a Monday, about a photograph he did not take. **Do not rebuild a
-  sender-side switch.** The gate is the publish control under the photographs.
+  AND REMOVED** — a flag the quizmaster must respect is a rule he must REMEMBER,
+  on a Monday, about a photograph he did not take. **Do not rebuild a
+  sender-side switch.** The gate is the publish control under the photos.
 - **A LAMP PER PHOTO IS A SWITCH, WITH NO WORDS** — `title`/`aria-label` are
-  load-bearing and an 18px dot gets a 44px hit area. **A ruling that only restates
-  the DEFAULT is CLEARED, not stored.**
+  load-bearing and an 18px dot gets a 44px hit area. **A ruling that only
+  restates the DEFAULT is CLEARED, not stored.**
 - **THE PUBLISH LAMP ASKS FIRST, THE QUESTION NAMES THE NIGHT AND THE
-  CONSEQUENCE, AND SAYING NO CHANGES NOTHING** — the browser's own `confirm()`.
+  CONSEQUENCE, AND SAYING NO CHANGES NOTHING** — the browser's `confirm()`.
 - **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — **a number
-  right about the wrong question is how a working app looks broken.**
-- **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND THE PAGE SAYS SO
-  LOUDLY**; **`?as=visitor` stands the preview down ON THE SERVER** and **only
-  ever SUBTRACTS**, which is why it needs no gate.
+  right about the wrong question is a working app looking broken.**
+- **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND SAYS SO LOUDLY**;
+  **`?as=visitor` stands the preview down ON THE SERVER** and **only ever
+  SUBTRACTS**, which is why it needs no gate.
 - **NAMES AND POINTS, NEVER FACES** on anything public, **named on the way out
   rather than spread** — or the next field added is a photograph on a public page.
+- **A VENUE SAVES A PHOTO WITH THE QUIZMASTER'S NAME ON IT — `photo-save.js`.**
+  They could always save one, so **NO new gate; one would be theatre**;
+  **the WATERMARK is the feature.** **Drawn in the BROWSER**, never the server.
+  **Share sheet first.** **On the big picture ONLY**, never one per tile.
 - **THE OTHER TWENTY-ODD PHOTO RULES ARE IN
   [`docs/gigs/photos.md`](docs/gigs/photos.md)** — the lamps, the pins, the
   slug fold, `inOrder()`, `tryGetFile()`, the read-back sha — **and the cover
@@ -3182,9 +3185,9 @@ buttons STAY** — drag is the fast way and every drag has a way round it.
 - **Changing the venue re-resolves a night that is up but EMPTY** —
   `chooseVenue()` relaunches through the same `switchIfFree` guard, and once it
   cannot, the bar says so. The prizes and the voucher are read at launch.
-- **A ROUND IS SWITCHED OFF WITH A TICK, NOT DRAGGED OUT** — a tap works on both
-  a laptop and a phone. **ANY round can be switched off, including the last**; a
-  pack with all of them off is simply an empty pack, and Launch is hollow.
+- **A ROUND IS SWITCHED OFF WITH A TICK, NOT DRAGGED OUT** — a tap works on a
+  laptop and a phone. **ANY round can be switched off, including the last**; a
+  pack with all of them off is an empty pack, and Launch is hollow.
   **BUT A BINGO PACK HAS NO ROUNDS AT ALL, and reading that as "all of them are
   off" disabled Launch for ever the moment one was dragged in** — `hasRounds()`
   is the distinction, and the two states are not the same thing. It survived
@@ -3435,16 +3438,13 @@ pack is theoretically just an amalgamation of the other three."*
   files rather than holding their questions, and this shelf then lists real
   packs unchanged. **Do not start that on a gig week**: it moves `loadQuiz()`.
 - **AND A PICTURE ROUND IS DRAWN FROM HERE, THROUGH THE PACK CARD'S OWN
-  PANEL.** *"If that can't be done here I need an empty pack added to the image
-  tab so I can generate it in there."* **There is nothing to add: the round is
-  already on this shelf** — `QUIZ_ROUNDS` ticks `image`, so a generated quiz
-  arrives WITH its picture round and without the pictures, drawing being a
-  press that spends money and waits to be asked for. **An empty pack invented
-  to hold them is a second file for a round that exists — rule 11 backwards.**
-  So it is `picturePanel()`, EXPORTED rather than copied, hung under the grid
-  with the pack NAMED, **one open at a time**. **Workshop door and
-  `FEATURES.CATALOGUE` only** — the pack card's own gate, and on the Console a
-  tap means *put this in Tonight*.
+  PANEL.** **There is nothing to add: the round is already on this shelf** —
+  `QUIZ_ROUNDS` ticks `image`, and drawing is a press that spends money.
+  **An empty pack invented to hold them is a second file for a round that
+  exists — rule 11 backwards.** So it is `picturePanel()`, EXPORTED rather than
+  copied, with the pack NAMED, **one open at a time**. **Workshop door and
+  `FEATURES.CATALOGUE` only** — the pack card's gate; on the Console a tap
+  means *put this in Tonight*.
 - **THE EMPTY STATE NAMES THE TYPE**, or General Knowledge tells an empty
   library it holds no PICTURES.
 - **AND A TARGET HAS TO ANSWER BOTH CHANNELS.** The bench asked for `packDrag`
@@ -4057,6 +4057,7 @@ node --test test/breached.test.js       # is a known-breached password refused?
 node scripts/dj-set.mjs                 # a DJ set — and is the queue off the wall?
 node scripts/sign-in-link.mjs           # forgot your password — can you get in?
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
+node scripts/photo-to-socials.mjs       # can a pub save a photo, with your name on?
 ```
 
 **The rules these commands run on, and each was learned expensively — the full

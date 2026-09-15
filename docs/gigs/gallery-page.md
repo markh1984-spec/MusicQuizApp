@@ -1102,3 +1102,100 @@ That is screenshots, at 1280 and at 390, which is where the figure grid's
 minimum column width was set — 96px gave a phone three across and left *"2
 venues"* alone on a second row; 120px folds it to a two-by-two and still fits
 four on a laptop.
+
+## Saving a photograph — and whose name is on the copy
+
+*"Would be kinda cool to allow venues to download photos from their own nights
+for use on socials?"*
+
+**THE FIRST THING TO SAY IS THAT THEY ALREADY COULD.** A published gallery is a
+web page with `<img>` on it, so a landlord has been one long-press away from a
+photograph since the day the gallery shipped. Reading the ask as a permission
+question would have produced a gate over a URL anybody can type, which is the
+shape of lie this repo already has a rule against — *never claim it cannot be
+read*.
+
+**SO THE FEATURE IS THE WATERMARK, NOT THE BUTTON.** What was actually missing
+is the quizmaster's name on the copy that ends up on the pub's Facebook page.
+That makes it a rule-4 feature — *build what helps a quizmaster sell* — because
+the venue does the posting and the marketing lands on whoever ran the night. A
+save control with a bare file on the end of it would have been the convenience
+half alone, and the convenience half was never the gap.
+
+### What it does not do
+
+- **No new gate, and no new route.** `/gallery-photo/<night>/<name>` already
+  refuses an unpublished night and re-checks `showsOnGallery()` for itself.
+  This reads a picture the browser has been handed.
+- **No server work.** The stamp is drawn on a canvas in the browser — the way
+  this app already does the picture round's reveals, the photo props and the
+  venue logo. Server-side compositing means decoding and re-encoding a JPEG,
+  which with no dependencies means writing a JPEG codec; and it would spend a
+  request per photo per visitor against the rule that **a gallery is paid for
+  once.**
+- **No zip, and no "download all".** Deliberately not built: there is no zip
+  anywhere in this repo and `src/qrcode.js` is what writing a format from
+  scratch costs. What a landlord actually does is pick three good ones for a
+  post, and per-photo is the right shape for that on a phone. If somebody asks
+  for the whole night in one file, that is the moment to price it.
+
+### The decisions inside it
+
+- **ON THE BIG PICTURE, NEVER ONE PER TILE.** The wall is something you scan;
+  eighteen Save buttons on it is the clutter rule. The tap that enlarges is
+  already somebody saying *this one*, so the control sits with the thing it
+  acts on.
+- **AND THE PRESS MUST NOT REACH THE OVERLAY.** The whole big picture is a
+  `<button>` whose only job is to close, so without `stopPropagation` the
+  photograph shuts the instant you reach for Save and nothing is saved. It
+  looks like a broken control rather than a failed one, and it is the first
+  thing `photo-to-socials.mjs` puts back to check the guard is real.
+- **THE SHARE SHEET FIRST, THE DOWNLOAD SECOND.** On a phone a `download`
+  attribute opens the picture in a tab and leaves somebody to long-press it
+  again — which is the thing this replaced. `navigator.share()` with a file
+  gives iOS its own *Save Image*, and a share sheet is already how invoices
+  leave this app. Closing the sheet is an `AbortError` and is **not** an error
+  to raise at anybody.
+- **IT LOADS ITS OWN COPY OF THE PICTURE.** The grid is `loading="lazy"` and
+  the big one may still be arriving, so a canvas built from whatever the DOM
+  holds is a race that writes a blank file some of the time with nothing to
+  explain it. A second `Image` on the same URL is the browser cache.
+- **A PLATE UNDER THE WORDS, because a pub is whatever colour it is.** White
+  text vanishes against a ceiling light and black against a dark corner; a dark
+  plate is the only version that cannot come out unreadable, which is what
+  every camera app does.
+- **THE MARK SCALES WITH THE SHORT SIDE AND IS CLAMPED BOTH WAYS.** The long
+  side is only how the phone was held. Too small survives no compression; too
+  large is a quizmaster's name across somebody's face, which is the opposite of
+  what a pub wants to post.
+- **THE SOUND ARCS STAY OFF.** This draws the brandmark bigger than anywhere
+  else in the app, which makes *never above 30px* live for the first time.
+  Turning the arcs on because there is finally room is exactly the change the
+  decision exists to stop.
+- **THEIR OWN TWO COLOURS, PUSHED IN AS A `style` ON THE ROOT SVG.**
+  `quizMark()` writes `var(--hot, <hex>)` and the fallback is deliberate — it
+  is also served as `/favicon.svg`, a standalone document with no stylesheet. A
+  data URI is standalone the same way, so without this the mark on a photograph
+  comes out in the app's default colours rather than the quizmaster's.
+- **THE FILENAME IS NOT THE STORED NAME.** A photo on disk is named for the
+  room and the moment it arrived, which says more about the app's internals
+  than anybody needs. It is the pub, the night and which one — and a venue is
+  typed freehand, so it is slugged hard: a filename is one of the few places in
+  this app where a slash is not merely ugly.
+- **EVERY STEP DEGRADES RATHER THAN DIES.** A mark that will not decode, a
+  browser with no `roundRect`, a canvas with no `toBlob` — a photograph that
+  saves without the watermark is a better outcome than one that does not save,
+  and none of those may throw.
+
+### And the guard reads the bytes
+
+`node scripts/photo-to-socials.mjs` seeds a night, publishes it, opens the real
+gallery in a real browser, puts a finger on the control with
+`elementFromPoint`, presses it, catches the download and then **decodes the
+saved file again and samples it** — the bottom-right corner has to have gone
+dark against a deliberately bright source, and the middle has to still be the
+photograph. Both halves were verified by putting the fault back.
+
+**The source JPEG is made by the browser**, not checked in: the fixtures the
+unit tests use are 64 bytes of nothing, which no decoder will open, and a real
+image is one `toDataURL` away with no dependency.

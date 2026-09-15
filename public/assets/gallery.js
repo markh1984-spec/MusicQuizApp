@@ -22,6 +22,7 @@
  */
 
 import { esc, node, brandMark, brandWords } from './client.js';
+import { savePhoto, saveName } from './photo-save.js';
 import { matchNightSlug, nightSlug, readVenuePath } from './slugs.js';
 
 const body = document.getElementById('galBody');
@@ -144,10 +145,20 @@ const nightLink = (night) => (VENUE
  * one can be asked for. And it fails quietly: the page is the photographs, and
  * a missing logo is not a reason to show somebody an error.
  */
+/*
+ * WHOSE NIGHT IT WAS, KEPT — because a saved photograph carries it.
+ *
+ * The header has always drawn this and thrown it away. A download stamps the
+ * name onto the file, so it has to survive the fetch rather than be read back
+ * out of the DOM, where it is two spans and a stacking rule.
+ */
+let brandName = '';
+
 fetch(keyed('/api/brand'))
   .then((r) => r.json())
   .then((d) => {
     const slot = document.getElementById('brand');
+    brandName = String((d && d.name) || '');
     if (slot) slot.innerHTML = `${brandMark(26)}${brandWords(d.name, d.appName || '')}`;
     if (d.name) document.title = `Photos — ${d.name}`;
   })
@@ -543,7 +554,7 @@ async function showNight(night) {
   // there before the photographs were built and replacing would drop it.
   body.appendChild(grid);
   body.appendChild(node(`<p class="gal-back"><a href="${esc(home())}">All nights</a></p>`));
-  wireBigPicture(grid, data.photos);
+  wireBigPicture(grid, data.photos, data);
 }
 
 /**
@@ -618,7 +629,22 @@ function placeArrows(data) {
  * gallery of fourteen is closed and reopened without effort. The rule this app
  * holds everywhere: leave it out and wait for somebody to miss it.
  */
-function wireBigPicture(grid, photos) {
+/*
+ * THE SAVE LIVES ON THE BIG PICTURE, AND NOWHERE ELSE.
+ *
+ * *"Would be kinda cool to allow venues to download photos from their own
+ * nights for use on socials?"* — and the place for it is the moment somebody
+ * has already said *this one*, which is the tap that enlarges. A button on
+ * every tile is eighteen buttons on a wall somebody is scanning, which is the
+ * clutter rule; one on the picture you are looking at is a control sitting
+ * with the thing it acts on.
+ *
+ * **IT STOPS THE PRESS FROM REACHING THE OVERLAY.** The whole big picture is a
+ * button whose job is to close, so without this the photograph shuts the
+ * instant you reach for Save and nothing is saved — a control that looks
+ * broken rather than one that failed.
+ */
+function wireBigPicture(grid, photos, data = {}) {
   let open = null;
 
   const close = () => {
@@ -635,7 +661,34 @@ function wireBigPicture(grid, photos) {
     open = node(`
       <button class="gal-big" type="button" aria-label="Close this photo">
         <img src="${esc(keyed(p.url))}" alt="A photo from the night">
+        <span class="gal-save" role="button" tabindex="0">Save this photo</span>
       </button>`);
+    const saver = open.querySelector('.gal-save');
+    const save = async (ev) => {
+      ev.stopPropagation();
+      if (saver.dataset.busy) return;
+      saver.dataset.busy = '1';
+      saver.textContent = 'Saving…';
+      try {
+        await savePhoto(keyed(p.url), {
+          words: brandName,
+          filename: saveName(data.venue, data.when || data.night, at, ''),
+        });
+        saver.textContent = 'Saved';
+      } catch {
+        // SAID OUT LOUD, on the control. A save that quietly did nothing is
+        // somebody standing behind a bar wondering whether they pressed it.
+        saver.textContent = 'That would not save — try again';
+      }
+      setTimeout(() => {
+        saver.textContent = 'Save this photo';
+        delete saver.dataset.busy;
+      }, 2400);
+    };
+    saver.addEventListener('click', save);
+    saver.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') save(ev);
+    });
     open.addEventListener('click', close);
     document.body.appendChild(open);
     // The page behind it must not scroll under the picture — a flick meant for

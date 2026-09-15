@@ -10078,6 +10078,23 @@ body.gallery { padding: 0; }
            max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
 }
 .gal-big img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--r-card); }
+/* SAVE THIS PHOTO — an ORDINARY control, on the picture it acts on.
+   Outlined rather than filled: the gallery has no gradient button on it and a
+   filled one here would be the loudest thing on a page whose whole job is the
+   photograph. Pinned to the bottom so it never lands on a face, and 44px tall
+   because a landlord presses it with a thumb. */
+.gal-save {
+  position: absolute; z-index: 1;
+  left: 50%; transform: translateX(-50%);
+  bottom: max(18px, calc(env(safe-area-inset-bottom) + 10px));
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.38); border-radius: var(--r-pill);
+  background: rgba(8, 8, 14, 0.62); color: #fff;
+  font: 600 15px/1 var(--ui, system-ui), sans-serif; letter-spacing: 0.01em;
+  cursor: pointer; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.gal-save:hover { background: rgba(8, 8, 14, 0.82); border-color: rgba(255, 255, 255, 0.6); }
 /* THE PAGE BEHIND IT DOES NOT SCROLL — a flick meant for the photograph would
    otherwise move the wall somebody is about to come back to, which is the
    scroll the overlay exists to preserve. */
