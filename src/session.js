@@ -30,6 +30,7 @@ import { mergeGigs, sameVenue } from './past-gigs.js';
 import { leagueTable } from './league.js';
 import { findSlide, listAdvertPacks, loadAdvertPack } from './adverts.js';
 import { cleanPlan } from '../public/assets/break-parts.js';
+import { deckPack } from '../public/assets/deck.js';
 import { readPack, listOwn } from './own-packs.js';
 import { cleanComeBack } from './comeback.js';
 import { composeQuiz, isComposed } from './running-order.js';
@@ -72,6 +73,33 @@ const LAUNCHERS = {
     },
     isOver: (s) => s.phase === BINGO_PHASES.FINISHED,
     empty: { id: 'empty', title: 'No bingo pack loaded', tracks: [], cardSize: 4 },
+  },
+  /*
+   * CARD BINGO — thirteen playing cards each, the console turning one at a
+   * time. See `public/assets/deck.js`.
+   *
+   * **A SEPARATE GAME ON THE SAME ENGINE, WHICH IS THE WHOLE DESIGN.** Asked
+   * for as *"a separate game to music bingo"*, and it is one: its own kind,
+   * its own tab, its own name, never on the bingo shelf. But its state is
+   * music bingo's exactly, so `make` builds a `BingoGame` and `milestone` and
+   * `isOver` are deliberately the SAME FUNCTIONS as bingo's rather than
+   * copies — a mark still goes straight to disk, for the reason written
+   * against `bingo.milestone` above, and it would be absurd for the two to
+   * ever answer differently about that.
+   *
+   * **THERE IS ONE PACK AND IT IS GENERATED**, like the DJ set's. A deck is
+   * fifty-two cards for ever, so a file on disk would be a copy of something
+   * that cannot change — and generating it keeps the deck out of
+   * `validateBingoPack()`, which sits on the protected launch path and is
+   * therefore left alone.
+   */
+  cards: {
+    load: () => deckPack(),
+    list: () => [{ ...deckPack(), tracks: undefined, trackCount: 52 }],
+    make: (pack, opts) => new BingoGame({ pack, ...opts }),
+    milestone: (s) => LAUNCHERS.bingo.milestone(s),
+    isOver: (s) => s.phase === BINGO_PHASES.FINISHED,
+    empty: deckPack(),
   },
   /*
    * A DJ SET — the photo wall and a request queue. See `src/dj.js`.
@@ -1672,7 +1700,7 @@ export class Session {
       finish: () => (this.moreToCome()
         ? { ok: false, reason: 'more_to_come' }
         : this.engine.finish()),
-    } : this.kind === 'bingo' ? {
+    } : this.kind === 'bingo' || this.kind === 'cards' ? {
       start: () => this.engine.start(),
       call: () => this.engine.call(String(body.trackId)),
       uncall: () => this.engine.uncall(String(body.trackId)),
@@ -1680,6 +1708,20 @@ export class Session {
       playOn: () => this.engine.playOn(body.target),
       newRound: () => this.engine.newRound(),
       finish: () => this.engine.finish(),
+      /*
+       * AND ONLY CARD BINGO DEALS.
+       *
+       * The two games share this whole control view because they share an
+       * engine — naming both kinds here rather than copying the block is the
+       * same decision `LAUNCHERS.cards` makes. `draw` is the one thing that
+       * does NOT cross over, and it is spread in rather than declared for
+       * both: on a music night the host chooses the record, and a Draw button
+       * on that screen would be a control with nothing to act on.
+       *
+       * Spread only when it exists, so a music bingo night's dispatch table is
+       * the object it always was.
+       */
+      ...(this.kind === 'cards' ? { draw: () => this.engine.drawNext() } : {}),
     } : {
       /*
        * A DJ SET, AND THE BRANCH ABOVE HAD TO BE NAMED RATHER THAN LEFT AS
@@ -1776,7 +1818,23 @@ export class Session {
      */
     if (player && !player.token) player.token = newToken();
 
-    if (this.kind === 'bingo') {
+    /*
+     * MARKING AND CALLING BELONG TO ANY GAME PLAYED ON A CARD.
+     *
+     * **THIS READ `kind === 'bingo'` AND CARD BINGO WAS UNPLAYABLE.** Every
+     * screen drew perfectly — the hand, the faces, the deck, the Draw button,
+     * the count going up — and every tap on a square answered
+     * `{ok: false, reason: 'not_available'}`, so nobody could mark anything and
+     * no hand could ever be completed. Nothing threw, nothing was logged, and
+     * the whole of `npm test` was green: the unit tests call `engine.mark()`
+     * directly, which was never the thing that was broken.
+     *
+     * It is the third sighting of one shape — `perGame` gave the DJ set
+     * bingo's control view, `s.game === 'bingo'` on the phone would have given
+     * a card night the quiz layout, and this. **A kind test written when there
+     * were two games is a bug waiting for the third.**
+     */
+    if (this.kind === 'bingo' || this.kind === 'cards') {
       if (action === 'mark') return this.engine.mark({ playerId: body.playerId, index: body.index, marked: body.marked });
       if (action === 'claim') return this.engine.claim(String(body.playerId));
     }

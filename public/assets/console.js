@@ -734,7 +734,7 @@ export const QUIZ_ROUNDS = [
  * shelf would join the dropdown by accident all over again. `LAUNCHERS` in
  * `src/session.js` is the server's half; a third game adds a line to both.
  */
-export const GAME_KINDS = ['quiz', 'bingo'];
+export const GAME_KINDS = ['quiz', 'bingo', 'cards'];
 
 export const TABS = [
   {
@@ -903,6 +903,19 @@ export const TABS = [
       }
       return wrap;
     },
+  },
+  {
+    /* CARD BINGO — its own tab and its own name, on the SAME engine as music
+     * bingo. **Do not move a deck onto the Music Bingo shelf** (that shelf
+     * means track lists you play records from), and it has **no generator, no
+     * editor and no `editLabel`** — one deck, nothing to write. **Console door
+     * only.** Why, and the rest: `public/assets/deck.js`. */
+    id: 'cards',
+    doors: ['console'],
+    needs: FEATURES.LIBRARY,
+    label: 'Card Bingo',
+    blurb: 'Thirteen playing cards each. The console turns one at a time.',
+    packs: () => library.cards || [],
   },
   {
     /*
@@ -1557,34 +1570,18 @@ function consoleColumns(bar, body) {
 /**
  * CHANGING TAB DOES NOT MOVE THE PAGE. YOU STAY WHERE YOU WERE.
  *
- * Asked for in those words: *"can clicking across the tabs keep the page in
- * place? So if I'm scrolled 100 pixels down on one tab I click into another
- * tab and it loads scrolled 100 pixels down."*
+ * Tabs are one page with the middle swapped, and jumping to the top on every
+ * press makes them feel like nine separate pages.
  *
- * **This is the third arrangement of one behaviour, and the previous two are
- * worth recording, because each was right about the console it was written
- * for.** First it scrolled the TAB BAR to the top of the screen, which was a
- * way of hiding a launch panel too tall to want on screen — three rows, a
- * guessed pack, a dropdown and a search box. Then that panel became a line and
- * a drop zone, so there was nothing left to hide from and `top: 0` was the
- * honest version: every tab starts in the same place, no arithmetic.
+ * **IT HAS TO HOLD THE SCROLL, NOT MERELY DECLINE TO CHANGE IT** — which looks
+ * like a one-line deletion and is not. `render()` replaces the whole of
+ * `mainEl`, so for an instant the document is short, the browser clamps
+ * `scrollY` to the new maximum, and putting the content back does NOT put the
+ * scroll back. Read the offset before, write it after. **A shorter tab still
+ * clamps, and that is correct rather than a case to handle.**
  *
- * What changes it again is that BOTH of those move the page, and moving the
- * page is only ever worth it if there is something to get away from. There is
- * not any more. Standing still is what a set of tabs is supposed to do — they
- * are one page with the middle swapped, and a page that jumps to the top every
- * time you press one makes them feel like nine separate pages instead.
- *
- * **IT HAS TO HOLD THE SCROLL, NOT MERELY DECLINE TO CHANGE IT**, which is the
- * part that would look like a one-line deletion and would not work.
- * `render()` replaces the whole of `mainEl` — so for an instant the document
- * is short, the browser clamps `scrollY` to the new maximum, and putting the
- * content back does NOT put the scroll back. Reading the offset before and
- * writing it after is the whole job.
- *
- * A shorter tab still clamps, and that is correct rather than a case to
- * handle: there is nowhere else for it to go, and the browser lands on the
- * bottom of the new tab, which is a real place.
+ * The two arrangements this replaced, and why each was right about the console
+ * it was written for: `docs/console.md`.
  */
 export function renderKeepingPlace() {
   /*

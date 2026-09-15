@@ -2013,6 +2013,68 @@ body.bingo-card .bingo-call { margin-right: 72px; }
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .bingo-cell .ba { font-size: 10px; color: var(--ink-dim); font-weight: 600; text-align: center; }
+
+/*
+ * A HAND OF THIRTEEN PLAYING CARDS — seven over six.
+ *
+ * Asked for in those words. Thirteen is prime, so it is not a grid: fourteen
+ * columns with every card spanning two gives seven across, and starting the
+ * eighth at column 2 puts the remaining six underneath, centred, offset by
+ * half a card. One rule, no arithmetic in the markup, and it reflows at every
+ * width because the columns are fractions.
+ *
+ * The face is big because there is nothing to read — `7` and a suit, against a
+ * song title's three clamped lines — and a card you can read from a table with
+ * a drink on it is the whole point of the game.
+ */
+.bingo-grid.hand { grid-template-columns: repeat(14, 1fr); align-content: center; }
+.bingo-grid.hand .bingo-cell { grid-column: span 2; aspect-ratio: 5 / 7; }
+.bingo-grid.hand .bingo-cell:nth-child(8) { grid-column: 2 / span 2; }
+.bingo-grid.hand .bingo-cell .bt {
+  font-size: clamp(15px, 5.2vw, 30px); -webkit-line-clamp: 1; letter-spacing: -0.02em;
+}
+/*
+ * RED IS THE SUIT, NOT AN ERROR — which is why it is its own token and never
+ * `--bad`. A scheme changes personality and never meaning, and the meaning of
+ * red on a playing card is "hearts or diamonds"; borrowing the colour that
+ * means WRONG would say a team had mismarked half their hand. Lifted off the
+ * usual red so it carries on a dark panel.
+ */
+.bingo-cell.red .bt { color: #ff6b70; }
+.bingo-cell.red.marked .bt, .bingo-cell.red.confirmed .bt { color: #ff9095; }
+
+/* THE DEALER'S PANEL — the card just turned, the button, and the deck. */
+.dealt-row { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.dealt-card {
+  flex: 0 0 auto; width: 66px; aspect-ratio: 5 / 7;
+  display: grid; place-items: center;
+  border-radius: var(--r-card); border: 2px solid var(--panel-line);
+  background: var(--panel); color: var(--ink);
+  font-size: 27px; font-weight: 900; letter-spacing: -0.02em;
+}
+.dealt-card.red { color: #ff6b70; }
+.dealt-card.none { color: var(--ink-dim); font-size: 20px; }
+.dealt-name { font-size: var(--fs-head); font-weight: 800; }
+/* The one control on this panel that is pressed forty times in three minutes. */
+.dealt-go { width: 100%; font-size: var(--fs-head); padding: 14px; margin-bottom: 12px; }
+/*
+ * Four rows, one per suit, ace to king — deck order, never alphabetical.
+ * `minmax(0, 1fr)` because a grid child defaults to `min-width: auto`, and
+ * thirteen of them would push the panel sideways rather than shrink.
+ */
+.deckgrid { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 4px; }
+.deckcell {
+  padding: 7px 2px; border-radius: var(--r-field);
+  border: 1px solid var(--panel-line); background: transparent;
+  color: var(--ink-dim); font-size: var(--fs-mini); font-weight: 800;
+  cursor: default; overflow: hidden;
+}
+.deckcell.red { color: color-mix(in srgb, #ff6b70 55%, var(--ink-dim)); }
+.deckcell.done {
+  background: color-mix(in srgb, var(--good) 22%, transparent);
+  border-color: var(--good); color: var(--ink); cursor: pointer;
+}
+.deckcell.done.red { color: #ff9095; }
 .bingo-cell .btick {
   position: absolute; inset: 0;
   display: none; place-items: center;

@@ -12,7 +12,7 @@
 
 import {
   esc, node, ServerClock, Live, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights,
-  rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote,
+  rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote, playsACard,
 } from './client.js';
 import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
@@ -293,7 +293,7 @@ function restartNotice(s) {
 
 function whereLabel(s) {
   if (s.game === 'dj') return djWhere(s);
-  if (s.game === 'bingo') {
+  if (playsACard(s)) {
     return s.phase === 'lobby'
       ? 'Bingo — waiting to start'
       : s.phase === 'finished'
@@ -455,9 +455,9 @@ function buildPanels(s) {
   // Bingo's call sheet wants the whole screen — forty tracks in a grid rather
   // than forty rows down a 720px column. The quiz's panels are read, not
   // scanned, so they keep the narrower measure.
-  document.body.classList.toggle('bingo', s.game === 'bingo');
+  document.body.classList.toggle('bingo', playsACard(s));
   if (s.game === 'dj') return djPanels(s, djAct);
-  if (s.game === 'bingo') return bingoPanels(s, act);
+  if (playsACard(s)) return bingoPanels(s, act);
   const panels = [];
 
   // The cue comes first when it matters: on the intro round you need to know
@@ -1133,7 +1133,7 @@ function minorButton(text, handler, danger = false) {
 
 function buildActions(s) {
   if (s.game === 'dj') return djActions(s, djAct, minorButton);
-  if (s.game === 'bingo') return bingoActions(s, act, minorButton);
+  if (playsACard(s)) return bingoActions(s, act, minorButton);
 
   /*
    * TONIGHT AS MORE THAN ONE GAME — this quiz part is not the whole night,
@@ -1576,7 +1576,7 @@ function tick() {
     clockEl.classList.remove('urgent');
     return;
   }
-  if (state.game === 'bingo') {
+  if (playsACard(state)) {
     clockEl.textContent = state.calledCount ?? '';
     clockEl.classList.remove('urgent');
     return;

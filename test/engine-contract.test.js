@@ -66,12 +66,31 @@ const PER_KIND = {
     'answerBreakout', 'wandered', 'msRemaining', 'isExpired', 'clampPointers', 'say'],
   bingo: ['start', 'call', 'uncall', 'undoLastCall', 'playOn', 'newRound', 'finish',
     'mark', 'claim', 'syncTarget'],
+  /*
+   * CARD BINGO IS MUSIC BINGO'S LIST PLUS EXACTLY ONE CALL.
+   *
+   * The two kinds run the SAME engine — `LAUNCHERS.cards` builds a
+   * `BingoGame` — so spelling the shared half out again would be two lists
+   * that have to be kept in step by hand, which is the fault this whole file
+   * exists to catch. It is built from bingo's, and the ONE addition is named:
+   * `drawNext`, the console turning a card over, which music bingo must never
+   * gain because there the host chooses the record.
+   */
+  cards: null,   // filled in below, from bingo's
   dj: ['finish', 'notePhoto', 'request', 'played', 'bin', 'where'],
 };
+PER_KIND.cards = [...PER_KIND.bingo, 'drawNext'];
 
 const ENGINES = {
   quiz: Engine.prototype,
   bingo: BingoGame.prototype,
+  /*
+   * The same prototype as bingo, deliberately — so every shared contract check
+   * above runs against it a second time under its own name. If the two kinds
+   * ever stop sharing an engine, this line is the one that has to change and
+   * the checks carry on meaning what they meant.
+   */
+  cards: BingoGame.prototype,
   dj: DjSet.prototype,
 };
 

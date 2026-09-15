@@ -9,6 +9,7 @@
 import {
   esc, node, rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote,
 } from './client.js';
+import { SUITS, RANKS, isRed, saidAloud } from './deck.js';
 
 let filter = '';
 /*
@@ -25,7 +26,16 @@ export function bingoPanels(s, act) {
   const panels = [];
 
   if (s.win) panels.push(winPanel(s, act));
-  panels.push(callerPanel(s, act));
+  /*
+   * CARD BINGO DEALS; MUSIC BINGO IS DEALT WITH.
+   *
+   * The two games share this whole view because they share an engine, and this
+   * is the one panel where they genuinely differ: there the host has just
+   * played a record and is telling the app which one, here the app decides and
+   * tells the host. Same panel slot, opposite direction of travel — which is
+   * why it is a different panel and not a button bolted onto the caller's.
+   */
+  panels.push(s.game === 'cards' ? dealerPanel(s, act) : callerPanel(s, act));
   panels.push(playersPanel(s, act));
   if (s.claims && s.claims.length) panels.push(claimsPanel(s));
 
@@ -189,6 +199,75 @@ function callerPanel(s, act) {
  * The panel is shared with the quiz rather than copied, which is also what
  * keeps its wording and its reasoning in one place.
  */
+/**
+ * THE DEALER'S PANEL — turn the next card, and the deck so far.
+ *
+ * **THE BUTTON IS THE PANEL.** This is pressed forty-odd times in three
+ * minutes with a room watching, so it is the biggest thing on the screen and
+ * everything else on the panel is a read-out beside it. A host hunting for a
+ * control between cards is the show stopping.
+ *
+ * **IT SAYS THE CARD IN WORDS AS WELL AS DRAWING IT** — `saidAloud()` gives
+ * "Seven of Hearts", which is what goes down the microphone. The glyph alone
+ * is right on a square and wrong on a prompt: nobody reads "7♥" aloud.
+ *
+ * **EVERY CARD IS TAPPABLE TO TAKE IT BACK**, the same `uncall` the caller's
+ * panel uses. A deal cannot be un-drawn any other way, and a card turned over
+ * by a sleeve on a laptop trackpad is a real Thursday.
+ */
+function dealerPanel(s, act) {
+  const byId = new Map((s.tracks || []).map((t) => [t.id, t]));
+  // `view.called` is already {id,title,artist} IN CALL ORDER — which is the
+  // whole reason the last card turned can be named without a second field.
+  const called = s.called || [];
+  const done = new Set(called.map((c) => c.id));
+  const last = called.length ? called[called.length - 1] : null;
+  const left = (s.tracks || []).length - called.length;
+
+  const el = node(`
+    <div class="panel">
+      <h3>Turn the cards — ${called.length} of ${(s.tracks || []).length} dealt</h3>
+      <div class="dealt-row">
+        <div class="dealt-card ${last && isRed(last.title) ? 'red' : ''} ${last ? '' : 'none'}">
+          ${last ? esc(last.title) : '—'}
+        </div>
+        <div class="dealt-said">
+          <div class="dealt-name">${last ? esc(saidAloud(last.title)) : 'Nothing turned yet'}</div>
+          <div class="tiny">${left} left in the deck</div>
+        </div>
+      </div>
+      <button class="btn primary dealt-go" id="drawNext" ${left ? '' : 'disabled'}>
+        ${left ? 'Turn the next card' : 'The deck is finished'}
+      </button>
+      <div class="deckgrid" id="deckGrid"></div>
+    </div>`);
+
+  el.querySelector('#drawNext').addEventListener('click', () => act('draw', {}));
+
+  /*
+   * THE DECK IN DECK ORDER, NEVER ALPHABETICAL. The caller's panel sorts by
+   * title because a song has no other order — but "10♣, 2♣, 3♣" is what
+   * alphabetical does to a suit, and a host checking whether the seven of
+   * hearts has gone wants it where the seven of hearts lives. Four rows, one
+   * per suit, ace to king.
+   */
+  const grid = el.querySelector('#deckGrid');
+  grid.replaceChildren(...SUITS.flatMap((suit) => RANKS.map((rank) => {
+    const id = `${suit.key[0]}${rank.toLowerCase()}`;
+    const track = byId.get(id);
+    if (!track) return node('<span></span>');
+    const turned = done.has(id);
+    const box = node(`
+      <button class="deckcell ${turned ? 'done' : ''} ${suit.red ? 'red' : ''}"
+        title="${esc(saidAloud(track.title))}">${esc(track.title)}</button>`);
+    if (turned) box.addEventListener('click', () => act('uncall', { trackId: id }));
+    else box.disabled = true;
+    return box;
+  })));
+
+  return el;
+}
+
 function playersPanel(s, act) {
   /*
    * TWELVE, AND A WAY PAST IT — because messaging one phone arrived on this

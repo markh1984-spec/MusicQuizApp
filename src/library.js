@@ -17,8 +17,9 @@ import path from 'node:path';
 
 import { listQuizzes, searchBlob } from './quizzes.js';
 import { validateBingoPack, cardShape, shapeFields } from './bingo.js';
+import { deckPack } from '../public/assets/deck.js';
 
-export const GAME_KINDS = ['quiz', 'bingo'];
+export const GAME_KINDS = ['quiz', 'bingo', 'cards'];
 
 /** Every bingo pack in the folder, summarised. */
 export function listBingoPacks(dir) {
@@ -121,6 +122,18 @@ export function fullLibrary({ quizDir, bingoDir, dataDir, imageDir = '' }, roomI
       ...listBingoPacks(bingoDir).map(decorate),
       ...((own && own.bingo) || []).map((b) => decorate({ ...b, kind: 'bingo' })),
     ],
+    /*
+     * ONE DECK, AND IT IS A SHELF OF ONE ON PURPOSE.
+     *
+     * Card Bingo has exactly one pack and always will — fifty-two cards do not
+     * vary — so there is nothing here to curate, write or buy. It is still a
+     * shelf rather than a special case, because that is what makes the tab, the
+     * drag onto Tonight, the launch, the saved show and the archive all work
+     * with no code of their own: every one of them asks a game for its packs.
+     */
+    cards: [decorate({
+      ...deckPack(), tracks: undefined, trackCount: 52, kind: 'cards',
+    })],
   };
 }
 

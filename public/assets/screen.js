@@ -10,7 +10,7 @@
  * simply does not put it in this payload.
  */
 
-import { comeBackBand, esc, fitWinner, node, ServerClock, Live, brandMark, brandWords, roomCode, roomParam } from './client.js';
+import { comeBackBand, esc, fitWinner, node, ServerClock, Live, brandMark, brandWords, roomCode, roomParam, playsACard } from './client.js';
 import { bingoCard, bingoTopbar } from './screen-bingo.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
@@ -253,7 +253,7 @@ function draw(next) {
   // Which game is running decides which set of cards to draw from. Everything
   // else on this page — the connection, the clock, the swap animation — is
   // shared, so a new game only has to bring its own cards.
-  const isBingo = state.game === 'bingo';
+  const isBingo = playsACard(state);
   // A DJ set has no rounds and nothing to count, so the pill says what the
   // room is being asked for rather than printing "Round 1 of undefined".
   roundPillEl.textContent = state.game === 'dj'

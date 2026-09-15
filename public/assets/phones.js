@@ -59,7 +59,7 @@ export function phonesAre(s) {
       : 'The camera, and a box to ask for a song';
   }
 
-  if (s.game === 'bingo') {
+  if (s.game === 'bingo' || s.game === 'cards') {
     switch (s.phase) {
       // The one moment a bingo phone has something to do besides its card.
       case 'lobby': return 'Waiting — a game to play';

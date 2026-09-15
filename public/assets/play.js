@@ -15,7 +15,7 @@
 
 import {
   esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam,
-  rememberRoom, noteDrinks, prizesShowing, prizesHead, wireDrinks,
+  rememberRoom, noteDrinks, prizesShowing, prizesHead, wireDrinks, playsACard,
 } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { buildDj, djKey, djHead } from './play-dj.js';
@@ -970,7 +970,7 @@ function draw(next) {
       const head = djHead(state);
       teamScoreEl.textContent = head.score;
       teamRankEl.textContent = head.rank;
-    } else if (state.game === 'bingo') {
+    } else if (playsACard(state)) {
       // No score in bingo — what matters is how close you are.
       teamScoreEl.textContent = state.you.squaresAway === 0 ? '✓' : state.you.squaresAway;
       teamRankEl.textContent = state.you.squaresAway === 0 ? 'line complete' : 'squares to go';
@@ -1083,7 +1083,7 @@ function paintCameraButton(s) {
 
 function screenKey(s) {
   if (s.game === 'dj') return djKey(s);
-  if (s.game === 'bingo') return bingoKey(s);
+  if (playsACard(s)) return bingoKey(s);
   if (s.phase === 'question' || s.phase === 'reveal') return `q:${s.roundIndex}:${s.questionIndex}:${s.phase}`;
   return `${s.phase}:${s.roundIndex}`;
 }
@@ -1106,11 +1106,11 @@ function buildScreen(s) {
   // card that put 58 pixels of button on top of a square — one nobody can tap,
   // and therefore a full house nobody can get. This tells the stylesheet to
   // move it down beside the BINGO button instead.
-  document.body.classList.toggle('bingo-card', s.game === 'bingo' && s.phase !== 'lobby');
+  document.body.classList.toggle('bingo-card', playsACard(s) && s.phase !== 'lobby');
   // So the head can stop painting its number gold — see the rule below.
   document.body.classList.toggle('dj', s.game === 'dj');
   if (s.game === 'dj') return buildDj(s, { openCamera, player: me });
-  if (s.game === 'bingo') return renderBingo(s, me);
+  if (playsACard(s)) return renderBingo(s, me);
   switch (s.phase) {
     case 'question': return buildAnswers(s);
     case 'reveal': return buildReveal(s);
@@ -1796,7 +1796,7 @@ function paintHostNote(s) {
 }
 
 function updateScreen(s) {
-  if (s.game === 'bingo') return updateBingo(s, me);
+  if (playsACard(s)) return updateBingo(s, me);
   if (s.phase !== 'question') return;
 
   // A breakout box locks itself the moment it is submitted — see

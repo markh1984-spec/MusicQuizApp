@@ -1287,6 +1287,27 @@ export function moveWithin(list, from, to, above) {
  */
 
 /** The best-fitting shape for a pack this size — the most squares any valid shape offers, so the fewest calls are wasted on a player's own card. */
+/**
+ * IS THIS GAME PLAYED ON A BINGO CARD?
+ *
+ * **MUSIC BINGO AND CARD BINGO BOTH ARE, AND THEY ARE DIFFERENT GAMES.** They
+ * run the same engine (`LAUNCHERS.cards` builds a `BingoGame`), so every screen
+ * that draws a card, a mark, a claim or a status line wants both — and every
+ * one of those was written as `s.game === 'bingo'` when bingo was the only
+ * thing with a card.
+ *
+ * **A THIRD GAME IS WHERE THAT SHAPE OF TEST BREAKS, AND THIS APP HAS FORM.**
+ * `perGame` in `session.js` read `quiz ? … : bingo`, so the DJ set inherited
+ * bingo's entire control view and every button was a 500. The same sentence
+ * wearing a phone: `s.game === 'bingo'` is false on a card night, so
+ * `renderBingo()` is never called, and the player gets the QUIZ layout — no
+ * card, nothing thrown, every payload correct when you ask for it directly.
+ *
+ * So it is asked in ONE place. A fourth game with a card adds a word here, not
+ * a bug on nine screens.
+ */
+export const playsACard = (s) => Boolean(s) && (s.game === 'bingo' || s.game === 'cards');
+
 export function bestBingoShape(cardShapes, trackCount) {
   const usable = (cardShapes || []).filter((s) => trackCount >= s.minimum);
   const pick = usable.length ? usable : (cardShapes || []).slice(0, 1);

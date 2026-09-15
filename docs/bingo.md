@@ -368,3 +368,122 @@ drawn there, and called a working feature broken. `scripts/bingo-prizes.mjs`
 now asks the phone's own payload across the boundary, and
 `scripts/bingo-round-ends.mjs` drives a real bingo-then-quiz order and checks
 a QR is still **painted** after the part changes.
+
+---
+
+# CARD BINGO — a separate game on this same engine
+
+Asked for on 15 September 2026: *"is it possible to add a bingo round based on
+playing cards? So each person gets 13 playing cards and the console calls one at
+a time until we have a winner?"* — and then, when the shape was put to him, the
+half that decided the architecture: ***"I like 13, you can just have a row of 7
+and a row of 6, it's a separate game to music bingo."***
+
+`public/assets/deck.js`, `LAUNCHERS.cards` in `src/session.js`, `drawNext()` in
+`src/bingo.js`, `dealerPanel()` in `host-bingo.js`, `node scripts/card-bingo.mjs`.
+
+## The maths came first, and it is what made the answer yes
+
+Every player holds an independent random 13 of 52, so the arithmetic is exact:
+`P(one player done by call k) = C(k,13)/C(52,13)`, and the first winner is the
+minimum over the room. Computed before a line was written:
+
+| hand | room of 10 | room of 30 | room of 60 |
+|---|---|---|---|
+| 13 cards | 43.5 calls | 40.6 | 38.9 |
+| 16 (4×4) | 45.3 | 42.9 | 41.5 |
+| 25 (5×5) | 48.3 | 46.9 | 46.0 |
+
+**Forty calls sounds fatal and is not, and the reason is the whole product.** On
+music bingo a call is a chorus — thirty to forty seconds — so forty calls is
+twenty-five minutes and a headline event. Here a call is *"seven of hearts"*,
+about three seconds, so the same forty calls is **under three minutes**. Card
+Bingo is a filler, and it is a filler precisely because it has no music in it.
+
+The other number worth keeping: at the median call, **about five people in a
+room of sixty are one card away**. `onesAway()` already existed, so the tension
+the game needs was already computed and already on the control view.
+
+## Thirteen is prime, and that decided the prizes
+
+There is no rows×cols for 13, so a hand cannot be a grid, so it cannot have
+lines — and the engine's own rule (`cardLines()`) says a card whose lines are
+different lengths is not a fair game, which is exactly what a row of 7 and a row
+of 6 would be if they were lines. So:
+
+- **the shape is `{ rows: 1, cols: 13 }`** — `cardLines()` returns ONE line of
+  all thirteen, `maxPrizes()` answers 1 by itself, and the only way to win is
+  the full house;
+- **the seven-over-six is a WRAP, not a shape.** The stylesheet lays the same
+  thirteen on fourteen columns, each card spanning two, with the eighth starting
+  at column 2 so the second row centres. **The server and every phone still
+  agree that a line means all thirteen**, so this is not the disagreement that
+  once had a 5×5's idea of a line running against a 4×4's;
+- **one prize per round.** More prizes is more rounds — `newRound()` reissues
+  everyone and already does exactly that.
+
+## One engine, and the three places that had to learn a third game
+
+`LAUNCHERS.cards` builds a `BingoGame`. That is not a shortcut: the state is
+music bingo's exactly, so rule 6 (a card cannot be regenerated), the
+one-prize-per-game rule, the held vouchers, the part-boundary carry and crash
+recovery all arrive already true and already tested. A second engine would have
+been six rules kept in step by hand.
+
+**What sharing costs is that every `kind === 'bingo'` written when bingo was the
+only game with a card is now wrong.** This app has form here — `perGame` in
+`session.js` once read `quiz ? … : bingo`, so the DJ set inherited bingo's whole
+control view and every button was a 500. Three more of the same shape:
+
+1. **`runPlayerAction` gated `mark` and `claim` on `kind === 'bingo'`** — so
+   **the game was completely unplayable**. Every screen drew perfectly, the deck
+   counted up, and every tap on a square answered
+   `{ok: false, reason: 'not_available'}`. Nothing threw, nothing was logged,
+   and all 1,982 unit tests were green, because they call `engine.mark()`
+   directly and that was never what was broken. **Found by `card-bingo.mjs`
+   driving a real phone over HTTP, on its first run.**
+2. **`s.game === 'bingo'` on the phone, the projector and the control view** —
+   nine sites. Left alone, a card night would have got the QUIZ layout: no card
+   at all, and again nothing thrown. They ask `playsACard()` in `client.js` now,
+   so a fourth game with a card is one word rather than nine bugs.
+3. **`perGame` itself** — `cards` is named beside `bingo` and `draw` is spread
+   in only for `cards`, so `/api/host/draw` on a music night is a 404. That is
+   asserted, because it is the half somebody would "fix" by accident.
+
+## The console deals — the one genuinely new capability
+
+`drawNext()` picks uniformly from what is left and goes through `call()`, so the
+phase change, the timestamp and the flush are the ones every other call gets.
+`random` is injected like `now()`, the precedent being `drawLuckyDip()`.
+
+**There is no pre-shuffled order on the state, deliberately.** `state.called` is
+already the order, already flushes on every call (rule 7) and already survives a
+restart; a stored deck order would be a second record of the same fact, and the
+two disagreeing is a card turned over twice in front of a room.
+
+**Music bingo must never gain this.** There the host chooses the record and the
+app writes down which — the opposite direction of travel, which is also why the
+dealer's panel is a different panel rather than a button added to the caller's.
+
+## Smaller decisions worth not undoing
+
+- **The hand is DEALT sorted, not sorted at render** (`sortCard` on the pack).
+  `marks[i]` is keyed by position, so re-ordering on the phone would leave every
+  tick attached to a different card. Sorting is the one real advantage a deck
+  has over a track list: thirteen cards in suit-and-rank order can be checked
+  against a call at a glance.
+- **The card's name is its title**, so `A♠` reaches a phone with no new field on
+  any view, no whitelist edited and nothing for `pub-unchanged` to report.
+  Whether it is red is DERIVED from the title by `isRed()`, so there is one
+  definition of a red suit and both sides read it.
+- **Red is its own colour, never `--bad`.** A scheme changes personality and
+  never meaning; red on a playing card means hearts or diamonds, and borrowing
+  the colour that means WRONG would say a team had mismarked half their hand.
+- **There is no pack file.** A deck is fifty-two cards for ever, so a JSON file
+  would be a copy of something that cannot change — and generating it keeps the
+  deck out of `validateBingoPack()`, which sits on the protected launch path.
+- **Its own tab, Console door only, no generator and no editor** — there is
+  nothing about a deck to write, so those controls are absent rather than
+  present and inert.
+- **It is not sold and not gated beyond `FEATURES.LIBRARY`** — pricing is a
+  question nobody has answered, and gating it on a guess answers it by accident.

@@ -8,6 +8,7 @@
 
 import { esc, node, postJson, roomCode, prizesShowing, prizesHead } from './client.js';
 import { arcadeCard, wireArcade } from './lobby-menu.js';
+import { isRed } from './deck.js';
 
 let marking = new Set(); // squares tapped but not yet confirmed by the server
 
@@ -72,11 +73,23 @@ export function renderBingo(s, me) {
   const rows = s.cardRows || s.cardSize || 4;
   // Taller than it is wide, so the squares have to be rows rather than boxes.
   const strip = rows > cols ? ' strip' : '';
+  /*
+   * A HAND OF THIRTEEN IS LAID OUT SEVEN OVER SIX, WHICH IS NOT ITS SHAPE.
+   *
+   * The engine calls it one row of thirteen and that is what decides the game
+   * — one line, all thirteen, a full house. Thirteen across a phone would be
+   * 26px a card, so the stylesheet folds the same thirteen onto two rows with
+   * the second offset by half a card, the way a hand sits in your fingers.
+   * Nothing about what WINS moves: this is the only place the two differ, and
+   * it is a wrap rather than a second opinion about where the lines are.
+   */
+  const hand = s.game === 'cards';
   const el = node(`
     <div class="bingo-wrap">
       <div class="bingo-status" id="bingoStatus"></div>
       <div class="bingo-vouchers" id="bingoVouchers"></div>
-      <div class="bingo-grid cols-${cols}${strip}" style="grid-template-columns:repeat(${cols}, 1fr)" id="bingoGrid"></div>
+      <div class="bingo-grid ${hand ? 'hand' : `cols-${cols}${strip}`}"
+        ${hand ? '' : `style="grid-template-columns:repeat(${cols}, 1fr)"`} id="bingoGrid"></div>
       <button class="btn bingo-call" id="bingoCall" disabled>BINGO!</button>
     </div>`);
 
@@ -208,7 +221,7 @@ function paintCard(root, s, me) {
   if (grid.children.length !== card.length) {
     grid.replaceChildren(...card.map((square) => {
       const cell = node(`
-        <button class="bingo-cell" data-i="${square.index}">
+        <button class="bingo-cell${isRed(square.title) ? ' red' : ''}" data-i="${square.index}">
           <span class="bt">${esc(square.title)}</span>
           <span class="ba">${esc(square.artist || '')}</span>
           <span class="btick">✓</span>

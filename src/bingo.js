@@ -94,9 +94,19 @@ export class BingoGame {
    * @param {object} [opts.state]
    * @param {function(BingoGame): void} [opts.onChange]
    */
-  constructor({ pack, now = () => Date.now(), state = null, onChange = null }) {
+  constructor({
+    pack, now = () => Date.now(), state = null, onChange = null, random = Math.random,
+  }) {
     this.pack = pack;
     this.now = now;
+    /*
+     * INJECTED LIKE `now()`, and for the same reason rule 2 gives: the one
+     * thing in this engine that is not decided by what the host pressed is
+     * which card comes off the deck, and a test that cannot fix it is a test
+     * that cannot say what the game did. `drawLuckyDip()` in the quiz engine
+     * is the precedent — the ENGINE draws, never a phone.
+     */
+    this.random = random;
     this.onChange = onChange;
     this.state = state || BingoGame.freshState(pack);
   }
@@ -279,7 +289,29 @@ export class BingoGame {
     const ids = this.tracks.map((t) => t.id);
     const seed = hashString(`${this.pack.id}:${this.state.round}:${playerId}:${salt}`);
     const shuffled = shuffle(ids, seed);
-    return shuffled.slice(0, this.squareCount);
+    const chosen = shuffled.slice(0, this.squareCount);
+    /*
+     * A HAND OF PLAYING CARDS IS SORTED. A BINGO CARD IS NOT, AND MUST NOT BE.
+     *
+     * Which cards you hold is still the shuffle above — this only decides the
+     * order they are LAID OUT in, and it is the one real advantage a deck has
+     * over a track list: thirteen cards in suit-and-rank order can be checked
+     * against "seven of hearts" at a glance, where thirteen song titles have no
+     * order to check against and have to be read one by one.
+     *
+     * **SORTED HERE RATHER THAN ON THE PHONE, because `marks[i]` is keyed by
+     * POSITION.** Re-ordering at render time would leave every square's tick
+     * attached to a different card — a team marking the seven of hearts and
+     * watching the nine of clubs light up. Dealt in order, `card[i]` and
+     * `marks[i]` mean what they have always meant and not one reader changes.
+     *
+     * Opt-in per pack (`deckPack()` sets it), so a music bingo card is dealt
+     * exactly as it was: pack order there would put the same songs in the same
+     * places on every card in the room.
+     */
+    if (!this.pack.sortCard) return chosen;
+    const want = new Set(chosen);
+    return ids.filter((id) => want.has(id));
   }
 
   /**
@@ -464,6 +496,34 @@ export class BingoGame {
     this.state.calledAt[trackId] = this.now();
     this.changed();
     return true;
+  }
+
+  /**
+   * Turn the next card over — Card Bingo's one new capability.
+   *
+   * **MUSIC BINGO HAS NO RANDOMISER AND MUST NOT GAIN ONE.** There the host
+   * chooses the record, and the app's job is to write down what was played;
+   * here there is nothing to choose, so the console deals. That is the whole
+   * difference between the two games at the engine level, and it is this
+   * method.
+   *
+   * **UNIFORM OVER WHAT IS LEFT, NEVER A PRE-SHUFFLED ORDER ON THE STATE.**
+   * A shuffled deck written at launch would be a second record of the same
+   * fact — `state.called` already IS the order, already flushes to disk on
+   * every call (rule 7), and already survives a restart. A stored order could
+   * disagree with it, and the two disagreeing is a card turned over twice in
+   * front of a room.
+   *
+   * It goes through `call()` rather than round it, so the phase change, the
+   * timestamp and the flush are the ones every other call gets.
+   *
+   * @returns {object|null} the card that came up, or null if the deck is out.
+   */
+  drawNext() {
+    const left = this.tracks.filter((t) => !this.state.called.includes(t.id));
+    if (!left.length) return null;
+    const card = left[Math.floor(this.random() * left.length)] || left[0];
+    return this.call(card.id) ? card : null;
   }
 
   /** Pressed the wrong one. Take it back. */

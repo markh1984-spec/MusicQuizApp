@@ -2095,70 +2095,82 @@ the prizes."*
 
 - **THE CLAIM IS STILL RIGHT AND IS RECORDED AS RIGHT** — THREE outcomes on
   the control view, not two. **AND NO SENTENCE ON A PHONE MAY SAY "you have
-  already won"** — reverted off the live app once. **The wording is about the
+  already won"**, reverted off the live app once: **the wording is about the
   PRIZE, never the person.**
-- **THE CARDS CANNOT DO THIS ON THEIR OWN, asked for twice.** A card is dealt
-  at JOIN and who wins is decided by **the order the host plays the tracks
-  in**, which the app never sees. **Read `docs/bingo.md` before re-proposing
-  dealing as the fix.**
-- **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert.
-- **NO SETTING.** It is one line to invert if anybody ever asks.
+- **THE CARDS CANNOT DO THIS ON THEIR OWN, asked for twice** — a card is dealt
+  at JOIN and who wins is decided by the ORDER the host plays the tracks in,
+  which the app never sees. **Read `docs/bingo.md` first.**
+- **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert. **NO
+  SETTING** — one line to invert if anybody ever asks.
 - **A STAGE CAN ONLY BE TAKEN ONCE — `stageTaken()`, checked BEFORE anything
-  is recorded.** A second GENUINE line a beat later **changed the winner's
-  name on the projector while the prize stayed with the first**, and
-  `results()` filed BOTH. **The button stands down for EVERYBODY.**
-  **`tooLate` is a separate flag**: *"had one"* is untrue here.
-- **AND THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE** — **every phone
-  lit up the moment one line landed**, on the settings every 40-track pack
-  ships with. It is `evaluate()`'s shape on MARKS; **the two may not disagree
-  about what the prize IS.**
+  is recorded**, or a second genuine line changes the winner's name on the
+  projector while the prize stays with the first. **The button stands down for
+  EVERYBODY**, and **`tooLate` is a separate flag**.
+- **AND THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE** — it is
+  `evaluate()`'s shape on MARKS; **the two may not disagree about what the
+  prize IS.**
 - **A VOUCHER SURVIVES A PART BOUNDARY — `carried` in
   `startOrderSegment()`.** **The flag is load-bearing**: the idempotency check
-  sees THIS part's only, while the lookup, the redeem, the host panel and the
-  archive see all. **`prizeWinners` does NOT carry** — `stageIndex` restarts,
-  so a carried list makes `stageTaken()` true for a prize nobody played for.
+  sees THIS part's only, the lookup and the archive see all. **`prizeWinners`
+  does NOT carry** — a carried list makes `stageTaken()` true for a prize
+  nobody played for.
 - **`Continue to the quiz` IS DRAWN ONCE**, and **bingo's `Finish` STAYS AND
-  SAYS WHAT IT COSTS** — a deliberate escape hatch, not hidden the way the
-  quiz's *Stop* is; its confirm names what it leaves out.
-- **AND THE ROUND CAN STALL, SO THE CONTROL VIEW SAYS SO — `view.stalled`**,
-  when everyone who has completed the card already holds a prize. **The rule
-  is NOT lifted** — the host has *Play on*, *New round* and *Finish*.
+  SAYS WHAT IT COSTS** — a deliberate escape hatch, unlike the quiz's *Stop*.
+- **AND THE ROUND CAN STALL, SO THE CONTROL VIEW SAYS SO — `view.stalled`.**
+  **The rule is NOT lifted**: the host has *Play on*, *New round*, *Finish*.
 - **WHEN THE LAST PRIZE GOES THE WHOLE ROOM IS TOLD — `allPrizesGone`.**
-  **IT IS NOT THE `WON` PHASE**, which fires on EVERY claim: it is
-  `onLastStage && stageTaken()`, neither half alone. **DRAWN ON EVERY PHONE,
-  not only the winners'** — the card key broke it on every phone BUT the
-  winner's.
+  **IT IS NOT THE `WON` PHASE**: it is `onLastStage && stageTaken()`, neither
+  half alone. **DRAWN ON EVERY PHONE, not only the winners'.**
 - **THE CODES ARE HELD AND ALL APPEAR TOGETHER AT THE END OF THE ROUND** —
   **this REVERSES an answer of "both": do not put the trickle back.**
-  **MINTED at the win, held from the PHONE**, or it is *"my bingo winners
-  didn't receive a QR code"* rebuilt. **THREE RELEASES, ALL LOAD-BEARING** —
-  the round ending, `Finish`, and an EARLIER `round` or `carried`; **an
-  unstamped voucher SHOWS**. **The HOST's panel is never held.** **The phone
-  says when it is coming, on the `won` branch TOO.**
-- **ONE PRIZE PER PHONE PER BINGO *GAME* — `stillWithoutAPrize()` DELETED,
-  and the scope is the GAME, not the round.** *"The same person can't win
-  multiple prizes per quiz or music bingo."* **`state.wonThisGame`, and
-  `newRound()` MUST NOT CLEAR IT** — one line puts the fault back and looks
+  **MINTED at the win, held from the PHONE.** **THREE RELEASES, ALL
+  LOAD-BEARING** — the round ending, `Finish`, and an EARLIER `round` or
+  `carried`. **The HOST's panel is never held.**
+- **ONE PRIZE PER PHONE PER BINGO *GAME*, not per round** — *"the same person
+  can't win multiple prizes per quiz or music bingo."* **`state.wonThisGame`,
+  and `newRound()` MUST NOT CLEAR IT** — one line puts the fault back and looks
   like tidying. **REVERSES two pinned tests.** **The round that cannot pay out
-  is NOT automated away** — `view.noneLeft`, **its own flag beside `stalled`
-  because "play on" is then wrong**. **No "you have already won" on a phone**
-  (`view.tookOne`). **A fresh bingo PART is a fresh game.**
+  is NOT automated away** (`view.noneLeft`). **No "you have already won" on a
+  phone.** **A fresh bingo PART is a fresh game.**
 - **A CODE STAYS ON THE PHONE UNTIL THE BAR SCANS IT — `view.vouchers` on the
-  QUIZ engine too.** Gated on `phase === FINAL` and sending ONE, a bingo code
-  left the screen at *Continue to the quiz*. **Every live code, at every phase
+  QUIZ engine too**: gated on FINAL and sending ONE, a bingo code left the
+  screen at *Continue to the quiz*. **Every live code, at every phase
   with room, NEVER over a live QUESTION.** **A REDEEMED one now DISAPPEARS from
   the phone** — reversed 11 September 2026, see *My prizes*; the two engines may
   not disagree. **`view.voucher` UNCHANGED.**
-- **`pub-unchanged.mjs` SETS NO VENUE AND NO REWARDS, SO IT MINTS NO VOUCHER**
-  — IDENTICAL there says nothing about any of this. **A probe aimed at
-  `#bingoVouchers` reads 0 on a QUIZ screen** whatever is drawn.
-
 - **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS — it reads `quizzes/`
-  only.** IDENTICAL on a bingo change is the guard answering confidently about
-  something it is not looking at. `node scripts/bingo-prizes.mjs` drives three
-  phones over real HTTP instead.
+  only, sets no venue and mints no voucher.** IDENTICAL on a bingo change is
+  the guard answering confidently about something it is not looking at, and **a
+  probe aimed at `#bingoVouchers` reads 0 on a QUIZ screen** whatever is drawn.
+  `node scripts/bingo-prizes.mjs` drives three phones over real HTTP instead.
 
 Full reasoning, with the measurements: **[`docs/bingo.md`](docs/bingo.md)**.
+
+### CARD BINGO IS A SEPARATE GAME ON THE SAME ENGINE — `deck.js`, `LAUNCHERS.cards`
+
+*"13 playing cards and the console calls one at a time"*, then *"a row of 7 and
+a row of 6, **it's a separate game to music bingo**."* Both halves are built:
+its own kind, tab and name, and `LAUNCHERS.cards` builds a `BingoGame`, so
+**not one rule in `bingo.js` gets a second copy**.
+
+- **THIRTEEN IS PRIME, SO A HAND IS NOT A GRID AND HAS NO LINES.**
+  `{rows: 1, cols: 13}` is ONE line of all thirteen, so **one prize, and more
+  prizes is more ROUNDS.** The seven-over-six is a WRAP in the stylesheet,
+  never a second opinion about where a line is.
+- **A KIND TEST WRITTEN WHEN THERE WERE TWO GAMES IS A BUG WAITING FOR THE
+  THIRD — third sighting.** `runPlayerAction` gated `mark`/`claim` on
+  `kind === 'bingo'`, so **the game was UNPLAYABLE while every screen drew
+  perfectly and 1,982 tests passed**. **Ask `playsACard()`, never the kind.**
+- **MUSIC BINGO MUST NEVER GAIN THE DRAW** — there the host chooses the record;
+  `/api/host/draw` 404s on a music night. **No pre-shuffled deck on the
+  state**: `state.called` IS the order.
+- **THE HAND IS DEALT SORTED, NEVER SORTED AT RENDER** — `marks[i]` is a
+  POSITION. **Its name is its TITLE**, so no payload changed; **red is its own
+  colour, never `--bad`**; **no pack file**, so `validateBingoPack()` is
+  untouched.
+- **`node scripts/card-bingo.mjs` FOUND THE UNPLAYABLE BUG ON ITS FIRST RUN.**
+  **[`docs/bingo.md`](docs/bingo.md)** — including why forty calls is three
+  minutes.
 
 ### FOUR WAYS A NIGHT'S SCORES AND PRIZES CAME APART
 
@@ -2166,69 +2178,58 @@ All four are ordinary presses, none of them throws, and each is on the path a
 gig actually takes.
 
 - **BACK WIPES THE QUESTION IT IS LEAVING**, exactly as `Skip` and `Ask again`
-  do — one act from three directions, and Back was the one that did not. Two
-  tables kept points AND the bonus for a question never played, then answered
-  `already_answered` on the replay.
+  do — one act from three directions, and Back was the one that did not: two
+  tables kept points and the bonus for a question never played.
 - **A PRIZE NO LONGER OWED IS TAKEN BACK — unless it has been SPENT.**
-  `issueVouchers()` only topped up, so four ordinary presses left **three live
-  top-prize codes on a night with two winners**. **A redeemed, `draw` or
+  `issueVouchers()` only topped up, so four ordinary presses left three live
+  top-prize codes on a night with two winners. **A redeemed, `draw` or
   `carried` one stays.**
-- **RESET SCORES HANDS THE NEXT GAME A CLEAN LEDGER, and destroys nothing.** It
-  kept `luckyDip`, so **the draw never ran again**, and kept game one's vouchers
-  in the paid set, so game two's winner got nothing. **Marked `carried`, never
-  deleted.**
-- **AND THE DRAW READS THE LAST QUESTION PLAYED, not the pointer.** Stopping at
-  a round intro — when a room is thinning out, which is what the draw is FOR —
-  left it reading a question nobody had been asked.
+- **RESET SCORES HANDS THE NEXT GAME A CLEAN LEDGER, and destroys nothing** —
+  it kept `luckyDip` (so the draw never ran again) and game one's vouchers in
+  the paid set. **Marked `carried`, never deleted.**
+- **AND THE DRAW READS THE LAST QUESTION PLAYED, not the pointer** — stopping
+  at a round intro left it reading a question nobody had been asked.
 
 ### A TEAM'S SEATS ARE SETTLED AT A BOUNDARY, AND A PHONE MAY NOT MINT ONE
 
 - **`makeTeam()` REFUSES BEFORE IT WRITES.** The caller made the team and then
   joined it, and only the JOIN knew about random mode — so a phone was refused
   **while the team it named was already in the state**: arbitrary unfiltered
-  text on the projector, which is the one screen this app never filters. An
-  injected team has size 0, so `dealInto()` puts the next honest joiner into
-  it. `dealt: true` is the app's own way in.
-- **AND THERE IS A CEILING — `MAX_TEAMS`.** There was none: **1,200 teams in
-  1.3 seconds** from one phone. **Forty, not `RANDOM_TEAM_MAX`** — six is a
-  DESIGN number; this is a SAFETY number.
+  text on the projector, the one screen this app never filters. `dealt: true`
+  is the app's own way in.
+- **AND THERE IS A CEILING — `MAX_TEAMS`**, after 1,200 teams in 1.3 seconds
+  from one phone. **Forty, not `RANDOM_TEAM_MAX`** — six is a DESIGN number;
+  this is a SAFETY number.
 - **A TEAM MAY ONLY CHANGE AT A BOUNDARY — `TEAM_CHANGE_PHASES`.** The rule was
-  `QUESTION && !closed`, leaving the seconds after the clock runs out, the whole
-  REVEAL and the FINAL open. **Scores are AVERAGED**, so a table that sheds its
+  `QUESTION && !closed`, leaving the seconds after the clock, the whole REVEAL
+  and the FINAL open — and **scores are AVERAGED**, so a table that sheds its
   weakest phone at the reveal overtakes its rival with no question asked.
 
 Full reasoning for both: **[`docs/engine.md`](docs/engine.md)**.
 
 ### A TEAM NIGHT IS ONE ENTITY PER BOARD ROW, EVERYWHERE — `boardIdFor()`
 
-It was threaded through the phone's POSITION and nothing else, so one cause had
-six symptoms, all live for the whole of any team night and none of them
-throwing.
+Threaded through the phone's POSITION and nothing else, so one cause had six
+symptoms, all live for any team night and none of them throwing.
 
 - **`playerCount` IS BOARD ROWS AND `answeredCount` IS PHONES, AND THEY WERE
-  PRINTED IN ONE SENTENCE** — *"60 of 6 answered"*, six feet wide in a dark
-  pub, beside a pill saying *"6 playing"* to a room of sixty. **`phoneCount` is
-  a SECOND field, spread in only when the two differ**, so an ordinary night's
-  payload is byte-for-byte what it was.
-- **A PHONE'S OWN HEADER IS ITS TEAM'S ROW — score, key, name and position in
-  one unit.** It read **1,390** while the projector said **695**, and `you.key`
-  never matched a board row, so `play.js`'s fallback drew **every phone its own
-  team twice**. **AND THE TEAM'S SCORE IS FROZEN FOR THE LENGTH OF A QUESTION
-  TOO**: an average built from live scores moves the instant a team-mate
-  answers, which is the `scoreBefore` leak arriving through the average.
+  PRINTED IN ONE SENTENCE** — *"60 of 6 answered"*, six feet wide in a dark pub.
+  **`phoneCount` is a SECOND field, spread in only when the two differ**, so an
+  ordinary night's payload is byte-for-byte what it was.
+- **A PHONE'S OWN HEADER IS ITS TEAM'S ROW** — score, key, name and position in
+  one unit, or `play.js`'s fallback draws every phone its own team twice. **AND
+  THE TEAM'S SCORE IS FROZEN FOR THE LENGTH OF A QUESTION TOO**: an average
+  built from live scores is the `scoreBefore` leak wearing an average.
 - **THE HOST'S PLAYING PANEL LISTS PHONES, because that is what its controls
   act on.** Built from `leaderboard()`, every row carried a `team:` id and
   `adjustScore`/`renamePlayer`/`removePlayer` answered `{ok:false}` **in
-  silence**. Same line gave every team an **"off" badge all night**, no team a
-  **tick**, and an idle count of **0** where the button would have removed
-  nine. **The ordinary night's rows are untouched, with a test pinning the
+  silence**. **The ordinary night's rows are untouched, with a test pinning the
   field list.**
-- **AND THE HOST IS TOLD WHO THE ROOM KNOWS — `whoIsThat()`.** The fastest
-  finger, `whoPicked` and `wanderedNow` named handsets under a board of teams.
-  **The handset is KEPT beside the team, not folded away** — the tally counts
-  PICKS, so deduplicating would leave the names disagreeing with the number
-  above them. **The fastest finger's `faceKey` stays the INDIVIDUAL'S**: a team
-  has no face.
+- **AND THE HOST IS TOLD WHO THE ROOM KNOWS — `whoIsThat()`.** **The handset is
+  KEPT beside the team, not folded away** — the tally counts PICKS, so
+  deduplicating would leave the names disagreeing with the number above them.
+  **The fastest finger's `faceKey` stays the INDIVIDUAL'S**: a team has no
+  face.
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
@@ -4030,6 +4031,7 @@ node scripts/shots.mjs --key KEY       # screenshots of a whole quiz
 node scripts/shot-bingo.mjs            # bingo, incl. card-reload
 node scripts/bingo-prizes.mjs          # does a bingo prize reach who won it?
 node scripts/bingo-round-ends.mjs      # is the whole room told the prizes have gone?
+node scripts/card-bingo.mjs             # does a deck reach a room, and can a phone mark it?
 node scripts/a-word-in-your-ear.mjs     # does a message reach one phone and no other?
 node scripts/drinks-in-your-pocket.mjs  # is a drink they won ever off their phone?
 node scripts/drinks-keep.mjs            # is the drink still there next week?
