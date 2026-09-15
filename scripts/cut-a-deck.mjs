@@ -77,6 +77,21 @@ const rows = Number(flag('rows', '4'));
  * slice of its neighbour; too much and the borders get shaved off.
  */
 const inset = Number(flag('inset', '4')) / 100;
+/*
+ * WHERE THE GRID ACTUALLY IS, because a generated sheet has a MARGIN.
+ *
+ * Dividing the whole image by the column count assumes the cards start at
+ * pixel zero, and they never do — a sheet comes back with a border, and the
+ * error accumulates across the row until the last card is half its neighbour.
+ * `--box x,y,w,h` names the rectangle the cards actually occupy. Left unset it
+ * is the whole image, which is the old behaviour.
+ *
+ * It is a NUMBER rather than a detector on purpose: three attempts at finding
+ * the card edges automatically were each fooled by the court cards, which are
+ * bright where every other card is black. A human reading the contact sheet
+ * and nudging four numbers takes a minute and cannot be confidently wrong.
+ */
+const box = flag('box', '').split(',').map(Number).filter((n) => !Number.isNaN(n));
 const into = flag('into', 'asis');
 const folder = { asis: 'asis', full: 'full', mid: '' }[into];
 if (folder === undefined) {
@@ -118,11 +133,12 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 await page.setContent('<body style="margin:0"></body>');
 
-const cut = await page.evaluate(async ({ src, cols, rows, inset, order }) => {
+const cut = await page.evaluate(async ({ src, cols, rows, inset, order, box }) => {
   const img = new Image();
   await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = src; });
-  const cw = img.naturalWidth / cols;
-  const ch = img.naturalHeight / rows;
+  const [bx, by, bw, bh] = box.length === 4 ? box : [0, 0, img.naturalWidth, img.naturalHeight];
+  const cw = bw / cols;
+  const ch = bh / rows;
   const dx = cw * inset;
   const dy = ch * inset;
   const out = [];
@@ -133,14 +149,14 @@ const cut = await page.evaluate(async ({ src, cols, rows, inset, order }) => {
     c.height = Math.round(ch - dy * 2);
     c.getContext('2d').drawImage(
       img,
-      Math.round((i % cols) * cw + dx), Math.round(Math.floor(i / cols) * ch + dy),
+      Math.round(bx + (i % cols) * cw + dx), Math.round(by + Math.floor(i / cols) * ch + dy),
       c.width, c.height,
       0, 0, c.width, c.height,
     );
     out.push({ id: order[i], w: c.width, h: c.height, png: c.toDataURL('image/png').split(',')[1] });
   }
   return { sheet: { w: img.naturalWidth, h: img.naturalHeight }, cards: out };
-}, { src, cols, rows, inset, order });
+}, { src, cols, rows, inset, order, box });
 
 for (const card of cut.cards) {
   fs.writeFileSync(path.join(outDir, `${card.id}.png`), Buffer.from(card.png, 'base64'));
@@ -154,15 +170,15 @@ for (const card of cut.cards) {
  * order you typed. The only check is a human looking at the pile with the
  * names written under it.
  */
-await page.setViewportSize({ width: 1180, height: 60 + Math.ceil(cut.cards.length / 11) * 200 });
+await page.setViewportSize({ width: 1240, height: 60 + Math.ceil(cut.cards.length / 10) * 200 });
 await page.evaluate(({ cards, dir }) => {
   document.body.style.cssText = 'margin:0;background:#15151f;font:12px system-ui;color:#8d8da0';
   document.body.innerHTML = `<div style="padding:16px">
     <div style="color:#fff;font:600 14px system-ui;margin:0 0 12px">
       ${cards.length} cards → ${dir}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:10px">${cards.map((c) => `
-      <div style="width:90px;text-align:center">
-        <img src="data:image/png;base64,${c.png}" style="width:90px;display:block;border-radius:6px">
+    <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:10px">${cards.map((c) => `
+      <div style="text-align:center">
+        <img src="data:image/png;base64,${c.png}" style="width:100%;display:block;border-radius:6px">
         <div style="padding-top:4px">${c.id}</div>
       </div>`).join('')}</div></div>`;
 }, { cards: cut.cards, dir: `public/assets/cards/${folder || ''}` });
