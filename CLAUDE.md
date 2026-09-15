@@ -2169,10 +2169,13 @@ its own kind, tab and name, and `LAUNCHERS.cards` builds a `BingoGame`, so
 - **AND THE COURT CARDS GET NO FIGURE — THIS IS THE NEW EVIDENCE THE PACK-CARD
   RULE ASKED FOR.** Three designs at the real 45px all came out the same
   dome-and-bar blob. J/Q/K take the ACE's treatment: one big pip under a big
-  index. **A figure would work at 120px and up and is deliberately NOT built** —
-  two drawings to keep in step. **ONE index, where a card has two**: a screen
-  has no other end, and dropping it paid for the size of the one left. **The
-  index may never end up smaller than the text it replaced.**
+  index. **A figure would work at 120px and up and is deliberately NOT built.**
+  **ONE index, where a card has two** — a screen has no other end. It still
+  renders ~16px against the 20px text it replaced, and **the PIPS are what pay
+  for that**: a seven is read off its pattern without the corner at all.
+  **The pip field is INSET BELOW the index** (0.30–0.84, so the turn-over pivot
+  is 0.57) — enlarge one and it lands on the other. **Measure after any
+  change.**
 
 ### FOUR WAYS A NIGHT'S SCORES AND PRIZES CAME APART
 
@@ -3655,17 +3658,15 @@ test that the route works proves nothing about whether anybody can reach it.
   a button on the collapsed row is one tap from a stranger's face going
   public.
 - **It says what publishing means in one line** — *"Anyone with the link can
-  see these."* A warning is the exception to the short-label rule. Not red: it
-  is read BEFORE pressing, and red would say a mistake had been made.
+  see these."* Not red: it is read BEFORE pressing, and red would say a mistake
+  had been made.
 - **Taking it down is as prominent as putting it up**, outlined red — the
   honest answer to somebody asking is a quizmaster who can do it stood
   there.
-- **THE OWNER PREVIEW NEEDS THE KEY AND WAS NOT SENDING IT.** `/gallery` shows
-  unpublished nights to whoever is signed in — but the page sent nothing on a
-  `?key=` link, so the preview silently failed on the identity most likely to
-  be checking. Read **from the URL, never from localStorage** (the remembered-key
-  rule), and put on the IMAGES too, because the photo route re-checks for
-  itself.
+- **THE OWNER PREVIEW NEEDS THE KEY AND WAS NOT SENDING IT** on a `?key=`
+  link, so it failed on the identity most likely to be checking. Read **from
+  the URL, never from localStorage**, and put on the IMAGES too, because the
+  photo route re-checks for itself.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
@@ -3697,8 +3698,7 @@ photographed nights.
   the evening straight back to `venueMixed`.
 - **A NIGHT WITH NOTHING FILED GETS A `kind: 'note'`, AND A NOTE IS NOT A
   GAME** — `mergeGigs()` skips it, so no phantom nought-player quiz reaches the
-  headcounts, the league or *heard here*, and *"No results saved"* stays true of
-  a night that genuinely has none.
+  headcounts, the league or *heard here*.
 - **"No venue on these" IS A CARD LIKE ANY OTHER** — it was left out of the
   auto-open, so the night somebody opened in order to SAY where it was kept its
   controls folded away.

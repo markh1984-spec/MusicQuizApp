@@ -2087,7 +2087,9 @@ body.bingo-card .bingo-call { margin-right: 72px; }
 svg.cardface { width: 100%; height: 100%; display: block; }
 svg.cardface path, svg.cardface circle, svg.cardface rect { fill: currentColor; }
 svg.cardface .cf-ground { fill: #fdfdfd; }
-svg.cardface .cf-rank { fill: currentColor; font: 800 34px/1 var(--ui, system-ui), sans-serif; }
+svg.cardface .cf-rank { fill: currentColor; font: 800 40px/1 var(--ui, system-ui), sans-serif; }
+/* The ten, and only the ten — see the note beside `index` in card-face.js. */
+svg.cardface .cf-rank.two { font-size: 31px; }
 /* Red is the SUIT and never `--bad` — see the note in the hand rules above. */
 .cardface.red { color: #ff6b70; }
 .cardface.cf-plain.black { color: var(--ink); }

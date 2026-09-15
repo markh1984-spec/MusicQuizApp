@@ -522,7 +522,16 @@ draws that character any more. `test/card-face.test.js` pins it.
 - **The index came out smaller than the text it replaced** — a real 7px rank on
   a 45px card, where the plain `K♣` it replaced had been 20px in the middle.
   Prettier and harder to read is the wrong trade on the one screen somebody
-  scans against *"seven of hearts"*.
+  scans against *"seven of hearts"*. It is about **16px** now, which is **still
+  a loss against 20** — and what pays for it is the pips, a second channel for
+  the same fact that the plain text never had. A seven is read off its pattern
+  without the corner being read at all.
+- **And then the enlarged index collided with the top-left pip**, on every card
+  that has one there. A real deck avoids this with a SMALL index in the corner
+  margin; this one cannot, because small is unreadable at 45px. **So the pip
+  field gives way instead** — it runs 0.30 to 0.84 rather than 0.19 to 0.81,
+  which is why its middle is 0.57 and why **what turns over is everything below
+  THAT rather than below the card's own middle.**
 
 ### The court cards do not get a figure, and that was measured
 

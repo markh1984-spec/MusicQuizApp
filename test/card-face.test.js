@@ -81,7 +81,10 @@ test('NO SUIT IS EVER A CHARACTER — drawn, never emoji', () => {
 test('the index says the rank, and a ten is not a one', () => {
   for (const rank of RANKS) {
     const svg = cardFaceSvg(`${rank}♠`, { plain: true });
-    assert.match(svg, new RegExp(`class="cf-rank"[^>]*>${rank}</text>`),
+    // `10` carries an extra class for its own size — see the note beside the
+    // index in card-face.js — so the class list is matched loosely and the
+    // TEXT exactly, which is the half that matters.
+    assert.match(svg, new RegExp(`class="cf-rank[^"]*"[^>]*>${rank}</text>`),
       `${rank} is not printed as its own index`);
   }
 });

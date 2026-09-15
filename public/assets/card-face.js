@@ -59,23 +59,45 @@ const STEM = {
  * below the middle is drawn upside down, exactly as a real card does it.
  */
 const COL = { L: 0.28, C: 0.5, R: 0.72 };
-const ROW3 = [0.19, 0.5, 0.81];
-const ROW4 = [0.19, 0.3833, 0.6167, 0.81];
 
+/*
+ * THE PIP FIELD IS INSET BELOW THE INDEX, AND THAT IS WHY IT IS NOT CENTRED.
+ *
+ * The index is deliberately large — it is the part that gets read — and at the
+ * classic layout the top-left pip sat straight underneath it: the rank and the
+ * first pip overlapped on every card that has one there, on all four suits.
+ * A real card avoids it by printing a SMALL index in the corner margin; this
+ * one cannot, because a small index is unreadable at the 45px a hand card gets.
+ *
+ * So the pips give way instead. The field runs 0.30 to 0.84 rather than 0.19 to
+ * 0.81, which puts its middle at 0.57 — everything below THAT is what turns
+ * over, not everything below the card's own middle.
+ */
+const FIELD_MID = 0.57;
+const ROW3 = [0.30, FIELD_MID, 0.84];
+const ROW4 = [0.30, 0.48, 0.66, 0.84];
+
+/**
+ * Where the pips go, as fractions of the card.
+ *
+ * The standard Anglo-American arrangement, which is centuries old and belongs
+ * to nobody — but the SHAPES are drawn in this file rather than copied from any
+ * modern deck, because this app is SOLD and a published deck's artwork is
+ * somebody's copyright even where the arrangement is not.
+ */
 const PIPS = {
-  A: [[COL.C, 0.5]],
-  2: [[COL.C, 0.19], [COL.C, 0.81]],
-  3: [[COL.C, 0.19], [COL.C, 0.5], [COL.C, 0.81]],
-  4: [[COL.L, 0.19], [COL.R, 0.19], [COL.L, 0.81], [COL.R, 0.81]],
-  5: [[COL.L, 0.19], [COL.R, 0.19], [COL.C, 0.5], [COL.L, 0.81], [COL.R, 0.81]],
+  A: [[COL.C, FIELD_MID]],
+  2: [[COL.C, 0.30], [COL.C, 0.84]],
+  3: [[COL.C, 0.30], [COL.C, FIELD_MID], [COL.C, 0.84]],
+  4: [[COL.L, 0.30], [COL.R, 0.30], [COL.L, 0.84], [COL.R, 0.84]],
+  5: [[COL.L, 0.30], [COL.R, 0.30], [COL.C, FIELD_MID], [COL.L, 0.84], [COL.R, 0.84]],
   6: [COL.L, COL.R].flatMap((x) => ROW3.map((y) => [x, y])),
-  7: [...[COL.L, COL.R].flatMap((x) => ROW3.map((y) => [x, y])), [COL.C, 0.345]],
-  8: [...[COL.L, COL.R].flatMap((x) => ROW3.map((y) => [x, y])), [COL.C, 0.345], [COL.C, 0.655]],
-  9: [...[COL.L, COL.R].flatMap((x) => ROW4.map((y) => [x, y])), [COL.C, 0.5]],
-  10: [...[COL.L, COL.R].flatMap((x) => ROW4.map((y) => [x, y])), [COL.C, 0.2867], [COL.C, 0.7133]],
+  7: [...[COL.L, COL.R].flatMap((x) => ROW3.map((y) => [x, y])), [COL.C, 0.435]],
+  8: [...[COL.L, COL.R].flatMap((x) => ROW3.map((y) => [x, y])), [COL.C, 0.435], [COL.C, 0.705]],
+  9: [...[COL.L, COL.R].flatMap((x) => ROW4.map((y) => [x, y])), [COL.C, FIELD_MID]],
+  10: [...[COL.L, COL.R].flatMap((x) => ROW4.map((y) => [x, y])), [COL.C, 0.39], [COL.C, 0.75]],
 };
 
-/** Ace's single pip is large; the rest are read as a group. */
 const PIP_SIZE = { A: 40, big: 17 };
 
 const SUIT_OF = { '♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs' };
@@ -151,31 +173,45 @@ export function cardFaceSvg(title = '', { plain = false } = {}) {
      * one, and nothing threw. Caught by rendering the whole deck and counting,
      * which is the only way it could have been.
      */
-    const flip = y > 0.5 ? ' rotate(180)' : '';
+    const flip = y > FIELD_MID ? ' rotate(180)' : '';
     return `<g transform="translate(${x * 100} ${y * 140})${flip} scale(${s}) translate(-50 -50)">${art}</g>`;
   };
 
   /* A court card and an Ace are the same drawing: one big pip under the index. */
   const big = isCourt(rank) || rank === 'A';
   const middle = big
-    ? pip(COL.C, 0.58, PIP_SIZE.A)
+    ? pip(COL.C, FIELD_MID, PIP_SIZE.A)
     : (PIPS[rank] || []).map(([x, y]) => pip(x, y, PIP_SIZE.big)).join('');
 
   /*
    * THE INDEX, AND IT IS THE BIGGEST THING ON THE CARD.
    *
-   * Measured before it was changed: the first version put the rank in the
-   * corner at a real 7px on a 45px hand card, where the plain text it replaced
-   * had been 20px in the middle. Prettier and harder to read is the wrong
-   * trade on the one screen somebody scans against *"seven of hearts"*.
+   * Measured, twice. The first version put the rank at a real 7px on a 45px
+   * hand card, where the plain text it replaced had been 20px in the middle —
+   * prettier and harder to read, which is the wrong trade on the one screen
+   * somebody scans against *"seven of hearts"*.
+   *
+   * **It still lands around 16px, and that is a real loss against 20 — what
+   * pays for it is the PIPS.** A seven is read off its pattern without the
+   * corner being read at all, which is exactly why a real deck is quick to
+   * fan: two channels for one fact. The plain text had only ever had one.
+   * **Measure it after any change to the size or the field.**
    *
    * **AND THERE IS ONLY ONE, WHERE A REAL CARD HAS TWO.** The second, upside
    * down in the far corner, exists so a physical hand can be fanned from
    * either end — a screen has no other end, so it was thirteen little rotated
    * numbers of noise, and dropping it is what pays for the size of this one.
    */
-  const index = `<text x="9" y="34" class="cf-rank" text-anchor="start">${rank}</text>`
-    + `<g transform="translate(74 25) scale(0.26) translate(-50 -50)">${art}</g>`;
+  /*
+   * `10` IS THE ONLY TWO-CHARACTER RANK AND IT GETS ITS OWN SIZE.
+   *
+   * At the single-digit size it ran straight into the suit pip beside it — on
+   * all four tens, worst on the projector where the collision is a foot wide.
+   * A real card prints its ten narrower for exactly this reason. Sized in the
+   * stylesheet rather than here, so the two live beside each other.
+   */
+  const index = `<text x="8" y="35" class="cf-rank${rank.length > 1 ? ' two' : ''}" text-anchor="start">${rank}</text>`
+    + `<g transform="translate(78 24) scale(0.24) translate(-50 -50)">${art}</g>`;
 
   const ground = plain ? '' : '<rect x="1" y="1" width="98" height="138" rx="9" class="cf-ground"/>';
 
