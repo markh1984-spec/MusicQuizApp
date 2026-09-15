@@ -1545,25 +1545,35 @@ const CARD_ART_EXT = ['.webp', '.png', '.jpg', '.jpeg', '.svg'];
 let cardArtSeen = null;
 function cardArt() {
   if (cardArtSeen) return cardArtSeen;
-  cardArtSeen = {};
   const ids = new Set(DECK.map((c) => c.id));
-  const rank = {};
-  let names = [];
-  try {
-    names = fs.readdirSync(path.join(config.publicDir, 'assets', 'cards'));
-  } catch {
-    // No folder at all is the ordinary state of this feature, not a fault.
-    return cardArtSeen;
-  }
-  for (const name of names) {
-    const ext = path.extname(name).toLowerCase();
-    const id = name.slice(0, name.length - ext.length);
-    const pref = CARD_ART_EXT.indexOf(ext);
-    if (pref < 0 || !ids.has(id)) continue;
-    if (id in rank && rank[id] <= pref) continue;
-    rank[id] = pref;
-    cardArtSeen[id] = ext.slice(1);
-  }
+  /*
+   * TWO FOLDERS, TWO ANSWERS. `cards/` is a picture for the MIDDLE of the card
+   * the app draws; `cards/full/` is the WHOLE card, border and ground and all.
+   * They are told apart by where they sit rather than by a suffix, so there is
+   * nothing to rename on the way in — see `public/assets/card-face.js`.
+   */
+  const read = (...parts) => {
+    const found = {};
+    const rank = {};
+    let names = [];
+    try {
+      names = fs.readdirSync(path.join(config.publicDir, 'assets', 'cards', ...parts));
+    } catch {
+      // No folder at all is the ordinary state of this feature, not a fault.
+      return found;
+    }
+    for (const name of names) {
+      const ext = path.extname(name).toLowerCase();
+      const id = name.slice(0, name.length - ext.length);
+      const pref = CARD_ART_EXT.indexOf(ext);
+      if (pref < 0 || !ids.has(id)) continue;
+      if (id in rank && rank[id] <= pref) continue;
+      rank[id] = pref;
+      found[id] = ext.slice(1);
+    }
+    return found;
+  };
+  cardArtSeen = { art: read(), full: read('full') };
   return cardArtSeen;
 }
 
@@ -2268,7 +2278,7 @@ async function handleGet(req, res, url, route) {
    * picture that goes on a projector, so somebody converting a folder later
    * must not have to delete the originals to make it take effect.
    */
-  if (route === '/api/card-art') return sendJson(res, 200, { art: cardArt() }), true;
+  if (route === '/api/card-art') return sendJson(res, 200, cardArt()), true;
 
   if (route === '/api/brand') {
     // The public gallery names whose photos these are the same way it picks

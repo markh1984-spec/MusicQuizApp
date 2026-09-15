@@ -132,7 +132,10 @@ test('a supplied picture takes the middle, and only of that card', async () => {
     // A junk id and a junk extension, because the browser must never build a
     // path out of a string it was handed — the pack-id trap, wearing a
     // filename.
-    return { ok: true, json: async () => ({ art: { sj: 'png', hq: 'webp', 'not-a-card': 'png' } }) };
+    return { ok: true, json: async () => ({
+      art: { sj: 'png', hq: 'webp', 'not-a-card': 'png' },
+      full: { sk: 'webp', 'nor-this': 'png' },
+    }) };
   };
   try {
     await ensureCardArt();
@@ -151,7 +154,41 @@ test('a supplied picture takes the middle, and only of that card', async () => {
   assert.match(cardFaceSvg('Q♥'), /href="\/assets\/cards\/hq\.webp"/);
 
   // Everything else still draws itself.
-  const king = cardFaceSvg('K♠', { plain: true });
-  assert.ok(!king.includes('<image'), 'a card with no file supplied drew a picture');
-  assert.match(king, /<g transform=/, 'a card with no file supplied stopped drawing');
+  const queenOfClubs = cardFaceSvg('Q♣', { plain: true });
+  assert.ok(!queenOfClubs.includes('<image'), 'a card with no file supplied drew a picture');
+  assert.match(queenOfClubs, /<g transform=/, 'a card with no file supplied stopped drawing');
+});
+
+/**
+ * A WHOLE CARD TAKES THE GROUND AND THE APP KEEPS THE INDEX.
+ *
+ * The half that would break silently is the ground: a supplied card brings its
+ * own, so the app's white rectangle must not be drawn under it — and with it
+ * gone the ink has to flip light, or a black card prints a black rank on
+ * itself and every screen still renders.
+ */
+test('a whole card covers the ground, keeps the index and clips to the corners', () => {
+  const king = cardFaceSvg('K♠');
+
+  assert.match(king, /<image [^>]*href="\/assets\/cards\/full\/sk\.webp"/,
+    'the whole card did not come out of its own folder');
+  assert.ok(!king.includes('cf-ground'),
+    'the app drew its white card under a card that brought its own');
+  assert.match(king, /class="cf-rank[^"]*"[^>]*>K<\/text>/,
+    'the supplied card took the index with it');
+  assert.match(king, /cf-plain/,
+    'a dark supplied card kept the ink meant for a white ground');
+  assert.match(king, /xMidYMid slice/,
+    'a whole card was letterboxed rather than filling the card');
+  assert.match(king, /clipPath id="cf-clip-sk"/,
+    'the clip is not keyed to its own card, so thirteen would share one');
+  // The index's own little suit is a `<g transform=` and stays; the big
+  // centre pip is the one a supplied card replaces.
+  assert.equal(groups(king), 1,
+    'the pips are still drawn underneath a card that covers them');
+  assert.equal(groups(cardFaceSvg('K♣')), 2, 'a court with no file lost its pip');
+
+  // A full card wins over a middle for the same id, and junk in either
+  // folder is still ignored.
+  assert.ok(!cardFaceSvg('2♠').includes('<image'), 'a junk id reached the markup');
 });

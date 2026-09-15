@@ -193,7 +193,53 @@ const REAL_ID = new Set(DECK.map((c) => c.id));
  */
 const ART = { x: 8, y: 38, w: 84, h: 94 };
 
-/** id -> the file extension somebody supplied, e.g. `'sj' -> 'webp'`. */
+/*
+ * AND A WHOLE CARD IS ITS OWN FOLDER — `cards/full/`.
+ *
+ * Asked for by sending one: a black card with a gold border and no corner
+ * index, which is a CARD rather than a figure. Dropped into `cards/` it would
+ * have drawn a black card inside the app's white one with two indices on it,
+ * so the two are told apart by WHERE THEY SIT rather than by a suffix —
+ * nothing to rename on the way in, and the folder's name is the explanation.
+ *
+ * **THE INDEX IS STILL THE APP'S, AND STILL ON TOP.** That is the whole reason
+ * this file exists: at the 45px a hand card gets, a supplied card's own corner
+ * index is a smudge, and the rank is the one thing somebody is scanning for.
+ * A card beautiful at 200px and unreadable at 45 is a hand nobody can play.
+ *
+ * **A FULL CARD IS ASSUMED DARK**, so the index takes the same light treatment
+ * the phone's own squares already use — no new colours, just `cf-plain`'s pair.
+ * A pale supplied card would need its own decision, and nobody has one.
+ *
+ * **IT IS CLIPPED TO THE CARD'S OWN CORNERS.** A supplied file is a rectangle
+ * with the rounded card drawn inside it, so whatever is in the four corners —
+ * white, a checker, a shadow — would print as nubs outside the app's radius.
+ * The clip means it cannot.
+ *
+ * **AND IT IS ALL FIFTY-TWO OR NONE.** Twelve black courts in a hand of
+ * thirteen white cards reads as broken rather than as a theme. Nothing in the
+ * code enforces that — it is a thing to know before generating twelve.
+ */
+
+/*
+ * AND ONE SUPPLIED CARD DRESSES THE OTHER FIFTY-ONE — `themed()`.
+ *
+ * The whole-card path solved the wrong half on its own: one black card in a
+ * hand of thirteen white ones reads as a card that failed to load, not as a
+ * theme, which put "all fifty-two or none" in front of somebody who had drawn
+ * twelve. But the forty numbers do not need DRAWING — the app already draws
+ * them, correctly, with the pips where a seven is read off its pattern. What
+ * they need is the same GROUND.
+ *
+ * So the moment any full card exists, every card without one takes a dark
+ * ground and a gold edge and keeps its own pips. Twelve files, fifty-two cards.
+ *
+ * **DERIVED, NEVER A SETTING** — the rule the pack colours already follow. A
+ * switch here would be a thing to remember on a Monday, and a deck that is
+ * half dressed is exactly what it would cause.
+ */
+
+/** id -> `{ ext, full }`. `full` means it covers the whole card. */
 const artFiles = new Map();
 let artAsked = null;
 
@@ -206,20 +252,29 @@ export function ensureCardArt() {
   artAsked = fetch('/api/card-art')
     .then((r) => (r.ok ? r.json() : null))
     .then((j) => {
-      const art = (j && j.art) || {};
-      Object.keys(art).forEach((id) => {
-        // The id and the extension are both built from the server's own reading
-        // of its own folder against `DECK`, so there is nothing here a caller
-        // could have named — but the href is assembled from them rather than
-        // sent whole, so the markup can never carry a string somebody chose.
+      // The id and the extension are both built from the server's own reading
+      // of its own folder against `DECK`, so there is nothing here a caller
+      // could have named — but the href is assembled from them rather than
+      // sent whole, so the markup can never carry a string somebody chose.
+      const take = (from, full) => Object.keys(from || {}).forEach((id) => {
         if (!REAL_ID.has(id)) return;
-        artFiles.set(id, String(art[id]).replace(/[^a-z0-9]/gi, ''));
+        artFiles.set(id, { ext: String(from[id]).replace(/[^a-z0-9]/gi, ''), full });
       });
+      // A whole card wins over a middle for the same id: it is the more
+      // deliberate of the two, and it is the one that names its own folder.
+      take(j && j.art, false);
+      take(j && j.full, true);
       return artFiles;
     })
     .catch(() => artFiles);
   return artAsked;
 }
+
+/** Has anybody supplied a whole card? Then the rest of the deck follows it. */
+const themed = () => {
+  for (const v of artFiles.values()) if (v && v.full) return true;
+  return false;
+};
 
 /** Is this card one of the three that carry a figure? */
 export const isCourt = (rank) => rank === 'J' || rank === 'Q' || rank === 'K';
@@ -274,12 +329,23 @@ export function cardFaceSvg(title = '', { plain = false } = {}) {
    * cost of getting it wrong is the middle of every card blank six feet wide,
    * which is a worse trade than one duplicated attribute.
    */
-  const ext = artFiles.get(ID_OF.get(String(title)) || '');
-  const href = ext ? `/assets/cards/${ID_OF.get(String(title))}.${ext}` : '';
-  const middle = href
-    ? `<image href="${href}" xlink:href="${href}" x="${ART.x}" y="${ART.y}"`
-      + ` width="${ART.w}" height="${ART.h}" preserveAspectRatio="xMidYMid meet"/>`
-    : drawn;
+  const id = ID_OF.get(String(title)) || '';
+  const supplied = artFiles.get(id);
+  const href = supplied ? `/assets/cards/${supplied.full ? 'full/' : ''}${id}.${supplied.ext}` : '';
+  const image = (x, y, w, h, fit) => `<image href="${href}" xlink:href="${href}"`
+    + ` x="${x}" y="${y}" width="${w}" height="${h}"`
+    + (fit ? ` preserveAspectRatio="${fit}"` : '')
+    + (supplied && supplied.full ? ` clip-path="url(#cf-clip-${id})"` : '') + '/>';
+  const middle = !href ? drawn
+    /*
+     * A WHOLE CARD IS `slice`, WHERE A MIDDLE IS `meet` — and the two are
+     * opposite for the same reason. A figure letterboxed inside its field
+     * loses space; a CARD letterboxed inside the card leaves a bar of the
+     * app's own ground down one edge, which reads as the picture having
+     * failed to load. The clip is what makes the overflow safe.
+     */
+    : supplied.full ? image(0, 0, 100, 140, 'xMidYMid slice')
+    : image(ART.x, ART.y, ART.w, ART.h, 'xMidYMid meet');
 
   /*
    * THE INDEX, AND IT IS THE BIGGEST THING ON THE CARD.
@@ -311,7 +377,33 @@ export function cardFaceSvg(title = '', { plain = false } = {}) {
   const index = `<text x="8" y="35" class="cf-rank${rank.length > 1 ? ' two' : ''}" text-anchor="start">${rank}</text>`
     + `<g transform="translate(78 24) scale(0.24) translate(-50 -50)">${art}</g>`;
 
-  const ground = plain ? '' : '<rect x="1" y="1" width="98" height="138" rx="9" class="cf-ground"/>';
+  /*
+   * A SUPPLIED WHOLE CARD BRINGS ITS OWN GROUND, so the app's white one is not
+   * drawn under it — and it takes `cf-plain`'s LIGHT ink, because that ground
+   * is dark. Nothing about the phone's own squares changed: `plain` still asks
+   * *"does this square already have a ground"*, and a full card answers yes.
+   */
+  const overArt = Boolean(supplied && supplied.full);
+  /*
+   * A DRESSED CARD DRAWS ITS GROUND EVEN IN `plain`, which the white one does
+   * not. On a phone the square underneath is already dark, so the white card
+   * could be skipped; a dark card has a GOLD EDGE, and that edge is the only
+   * thing saying where one card in a fanned hand of thirteen ends.
+   */
+  const dressed = !supplied && themed();
+  const bare = (plain && !dressed) || overArt;
+  const ground = bare ? ''
+    : `<rect x="1" y="1" width="98" height="138" rx="9" class="cf-ground${dressed ? ' cf-dark' : ''}"/>`;
+  /*
+   * KEYED BY THE CARD, because thirteen of these share one document. Every
+   * clip is the same rectangle, so a shared id would look fine — right up
+   * until something removed the card that happened to be FIRST, and the other
+   * twelve lost their corners with nothing thrown.
+   */
+  const clip = overArt
+    ? `<defs><clipPath id="cf-clip-${id}"><rect x="0" y="0" width="100" height="140" rx="9"/>`
+      + '</clipPath></defs>'
+    : '';
 
   /*
    * `cf-plain` vs `cf-solid` is the whole reason the caller says which it
@@ -320,8 +412,9 @@ export function cardFaceSvg(title = '', { plain = false } = {}) {
    * own white ground, so the same suit has to be DARK. One drawing, two
    * grounds, and the stylesheet decides rather than the caller passing colours.
    */
-  return `<svg class="cardface ${red ? 'red' : 'black'} ${plain ? 'cf-plain' : 'cf-solid'}" viewBox="0 0 100 140"`
+  const ink = bare || dressed ? 'cf-plain' : 'cf-solid';
+  return `<svg class="cardface ${red ? 'red' : 'black'} ${ink}" viewBox="0 0 100 140"`
     + ` xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`
     + ` role="img" aria-label="${rank} of ${suit}">`
-    + `${ground}${middle}${index}</svg>`;
+    + `${clip}${ground}${middle}${index}</svg>`;
 }

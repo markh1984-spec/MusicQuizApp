@@ -2139,9 +2139,9 @@ Full reasoning, with the measurements: **[`docs/bingo.md`](docs/bingo.md)**.
 ### CARD BINGO IS A SEPARATE GAME ON THE SAME ENGINE — `deck.js`, `LAUNCHERS.cards`
 
 *"13 playing cards and the console calls one at a time"*, then *"a row of 7 and
-a row of 6, **it's a separate game to music bingo**."* Both halves are built:
-its own kind, tab and name, and `LAUNCHERS.cards` builds a `BingoGame`, so
-**not one rule in `bingo.js` gets a second copy**.
+a row of 6, **it's a separate game to music bingo**."* Its own kind, tab and
+name, and `LAUNCHERS.cards` builds a `BingoGame`, so **not one rule in
+`bingo.js` gets a second copy**.
 
 - **THIRTEEN IS PRIME, SO A HAND IS NOT A GRID AND HAS NO LINES.**
   `{rows: 1, cols: 13}` is ONE line of all thirteen, so **one prize, and more
@@ -2151,32 +2151,30 @@ its own kind, tab and name, and `LAUNCHERS.cards` builds a `BingoGame`, so
   THIRD — third sighting.** `runPlayerAction` gated `mark`/`claim` on
   `kind === 'bingo'`, so **the game was UNPLAYABLE while every screen drew
   perfectly and 1,982 tests passed**. **Ask `playsACard()`, never the kind.**
-- **MUSIC BINGO MUST NEVER GAIN THE DRAW** — there the host chooses the record;
-  `/api/host/draw` 404s on a music night. **No pre-shuffled deck on the
-  state**: `state.called` IS the order.
+- **MUSIC BINGO MUST NEVER GAIN THE DRAW** — `/api/host/draw` 404s on a music
+  night. **No pre-shuffled deck on the state**: `state.called` IS the order.
 - **THE HAND IS DEALT SORTED, NEVER SORTED AT RENDER** — `marks[i]` is a
   POSITION. **Its name is its TITLE**, so no payload changed; **red is its own
-  colour, never `--bad`**; **no pack file**, so `validateBingoPack()` is
-  untouched.
+  colour, never `--bad`**; **no pack file**, so `validateBingoPack()` stands.
 - **`node scripts/card-bingo.mjs` FOUND THE UNPLAYABLE BUG ON ITS FIRST RUN.**
   **[`docs/bingo.md`](docs/bingo.md)**.
-- **THE CARDS ARE DRAWN — `card-face.js`, SVG so ONE drawing serves a 45px hand
-  and a projector.** **NO SUIT IS EVER THE CHARACTER `♠♥♦♣`** — a phone may
-  draw those as EMOJI, which is *drawn, never emoji* again. The card is still
-  NAMED `7♥`. **The pip layout is centuries old and free; the SHAPES are drawn
-  here**, this app being SOLD.
-- **AND THE COURT CARDS GET NO DRAWN FIGURE — THE NEW EVIDENCE THE PACK-CARD
-  RULE ASKED FOR, in [`docs/bingo.md`](docs/bingo.md).** J/Q/K take the ACE's
-  treatment: one big pip under a big index. **ONE index, where a card has
-  two** — a screen has no other end, and **the PIPS pay for the size.** **The pip field is INSET BELOW the
-  index** (0.30–0.84, pivot 0.57) — enlarge one and it lands on the other.
-  **Measure after any change.**
-- **AND A DROPPED-IN PICTURE BEATS THE DRAWING — `public/assets/cards/<id>.png`,
-  the SOUNDBOARD'S interface exactly.** All 52, never only the courts. **The
-  DRAWN one is the FALLBACK, never deleted**; **it takes the MIDDLE only — the
-  index and the white ground are never given away.** **A manifest read ONCE
-  (`/api/card-art`), never 52 speculative 404s per phone**, and **an id the DECK
-  does not hold is ignored.**
+- **THE CARDS ARE DRAWN — `card-face.js`, SVG: one drawing, 45px to a wall.** **NO SUIT IS EVER THE CHARACTER `♠♥♦♣`** — a phone may draw
+  those as EMOJI, which is *drawn, never emoji* again. It is still NAMED `7♥`.
+  **The pip layout is centuries old and free; the SHAPES are drawn here**, this
+  app being SOLD.
+- **AND THE COURT CARDS GET NO DRAWN FIGURE — the evidence is in
+  [`docs/bingo.md`](docs/bingo.md).** J/Q/K take the ACE's treatment: one big
+  pip under a big index. **ONE index, where a card has two**, and **the PIPS
+  pay for the size.** **The pip field is INSET BELOW the index** (0.30–0.84,
+  pivot 0.57) — enlarge one and it lands on the other. **Measure after.**
+- **A DROPPED-IN PICTURE BEATS THE DRAWING — `public/assets/cards/`, the
+  SOUNDBOARD'S interface exactly.** All 52, not only the courts. **The DRAWN one
+  is the FALLBACK, never deleted**; **a manifest read ONCE, never 52
+  speculative 404s per phone**; **an id the DECK does not hold is ignored.**
+- **`cards/` IS THE MIDDLE AND `cards/full/` THE WHOLE CARD**, told apart by
+  where they SIT. **THE INDEX IS ALWAYS THE APP'S AND ALWAYS ON TOP** — a
+  supplied one is a smudge at 45px. **ONE full card DRESSES the other
+  fifty-one** (`themed()`) — **DERIVED, never a setting.**
 
 ### FOUR WAYS A NIGHT'S SCORES AND PRIZES CAME APART
 

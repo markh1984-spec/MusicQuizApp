@@ -652,3 +652,71 @@ deliberately: music bingo has a card with songs on it and no artwork to fetch.
 browser reads; the second is the SVG 1.1 spelling an older iPad needs, and an
 older iPad is what a pub's spare projector laptop is. One duplicated attribute
 against the middle of every card going blank six feet wide is not a close call.
+
+### And a WHOLE card, in `cards/full/` — plus what it does to the other fifty-one
+
+He sent a King of Spades: a black card with a double gold border, a gold and
+silver figure, and no corner index. Which is a **card**, not a figure — and
+dropped into `cards/` it would have drawn a black card inside the app's white
+one with two indices on it.
+
+**TWO FOLDERS, TOLD APART BY WHERE THEY SIT.** `cards/<id>` is a picture for
+the middle; `cards/full/<id>` is the whole card. A filename suffix was the
+obvious alternative and is worse in the one way that counts here: the files
+arrive from an image generator with names somebody then has to edit, on a
+Monday, twelve times. A folder is the same information with nothing to rename,
+and the folder's own name is the explanation. A full card wins if the same id
+is in both — it is the more deliberate of the two.
+
+**THE INDEX IS STILL THE APP'S AND STILL ON TOP.** This is the section above
+arriving again from the other side: at 45px a supplied card's own corner index
+is a smudge over the one thing somebody is scanning a hand of thirteen for. A
+card that is beautiful at 200px and unreadable at 45 is a hand nobody can play.
+So the app prints the rank and the suit over whatever lands, and the generating
+prompt says *no letters or numbers anywhere on the card*.
+
+**A FULL CARD IS ASSUMED DARK.** It takes the light ink the phone's own squares
+already use — `cf-plain`'s pair, no new colours — because a themed deck is a
+dark deck in practice and the alternative is a setting nobody asked for. A pale
+supplied card would need its own decision; nobody has one.
+
+**`slice`, WHERE A MIDDLE IS `meet`** — opposite for one reason. A figure
+letterboxed inside its field loses space, which is fine; a CARD letterboxed
+inside the card leaves a bar of the app's own ground down one edge, which reads
+as the picture having failed to load. The clip below is what makes overflowing
+safe.
+
+**CLIPPED TO THE CARD'S OWN CORNERS, AND THE CLIP IS KEYED BY CARD.** A
+supplied file is a rectangle with the rounded card drawn inside it, so whatever
+is in its four corners — white, a shadow, a checker — would print as nubs
+outside the app's radius. And thirteen of these share one document: every clip
+is the same rectangle, so a shared id looks perfect right up until something
+removes whichever card happens to be FIRST and the other twelve lose their
+corners, with nothing thrown.
+
+**AND ONE SUPPLIED CARD DRESSES THE OTHER FIFTY-ONE — `themed()`.** The
+whole-card path solved the wrong half on its own. Rendered, one black court in
+a hand of thirteen white cards reads as a card that failed to load rather than
+as a theme — which puts *"all fifty-two or none"* in front of somebody who has
+drawn twelve. But the forty numbers do not need **drawing**: the app already
+draws them, correctly, with the pips placed so a seven is read off its pattern.
+What they need is the same **ground**. So the moment any full card exists,
+every card without one takes a dark ground and a gold edge and keeps its own
+pips. Twelve files, fifty-two cards.
+
+- **DERIVED, NEVER A SETTING** — the rule the pack colours already follow. A
+  switch would be a thing to remember on a Monday, and a half-dressed deck is
+  exactly what forgetting it would produce.
+- **A DRESSED CARD DRAWS ITS GROUND EVEN IN `plain`**, which the white one does
+  not. On a phone the square underneath is already dark, so a white card can
+  skip it — but a dark card's **gold edge is the only thing saying where one
+  card in a fanned hand of thirteen ends.**
+- **THE EDGE IS A `stroke` ON THE EXISTING `.cf-ground` RECT**, one extra CSS
+  rule behind `.cf-dark`, so nothing about the white card moved.
+
+**AND A `fill` ATTRIBUTE CANNOT RECOLOUR THE INDEX.** Found while rendering the
+comparison, before any of this shipped: `svg.cardface .cf-rank { fill:
+currentColor }` is a CSS rule and beats a presentation attribute, so a mock
+that set `fill="#f2e3b0"` on the text drew black-on-black and looked like the
+feature failing. **The card's `color` is what flips**, which is why the light
+treatment is a class rather than a colour passed in.

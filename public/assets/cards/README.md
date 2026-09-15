@@ -26,10 +26,30 @@ The id is the suit's first letter and the rank, lower case:
 So the Jack of Spades is `sj.png`. All fifty-two work — a seven of hearts with
 a picture on it needs no new code.
 
+## Two folders, and the difference matters
+
+- **`cards/`** — a picture for the **middle** of the card. The app draws the
+  white card, the rank and the suit around it.
+- **`cards/full/`** — the **whole card**: your own ground, your own border. The
+  app draws no card under it, and prints only the rank and suit **on top**.
+
+Nothing to rename: the folder you put a file in is the answer. A whole card
+wins if the same id is in both.
+
+A full card is assumed **dark** — the rank and suit print light over it — and
+it is **clipped to the card's rounded corners**, so whatever is in your file's
+four corners never shows.
+
+**A full deck is all fifty-two or none.** Twelve black court cards in a hand of
+thirteen white ones reads as broken rather than as a theme.
+
 ## What to draw
 
-- **Square**, transparent background, around 1024x1024.
-- **The figure only.** No border, no white card, and **no corner index** — the
+- For **`cards/`**: **square**, transparent background, around 1024x1024, the
+  figure only, no border and no card behind it.
+- For **`cards/full/`**: **portrait 5:7**, about 1024x1434, the whole card
+  including its border and ground.
+- **Never a corner index, in either folder** — the
   app draws the rank, the suit and the white ground around your picture, and
   the corner is the part that is actually read at the 45px a hand card gets on
   a phone. A drawn-in index at that size is a smudge over the one thing
