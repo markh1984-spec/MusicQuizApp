@@ -63,13 +63,27 @@ export function bingoActions(s, act, minor) {
   const continuing = Boolean(order && order.nextKind);
   const continueWord = continuing && order.nextKind === 'bingo' ? 'the bingo' : 'the quiz';
 
+  /*
+   * AND THE TWO LABELS THAT NAME A TRACK HAVE TO NAME A CARD ON A DECK NIGHT.
+   *
+   * Caught off a screenshot: the fixed bar read *"Tap a track above as you play
+   * it"*, disabled, directly under Card Bingo's own dealer panel — which has
+   * the real button on it. Two faults in one line. It named the wrong object
+   * ("track", on a game with no music in it), and it described an action that
+   * is this game's whole point while pointing at nothing, four inches under the
+   * control that actually does it.
+   *
+   * Every other label here is about the PRIZE and reads correctly for both
+   * games, so only these two are branched.
+   */
+  const deck = s.game === 'cards';
   const primaryLabel = s.phase === 'lobby'
-    ? 'Start — then call your first track'
+    ? (deck ? 'Start — then turn your first card' : 'Start — then call your first track')
     : s.win
       ? (stage.last
         ? (continuing ? `Continue to ${continueWord}` : 'Finish the game')
         : `Play on for ${nextLabel}`)
-      : 'Tap a track above as you play it';
+      : (deck ? 'Turn the cards above' : 'Tap a track above as you play it');
 
   const primary = node(`<button class="primary" ${!s.win && s.phase !== 'lobby' ? 'disabled' : ''}>${esc(primaryLabel)}</button>`);
   primary.addEventListener('click', () => {
