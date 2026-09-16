@@ -422,6 +422,33 @@ export class Photos {
       .map((p) => ({ id: p.id, url: `/photos/${p.file}`, teamName: p.teamName, at: p.at, faceKey: faceKey(p.playerId || '') }));
   }
 
+  /**
+   * HAS THIS PHONE ALREADY TAKEN ONE, off its own camera?
+   *
+   * Asked for as a way in: *"one photo as a cost to enter the night's
+   * entertainment… and it can't be an upload, has to be from the camera."*
+   *
+   * **`camera` RATHER THAN "has this phone sent anything".** The whole point
+   * of the ask is a photograph of tonight, so a screenshot or something
+   * forwarded through WhatsApp is not the thing being asked for — and
+   * `looksCameraTaken()` already tells them apart by reading the EXIF `Make`
+   * tag off the raw file before the upload's own canvas strips it.
+   *
+   * **IT CAN UNDER-COUNT AND CANNOT OVER-COUNT**, which is the right way round
+   * here and is `filters.js`'s own note: nothing manufactures a `Make` tag
+   * that was never there, but a real photograph that has been through a
+   * messaging app has had its EXIF removed by that app. A fresh snap keeps it.
+   * That asymmetry is exactly the distinction being asked for — and it is also
+   * why the way past this is never taken away.
+   *
+   * **AND IT IS THE PHONE'S OWN ANSWER, NOT A COUNT.** One is the ask; a
+   * second is somebody enjoying themselves.
+   */
+  cameraShotBy(playerId) {
+    if (!playerId) return false;
+    return this.state.items.some((p) => p.camera && p.playerId === playerId);
+  }
+
   /** The host sees them whether or not the screen does, so they can be binned. */
   forHost(limit = 60) {
     return this.state.items

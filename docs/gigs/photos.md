@@ -1458,3 +1458,101 @@ photo cache.**
   **filed against the night in the URL, never against today**. **A POST written
   beside GETs is the 404 this repo already shipped once**, so the test asserts
   against the 404, not the 400
+
+## One camera photo starts the night — the gate, and the way past it
+
+*"I think one photo as a cost to enter the night's entertainment is fair, no?
+Not per game or per round, one single photo at the start to kick things off.
+The first 10 mins before the first game is ample time."* Then, after an
+argument: *"they're not paying customers — it's free entry lol. Yeah make it
+awkward to join without taking a camera photo."*
+
+**THIS REVERSES `sending it is the consent`, AND THE REVERSAL WAS ARGUED WITH
+FIRST.** Twice. The objection put was the strong one rather than the taste one:
+consent is not freely given if refusing costs you the thing you came for, a
+recognisable face is personal data, these go on a public gallery, and the app
+is SOLD — so whatever ships here becomes every other quizmaster's risk too. The
+answer that carried it was that **entry is free**, which is a fact about this
+business the argument had assumed the other way round. Recorded because the
+next session will find the old rule and needs to know it was overturned
+knowingly rather than forgotten.
+
+### What "awkward" turned into
+
+- **THE CAMERA IS FILLED AND THE WAY PAST IS A PLAIN LINE UNDER IT.** That is
+  the whole of it. A skip that is hidden, delayed or buried is a dark pattern,
+  and the people it would catch are not the ones being aimed at: a phone with
+  no working camera, somebody who does not want to be findable, somebody
+  helping a mate who cannot see the screen. **The skip keeps the 44px touch
+  floor** — it is a smaller decision, not a smaller target, and the person
+  reaching for it usually has the least reason to be made to fight a screen in
+  a dark pub.
+- **IT OWNS THE LOBBY AND NOTHING ELSE.** At kick-off it is gone and everybody
+  plays, sent one or not. That is *"ten minutes is ample"* read literally and
+  it is the version that cannot cost somebody the night. **Do not extend it
+  past the lobby** without deciding, out loud, that a phone may be locked out
+  of a question.
+- **NEVER DRAWN WHERE IT WOULD BE A LIE.** No camera on this night —
+  `photosOpen` false, or the host's kill switch pressed — and there is nothing
+  to ask for, so there is no gate. A control that cannot be satisfied is worse
+  than no control.
+- **IT REPLACES THE LOBBY MENU RATHER THAN SITTING ABOVE IT.** Both at once is
+  two primaries, and the game wins: it is the one that does something the
+  instant you press it.
+
+### The camera test, and which way it errs
+
+**`looksCameraTaken()` ALREADY EXISTED** and reads the EXIF `Make` tag off the
+raw file before the upload's own canvas strips it. Its own note is what makes
+it right for this: **it can UNDER-count and cannot OVER-count** — nothing
+manufactures a `Make` tag, but a photograph forwarded through WhatsApp has had
+its EXIF removed by WhatsApp. A fresh snap keeps it. So "camera, not an upload"
+is exactly the line it draws, and the direction it errs in is the one the way
+past exists for.
+
+**AND IT IS THE PHONE'S ASSERTION, not proof.** `camera=1` on the upload is set
+by the phone. A determined person could lie; this is a pub, and it is the same
+trust the whole app runs on. **Never claim otherwise** — the `capture`
+attribute is a hint too, honoured on iOS, varying on Android and ignored on a
+laptop.
+
+### Where each half of the answer lives
+
+- **THE ANSWER IS THE SERVER'S — `photoDone`, from `photos.cameraShotBy()`.** A
+  phone that reloads mid-lobby (a wifi blip, a backgrounded tab) must not be
+  asked again for something it has already done, and a flag it kept itself
+  would be gone. **Spread in only when true**, so a night where nobody has sent
+  one is byte-for-byte the payload it always was.
+- **ON THE ROOM, NEVER IN AN ENGINE.** It sits beside `photosOpen` in
+  `viewFor()`. Photographs belong to the room — that is why the DJ set got the
+  camera, the wall and the gallery for free — so a fact about them cannot be
+  one engine's to answer, and putting it in one engine is how a rule ends up
+  living in one of two.
+- **THE SKIP IS THE PHONE'S**, a module binding. It is a decision about this
+  screen, and a re-render on every state push would put the gate back over
+  somebody who had just stood it down.
+- **AND IT IS IN THE LOBBY'S CARD KEY.** *A card key is a fingerprint of what
+  it draws, never one field of it* — **fifth sighting.** The gate replaces the
+  whole lobby menu, so a key naming only the phase said nothing had changed
+  when it cleared: the skip drew, the flag flipped, and `draw()` declined to
+  rebuild. **Pressing it did nothing**, and nothing threw.
+- **AND THE CAMERA SHEET SAYS WHICH IT WAS.** A camera-roll pick is still kept
+  and still goes up — the wall has never cared where a picture came from — but
+  it does not answer the ask, and the one moment somebody will read that is on
+  the screen that just told them it sent. Finding out by going back and seeing
+  the same question still up reads as the app being broken.
+
+### The guard, and the false pass it started with
+
+`node scripts/photo-to-start.mjs` drives real phones over HTTP and a real
+browser: the gate draws, the camera button can be pressed
+(`elementFromPoint`), the skip is a real 44px target, an upload does **not**
+clear it, a `camera=1` post does, pressing the skip stands it down and brings
+the lobby back, and at kick-off it is gone. Each half verified by putting the
+fault back.
+
+**ITS FIRST RUN PASSED A CHECK ON AN EMPTY PAGE.** The join selectors were
+wrong, so the phone never joined — and *"the lobby game is not offered while
+the gate is up"* was satisfied by there being no lobby at all. A guard that is
+satisfied by nothing having happened is this repo's oldest fault; that check
+now asserts the gate is present in the same breath.

@@ -871,12 +871,29 @@ function openCamera() {
        */
       const dj = state && state.game === 'dj';
       const opened = dj && !state.unlocked;
+      /*
+       * AND IF THE LOBBY WAS ASKING FOR A CAMERA SHOT, SAY WHETHER THIS WAS ONE.
+       *
+       * The photograph is kept and goes up either way — the room's wall has
+       * never cared where a picture came from and is not about to start. What
+       * a camera roll pick does NOT do is answer the lobby's ask, and the one
+       * moment somebody will read that is here, on the screen that just told
+       * them it sent. Finding out by going back and seeing the same question
+       * still up is the version that reads as the app being broken.
+       *
+       * Silent whenever the gate is not up, which is every break, every
+       * ordinary night and every phone that has already taken one.
+       */
+      const owed = gateWanted(state) && !cameraLikely;
       sheet.querySelector('.cam-sheet').replaceChildren(node(`
         <div style="text-align:center;padding:22px 6px">
-          <div style="font-size:44px">🎉</div>
+          <div style="font-size:44px">${owed ? '📷' : '🎉'}</div>
           <b>${upNow ? 'It is on the screen' : 'Sent'}</b>
           <p class="tiny">${opened ? 'Have a look up — and you can ask for a song now.'
             : upNow ? 'Have a look up.' : 'It goes up on the big screen at the next break.'}</p>
+          ${owed ? `<p class="tiny">That one came out of your camera roll, so the
+            night is still waiting on a photo taken now. Open the camera again
+            when you are ready.</p>` : ''}
         </div>`));
       setTimeout(close, 1800);
     } catch (err) {
@@ -1085,7 +1102,21 @@ function screenKey(s) {
   if (s.game === 'dj') return djKey(s);
   if (playsACard(s)) return bingoKey(s);
   if (s.phase === 'question' || s.phase === 'reveal') return `q:${s.roundIndex}:${s.questionIndex}:${s.phase}`;
-  return `${s.phase}:${s.roundIndex}`;
+  /*
+   * AND THE LOBBY'S KEY CARRIES WHETHER THE PHOTO IS STILL OWED.
+   *
+   * *A card key is a fingerprint of what it draws, never one field of it* —
+   * the rule this repo has four sightings of, and this is the fifth. The gate
+   * replaces the whole lobby menu, so a key that names only the phase says
+   * nothing changed when it clears: the skip drew, the flag flipped, and
+   * `draw()` declined to rebuild. **Pressing it did nothing**, which is worse
+   * than not offering it, and nothing threw.
+   *
+   * It covers both ways out — the server saying the photograph arrived, and
+   * this phone standing the ask down — because either one changes what is on
+   * the screen.
+   */
+  return `${s.phase}:${s.roundIndex}${gateWanted(s) ? ':ask' : ''}`;
 }
 
 function buildScreen(s) {
@@ -1159,6 +1190,70 @@ function gapWants(s) {
   };
 }
 
+/*
+ * THE ONE PHOTOGRAPH THAT STARTS THE NIGHT — `photoGate()`.
+ *
+ * Asked for directly: *"one photo as a cost to enter the night's
+ * entertainment… not per game or per round, one single photo at the start to
+ * kick things off. The first 10 mins before the first game is ample time."*
+ * And then: *"make it awkward to join without taking a camera photo."*
+ *
+ * **AWKWARD, NOT IMPOSSIBLE, AND THAT WORD IS THE WHOLE SPEC.** The camera is
+ * the big filled control and the way past is a small plain line under it. A
+ * skip that is hidden, delayed or buried is a dark pattern, and the people it
+ * would actually catch are not the ones being aimed at: somebody whose phone
+ * has no working camera, somebody who does not want their face findable,
+ * somebody helping a mate who cannot see the screen. They are in the room and
+ * the pub booked the entertainment for them too.
+ *
+ * **IT OWNS THE LOBBY AND NOTHING ELSE.** At kick-off the gate is gone and
+ * everybody plays, sent one or not — that is the host's own "ten minutes is
+ * ample" read literally, and it is the version that cannot cost somebody the
+ * night they turned up for. **Do not extend it past the lobby** without
+ * deciding, out loud, that a phone may be locked out of a question.
+ *
+ * **IT IS NEVER SHOWN WHERE IT WOULD BE A LIE.** No camera on this night
+ * (`photosOpen` false, or the host's kill switch pressed) and there is nothing
+ * to ask for, so there is no gate — a control that cannot be satisfied is
+ * worse than no control.
+ *
+ * **THE ANSWER COMES FROM THE SERVER (`s.photoDone`)**, so a phone that
+ * reloads in the lobby is not asked twice for something it has already done.
+ * The SKIP is the phone's own, in a module binding: it is a decision about
+ * this screen, and a re-render on every state push would otherwise put the
+ * gate straight back over somebody who had stood it down.
+ */
+let photoSkipped = false;
+
+/** Does this phone still owe the night its photograph? */
+function gateWanted(s) {
+  return Boolean(s && s.phase === 'lobby' && s.photosOpen && !s.photoDone && !photoSkipped);
+}
+
+function photoGate() {
+  return `
+    <div class="photo-gate">
+      <span class="wait-item-icon" aria-hidden="true">📷</span>
+      <b>Take a photo to start</b>
+      <span class="tiny">One picture of your table, your pint, whatever — it
+        goes on the big screen. It has to be taken now rather than picked out
+        of your camera roll.</span>
+      <button class="photo-gate-go" type="button">Open the camera</button>
+      <button class="photo-gate-skip" type="button">I can&rsquo;t take one</button>
+    </div>`;
+}
+
+function wirePhotoGate(el, s) {
+  el.querySelector('.photo-gate-go')?.addEventListener('click', openCamera);
+  el.querySelector('.photo-gate-skip')?.addEventListener('click', () => {
+    photoSkipped = true;
+    // Repaint from the state we already hold — the gate is the only thing that
+    // changed, and waiting for the next push would leave the button looking
+    // like it had not worked.
+    if (s) draw(s);
+  });
+}
+
 function gapMenu(s, { photosFirst }) {
   const wants = gapWants(s);
   const photo = wants.photos ? `      <button class="wait-item wait-photo" type="button">
@@ -1207,11 +1302,14 @@ function buildWaiting(s, kicker, title, sub) {
            in the lobby while this is up — see paintCameraButton — because
            two controls for one job is how somebody ends up using the worse
            one out of habit. -->
-      ${gapMenu(s, { photosFirst: false })}
+      <!-- THE PHOTOGRAPH COMES FIRST, AND IT REPLACES THE MENU RATHER THAN
+           SITTING ABOVE IT. Both at once is two primaries and the game wins:
+           it is the one that does something the instant you press it. -->
+      ${gateWanted(s) ? photoGate() : gapMenu(s, { photosFirst: false })}
     </div>
   `);
   wireTeamPicker(el, s);
-  wireGapMenu(el, s);
+  if (gateWanted(s)) wirePhotoGate(el, s); else wireGapMenu(el, s);
   paintStartsIn(s);
   return el;
 }

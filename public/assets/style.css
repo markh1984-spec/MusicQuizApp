@@ -10113,6 +10113,32 @@ body.gallery { padding: 0; }
    scroll the overlay exists to preserve. */
 body.gal-zoomed { overflow: hidden; }
 
+/* THE ONE PHOTOGRAPH THAT STARTS THE NIGHT — see `photoGate()` in play.js.
+   The camera is the filled control and the way past is a plain line under it:
+   awkward is the brief, hidden is not. The skip keeps the 44px touch floor
+   every other control on a phone has — it is a smaller decision, not a smaller
+   target, and somebody reaching for it in a dark pub is usually the person
+   who has the least reason to be made to fight the screen. */
+.photo-gate {
+  display: grid; gap: 8px; justify-items: center; text-align: center;
+  padding: 20px 16px; border-radius: var(--r-card);
+  background: var(--panel); border: 1px solid var(--panel-line);
+}
+.photo-gate .wait-item-icon { font-size: 34px; }
+.photo-gate .tiny { max-width: 30ch; }
+.photo-gate-go {
+  min-height: 52px; padding: 0 26px; margin-top: 4px;
+  border: 0; border-radius: var(--r-pill); color: #fff;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  font: 700 17px/1 var(--ui, system-ui), sans-serif; cursor: pointer;
+}
+.photo-gate-skip {
+  min-height: 44px; padding: 0 12px;
+  border: 0; background: none; color: var(--ink-dim);
+  font: 400 13px/1 var(--ui, system-ui), sans-serif;
+  text-decoration: underline; cursor: pointer;
+}
+
 /* ---- AN ARROW EITHER SIDE OF THE DATE — forwards and backwards in time.
 
    Three columns with the sides on `auto` and the middle taking the rest, so

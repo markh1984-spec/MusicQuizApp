@@ -261,7 +261,29 @@ function viewFor(client) {
      */
     view.mayAdvert = can(accounts.find(room.id) || null, FEATURES.ADVERTS);
   }
-  else view.photosOpen = photosWanted(room);
+  else {
+    view.photosOpen = photosWanted(room);
+    /*
+     * HAS THIS PHONE ALREADY TAKEN ITS ONE, so the lobby can stop asking.
+     *
+     * **SPREAD IN ONLY WHEN IT IS TRUE**, like the draw and the comeback band:
+     * a night where nobody has sent a photograph is byte-for-byte the payload
+     * it always was, so `pub-unchanged` still says IDENTICAL with no
+     * `--ignore`.
+     *
+     * **ON THE ROOM RATHER THAN THE GAME**, which is why it is here beside
+     * `photosOpen` and not in either engine. Photographs belong to the room —
+     * that is the whole reason the DJ set got the camera, the wall and the
+     * gallery for free — so a fact about them cannot be an engine's to answer,
+     * and putting it in one engine is how a rule ends up living in one of two.
+     *
+     * **AND IT IS THE SERVER'S ANSWER, NOT THE PHONE'S.** A phone that
+     * reloads mid-lobby — a wifi blip, a backgrounded tab — must not be asked
+     * again for something it has already done, and a flag it kept itself would
+     * be gone.
+     */
+    if (photos.cameraShotBy(client.playerId)) view.photoDone = true;
+  }
   // Whose night this is — the name AND the two colours — travels with every
   // payload, so a page never has to ask for it separately or flash the wrong
   // thing while it loads. Taken from the ROOM, never from whoever is looking:

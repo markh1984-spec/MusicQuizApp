@@ -1309,23 +1309,21 @@ board), `src/arcade.js` (the scores, shared by both engines),
   IDENTICAL. **A list of ONE is dropped.**
 - **THE QUIET LAUNCH SENDS THE WHOLE NIGHT — `nightOpts()`.** Tapping a pack
   sent FIVE of Launch's twelve fields. **One `nightOpts()`, spread into all
-  three launches**, with a test that fails if a fourth writes its own.
+  three launches**, with a test if a fourth writes its own.
 - **ONE ROW EITHER WAY, AND THE CHOICE IS ONE TAP INSIDE IT** — a row per game
   is **423px of menu** at 390px. **The box opens on the CHOOSER and nothing
-  runs yet.** **Switching calls `stopArcade()` first and RESHAPES the canvas**,
-  or a loop banks under the wrong game.
-- **NO PHOTO GATE, AND ONE WAS PROPOSED AND TURNED DOWN** — **it prices
-  consent**; *sending it is the consent*.
+  runs yet.** **Switching calls `stopArcade()` first and RESHAPES the canvas.**
+- **NO PHOTO GATE ON THE LOBBY GAME** — *sending it is the consent*. The
+  night's own one-photo ask is a separate, deliberate reversal.
 - **THE BOARD SAYS WHICH GAME EACH SCORE WAS ON — `state.arcadeGame`, a map
   BESIDE the scores, never folded into `state.arcade`**, which is
-  `{id: number}` in every state file there is. **The id is a LABEL.**
+  `{id: number}` in every state file. **The id is a LABEL.**
 - **QUICK DRAW'S OUTLAW RAISES ITS GUN** — *how close is this one to shooting
-  me* was information the schedule held and the canvas never drew. **It changes
-  what the game IS**: without it the winning move is to tap the instant
-  anything appears.
+  me*. **It changes what the game IS**: without it the winning move is to tap
+  the instant anything appears.
 - **THE DEFAULT FOLLOWS THE GAME, NOT THE ACCOUNT: Maze Mouth before a quiz,
   Rally before the bingo.** A remembered preference is wrong on half the nights
-  of anybody running both.
+  of anybody running both games.
 - **WHICH GAME IS A DECISION ABOUT TONIGHT**, chosen on the launch bar and
   written into `state.lobbyGame`. **THE TIER IS CHECKED AT THE ROUTE, never in
   the console**, and a game above the tier is **dropped in favour of the
@@ -1339,37 +1337,31 @@ board), `src/arcade.js` (the scores, shared by both engines),
   bottom tier** — a phone with a game on it stays in the FOREGROUND. **Locked
   games are SHOWN.**
 - **THEY ARE CALLED MAZE MOUTH, RALLY, TAILBACK, QUICK DRAW AND LAST ORDERS.**
-  The names and characters the first three resemble are Namco's and Atari's and
-  this app is SOLD — a legal line, not a taste one. **An unnamed game keeps
-  inviting the wrong name.**
+  The names the first three resemble are Namco's and Atari's and this app is
+  SOLD — a legal line, not a taste one. **An unnamed game keeps inviting the
+  wrong name.**
 - **PILE UP IS DELETED, AND TETRIS IS STILL THE REASON.** **The shapes were
   not the only thing held protectable in *Tetris Holding v. Xio*** — the well
-  and the piece behaviour went with them, and this app is SOLD; **and triangles
-  do not tile a square grid**. **Do not rebuild it.**
+  and the piece behaviour went too, and this app is SOLD. **Do not rebuild
+  it.**
 - **LAST ORDERS REPLACED IT, and its legal line is a DIFFERENT one.** Taito
-  owns the NAME and the specific sprites, **not** a formation descending on a
-  defender. So: **not called Space Invaders, no crab/squid/octopus, no 5x11, no
-  saucer, no bunkers**, with a test on the words. **Tap-to-destination and it
-  fires itself** — auto-fire makes POSITIONING the game. **Reaching the bar
-  ends it outright.**
+  owns the NAME and the sprites, **not** a formation descending on a defender.
+  So: **not called Space Invaders, no crab/squid/octopus, no 5x11, no saucer,
+  no bunkers**, with a test on the words. **Tap-to-destination and it fires
+  itself** — auto-fire makes POSITIONING the game. **Reaching the bar ends
+  it.**
 - **THE PER-GAME RULES ARE IN
   [`docs/lobby-games.md`](docs/lobby-games.md) — read it before touching one.**
-  Not to be undone: **three ways a game is made the same on every phone** — a
-  fixed-step GRID, a capped ACCUMULATOR, or a SCHEDULE pure in the seed and T —
-  and **a frame delta is none of them and is always wrong here**; **one
-  scoreboard for both engines, in `src/arcade.js`**; **every phone plays the
-  same game**, seeded at launch; **it cannot reach a quiz**, tested each half;
-  **no control panel — you tap and it walks there**, and **a fire button plus
-  movement is a control panel too**; **a turn pressed early is remembered** and
-  **a wall never picks a direction for you**; **Tailback's tail is fatal and
-  its walls are not**, and **a life is never taken for a route the player did
-  not choose**; **the big screen is only promised where the board draws**;
-  **one POST leaves a phone**, at game over and at each life lost; **the game
-  is stopped in `buildScreen()`, on every rebuild**; **Maze Mouth's death is a
-  GULP, not the unfurl-and-spin**, and **the score is banked at the CATCH**;
-  **sound is synthesised, on by default and never on a timer**, **the host's
-  switch wins and does not wipe the phone's own**, and **every noise is tied to
-  something the player DID**.
+  Not to be undone: **a frame delta is never how a game is made the same on
+  every phone** (a fixed-step GRID, a capped ACCUMULATOR or a SCHEDULE pure in
+  the seed and T); **one scoreboard for both engines, in `src/arcade.js`**;
+  **every phone plays the same game**, seeded at launch; **it cannot reach a
+  quiz**; **no control panel — you tap and it walks there**, and **a fire
+  button plus movement is a control panel too**; **a wall never picks a
+  direction for you**; **a life is never taken for a route the player did not
+  choose**; **one POST leaves a phone**; **the game is stopped in
+  `buildScreen()`, on every rebuild**; **sound is synthesised and never on a
+  timer**, and **the host's switch wins without wiping the phone's own**.
 - **THE BOARD IS ON THE PROJECTOR AT THE LOBBY ONLY** — inside the white QR
   panel and UNDER the code, which nothing may dim. **It was computed and never
   drawn for as long as the feature existed**, and **a test that the payload is
@@ -2572,6 +2564,13 @@ costs.
   SUBTRACTS**, which is why it needs no gate.
 - **NAMES AND POINTS, NEVER FACES** on anything public, **named on the way out
   rather than spread** — or the next field added is a photograph on a public page.
+- **ONE CAMERA PHOTO STARTS THE NIGHT — `photoGate()` in `play.js`.** Asked for
+  twice against *sending it is the consent*: **REVERSED knowingly**, entry being
+  free. **AWKWARD, NEVER IMPOSSIBLE** — the way past is a plain line at the
+  44px floor. **IT OWNS THE LOBBY, NOTHING ELSE.** **`camera` via
+  `looksCameraTaken()`, which UNDER-counts and cannot OVER-count.** **The answer
+  is the SERVER'S (`photoDone`), the skip the PHONE'S.** **It is in the lobby's
+  CARD KEY** — fifth sighting; without it the skip drew and did nothing.
 - **A VENUE SAVES A PHOTO WITH THE QUIZMASTER'S NAME ON IT — `photo-save.js`.**
   They could always save one, so **NO new gate; one would be theatre**;
   **the WATERMARK is the feature.** **Drawn in the BROWSER**, never the server.
@@ -4058,6 +4057,7 @@ node scripts/dj-set.mjs                 # a DJ set — and is the queue off the 
 node scripts/sign-in-link.mjs           # forgot your password — can you get in?
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 node scripts/photo-to-socials.mjs       # can a pub save a photo, with your name on?
+node scripts/photo-to-start.mjs         # is the photo ask real, and the skip?
 ```
 
 **The rules these commands run on, and each was learned expensively — the full
