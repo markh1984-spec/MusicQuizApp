@@ -131,6 +131,30 @@ await withApp(async ({ base, key, stop }) => {
   await page.waitForTimeout(1200);
 
   /*
+   * THE PHOTO GATE OWNS THE LOBBY NOW, SO THE WAY PAST IT IS PART OF GETTING
+   * TO THE GAMES AT ALL.
+   *
+   * *One camera photo starts the night* shipped after this script was written
+   * and REPLACES the chooser until a photo is taken or the skip is pressed —
+   * deliberately, and `photo-to-start.mjs` asserts that half. This script knew
+   * nothing about it, so it stopped dead on the very first check and **every
+   * one of the five games went unexercised while the run still printed a
+   * failure that looked like the games being broken**. A guard that quietly
+   * tests nothing is worse than no guard, because it is believed.
+   *
+   * The SKIP rather than a photograph: this script is about whether the games
+   * draw, run and score, and sending a JPEG to reach them would put the photo
+   * store, the EXIF read and the upload route inside a lobby-games failure.
+   * Tolerant of the gate being absent — with photos switched off there is
+   * nothing to press, and that is an ordinary night too.
+   */
+  const skip = page.locator('.photo-gate-skip');
+  if (await skip.count()) {
+    await skip.click();
+    await page.waitForTimeout(600);
+  }
+
+  /*
    * WHAT THE ROOM WAS GIVEN IS READ OFF THE PHONE, NOT THE PROJECTOR. The
    * first version asked `?role=screen` and printed "given: nothing" under a
    * chooser holding five tiles — because the game list is a PHONE's business

@@ -64,7 +64,25 @@ try {
         .find((s) => [...s.options].some((o) => o.value === 'bingo'));
     return sel ? [...sel.options].map((o) => o.value) : ['NO GAME PICKER FOUND'];
   });
-  check('the game picker offers only kinds the server can launch', kinds.sort(), ['bingo', 'quiz']);
+  /*
+   * AGAINST THE APP'S OWN LIST, NEVER ONE WRITTEN OUT HERE.
+   *
+   * This said `['bingo', 'quiz']` and Card Bingo shipped, so it failed on a
+   * working picker and called a real game an intruder — *a COUNT goes stale
+   * silently*, wearing a list. `GAME_KINDS` is the console's own named
+   * constant and `game-kinds.test.js` already pins it against the server's
+   * `LAUNCHERS`, so reading it here means the two move together and a fourth
+   * game needs no edit in this file.
+   *
+   * The dynamic import is safe precisely because this is the console's own
+   * page: the module is already evaluated, so it comes back cached rather
+   * than booting a second time. Do NOT copy this into a script pointed at any
+   * other page — *importing from a page's own module runs that page's own
+   * boot code*.
+   */
+  const named = await page.evaluate(() => import('/assets/console.js')
+    .then((m) => [...(m.GAME_KINDS || [])].sort()).catch(() => ['COULD NOT READ GAME_KINDS']));
+  check('the game picker offers exactly the console\'s own GAME_KINDS', kinds.sort(), named);
 
   /*
    * AND EVERY ONE OF THEM IS ASKED OF THE SERVER, rather than trusted to a
