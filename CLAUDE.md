@@ -942,35 +942,35 @@ one of the output screens… I would need a second screen for that second QR cod
 and photo uploads."*
 
 - **IT WAS SMALL BECAUSE PHOTOGRAPHS LIVE ON THE ROOM, NOT THE GAME** — no
-  engine, no phase, no game. **A relaunch therefore does not take the wall with
-  it**, which is what makes a mixed night work.
+  engine, no phase, no game, and **a relaunch does not take the wall with it**,
+  which is what makes a mixed night work.
 - **IT CANNOT SHOW THE QUIZ, STRUCTURALLY** — `wallView()` does not BUILD a
-  question. A second output ends up where the host is not standing, so rule 1
-  has to hold for a third screen. **The guard SWEEPS the projector's payload**
-  rather than naming fields, and **a new role must not fall into `viewFor()`'s
-  `else`, which is the PHONE's.**
+  question, and a second output ends up where the host is not standing, so rule
+  1 holds for a third screen. **The guard SWEEPS the projector's payload**, and
+  **a new role must not fall into `viewFor()`'s `else`, the PHONE's.**
 - **A PAGE, NEVER A SECOND `/screen`** — every `role=screen` client gets the
-  identical view, which is right and is why it cannot be one. **AND IT TAKES NO
-  SOUND**: `room.sting` stays `role === 'screen'`, so the soundboard comes out
-  of the one laptop wired to the PA.
+  identical view, which is why it cannot be one. **AND IT TAKES NO SOUND**:
+  `room.sting` stays `role === 'screen'`, so the soundboard comes out of the one
+  laptop wired to the PA.
 - **A NEW TOP-LEVEL ROUTE GOES IN `RESERVED`** — *The Wall* is a pub name, and
-  `test/slugs.test.js` caught it the same hour. Second time that list has paid.
-- **TWO PROJECTOR WINDOWS ON ONE ROOM IS SUPPORTED — `two-screens.mjs`, on a
-  REAL account.** **Every other screen guard runs on the HOST KEY, which is the
-  HOUSE room and has no join code**, so a resolving `?g=`, a second screen on
-  somebody's OWN room and a control view driven from a COOKIE went unmeasured.
+  `slugs.test.js` caught it. Second time that list has paid.
+- **IT NEEDS NO COOKIE, WHICH IS WHAT LETS IT RUN ON A SPARE LAPTOP** — an HDMI
+  splitter is one input and N IDENTICAL outputs, so a second browser is the only
+  version needing no hardware. `second-laptop.mjs` drives a real `?g=` from a
+  browser that has never seen the app — the case between the other two guards.
+  **A mistyped code shows NOBODY's photographs.**
+- **TWO PROJECTOR WINDOWS ON ONE ROOM IS SUPPORTED — `two-screens.mjs`.**
+  **Every other screen guard runs on the HOST KEY, the HOUSE room with no join
+  code**, so a resolving `?g=` and a cookie-driven control view went unmeasured.
   **`browser.newPage()` opens a fresh incognito context** — the control view
   401'd and a working button read as missing.
 - **`scrollHeight` IS A LIE ON ANY `body.screen` PAGE — a rule for the whole
-  repo.** `overflow: hidden` CLAMPS the document, so `scrollHeight -
-  innerHeight` reads 0 however far content runs past the bottom; a check written
-  that way passed with a heading set to 22vh. **Ask the ELEMENTS where they
-  end**, `console-frame.mjs`'s own distinction on a screen that cannot scroll to
-  reveal the answer. **And fill the grid first** — it saw nothing with ONE
-  photograph in, because one row fits anything.
-- **A MEDIA QUERY ADDS NO SPECIFICITY** — fourth sighting of equal-specificity
-  source order here: a correct narrow cap sat above the rule it overrode and did
-  nothing. **Measure after.**
+  repo.** `overflow: hidden` CLAMPS the document, so it reads 0 however far
+  content runs past the bottom; a check written that way passed with a 22vh
+  heading. **Ask the ELEMENTS where they end**, and **fill the grid first** —
+  one row fits anything. **A MEDIA QUERY ADDS NO SPECIFICITY** either: fourth
+  sighting, a correct cap above the rule it overrode doing nothing. **Measure
+  after.**
 
 Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
 
@@ -4080,7 +4080,7 @@ node scripts/tonight-resolves.mjs       # does the bar offer real games, and fin
 node scripts/community-bay.mjs          # does the Community bay still fit the frame?
 node scripts/console-frame.mjs          # is every Console control reachable?
 node scripts/console-controls.mjs       # and does pressing one do what it says?
-node scripts/dead-controls.mjs --door console   # and is anything inert? (25min for all)
+node scripts/dead-controls.mjs --door console   # anything inert? (25min for all)
 node scripts/pages-scroll.mjs           # can a person actually scroll each page?
 node scripts/final-fits.mjs             # is the last slide of the night all on screen?
 node scripts/advert-on-the-wall.mjs     # does a corrected slide reach the room?
@@ -4100,8 +4100,9 @@ node scripts/sign-in-link.mjs           # forgot your password — can you get i
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 node scripts/photo-to-socials.mjs       # can a pub save a photo, with your name on?
 node scripts/photo-to-start.mjs         # is the photo ask real, and the skip?
-node scripts/second-screen.mjs          # does a second display show the code and the photos?
-node scripts/two-screens.mjs            # a real account, two outputs, quiz -> bingo -> karaoke
+node scripts/second-screen.mjs          # the second display: the code and the photos
+node scripts/two-screens.mjs            # two outputs, a real account, quiz -> bingo
+node scripts/second-laptop.mjs          # the wall on a spare laptop
 node scripts/funniest-photo.mjs         # does the room's vote reach a drink?
 ```
 
