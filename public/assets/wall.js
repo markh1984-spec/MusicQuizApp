@@ -66,14 +66,33 @@ function build() {
   cardEl.replaceChildren(node(`
     <div class="wall-grid">
       <div class="wall-ask">
+        <!-- THE STEPS NAME THE JOIN, BECAUSE THE CODE IS THE JOIN CODE.
+             This read "1 Point your camera at the code / 2 Take a photo / 3 It
+             lands here" over a QR that goes to the PLAY page — so somebody
+             followed three instructions about photographs and met a box asking
+             for a team name. The destination is right and the words were
+             wrong: one night is one join, and a joined phone carries a camera
+             into the rest of the evening.
+
+             The snap page is the identity-free camera and is deliberately NOT
+             this code — it is handed over from Community > Photos, to somebody
+             working the room rather than to the room. Two codes on two screens
+             both saying "camera" is the collision this wording avoids.
+
+             Step 2 is the PROJECTOR'S own word for the same act, so the two
+             screens in one room cannot describe one code differently.
+
+             NO BACKTICKS IN HERE: this comment sits inside a template literal,
+             so one ends the string and the whole page stops parsing. It cost a
+             console outage once and node --check caught it again here. -->
         <h1 class="grad-text">Get your photos on the screen</h1>
         <ol class="join-steps">
           <li><span class="n">1</span><span>Point your camera at the code</span></li>
-          <li><span class="n">2</span><span>Take a photo</span></li>
-          <li><span class="n">3</span><span>It lands here</span></li>
+          <li><span class="n">2</span><span>Type in a name</span></li>
+          <li><span class="n">3</span><span>Send photos — they land here</span></li>
         </ol>
         <div class="qr-panel wall-qr">
-          <img src="${joinQr}" alt="Scan to send a photo">
+          <img src="${joinQr}" alt="Scan to join and send photos">
           <div class="url" id="wallUrl">${esc(joinUrl)}</div>
         </div>
       </div>
