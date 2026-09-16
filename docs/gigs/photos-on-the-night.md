@@ -624,5 +624,22 @@ Monday.
   time that panel has taught it: it is rebuilt on every state push and a
   photograph landing IS a push, so a code hidden by an element would shut itself
   while staff were pointing a camera at it.
+- **AND WITH NO JOIN CODE THE HAND-OVER SAYS SO RATHER THAN DRAWING ONE.**
+  `/snap` refuses to fall back to the house room, and a control view driven on
+  the HOST KEY resolves to exactly that room — which has no code. The button
+  would have drawn a perfectly good QR at a page that then reads *"this link is
+  missing its room"*: **a control that reports success it did not have**, this
+  repo's commonest fault, failing in front of somebody working behind a bar.
+  **The reason is in the LABEL, not a `title`** — the control view is driven on
+  a phone and a phone never shows a tooltip.
+- **AND `whoIs()` CHECKS THE HOST KEY BEFORE THE COOKIE, WHICH IS A TRAP FOR
+  THE OWNER ALONE.** A request carrying both a signed-in cookie and an
+  `X-Host-Key` resolves to the HOUSE room, not the account's own — found while
+  shooting this, where an upload answered `ok: true` and landed in a different
+  room from the one the join code pointed at. It is **correct behaviour** (the
+  key is the master key, and no real quizmaster has one) and it is **the
+  two-rooms-for-the-owner hazard this file already records** wearing another
+  hat. Nothing silently splits here, because both halves resolve the same way
+  and the button above then says there is nothing to hand over.
 - **`snap` WENT IN `RESERVED`.** Third time that list has paid — *The Snap* is
   as plausible a pub name as *The Wall*.

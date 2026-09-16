@@ -224,6 +224,23 @@ try {
   });
   check('a mistyped code reaches nobody\'s room', junk.status >= 400, `HTTP ${junk.status}`);
 
+  /* ------------------------ and with no code, the button says so rather than
+   * drawing a QR at a page that then says the link is missing its room. The
+   * HOUSE room is the case: it has no join code, and a control view on the
+   * host key resolves to it. */
+  const houseHand = await browser.newPage({ viewport: { width: 390, height: 780 } });
+  await houseHand.goto(`${BASE}/host?key=${KEY}`);
+  await houseHand.waitForSelector('.snap-hand', { timeout: 15000 });
+  const noCode = await houseHand.evaluate(() => {
+    const b = document.querySelector('.snap-hand');
+    return { words: b.textContent.trim(), off: b.disabled, qr: Boolean(document.querySelector('.snap-qr')) };
+  });
+  check('with no join code the hand-over is inert', noCode.off, JSON.stringify(noCode.words));
+  check('and the reason is in the LABEL, where a phone can read it',
+    /no code/i.test(noCode.words), JSON.stringify(noCode.words));
+  check('and no code is drawn at a page that would refuse it', !noCode.qr);
+  await houseHand.close();
+
   check('nothing threw on the bar\'s phone', errors.length === 0, errors.join(' | '));
   await bar.close();
 } finally {

@@ -1018,14 +1018,13 @@ Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-n
 *"one of the bar staff could also get access to this… and then they all go into
 one like shared bucket."*
 
-- **A PAGE WITH NO IDENTITY, like `/play`, `/v` and `/wall`.** A seat is a paid
-  thing, a password to remember and the whole console including the answer key;
-  joining the room puts the bar on the leaderboard. **No player, no caption, no
-  row on the board.**
+- **A PAGE WITH NO IDENTITY, like `/play`, `/v` and `/wall`.** A seat is paid,
+  a password to remember and the whole console including the answer key; joining
+  puts the bar on the leaderboard. **No player, no caption, no row on the board.**
 - **THE JOIN CODE IS THE HANDLE — a revocable staff key was offered and turned
   down.** Anybody holding the code can already upload by joining, so a key is a
-  lock beside an open door — and it would need a store that survives a deploy.
-  **The cost, accepted: one person cannot be shut out.**
+  lock beside an open door, and it needs a store that survives a deploy. **The
+  cost, accepted: one person cannot be shut out.**
 - **ONE BUCKET** — through `photos.add()` and nothing else, so one bin press
   clears the projector, `/wall`, the grid and the night's folder together.
 - **NO NEW ROLE ON THE WIRE — it opens a `role=wall` stream**, which is already
@@ -1038,6 +1037,9 @@ one like shared bucket."*
   HANDED over, so a missing code means it was handed over broken.
 - **THE CODE IS SHOWN, NEVER SENT** — a QR on the photo panel. **The fold is a
   MODULE BINDING**, that panel's second lesson in a day.
+- **NO JOIN CODE MEANS AN INERT HAND-OVER, REASON IN THE LABEL never a
+  `title`** — driven on a phone. **`whoIs()` READS THE HOST KEY BEFORE THE
+  COOKIE**, so `?key=` plus a cookie is the HOUSE room, which has no code.
 - **`snap` WENT IN `RESERVED`** — third time that list has paid.
 
 Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
@@ -1048,14 +1050,12 @@ Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-n
   cards said "52 tracks".** Named per kind now (`UNIT` in `console-packs.js`),
   **with an unnamed kind falling back to its track count** so a fifth game reads
   as it always would rather than printing `undefined`.
-- **AND `shortTitle()` TRIMMED *Card Bingo* TO "Card".** The trim drops a
-  REDUNDANT game word and is right for every pack named after a SUBJECT; a deck
-  is the one pack whose name IS the game's. **`GAME_WORDS` is NAMED, never
-  derived from the shape** — *leave at least two words* was measured against the
-  real library first and breaks "Madonna", "Metallica", "2006" and "1980s".
-- **CARD BINGO'S TAB IS CONSOLE-ONLY AND THAT STANDS** — there is no generator,
-  no editor and no pack file, so a Workshop shelf would hold one card with
-  nothing to do to it.
+- **AND `shortTitle()` TRIMMED *Card Bingo* TO "Card"** — a deck is the one
+  pack whose name IS the game's. **`GAME_WORDS` is NAMED, never derived from the
+  shape**: *leave at least two words* was measured against the real library and
+  breaks "Madonna", "Metallica", "2006" and "1980s".
+- **CARD BINGO'S TAB IS CONSOLE-ONLY AND THAT STANDS** — no generator, no
+  editor, no pack file, so a Workshop shelf holds one card with nothing to do.
 
 ### A WORD IN ONE EAR — `src/notes.js`, one phone and never the room
 

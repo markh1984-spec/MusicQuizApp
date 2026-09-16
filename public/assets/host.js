@@ -499,7 +499,7 @@ function myCameraRow(info, joinCode) {
         Add your own photo
         <input type="file" accept="image/*" multiple hidden ${shut ? 'disabled' : ''}>
       </label>
-      <button class="minor snap-hand" ${shut ? 'disabled' : ''}>Hand it to the bar</button>
+      <button class="minor snap-hand" ${shut || !joinCode ? 'disabled' : ''}></button>
       <span class="tiny mine-said">${esc(shut
         ? 'Photos are switched off, so there is nowhere for one to go yet.'
         : (myPhotoSaid || 'Yours goes in with the room\u2019s.'))}</span>
@@ -527,8 +527,25 @@ function myCameraRow(info, joinCode) {
    * shut itself the moment anybody in the room sent one, while a member of
    * staff was pointing a camera at it.
    */
+  /*
+   * **AND WITH NO JOIN CODE THERE IS NOTHING TO HAND OVER, so the button says
+   * that rather than drawing one.** `/snap` needs a code — it is always
+   * *handed* to somebody, so it refuses to fall back to the house room the way
+   * `/wall` can. A control view running on the HOST KEY resolves to that house
+   * room, which has no code: the button would have drawn a perfectly good QR
+   * at a page that then says *"this link is missing its room"*, which is *a
+   * control that reports success it did not have*, this repo's commonest
+   * fault, on the one screen where the person it fails in front of works
+   * behind a bar.
+   *
+   * **THE REASON GOES IN THE LABEL, NOT A `title`.** This page is driven on a
+   * phone, and a phone never shows a tooltip — the fault this file already
+   * records as *a bare verb whose object lived in a tooltip*.
+   */
   const hand = row.querySelector('.snap-hand');
-  hand.textContent = snapQrOpen ? 'Hide the code' : 'Hand it to the bar';
+  hand.textContent = !joinCode ? 'No code to hand over'
+    : (snapQrOpen ? 'Hide the code' : 'Hand it to the bar');
+  if (!joinCode) hand.title = 'This room has no join code — launch a night and it gets one.';
   hand.addEventListener('click', () => { snapQrOpen = !snapQrOpen; if (state) draw(state); });
 
   const input = row.querySelector('input');
@@ -570,7 +587,7 @@ function myCameraRow(info, joinCode) {
     say(done === 1 ? 'Added — it is on the screen now.' : `${done} added.`);
     label.classList.remove('is-busy');
   });
-  if (snapQrOpen && !shut) {
+  if (snapQrOpen && !shut && joinCode) {
     const link = `${location.origin}/snap${joinCode ? `?g=${encodeURIComponent(joinCode)}` : ''}`;
     row.appendChild(node(`
       <div class="snap-qr">
