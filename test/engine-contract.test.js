@@ -52,6 +52,18 @@ const CONTRACT = [
   'setRewards', 'redeemVoucher', 'reinstateVoucher',
   // a phone's shared actions — see `runPlayerAction()`
   'arcadeScore',
+  /*
+   * THE FUNNIEST PHOTOGRAPH, PUT TO THE ROOM — `src/photo-vote.js`.
+   *
+   * SHARED rather than per-kind, and this file's own lesson is the reason: a
+   * break happens on a bingo night, and on a DJ set a photograph is not a
+   * side-show but the entire currency of the game. Gating it on `kind` would
+   * be *a kind test written when there were two games*, for the fourth time.
+   *
+   * `settlePhotoVote()` is on the list because `advanceOrder()` calls it at a
+   * part boundary, which is shared by construction.
+   */
+  'openPhotoVote', 'closePhotoVote', 'settlePhotoVote', 'dropPhotoVote', 'castPhotoVote',
 ];
 
 /**

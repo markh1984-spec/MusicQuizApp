@@ -1556,3 +1556,182 @@ wrong, so the phone never joined — and *"the lobby game is not offered while
 the gate is up"* was satisfied by there being no lobby at all. A guard that is
 satisfied by nothing having happened is this repo's oldest fault; that check
 now asserts the gate is present in the same breath.
+
+---
+
+## THE FUNNIEST PHOTOGRAPH OF THE NIGHT — the host shortlists four, the room votes
+
+`src/photo-vote.js`, `photoVoteCard()` / `photoVotePanel()` in `client.js`,
+`cards.photoVote` in `screen.js`, `state.photoVote`, `node
+scripts/funniest-photo.mjs`.
+
+Asked for on 16 September 2026, as the second half of a conversation about
+getting more photographs out of a room: *"the funniest photo of the night
+getting a free drink is actually a really good idea, perhaps you could let the
+crowd vote on their favourite as well to get a free drink?"* — and then the
+shape, chosen off four options: **you shortlist four at the break.**
+
+### Why a human picks the four
+
+A vote over everything the room sent is forty thumbnails on a projector nobody
+can read and a scroll on a phone. Worse than unusable, it is the app putting
+**every** photograph up for public judgement, including the one somebody sent of
+their mate looking rough at half nine.
+
+Four is a screen, a glance and one tap. And the judgement it takes — which four
+are actually funny — is a second's work for a person on a microphone and cannot
+be automated without being confidently wrong in front of a room. That is rule
+4's own arrangement: *the NUMBER is what tells the host which it is*, here
+wearing photographs.
+
+**The second judgement is deliberately his too.** A row belonging to somebody
+who is already holding a live voucher is MARKED with a 🍺 rather than removed.
+Removing it would be the app overruling a vote the room has not yet cast;
+marking it puts the fact in front of the one person who can weigh it.
+
+### It is a flag, not a phase — with one difference from the other three
+
+Rule 9, and it behaves exactly as the scoreboard, the advert and the photos
+slide do: over the top of whatever the night is doing, nothing to undo, refused
+over a live question, and it clears the other three as they clear each other.
+
+**The one difference is what a MOVE does to it, and it is deliberate.** A
+scoreboard cleared by pressing Next has lost nothing — press it again. A vote
+cleared by pressing Next has thrown away what forty people just did, silently,
+and there is no putting it back. So every move **settles** it instead: the
+tally is taken, the winner is named, the drink is minted, and the quiz carries
+on. `settlePhotoVote()` on all three engines.
+
+**`start()` was the one that got missed** — added only because
+`funniest-photo.mjs` failed on it. The break this was built for is the ten
+minutes BEFORE the first question, so *Start* is the button that most often
+ends one, and it was the single move without the call. `next()`, `back()`,
+`finish()` and `askQuestion()` all had it. A reasoned list of "the moves" had
+the important one missing from it.
+
+### What each screen is told, and why they differ
+
+| | the four | the live counts | the winner | the code |
+|---|---|---|---|---|
+| **projector** | yes | **never** | yes, with the count | **never** |
+| **phone** | yes | never | yes, no count | winner's own only |
+| **control view** | yes | **yes** | yes, with the code | yes |
+
+- **NO RUNNING TALLY ON THE WALL.** A count six feet wide turns the vote into a
+  bandwagon — the last twenty people to look up would be voting on what is
+  winning rather than on what is funny. It is `whoPicked()`'s own arrangement:
+  the room gets the result, the person on the microphone gets the numbers,
+  because what he says next depends on them. **Structural, not a rule this file
+  has to keep**: `voteForScreen()` does not build the field at all.
+- **THE CODE IS NEVER ON THE PROJECTOR.** It is a bearer token for a drink and
+  that is the one screen in the app sixty people read at once — the draw's own
+  rule, and `funniest-photo.mjs` asserts it.
+- **AND NO SENDER'S PLAYER ID GOES ON ANY WIRE.** The shortlist has to carry the
+  sender or the drink cannot find anybody, so `Photos.shortlist()` puts it into
+  `state.photoVote` and every view builder strips it out again. Rule 3: a player
+  id is a bearer credential and the projector's payload goes to anybody holding
+  the join code. **The guard sweeps the WHOLE payload for every real id** rather
+  than naming `photos[].playerId` — a named check only ever catches the field
+  somebody thought of. Verified by putting the leak back.
+
+### The prize is the last one on the table, and it is NAMED on the button
+
+`photoVotePrize()`. The lucky dip's own choice and the same argument: the last
+prize is the smallest, and the smallest is what a raffle prize actually is.
+
+**What is deliberately NOT copied is that draw's floor of three prizes**, and
+the difference is how each is reached. A draw happens by itself at the final,
+where nobody can see what it is about to give away, so it needs a rule. This
+happens because a host pressed a button — so the button says *"Put 4 to the
+room — winner gets: A pint"*, and a night with nothing on the venue's list says
+so and mints nothing.
+
+**A human reading the prize beats a rule guessing at it.** On a three-prize
+night this offers third place's drink, which on some nights is exactly right and
+on others is a round the venue did not budget for. The person who knows which is
+the one holding the microphone.
+
+### A tie is broken at random, once, by the engine
+
+Four photographs and forty voters ties often enough to need an answer, and every
+alternative is worse: *earliest* rewards being quick rather than funny, and
+asking the host to pick turns the room's vote into his. `random` is injected
+like `now()`.
+
+**Decided ONCE and written into the state**, exactly like the lucky dip: closing
+twice — which a flaky connection, a second press and a restart all do — must not
+name a different photograph to a room that has already heard the first. And the
+counts go up **with** the winner, so a room that watched 12–12 resolve is told
+that is what happened rather than shown a landslide.
+
+**Nobody voting is not somebody winning.** An empty vote closes with no winner
+and mints nothing, rather than handing a drink to whichever photograph happened
+to be first — the floor `issueVouchers()` already keeps for a row that scored
+zero.
+
+### One file for three engines, and the contract test made that decision
+
+`photo-vote.js` is `notes.js`'s shape exactly: state in, result out, neither
+engine's `changed()` called from inside. Two copies would be two rules, and the
+day one is fixed is the day a bingo night behaves differently from a quiz night
+for no reason anybody chose.
+
+**`test/engine-contract.test.js` failed the moment the methods were written**,
+which is what forced the real decision: shared, or behind a `kind` check. It is
+shared — a break happens on a bingo night too, and **on a DJ set a photograph is
+not a side-show but the entire currency of the game**, a request being gated on
+sending one. Gating this on `kind` would have been *a kind test written when
+there were two games* for the fourth time.
+
+**A DJ set gets no voucher**, and that is the documented degrade rather than a
+special case: there is no reward list to read, so `closeVote()` names a winner
+and mints nothing.
+
+### The voucher
+
+- **`funny: true` and `place: null`.** Without the marker the card downstream
+  reads `place || 1` and tells somebody who came eleventh that they won the quiz
+  — the app contradicting the projector on the one screen they are about to hold
+  up at a bar.
+- **`withdrawVouchersNoLongerOwed()` SKIPS IT.** That pass reads the scoreboard,
+  which has nothing whatever to say about whose photograph was funniest, and
+  without the exemption it would delete a live code the moment the final scores
+  went up.
+- **NO `round` STAMP, which is what lets it show on a bingo night.** Bingo holds
+  a code back until its round ends so the prizes appear together — right for a
+  prize won on the card, wrong for this one. A voucher with no `round` reads as
+  "not this round" and shows, which `issueVoucher()` already calls the safe
+  direction; here it is also the wanted one.
+- **AND A PART BOUNDARY SETTLES IT FIRST.** `advanceOrder()` builds a fresh
+  engine with `photoVote: null`, so a vote cast at the break before *Continue to
+  the bingo* would have evaporated — every vote lost, no winner, no drink, and
+  nothing thrown. The tenth entry on the list of things a part boundary did not
+  carry, caught before it was one.
+
+### The guard, and what it caught
+
+`node scripts/funniest-photo.mjs` — three phones, a projector and a control
+view over real HTTP, plus a REAL BROWSER leg because *a test that the payload is
+right proves nothing about whether anybody drew it.*
+
+**`pub-unchanged.mjs` says IDENTICAL on all of this and says it confidently.**
+It never posts a photograph, never opens a vote and never mints a voucher — the
+fifth time this repo has had to write that sentence down.
+
+Five real findings on its first runs, all silent:
+
+- **the missing `start()` settle**, above;
+- **the host route wraps a session action as `{ ok, view }`**, so a check
+  reading `body.winner` was `undefined === undefined` — a guard passing by
+  looking in the wrong place, which is worse than one that fails;
+- **a vote run at a REVEAL leaves the winner's phone empty**, because
+  `VOUCHER_PHASES` has no reveal in it. The app was right and the guard was
+  walking a path a host never walks;
+- **`act()` on the control view swallowed its own answer**, so a panel had no
+  way to put its button back or say what to do instead. It hands the result
+  back now;
+- **the id sweep flagged a phone's OWN id** on its own payload, which is what
+  `you.id` has always been.
+
+Verified by reintroducing three faults — the leak, the missing settle, and the
+tap that lights nothing — and watching each one fail.

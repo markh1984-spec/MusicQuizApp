@@ -11666,3 +11666,92 @@ body.dj .head .score { color: var(--ink); }
 }
 .dj-door-note { color: var(--ink-dim); }
 .dj-door-warn { color: var(--ink-dim); }
+
+/* ---------------------------------------- the funniest photograph of the night
+ * Three surfaces off one feature: the four on a phone, the tally on the host's
+ * control view, and the wall. `src/photo-vote.js` has the reasoning.
+ */
+
+/* ---- the phone. Two by two, because four in a row on a 390px screen is 88px
+ * a picture and a thumb is 44. A square crop rather than the photograph's own
+ * shape: these arrive portrait and landscape from whatever was in the room, and
+ * a ragged grid is one nobody can compare at a glance.
+ */
+.votecard { display: grid; gap: 10px; text-align: left; }
+.vote-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.vote-pic {
+  position: relative; padding: 0; overflow: hidden; cursor: pointer;
+  aspect-ratio: 1 / 1; border-radius: var(--r-field);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04));
+  border: 2px solid var(--panel-line);
+}
+.vote-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* The one you picked, and it has to read in a dark pub from arm's length: a
+   border alone at 2px is invisible there, so the account's own colour goes all
+   the way round at 3px with a glow off it. Never gold — that is the trophy
+   colour and this is not a placing. */
+.vote-pic.picked { border-color: var(--hot); box-shadow: 0 0 0 3px color-mix(in srgb, var(--hot) 45%, transparent); }
+.vote-pic.picked::after {
+  content: '✓'; position: absolute; inset: auto 6px 6px auto;
+  width: 26px; height: 26px; display: grid; place-items: center;
+  border-radius: 999px; background: var(--hot); color: #fff; font-weight: 900;
+}
+.vote-who {
+  position: absolute; inset: auto 0 0 0; padding: 4px 6px;
+  background: rgba(8, 8, 14, 0.62); color: #fff;
+  font-size: var(--fs-note); text-align: left;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.voted-done { text-align: center; }
+.vote-won { font-size: var(--fs-head); }
+
+/* ---- the host's end. A grid of everything sent, four pickable, then a tally. */
+.votepanel { display: grid; gap: 10px; }
+.vote-pick {
+  display: grid; gap: 6px; max-height: 240px; overflow-y: auto;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+}
+.vote-thumb {
+  position: relative; padding: 0; overflow: hidden; cursor: pointer;
+  aspect-ratio: 1 / 1; border-radius: var(--r-field);
+  background: rgba(255, 255, 255, 0.04); border: 2px solid var(--panel-line);
+}
+.vote-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vote-thumb.picked { border-color: var(--hot); box-shadow: 0 0 0 2px color-mix(in srgb, var(--hot) 45%, transparent); }
+.vote-tally { display: grid; gap: 6px; }
+.vote-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px; border-radius: var(--r-field); background: rgba(255, 255, 255, 0.04);
+}
+.vote-row img { width: 48px; height: 48px; object-fit: cover; border-radius: var(--r-field); }
+.vote-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* Tabular, so four counts under each other line up rather than jiggling as
+   they climb — the one place in this panel the host is comparing numbers. */
+.vote-n { font-variant-numeric: tabular-nums; font-size: var(--fs-head); }
+
+/* ---- the wall. Sized in vh like every other rule on the projector, and read
+ * from the back of a dark pub. The numbers are what the room is being asked to
+ * tap, so they are large and they sit ON the picture rather than under it.
+ */
+.votewall { display: grid; gap: 2vh; place-items: center; width: 100%; height: 100%; align-content: center; }
+.vw-grid { display: grid; gap: 1.6vh; width: 92%; max-height: 66vh; }
+.vw-of-2 { grid-template-columns: 1fr 1fr; }
+.vw-of-3 { grid-template-columns: repeat(3, 1fr); }
+.vw-of-4 { grid-template-columns: 1fr 1fr; }
+.vw-cell {
+  position: relative; overflow: hidden; border-radius: var(--r-card);
+  aspect-ratio: 4 / 3; background: rgba(255, 255, 255, 0.05);
+}
+.vw-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.vw-tag {
+  position: absolute; inset: auto 0 0 0; padding: 0.8vh 1vw;
+  display: flex; align-items: center; gap: 1vw;
+  background: rgba(8, 8, 14, 0.66); color: #fff; font-size: 2.2vh;
+}
+.vw-tag b {
+  display: grid; place-items: center; flex: 0 0 auto;
+  width: 4.4vh; height: 4.4vh; border-radius: 999px;
+  background: var(--hot); font-size: 2.6vh;
+}
+.vw-big { max-height: 56vh; max-width: 80%; border-radius: var(--r-card); object-fit: contain; }
+.vw-count { font-size: 2.6vh; color: var(--ink-dim); }

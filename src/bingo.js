@@ -25,6 +25,7 @@ import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
 import { breakNow, offersGame, offersPhotos } from '../public/assets/break-parts.js';
 
 import { noteForPlayer, notesForHost } from './notes.js';
+import { castVote, closeVote, dropVote, openVote, voteForHost, voteForPlayer, voteForScreen } from './photo-vote.js';
 
 export const BINGO_PHASES = {
   LOBBY: 'lobby',
@@ -156,6 +157,16 @@ export class BingoGame {
        * is: a restart must bring the night back as it was.
        */
       comeBack: null,
+      /*
+       * THE FUNNIEST PHOTOGRAPH, PUT TO THE ROOM — `src/photo-vote.js`, shared
+       * with the quiz engine because a bingo night has breaks in it too.
+       *
+       * It is the FIRST and only thing on this engine that goes over the top
+       * of the game without moving it, so there is nothing here for it to
+       * clear and nothing to clear it — bingo has never had a scoreboard or an
+       * advert flag. `null` on every ordinary night.
+       */
+      photoVote: null,
       /*
        * THE LOBBY GAME — a bingo night gets Rally, a quiz night gets Maze
        * Mouth, and both read the same two fields.
@@ -481,6 +492,10 @@ export class BingoGame {
 
   start() {
     if (!this.tracks.length) return false;
+    // Kicking off is a move — see the quiz engine's own note. AFTER the
+    // refusal, or a start that never happened settles a vote that is still
+    // running.
+    this.settlePhotoVote();
     this.state.phase = BINGO_PHASES.PLAYING;
     this.state.startedAt = this.now();
     this.changed();
@@ -494,6 +509,9 @@ export class BingoGame {
     if (this.state.phase === BINGO_PHASES.LOBBY) this.start();
     this.state.called.push(trackId);
     this.state.calledAt[trackId] = this.now();
+    // Calling the next track is this game's "press on", so it settles an open
+    // vote rather than leaving one over a card the room is marking.
+    this.settlePhotoVote();
     this.changed();
     return true;
   }
@@ -930,6 +948,84 @@ export class BingoGame {
    * There is nothing to carry on to once the last one has gone, so this says
    * no rather than quietly restarting the round somebody has just won.
    */
+
+  /**
+   * THE FUNNIEST PHOTOGRAPH OF THE NIGHT, PUT TO THE ROOM.
+   *
+   * The twin of the quiz engine's, and deliberately its twin rather than a
+   * spot check — every decision lives in `src/photo-vote.js`, shared, so there
+   * is one rule rather than two that drift. What differs is only what this
+   * game can answer for itself.
+   *
+   * **THERE IS NOTHING TO REFUSE IT OVER.** A bingo night has no question with
+   * a clock on it: the host plays a chorus and the room marks a square, and a
+   * vote over the top of that costs nobody an answer. The quiz's
+   * `question_live` guard has no counterpart here, which is why this is four
+   * lines and not a copy of that one.
+   */
+  openPhotoVote(photos) {
+    const out = openVote(this.state, photos, this.now());
+    if (out.ok) this.changed();
+    return out;
+  }
+
+  /**
+   * The last prize on the table, NAMED on the button that opens the vote — see
+   * the quiz engine's own note for why it is named rather than floored.
+   */
+  photoVotePrize() {
+    const prizes = this.rewardList();
+    return prizes.length ? prizes[prizes.length - 1] : '';
+  }
+
+  /**
+   * Close it, name the winner, mint the drink.
+   *
+   * **THE CODE IS NOT HELD BACK, and that is the one bingo-shaped decision.**
+   * Every other voucher on this engine waits for the round to end so the
+   * prizes appear together; this one has nothing to do with the card, and a
+   * drink the room voted for should be on the phone before the laugh dies.
+   * `closeVote()` writes no `round` stamp, which is exactly what
+   * `issueVoucher()`'s own note calls the safe direction — here it is also the
+   * wanted one.
+   */
+  closePhotoVote() {
+    const v = this.state.photoVote;
+    if (!v) return { ok: false, reason: 'no_vote' };
+    if (!v.open) return { ok: true, winner: v.winner };
+    const out = closeVote(this.state, {
+      now: this.now(),
+      random: this.random,
+      reward: this.photoVotePrize(),
+      venue: this.state.venue || '',
+      newCode: newVoucherCode,
+    });
+    this.changed();
+    return out;
+  }
+
+  /** Pressing on settles a vote; it never throws one away. See the quiz's. */
+  settlePhotoVote() {
+    if (this.state.photoVote && this.state.photoVote.open) this.closePhotoVote();
+  }
+
+  /**
+   * A phone picks one. One vote each, and voting again replaces it.
+   *
+   * No `boardIdFor()` here: bingo has no teams and no averaging, so a phone IS
+   * the entity — the quiz's own note says why that distinction matters there.
+   */
+  castPhotoVote(playerId, photoId) {
+    return castVote(this.state, playerId, photoId);
+  }
+
+  /** The host's escape hatch — the only thing here that destroys votes. */
+  dropPhotoVote() {
+    const out = dropVote(this.state);
+    this.changed();
+    return out;
+  }
+
   playOn() {
     if (this.onLastStage) return false;
     this.state.stageIndex = (this.state.stageIndex || 0) + 1;
@@ -941,6 +1037,7 @@ export class BingoGame {
   }
 
   finish() {
+    this.settlePhotoVote();
     this.state.phase = BINGO_PHASES.FINISHED;
     this.state.finishedAt = this.now();
     this.changed();
@@ -952,6 +1049,7 @@ export class BingoGame {
    * nobody has to scan the code again between rounds.
    */
   newRound() {
+    this.settlePhotoVote();
     this.state.round++;
     this.state.called = [];
     this.state.calledAt = {};
@@ -1072,6 +1170,13 @@ export class BingoGame {
     view.called = called.map((t) => ({ id: t.id, title: t.title, artist: t.artist }));
     view.lastCalled = called.length ? called[called.length - 1] : null;
     view.onesAway = this.onesAway();
+
+    /*
+     * THE FUNNIEST PHOTOGRAPH, ON THE BIG SCREEN. `voteForScreen()` IS the
+     * whitelist — no sender id, no live counts. Absent on an ordinary night.
+     */
+    const vote = voteForScreen(this.state);
+    if (vote) view.photoVote = vote;
 
     if (this.state.phase === BINGO_PHASES.LOBBY) {
       view.lobby = {
@@ -1216,6 +1321,13 @@ export class BingoGame {
      */
     const note = noteForPlayer(this.state, playerId);
     if (note) view.note = note;
+    /*
+     * THE FOUR TO TAP. Keyed by the player id, which on bingo IS the board
+     * row — this engine has no team averaging, so there is no `boardIdFor()`
+     * to go through and nothing to keep in step.
+     */
+    const vote = voteForPlayer(this.state, playerId);
+    if (vote) view.photoVote = vote;
     view.won = this.state.phase === BINGO_PHASES.WON
       && Boolean(this.state.lastWin) && this.state.lastWin.playerId === playerId;
     // What they have already taken, so the phone can keep score of their night.
@@ -1276,6 +1388,10 @@ export class BingoGame {
         code: v.code,
         name: v.name,
         place: v.place,
+        // The room VOTED for this one at a break; it is not a stage on the
+        // card, and without the marker the phone reads `place || 1` and tells
+        // them they won the bingo.
+        ...(v.funny ? { funny: true } : {}),
         stage: v.stage,
         reward: v.reward,
         venue: v.venue,
@@ -1433,6 +1549,20 @@ export class BingoGame {
     // `standDown` rides with each row: a correct call that took no prize is a
     // third outcome and the control view has to say which — see `claimsPanel`.
     // What has been said to whom, and whether it landed. Host only.
+    /*
+     * THE LIVE COUNTS, HOST ONLY — the quiz's own arrangement, and the reason
+     * `photo-vote.js` is shared rather than copied.
+     */
+    const vote = voteForHost(this.state);
+    if (vote) view.photoVote = vote;
+    /*
+     * SPREAD IN ONLY WHEN THERE IS ONE — the draw's and the comeback band's
+     * own arrangement. An empty string on every host payload of every night is
+     * a byte `pub-unchanged` is right to shout about, and the control reads a
+     * missing field exactly as it reads an empty one.
+     */
+    const prize = this.photoVotePrize();
+    if (prize) view.photoVotePrize = prize;
     const notes = notesForHost(this.state);
     if (Object.keys(notes).length) view.notes = notes;
     view.claims = this.state.claims.slice(-6).reverse();

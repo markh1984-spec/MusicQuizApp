@@ -1209,6 +1209,17 @@ export class Session {
   advanceOrder() {
     const list = this.runningOrder;
     if (!list || this.orderPos >= list.length - 1) return { ok: false, reason: 'no_more_parts' };
+    /*
+     * A VOTE STILL OPEN IS SETTLED BEFORE THE PART IS THROWN AWAY.
+     *
+     * The tenth entry on the list of things a part boundary did not carry, and
+     * caught before it was one: a fresh engine starts with `photoVote: null`,
+     * so a vote the room had cast at the break before *Continue to the bingo*
+     * would have evaporated — every vote lost, no winner named, no drink
+     * minted, and nothing thrown. The voucher it mints IS carried, by
+     * `nightWideOpts()`'s existing `vouchers` hand-over.
+     */
+    this.engine.settlePhotoVote();
     const opts = nightWideOpts(this.engine.state);
     /*
      * THE RUNNING SCORE ONLY EXISTS ON A QUIZ ENGINE'S PLAYERS. Bingo has
@@ -1590,6 +1601,18 @@ export class Session {
     return this.engine.results();
   }
 
+  /**
+   * Put four photographs to the room.
+   *
+   * A method rather than an entry in `run()`'s table because the argument is
+   * not a field of the request body — the route resolves the ids against the
+   * room's photo store first, and a `run()` action that took resolved objects
+   * off the wire would be a way to put anything at all on the projector.
+   */
+  openPhotoVote(photos) {
+    return this.engine.openPhotoVote(photos);
+  }
+
 
   // ---------------------------------------------------------------- actions
 
@@ -1613,6 +1636,17 @@ export class Session {
         if (out.ok) this.engine.changed();
         return out;
       },
+      /*
+       * THE FUNNIEST PHOTOGRAPH, PUT TO THE ROOM — `src/photo-vote.js`.
+       *
+       * SHARED, because a bingo night has breaks in it too and both engines
+       * carry the identical model. The photographs themselves are resolved by
+       * the route before they get here: they belong to the ROOM rather than to
+       * the game (see `viewFor()`), and neither engine has ever known they
+       * exist.
+       */
+      photoVoteClose: () => this.engine.closePhotoVote(),
+      photoVoteDrop: () => this.engine.dropPhotoVote(),
       resetAll: () => { this.joins.reset(); return this.engine.resetAll(); },
       // "18 phones waiting to join — Let them in." One tap, and the number on
       // the button is what tells the host whether it is a room or mischief.
@@ -1863,6 +1897,17 @@ export class Session {
      */
     if (action === 'note-read') {
       const out = markNoteRead(this.engine.state, String(body.playerId || ''), Date.now());
+      if (out.ok) this.engine.changed();
+      return out;
+    }
+    /*
+     * A VOTE FOR THE FUNNIEST PHOTOGRAPH. Behind `ownsPlayer` above like every
+     * other player action — it decides who gets a drink, so a phone that could
+     * post as somebody else could stuff the ballot under their name. Shared by
+     * both games, because the vote is.
+     */
+    if (action === 'photo-vote') {
+      const out = this.engine.castPhotoVote(String(body.playerId || ''), String(body.photoId || ''));
       if (out.ok) this.engine.changed();
       return out;
     }

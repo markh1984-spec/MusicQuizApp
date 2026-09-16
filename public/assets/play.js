@@ -15,7 +15,7 @@
 
 import {
   esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam,
-  rememberRoom, noteDrinks, prizesShowing, prizesHead, wireDrinks, playsACard,
+  rememberRoom, noteDrinks, prizesShowing, prizesHead, wireDrinks, playsACard, photoVoteCard, wirePhotoVote,
 } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { buildDj, djKey, djHead } from './play-dj.js';
@@ -1116,7 +1116,17 @@ function screenKey(s) {
    * this phone standing the ask down — because either one changes what is on
    * the screen.
    */
-  return `${s.phase}:${s.roundIndex}${gateWanted(s) ? ':ask' : ''}`;
+  /*
+   * AND THE VOTE IS PART OF THE FINGERPRINT TOO, for the identical reason —
+   * it replaces nothing and ADDS a panel, so a key naming only the phase and
+   * the gate says "nothing changed" the moment four photographs go up, and
+   * the room is asked out loud to tap something that is not on their phones.
+   * Which one you PICKED is deliberately not in it: that is painted in place
+   * by the tap itself, and a rebuild per vote would drop the image you are
+   * looking at and reload four photographs on pub wifi.
+   */
+  const vote = s.photoVote ? (s.photoVote.open ? ':vote' : ':voted') : '';
+  return `${s.phase}:${s.roundIndex}${gateWanted(s) ? ':ask' : ''}${vote}`;
 }
 
 function buildScreen(s) {
@@ -1305,10 +1315,17 @@ function buildWaiting(s, kicker, title, sub) {
       <!-- THE PHOTOGRAPH COMES FIRST, AND IT REPLACES THE MENU RATHER THAN
            SITTING ABOVE IT. Both at once is two primaries and the game wins:
            it is the one that does something the instant you press it. -->
+      <!-- THE FUNNIEST PHOTOGRAPH, WHILE THE ROOM IS VOTING. Above the menu
+           because it is the thing the host has just asked the room out loud to
+           do, and it is over in a minute — and INSIDE the waiting screen,
+           which is what makes it structurally impossible for it to land over a
+           question. -->
+      ${photoVoteCard(s)}
       ${gateWanted(s) ? photoGate() : gapMenu(s, { photosFirst: false })}
     </div>
   `);
   wireTeamPicker(el, s);
+  wirePhotoVote(el, postPhotoVote);
   if (gateWanted(s)) wirePhotoGate(el, s); else wireGapMenu(el, s);
   paintStartsIn(s);
   return el;
@@ -1322,6 +1339,19 @@ function buildWaiting(s, kicker, title, sub) {
  * serves two screens which hold their own identity, and it has no business
  * knowing about either.
  */
+/**
+ * ONE VOTE FOR THE FUNNIEST PHOTOGRAPH.
+ *
+ * The token rides like every other player action (rule 3): this decides who
+ * gets a drink, so a post that could name somebody else is a ballot anybody in
+ * the room could stuff. A failure is swallowed — the tile is already lit and
+ * the next state push is the truth — because an alert over a vote somebody
+ * casts in a noisy pub is worse than a vote that quietly did not land.
+ */
+const postPhotoVote = (photoId) => postJson('/api/photo-vote', {
+  playerId: me.id, token: me.token, joinCode: roomCode(), photoId,
+}).catch(() => {});
+
 const postArcadeScore = (score, game = '') => postJson('/api/arcade', {
   // `game` is which of them they were playing — a LABEL for the projector's
   // board, never a permission. The room can pick its own game now, so a board

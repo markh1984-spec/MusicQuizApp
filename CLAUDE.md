@@ -868,59 +868,71 @@ they say next.
 
 ### THE DRINKS STAY IN THEIR POCKET — across nights, and with no login
 
-*"Drinks that they keep in their account on their phone so they can redeem them
-throughout the night"*, then the correction that mattered: *"the app already
-remembers phones from previous weeks including their name, so I don't understand
-why it can't just remember the drinks they've won as well?"*
+*"the app already remembers phones from previous weeks including their name, so
+I don't understand why it can't just remember the drinks they've won as well?"*
 
-- **"A PHONE HAS NO ACCOUNT" WAS THE WRONG ANSWER** — a phone has kept its id,
-  token and team name since rule 3. The real reason was narrower:
-  **`/api/voucher` and `/api/voucher/redeem` read the LIVE game's state, which
-  the next launch replaces.** `src/wallet.js` falls back to the filed nights.
-- **NOTHING NEW IS STORED** — `results()` has filed the vouchers into every
-  archived night since the bar started scanning. **The archive already survives
-  the deploys that wipe `data/`; a new store would earn that from scratch.**
-- **THE LIVE GAME IS ASKED FIRST, IN BOTH ROUTES AND IN THAT ORDER.** A pub
-  night takes the path it always took — and archive-first would let a filed
-  copy be taken while the live one still reads as owed: two drinks for one win.
-  **`already` is NOT a reason to fall through.**
+- **NOTHING NEW IS STORED** — `/api/voucher` read the LIVE state, which the next
+  launch replaces; `src/wallet.js` falls back to the nights `results()` has
+  filed since the bar started scanning. **A new store would have to earn
+  surviving a deploy from scratch.**
+- **THE LIVE GAME IS ASKED FIRST, IN BOTH ROUTES AND IN THAT ORDER** —
+  archive-first lets a filed copy be taken while the live one still reads as
+  owed: two drinks for one win. **`already` is NOT a reason to fall through.**
 - **A VOUCHER REACHES THE ARCHIVE WHEN THE NIGHT IS FILED.** A night abandoned
-  by launching the next thing over the top has no record and never had one —
-  the same deal the scores, the headcounts and the league have always had.
-- **THE PHONE REMEMBERS THE CODE AND NOTHING ELSE** — the words, the venue and
-  whether it is spent come back from the server every load, so it cannot carry a
-  lie to a bar. **`musicquiz.drinks`, NEVER `STORE_KEY`, and that is rule 5**:
-  being removed from tonight's quiz must not destroy last Thursday's drink.
-  **The room rides with the code.** **A 404 drops it; a request that FAILED does
-  not.**
-- **MERGED IN `draw()`, so `wallet()` and `paintVouchers()` both draw them** —
-  one list, two engines. **Tonight's copy wins on a clash.**
-- **AND THE WALLET BUTTON STAYS DELETED.** `drinks-in-your-pocket.mjs` still
-  says a held code is drawn at every phase of a night, so a chip has no moment
-  to exist in. **Do not build one without running that guard and finding a
-  gap.** `drinks-keep.mjs` is the across-nights half, and it relaunches.
-- **THEY NEVER EXPIRE, BY DECISION.** The card carries the date won, so a bar
-  can judge an old one; the app does not decide for the venue.
-- **IT IS A SECTION CALLED *My prizes*, AND IT IS SHUT.** A QR is square, so
-  one at a lobby pushed the game and the camera below the fold and on a bingo
-  card pushed the squares off the screen — *"it needs to be collapsible so they
-  can still interact with the app even when they have drinks."* **ONE fold, not
-  one per prize**: three carets is three decisions at a bar, and somebody at the
-  till wants all their codes. **The count is in the shut row**, the only
-  thing said about what is behind it.
-- **IT OPENS ITSELF WHEN A PRIZE IS WON AND NEVER AGAIN** — `noteDrinks()`
-  seeds on the FIRST draw, so what the phone arrived holding stays shut and what
-  lands while you watch fills the screen. **That is what keeps the on-the-night
-  guards honest.**
+  by launching over the top has no record and never had one.
+- **THE PHONE REMEMBERS THE CODE AND NOTHING ELSE**, so it cannot carry a lie to
+  a bar. **`musicquiz.drinks`, NEVER `STORE_KEY`, and that is rule 5.** **The
+  room rides with the code.** **A 404 drops it; a request that FAILED does not.**
+- **MERGED IN `draw()`** — one list, two engines. **Tonight's copy wins.**
+- **AND THE WALLET BUTTON STAYS DELETED** — a held code is drawn at every phase
+  of a night, so a chip has no moment to exist in. **Do not build one without
+  running `drinks-in-your-pocket.mjs` and finding a gap.** `drinks-keep.mjs` is
+  the across-nights half, and it relaunches.
+- **THEY NEVER EXPIRE, BY DECISION** — the card carries the date won; the app
+  does not decide for the venue.
+- **IT IS A SECTION CALLED *My prizes*, AND IT IS SHUT** — a QR is square and
+  pushed the game, the camera and the bingo squares off the screen. **ONE fold,
+  not one per prize**; **the count is in the shut row.**
+- **IT OPENS ITSELF WHEN A PRIZE IS WON AND NEVER AGAIN** — `noteDrinks()` seeds
+  on the FIRST draw, which is what keeps the on-the-night guards honest.
 - **A COLLECTED PRIZE DISAPPEARS, WHICH REVERSES THE PINNED RECEIPT RULE.**
-  Right when a code lived one night; kept for ever it is a dead card above a
-  live one. **The evidence did not move** — the host's panel and the filed night
-  hold every voucher. **The phone forgets the code too.**
+  **The evidence did not move** — the host's panel and the filed night hold
+  every voucher. **The phone forgets the code too.**
 - **THE FOLD IS A MODULE BINDING IN `client.js`, NEVER THE MARKUP** — the bingo
-  card repaints on every mark, so a section holding its own state shuts itself
-  under a thumb. **ONE document listener**, and **the press toggles the
-  ELEMENT.** **The fold is part of `paintVouchers()`'s key**, or opening it and
-  marking a square shuts it again.
+  card repaints on every mark. **ONE document listener**, **the press toggles
+  the ELEMENT**, and **the fold is part of `paintVouchers()`'s key.**
+
+
+### THE FUNNIEST PHOTOGRAPH — you shortlist four, the room votes, the winner gets a drink
+
+`src/photo-vote.js` (one file, THREE engines), `state.photoVote`, `node
+scripts/funniest-photo.mjs`. *"the funniest photo of the night getting a free
+drink… perhaps you could let the crowd vote on their favourite as well?"*
+
+- **FOUR, PICKED BY A HUMAN AT A BREAK** — a vote over everything sent puts
+  every photograph up for public judgement. **A sender already holding a voucher
+  is MARKED, never removed**: the app must not overrule a vote not yet cast.
+- **A FLAG, NOT A PHASE (rule 9) — BUT A MOVE SETTLES IT RATHER THAN CLEARING
+  IT**, which would throw away what forty people just did, in silence.
+  **`start()` was the move missing the call**; `advanceOrder()` settles first.
+- **NO RUNNING TALLY ON THE WALL** — structural, `voteForScreen()` never builds
+  the field: a count six feet wide makes the last twenty voters followers. **Nor
+  the CODE, nor any sender's player id, on any wire** (rule 3) — the guard
+  sweeps the WHOLE payload, a named check only ever catching the field somebody
+  thought of.
+- **THE PRIZE IS THE LAST ON THE TABLE AND IS NAMED ON THE BUTTON** — no floor
+  like the draw's, a host reading *"winner gets: A pint"* being able to see he is
+  about to give away third place's.
+- **A TIE IS BROKEN AT RANDOM, ONCE, IN THE STATE.** **NOBODY VOTING IS NOT
+  SOMEBODY WINNING.**
+- **SHARED, BECAUSE `engine-contract.test.js` FORCED THE DECISION** — a DJ set is
+  where a photograph IS the currency, so a `kind` gate would be *a kind test
+  written when there were two games* for the fourth time. **A DJ set mints no
+  voucher.** `funny: true`/`place: null`, **skipped by
+  `withdrawVouchersNoLongerOwed()`**, **no `round` stamp** so bingo cannot hold
+  it back. **`pub-unchanged` says IDENTICAL and is silent about all of it.**
+
+Full reasoning: **[`docs/gigs/photos.md`](docs/gigs/photos.md)**.
 
 ### A WORD IN ONE EAR — `src/notes.js`, one phone and never the room
 
@@ -4058,6 +4070,7 @@ node scripts/sign-in-link.mjs           # forgot your password — can you get i
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 node scripts/photo-to-socials.mjs       # can a pub save a photo, with your name on?
 node scripts/photo-to-start.mjs         # is the photo ask real, and the skip?
+node scripts/funniest-photo.mjs         # does the room's vote reach a drink?
 ```
 
 **The rules these commands run on, and each was learned expensively — the full

@@ -30,6 +30,7 @@ import * as chat from './chat.js';
 import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
 import { noteForPlayer, notesForHost } from './notes.js';
+import { castVote, closeVote, dropVote, openVote, voteForHost, voteForPlayer, voteForScreen } from './photo-vote.js';
 import { breakNow, offersGame, offersPhotos, showsScores, showsAdverts } from '../public/assets/break-parts.js';
 import { dealInto, MAX_TEAMS } from './teams.js';
 // For faceKey — a player's public handle, derived one way from their id.
@@ -211,6 +212,14 @@ export class Engine {
        */
       photoLink: null,
       photoSlide: false,
+      /*
+       * THE FUNNIEST PHOTOGRAPH, PUT TO THE ROOM — `src/photo-vote.js`.
+       *
+       * `null` on every ordinary night, which is what keeps this out of every
+       * payload that is not having one: the view builders return early rather
+       * than sending an empty shape, so `pub-unchanged` still says IDENTICAL.
+       */
+      photoVote: null,
       /*
        * MAY THE ROOM ASK FOR A ROUND at the end? Set at launch like the look
        * and the card shape, and off unless the account holds it — so a night
@@ -1154,6 +1163,14 @@ export class Engine {
 
   start() {
     if (this.rounds.length === 0) return false;
+    /*
+     * KICKING OFF IS A MOVE, and it is the one a vote is most likely to be
+     * open across: the break this was built for is the ten minutes BEFORE the
+     * first question, so *Start* is the button that ends it. Found by the
+     * guard rather than by reasoning — `next()`, `back()` and `askQuestion()`
+     * had it and the one door the room actually walks through did not.
+     */
+    this.settlePhotoVote();
     // The rules come first, unless a pack says otherwise.
     this.state.phase = this.quiz.showRules === false ? PHASES.ROUND_INTRO : PHASES.RULES;
     this.state.roundIndex = 0;
@@ -1235,9 +1252,124 @@ export class Engine {
     this.state.photoSlide = wanted;
     // Two things cannot be on one projector — the same rule the scoreboard and
     // the adverts already keep between themselves.
-    if (wanted) { this.state.scoreboard = false; this.state.advert = null; }
+    if (wanted) { this.state.scoreboard = false; this.state.advert = null; this.settlePhotoVote(); }
     this.changed();
     return { ok: true, photoSlide: wanted };
+  }
+
+  /**
+   * THE FUNNIEST PHOTOGRAPH OF THE NIGHT, PUT TO THE ROOM.
+   *
+   * The model and every decision in it are in `src/photo-vote.js`, shared with
+   * the bingo engine because a break happens on a bingo night too. What is
+   * here is the three things only an engine can answer: when it is refused,
+   * what the prize is, and where the code comes from.
+   *
+   * **REFUSED OVER A LIVE QUESTION**, exactly as the scoreboard and an advert
+   * are, and for the sharper version of the same reason: this one asks the room
+   * to TAP something, and twenty seconds with four options on it is the one
+   * moment in the night that belongs to the quiz.
+   */
+  openPhotoVote(photos) {
+    if (this.state.phase === PHASES.QUESTION && !this.state.question?.closed) {
+      return { ok: false, reason: 'question_live' };
+    }
+    const out = openVote(this.state, photos, this.now());
+    if (!out.ok) return out;
+    // Two things cannot be on one projector — rule 9, and the pairing that
+    // has already been got wrong once by only being written one way.
+    this.state.scoreboard = false;
+    this.state.advert = null;
+    this.state.photoSlide = false;
+    this.changed();
+    return out;
+  }
+
+  /**
+   * WHAT IT IS PLAYING FOR — the last prize on the table, and it is NAMED on
+   * the button that opens the vote.
+   *
+   * The lucky dip's own choice (`drawLuckyDip()`) and the same argument: the
+   * last prize is the smallest, and the smallest is what a raffle prize
+   * actually is. What is deliberately NOT copied is that draw's floor of three
+   * prizes, because the two are reached differently — a draw happens by itself
+   * at the final, where nobody can see what it is about to give away, and this
+   * happens because a host pressed a button with the prize written on it.
+   *
+   * **A HUMAN READING THE PRIZE BEATS A RULE GUESSING AT IT.** With three
+   * prizes up this offers third place's, which on some nights is exactly right
+   * and on others is a drink the venue did not budget for — and the person who
+   * knows which is the one holding the microphone. So it is on the control, and
+   * a night with nothing on the table says so rather than minting a code the
+   * bar will not honour.
+   */
+  photoVotePrize() {
+    const prizes = this.rewardList();
+    return prizes.length ? prizes[prizes.length - 1] : '';
+  }
+
+  /**
+   * Close it, name the winner, mint the drink.
+   *
+   * Idempotent, because everything that can reach it can happen twice: a second
+   * press, a reconnecting console, and every move the host makes below.
+   */
+  closePhotoVote() {
+    const v = this.state.photoVote;
+    if (!v) return { ok: false, reason: 'no_vote' };
+    if (!v.open) return { ok: true, winner: v.winner };
+    const out = closeVote(this.state, {
+      now: this.now(),
+      random: this.random,
+      reward: this.photoVotePrize(),
+      venue: this.state.venue || '',
+      newCode: newVoucherCode,
+    });
+    this.changed();
+    return out;
+  }
+
+  /**
+   * PRESSING ON CLOSES IT; IT DOES NOT THROW IT AWAY.
+   *
+   * This is the one place the vote differs from the other three flags, and the
+   * difference is deliberate. A scoreboard cleared by a move has lost nothing
+   * and can be put straight back. A vote cleared by a move has thrown away what
+   * forty people in a room just did, silently, because the host pressed Next —
+   * and there is no putting that back.
+   *
+   * So every move and every other overlay settles it on the way past: the
+   * tally is taken, the winner is named and the drink is minted. The projector
+   * has moved on, which is fine — the host's own panel says who won and the
+   * code is already on their phone.
+   */
+  settlePhotoVote() {
+    if (this.state.photoVote && this.state.photoVote.open) this.closePhotoVote();
+  }
+
+  /**
+   * A PHONE PICKS ONE.
+   *
+   * Keyed by the BOARD row, not the handset — one entity per board row
+   * everywhere (`boardIdFor()`). A table of four phones would otherwise carry
+   * four votes against a table of one, which is the exact arithmetic team
+   * scores are averaged to avoid.
+   */
+  castPhotoVote(playerId, photoId) {
+    return castVote(this.state, this.boardIdFor(playerId), photoId);
+  }
+
+  /**
+   * Take it down without deciding anything — the host's escape hatch.
+   *
+   * Its own button and its own word, because it is the only thing in the
+   * feature that destroys a room's votes, and a control that does that may not
+   * share a label with one that does not.
+   */
+  dropPhotoVote() {
+    const out = dropVote(this.state);
+    this.changed();
+    return out;
   }
 
   /**
@@ -1267,7 +1399,7 @@ export class Engine {
      * button said the scores were up — and pressing it again did nothing,
      * because the flag it toggles was already right.
      */
-    if (wanted) { this.state.advert = null; this.state.photoSlide = false; }
+    if (wanted) { this.state.advert = null; this.state.photoSlide = false; this.settlePhotoVote(); }
     this.changed();
     return { ok: true, scoreboard: wanted };
   }
@@ -1298,6 +1430,7 @@ export class Engine {
     // the third, which only ever cleared the other two. See `showScoreboard()`.
     this.state.scoreboard = false;
     this.state.photoSlide = false;
+    this.settlePhotoVote();
     this.changed();
     return { ok: true, advert: this.state.advert };
   }
@@ -1310,6 +1443,8 @@ export class Engine {
     this.state.scoreboard = false;
     this.state.advert = null;
     this.state.photoSlide = false;
+    // A vote is SETTLED rather than cleared — see `settlePhotoVote()`.
+    this.settlePhotoVote();
     const seconds = this.questionSeconds();
     const startedAt = this.now();
     this.state.phase = PHASES.QUESTION;
@@ -1387,6 +1522,9 @@ export class Engine {
     // without it — the reason rule 9 makes these flags rather than phases is
     // that a move puts the quiz back on screen.
     s.photoSlide = false;
+    // …and a VOTE is settled rather than cleared, because clearing one throws
+    // away what the room just did. See `settlePhotoVote()`.
+    this.settlePhotoVote();
     switch (s.phase) {
       case PHASES.LOBBY:
         return this.start();
@@ -1461,6 +1599,7 @@ export class Engine {
     this.state.question = null;
     this.state.scoreboard = false;
     this.state.advert = null;
+    this.settlePhotoVote();
     // A night stopped early still has a winner, so it still has a voucher —
     // and the people who stayed to the end still stayed to the end.
     this.issueVouchers();
@@ -1579,7 +1718,11 @@ export class Engine {
    * A `draw` voucher is untouched — `drawLuckyDip()` decides once, in the
    * state, precisely so a room cannot be told two different names. So is a
    * `carried` one: it was won earlier tonight, in another part, and this
-   * board has nothing to say about it.
+   * board has nothing to say about it. **And so is a `funny` one**, for the
+   * strongest version of that reason: the room VOTED for it, out loud, at a
+   * break — this pass reads the scoreboard, which has nothing whatever to say
+   * about whose photograph was the funniest, and without the exemption it
+   * would delete a live code the moment the final scores went up.
    */
   withdrawVouchersNoLongerOwed() {
     const s = this.state;
@@ -1592,7 +1735,7 @@ export class Engine {
       owed.set(row.id, row.position);
     }
     for (const [code, v] of Object.entries(s.vouchers || {})) {
-      if (v.draw || v.carried || v.redeemedAt) continue;
+      if (v.draw || v.funny || v.carried || v.redeemedAt) continue;
       if (owed.get(v.winnerId) === v.place) continue;
       delete s.vouchers[code];
     }
@@ -1847,6 +1990,9 @@ export class Engine {
     // without it — the reason rule 9 makes these flags rather than phases is
     // that a move puts the quiz back on screen.
     s.photoSlide = false;
+    // …and a VOTE is settled rather than cleared, because clearing one throws
+    // away what the room just did. See `settlePhotoVote()`.
+    this.settlePhotoVote();
     switch (s.phase) {
       case PHASES.REVEAL:
         // Back from a reveal reopens the same question, cleared, from the top.
@@ -2542,6 +2688,17 @@ export class Engine {
     // The scoreboard rides over whatever else is on screen, so the leaderboard
     // has to be there for it to draw.
     view.scoreboard = Boolean(s.scoreboard);
+
+    /*
+     * THE FUNNIEST PHOTOGRAPH, ON THE BIG SCREEN — `src/photo-vote.js`.
+     *
+     * `voteForScreen()` IS the whitelist: it names every field it sends, so
+     * the sender's player id and the live counts cannot reach a payload that
+     * anybody holding the join code can read. Absent on every night that is
+     * not having one, which is what keeps an ordinary payload byte-identical.
+     */
+    const vote = voteForScreen(s);
+    if (vote) view.photoVote = vote;
     if (s.scoreboard) view.leaderboard = this.leaderboard().map(publicPlayer);
 
     // An advert is looked up by the server rather than carried in state, so
@@ -3063,6 +3220,16 @@ export class Engine {
     const note = noteForPlayer(s, playerId);
     if (note) view.note = note;
 
+    /*
+     * THE FOUR TO TAP, AND WHICH ONE THIS PHONE PICKED.
+     *
+     * Keyed by the BOARD row rather than the handset — one entity per row
+     * everywhere (`boardIdFor()`), or a table of four outvotes a table of one
+     * four times over, which is the same arithmetic teams are averaged for.
+     */
+    const vote = voteForPlayer(s, this.boardIdFor(playerId));
+    if (vote) view.photoVote = vote;
+
     const VOUCHER_PHASES = new Set([PHASES.LOBBY, PHASES.RULES, PHASES.ROUND_INTRO,
       PHASES.ROUND_BOARD, PHASES.FINAL]);
     if (VOUCHER_PHASES.has(s.phase) && s.vouchers) {
@@ -3073,7 +3240,17 @@ export class Engine {
         .map((v) => ({
           code: v.code,
           name: v.name,
-          ...(v.draw ? { draw: true, place: null } : { place: v.place || 1 }),
+          ...(v.draw ? { draw: true, place: null } : {}),
+          /*
+           * THE FUNNIEST PHOTOGRAPH'S DRINK SAYS SO.
+           *
+           * Without it the card downstream reads `place || 1` and tells
+           * somebody who came eleventh that they won the quiz — which is the
+           * app contradicting the projector on the one screen they are about
+           * to hold up at a bar.
+           */
+          ...(v.funny ? { funny: true, place: null } : {}),
+          ...(v.draw || v.funny ? {} : { place: v.place || 1 }),
           reward: v.reward,
           venue: v.venue,
           ...(s.venueLogo ? { logo: s.venueLogo } : {}),
@@ -3102,7 +3279,9 @@ export class Engine {
            * eleventh that they had won the quiz, in a room that had just
            * watched somebody else win it.
            */
-          ...(mine.draw ? { draw: true, place: null } : { place: mine.place || 1 }),
+          ...(mine.draw ? { draw: true, place: null } : {}),
+          ...(mine.funny ? { funny: true, place: null } : {}),
+          ...(mine.draw || mine.funny ? {} : { place: mine.place || 1 }),
           reward: mine.reward,
           venue: mine.venue,
           /*
@@ -3250,6 +3429,23 @@ export class Engine {
     // What has been said to whom, and whether it landed. Host only.
     const notes = notesForHost(s);
     if (Object.keys(notes).length) view.notes = notes;
+    /*
+     * THE LIVE COUNTS, HOST ONLY — `whoPicked()`'s own arrangement. A running
+     * tally on the projector turns a vote into a bandwagon; the person on the
+     * microphone is the one whose next sentence depends on the numbers.
+     */
+    const vote = voteForHost(s);
+    if (vote) view.photoVote = vote;
+    // What the vote is playing for, so the control can NAME it before it is
+    // pressed rather than after — see `photoVotePrize()`.
+    /*
+     * SPREAD IN ONLY WHEN THERE IS ONE — the draw's and the comeback band's
+     * own arrangement. An empty string on every host payload of every night is
+     * a byte `pub-unchanged` is right to shout about, and the control reads a
+     * missing field exactly as it reads an empty one.
+     */
+    const prize = this.photoVotePrize();
+    if (prize) view.photoVotePrize = prize;
     view.vouchers = Object.values(s.vouchers || {});
     view.rewards = this.rewardList();
 

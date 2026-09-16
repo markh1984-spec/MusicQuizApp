@@ -6,7 +6,7 @@
  * refresh into a better card. Reloading just fetches the same one back.
  */
 
-import { esc, node, postJson, roomCode, prizesShowing, prizesHead } from './client.js';
+import { esc, node, postJson, roomCode, prizesShowing, prizesHead, photoVoteCard, wirePhotoVote } from './client.js';
 import { arcadeCard, wireArcade } from './lobby-menu.js';
 import { isRed } from './deck.js';
 import { cardFaceSvg, ensureCardArt } from './card-face.js';
@@ -14,7 +14,15 @@ import { cardFaceSvg, ensureCardArt } from './card-face.js';
 let marking = new Set(); // squares tapped but not yet confirmed by the server
 
 export function bingoKey(s) {
-  return `bingo:${s.phase}:${s.round}:${s.target}:${s.stage ? s.stage.index : 0}`;
+  /*
+   * AND THE VOTE IS IN THE FINGERPRINT — *a card key is a fingerprint of what
+   * it draws, never one field of it.* The funniest-photo card is drawn above
+   * the bingo card, so a key naming only the phase and the round says nothing
+   * changed at the moment four photographs go up and the host asks the room
+   * out loud to tap one.
+   */
+  const vote = s.photoVote ? (s.photoVote.open ? ':vote' : ':voted') : '';
+  return `bingo:${s.phase}:${s.round}:${s.target}:${s.stage ? s.stage.index : 0}${vote}`;
 }
 
 /**
@@ -34,6 +42,17 @@ function lineWording(s) {
   if (needs === 'full') return 'Get a full house';
   return needs > 1 ? `Get ${needs} full ${rows === cols ? 'lines' : which + 's'}` : `Get a full ${which}`;
 }
+
+/**
+ * One vote for the funniest photograph, with the token on it (rule 3).
+ *
+ * A tiny factory rather than a bare function because this module is handed
+ * `me` per call and has no module-level identity of its own — the same reason
+ * `postArcadeScore` is passed IN to the shared lobby card.
+ */
+const votePoster = (me) => (photoId) => postJson('/api/photo-vote', {
+  playerId: me.id, token: me.token, joinCode: roomCode(), photoId,
+}).catch(() => {});
 
 export function renderBingo(s, me) {
   /*
@@ -75,11 +94,13 @@ export function renderBingo(s, me) {
         <h1 class="grad-text">${esc(s.you ? s.you.name : '')}</h1>
         <p>Your card is ready. It appears the moment the first song plays.</p>
         <p class="muted" style="font-size:14px">This card is yours for the whole round — it will not change.</p>
+        ${photoVoteCard(s)}
         <div class="wait-menu">${arcadeCard(s)}</div>
       </div>`);
     wireArcade(el, s, (score, game = '') => postJson('/api/arcade', {
       playerId: me.id, token: me.token, joinCode: roomCode(), score, game,
     }).catch(() => {}));
+    wirePhotoVote(el, votePoster(me));
     return el;
   }
 
@@ -102,6 +123,11 @@ export function renderBingo(s, me) {
   const hand = s.game === 'cards';
   const el = node(`
     <div class="bingo-wrap">
+      <!-- THE FUNNIEST PHOTOGRAPH, ABOVE THE CARD. A bingo night's break is
+           the same break a quiz has, and the card is not a question with a
+           clock on it — nothing is taken away by a panel over the top of it
+           for a minute. -->
+      ${photoVoteCard(s)}
       <div class="bingo-status" id="bingoStatus"></div>
       <div class="bingo-vouchers" id="bingoVouchers"></div>
       <div class="bingo-grid ${hand ? 'hand' : `cols-${cols}${strip}`}"
@@ -110,6 +136,7 @@ export function renderBingo(s, me) {
     </div>`);
 
   el.querySelector('#bingoCall').addEventListener('click', () => claim(el));
+  wirePhotoVote(el, votePoster(me));
   paintCard(el, s, me);
   paintVouchers(el, s);
   return el;

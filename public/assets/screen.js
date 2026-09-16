@@ -88,6 +88,21 @@ const cards = {
    */
   advert: { key: (s) => `ad:${fingerprint(s.advert)}`, render: renderAdvert },
   photos: { key: () => 'photos', render: renderPhotosSlide },
+  /*
+   * THE FUNNIEST PHOTOGRAPH, PUT TO THE ROOM.
+   *
+   * **KEYED ON WHAT IT DRAWS, NOT ON ONE FIELD OF IT** — the rule this repo
+   * has five sightings of. The four photographs change when a host bins a vote
+   * and shortlists again, and the whole card changes when it closes, so both
+   * are in the key. The live counts are deliberately NOT: they are not on this
+   * screen at all (see `voteForScreen()`), so nothing here can rebuild while
+   * the room is looking at it.
+   */
+  photoVote: {
+    key: (s) => `vote:${(s.photoVote.photos || []).map((p) => p.id).join(',')}:${
+      s.photoVote.open ? 'open' : 'done'}`,
+    render: renderPhotoVote,
+  },
   round_intro: { key: (s) => `intro:${s.roundIndex}`, render: renderRoundIntro },
   /*
    * AND THE QUESTION ITSELF IS IN THE KEY, or a CORRECTION never reaches the
@@ -274,7 +289,15 @@ function draw(next) {
 
   // The scoreboard is shown over whatever the quiz is doing, without moving
   // it. Picked here rather than as a phase so there is nothing to undo.
-  const card = state.advert && state.advert.heading !== undefined
+  /*
+   * THE VOTE WINS OVER EVERYTHING, and it can only ever be up when nothing
+   * else is: `openPhotoVote()` clears the other three flags and each of them
+   * settles it, so this is first in the chain to say so rather than to break a
+   * tie that cannot happen.
+   */
+  const card = state.photoVote
+    ? cards.photoVote
+    : state.advert && state.advert.heading !== undefined
     ? cards.advert
     : state.scoreboard
       ? cards.scoreboard
@@ -736,6 +759,59 @@ function updateScoreboard(s) {
  * the morning is the truth; "see them now" would be the app lying about its
  * own state, which is the rule the comeback slide already follows.
  */
+
+/**
+ * THE FUNNIEST PHOTOGRAPH — four on the wall, then the winner.
+ *
+ * **NO RUNNING TALLY WHILE IT IS OPEN.** The payload does not carry one, which
+ * makes it structural rather than a rule this file has to keep: a count six
+ * feet wide turns the vote into a bandwagon, and the last twenty people to look
+ * up would be voting on what is winning rather than on what is funny. The
+ * numbers go up WITH the winner, where they are the story instead of an
+ * instruction.
+ *
+ * **THE CODE IS NEVER ON THIS SCREEN.** It is a bearer token for a drink and
+ * this is the one screen in the app that sixty people read at once — the same
+ * reason the draw's code stays off it. The winner's own phone is told.
+ *
+ * **AND A TIE SAYS IT WAS A TIE.** The engine breaks one at random, and a room
+ * that watched 12–12 resolve itself deserves to be told that is what happened
+ * rather than shown a landslide.
+ */
+function renderPhotoVote(s) {
+  const v = s.photoVote;
+  if (!v.open && v.winner) {
+    const w = v.winner;
+    return node(`
+      <div class="winner votewall votewall-won">
+        <div class="kicker">Funniest photo of the night</div>
+        <img class="vw-big" src="${esc(w.url)}" alt="">
+        <h1 class="grad-text">${esc(w.teamName || 'That one')}</h1>
+        <div class="vw-count">${w.votes} of ${w.cast} vote${w.cast === 1 ? '' : 's'}${
+      w.tied > 1 ? ' &mdash; it was a tie' : ''}</div>
+      </div>`);
+  }
+  if (!v.open) {
+    return node(`
+      <div class="winner votewall">
+        <div class="kicker">Funniest photo of the night</div>
+        <h1 class="grad-text">Nobody voted</h1>
+      </div>`);
+  }
+  return node(`
+    <div class="votewall votewall-open">
+      <div class="kicker">Funniest photo of the night</div>
+      <h1 class="grad-text">Vote on your phone</h1>
+      <div class="vw-grid vw-of-${v.photos.length}">
+        ${v.photos.map((p, i) => `
+          <div class="vw-cell">
+            <img src="${esc(p.url)}" alt="">
+            <div class="vw-tag"><b>${i + 1}</b>${p.teamName ? esc(p.teamName) : ''}</div>
+          </div>`).join('')}
+      </div>
+    </div>`);
+}
+
 function renderPhotosSlide(s) {
   const p = s.photoSlide || {};
   const link = String(p.link || '');

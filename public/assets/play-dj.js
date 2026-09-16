@@ -29,7 +29,7 @@
  * live in module bindings, exactly as the bingo card's fold does.
  */
 
-import { esc, node, postJson, roomCode } from './client.js';
+import { esc, node, postJson, roomCode, photoVoteCard, wirePhotoVote } from './client.js';
 
 /**
  * WHO THIS PHONE IS, handed in by `play.js` rather than read back out of
@@ -59,7 +59,9 @@ const SHOW_TRACKS = 5;
  */
 export function djKey(s) {
   const mine = (s.mine || []).map((r) => `${r.id}${r.played ? 'P' : ''}`).join(',');
-  return `dj:${s.phase}:${s.unlocked ? 'on' : 'off'}:${s.left}:${mine}`;
+  // The vote is part of the fingerprint — see the quiz's own note.
+  const vote = s.photoVote ? (s.photoVote.open ? ':vote' : ':voted') : '';
+  return `dj:${s.phase}:${s.unlocked ? 'on' : 'off'}:${s.left}:${mine}${vote}`;
 }
 
 /** The head of the phone — no score on a DJ set, so it says where you are. */
@@ -85,6 +87,9 @@ export function buildDj(s, { openCamera, player }) {
    */
   const el = node(`
     <div class="dj-phone">
+      <!-- THE FUNNIEST PHOTOGRAPH — and on a set it is the most at home it
+           gets, a photograph being the ticket here rather than a side-show. -->
+      ${photoVoteCard(s)}
       <div class="dj-slot dj-slot-camera"></div>
       <div class="dj-slot dj-slot-ask"></div>
       <div class="dj-slot dj-slot-mine"></div>
@@ -94,6 +99,9 @@ export function buildDj(s, { openCamera, player }) {
   el.querySelector('.dj-slot-ask').replaceChildren(askCard(s));
   const mine = mineCard(s);
   if (mine) el.querySelector('.dj-slot-mine').replaceChildren(mine);
+  wirePhotoVote(el, (photoId) => postJson('/api/photo-vote', {
+    playerId: me.id, token: me.token, joinCode: roomCode(), photoId,
+  }).catch(() => {}));
   return el;
 }
 

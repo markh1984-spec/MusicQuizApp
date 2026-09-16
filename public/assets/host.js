@@ -12,7 +12,7 @@
 
 import {
   esc, node, ServerClock, Live, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights,
-  rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote, playsACard,
+  rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote, playsACard, photoVotePanel,
 } from './client.js';
 import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
@@ -124,9 +124,17 @@ async function act(action, body = {}) {
   if (action === lastAct.action && at - lastAct.at < DOUBLE_TAP_MS) return;
   lastAct = { action, at };
   try {
-    await postJson(`/api/host/${action}`, body, { 'X-Host-Key': hostKey });
+    /*
+     * IT HANDS THE ANSWER BACK NOW. Almost every control here is fire-and-
+     * forget and still ignores it, but a refusal that only ever became a toast
+     * left a caller no way to put its own button back or say what to do
+     * instead — and *a control that reports success it did not have is this
+     * repo's commonest fault* has a twin: one stuck on "sending".
+     */
+    return await postJson(`/api/host/${action}`, body, { 'X-Host-Key': hostKey });
   } catch (err) {
     toast(whyRefused(err));
+    return undefined;
   }
 }
 
@@ -239,7 +247,14 @@ function draw(next) {
     ? `${state.playerCount} ${state.playerCount === 1 ? 'phone' : 'phones'} in`
     : `${state.playerCount} playing`;
   connEl.textContent = state.joinCode ? `${inRoom} · code ${state.joinCode}` : inRoom;
-  mainEl.replaceChildren(...restartNotice(state), ...advertPanel(state), ...voucherPanel(state), ...buildPanels(state), ...photoPanel(state));
+  /*
+   * THE FUNNIEST PHOTOGRAPH SITS WITH THE PHOTOGRAPHS, on all three control
+   * views at once — this line is shared by the quiz, the bingo and the DJ desk
+   * (`buildPanels()` is the only part that branches), and photographs belong
+   * to the ROOM rather than to any of them.
+   */
+  mainEl.replaceChildren(...restartNotice(state), ...advertPanel(state), ...voucherPanel(state),
+    ...buildPanels(state), ...photoPanel(state), ...votePanel(state));
   actionsEl.replaceChildren(...buildActions(state));
   /*
    * MAKE ROOM FOR THE BAR THAT SITS ON TOP OF THE PAGE.
@@ -408,6 +423,18 @@ function voucherPanel(s) {
     button.addEventListener('click', () => act(button.dataset.do, { code: button.dataset.code }));
   }
   return [el];
+}
+
+/**
+ * Four photographs to the room, and the tally while they vote.
+ *
+ * The panel itself is `photoVotePanel()` in `client.js`, shared for the reason
+ * `joinQueuePanel()` is: a bingo night and a DJ set have the same break, and
+ * **a page module may not be imported by another page.**
+ */
+function votePanel(s) {
+  const el = photoVotePanel(s, act);
+  return el ? [el] : [];
 }
 
 function photoPanel(s) {

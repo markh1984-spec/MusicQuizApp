@@ -449,6 +449,37 @@ export class Photos {
     return this.state.items.some((p) => p.camera && p.playerId === playerId);
   }
 
+  /**
+   * THE FOUR THE HOST SHORTLISTED, resolved for the vote.
+   *
+   * **THE ONLY PLACE A SENDER'S PLAYER ID LEAVES THIS STORE**, and it goes
+   * exactly one step: into `state.photoVote`, where `photo-vote.js`'s view
+   * builders strip it out again before anything reaches a wire. It is needed
+   * for one thing — minting the winner's drink — and a player id is a bearer
+   * credential (rule 3), so it never gets near the projector's payload.
+   *
+   * **IT KEEPS THE ORDER THE HOST PICKED IN**, rather than the order they were
+   * sent in: the shortlist is four tiles he has just arranged on a screen, and
+   * a vote that reshuffles them under his thumb is a vote he cannot read out.
+   *
+   * An id that names nothing is DROPPED rather than faked, and the caller sees
+   * a short list — which `openVote()` then refuses. A photograph binned between
+   * the shortlist and the press is a real thing on a night, and the honest
+   * answer is a refusal the host can act on, not three tiles and a gap.
+   */
+  shortlist(ids) {
+    const want = (Array.isArray(ids) ? ids : []).map(String);
+    return want
+      .map((id) => this.state.items.find((p) => p.id === id))
+      .filter(Boolean)
+      .map((p) => ({
+        id: p.id,
+        url: `/photos/${p.file}`,
+        teamName: p.teamName,
+        playerId: p.playerId || '',
+      }));
+  }
+
   /** The host sees them whether or not the screen does, so they can be binned. */
   forHost(limit = 60) {
     return this.state.items

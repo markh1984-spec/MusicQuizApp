@@ -672,6 +672,254 @@ export function joinQueuePanel(s, act) {
   return el;
 }
 
+/*
+ * THE FUNNIEST PHOTOGRAPH — the card a phone taps, shared by both games.
+ *
+ * In `client.js` rather than `play.js` because a break happens on a bingo
+ * night too and **a page module may not be imported by another page** — the
+ * rule `notes.js`'s own controls were moved here for. One definition, drawn by
+ * the quiz's waiting screen and by the bingo card's.
+ *
+ * **IT LIVES INSIDE A WAITING SCREEN, WHICH IS WHAT KEEPS IT OFF A QUESTION.**
+ * The engine already refuses to open one over a live question and settles any
+ * open vote as the next question goes up, so this is the belt to that's braces:
+ * there is no phase with a clock on it that draws this card at all.
+ *
+ * **NO COUNTS, OPEN OR CLOSED.** The phone's job is one tap and the result is
+ * the projector's moment — a tally in the hand is the bandwagon the big screen
+ * is already kept clear of.
+ */
+export function photoVoteCard(s) {
+  const v = s && s.photoVote;
+  if (!v) return '';
+  if (!v.open) {
+    if (!v.winner) return '';
+    return `
+      <div class="panel votecard voted-done">
+        <div class="sub">Funniest photo of the night</div>
+        <b class="vote-won">${esc(v.winner.teamName || 'That one')}</b>
+        <span class="tiny">${v.winner.votes} vote${v.winner.votes === 1 ? '' : 's'} — look up.</span>
+      </div>`;
+  }
+  return `
+    <div class="panel votecard">
+      <div class="sub">Funniest photo of the night</div>
+      <span class="tiny">Tap the one that made you laugh. You can change your mind.</span>
+      <div class="vote-grid">
+        ${v.photos.map((p) => `
+          <button class="vote-pic${v.picked === p.id ? ' picked' : ''}" type="button"
+            data-photo="${esc(p.id)}"
+            aria-pressed="${v.picked === p.id ? 'true' : 'false'}"
+            aria-label="Vote for ${esc(p.teamName || 'this photo')}">
+            <img src="${esc(p.url)}" alt="" loading="lazy">
+            ${p.teamName ? `<span class="vote-who">${esc(p.teamName)}</span>` : ''}
+          </button>`).join('')}
+      </div>
+    </div>`;
+}
+
+/**
+ * Wire it up.
+ *
+ * **THE TAP PAINTS ITSELF AND THEN SENDS**, rather than waiting for the state
+ * push to light the tile. A vote is one tap in a noisy room and a button that
+ * does nothing for half a second is one somebody presses again — and on pub
+ * wifi that half second is longer. The server's own answer still wins on the
+ * next push, so an optimistic tick can only ever be early, never wrong.
+ *
+ * @param {Element}  root  where the card was drawn
+ * @param {function} post  the page's own poster: (photoId) => Promise
+ */
+export function wirePhotoVote(root, post) {
+  root.querySelectorAll('.vote-pic').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      root.querySelectorAll('.vote-pic').forEach((b) => {
+        b.classList.remove('picked');
+        b.setAttribute('aria-pressed', 'false');
+      });
+      btn.classList.add('picked');
+      btn.setAttribute('aria-pressed', 'true');
+      post(btn.dataset.photo);
+    });
+  });
+}
+
+/**
+ * THE HOST'S END — pick four photographs and put them to the room.
+ *
+ * Shared for the same reason the card is, and drawn on all three control
+ * views: photographs belong to the ROOM, so every game has them.
+ *
+ * **THE SHORTLIST IS A HUMAN'S AND THIS IS WHERE THE JUDGEMENT HAPPENS.** Two
+ * things the app cannot decide are put in front of him rather than automated:
+ * the four that are actually funny, and whether the person who sent one is
+ * already holding a drink — so a row that belongs to somebody with a live
+ * voucher is MARKED rather than removed. Removing it would be the app
+ * overruling the room's vote before the room has cast it; marking it is the
+ * join flood's own arrangement, where a number a person reads for a second
+ * beats a rule that is confidently wrong.
+ *
+ * **THE PRIZE IS NAMED ON THE BUTTON.** It is the last one on the venue's
+ * list, so on a three-prize night this offers third place's drink — which is
+ * right on some nights and an unbudgeted round on others, and the person who
+ * knows which is the one holding the microphone. A night with nothing on the
+ * table says so and mints nothing.
+ *
+ * @param {object}   s     the host view
+ * @param {function} act   the page's own `act()`
+ */
+export function photoVotePanel(s, act) {
+  const photos = ((s.photos || {}).items) || [];
+  const vote = s.photoVote;
+  const prize = s.photoVotePrize || '';
+
+  if (vote && vote.open) {
+    const el = node(`
+      <div class="panel votepanel">
+        <h3>Funniest photo — the room is voting</h3>
+        <div class="vote-tally">
+          ${vote.photos.map((p) => `
+            <div class="vote-row">
+              <img src="${esc(p.url)}" alt="">
+              <span class="vote-name">${esc(p.teamName || '—')}</span>
+              <b class="vote-n">${p.votes}</b>
+            </div>`).join('')}
+        </div>
+        <div class="tiny">${vote.cast} phone${vote.cast === 1 ? '' : 's'} voted${
+      prize ? ` — winner gets: ${esc(prize)}` : ' — no prize on the table, so no code is issued'}</div>
+        <div class="row">
+          <button class="go" id="voteClose">Close it and name the winner</button>
+          <button class="danger" id="voteDrop">Bin the vote</button>
+        </div>
+      </div>`);
+    el.querySelector('#voteClose').addEventListener('click', () => act('photoVoteClose'));
+    el.querySelector('#voteDrop').addEventListener('click', () => {
+      // The ONE control in the feature that destroys what a room did, so it is
+      // the one that asks. The question names the cost rather than saying
+      // "are you sure" — the publish lamp's own rule.
+      if (confirm('Bin the vote? Everything the room has already voted for is lost and nobody wins.')) {
+        act('photoVoteDrop');
+      }
+    });
+    return el;
+  }
+
+  if (vote && vote.winner) {
+    const w = vote.winner;
+    const el = node(`
+      <div class="panel votepanel">
+        <h3>Funniest photo — ${esc(w.teamName || 'the winner')}</h3>
+        <div class="vote-tally">
+          <div class="vote-row">
+            <img src="${esc(w.url)}" alt="">
+            <span class="vote-name">${w.votes} of ${w.cast} vote${w.cast === 1 ? '' : 's'}${
+      w.tied > 1 ? ` — tied with ${w.tied - 1} other${w.tied === 2 ? '' : 's'}, drawn` : ''}</span>
+          </div>
+        </div>
+        <div class="tiny">${w.code
+      ? `Their drink is on their phone — code ${esc(w.code)}.`
+      : 'No prize was on the table, so no code was issued.'}</div>
+        <div class="row"><button class="btn" id="voteAgain">Run another one</button></div>
+      </div>`);
+    el.querySelector('#voteAgain').addEventListener('click', () => act('photoVoteDrop'));
+    return el;
+  }
+
+  if (vote && !vote.winner) {
+    const el = node(`
+      <div class="panel votepanel">
+        <h3>Funniest photo — nobody voted</h3>
+        <div class="tiny">The vote closed with no votes in it, so nothing was won.</div>
+        <div class="row"><button class="btn" id="voteAgain">Try again</button></div>
+      </div>`);
+    el.querySelector('#voteAgain').addEventListener('click', () => act('photoVoteDrop'));
+    return el;
+  }
+
+  if (photos.length < 2) return null;
+
+  const held = new Set((s.vouchers || []).filter((v) => !v.redeemedAt).map((v) => v.name));
+  const el = node(`
+    <div class="panel votepanel">
+      <h3>Funniest photo</h3>
+      <div class="tiny">Pick four and put them to the room. One tap each, and the
+        winner's drink lands on their phone.</div>
+      <div class="vote-pick">
+        ${photos.slice(0, 40).map((p) => `
+          <button class="vote-thumb" type="button" data-photo="${esc(p.id)}"
+            aria-pressed="false"
+            aria-label="Shortlist ${esc(p.teamName || 'this photo')}">
+            <img src="${esc(p.url)}" alt="" loading="lazy">
+            ${p.teamName ? `<span class="vote-who">${esc(p.teamName)}${
+      held.has(p.teamName) ? ' 🍺' : ''}</span>` : ''}
+          </button>`).join('')}
+      </div>
+      <div class="row">
+        <button class="go" id="voteOpen" disabled>Put it to the room</button>
+      </div>
+      <div class="tiny" id="voteHint">Pick at least two.</div>
+    </div>`);
+
+  const go = el.querySelector('#voteOpen');
+  const hint = el.querySelector('#voteHint');
+  const chosen = [];
+  const repaint = () => {
+    el.querySelectorAll('.vote-thumb').forEach((b) => {
+      const on = chosen.includes(b.dataset.photo);
+      b.classList.toggle('picked', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    go.disabled = chosen.length < 2;
+    /*
+     * THE REASON A CONTROL IS OFF GOES ON THE CONTROL, and the reason it is ON
+     * goes there too — which here means the PRIZE, before the press rather
+     * than after. A host reading "winner gets: a pint" can see he is about to
+     * give away third place's drink; one reading "Put it to the room" cannot.
+     */
+    go.textContent = chosen.length < 2
+      ? 'Put it to the room'
+      : prize ? `Put ${chosen.length} to the room — winner gets: ${prize}`
+        : `Put ${chosen.length} to the room`;
+    hint.textContent = chosen.length < 2
+      ? 'Pick at least two.'
+      : prize ? '' : 'Nothing on the venue’s prize list, so the winner gets named and no code is issued.';
+  };
+
+  el.querySelectorAll('.vote-thumb').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.photo;
+      const at = chosen.indexOf(id);
+      if (at >= 0) chosen.splice(at, 1);
+      // FOUR, and a fifth press is refused rather than dropping the oldest —
+      // silently swapping one out is a shortlist that is not the one he built.
+      else if (chosen.length < 4) chosen.push(id);
+      repaint();
+    });
+  });
+  go.addEventListener('click', async () => {
+    go.disabled = true;
+    try {
+      const out = await act('photoVoteOpen', { ids: chosen });
+      /*
+       * A CONTROL THAT REPORTS SUCCESS IT DID NOT HAVE is this repo's
+       * commonest fault — and a control stuck on "sending" is its twin, which
+       * is why the button comes back in `finally` whatever happened. A refusal
+       * is the route's own 400 and the host page toasts the reason; this says
+       * the one thing the toast cannot, which is what to do next.
+       */
+      if (out && out.ok === false) {
+        hint.textContent = out.reason === 'too_few'
+          ? 'One of those has been binned. Pick again.'
+          : 'That would not go up. Pick again.';
+      }
+    } finally {
+      go.disabled = false;
+    }
+  });
+  repaint();
+  return el;
+}
+
 export function rewardsEditorPopover(s, act) {
   /*
    * ONE AT A TIME, AND THE REASON IS THAT THEY STACK INVISIBLY.

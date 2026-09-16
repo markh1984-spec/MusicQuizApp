@@ -7083,10 +7083,10 @@ async function handleWrite(req, res, url, route) {
   }
 
   // What a phone is allowed to do: answer a question, mark a bingo square and
-  // call house, tap away a message the host sent it, and — on an online night
-  // — say something in one of its own rooms. Nothing else, and nothing that
-  // could hand out a new card.
-  if (['/api/answer', '/api/answer-breakout', '/api/mark', '/api/claim', '/api/wandered', '/api/say', '/api/team', '/api/arcade', '/api/note-read'].includes(route) && req.method === 'POST') {
+  // call house, tap away a message the host sent it, vote for the funniest
+  // photograph of the night, and — on an online night — say something in one
+  // of its own rooms. Nothing else, and nothing that could hand out a new card.
+  if (['/api/answer', '/api/answer-breakout', '/api/mark', '/api/claim', '/api/wandered', '/api/say', '/api/team', '/api/arcade', '/api/note-read', '/api/photo-vote'].includes(route) && req.method === 'POST') {
     const body = await readJson(req);
     const action = route.slice('/api/'.length);
     const result = roomForPhone(req, url, body).session.runPlayerAction(action, body);
@@ -8364,6 +8364,27 @@ async function handleWrite(req, res, url, route) {
         if (result.ok) filed++;
       }
       return sendJson(res, 200, { ok: true, filed, failed: todo.length - filed }), true;
+    }
+    /*
+     * THE FUNNIEST PHOTOGRAPH, PUT TO THE ROOM — `src/photo-vote.js`.
+     *
+     * IT LIVES HERE RATHER THAN IN `session.run()` because the photographs
+     * belong to the ROOM and neither engine has ever known they exist — the
+     * same reason `photosOn` and `photoRemove` are up here. The ids are
+     * resolved against the store and what goes into the game state is four
+     * plain objects, so nothing downstream can reach a photograph it was not
+     * handed.
+     *
+     * **THE IDS ARE VALIDATED AGAINST THE STORE, NEVER TRUSTED** — the
+     * `packId` trap wearing a photograph. An id naming nothing is dropped by
+     * `shortlist()` and the short list is then refused, which is the honest
+     * answer rather than a vote with a hole in it.
+     */
+    if (action === 'photoVoteOpen') {
+      const list = photos.shortlist(body.ids);
+      const out = session.openPhotoVote(list);
+      if (out.ok) pushState(room);
+      return sendJson(res, out.ok ? 200 : 400, out), true;
     }
     if (action === 'photosClear') {
       const n = photos.clear();

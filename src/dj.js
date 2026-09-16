@@ -50,6 +50,7 @@ import {
   cleanTeamName, faceKey, isSafeId, newId, newToken, ownsPlayer,
   MAX_PLAYERS, rememberRemoved, wasRemoved, forgetRemoved,
 } from './engine.js';
+import { castVote, closeVote, dropVote, openVote, voteForHost, voteForPlayer, voteForScreen } from './photo-vote.js';
 
 /**
  * A set has one phase, and that is the point.
@@ -88,6 +89,18 @@ function freshState(now) {
     players: {},
     requests: [],
     removed: {},
+    /*
+     * THE FUNNIEST PHOTOGRAPH, PUT TO THE ROOM — `src/photo-vote.js`.
+     *
+     * **AND IT BELONGS ON A DJ SET MORE THAN ANYWHERE**, which is why this is
+     * here rather than behind a kind check: on a quiz the photographs are a
+     * side-show, and here a photograph is the TICKET — it is the entire
+     * currency of the game. The one thing it does not get is a voucher:
+     * `photoVotePrize()` has no reward list to read, so the winner is named on
+     * the wall and the DJ hands over whatever they were going to hand over.
+     * Silence beats minting a code no bar has agreed to honour.
+     */
+    photoVote: null,
     // Written EXPLICITLY, so ABSENT can mean launched — the same reasoning
     // `state.launched` carries on the quiz.
     launched: false,
@@ -263,7 +276,52 @@ export class DjSet {
     return wasRemoved(this.state, id);
   }
 
+  /**
+   * THE FUNNIEST PHOTOGRAPH — the same five calls both other engines answer.
+   *
+   * They are on the shared contract (`test/engine-contract.test.js`) rather
+   * than behind a kind check, and this file is why the test exists: *a kind
+   * test written when there were two games is a bug waiting for the third.*
+   * The model is `src/photo-vote.js`, shared, so all of this is plumbing.
+   *
+   * **NO PRIZE, AND THEREFORE NO VOUCHER.** A set has no reward list and no
+   * `state.vouchers`, so `closeVote()` names a winner and mints nothing — the
+   * documented degrade rather than a special case.
+   */
+  openPhotoVote(photos) {
+    const out = openVote(this.state, photos, this.now());
+    if (out.ok) this.changed();
+    return out;
+  }
+
+  /** Nothing to read a prize off. Stated rather than absent — see above. */
+  photoVotePrize() { return ''; }
+
+  closePhotoVote() {
+    const v = this.state.photoVote;
+    if (!v) return { ok: false, reason: 'no_vote' };
+    if (!v.open) return { ok: true, winner: v.winner };
+    const out = closeVote(this.state, { now: this.now(), venue: this.state.venue || '' });
+    this.changed();
+    return out;
+  }
+
+  settlePhotoVote() {
+    if (this.state.photoVote && this.state.photoVote.open) this.closePhotoVote();
+  }
+
+  dropPhotoVote() {
+    const out = dropVote(this.state);
+    this.changed();
+    return out;
+  }
+
+  castPhotoVote(playerId, photoId) {
+    return castVote(this.state, playerId, photoId);
+  }
+
   finish() {
+    this.settlePhotoVote();
     this.state.phase = DJ_PHASES.FINISHED;
     this.changed();
     return true;
@@ -388,6 +446,8 @@ export class DjSet {
       // screen draws the QR panel from this exactly as a lobby does.
       invite: 'Send a photo to ask for a song',
       playerCount: Object.keys(this.state.players).length,
+      // The whitelist IS `voteForScreen()` — no sender id, no live counts.
+      ...(voteForScreen(this.state) ? { photoVote: voteForScreen(this.state) } : {}),
     };
   }
 
@@ -413,6 +473,7 @@ export class DjSet {
       mine: mine.map((r) => ({
         id: r.id, artist: r.artist, title: r.title, played: Boolean(r.playedAt),
       })),
+      ...(voteForPlayer(this.state, player.id) ? { photoVote: voteForPlayer(this.state, player.id) } : {}),
     };
   }
 
@@ -445,6 +506,8 @@ export class DjSet {
       unlockedCount: Object.values(this.state.players).filter((p) => (p.photos || 0) > 0).length,
       requests: live.map(row),
       played: done.map(row),
+      // The live counts, host only — the same arrangement on all three games.
+      ...(voteForHost(this.state) ? { photoVote: voteForHost(this.state) } : {}),
     };
   }
 
