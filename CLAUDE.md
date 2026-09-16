@@ -942,29 +942,35 @@ one of the output screens… I would need a second screen for that second QR cod
 and photo uploads."*
 
 - **IT WAS SMALL BECAUSE PHOTOGRAPHS LIVE ON THE ROOM, NOT THE GAME** — no
-  engine, no phase, no game.
+  engine, no phase, no game. **A relaunch therefore does not take the wall with
+  it**, which is what makes a mixed night work.
 - **IT CANNOT SHOW THE QUIZ, STRUCTURALLY** — `wallView()` does not BUILD a
-  question, so nothing hides one. A second output ends up where the host is not
-  standing, so rule 1 has to hold for a third screen. **The guard SWEEPS the
-  projector's payload** rather than naming fields, and **a new role must not
-  fall into `viewFor()`'s `else`, which is the PHONE's.**
-- **A PAGE, NEVER A SECOND `/screen`** — every `role=screen` client in a room
-  gets the identical view, which is right and is exactly why it cannot be one.
-- **AND IT TAKES NO SOUND** — `room.sting` stays `role === 'screen'`, so the
-  soundboard still comes out of the one laptop wired to the PA.
+  question. A second output ends up where the host is not standing, so rule 1
+  has to hold for a third screen. **The guard SWEEPS the projector's payload**
+  rather than naming fields, and **a new role must not fall into `viewFor()`'s
+  `else`, which is the PHONE's.**
+- **A PAGE, NEVER A SECOND `/screen`** — every `role=screen` client gets the
+  identical view, which is right and is why it cannot be one. **AND IT TAKES NO
+  SOUND**: `room.sting` stays `role === 'screen'`, so the soundboard comes out
+  of the one laptop wired to the PA.
 - **A NEW TOP-LEVEL ROUTE GOES IN `RESERVED`** — *The Wall* is a pub name, and
   `test/slugs.test.js` caught it the same hour. Second time that list has paid.
-- **`scrollHeight` IS A LIE ON ANY `body.screen` PAGE, AND THAT IS A RULE FOR
-  THE WHOLE REPO.** `overflow: hidden` CLAMPS the document, so
-  `documentElement.scrollHeight - innerHeight` reads 0 however far the content
-  runs past the bottom — a check written that way passed with a heading set to
-  22vh. **Ask the ELEMENTS where they end** (`getBoundingClientRect().bottom`),
-  which is `console-frame.mjs`'s own distinction on a screen that cannot scroll
-  to reveal the answer. **And fill the grid first**: the same check saw nothing
-  with ONE photograph in, because one row fits anything.
-- **A MEDIA QUERY ADDS NO SPECIFICITY** — the narrow-screen block sat above the
-  rule it overrode and lost at equal specificity, so a correct cap did nothing.
-  FOURTH sighting in this sheet. **Measure after.**
+- **TWO PROJECTOR WINDOWS ON ONE ROOM IS SUPPORTED — `two-screens.mjs`, on a
+  REAL account.** **Every other screen guard runs on the HOST KEY, which is the
+  HOUSE room and has no join code**, so a resolving `?g=`, a second screen on
+  somebody's OWN room and a control view driven from a COOKIE went unmeasured.
+  **`browser.newPage()` opens a fresh incognito context** — the control view
+  401'd and a working button read as missing.
+- **`scrollHeight` IS A LIE ON ANY `body.screen` PAGE — a rule for the whole
+  repo.** `overflow: hidden` CLAMPS the document, so `scrollHeight -
+  innerHeight` reads 0 however far content runs past the bottom; a check written
+  that way passed with a heading set to 22vh. **Ask the ELEMENTS where they
+  end**, `console-frame.mjs`'s own distinction on a screen that cannot scroll to
+  reveal the answer. **And fill the grid first** — it saw nothing with ONE
+  photograph in, because one row fits anything.
+- **A MEDIA QUERY ADDS NO SPECIFICITY** — fourth sighting of equal-specificity
+  source order here: a correct narrow cap sat above the rule it overrode and did
+  nothing. **Measure after.**
 
 Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
 
@@ -4095,6 +4101,7 @@ node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 node scripts/photo-to-socials.mjs       # can a pub save a photo, with your name on?
 node scripts/photo-to-start.mjs         # is the photo ask real, and the skip?
 node scripts/second-screen.mjs          # does a second display show the code and the photos?
+node scripts/two-screens.mjs            # a real account, two outputs, quiz -> bingo -> karaoke
 node scripts/funniest-photo.mjs         # does the room's vote reach a drink?
 ```
 

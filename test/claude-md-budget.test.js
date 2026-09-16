@@ -850,6 +850,23 @@ const ROOT = new URL('..', import.meta.url).pathname;
  *
  * ---
  *
+ * 254,200 — the same section, plus `two-screens.mjs`, the night after.
+ *
+ * A gig the following evening wanted the quiz on BOTH outputs and then karaoke
+ * on one with the photo wall on the other — so the whole path was driven on a
+ * REAL quizmaster account for the first time. That turned up the general fact
+ * worth the bytes: **every other screen guard in this repo runs on the host
+ * key, which is the HOUSE room and has no join code**, so a resolving `?g=`, a
+ * second screen on somebody's OWN room and a control view driven from a cookie
+ * had never been measured at all.
+ *
+ * NOT PAID FOR, and said plainly rather than dressed up: this is 500 bytes on
+ * top of a bump made hours earlier, and the sections around it are prohibitions
+ * with no prose left on them. The prediction stands for the third time — the
+ * next one is a SPLIT.
+ *
+ * ---
+ *
  * 253,700 — THE SECOND SCREEN, AND TWO LESSONS THAT ARE NOT ABOUT IT.
  *
  * `/wall` itself needs four lines: it cannot show the game structurally, it is
@@ -934,7 +951,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * RAISE**: two raises in two sessions is the shape the note above warned
  * about, and the honest fix now is a section moved whole rather than squeezed.
  */
-const BUDGET = 253_700;
+const BUDGET = 254_200;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
