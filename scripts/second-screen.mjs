@@ -161,6 +161,49 @@ try {
     .includes('Back Table'));
   check('and the empty note has gone', await wall.locator('.wall-empty').count() === 0);
 
+  /* --------------------------------------------------------- ONE BUCKET */
+
+  /*
+   * *"I don't want to have two buckets of photos."* There is one, and the proof
+   * is not that both screens SHOW a photograph — two separate stores would look
+   * identical while both filled up. It is that acting on one acts on the other:
+   * the host bins a picture and it leaves BOTH.
+   *
+   * That is the control quietly halved if the wall ever grew a list of its own.
+   * Somebody asks for their photograph to come down, the host presses the bin,
+   * and it goes off the projector while the screen by the door keeps showing
+   * it — which on the night somebody actually asks is the worst half-measure
+   * available.
+   */
+  const projector = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  await projector.goto(`${BASE}/screen${g}`);
+  await projector.waitForTimeout(1600);
+
+  const onBoth = async () => ({
+    projector: await projector.evaluate(() => document.querySelectorAll('.photo-strip .photo').length),
+    wall: await wall.evaluate(() => document.querySelectorAll('.wall-shot').length),
+  });
+
+  const before = await onBoth();
+  check('the SAME photograph is on the projector and the second screen',
+    before.projector === 1 && before.wall === 1, JSON.stringify(before));
+
+  const binned = await host('/api/host/photoRemove', { id: (await wallState()).photos[0].id });
+  check('the host can bin it', binned.status === 200, JSON.stringify(binned.body));
+  await projector.waitForTimeout(1600);
+
+  const after = await onBoth();
+  check('and binning it takes it off BOTH screens',
+    after.projector === 0 && after.wall === 0,
+    `${JSON.stringify(after)} — one control, two screens, or the bin is half a control`);
+  await projector.close();
+
+  /* Put one back, so the checks below still have something to look at. */
+  await fetch(`${BASE}/api/photo?playerId=${player.playerId || player.id}&camera=1${gq}`, {
+    method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: Buffer.from(b64, 'base64'),
+  });
+  await wall.waitForTimeout(1400);
+
   /* ------------------------ the quiz moves and this screen does not follow it */
 
   await host('/api/host/start', {});

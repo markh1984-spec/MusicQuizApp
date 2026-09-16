@@ -264,7 +264,8 @@ function wallView(room) {
   return {
     kind: 'wall',
     open: photosWanted(room),
-    photos: room.photos.forScreen(),
+    // The photographs themselves are hung on by `viewFor()`, on the SAME line
+    // the projector's are — see there for why that sharing is the point.
   };
 }
 
@@ -284,7 +285,27 @@ function viewFor(client) {
     : session.screenView();
   // The wall of photos rides along with whatever else is on screen, so it
   // survives every phase change and every game without each card knowing.
-  if (client.role === 'screen') view.photos = photos.forScreen();
+  /*
+   * ONE BUCKET, AND THE TWO SCREENS SHARE THIS LINE TO SAY SO.
+   *
+   * Asked directly: *"the permanent photos screen and the photo screen that
+   * pops up between rounds — could they both feed into the same thing? I don't
+   * want two buckets of photos."* They always did, and the way to keep it that
+   * way is for there to be nothing to keep in step: ONE store on the room, ONE
+   * `forScreen()`, both roles on one line rather than two that could drift.
+   *
+   * It is also what makes the host's bin mean what it says. `photoRemove` acts
+   * on the store, so a picture binned mid-quiz leaves the projector AND the
+   * second screen on the next push — if the wall ever grew a list of its own,
+   * the one control for taking a photograph down would only work on one of the
+   * two screens showing it, which on a night where somebody has asked is the
+   * worst possible half-measure.
+   *
+   * **THE `wall` ROLE MUST STAY NAMED HERE**, not left to fall through: the
+   * `else` at the bottom is the PHONE's, and a role that lands there is handed
+   * facts about a handset that has joined a game.
+   */
+  if (client.role === 'screen' || client.role === 'wall') view.photos = photos.forScreen();
   else if (client.role === 'host') {
     // `enabled` here is what the room ACTUALLY does, not just the kill switch —
     // otherwise the control view shows photos on while the account preference
@@ -306,17 +327,6 @@ function viewFor(client) {
      */
     view.mayAdvert = can(accounts.find(room.id) || null, FEATURES.ADVERTS);
   }
-  /*
-   * THE SECOND SCREEN TAKES THE PHOTOGRAPHS AND NOTHING ELSE.
-   *
-   * Named rather than left to the `else`, which is the PHONE's branch — a wall
-   * client was falling into it and being handed `photosOpen` and `photoDone`,
-   * facts about a handset that has joined a game. Harmless on the day and
-   * exactly the shape that stops being harmless: the else is where a future
-   * field lands by default, and this role is meant to be told less than every
-   * other one, not more.
-   */
-  else if (client.role === 'wall') view.photos = photos.forScreen();
   else {
     view.photosOpen = photosWanted(room);
     /*
