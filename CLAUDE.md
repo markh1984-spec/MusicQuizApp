@@ -2130,17 +2130,16 @@ for each."* One winner draws no podium and issues one voucher.
   draw and the comeback band, so `pub-unchanged` says IDENTICAL with no
   `--ignore`.
 - **IT CAN ONLY EVER SUBTRACT** — `rewards[position - 1]` still has to find a
-  prize, so a generous setting cannot conjure one.
+  prize.
 - **A STATE OR A SHOW WRITTEN BEFORE THIS EXISTED READS AS THREE**, never as
-  zero: a redeploy mid-season must not change what a running night pays out.
+  zero.
 - **NOBODY SCORED IS NOT EVERYBODY WON.** Equal scores share a position, so an
-  all-zero board is EVERYBODY at position 1 — and paying by position handed **a
-  first-place voucher with a live code to every phone in the room**, which the
-  bar honours. Three ways in: the wrong pack and Stop early, the projector
-  never connecting, and any breakout-only night. **A row scoring zero is
-  skipped** — a FLOOR, so it can only issue fewer.
-- **A TIE FOR FIRST IS STILL PAID IN FULL** — the cap is on POSITION, not on
-  how many rows have been paid.
+  all-zero board is EVERYBODY at position 1 — paying by position handed **a
+  first-place voucher to every phone in the room**. Three ways in: the wrong
+  pack and Stop early, the projector never connecting, and any breakout-only
+  night. **A row scoring zero is skipped** — a FLOOR, so it can only issue
+  fewer.
+- **A TIE FOR FIRST IS STILL PAID IN FULL** — the cap is on POSITION.
 - **`doLaunch()`/`doLaunchOrder()` IN `console-packs.js` DESTRUCTURE A
   WHITELIST, AND A FIELD MISSING FROM IT IS DROPPED IN SILENCE.** `winners` was
   wired through the bar, `night`, both payload builders, the route,
@@ -2158,14 +2157,23 @@ bingo winners on thursday didn't receive a QR code"*.
   venue mints no voucher and the winner's phone is blank. **The warning names
   the CONSEQUENCE and draws with no venue too** — it began `if (!name) return
   null`, switched off in the case it was for.
+- **AND LAUNCH NOW STANDS DOWN WITHOUT THEM — `noPrizesReason()`, asked for
+  after the warning failed to stop it twice.** *A line next to a working
+  button is a line you launch past.* **IT FAILS OPEN AND THAT IS THE WHOLE
+  DECISION**: `null` for anything it is not certain about, because
+  `venueRecords` rides in with the library and **a false block costs the
+  evening where a missed warning costs a voucher**. **ONE GATE, CALLED BY BOTH
+  PAINTERS** — the first build sat in `paintGo()` alone and gated nothing,
+  `paintOrder()` being the painter a burst pack goes through. **THE SERVER
+  STILL LAUNCHES**: a refusal there costs the night.
+  `no-prizes-no-launch.mjs`.
 - **SO PRESSING *Prizes* AFTERWARDS PAYS ANYBODY ALREADY OWED.** Both engines
   said it "takes effect for the NEXT prize onwards" — true, and the bug. **Both
   catch-ups are IDEMPOTENT.**
 - **BINGO KEYS ON THE WIN'S OWN TIMESTAMP, NEVER THE STAGE ALONE** —
-  `newRound()` clears `prizeWinners` and NOT `vouchers`, so *"is stage 1 paid"*
-  alone refuses round two's line winner. **AND "PAID" COMPARES THE WORDS.**
-  **Updated in place, never a second voucher**, and **a REDEEMED one is left
-  alone** — rewriting a spent voucher is editing history.
+  `newRound()` clears `prizeWinners` and NOT `vouchers`. **AND "PAID" COMPARES
+  THE WORDS.** **Updated in place, never a second voucher**, and **a REDEEMED
+  one is left alone.**
 - **THE CARD SHAPE CHOOSES THE PRIZE COUNT, A NUMBER PER SHAPE RATHER THAN A
   FORMULA** — `defaultPrizes()`: 3x3 → 1, 4x4 → 2, 5x5 → 5, 4x6 → 4, 3x8 → 3.
   **The table lives BESIDE the shape, never in the console**, so a sixth names
@@ -2184,17 +2192,15 @@ the prizes."*
 
 - **THE CLAIM IS STILL RIGHT AND IS RECORDED AS RIGHT** — THREE outcomes on
   the control view, not two. **AND NO SENTENCE ON A PHONE MAY SAY "you have
-  already won"**, reverted off the live app once: **the wording is about the
-  PRIZE, never the person.**
+  already won"**: **the wording is about the PRIZE, never the person.**
 - **THE CARDS CANNOT DO THIS ON THEIR OWN, asked for twice** — a card is dealt
-  at JOIN and who wins is decided by the ORDER the host plays the tracks in,
-  which the app never sees. **Read `docs/bingo.md` first.**
+  at JOIN and who wins is decided by the ORDER the host plays the tracks in.
+  **Read `docs/bingo.md` first.**
 - **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert. **NO
   SETTING** — one line to invert if anybody ever asks.
 - **A STAGE CAN ONLY BE TAKEN ONCE — `stageTaken()`, checked BEFORE anything
-  is recorded**, or a second genuine line changes the winner's name on the
-  projector while the prize stays with the first. **The button stands down for
-  EVERYBODY**, and **`tooLate` is a separate flag**.
+  is recorded.** **The button stands down for EVERYBODY**, and **`tooLate` is a
+  separate flag**.
 - **AND THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE** — it is
   `evaluate()`'s shape on MARKS; **the two may not disagree about what the
   prize IS.**
@@ -2206,32 +2212,27 @@ the prizes."*
 - **`Continue to the quiz` IS DRAWN ONCE**, and **bingo's `Finish` STAYS AND
   SAYS WHAT IT COSTS** — a deliberate escape hatch, unlike the quiz's *Stop*.
 - **AND THE ROUND CAN STALL, SO THE CONTROL VIEW SAYS SO — `view.stalled`.**
-  **The rule is NOT lifted**: the host has *Play on*, *New round*, *Finish*.
+  **NOT lifted**: the host has *Play on*, *New round*, *Finish*.
 - **WHEN THE LAST PRIZE GOES THE WHOLE ROOM IS TOLD — `allPrizesGone`.**
   **IT IS NOT THE `WON` PHASE**: it is `onLastStage && stageTaken()`, neither
   half alone. **DRAWN ON EVERY PHONE, not only the winners'.**
 - **THE CODES ARE HELD AND ALL APPEAR TOGETHER AT THE END OF THE ROUND** —
-  **this REVERSES an answer of "both": do not put the trickle back.**
-  **MINTED at the win, held from the PHONE.** **THREE RELEASES, ALL
-  LOAD-BEARING** — the round ending, `Finish`, and an EARLIER `round` or
-  `carried`. **The HOST's panel is never held.**
-- **ONE PRIZE PER PHONE PER BINGO *GAME*, not per round** — *"the same person
-  can't win multiple prizes per quiz or music bingo."* **`state.wonThisGame`,
+  **do not put the trickle back.** **MINTED at the win, held from the PHONE.**
+  **THREE RELEASES, ALL LOAD-BEARING** — the round ending, `Finish`, and an
+  EARLIER `round` or `carried`. **The HOST's panel is never held.**
+- **ONE PRIZE PER PHONE PER BINGO *GAME*, not per round.** **`state.wonThisGame`,
   and `newRound()` MUST NOT CLEAR IT** — one line puts the fault back and looks
   like tidying. **REVERSES two pinned tests.** **The round that cannot pay out
-  is NOT automated away** (`view.noneLeft`). **No "you have already won" on a
-  phone.** **A fresh bingo PART is a fresh game.**
+  is NOT automated away** (`view.noneLeft`). **A fresh bingo PART is a fresh
+  game.**
 - **A CODE STAYS ON THE PHONE UNTIL THE BAR SCANS IT — `view.vouchers` on the
-  QUIZ engine too**: gated on FINAL and sending ONE, a bingo code left the
-  screen at *Continue to the quiz*. **Every live code, at every phase
-  with room, NEVER over a live QUESTION.** **A REDEEMED one now DISAPPEARS from
-  the phone** — reversed 11 September 2026, see *My prizes*; the two engines may
-  not disagree. **`view.voucher` UNCHANGED.**
+  QUIZ engine too.** **Every live code, at every phase with room, NEVER over a
+  live QUESTION.** **A REDEEMED one now DISAPPEARS from the phone** — see *My
+  prizes*; the two engines may not disagree. **`view.voucher` UNCHANGED.**
 - **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS — it reads `quizzes/`
   only, sets no venue and mints no voucher.** IDENTICAL on a bingo change is
-  the guard answering confidently about something it is not looking at, and **a
-  probe aimed at `#bingoVouchers` reads 0 on a QUIZ screen** whatever is drawn.
-  `node scripts/bingo-prizes.mjs` drives three phones over real HTTP instead.
+  the guard answering confidently about something it is not looking at.
+  `bingo-prizes.mjs` drives three phones over real HTTP instead.
 
 Full reasoning, with the measurements: **[`docs/bingo.md`](docs/bingo.md)**.
 
@@ -4171,6 +4172,7 @@ node scripts/second-laptop.mjs          # the wall on a spare laptop
 node scripts/funniest-photo.mjs         # does the room's vote reach a drink?
 node scripts/bar-staff-camera.mjs       # the camera code — same bucket, and nothing else
 node scripts/props-on-a-photo.mjs       # do the googly eyes go on, on BOTH cameras?
+node scripts/no-prizes-no-launch.mjs    # can a night launch with nobody to pay?
 ```
 
 **The rules these commands run on, and each was learned expensively — the full

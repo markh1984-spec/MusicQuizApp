@@ -16,7 +16,7 @@ import {
   moveRoundToSlot, segmentsFromSlots, simpleNight, slotsFromSimple,
 } from './console-tonight-mix.js';
 import { renderSlots } from './console-tonight-mix-ui.js';
-import { lastNightWarning, venuePrizeWarning } from './console-warnings.js';
+import { lastNightWarning, noPrizesReason, venuePrizeWarning } from './console-warnings.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, me, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
 import { nowNextRows } from './console-venues.js';
 import { GAME_KINDS, TABS, can, doorNow, goTo, goToDoor, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone } from './console.js';
@@ -2651,6 +2651,9 @@ export function launchBar() {
     goBtn.textContent = parts
       ? `Launch tonight — ${says || `${parts} part${parts === 1 ? '' : 's'}`}`
       : 'Tap a pack to launch';
+    // The button is set here as well as in `paintGo()`, so the gate is asked
+    // here as well — see `standDownWithoutPrizes()`.
+    standDownWithoutPrizes();
     paintInTonight();
   }
 
@@ -3197,6 +3200,35 @@ export function launchBar() {
       return;
     }
     goBtn.textContent = `Launch tonight — ${packs.length} packs, ${rounds} round${rounds === 1 ? '' : 's'}`;
+    standDownWithoutPrizes();
+  }
+
+  /**
+   * NOTHING TO GIVE THE WINNER IS A REASON NOT TO LAUNCH — asked for after a
+   * night where the winners got a blank phone: *"a prompt that doesn't allow
+   * me to launch without prizes"*. The warning beside the button had existed
+   * since that night and had not stopped it, because a line next to a working
+   * button is a line you launch past.
+   *
+   * **ONE GATE, CALLED BY BOTH PAINTERS, WHICH IS THE WHOLE REASON IT IS A
+   * FUNCTION.** `paintGo()` and `paintOrder()` each set this button's words
+   * and its disabled state, independently — and since a pack BURSTS into a
+   * tile per round, `paintOrder()` is the one an ordinary night goes through.
+   * The first build put the check in `paintGo()` alone and the button never
+   * changed on any real night: the guard caught it, five assertions at once.
+   * Two places doing one job is how they come to disagree.
+   *
+   * **IT ONLY EVER SUBTRACTS.** It never enables a button another painter
+   * disabled, so every existing reason to be hollow still wins — and
+   * `noPrizesReason()` fails OPEN, returning null for anything it is not
+   * certain about, so an unloaded library launches as it always did.
+   */
+  function standDownWithoutPrizes() {
+    if (goBtn.disabled) return;
+    const why = noPrizesReason(venueNow(), library && library.venueRecords);
+    if (!why) return;
+    goBtn.disabled = true;
+    goBtn.textContent = why;
   }
 
   /* THE VENUE STAYS A BUTTON at the head of the bar and is READ here: it is

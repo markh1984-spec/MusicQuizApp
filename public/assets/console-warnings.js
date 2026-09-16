@@ -69,12 +69,50 @@ export function lastNightWarning(me) {
  * gains nothing from being told so, and *space is at a premium*.
  */
 export function venuePrizeWarning(name, venueRecords) {
-  const record = name
-    ? (venueRecords || []).find((v) => (v.name || '').toLowerCase() === String(name).toLowerCase())
-    : null;
-  const prizes = ((record && record.rewards) || []).map((r) => String(r || '').trim()).filter(Boolean);
-  if (prizes.length) return null;
+  if (prizesOn(name, venueRecords).length) return null;
   return node(`<div class="lb-say lb-say-none">No venue prizes set${
     name ? '' : ' — no venue picked'}, so the winners get no voucher to scan${
     name ? ` — add them on ${goTo('workshop', 'venues', 'the Venues tab')}` : ''}</div>`);
+}
+
+/** The prizes actually on a venue record, trimmed and emptied of blanks. */
+function prizesOn(name, venueRecords) {
+  const record = name
+    ? (venueRecords || []).find((v) => (v.name || '').toLowerCase() === String(name).toLowerCase())
+    : null;
+  return ((record && record.rewards) || []).map((r) => String(r || '').trim()).filter(Boolean);
+}
+
+/**
+ * WHY LAUNCH IS OFF, WHEN IT IS OFF FOR WANT OF PRIZES — asked for directly:
+ * *"perhaps a prompt that doesn't allow me to launch without prizes?"*
+ *
+ * The warning above has existed since the night his winners got a blank phone
+ * and it did not stop it happening again, because a line beside a working
+ * button is a line you launch past. This stands the button down instead, which
+ * is the same arrangement the bar already uses for a pack with every round
+ * switched off: *hollow, and saying what it wants.*
+ *
+ * **IT FAILS OPEN, AND THAT IS THE WHOLE ENGINEERING DECISION.** A `null` here
+ * means *launch*, and it is returned for every state except one this is
+ * CERTAIN about. `venueRecords` arrives with the library, so a slow fetch, a
+ * failed one or a payload that never carried the field all leave it undefined
+ * — and blocking on that would kill a night for a reason that is not real, on
+ * the protected path, ten minutes before a room sits down. A missed warning
+ * costs a voucher; a false block costs the evening, and only one of those is
+ * recoverable in a pub.
+ *
+ * **THE REASON AND THE FIX ARE THE SAME SENTENCE**, because the button is
+ * where somebody is looking when they find out — *the reason a control is off
+ * goes on the control*. The `goTo()` link lives in the warning, which is drawn
+ * directly above: a button cannot hold a link, and two of them would be two
+ * controls for one job.
+ */
+export function noPrizesReason(name, venueRecords) {
+  // NOT LOADED IS NOT EMPTY. Only an actual list can say there are no prizes.
+  if (!Array.isArray(venueRecords)) return null;
+  if (prizesOn(name, venueRecords).length) return null;
+  return name
+    ? `No prizes set for ${name} — add them on the Venues tab`
+    : 'Pick a venue with prizes on it';
 }

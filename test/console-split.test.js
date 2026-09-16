@@ -379,6 +379,32 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * opposite was true, which is why the replacement has to say what changed.
  */
 /*
+ * AND TO 4220 ON 16 SEPTEMBER 2026, for ten lines: Launch now stands down
+ * when the venue has no prizes on it, asked for after a night where the
+ * winners got a blank phone and the warning BESIDE the button had not stopped
+ * it — a line next to a working button is a line you launch past.
+ *
+ * The reasoning is deliberately NOT here. `noPrizesReason()` lives in
+ * `console-warnings.js` and carries all of it, including the half that
+ * matters: it fails OPEN, returning null for every state it is not certain
+ * about, because `venueRecords` rides in with the library and blocking on an
+ * unloaded one would kill a night on the protected path for a reason that is
+ * not real. What is in this file is the call and the button's words, which is
+ * the pattern the bar already uses for a pack with every round switched off.
+ *
+ * FORTY rather than the twenty first written here, and the extra twenty is
+ * the interesting half. The check began inline in `paintGo()` and gated
+ * nothing: `paintOrder()` sets the same button's words and disabled state
+ * independently, and since a pack bursts into a tile per round THAT is the
+ * painter an ordinary night goes through. The fix is one
+ * `standDownWithoutPrizes()` both call — a function, and the note saying why
+ * it is one, rather than the same four lines written twice in a file that has
+ * already been bitten by two painters disagreeing.
+ *
+ * Rounded up rather than set to the exact line count, because a cap equal to
+ * the current length makes the next one-line fix a budget negotiation.
+ */
+/*
  * `console-tonight.js` GOES TO 4200 ON 7 SEPTEMBER 2026, for a run of fixes
  * out of the September sweep that all landed in this one file — and each is
  * the kind that only stays fixed if the reasoning is written beside it:
@@ -435,7 +461,7 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * Worth doing on a day with room for it, not at the end of one.
  */
 const BUDGET = {
-  'console-tonight.js': 4200, 'console.js': 2000, 'console-packs.js': 1890,
+  'console-tonight.js': 4240, 'console.js': 2000, 'console-packs.js': 1890,
   'console-account.js': 1620, 'console-community.js': 1620,
 };
 const DEFAULT_BUDGET = 1600;
