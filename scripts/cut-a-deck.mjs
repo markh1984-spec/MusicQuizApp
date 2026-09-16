@@ -92,6 +92,15 @@ const inset = Number(flag('inset', '4')) / 100;
  * and nudging four numbers takes a minute and cannot be confidently wrong.
  */
 const box = flag('box', '').split(',').map(Number).filter((n) => !Number.isNaN(n));
+/*
+ * WEBP BY DEFAULT, because a card is photographic and a deck is fifty-two of
+ * them. Cut as PNG the first full deck came to 19MB, which is a repository
+ * Render re-clones on every deploy and a git history that keeps it for ever —
+ * the same arithmetic the sales page already paid for, where 4.6MB of screens
+ * became 180KB. The app prefers `.webp` over `.png` where both exist, so this
+ * is also the format it would have chosen anyway.
+ */
+const as = flag('as', 'webp') === 'png' ? 'png' : 'webp';
 const into = flag('into', 'asis');
 const folder = { asis: 'asis', full: 'full', mid: '' }[into];
 if (folder === undefined) {
@@ -133,7 +142,7 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 await page.setContent('<body style="margin:0"></body>');
 
-const cut = await page.evaluate(async ({ src, cols, rows, inset, order, box }) => {
+const cut = await page.evaluate(async ({ src, cols, rows, inset, order, box, as }) => {
   const img = new Image();
   await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = src; });
   const [bx, by, bw, bh] = box.length === 4 ? box : [0, 0, img.naturalWidth, img.naturalHeight];
@@ -153,13 +162,16 @@ const cut = await page.evaluate(async ({ src, cols, rows, inset, order, box }) =
       c.width, c.height,
       0, 0, c.width, c.height,
     );
-    out.push({ id: order[i], w: c.width, h: c.height, png: c.toDataURL('image/png').split(',')[1] });
+    out.push({
+      id: order[i], w: c.width, h: c.height,
+      png: c.toDataURL(as === 'webp' ? 'image/webp' : 'image/png', 0.92).split(',')[1],
+    });
   }
   return { sheet: { w: img.naturalWidth, h: img.naturalHeight }, cards: out };
-}, { src, cols, rows, inset, order, box });
+}, { src, cols, rows, inset, order, box, as });
 
 for (const card of cut.cards) {
-  fs.writeFileSync(path.join(outDir, `${card.id}.png`), Buffer.from(card.png, 'base64'));
+  fs.writeFileSync(path.join(outDir, `${card.id}.${as}`), Buffer.from(card.png, 'base64'));
 }
 
 /*
@@ -171,17 +183,17 @@ for (const card of cut.cards) {
  * names written under it.
  */
 await page.setViewportSize({ width: 1240, height: 60 + Math.ceil(cut.cards.length / 10) * 200 });
-await page.evaluate(({ cards, dir }) => {
+await page.evaluate(({ cards, dir, as }) => {
   document.body.style.cssText = 'margin:0;background:#15151f;font:12px system-ui;color:#8d8da0';
   document.body.innerHTML = `<div style="padding:16px">
     <div style="color:#fff;font:600 14px system-ui;margin:0 0 12px">
       ${cards.length} cards → ${dir}</div>
     <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:10px">${cards.map((c) => `
       <div style="text-align:center">
-        <img src="data:image/png;base64,${c.png}" style="width:100%;display:block;border-radius:6px">
+        <img src="data:image/${as};base64,${c.png}" style="width:100%;display:block;border-radius:6px">
         <div style="padding-top:4px">${c.id}</div>
       </div>`).join('')}</div></div>`;
-}, { cards: cut.cards, dir: `public/assets/cards/${folder || ''}` });
+}, { cards: cut.cards, dir: `public/assets/cards/${folder || ''}`, as });
 fs.mkdirSync(path.join(ROOT, 'screenshots'), { recursive: true });
 await page.screenshot({ path: path.join(ROOT, 'screenshots', 'deck-cut.png'), fullPage: true });
 await browser.close();
