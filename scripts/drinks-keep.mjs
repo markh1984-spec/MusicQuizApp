@@ -177,8 +177,15 @@ try {
 
   const belowIt = await page.evaluate(() => {
     /* The camera button is the app carrying on underneath — a control that
-       was genuinely pushed off the bottom by a voucher card. */
-    const btn = [...document.querySelectorAll('.wait-menu button, .wait-menu a, #cameraBtn')]
+       was genuinely pushed off the bottom by a voucher card.
+       AND THE PHOTO GATE COUNTS AS THE APP UNDERNEATH, because at the lobby it
+       REPLACES `.wait-menu` rather than sitting above it — *one camera photo
+       starts the night* shipped after this was written, so the selector found
+       nothing and a working screen read as a prize card having eaten the page.
+       Third guard broken by that gate. What is being asked is whether a
+       voucher pushes the lobby's own controls off the bottom, and on a night
+       with the gate up those controls ARE the gate's. */
+    const btn = [...document.querySelectorAll('.wait-menu button, .wait-menu a, #cameraBtn, .photo-gate button')]
       .filter((el) => el.getBoundingClientRect().height > 0);
     if (!btn.length) return { none: true };
     const el = btn[btn.length - 1];
