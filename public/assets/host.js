@@ -18,6 +18,7 @@ import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 import { djPanels, djActions, djWhere } from './host-dj.js';
 import { cueOffsetMs, formatOffset } from './cue.js';
+import { shrinkPhoto, looksCameraTaken } from './filters.js';
 import { phonesAre } from './phones.js';
 import { STINGS } from './stings.js';
 
@@ -437,6 +438,120 @@ function votePanel(s) {
   return el ? [el] : [];
 }
 
+/**
+ * WHAT THE QUIZMASTER'S OWN UPLOAD IS DOING, IN A MODULE BINDING.
+ *
+ * This panel is rebuilt on every state push — and a photograph landing IS a
+ * state push — so a status line written into the element would be wiped by
+ * the very success it was reporting. Same reasoning as the vouchers fold and
+ * the who-picked-what lists: **it has to live outside the render.**
+ */
+let myPhotoSaid = '';
+
+/**
+ * THE QUIZMASTER'S OWN CAMERA — asked for as *"an app on my phone... that I
+ * take photos and it goes into that same bucket from that same evening."*
+ *
+ * **IT IS ON THE CONTROL VIEW BECAUSE THAT IS ALREADY THE APP IN HIS HAND.**
+ * A separate page would be a second thing to install, a second thing to sign
+ * in to and a second thing to point at the right room, in exchange for a
+ * button this page had space for.
+ *
+ * **IN THE PANEL HEADED *Photos on the big screen*, WHICH IS WHERE IT GOES.**
+ * That panel is on the render line shared by the quiz, the bingo desk and the
+ * DJ desk — photographs belong to the ROOM, not to any of them — so this
+ * draws on a karaoke night with no game loaded, which is the night it is most
+ * wanted on.
+ *
+ * **NO `capture` ATTRIBUTE.** Forcing the camera takes away the sheet iOS
+ * already offers, whose first entry is the camera anyway; leaving it off means
+ * one control covers both *photograph the room now* and *send the three good
+ * ones from earlier*. Which it was is read off the raw file's EXIF and only
+ * ever decides gallery eligibility, never whether it goes up.
+ *
+ * **ONE AT A TIME, IN ORDER, WITH THE COUNT GOING UP** — the Community door's
+ * batch rule, and for its reasons: firing six at once is six writes racing on
+ * one folder, on a pub's wifi.
+ */
+function myCameraRow(info) {
+  /*
+   * THE REASON A CONTROL IS OFF GOES ON THE CONTROL, AND IT OUTRANKS WHATEVER
+   * HAPPENED LAST.
+   *
+   * Written the other way round first — the remembered status line winning
+   * over the derived one — and the guard caught it: after one successful
+   * upload the row said *"Added — it is on the screen now"* for ever, so
+   * switching the room's photographs off left the one control that would tell
+   * you why still reporting a success from ten minutes earlier. A status line
+   * that cannot be overtaken by the current state is a control that lies.
+   *
+   * Inert rather than refused, for the same reason: opening a picker, choosing
+   * a photograph and THEN being told no is the worst order to find out in.
+   */
+  const shut = !info.enabled;
+  if (shut) myPhotoSaid = '';
+  const row = node(`
+    <div class="mine-add">
+      <label class="minor mine-pick ${shut ? 'is-off' : ''}">
+        Add your own photo
+        <input type="file" accept="image/*" multiple hidden ${shut ? 'disabled' : ''}>
+      </label>
+      <span class="tiny mine-said">${esc(shut
+        ? 'Photos are switched off, so there is nowhere for one to go yet.'
+        : (myPhotoSaid || 'Yours goes in with the room\u2019s.'))}</span>
+    </div>`);
+
+  const input = row.querySelector('input');
+  const label = row.querySelector('.mine-pick');
+  const said = row.querySelector('.mine-said');
+
+  // Only what the ELEMENT still on the page can be told. Once a photograph
+  // lands the panel is rebuilt around us, so the binding is what the next
+  // render reads and this is only for the moment in between.
+  const say = (words) => { myPhotoSaid = words; if (said.isConnected) said.textContent = words; };
+
+  input.addEventListener('change', async () => {
+    const files = [...(input.files || [])];
+    input.value = '';
+    if (!files.length) return;
+    label.classList.add('is-busy');
+    let done = 0;
+    for (const file of files) {
+      say(files.length > 1 ? `Sending ${done + 1} of ${files.length}\u2026` : 'Sending\u2026');
+      try {
+        // On the RAW file, before the shrink's own canvas strips every byte of
+        // EXIF it might have carried. See looksCameraTaken() in filters.js.
+        const camera = await looksCameraTaken(file);
+        const blob = await shrinkPhoto(file);
+        const res = await fetch(`/api/host/photo?camera=${camera ? '1' : '0'}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'image/jpeg', 'X-Host-Key': hostKey },
+          body: blob,
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!out.ok) throw new Error(WHY_NOT[out.reason] || 'Could not add that one.');
+        done += 1;
+      } catch (err) {
+        say(err.message);
+        label.classList.remove('is-busy');
+        return;
+      }
+    }
+    say(done === 1 ? 'Added — it is on the screen now.' : `${done} added.`);
+    label.classList.remove('is-busy');
+  });
+  return row;
+}
+
+/** What `photos.add()` refuses for, in words a host can act on. */
+const WHY_NOT = {
+  off: 'Photos are switched off for this room. Switch them back on first.',
+  too_big: 'That photo is too big, even scaled down.',
+  not_an_image: 'That file is not a photo.',
+  empty: 'That file was empty.',
+  could_not_save: 'Could not save that one.',
+};
+
 function photoPanel(s) {
   const info = s.photos;
   if (!info) return [];
@@ -455,6 +570,15 @@ function photoPanel(s) {
     </div>`);
 
   el.querySelector('[data-a="toggle"]').addEventListener('click', () => act('photosOn', { on: !info.enabled }));
+  /*
+   * UNDER THE PANEL'S OWN LINE, NOT BETWEEN IT AND THE HEADING.
+   *
+   * Put above it first and the screenshot said why not: the panel's own
+   * sentence describes the whole panel, so a control wedged in front of it
+   * leaves the description reading as a note about the button. Two dim grey
+   * lines stacked, the second explaining the thing three rows up.
+   */
+  el.querySelector('.tiny').after(myCameraRow(info));
   el.querySelector('.clear')?.addEventListener('click', () => {
     if (confirm(`Delete all ${info.count} photos?\n\nThis cannot be undone.`)) act('photosClear', {});
   });

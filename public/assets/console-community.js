@@ -46,7 +46,7 @@ import { esc, node } from './client.js';
 // `filters.js` has no page and no boot code — only exported functions — which
 // is what makes importing it here safe. Importing from a module with top-level
 // listeners is what once hung the whole console on "Loading your library…".
-import { drawFiltered } from './filters.js';
+import { shrinkPhoto } from './filters.js';
 // `keyed` comes from the shell, exactly as `console-gigs.js` takes it — the
 // established pattern here, and safe because it is a hoisted function
 // declaration rather than something read while the shell is half-built.
@@ -657,24 +657,15 @@ function myPhotos(night) {
   return wrap;
 }
 
-/** A phone photograph, down to something a pub's wifi can carry. */
+/**
+ * A phone photograph, down to something a pub's wifi can carry.
+ *
+ * `shrinkPhoto()` in `filters.js` holds the numbers now — the quizmaster's own
+ * camera on the control view wants the identical ones, and this app's oldest
+ * lesson is that two copies is one that gets a number changed.
+ */
 function shrink(file) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const src = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(src);
-      try {
-        const canvas = document.createElement('canvas');
-        // `square: false` — a room is a room. 1600 rather than the phone's
-        // 1280 because this one is meant to be looked at on a laptop.
-        drawFiltered(canvas, img, 'none', 1600, { square: false });
-        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not read that photo.'))), 'image/jpeg', 0.85);
-      } catch (err) { reject(err); }
-    };
-    img.onerror = () => { URL.revokeObjectURL(src); reject(new Error('That file is not a photo.')); };
-    img.src = src;
-  });
+  return shrinkPhoto(file);
 }
 
 /**

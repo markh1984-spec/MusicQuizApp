@@ -234,6 +234,44 @@ export function toJpeg(canvas, quality = 0.85) {
 }
 
 /**
+ * A PHONE PHOTOGRAPH, DOWN TO SOMETHING A PUB'S WIFI CAN CARRY.
+ *
+ * A modern phone takes five to eight megabytes and every route that accepts a
+ * photograph caps at three, so the scaling is not an optimisation — without it
+ * the upload is simply refused. It happens in the BROWSER for the reason the
+ * watermark does: this is a quizmaster on a venue's wifi, which is the
+ * connection this app protects above every other.
+ *
+ * **`square: false`, unlike a player's photo.** A picture of a room is a room,
+ * and cropping it square for a wall of thumbnails throws away the half that
+ * shows how full it was. 1600 rather than a phone's 1280 because these are
+ * meant to be looked at on a laptop afterwards.
+ *
+ * **SHARED, because there are now two callers and the numbers are the
+ * decision** — the quizmaster's own camera on the control view, and the batch
+ * on the Community door. Two copies is one that gets a number changed.
+ *
+ * @param {Blob} file
+ * @returns {Promise<Blob>}
+ */
+export function shrinkPhoto(file, maxSide = 1600, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const src = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(src);
+      try {
+        const canvas = document.createElement('canvas');
+        drawFiltered(canvas, img, 'none', maxSide, { square: false });
+        toJpeg(canvas, quality).then((b) => (b ? resolve(b) : reject(new Error('Could not read that photo.'))));
+      } catch (err) { reject(err); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(src); reject(new Error('That file is not a photo.')); };
+    img.src = src;
+  });
+}
+
+/**
  * DID A CAMERA TAKE THIS, OR WAS IT PICKED FROM THE GALLERY — asked for
  * directly, so the public gallery can hold only what somebody actually
  * photographed that night, while the big screen keeps taking anything: *"if

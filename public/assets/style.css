@@ -1527,7 +1527,7 @@ body.host::after { display: none; }
    leaked in halfway down.
    Padding is the console's rather than the bar's: these sit in a panel with
    text around them, not in a row of thumb targets. */
-.host .panel a.minor, .host .panel button.minor {
+.host .panel a.minor, .host .panel button.minor, .host .panel label.minor {
   text-decoration: none; display: inline-block;
   padding: 9px 13px; border-radius: var(--r-field); font-size: var(--fs-note); font-weight: 800;
   font-family: inherit; cursor: pointer;
@@ -1558,6 +1558,14 @@ body.host::after { display: none; }
   border-bottom-color: var(--bad);
 }
 .host .panel button.minor:disabled { opacity: 0.6; cursor: default; }
+/* A LABEL WEARING A BUTTON'S FACE HAS TO CENTRE ITS OWN TEXT.
+   `.host .minor` puts a 44px floor under every pressable thing on this page —
+   the touch floor — and a `<button>` centres its content inside that for free
+   where an `inline-block` label leaves the words sitting at the top of a box
+   a third taller than they are. The one control this applies to is the
+   quizmaster's own camera in the photos panel, which is a label because it
+   wraps a hidden file input: there is no button that opens a file picker. */
+.host .panel label.minor { display: inline-flex; align-items: center; }
 /* Back, as an arrow. It keeps a WHOLE CELL rather than being shrunk to fit
    the glyph: this is the undo, pressed in the dark with a mic in the other
    hand, and a small target is the wrong economy on the one control that
@@ -11170,7 +11178,7 @@ body.landing {
 .night-venue-said { color: var(--ink-dim); flex: 1 1 140px; }
 .mine-add { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
 .mine-pick { cursor: pointer; }
-.mine-pick.is-busy { opacity: 0.6; pointer-events: none; }
+.mine-pick.is-busy, .mine-pick.is-off { opacity: 0.6; pointer-events: none; }
 .mine-said { color: var(--ink-dim); }
 
 @media (min-width: 900px) {

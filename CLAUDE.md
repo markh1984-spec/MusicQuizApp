@@ -974,6 +974,44 @@ and photo uploads."*
 
 Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
 
+### THE QUIZMASTER'S OWN CAMERA — `POST /api/host/photo`, and there is no new app
+
+`myCameraRow()` in `host.js`, `node scripts/my-own-camera.mjs`. *"an app on my
+phone, or even just be able to bring up a PWA… that I take photos and it goes
+into that same bucket from that same evening."*
+
+- **AN APP AND A PWA ARE BOTH GUESSES AT A MECHANISM** — the control view is
+  already in his hand, signed in and pointed at his own room. A second page is a
+  second install, sign-in and way of knowing which room.
+- **IT COULD NOT BE A JOIN.** `POST /api/photo` needs only a player, so joining
+  his own room nearly works — and puts him on the leaderboard and the projector,
+  the fault `setOrganiser()` exists to prevent reached from the other side.
+  **The room comes from WHO IS SIGNED IN.**
+- **ITS OWN ROUTE BECAUSE IT CARRIES BYTES** — everything under `/api/host/*`
+  starts `readJson(req)`, which eats the body. ABOVE that block, still behind
+  the broad signed-in gate.
+- **ONE BUCKET**: through `photos.add()` and nothing else, so the projector,
+  `/wall`, the host's grid and the night's folder all get it and ONE bin press
+  takes it off all three. **`POST /api/past-photo/<night>` is the other half and
+  is untouched** — that one files against a NAMED night, for the car park.
+- **NO CAPTION** (`teamName` empty), and **NO `capture` ATTRIBUTE**: iOS's own
+  sheet leads with the camera, so one control covers *photograph the room now*
+  and *send the three good ones from earlier*.
+- **THE KILL SWITCH APPLIES; THE BREAK PLAN DOES NOT** — `photosWanted()` also
+  answers *what are PHONES being offered*, which is not a question about the
+  person driving.
+- **THE REASON IT IS OFF OUTRANKS WHATEVER HAPPENED LAST.** Built the other way
+  round and the guard caught it: one upload and the row said *"Added"* for ever,
+  so switching photos off left the control still reporting a success from ten
+  minutes earlier. **A status line the current state cannot overtake is a
+  control that lies.** **The line is a MODULE BINDING** — a photograph landing
+  IS a state push.
+- **NO SERVICE WORKER, EVER** — every push is a deploy, and a cached `host.js`
+  is a control view running last week's code in front of a room. **A manifest
+  wants a PNG icon and is NOT BUILT**; Add to Home Screen already works.
+
+Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
+
 ### A WORD IN ONE EAR — `src/notes.js`, one phone and never the room
 
 *"Say someone is being a bit cheeky I can send them a message saying 'stop
@@ -4104,6 +4142,7 @@ node scripts/second-screen.mjs          # the second display: the code and the p
 node scripts/two-screens.mjs            # two outputs, a real account, quiz -> bingo
 node scripts/second-laptop.mjs          # the wall on a spare laptop
 node scripts/funniest-photo.mjs         # does the room's vote reach a drink?
+node scripts/my-own-camera.mjs          # his own photo, into the same bucket
 ```
 
 **The rules these commands run on, and each was learned expensively — the full

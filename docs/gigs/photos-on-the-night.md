@@ -411,3 +411,128 @@ is real, the camera works, the photographs arrive — but the words are a quiz's
 **Not fixed blind**: the phone's lobby wording is on the protected surface and
 the right change depends on whether these nights are quiz nights with karaoke in
 them or karaoke nights with a camera, which is a question for the host.
+
+---
+
+## THE QUIZMASTER'S OWN CAMERA — `POST /api/host/photo`, and no new app
+
+Asked for on 16 September 2026, the morning after the one-bucket conversation:
+*"Another thing I'd absolutely love to be able to do is have, say, like an app
+on my phone, or even just be able to bring up a PWA on my phone, that I take
+photos and it goes into that same bucket from that same evening."*
+
+### There is no new app, and that is the answer rather than a shortcut
+
+An app and a PWA are both guesses at a MECHANISM. The requirement underneath
+them is *take a photograph on my own phone, during the night, into tonight's
+pile* — and the thing already in his hand all night, signed in, pointed at his
+own room, open behind a microphone, is the control view.
+
+A separate page would need its own install, its own sign-in and its own way of
+knowing which room it is looking at, in exchange for a button the page already
+had room for. Three new ways to be wrong at the moment there is least capacity
+to notice, for nothing the existing page could not do.
+
+**So it is a control in the panel headed *Photos on the big screen*, beside
+the switch that already governs them** — `myCameraRow()` in `host.js`.
+
+### It could NOT be a join, and that is the interesting half
+
+The obvious build is: join your own room on your phone like anybody else, and
+`POST /api/photo` takes the picture. It even nearly works — that route asks
+only that the player exists.
+
+What it costs is a row on the leaderboard and a team on the projector. The app
+already has a word for somebody in the room who is not a contestant —
+`setOrganiser()` in `engine.js`, written for *"the client's own contact and
+their IT person"* — and its own comment says why it exists: *"the person who
+booked you ends up winning their own event, which is a story that gets told."*
+The quizmaster joining his own quiz to take a photograph is that fault reached
+from the other direction, and `setOrganiser` is a quiz-only action with no
+control on any screen, so it is not a way in either.
+
+**The room comes from WHO IS SIGNED IN**, the rule every `/api/host/*` route
+follows. No player, no token, no team, no row.
+
+### Why it is its own route rather than a host action
+
+Everything under `/api/host/*` begins `const body = await readJson(req)`, which
+consumes the body — a photograph threaded through there arrives as a parse
+failure. So `POST /api/host/photo` sits immediately ABOVE that block and reads
+raw bytes, the same arrangement the Stripe webhook needs one layer up.
+
+It is still behind the broad *"everything below this line needs an account"*
+gate, so it gained no surface of its own.
+
+### One bucket, which was the whole ask a day earlier
+
+It goes through `photos.add()` and nothing else. That means it is on the
+projector's strip, on `/wall`, in the host's grid with a bin on it, and filed
+into the night's folder in the private repo by the same background write as
+every other photograph. **There is no second store and nothing downstream knows
+where a picture came from.** One bin press takes it off all three, which is what
+`my-own-camera.mjs` actually measures.
+
+**The existing `POST /api/past-photo/<night>` is the other half and is
+untouched** — that one files against a NAMED night, straight to the repo, for
+the car park and the Monday. This one is tonight's live room. They meet in the
+same folder.
+
+### The decisions inside it
+
+- **NO CAPTION.** `teamName` is empty, and the screen only draws a
+  `<figcaption>` when there is one. A picture of the room captioned with the
+  name of the person who took it is not a caption anybody wanted six feet wide.
+- **NO `capture` ATTRIBUTE ON THE INPUT.** Forcing the camera takes away the
+  sheet iOS already offers, whose first entry is the camera anyway — so one
+  control covers both *photograph the room now* and *send the three good ones
+  from earlier*. Which it was is read off the raw file's EXIF by
+  `looksCameraTaken()` and only ever decides gallery eligibility.
+- **THE KILL SWITCH APPLIES; THE BREAK PLAN DOES NOT.** `photosWanted()` also
+  answers *is the camera being offered to PHONES right now*, which is a question
+  about the gaps in the night and nothing to do with the person driving it.
+  `photos.add()`'s own `enabled` check does apply, because a photograph accepted
+  into a store the screen is ignoring is one that vanishes with no explanation.
+- **THE REASON IT IS OFF OUTRANKS WHATEVER HAPPENED LAST.** Written the other
+  way round first and the guard caught it: after one successful upload the row
+  said *"Added — it is on the screen now"* for ever, so switching the room's
+  photographs off left the one control that would tell you why still reporting a
+  success from ten minutes earlier. **A status line that cannot be overtaken by
+  the current state is a control that lies.**
+- **IT SITS UNDER THE PANEL'S OWN LINE, NOT ABOVE IT.** Put above it first and
+  the screenshot said why not: that sentence describes the whole panel, so a
+  control wedged in front of it left the description reading as a note about
+  the button — two dim grey lines stacked, the second explaining the thing
+  three rows up. The resting words were cut with it: the panel already says
+  photographs go straight to the screen, so his line only has to say the one
+  thing that is different about his, which is *"Yours goes in with the
+  room's."*
+- **THE STATUS LINE IS A MODULE BINDING.** This panel is rebuilt on every state
+  push — and a photograph landing IS a state push — so a line written into the
+  element would be wiped by the very success it was reporting. The vouchers
+  fold's rule, again.
+- **IT IS ON THE SHARED RENDER LINE**, so it draws on the bingo desk and the DJ
+  desk too, and on a karaoke night with no game loaded — which is the night it
+  is most wanted on. Photographs belong to the ROOM, not to any engine.
+- **`shrinkPhoto()` MOVED INTO `filters.js`** rather than being copied. The
+  Community door's batch had the numbers inline (1600, `square: false`, 0.85)
+  and this wants the identical ones; two copies is one that gets a number
+  changed.
+
+### The PWA half, deliberately not built
+
+Installing `/host` to a home screen wants a `manifest.webmanifest` and an
+`apple-touch-icon`, and **iOS wants that icon as a PNG**. This app draws its
+mark as SVG (`brandmark.js`) and has no dependencies, so producing a PNG is a
+small separate job — and a manifest with no icon is worse than none, because
+iOS then uses a screenshot of the page.
+
+**"Add to Home Screen" already works on `/host` today** without any of it. It
+gets a screenshot for an icon and opens in a browser tab rather than standalone,
+which is a cosmetic loss, not a functional one.
+
+**Do not add a service worker for this.** Every push is a deploy, and a service
+worker that has cached `host.js` is a control view running last week's code in
+front of a room — the one failure mode this app cannot afford, bought for an
+offline mode nobody needs in a pub with the wifi working well enough to upload
+photographs.
