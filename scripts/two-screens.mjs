@@ -168,6 +168,60 @@ try {
   } else {
     console.log('  --   no bingo pack in this library, skipped');
   }
+  /*
+   * AND A STRANGER SCANS IT AT TEN O'CLOCK, DURING THE KARAOKE.
+   *
+   * The second screen stands all night inviting scans, including for the hour
+   * after the games have finished — so the question is not whether the wall
+   * works, it is whether the phone it sends somebody to still does. Every other
+   * check in this repo joins a room with a game in front of it.
+   *
+   * **KNOWN AND DELIBERATELY NOT FIXED ON A GIG DAY:** their phone leads with a
+   * dead bingo card for a round that ended an hour ago, with the camera button
+   * below it. Cosmetic — the photograph goes through — and re-leading the phone
+   * on the protected surface the night before a gig is the trade this repo
+   * already refuses. The checks below are on what MUST work; the wording is not
+   * one of them, on purpose.
+   */
+  await host.evaluate(() => fetch('/api/host/finish', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+  }));
+  await host.waitForTimeout(800);
+
+  const late = await b.newPage({ viewport: { width: 390, height: 844 } });
+  await late.goto(`${B}/play?g=${code}`);
+  await late.waitForTimeout(1200);
+  const canJoin = await late.locator('#nameInput').count() === 1;
+  check('a stranger scanning after the games end can still join', canJoin,
+    'the wall invites a scan all night and the phone turned them away');
+  if (canJoin) {
+    await late.fill('#nameInput', 'Karaoke Kev');
+    await late.click('#joinBtn');
+    await late.waitForTimeout(1500);
+  }
+  check('and is still offered the camera',
+    await late.locator('.camera-btn').count() > 0,
+    'no way to do the one thing the second screen asked them to do');
+
+  const lateShot = await late.evaluate(async () => {
+    const c = document.createElement('canvas');
+    c.width = 400; c.height = 300;
+    const x = c.getContext('2d');
+    x.fillStyle = '#4c9'; x.fillRect(0, 0, 400, 300);
+    const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.85));
+    const me = JSON.parse(localStorage.getItem('musicquiz.player') || '{}');
+    const g = new URLSearchParams(location.search).get('g') || '';
+    return (await fetch(`/api/photo?playerId=${me.id}&camera=1&g=${g}`, {
+      method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: blob,
+    })).json();
+  });
+  check('and their photograph is ACCEPTED with no game running',
+    lateShot && lateShot.ok === true, JSON.stringify(lateShot));
+  await s2.waitForTimeout(1500);
+  check('and it reaches the second screen too',
+    await s2.locator('.wall-shot').count() === 2,
+    'the wall stopped updating once the night was over');
+
 } finally { await b.close().catch(()=>{}); await stop(); }
 console.log(fails ? `\n${fails} FAILED` : '\nAll good.');
 process.exit(fails?1:0);
