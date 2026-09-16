@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Second Screen</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body class="screen wall">
+  <div class="stage">
+    <header class="topbar">
+      <div class="titles">
+        <span id="brandSlot"></span>
+      </div>
+      <div class="right">
+        <span class="pill" id="countPill">0 photos</span>
+      </div>
+    </header>
+    <main id="card" class="card"><!-- built by wall.js --></main>
+  </div>
+  <div id="connWarn" class="conn-warn hidden">Reconnecting…</div>
+  <script type="module" src="/assets/wall.js"></script>
+</body>
+</html>

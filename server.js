@@ -228,6 +228,46 @@ function photosWanted(room) {
   return account ? switchedOn(account, FEATURES.PHOTOS) : true;
 }
 
+/**
+ * THE SECOND SCREEN — a QR to send a photograph, and the photographs.
+ *
+ * Asked for on 16 September 2026: *"if I'm doing karaoke, then the karaoke
+ * screen uses one of the output screens. But then if I'm trying to get photo
+ * uploads during the night as well, I would need a second screen for that
+ * second QR code and photo uploads."*
+ *
+ * **IT IS A ROOM VIEW, NOT A GAME VIEW, AND THAT IS THE WHOLE DESIGN.**
+ * Photographs belong to the ROOM rather than to whatever is running (the reason
+ * a DJ set got the camera, the wall and the gallery for free), so a screen that
+ * only wants the code and the pictures needs to know nothing whatever about the
+ * quiz. It is built here beside `photosWanted()` rather than in any engine, for
+ * the identical reason `photosOpen` is.
+ *
+ * **SO IT CANNOT SHOW THE QUIZ, STRUCTURALLY.** Not hidden with CSS and not a
+ * branch anybody has to keep right — the payload has no question, no answer, no
+ * scoreboard and no phase in it, because this function does not build them.
+ * That is rule 1's own machinery pointed at a new problem: a second output is
+ * likely to end up somewhere the host cannot see, on a stand by the door or a
+ * telly behind the bar, and *the projector and the host's phone show different
+ * things* has to hold for a third screen the moment one exists.
+ *
+ * **AND IT DELIBERATELY TAKES NO STING.** `room.sting` is `role === 'screen'`
+ * only, so the soundboard still plays out of exactly one laptop — the one wired
+ * to the PA. A second screen joining the noise would double every press, and on
+ * a karaoke night the main output is not even this app's.
+ *
+ * **THE PHOTO SWITCH IS ANSWERED HERE TOO** (`open`), because a QR inviting a
+ * room to send photographs at a night where the feature is off is a control
+ * that does nothing, six feet wide.
+ */
+function wallView(room) {
+  return {
+    kind: 'wall',
+    open: photosWanted(room),
+    photos: room.photos.forScreen(),
+  };
+}
+
 function viewFor(client) {
   // A client that arrived before its room existed, or whose room was never
   // booted, is shown the house game rather than nothing — the same silent
@@ -236,6 +276,11 @@ function viewFor(client) {
   const { session, photos } = room;
   const view = client.role === 'host' ? session.hostView()
     : client.role === 'player' ? session.playerView(client.playerId)
+    // The second screen, which is told about the ROOM and never about the game
+    // — see `wallView()`. Above the screen fallback deliberately: an unknown
+    // role still lands on the projector's view, which is what it has always
+    // done and what `roomForPhone()` already guards.
+    : client.role === 'wall' ? wallView(room)
     : session.screenView();
   // The wall of photos rides along with whatever else is on screen, so it
   // survives every phase change and every game without each card knowing.
@@ -261,6 +306,17 @@ function viewFor(client) {
      */
     view.mayAdvert = can(accounts.find(room.id) || null, FEATURES.ADVERTS);
   }
+  /*
+   * THE SECOND SCREEN TAKES THE PHOTOGRAPHS AND NOTHING ELSE.
+   *
+   * Named rather than left to the `else`, which is the PHONE's branch — a wall
+   * client was falling into it and being handed `photosOpen` and `photoDone`,
+   * facts about a handset that has joined a game. Harmless on the day and
+   * exactly the shape that stops being harmless: the else is where a future
+   * field lands by default, and this role is meant to be told less than every
+   * other one, not more.
+   */
+  else if (client.role === 'wall') view.photos = photos.forScreen();
   else {
     view.photosOpen = photosWanted(room);
     /*
@@ -1654,6 +1710,13 @@ async function handleGet(req, res, url, route) {
     return true;
   }
   if (route === '/screen') return serveFile(res, config.publicDir, 'screen.html'), true;
+  /*
+   * THE SECOND SCREEN. A page of its own rather than `/screen?wall=1`, because
+   * the two are opened side by side on one laptop and a query string is the one
+   * thing that does not survive being dragged to another display and
+   * bookmarked. See `wallView()` for what it is told.
+   */
+  if (route === '/wall') return serveFile(res, config.publicDir, 'wall.html'), true;
   if (route === '/play') return serveFile(res, config.publicDir, 'play.html'), true;
   // Where a scanned voucher lands. Open, like /play and the sign-in page:
   // it hands out nothing on its own, the code in the address has to be right.

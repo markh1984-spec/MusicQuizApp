@@ -932,7 +932,41 @@ drink… perhaps you could let the crowd vote on their favourite as well?"*
   `withdrawVouchersNoLongerOwed()`**, **no `round` stamp** so bingo cannot hold
   it back. **`pub-unchanged` says IDENTICAL and is silent about all of it.**
 
-Full reasoning: **[`docs/gigs/photos.md`](docs/gigs/photos.md)**.
+Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
+
+### THE SECOND SCREEN — `/wall`, the photo code and the photographs, and nothing else
+
+`wallView()` in `server.js`, `public/assets/wall.js`, `node
+scripts/second-screen.mjs`. *"if I'm doing karaoke, then the karaoke screen uses
+one of the output screens… I would need a second screen for that second QR code
+and photo uploads."*
+
+- **IT WAS SMALL BECAUSE PHOTOGRAPHS LIVE ON THE ROOM, NOT THE GAME** — no
+  engine, no phase, no game.
+- **IT CANNOT SHOW THE QUIZ, STRUCTURALLY** — `wallView()` does not BUILD a
+  question, so nothing hides one. A second output ends up where the host is not
+  standing, so rule 1 has to hold for a third screen. **The guard SWEEPS the
+  projector's payload** rather than naming fields, and **a new role must not
+  fall into `viewFor()`'s `else`, which is the PHONE's.**
+- **A PAGE, NEVER A SECOND `/screen`** — every `role=screen` client in a room
+  gets the identical view, which is right and is exactly why it cannot be one.
+- **AND IT TAKES NO SOUND** — `room.sting` stays `role === 'screen'`, so the
+  soundboard still comes out of the one laptop wired to the PA.
+- **A NEW TOP-LEVEL ROUTE GOES IN `RESERVED`** — *The Wall* is a pub name, and
+  `test/slugs.test.js` caught it the same hour. Second time that list has paid.
+- **`scrollHeight` IS A LIE ON ANY `body.screen` PAGE, AND THAT IS A RULE FOR
+  THE WHOLE REPO.** `overflow: hidden` CLAMPS the document, so
+  `documentElement.scrollHeight - innerHeight` reads 0 however far the content
+  runs past the bottom — a check written that way passed with a heading set to
+  22vh. **Ask the ELEMENTS where they end** (`getBoundingClientRect().bottom`),
+  which is `console-frame.mjs`'s own distinction on a screen that cannot scroll
+  to reveal the answer. **And fill the grid first**: the same check saw nothing
+  with ONE photograph in, because one row fits anything.
+- **A MEDIA QUERY ADDS NO SPECIFICITY** — the narrow-screen block sat above the
+  rule it overrode and lost at equal specificity, so a correct cap did nothing.
+  FOURTH sighting in this sheet. **Measure after.**
+
+Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
 
 ### A WORD IN ONE EAR — `src/notes.js`, one phone and never the room
 
@@ -1737,26 +1771,14 @@ quizzing."* Three tabs: **Quiz league**, **Photos**, **What they asked for**:
   FILTER IS CLEARED, NOT STORED**, or a later change to the word list silently
   cannot reach that name. **ONE CONTROL PER TABLE, FOLDED.** **THE ROW'S KEY
   TRAVELS WITH THE ROW.**
-- **ONE ROOM FOR THE WHOLE PHOTO STORY — `galleryRoomFor()`.** The gallery
-  reads the OWNER'S OWN QUIZMASTER ROOM, never `HOUSE`; through `roomForHost()`
-  a published night read back as *"Not published"*. **The hazard was written
-  down and left** — how a noted hazard becomes a bug.
+- **ONE ROOM FOR THE WHOLE PHOTO STORY — `galleryRoomFor()`**, never `HOUSE`.
+  **The hazard was written down and left** — how a noted hazard becomes a bug.
 - **THE SUITE MUST NEVER NEED THE PHOTO TOKEN** — `photo-repo-stub.mjs`.
-- **`published.json` HAS ONE WRITER AT A TIME, PER ROOM — `inOrder()` in
-  `src/gallery.js`**, or a lamp write begun before a publish finished silently
-  un-publishes the night. **THE BROWSER'S QUEUE CANNOT COVER IT** — order it
-  where the FILE is. **EVERY WRITER CARRIES THE HALVES IT IS NOT CHANGING** —
-  nights, rulings, pins; a test walks them.
-- **A READ THAT FAILED IS NOT AN EMPTY FOLDER — `tryGetFile()` /
-  `tryListDir()`.** **A 404 is an ANSWER; anything else is a failure to LOOK**,
-  and four callers LATCH on it. **ONE IMPLEMENTATION, and a failed listing is
-  NOT cached** — no TTL, which serves the wrong answer for its length.
-- **A READ-BACK SHA CAN BE STALE AND A `PUT`'S CANNOT**, so `putFile()`
-  remembers it — **a CACHE, so it must be able to be wrong**: forgotten,
-  re-read past the caches, retried once, said in WORDS.
-- **A NIGHT IS A CARD WITH ITS PHOTOGRAPHS FANNED ON IT — `coverPhotos()`.
-  BUILT FROM THE SAME FILTERED LIST THE NIGHT'S PAGE SHOWS.** **A pin is a
-  PREFERENCE; the lamp is the GATE.**
+- **THE STORAGE RULES ARE NAMED IN THE `docs/` INDEX BELOW AND LIVE IN
+  [`docs/gigs/photos.md`](docs/gigs/photos.md)** — `inOrder()` per room,
+  `tryGetFile()`, the read-back sha, `coverPhotos()`, the lamps and the pins.
+  They were written out here AND named there, which is one list paid for twice
+  by every session. **Read them before touching any of them.**
 - **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor. Nothing
   deciding who may see a photo is cached with it**, and **the browser window is
   NOT lengthened past a day.**
@@ -2557,43 +2579,45 @@ costs.
   otherwise.**
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
 - **THE CAMERA GATE IS GONE — every photo is on the gallery unless a human
-  switches it off** (`showsByDefault()`), and **`showsOnGallery()` is the ONE
-  decision all FOUR readers ask.** `isCameraFile()` survives as a NOTE, **never a
-  gate**; **the default is written out ONCE.**
+  switches it off** (`showsByDefault()`); **`showsOnGallery()` is the ONE
+  decision all FOUR readers ask**, `isCameraFile()` is a NOTE and **never a
+  gate**, and **the default is written out ONCE.**
 - **SENDING IT IS THE CONSENT. THERE IS NO PER-PHOTO OPT-OUT AND ONE WAS BUILT
   AND REMOVED** — a flag the quizmaster must respect is a rule he must REMEMBER,
   on a Monday, about a photograph he did not take. **Do not rebuild a
   sender-side switch.** The gate is the publish control under the photos.
 - **A LAMP PER PHOTO IS A SWITCH, WITH NO WORDS** — `title`/`aria-label` are
-  load-bearing and an 18px dot gets a 44px hit area. **A ruling that only
+  load-bearing, an 18px dot gets a 44px hit area, and **a ruling that only
   restates the DEFAULT is CLEARED, not stored.**
-- **THE PUBLISH LAMP ASKS FIRST, THE QUESTION NAMES THE NIGHT AND THE
-  CONSEQUENCE, AND SAYING NO CHANGES NOTHING** — the browser's `confirm()`.
-- **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW MANY THERE ARE** — **a number
-  right about the wrong question is a working app looking broken.**
+- **THE PUBLISH LAMP ASKS FIRST, NAMES THE NIGHT AND THE CONSEQUENCE, AND
+  SAYING NO CHANGES NOTHING.** **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW
+  MANY THERE ARE** — a number right about the wrong question is a working app
+  looking broken.
 - **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND SAYS SO LOUDLY**;
   **`?as=visitor` stands the preview down ON THE SERVER** and **only ever
   SUBTRACTS**, which is why it needs no gate.
 - **NAMES AND POINTS, NEVER FACES** on anything public, **named on the way out
   rather than spread** — or the next field added is a photograph on a public page.
 - **ONE CAMERA PHOTO STARTS THE NIGHT — `photoGate()` in `play.js`.** Asked for
-  twice against *sending it is the consent*: **REVERSED knowingly**, entry being
-  free. **AWKWARD, NEVER IMPOSSIBLE** — the way past is a plain line at the
-  44px floor. **IT OWNS THE LOBBY, NOTHING ELSE.** **`camera` via
+  against *sending it is the consent*: **REVERSED knowingly**, entry being free.
+  **AWKWARD, NEVER IMPOSSIBLE** — the way past is a plain line at the 44px
+  floor. **IT OWNS THE LOBBY, NOTHING ELSE.** **`camera` via
   `looksCameraTaken()`, which UNDER-counts and cannot OVER-count.** **The answer
-  is the SERVER'S (`photoDone`), the skip the PHONE'S.** **It is in the lobby's
-  CARD KEY** — fifth sighting; without it the skip drew and did nothing.
+  is the SERVER'S (`photoDone`), the skip the PHONE'S**, and **it is in the
+  lobby's CARD KEY** — fifth sighting; without it the skip drew and did nothing.
 - **A VENUE SAVES A PHOTO WITH THE QUIZMASTER'S NAME ON IT — `photo-save.js`.**
   They could always save one, so **NO new gate; one would be theatre**;
   **the WATERMARK is the feature.** **Drawn in the BROWSER**, never the server.
   **Share sheet first.** **On the big picture ONLY**, never one per tile.
-- **THE OTHER TWENTY-ODD PHOTO RULES ARE IN
-  [`docs/gigs/photos.md`](docs/gigs/photos.md)** — the lamps, the pins, the
-  slug fold, `inOrder()`, `tryGetFile()`, the read-back sha — **and the cover
-  fan and the prev/next in
+- **WHAT A PHOTOGRAPH DOES ON THE NIGHT — the ask, the vote and the second
+  screen — IS IN
+  [`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**, and
+  **where they are STORED and PUBLISHED is
+  [`docs/gigs/photos.md`](docs/gigs/photos.md)** — the lamps, the pins, the slug
+  fold, `inOrder()`, `tryGetFile()`, the read-back sha — **with the cover fan
+  and the prev/next in
   [`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)**. **Read them
   before touching any of them.**
-
 - **A picture is keyed on the MUSICIAN and the STYLE, and nothing else.**
   Never on the question's `imagePrompt` — those are written by Claude, so two
   quizzes wanting Madonna would produce two keys and two bills, and the host
@@ -4070,6 +4094,7 @@ node scripts/sign-in-link.mjs           # forgot your password — can you get i
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 node scripts/photo-to-socials.mjs       # can a pub save a photo, with your name on?
 node scripts/photo-to-start.mjs         # is the photo ask real, and the skip?
+node scripts/second-screen.mjs          # does a second display show the code and the photos?
 node scripts/funniest-photo.mjs         # does the room's vote reach a drink?
 ```
 

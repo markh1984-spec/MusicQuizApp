@@ -11755,3 +11755,119 @@ body.dj .head .score { color: var(--ink); }
 }
 .vw-big { max-height: 56vh; max-width: 80%; border-radius: var(--r-card); object-fit: contain; }
 .vw-count { font-size: 2.6vh; color: var(--ink-dim); }
+
+/* ------------------------------------------------- the second screen, `/wall`
+ * A QR that stands all night on one side, the photographs filling the other.
+ * Sized in vh like every other projector rule — this is a display across a
+ * room, not a page anybody leans into. `src/photo-vote.js`'s neighbour in
+ * spirit: the room's own pictures, on a screen of their own.
+ */
+.wall .stage { display: flex; flex-direction: column; }
+/*
+ * THE CARD IS THE BOX, AND IT CLIPS.
+ *
+ * `body.screen` is `overflow: hidden` — *the projector is the one that does not
+ * scroll* — so a page that grows past the viewport does not get a scrollbar,
+ * it loses the bottom of itself in silence. Bounding the grid's rows was not
+ * enough on its own: with photographs in, the shot grid sizes its rows off an
+ * `aspect-ratio` and came out a handful of pixels over, differently at each
+ * shape. `min-height: 0` lets this flex child actually shrink (a flex item
+ * defaults to `min-height: auto` and refuses), and `overflow: hidden` makes the
+ * remainder the CARD's problem rather than the document's.
+ *
+ * It clips rather than scrolls, which is right here and nowhere else: the grid
+ * is already capped at what can be read from across a room, so what would be
+ * cut is a row of stamps nobody could see anyway.
+ */
+.wall .card { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.wall-grid {
+  display: grid; grid-template-columns: 34% 1fr; gap: 2.4vw;
+  height: 100%; align-items: center;
+}
+.wall-ask { display: grid; gap: 2vh; }
+.wall-ask h1 { font-size: 4.4vh; line-height: 1.1; }
+/*
+ * THE CODE IS THE ONE THING ON THIS SCREEN THAT MUST NOT SHRINK.
+ *
+ * A QR is square, so on a wide short display the height is what runs out first
+ * — the lobby panel's own lesson, where 72vh was measured rather than chosen.
+ * The same cap applies here and for the same reason: this screen exists to be
+ * scanned, and every other thing on it can give ground first.
+ */
+.wall-qr { width: min(100%, 46vh); justify-self: start; }
+.wall-shots {
+  display: grid; gap: 1vh;
+  grid-template-columns: repeat(auto-fill, minmax(14vh, 1fr));
+  max-height: 84vh; overflow: hidden; align-content: start;
+}
+.wall-shot {
+  margin: 0; position: relative; overflow: hidden;
+  border-radius: var(--r-card); aspect-ratio: 1 / 1;
+  background: rgba(255, 255, 255, 0.05);
+}
+.wall-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wall-shot figcaption {
+  position: absolute; inset: auto 0 0 0; padding: 0.5vh 0.6vw;
+  background: rgba(8, 8, 14, 0.66); color: #fff; font-size: 1.6vh;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* An empty right-hand side would read as a screen that failed to load. */
+.wall-shots.waiting {
+  display: grid; place-items: center; grid-template-columns: 1fr; min-height: 40vh;
+  border: 2px dashed var(--panel-line); border-radius: var(--r-card);
+}
+.wall-empty { color: var(--ink-dim); font-size: 2.4vh; }
+.wall-shut { grid-template-columns: 1fr; place-items: center; text-align: center; }
+
+/*
+ * AND THIS BLOCK IS LAST IN THE SECTION ON PURPOSE.
+ *
+ * It sat above `.wall-qr` first, where it lost: a media query adds NO
+ * specificity, so `.wall-qr` and `.wall-qr` inside `@media` are both 0,1,0 and
+ * the later one in the sheet wins. The narrow cap was written, was correct, and
+ * did nothing — the code stayed 531px on a 720px screen and went on clipping.
+ * Fourth sighting of equal-specificity source order in this sheet, after
+ * `.cardface.cf-gilt.black` and `.tier-row`; nothing throws and the diff reads
+ * right either way, which is why the number is MEASURED afterwards.
+ */
+/*
+ * Below 900px the code goes on top and the photographs underneath — a second
+ * output is usually a telly in portrait or a tablet on a stand, and two columns
+ * there gives a QR nobody can scan.
+ *
+ * **AND THE ROWS ARE BOUNDED, WHICH THE FIRST VERSION WAS NOT.** Measured at
+ * 720x1280: `align-content: start` with an `auto` grid let the QR take 46vh of
+ * a TALL screen — 532px — and the photographs pushed 106px off the bottom.
+ * `body.screen` is `overflow: hidden` by decision (*the projector is the one
+ * that does not scroll*), so that 106px was not a scroll anybody could reach,
+ * it was gone. The same fault the lobby's join panel paid for, in the other
+ * axis: a square QR sized off the LONG side of the display.
+ *
+ * So: a fixed row for the code and a `minmax(0, 1fr)` for the grid — the `0` is
+ * load-bearing, a grid row defaults to `min-content` and would refuse to shrink
+ * — and the code is capped against the WIDTH here rather than the height.
+ */
+@media (max-width: 900px) {
+  .wall-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: stretch; gap: 2vh;
+  }
+  .wall-qr { width: min(100%, 44vw); justify-self: center; }
+  .wall-ask { justify-items: center; text-align: center; min-height: 0; }
+  /*
+   * SIZED OFF THE WIDTH, NOT THE HEIGHT, on a screen stood on its end.
+   * `4.4vh` of a 1280px-tall display is a 56px heading that wrapped to two
+   * lines and took 134px — on the axis that had already run out.
+   */
+  .wall-ask h1 { font-size: 5vw; }
+  /*
+   * AND THE THREE STEPS GO. Measured: they are 54px plus a gap on the one axis
+   * this layout has none of, and what they say is already said — the heading
+   * names the job and the address is printed under the code. *A control
+   * nobody uses is clutter, even a good one*, and on a telly by the door
+   * nobody is reading a numbered list.
+   */
+  .join-steps { display: none; }
+  .wall-shots { max-height: 100%; }
+}

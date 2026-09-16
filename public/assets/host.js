@@ -1351,6 +1351,27 @@ function buildActions(s) {
   }
 
   /*
+   * THE SECOND SCREEN — and it is OUTSIDE the block above on purpose.
+   *
+   * Everything up there is about a pack and a quiz; this one is about the ROOM,
+   * which is the whole reason `/wall` exists. It is most wanted on the night
+   * this app is NOT driving the main output — karaoke on the projector, a telly
+   * by the door showing the code — and on that night there is no pack loaded
+   * and none of those controls draws at all. Gated on the game, it would have
+   * been missing from the one night it was built for.
+   *
+   * **The photo switch is not re-asked here.** The page answers that for itself
+   * (`wallView().open`) and says so in words, which is the only version that
+   * stays true when somebody flips the switch with the screen already up.
+   */
+  {
+    out.push(minor('Second screen', () => window.open(
+      s.joinCode ? `/wall?g=${encodeURIComponent(s.joinCode)}` : '/wall', '_blank'),
+    false, 'A screen showing only the photo code and the photographs \u2014 for a '
+      + 'second display when something else has the projector.'));
+  }
+
+  /*
    * The scores on the big screen, on demand — roughly every five questions.
    *
    * A toggle rather than a phase, so it never has to be undone and cannot lose

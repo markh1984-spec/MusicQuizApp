@@ -850,6 +850,38 @@ const ROOT = new URL('..', import.meta.url).pathname;
  *
  * ---
  *
+ * 253,700 — THE SECOND SCREEN, AND TWO LESSONS THAT ARE NOT ABOUT IT.
+ *
+ * `/wall` itself needs four lines: it cannot show the game structurally, it is
+ * a page rather than a second `/screen`, it takes no sound, and a new
+ * top-level route goes in `RESERVED` (which `slugs.test.js` caught the same
+ * hour, because *The Wall* is a pub name).
+ *
+ * **Most of the section is the other two, and they are repo-wide.** First:
+ * `documentElement.scrollHeight - innerHeight` reads 0 on ANY `body.screen`
+ * page, because `overflow: hidden` clamps the document — a check written that
+ * way passed with a heading set to four times the viewport, and this repo has
+ * six screens under that rule. Second: a media query adds NO specificity, so a
+ * correct narrow-screen cap written above the rule it overrides silently does
+ * nothing — fourth sighting in one stylesheet. Both are the *a guard that
+ * quietly tests nothing is worse than no guard* family, which is the reason
+ * this file exists at all.
+ *
+ * PAID FOR, AND HONESTLY SHORT: the photo-storage bullets in FIVE DOORS, which
+ * were written out there AND named in the `docs/` index below — one list every
+ * session paid for twice — plus the photo index block compressed. ~900 bytes
+ * against ~2,500 added.
+ *
+ * **The prediction written at 252,100 was right and is repeated rather than
+ * withdrawn.** That entry said the next rule would have to delete something
+ * real; this one did, and it still did not cover the cost. Two things follow
+ * and neither is "trim harder next time": the sections left are prohibitions
+ * with no prose on them, and the way out is another SPLIT — `docs/` now has
+ * eleven files and this index names all of them, which is the shape that
+ * worked for `decisions.md` and for `photos.md` an hour ago.
+ *
+ * ---
+ *
  * 252,100 — THE FUNNIEST PHOTOGRAPH, AND A RULE THAT SPANS THREE ENGINES.
  *
  * A vote the host puts to the room at a break, which mints a voucher. It earns
@@ -902,7 +934,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * RAISE**: two raises in two sessions is the shape the note above warned
  * about, and the honest fix now is a section moved whole rather than squeezed.
  */
-const BUDGET = 252_100;
+const BUDGET = 253_700;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

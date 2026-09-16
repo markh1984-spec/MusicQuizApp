@@ -211,6 +211,10 @@ export const RESERVED = [
   'robots.txt', 'manifest.webmanifest', 'sw.js',
   // Found by the guard rather than by remembering — which is the point of it.
   'health', 'photos', 'quiz-images', 'reset', 'qr.svg', 'join-qr.svg', 'faq', 'dj', 'magic',
+  // `wall` is the second screen, and "The Wall" is a pub name — which is the
+  // whole reason this list is a TEST rather than a habit. Caught the same hour
+  // the route was written.
+  'wall',
 ];
 
 /**
