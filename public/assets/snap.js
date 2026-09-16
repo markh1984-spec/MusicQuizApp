@@ -42,7 +42,7 @@ import {
   esc, node, Live, brandMark, brandWords, roomParam, roomCode,
 } from './client.js';
 import { paintScheme } from './schemes.js';
-import { shrinkPhoto, looksCameraTaken } from './filters.js';
+import { openCameraSheet } from './camera-sheet.js';
 
 const cardEl = document.getElementById('card');
 
@@ -50,6 +50,15 @@ let built = false;
 let brandDone = false;
 let said = '';
 let busy = false;
+/*
+ * TONIGHT'S LOOK, held from the last payload.
+ *
+ * The props tray is dressed for the season the room is dressed for — the
+ * quizmaster picked one look and the bar's camera has no business offering a
+ * different one. It rides on the `role=wall` state this page already opens, so
+ * nothing new is on the wire.
+ */
+let look = '';
 
 /** How many of the night's photographs this page shows back. */
 const SHOWN = 12;
@@ -84,29 +93,69 @@ function build() {
   const input = cardEl.querySelector('.snap-take input');
   const label = cardEl.querySelector('.snap-take');
 
-  input.addEventListener('change', async () => {
+  /*
+   * AND THE PROPS COME WITH IT — the whole point of this change.
+   *
+   * Asked for as *"the camera photo upload thingy doesn't have sticker options
+   * when the camera QR code comes from the community bit — can I have the
+   * googly eyes etc. functionality in both pls"*. This page used to post the
+   * shrunk file straight off, so the bar could put a photograph on the screen
+   * and nothing on it, while every phone in the room had a tray of forty-two.
+   *
+   * **THE SHUTTER STAYS ON THIS PAGE AND THE SHEET OPENS WITH THE PHOTO
+   * ALREADY IN IT.** `capture="environment"` puts somebody straight into their
+   * camera, which is the right first press for a person carrying glasses, and
+   * a second "choose a photo" button inside the sheet would be a tap between
+   * the shutter and the screen. The file is handed to `openCameraSheet()`,
+   * which runs its own load path on it — one decode, one EXIF read, shared
+   * with `/play`.
+   *
+   * `shrinkPhoto()` is gone from this path rather than kept beside it: the
+   * sheet redraws at 1080 square through `drawFiltered`, so a second sizing
+   * here would be two answers to one question and the bar's photographs would
+   * be the only ones on the wall that were not square.
+   */
+  input.addEventListener('change', () => {
     const files = [...(input.files || [])];
     input.value = '';
     if (!files.length || busy) return;
     busy = true;
     label.classList.add('is-busy');
-    try {
-      const file = files[0];
-      // On the RAW file, before the shrink's own canvas strips the EXIF. Never
-      // a gate — it only decides gallery eligibility later.
-      const camera = await looksCameraTaken(file);
-      const blob = await shrinkPhoto(file);
-      const res = await fetch(`/api/snap?camera=${camera ? '1' : '0'}${roomParam()}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'image/jpeg' },
-        body: blob,
-      });
-      const out = await res.json().catch(() => ({}));
-      if (!out.ok) throw new Error(WHY_NOT[out.reason] || 'That one did not go. Try again.');
-      say('Sent — it is on the screen.');
-    } catch (err) {
-      say(err.message);
-    }
+    say('');
+    openCameraSheet({
+      look,
+      heading: 'Send a photo to the screen',
+      warn: 'No approval — it goes up between questions. Keep it decent. Goes on '
+        + 'the big screen tonight — and on this night\u2019s photo page if the '
+        + 'quizmaster shares it.',
+      file: files[0],
+      async send({ blob, camera, shown, used }) {
+        const tally = `&shown=${encodeURIComponent(shown.join(','))}&used=${encodeURIComponent(used.join(','))}`;
+        const res = await fetch(`/api/snap?camera=${camera ? '1' : '0'}${tally}${roomParam()}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'image/jpeg' },
+          body: blob,
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!out.ok) throw new Error(WHY_NOT[out.reason] || 'That one did not go. Try again.');
+        say('Sent — it is on the screen.');
+      },
+      done: () => `
+        <div style="text-align:center;padding:22px 6px">
+          <div style="font-size:44px">\u{1F389}</div>
+          <b>It is on the screen</b>
+          <p class="tiny">Have a look up.</p>
+        </div>`,
+    });
+    /*
+     * FREED WHEN THE SHEET IS OPEN, NOT WHEN THE PHOTOGRAPH LANDS.
+     *
+     * `busy` exists to stop two files being picked at once off this one input.
+     * The sheet owns everything after that — it has its own Send, its own
+     * disabled state and its own error line — so holding the shutter locked
+     * until an upload finished would leave the button dead behind a sheet
+     * somebody had already closed.
+     */
     busy = false;
     label.classList.remove('is-busy');
   });
@@ -174,6 +223,7 @@ function draw(s) {
     document.title = `${s.brand} — Send a photo`;
   }
   paintScheme(s.scheme);
+  if (s.look) look = s.look;
 
   if (!s.open) { paintShut(); return; }
   if (!built) build();

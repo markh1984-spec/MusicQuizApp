@@ -78,7 +78,7 @@ test('a tap on bare photo picks nothing', () => {
  * bare `querySelector('.cam-props')` matched IT, and on an ordinary night all
  * thirty-odd props were appended into a container that stays hidden. Nothing
  * threw; the tray was simply empty. These pin the data half, and the selector
- * in play.js is checked below.
+ * in the camera sheet is checked below.
  */
 test('an ordinary night gets every prop that is not seasonal', () => {
   const { seasonal, always } = stickersFor('default');
@@ -109,7 +109,16 @@ test('a prop can belong to more than one look', () => {
 });
 
 test('the phone reads the everyday tray by a selector the seasonal one cannot match', () => {
-  const source = fs.readFileSync(path.join(ROOT, 'public/assets/play.js'), 'utf8');
+  /*
+   * AND IT READS THE FILE THE SHEET IS ACTUALLY IN.
+   *
+   * This pointed at `play.js`, where the camera sheet lived until `/snap`
+   * needed the same props — so the move turned it red rather than leaving it
+   * quietly aimed at a file with no tray in it. *A grep aimed at the wrong
+   * file proves nothing* is this repo's oldest lesson; being caught by it here
+   * is the cheap version.
+   */
+  const source = fs.readFileSync(path.join(ROOT, 'public/assets/camera-sheet.js'), 'utf8');
   assert.match(source, /querySelector\('\.cam-props:not\(\.cam-props-season\)'\)/,
     'the everyday tray is back on a bare .cam-props, which the seasonal row also matches');
 });

@@ -98,11 +98,15 @@ try {
    * what happened at every step. The SAME function is pointed at both pages —
    * that is the whole point of the exercise.
    */
-  async function driveSheet(page, label) {
+  async function driveSheet(page, label, { loaded = false } = {}) {
     await page.waitForSelector('.cam-sheet', { timeout: 15000 });
-    await page.setInputFiles('.cam-pick input[type="file"]', {
-      name: 'the-room.jpg', mimeType: 'image/jpeg', buffer: JPEG,
-    });
+    // `/snap` hands the photograph in at open time — its own shutter is the
+    // first press, so the sheet arrives with a picture already on it.
+    if (!loaded) {
+      await page.setInputFiles('.cam-pick input[type="file"]', {
+        name: 'the-room.jpg', mimeType: 'image/jpeg', buffer: JPEG,
+      });
+    }
     /*
      * `.cam-stage` IS THE SIGNAL, not the canvas. The first version waited for
      * `canvas.width > 0` — which a canvas satisfies before anything is drawn on
@@ -226,9 +230,33 @@ try {
   const hasSheet = await bar.evaluate(() => Boolean(document.querySelector('.cam-pick, .snap-take')));
   check('snap: the page is up', hasSheet);
 
+  /*
+   * THE BAR'S SHUTTER IS THE FIRST PRESS, so the file goes into the page's own
+   * input and the sheet opens around it. Driven with the SAME function as the
+   * phone — a second copy of these assertions is a second thing to keep in
+   * step, and the point of the move was that there is one sheet.
+   */
+  const wasBar = await screenPhotos();
+  await bar.setInputFiles('.snap-take input[type="file"]', {
+    name: 'behind-the-bar.jpg', mimeType: 'image/jpeg', buffer: JPEG,
+  });
+  await bar.waitForTimeout(1200);
   const barProps = await bar.locator('.cam-prop').count();
   check('snap: it offers the same props as the phone', barProps > 0,
     barProps ? `${barProps} props` : 'NONE — this is what was asked for');
+  if (barProps) {
+    await driveSheet(bar, 'snap', { loaded: true });
+    await bar.locator('.cam-send').click();
+    await bar.waitForTimeout(2500);
+    const nowBar = await screenPhotos();
+    check('snap: the photo with a prop on it reaches the room', nowBar === wasBar + 1,
+      `${wasBar} -> ${nowBar}`);
+    // NO TEAM ON IT, which is the whole reason /snap is not a player. Rule 1's
+    // other half: the bar is not on the leaderboard and not on the projector.
+    const named = await desk.evaluate((g) => fetch(`/api/state?role=screen&g=${g}`)
+      .then((r) => r.json()).then((st) => (st.photos || []).filter((ph) => ph.teamName).length), joinCode);
+    check('snap: and it lands with no team on it', named === 1, `${named} captioned`);
+  }
 
   check('nothing threw on either page', boom.length === 0, boom.join(' | '));
   await phone.close();

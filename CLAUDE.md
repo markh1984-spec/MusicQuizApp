@@ -911,24 +911,20 @@ drink… perhaps you could let the crowd vote on their favourite as well?"*
 
 - **FOUR, PICKED BY A HUMAN AT A BREAK** — a vote over everything sent puts
   every photograph up for public judgement. **A sender already holding a voucher
-  is MARKED, never removed**: the app must not overrule a vote not yet cast.
+  is MARKED, never removed.**
 - **A FLAG, NOT A PHASE (rule 9) — BUT A MOVE SETTLES IT RATHER THAN CLEARING
-  IT**, which would throw away what forty people just did, in silence.
-  **`start()` was the move missing the call**; `advanceOrder()` settles first.
+  IT.** **`start()` was the move missing the call**; `advanceOrder()` settles
+  first.
 - **NO RUNNING TALLY ON THE WALL** — structural, `voteForScreen()` never builds
-  the field: a count six feet wide makes the last twenty voters followers. **Nor
-  the CODE, nor any sender's player id, on any wire** (rule 3) — the guard
-  sweeps the WHOLE payload, a named check only ever catching the field somebody
-  thought of.
+  the field. **Nor the CODE, nor any sender's player id, on any wire** (rule 3)
+  — the guard sweeps the WHOLE payload.
 - **THE PRIZE IS THE LAST ON THE TABLE AND IS NAMED ON THE BUTTON** — no floor
-  like the draw's, a host reading *"winner gets: A pint"* being able to see he is
-  about to give away third place's.
+  like the draw's.
 - **A TIE IS BROKEN AT RANDOM, ONCE, IN THE STATE.** **NOBODY VOTING IS NOT
   SOMEBODY WINNING.**
-- **SHARED, BECAUSE `engine-contract.test.js` FORCED THE DECISION** — a DJ set is
-  where a photograph IS the currency, so a `kind` gate would be *a kind test
-  written when there were two games* for the fourth time. **A DJ set mints no
-  voucher.** `funny: true`/`place: null`, **skipped by
+- **SHARED, BECAUSE `engine-contract.test.js` FORCED THE DECISION** — a `kind`
+  gate would be *a kind test written when there were two games* for the fourth
+  time. **A DJ set mints no voucher.** `funny: true`/`place: null`, **skipped by
   `withdrawVouchersNoLongerOwed()`**, **no `round` stamp** so bingo cannot hold
   it back. **`pub-unchanged` says IDENTICAL and is silent about all of it.**
 
@@ -942,35 +938,27 @@ one of the output screens… I would need a second screen for that second QR cod
 and photo uploads."*
 
 - **IT WAS SMALL BECAUSE PHOTOGRAPHS LIVE ON THE ROOM, NOT THE GAME** — no
-  engine, no phase, no game, and **a relaunch does not take the wall with it**,
-  which is what makes a mixed night work.
+  engine, no phase, no game, and **a relaunch does not take the wall with it**.
 - **IT CANNOT SHOW THE QUIZ, STRUCTURALLY** — `wallView()` does not BUILD a
-  question, and a second output ends up where the host is not standing, so rule
-  1 holds for a third screen. **The guard SWEEPS the projector's payload**, and
-  **a new role must not fall into `viewFor()`'s `else`, the PHONE's.**
+  question, so rule 1 holds for a third screen. **The guard SWEEPS the
+  projector's payload**, and **a new role must not fall into `viewFor()`'s
+  `else`, the PHONE's.**
 - **A PAGE, NEVER A SECOND `/screen`** — every `role=screen` client gets the
-  identical view, which is why it cannot be one. **AND IT TAKES NO SOUND**:
-  `room.sting` stays `role === 'screen'`, so the soundboard comes out of the one
-  laptop wired to the PA.
-- **A NEW TOP-LEVEL ROUTE GOES IN `RESERVED`** — *The Wall* is a pub name, and
-  `slugs.test.js` caught it. Second time that list has paid.
-- **IT NEEDS NO COOKIE, WHICH IS WHAT LETS IT RUN ON A SPARE LAPTOP** — an HDMI
-  splitter is one input and N IDENTICAL outputs, so a second browser is the only
-  version needing no hardware. `second-laptop.mjs` drives a real `?g=` from a
-  browser that has never seen the app — the case between the other two guards.
-  **A mistyped code shows NOBODY's photographs.**
+  identical view. **AND IT TAKES NO SOUND**: `room.sting` stays `role ===
+  'screen'`, so the soundboard comes out of the one laptop wired to the PA.
+- **A NEW TOP-LEVEL ROUTE GOES IN `RESERVED`** — *The Wall* is a pub name.
+  Second time that list has paid.
+- **IT NEEDS NO COOKIE, WHICH IS WHAT LETS IT RUN ON A SPARE LAPTOP** —
+  `second-laptop.mjs` drives a real `?g=` from a browser that has never seen the
+  app. **A mistyped code shows NOBODY's photographs.**
 - **TWO PROJECTOR WINDOWS ON ONE ROOM IS SUPPORTED — `two-screens.mjs`.**
   **Every other screen guard runs on the HOST KEY, the HOUSE room with no join
-  code**, so a resolving `?g=` and a cookie-driven control view went unmeasured.
-  **`browser.newPage()` opens a fresh incognito context** — the control view
-  401'd and a working button read as missing.
+  code.** **`browser.newPage()` opens a fresh incognito context.**
 - **`scrollHeight` IS A LIE ON ANY `body.screen` PAGE — a rule for the whole
   repo.** `overflow: hidden` CLAMPS the document, so it reads 0 however far
-  content runs past the bottom; a check written that way passed with a 22vh
-  heading. **Ask the ELEMENTS where they end**, and **fill the grid first** —
-  one row fits anything. **A MEDIA QUERY ADDS NO SPECIFICITY** either: fourth
-  sighting, a correct cap above the rule it overrode doing nothing. **Measure
-  after.**
+  content runs past the bottom. **Ask the ELEMENTS where they end**, and **fill
+  the grid first**. **A MEDIA QUERY ADDS NO SPECIFICITY** either — fourth
+  sighting. **Measure after.**
 
 Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
 
@@ -985,22 +973,21 @@ quiz… I click community and I've got the QR codes."*
 - **A CODE, NEVER A BUTTON** — the console is the laptop with the HDMI in it, so
   a camera button on it points at nothing. **ONE CODE, NOT TWO**: `/snap` holds
   no identity, so his phone scanning it gets what the bar gets. **`POST
-  /api/host/photo` IS DELETED** — nothing called it, and a route nothing reaches
-  is dead code that reads as a feature.
-- **A PAGE WITH NO IDENTITY, like `/play`, `/v` and `/wall`.** A seat is paid, a
-  password to remember and the whole console including the answer key; joining
-  puts the bar on the leaderboard. **No player, no caption, no row on the board.**
+  /api/host/photo` IS DELETED** — a route nothing reaches is dead code that
+  reads as a feature.
+- **A PAGE WITH NO IDENTITY, like `/play`, `/v` and `/wall`.** A seat is paid
+  and hands over the answer key; joining puts the bar on the leaderboard. **No
+  player, no caption, no row on the board.**
 - **THE JOIN CODE IS THE HANDLE — a revocable staff key was offered and turned
   down.** Anybody holding the code can already upload by joining, so a key is a
-  lock beside an open door, and it needs a store that survives a deploy. **The
-  cost, accepted: one person cannot be shut out.**
+  lock beside an open door. **The cost, accepted: one person cannot be shut
+  out.**
 - **ONE BUCKET** — through `photos.add()` and nothing else, so one bin press
   clears the projector, `/wall`, the grid and the night's folder together.
 - **NO NEW ROLE ON THE WIRE — it opens a `role=wall` stream.** **RULE 1 IS
-  SWEPT, NOT CHECKED**: the guard asserts no question, key, reveal, options,
-  board, player id or token reaches a phone the quizmaster will never see again.
+  SWEPT, NOT CHECKED.**
 - **THE KILL SWITCH AND THE BIN STAY ON THE CONTROL VIEW** — `photos.js` needs
-  them "immediate… one movement in the dark", not a door, a tab and a scroll.
+  them "immediate… one movement in the dark".
 - **NO UPLOAD CONTROL ON THE PANEL** — `myPhotos()` on the same tab files
   against a NAMED PAST night, and two controls meaning "add a photo" into
   different buckets is the collision rule 1 refuses.
@@ -1013,6 +1000,37 @@ quiz… I click community and I've got the QR codes."*
 - **`snap` WENT IN `RESERVED`** — third time that list has paid.
 
 Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
+
+### THE CAMERA SHEET IS ONE FILE AND BOTH CAMERAS OPEN IT — `camera-sheet.js`
+
+*"can I have the googly eyes etc. functionality in both pls"* — `/snap` posted
+the file straight off, so the bar could put a photograph on the screen and
+nothing on it.
+
+- **A LEAF WITH NO PAGE OF ITS OWN** — *a page module may not be imported by
+  another page*. No game state, no player, no room, no route: the caller passes
+  a `look`, a `send()` and a `done()`. **A `kind` branch in there would be a
+  kind test written when there were two pages.**
+- **THE SHUTTER STAYS ON `/snap` AND THE SHEET OPENS AROUND THE PHOTO** —
+  `openCameraSheet({ file })` runs the SAME `take()`, so the decode and the
+  EXIF read cannot drift. **`shrinkPhoto()` left that path**: the sheet redraws
+  at 1080 square and a second sizing makes the bar's the only photographs on
+  the wall that are not.
+- **`look` IS ON THE WALL PAYLOAD, AND `second-screen.mjs`'S `shared` SET NAMES
+  WHY.** **A field earns a place beside `brand` and `scheme` by being a fact
+  about the ROOM that is already six feet wide**, never a fact about the game —
+  anything else is how that sweep quietly stops sweeping.
+- **`/api/snap` RECORDS THE PROP TALLY TOO**, or `prop-use.js` measures the
+  room rather than the app, in the table that decides which drawings to delete.
+- **THE GUARD WAS WRITTEN BEFORE THE MOVE** — `props-on-a-photo.mjs`. Nothing
+  had ever run one line of `openCamera()`. **`boundingBox()` IS
+  VIEWPORT-RELATIVE AND THE SHEET IS TALLER THAN A PHONE**, so the canvas and
+  the tray are never both on screen: scroll each in and re-measure. Second
+  sighting in a week.
+- **AND THE MOVE DELETED `const STORE_KEY` WITH THE BINDINGS ABOVE IT** —
+  swallowed by `loadMe()`'s own `try`, so **every phone silently stopped
+  remembering itself**, which is rule 5, live. Caught by `second-laptop.mjs`
+  and by nothing else.
 
 ### A KIND TEST WRITTEN WHEN THERE WERE TWO GAMES — the FOURTH sighting, on the shelf
 
@@ -1034,11 +1052,9 @@ being a cheeky dickhead' and it appears on their bingo screen?"*, and
 *"until they tap it away but also let me know when they did."*
 
 - **ONE FILE FOR BOTH ENGINES**, `arcade.js`'s shape. **NEVER THE PROJECTOR**
-  (rule 1) and never the phone beside them — the same sentence six feet wide is
-  humiliating a customer in front of sixty people.
+  (rule 1) and never the phone beside them.
 - **NOT FILTERED, DELIBERATELY.** A length cap and control characters stripped;
-  the words are the host's own. That is the in-the-room rule applied to the one
-  direction where they are entirely his.
+  the words are the host's own.
 - **A NEW ONE REPLACES THE OLD** and clears `seenAt`; **an EMPTY one is
   REFUSED**, never silently dropped.
 - **THE RECEIPT IS BEHIND `ownsPlayer`** (rule 3) — one anybody could post
@@ -1048,10 +1064,9 @@ being a cheeky dickhead' and it appears on their bingo screen?"*, and
   `host-bingo.js` has a player panel of its OWN, so the quiz's copy left the
   host no way to send one **on the screen this was asked for**. A page module
   may not be imported by another page.
-- **THE BINGO LIST'S TWELVE GREW A WAY PAST IT.** The cap is right for *who is
-  about to win* and was wrong the moment the row grew a CONTROL — **a cap with
-  no way past it is the only kind this app must not have.** **One ✉, never the
-  quiz's whole menu**: a bingo player has no score to nudge.
+- **THE BINGO LIST'S TWELVE GREW A WAY PAST IT** — **a cap with no way past it
+  is the only kind this app must not have.** **One ✉, never the quiz's whole
+  menu**: a bingo player has no score to nudge.
 - **THE CARD NEEDS AN OPAQUE GROUND, AND `--panel` IS SIX PER CENT WHITE** —
   the bingo squares read straight through the words.
 - **AND EVERY HTTP CHECK PASSED WHILE NOTHING DREW IT.** `paintHostNote()` sat
@@ -2327,8 +2342,8 @@ Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 with `lobby-sound.js`), the `Sounds` panel in `host.js`, `POST
 /api/host/sting`, `room.sting`, `node scripts/soundboard.mjs`.
 
-- **THE LAPTOP WITH THE HDMI IS THE ONE WIRED TO THE PA** — *"my sound outputs
-  via my dj decks."* **The panel SAYS where the sound comes out.**
+- **THE LAPTOP WITH THE HDMI IS THE ONE WIRED TO THE PA.** **The panel SAYS
+  where the sound comes out.**
 - **AND A DROPPED-IN `.mp3` BEATS ANY OF IT — `public/assets/stings/<id>.mp3`.**
   **The synthesised one is the FALLBACK and is never deleted**: a missing file
   or a venue's wifi is still a press the host set up, and **silence is the one
@@ -2337,13 +2352,11 @@ with `lobby-sound.js`), the `Sounds` panel in `host.js`, `POST
   and **`MIME` in `server.js` must name it** or it is served as a download.
   **THE REPO IS PUBLIC AND THE APP IS SOLD** — a licence must cover commercial
   redistribution.
-- **SYNTHESISED IS THE FLOOR, NOT THE CEILING** — the boo is several DETUNED
-  voices started at DIFFERENT moments under a closing lowpass, and a laugh
-  stays out. **Anything with ARTICULATION needs a recording.**
-- **"YOUR MUM" IS THE BROWSER'S OWN `speechSynthesis`** — no file, no
-  dependency. **A missing voice is a silent no-op, never a throw.** **The guard
-  CANNOT measure it**, so it asserts it was SPOKEN rather than reading zero as
-  a pass.
+- **SYNTHESISED IS THE FLOOR, NOT THE CEILING.** **Anything with ARTICULATION
+  needs a recording.**
+- **"YOUR MUM" IS THE BROWSER'S OWN `speechSynthesis`.** **A missing voice is a
+  silent no-op, never a throw.** **The guard CANNOT measure it**, so it asserts
+  it was SPOKEN rather than reading zero as a pass.
 - **ONE AUDIO LAYER — `audio-kit.js`; the POLICY stays with each caller**: the
   lobby is gated on a phone's preference and the host's switch, the soundboard
   on nothing — **the press IS the decision**.
@@ -2353,7 +2366,7 @@ with `lobby-sound.js`), the `Sounds` panel in `host.js`, `POST
   `draw()` draws.**
 - **THE ID IS VALIDATED AGAINST `stings.js`'S OWN LIST** — the `packId` trap.
 - **A BROWSER IS SILENT UNTIL THE PAGE IS TAPPED, and reports no error.** The
-  arm chip is bottom LEFT, never near the join code.
+  arm chip is bottom LEFT, never near the code.
 - **THE PANEL IS SHUT BY DEFAULT** — **the board is the job, the soundboard
   the garnish.** **The open flag is a module binding**, or a view rebuilt on
   every answer shuts itself mid-press. **The guard OPENS it and presses a real
@@ -3815,10 +3828,9 @@ Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 `buildActions()` in `host.js`; `?night=` / `nightToOpen` in the console.
 
 - **IT DOES NOT PUBLISH AND MUST NOT BE MADE TO** — `PHOTO_PHASES` includes
-  `final`, so the room is still sending. **Nor back to a console prompt.**
+  `final`. **Nor back to a console prompt.**
 - **The night rides in the URL on the 6am key.** **The bench is set WITHOUT
-  rendering**: a render at boot beats `load()`, so `library` is null and the
-  paint throws.
+  rendering**: a render at boot beats `load()`.
 - **ARRIVING OPENS THE ROW**, via the row's own head. One shot.
 - **THE BENCH'S PUBLISH BUTTON OPENS THE PHOTOGRAPHS, not publishes** — it was
   a way round the safeguard under the photos.
@@ -4158,6 +4170,7 @@ node scripts/two-screens.mjs            # two outputs, a real account, quiz -> b
 node scripts/second-laptop.mjs          # the wall on a spare laptop
 node scripts/funniest-photo.mjs         # does the room's vote reach a drink?
 node scripts/bar-staff-camera.mjs       # the camera code — same bucket, and nothing else
+node scripts/props-on-a-photo.mjs       # do the googly eyes go on, on BOTH cameras?
 ```
 
 **The rules these commands run on, and each was learned expensively — the full

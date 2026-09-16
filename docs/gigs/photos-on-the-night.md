@@ -713,3 +713,109 @@ heading, its switch, its grid with a bin on every picture, and Clear all.
   `console-community.js` went 1600 → 1620 with `console-photos.js` recorded as
   owed. The comment on the panel was cut twice to fit first; a third cut would
   have left the newest code in the file the least documented.
+
+---
+
+## THE CAMERA SHEET IS ONE FILE NOW — `public/assets/camera-sheet.js`
+
+*"the camera photo upload thingy doesn't have sticker options when the camera QR
+code comes from the community bit — can I have the googly eyes etc.
+functionality in both pls"*, 16 September 2026.
+
+`/snap` shipped with a bare file input: pick a photo, shrink it, post it. That
+was right for the page it was on the day it was built — the bar's job is
+*photograph the room and move on* — but it meant the one camera a member of
+staff is handed was the only one in the building that could put a picture on the
+screen and nothing on it, while every phone in front of it had a tray of
+forty-two props.
+
+### Why it is a leaf and not an import out of `play.js`
+
+`openCamera()` was 610 lines inside `play.js`, and the obvious cheap fix is to
+import it. **A page module may not be imported by another page** — importing
+from `play.js` runs `play.js`'s own top-level boot code on `/snap`, and this
+repo has already paid for that once: `console-packs.js` importing a helper out
+of `editor.js` ran a `#quizPick` listener on `/console`, where that element does
+not exist, and the console hung on *"Loading your library…"* for every account
+with `node --check` seeing nothing.
+
+So the sheet moved into a file with no page of its own, and the parameterisation
+was chosen to keep it ignorant rather than flexible:
+
+| The caller passes | Because |
+|---|---|
+| `look` | which season the props tray is dressed for |
+| `heading`, `warn`, `pickLabel` | the two pages say slightly different things about where a photograph ends up |
+| `file` | `/snap`'s shutter is the first press, so the photograph arrives with the sheet |
+| `ready()` | `/api/photo` needs a joined phone; `/api/snap` needs nobody |
+| `send()` | two routes, two query strings, two sets of refusal wording |
+| `done()` | `/play` says whether the projector is carrying photographs *right now* and whether a DJ set just unlocked; `/snap` says neither |
+
+None of those questions belongs to a drag handler. **A `kind` branch inside the
+sheet would be *a kind test written when there were two pages*** — the fault
+this project has now recorded four times, and the third page is always the one
+that finds it.
+
+### The shutter stays on `/snap`
+
+`capture="environment"` puts somebody straight into their phone's camera, which
+is the right first press for a person carrying glasses across a room. A second
+*choose a photo* button inside the sheet would be a tap between the shutter and
+the screen, so the file is handed in at open time and runs the sheet's own
+`take()` — one decode, one EXIF read, shared with `/play`. The alternative,
+duplicating the load path, is how the two pages would come to disagree about
+whether a photograph was camera-taken.
+
+`shrinkPhoto()` left that path rather than sitting beside it. The sheet redraws
+at 1080 square through `drawFiltered` before sending, so a second sizing in
+`snap.js` would be two answers to one question — and the bar's photographs would
+be the only ones on the wall that were not square.
+
+### `look` on the wall payload, and the sweep that nearly stopped sweeping
+
+`wallView()` carried no look, so the bar's tray would have been dressed for
+nothing while the room was dressed for Halloween. Adding it turned
+`second-screen.mjs` red, which is the guard working: it sweeps *every field the
+projector has* rather than naming the ones somebody thought of.
+
+The honest resolution was to widen the `shared` set by one and say why in the
+guard itself. **A field earns a place beside `brand`, `appName` and `scheme` by
+being a fact about the ROOM that the room is already looking at** — the look is
+six feet wide on the projector and on every phone in the building. Anything
+justified more loosely than that is how a sweep becomes a formality.
+
+### The guard came first, and it had to
+
+Nothing in this repo had ever executed one line of `openCamera()`.
+`prop-edges.mjs` renders each prop's ARTWORK and never opens the sheet; the unit
+tests exercise `stickers.js`'s maths. Moving 610 lines of pointer handling under
+those conditions is *a dead control draws perfectly* — the gap dial died twice
+in one week that way, both times a `ReferenceError` on the press, eaten by a
+click handler's `catch`.
+
+`scripts/props-on-a-photo.mjs` places a prop by real pointer gesture, samples
+the canvas either side, drags it, undoes it and sends it to the room, on both
+pages through one function. Two things it taught:
+
+- **A tap and a hold are different gestures and the chip knows the difference.**
+  Moving the pointer more than 10px before `HOLD_MS` lands is read as scrolling
+  and cancels the lift — so a guard that drags straight off the chip places
+  nothing and reports a working app as broken.
+- **`boundingBox()` is viewport-relative and the sheet is taller than a phone.**
+  The props tray sits at y=833 in a 780px window, so the canvas and the tray are
+  never both on screen: each has to be scrolled in and re-measured before it is
+  touched. Second sighting in a week, after `community-bay.mjs`'s hover.
+
+### And the move deleted `const STORE_KEY`
+
+The prop bindings being lifted out of `play.js` sat directly under
+`const STORE_KEY = 'musicquiz.player'`, and it went with them. `loadMe()` and
+`saveMe()` both read it inside a `try`, so the `ReferenceError` was swallowed
+and **every phone silently stopped remembering itself** — which is rule 5, live,
+on the protected surface.
+
+`node --check` was happy. `npm test` was green. `props-on-a-photo.mjs` was green
+too, because it joins fresh on every run and never asks a phone to come back.
+`second-laptop.mjs` caught it, on the one assertion in the suite that sends a
+photograph from a phone that has been sitting there — which is the whole
+argument for keeping a guard that rejoins rather than one that only joins.

@@ -1016,6 +1016,22 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * deliberate raise. **THE NEXT ONE HAS TO COME OUT OF `docs/` MOVES, NOT A
  * RAISE**: two raises in two sessions is the shape the note above warned
  * about, and the honest fix now is a section moved whole rather than squeezed.
+ *
+ * AND THE NEXT ONE WAS PAID WITHOUT A RAISE, 16 September 2026 — the camera
+ * sheet becoming one file for `/play` and `/snap` added ~1,700 bytes of rules,
+ * and every one of them came back out of the four photograph sections around
+ * it. The note above was half right and half wrong, which is worth recording:
+ * it was right that prose alone would not cover it, and wrong that the only
+ * remaining move was a whole section. What actually paid was the RETELLING —
+ * "a count six feet wide makes the last twenty voters followers" explains a
+ * prohibition that the previous eight words already state. A rule needs its
+ * reason where the reason is what stops somebody undoing it; where the rule is
+ * self-evidently a rule, the reason belongs in `docs/`.
+ *
+ * So the rule for the next session stands and is now sharper: trim the
+ * SECOND sentence of a bullet before you trim a bullet, and move a section
+ * whole before you raise the number. Nothing was deleted here that forbids
+ * anything.
  */
 const BUDGET = 258_000;
 

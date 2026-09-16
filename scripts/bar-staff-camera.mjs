@@ -169,6 +169,18 @@ try {
   await bar.setInputFiles('.snap-take input[type="file"]', {
     name: 'behind-the-bar.jpg', mimeType: 'image/jpeg', buffer: JPEG,
   });
+  /*
+   * AND THE SHUTTER IS NOW THE FIRST OF TWO PRESSES, not the whole act.
+   *
+   * The photograph opens the camera sheet — the same one a player's phone gets,
+   * with the props on it, which is what *"can I have the googly eyes etc.
+   * functionality in both"* asked for — so it goes up when Send is pressed
+   * rather than the instant the file is chosen. `props-on-a-photo.mjs` is
+   * where the tray itself is driven; here it is only the step between the
+   * shutter and the room.
+   */
+  await bar.waitForSelector('.cam-send', { timeout: 15000 });
+  await bar.locator('.cam-send').click();
   await bar.waitForFunction(
     () => /Sent/i.test((document.querySelector('.snap-said') || {}).textContent || ''),
     null, { timeout: 15000 },

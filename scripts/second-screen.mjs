@@ -95,7 +95,21 @@ try {
   check('and it is not told the things a PHONE is told',
     !('photosOpen' in w) && !('photoDone' in w),
     Object.keys(w).filter((k) => k.startsWith('photo')).join(', '));
-  const shared = new Set(['brand', 'appName', 'scheme', 'joinCode', 'photos', 'kind']);
+  /*
+   * WHAT IS ALLOWED ON BOTH IS THE ROOM'S DRESSING, AND NOTHING ELSE.
+   *
+   * `brand`, `appName` and `scheme` are whose night it is; `look` is which
+   * season it is wearing, chosen at launch beside the scheme and already six
+   * feet wide on the projector and on every phone in the building. `/snap`
+   * opens the same camera sheet a player's phone does, and its props tray is
+   * dressed for the look — the bar's camera offering a different season would
+   * be the app disagreeing with itself in one room.
+   *
+   * **A FIELD EARNS A PLACE HERE BY BEING A FACT ABOUT THE ROOM, NEVER ABOUT
+   * THE GAME.** Adding one is how this sweep would quietly stop sweeping, so
+   * the question to answer first is whether the room is already looking at it.
+   */
+  const shared = new Set(['brand', 'appName', 'scheme', 'look', 'joinCode', 'photos', 'kind']);
   const gameFields = Object.keys(scr).filter((k) => !shared.has(k));
   const leaked = gameFields.filter((k) => k in w);
   check('the second screen is told NOTHING about the game', leaked.length === 0,

@@ -261,9 +261,24 @@ function photosWanted(room) {
  * that does nothing, six feet wide.
  */
 function wallView(room) {
+  const state = room.session.engine && room.session.engine.state;
   return {
     kind: 'wall',
     open: photosWanted(room),
+    /*
+     * TONIGHT'S LOOK, because `/snap` puts the same props on a photograph that
+     * a player's phone does — and the tray is dressed for the season the room
+     * is dressed for. One look was chosen at launch; the bar's camera offering
+     * a different one would be the app disagreeing with itself in the same
+     * room.
+     *
+     * **IT SAYS NOTHING ABOUT THE GAME**, which is what keeps this view what
+     * it is: the look is already six feet wide on the projector and on every
+     * phone in the building. A field here has to pass that test — see the
+     * sweep in `second-screen.mjs`, which asserts the rest of rule 1 for this
+     * payload rather than naming fields it thought of.
+     */
+    look: (state && state.look) || '',
     // The photographs themselves are hung on by `viewFor()`, on the SAME line
     // the projector's are — see there for why that sharing is the point.
   };
@@ -7223,6 +7238,27 @@ async function handleWrite(req, res, url, route) {
       // the EXIF. Never a gate; it only decides gallery eligibility later.
       camera: url.searchParams.get('camera') !== '0',
     });
+    /*
+     * AND THE PROPS ARE COUNTED HERE TOO — `src/prop-use.js`.
+     *
+     * This page shows the same tray as a player's phone now, so a route that
+     * did not read the tally would make the numbers a sample of the room and
+     * not of the app, silently, and the whole point of that table is deciding
+     * which drawings to delete. **A guard that answers confidently about
+     * something it is not looking at** is what the `shown` half exists to
+     * prevent in the first place.
+     *
+     * Same shape as `/api/photo`'s: outside the `result.ok` branch, never able
+     * to fail the photograph, and deliberately recorded for a refused one — a
+     * prop somebody chose is a prop somebody wanted.
+     */
+    try {
+      propUse.record({
+        shown: String(url.searchParams.get('shown') || '').split(',').filter(Boolean),
+        used: String(url.searchParams.get('used') || '').split(',').filter(Boolean),
+      });
+      backUpPropUse();
+    } catch { /* never fatal */ }
     if (result.ok) pushState(room);
     return sendJson(res, 200, result), true;
   }
