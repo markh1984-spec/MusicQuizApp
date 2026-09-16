@@ -850,6 +850,20 @@ const ROOT = new URL('..', import.meta.url).pathname;
  *
  * ---
  *
+ * TIGHTENED BACK TO 258,000 the same day, and the reason is worth more than
+ * the bytes: **the two camera sections became one, because the two features
+ * became one.** The quizmaster's camera was a button on the control view and
+ * the bar's was a QR; he moved both to Community, which collapsed them into a
+ * single code — and the entry describing the deleted half went with it.
+ *
+ * **1,866 bytes came back for free.** That is what this budget is FOR and it
+ * has now happened once: the pressure it applies is meant to be relieved by
+ * the app getting simpler, not only by prose getting shorter. Two entries
+ * describing one thing is the documentation form of the duplication this repo
+ * keeps finding in code.
+ *
+ * ---
+ *
  * 259,700 — THE BAR STAFF'S CAMERA, AND A KIND TEST'S FOURTH SIGHTING.
  *
  * Two entries, ~3,000 bytes, unpaid, one raise after the last one. The stale
@@ -1003,7 +1017,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * RAISE**: two raises in two sessions is the shape the note above warned
  * about, and the honest fix now is a section moved whole rather than squeezed.
  */
-const BUDGET = 259_700;
+const BUDGET = 258_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

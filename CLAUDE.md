@@ -974,52 +974,21 @@ and photo uploads."*
 
 Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
 
-### THE QUIZMASTER'S OWN CAMERA — `POST /api/host/photo`, and there is no new app
+### THE CAMERAS ARE ONE QR ON COMMUNITY > PHOTOS — `/snap`, never a button
 
-`myCameraRow()` in `host.js`, `node scripts/my-own-camera.mjs`. *"an app on my
-phone, or even just be able to bring up a PWA… that I take photos and it goes
-into that same bucket from that same evening."*
+`camerasPanel()` in `console-community.js`, `public/assets/snap.js`, `POST
+/api/snap`, `node scripts/bar-staff-camera.mjs`. Asked for as *"an app on my
+phone… that I take photos and it goes into that same bucket"*, then moved:
+*"instead of having stuff clogging up the quiz screen when I'm trying to run a
+quiz… I click community and I've got the QR codes."*
 
-- **AN APP AND A PWA ARE BOTH GUESSES AT A MECHANISM** — the control view is
-  already in his hand, signed in and pointed at his own room. A second page is a
-  second install, sign-in and way of knowing which room.
-- **IT COULD NOT BE A JOIN.** `POST /api/photo` needs only a player, so joining
-  his own room nearly works — and puts him on the leaderboard and the projector,
-  the fault `setOrganiser()` exists to prevent reached from the other side.
-  **The room comes from WHO IS SIGNED IN.**
-- **ITS OWN ROUTE BECAUSE IT CARRIES BYTES** — everything under `/api/host/*`
-  starts `readJson(req)`, which eats the body. ABOVE that block, still behind
-  the broad signed-in gate.
-- **ONE BUCKET**: through `photos.add()` and nothing else, so the projector,
-  `/wall`, the host's grid and the night's folder all get it and ONE bin press
-  takes it off all three. **`POST /api/past-photo/<night>` is the other half and
-  is untouched** — that one files against a NAMED night, for the car park.
-- **NO CAPTION** (`teamName` empty), and **NO `capture` ATTRIBUTE**: iOS's own
-  sheet leads with the camera, so one control covers *photograph the room now*
-  and *send the three good ones from earlier*.
-- **THE KILL SWITCH APPLIES; THE BREAK PLAN DOES NOT** — `photosWanted()` also
-  answers *what are PHONES being offered*, which is not a question about the
-  person driving.
-- **THE REASON IT IS OFF OUTRANKS WHATEVER HAPPENED LAST.** Built the other way
-  round and the guard caught it: one upload and the row said *"Added"* for ever,
-  so switching photos off left the control still reporting a success from ten
-  minutes earlier. **A status line the current state cannot overtake is a
-  control that lies.** **The line is a MODULE BINDING** — a photograph landing
-  IS a state push.
-- **NO SERVICE WORKER, EVER** — every push is a deploy, and a cached `host.js`
-  is a control view running last week's code in front of a room. **A manifest
-  wants a PNG icon and is NOT BUILT**; Add to Home Screen already works.
-
-Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
-
-### THE BAR STAFF'S CAMERA — `/snap`, opened with the room's own join code
-
-`public/assets/snap.js`, `POST /api/snap`, `node scripts/bar-staff-camera.mjs`.
-*"one of the bar staff could also get access to this… and then they all go into
-one like shared bucket."*
-
-- **A PAGE WITH NO IDENTITY, like `/play`, `/v` and `/wall`.** A seat is paid,
-  a password to remember and the whole console including the answer key; joining
+- **A CODE, NEVER A BUTTON** — the console is the laptop with the HDMI in it, so
+  a camera button on it points at nothing. **ONE CODE, NOT TWO**: `/snap` holds
+  no identity, so his phone scanning it gets what the bar gets. **`POST
+  /api/host/photo` IS DELETED** — nothing called it, and a route nothing reaches
+  is dead code that reads as a feature.
+- **A PAGE WITH NO IDENTITY, like `/play`, `/v` and `/wall`.** A seat is paid, a
+  password to remember and the whole console including the answer key; joining
   puts the bar on the leaderboard. **No player, no caption, no row on the board.**
 - **THE JOIN CODE IS THE HANDLE — a revocable staff key was offered and turned
   down.** Anybody holding the code can already upload by joining, so a key is a
@@ -1027,19 +996,20 @@ one like shared bucket."*
   cost, accepted: one person cannot be shut out.**
 - **ONE BUCKET** — through `photos.add()` and nothing else, so one bin press
   clears the projector, `/wall`, the grid and the night's folder together.
-- **NO NEW ROLE ON THE WIRE — it opens a `role=wall` stream**, which is already
-  *is the camera open, and what landed*. **RULE 1 IS SWEPT, NOT CHECKED**: the
-  guard asserts no question, key, reveal, options, board, player id or token.
-- **`capture="environment"` HERE AND NOT ON THE CONTROL VIEW** — staff want the
-  camera in one tap; the quizmaster wants the library too.
-- **KILL SWITCH YES, BREAK PLAN NO**, as the control view's camera decided.
-  **NO CODE AT ALL IS AN ERROR, not the house room** — this link is always
-  HANDED over, so a missing code means it was handed over broken.
-- **THE CODE IS SHOWN, NEVER SENT** — a QR on the photo panel. **The fold is a
-  MODULE BINDING**, that panel's second lesson in a day.
-- **NO JOIN CODE MEANS AN INERT HAND-OVER, REASON IN THE LABEL never a
-  `title`** — driven on a phone. **`whoIs()` READS THE HOST KEY BEFORE THE
+- **NO NEW ROLE ON THE WIRE — it opens a `role=wall` stream.** **RULE 1 IS
+  SWEPT, NOT CHECKED**: the guard asserts no question, key, reveal, options,
+  board, player id or token reaches a phone the quizmaster will never see again.
+- **THE KILL SWITCH AND THE BIN STAY ON THE CONTROL VIEW** — `photos.js` needs
+  them "immediate… one movement in the dark", not a door, a tab and a scroll.
+- **NO UPLOAD CONTROL ON THE PANEL** — `myPhotos()` on the same tab files
+  against a NAMED PAST night, and two controls meaning "add a photo" into
+  different buckets is the collision rule 1 refuses.
+- **KILL SWITCH YES, BREAK PLAN NO** — `photosWanted()` also answers *what are
+  PHONES being offered*. **NO CODE AT ALL IS AN ERROR, not the house room** —
+  this link is always HANDED over. **`whoIs()` READS THE HOST KEY BEFORE THE
   COOKIE**, so `?key=` plus a cookie is the HOUSE room, which has no code.
+- **NO SERVICE WORKER, EVER** — every push is a deploy, and a cached page is a
+  control view running last week's code in front of a room.
 - **`snap` WENT IN `RESERVED`** — third time that list has paid.
 
 Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
@@ -4187,8 +4157,7 @@ node scripts/second-screen.mjs          # the second display: the code and the p
 node scripts/two-screens.mjs            # two outputs, a real account, quiz -> bingo
 node scripts/second-laptop.mjs          # the wall on a spare laptop
 node scripts/funniest-photo.mjs         # does the room's vote reach a drink?
-node scripts/my-own-camera.mjs          # his own photo, into the same bucket
-node scripts/bar-staff-camera.mjs       # the bar's camera — same bucket, and nothing else
+node scripts/bar-staff-camera.mjs       # the camera code — same bucket, and nothing else
 ```
 
 **The rules these commands run on, and each was learned expensively — the full

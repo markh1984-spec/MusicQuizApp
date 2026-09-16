@@ -18,7 +18,6 @@ import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 import { djPanels, djActions, djWhere } from './host-dj.js';
 import { cueOffsetMs, formatOffset } from './cue.js';
-import { shrinkPhoto, looksCameraTaken } from './filters.js';
 import { phonesAre } from './phones.js';
 import { STINGS } from './stings.js';
 
@@ -438,180 +437,6 @@ function votePanel(s) {
   return el ? [el] : [];
 }
 
-/**
- * WHAT THE QUIZMASTER'S OWN UPLOAD IS DOING, IN A MODULE BINDING.
- *
- * This panel is rebuilt on every state push — and a photograph landing IS a
- * state push — so a status line written into the element would be wiped by
- * the very success it was reporting. Same reasoning as the vouchers fold and
- * the who-picked-what lists: **it has to live outside the render.**
- */
-let myPhotoSaid = '';
-
-/** Whether the bar's own code is showing. A module binding, for the reason above. */
-let snapQrOpen = false;
-
-/**
- * THE QUIZMASTER'S OWN CAMERA — asked for as *"an app on my phone... that I
- * take photos and it goes into that same bucket from that same evening."*
- *
- * **IT IS ON THE CONTROL VIEW BECAUSE THAT IS ALREADY THE APP IN HIS HAND.**
- * A separate page would be a second thing to install, a second thing to sign
- * in to and a second thing to point at the right room, in exchange for a
- * button this page had space for.
- *
- * **IN THE PANEL HEADED *Photos on the big screen*, WHICH IS WHERE IT GOES.**
- * That panel is on the render line shared by the quiz, the bingo desk and the
- * DJ desk — photographs belong to the ROOM, not to any of them — so this
- * draws on a karaoke night with no game loaded, which is the night it is most
- * wanted on.
- *
- * **NO `capture` ATTRIBUTE.** Forcing the camera takes away the sheet iOS
- * already offers, whose first entry is the camera anyway; leaving it off means
- * one control covers both *photograph the room now* and *send the three good
- * ones from earlier*. Which it was is read off the raw file's EXIF and only
- * ever decides gallery eligibility, never whether it goes up.
- *
- * **ONE AT A TIME, IN ORDER, WITH THE COUNT GOING UP** — the Community door's
- * batch rule, and for its reasons: firing six at once is six writes racing on
- * one folder, on a pub's wifi.
- */
-function myCameraRow(info, joinCode) {
-  /*
-   * THE REASON A CONTROL IS OFF GOES ON THE CONTROL, AND IT OUTRANKS WHATEVER
-   * HAPPENED LAST.
-   *
-   * Written the other way round first — the remembered status line winning
-   * over the derived one — and the guard caught it: after one successful
-   * upload the row said *"Added — it is on the screen now"* for ever, so
-   * switching the room's photographs off left the one control that would tell
-   * you why still reporting a success from ten minutes earlier. A status line
-   * that cannot be overtaken by the current state is a control that lies.
-   *
-   * Inert rather than refused, for the same reason: opening a picker, choosing
-   * a photograph and THEN being told no is the worst order to find out in.
-   */
-  const shut = !info.enabled;
-  if (shut) myPhotoSaid = '';
-  const row = node(`
-    <div class="mine-add">
-      <label class="minor mine-pick ${shut ? 'is-off' : ''}">
-        Add your own photo
-        <input type="file" accept="image/*" multiple hidden ${shut ? 'disabled' : ''}>
-      </label>
-      <button class="minor snap-hand" ${shut || !joinCode ? 'disabled' : ''}></button>
-      <span class="tiny mine-said">${esc(shut
-        ? 'Photos are switched off, so there is nowhere for one to go yet.'
-        : (myPhotoSaid || 'Yours goes in with the room\u2019s.'))}</span>
-    </div>`);
-
-  /*
-   * THE BAR STAFF'S CAMERA, HANDED OVER AS A CODE ON THIS SCREEN.
-   *
-   * Asked for as *"one of the bar staff could also get access to this"*. It
-   * sits with the quizmaster's own camera because it is the same act from the
-   * other side of the bar, and because a control belongs with what it acts on:
-   * everything in this panel is *photographs going up in this room*.
-   *
-   * **IT IS SHOWN, NEVER SENT.** A staff member holds a phone up to this one
-   * and scans it — no email, no message, no address to type in a dark pub. The
-   * code is drawn by the server's own encoder at `/qr.svg`, the same one the
-   * comeback slide and the advert offers use.
-   *
-   * **ORDINARY, NEVER THE GRADIENT.** There is one filled button on any screen
-   * and on the control view it is the onwards button at the foot.
-   *
-   * **AND THE FOLD IS A MODULE BINDING, NOT THE MARKUP** — the second lesson
-   * this panel has taught in a day. It is rebuilt on every state push and a
-   * photograph landing IS a push, so a code opened by hiding an element would
-   * shut itself the moment anybody in the room sent one, while a member of
-   * staff was pointing a camera at it.
-   */
-  /*
-   * **AND WITH NO JOIN CODE THERE IS NOTHING TO HAND OVER, so the button says
-   * that rather than drawing one.** `/snap` needs a code — it is always
-   * *handed* to somebody, so it refuses to fall back to the house room the way
-   * `/wall` can. A control view running on the HOST KEY resolves to that house
-   * room, which has no code: the button would have drawn a perfectly good QR
-   * at a page that then says *"this link is missing its room"*, which is *a
-   * control that reports success it did not have*, this repo's commonest
-   * fault, on the one screen where the person it fails in front of works
-   * behind a bar.
-   *
-   * **THE REASON GOES IN THE LABEL, NOT A `title`.** This page is driven on a
-   * phone, and a phone never shows a tooltip — the fault this file already
-   * records as *a bare verb whose object lived in a tooltip*.
-   */
-  const hand = row.querySelector('.snap-hand');
-  hand.textContent = !joinCode ? 'No code to hand over'
-    : (snapQrOpen ? 'Hide the code' : 'Hand it to the bar');
-  if (!joinCode) hand.title = 'This room has no join code — launch a night and it gets one.';
-  hand.addEventListener('click', () => { snapQrOpen = !snapQrOpen; if (state) draw(state); });
-
-  const input = row.querySelector('input');
-  const label = row.querySelector('.mine-pick');
-  const said = row.querySelector('.mine-said');
-
-  // Only what the ELEMENT still on the page can be told. Once a photograph
-  // lands the panel is rebuilt around us, so the binding is what the next
-  // render reads and this is only for the moment in between.
-  const say = (words) => { myPhotoSaid = words; if (said.isConnected) said.textContent = words; };
-
-  input.addEventListener('change', async () => {
-    const files = [...(input.files || [])];
-    input.value = '';
-    if (!files.length) return;
-    label.classList.add('is-busy');
-    let done = 0;
-    for (const file of files) {
-      say(files.length > 1 ? `Sending ${done + 1} of ${files.length}\u2026` : 'Sending\u2026');
-      try {
-        // On the RAW file, before the shrink's own canvas strips every byte of
-        // EXIF it might have carried. See looksCameraTaken() in filters.js.
-        const camera = await looksCameraTaken(file);
-        const blob = await shrinkPhoto(file);
-        const res = await fetch(`/api/host/photo?camera=${camera ? '1' : '0'}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'image/jpeg', 'X-Host-Key': hostKey },
-          body: blob,
-        });
-        const out = await res.json().catch(() => ({}));
-        if (!out.ok) throw new Error(WHY_NOT[out.reason] || 'Could not add that one.');
-        done += 1;
-      } catch (err) {
-        say(err.message);
-        label.classList.remove('is-busy');
-        return;
-      }
-    }
-    say(done === 1 ? 'Added — it is on the screen now.' : `${done} added.`);
-    label.classList.remove('is-busy');
-  });
-  if (snapQrOpen && !shut && joinCode) {
-    const link = `${location.origin}/snap${joinCode ? `?g=${encodeURIComponent(joinCode)}` : ''}`;
-    row.appendChild(node(`
-      <div class="snap-qr">
-        <img src="/qr.svg?text=${encodeURIComponent(link)}" alt="">
-        <div class="tiny">
-          <b>Let them scan this.</b> It opens a camera and nothing else \u2014 no
-          scores, no answers, no team on the board. Their photos land here with
-          everybody else\u2019s.
-          <div class="snap-url">${esc(link.replace(/^https?:\/\//, ''))}</div>
-        </div>
-      </div>`));
-  }
-  return row;
-}
-
-/** What `photos.add()` refuses for, in words a host can act on. */
-const WHY_NOT = {
-  off: 'Photos are switched off for this room. Switch them back on first.',
-  too_big: 'That photo is too big, even scaled down.',
-  not_an_image: 'That file is not a photo.',
-  empty: 'That file was empty.',
-  could_not_save: 'Could not save that one.',
-};
-
 function photoPanel(s) {
   const info = s.photos;
   if (!info) return [];
@@ -638,7 +463,6 @@ function photoPanel(s) {
    * leaves the description reading as a note about the button. Two dim grey
    * lines stacked, the second explaining the thing three rows up.
    */
-  el.querySelector('.tiny').after(myCameraRow(info, s.joinCode || ''));
   el.querySelector('.clear')?.addEventListener('click', () => {
     if (confirm(`Delete all ${info.count} photos?\n\nThis cannot be undone.`)) act('photosClear', {});
   });

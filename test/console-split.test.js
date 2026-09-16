@@ -411,9 +411,32 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * off an unrelated paragraph to pay for a call, which is the trade this budget
  * exists to make visible rather than to force.
  */
+/*
+ * `console-community.js` 1600 -> 1620 on 16 September 2026, and this one is a
+ * raise WITHOUT the seam, which the entry above says is the worse trade. Said
+ * plainly so the next session does not have to work it out.
+ *
+ * What went in is *Cameras for tonight* — the one QR that opens a camera on a
+ * phone, moved here off the control view because *the console is the laptop
+ * with the HDMI in it* and a camera button on that laptop points at nothing.
+ * Thirty-eight lines, and the comment above it was already cut twice to fit:
+ * first the reasoning (which went to `docs/gigs/photos-on-the-night.md`), then
+ * the two branches folded into one template. A third cut would have left the
+ * newest code in the file the least documented, which is how a budget starts
+ * costing more than it saves.
+ *
+ * **THE SEAM IS OWED AND IT IS NAMED: `console-photos.js`.** This module holds
+ * three tabs — the league, the photographs and the asks — and the photographs
+ * are the obvious third of it. It was NOT taken here because `communityBench()`
+ * and `photosSection()` share module bindings (`openNight`, `wallShots`), so
+ * the move is not the mechanical one `console-page.js` was: it needs those
+ * bindings lifted into `console-state.js` first, and *an ES import is a
+ * read-only view* is exactly the fault that arrangement exists to prevent.
+ * Worth doing on a day with room for it, not at the end of one.
+ */
 const BUDGET = {
   'console-tonight.js': 4200, 'console.js': 2000, 'console-packs.js': 1890,
-  'console-account.js': 1620,
+  'console-account.js': 1620, 'console-community.js': 1620,
 };
 const DEFAULT_BUDGET = 1600;
 

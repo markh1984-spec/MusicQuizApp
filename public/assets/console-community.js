@@ -1409,11 +1409,48 @@ function headsLine(venue) {
  * **A NIGHT WITH NO PICTURES IS NOT LISTED.** This tab is the photographs; a
  * row saying a night has none belongs on the page about nights.
  */
+/**
+ * THE CAMERAS FOR TONIGHT — one code, and it is the whole feature. Moved here
+ * off the control view: *"instead of having stuff clogging up the quiz screen
+ * when I'm trying to run a quiz… I click community and I've got the QR codes."*
+ *
+ * **A CODE, NEVER A BUTTON** — the console is the laptop with the HDMI in it,
+ * so a camera button on it points at nothing. **ONE CODE, NOT TWO**: `/snap`
+ * holds no identity, so his phone scanning it gets what the bar gets.
+ * **NO UPLOAD CONTROL HERE** — `myPhotos()` below is *Add your own photos* and
+ * files against a NAMED PAST night; two controls reading "add a photo" and
+ * meaning different buckets is the collision rule 1 refuses. **THE KILL SWITCH
+ * AND THE BIN STAY ON THE CONTROL VIEW**, which `src/photos.js` requires to be
+ * "one movement in the dark" — the opposite of a door, a tab and a scroll.
+ *
+ * Full reasoning: `docs/gigs/photos-on-the-night.md`.
+ */
+function camerasPanel() {
+  const code = (library && library.joinCode) || '';
+  // NO CODE MEANS NOTHING TO HAND OVER, said rather than drawn: `/snap` never
+  // falls back to the house room, so a QR made without one is a dead QR.
+  const link = code ? `${location.origin}/snap?g=${encodeURIComponent(code)}` : '';
+  return node(`
+    <div class="panel cams">
+      <h3>Cameras for tonight</h3>
+      <div class="tiny">${link
+    ? 'Scan it yourself, or show it to whoever is helping behind the bar. It opens'
+      + ' a camera and nothing else \u2014 no scores, no answers, no team on the'
+      + ' board \u2014 and the photographs land with the room\u2019s.'
+    : 'This room has no join code yet \u2014 launch a night and the code to hand'
+      + ' round appears here.'}</div>
+      ${link ? `<div class="cams-row">
+        <img class="cams-qr" src="/qr.svg?text=${encodeURIComponent(link)}" alt="Scan to open a camera">
+        <div class="tiny cams-url">${esc(link.replace(/^https?:\/\//, ''))}</div>
+      </div>` : ''}
+    </div>`);
+}
+
 export function photosSection() {
   const el = node('<div></div>');
   const note = node('<div class="tiny"></div>');
   const wrap = node('<div class="venue-cards"></div>');
-  el.append(note, wrap);
+  el.append(camerasPanel(), note, wrap);
 
   const open = new Set();
   let groups = { venues: [], unfiled: [] };

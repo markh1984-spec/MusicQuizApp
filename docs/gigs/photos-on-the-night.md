@@ -414,7 +414,12 @@ them or karaoke nights with a camera, which is a question for the host.
 
 ---
 
-## THE QUIZMASTER'S OWN CAMERA — `POST /api/host/photo`, and no new app
+## THE QUIZMASTER'S OWN CAMERA — built, then FOLDED INTO `/snap`
+
+> **SUPERSEDED on 16 September 2026 — read *The cameras moved to Community*
+> at the foot of this file first.** `POST /api/host/photo` and the camera row
+> on the control view are DELETED. What is below is why the feature exists and
+> which of its decisions survived into `/snap`; the route it describes is gone.
 
 Asked for on 16 September 2026, the morning after the one-bucket conversation:
 *"Another thing I'd absolutely love to be able to do is have, say, like an app
@@ -643,3 +648,68 @@ Monday.
   and the button above then says there is nothing to hand over.
 - **`snap` WENT IN `RESERVED`.** Third time that list has paid — *The Snap* is
   as plausible a pub name as *The Wall*.
+
+
+---
+
+## THE CAMERAS MOVED TO COMMUNITY — and two became one
+
+Asked for on 16 September 2026, a day after both were built: *"I think all of
+that should live in the community tab. So instead of having stuff clogging up
+the quiz screen when I'm trying to run a quiz… I click community and I've got
+the QR codes — my camera and the bar's camera — all from the community section,
+because the community section is the photos section."*
+
+### He is right, and the better reason is not tidiness
+
+The control view's camera was a **button**, and a button only helps if the
+control view is open on the phone you take photographs with. **The console is
+the laptop with the HDMI in it** — that is this project's own phrase, written
+for the drag-and-drop rules — and on a night driven from that laptop the button
+was a camera pointed at nothing.
+
+A **code** puts the camera where the camera has to be. So the move is not a
+relocation of the same control; it is the control being replaced by one that
+works in the case that actually happens.
+
+### One code, not two
+
+He asked for *"my camera and the bar's camera"*, and they were two things only
+because they were built a day apart from opposite directions — his from
+"a page I am signed into", the bar's from "a page with no identity".
+
+**`/snap` has no identity in it**: no player, no caption, no row on the board.
+Which is exactly what his own photographs already wanted. So his phone scanning
+that code gets precisely what the bar gets, and a second code would be a second
+thing to explain for no difference anybody can see.
+
+**So `POST /api/host/photo` is DELETED, not left.** Nothing called it once the
+row went, and *a route in the wrong place is dead code that reads as a feature*
+— the fault this file already records about the publish route. `my-own-camera.mjs`
+went with it; `bar-staff-camera.mjs` covers what is left, and grew a leg
+asserting the control view carries no camera any more.
+
+### What did NOT move, and why
+
+**The kill switch and the bin stay on the control view.** `src/photos.js` sets
+the requirement in its own words: when something goes wrong in front of a room
+it *"has to be immediate, and it has to be one movement in the dark"*. A door
+press, a tab and a scroll is the opposite of that. The photos panel keeps its
+heading, its switch, its grid with a bin on every picture, and Clear all.
+
+### The decisions inside the panel
+
+- **NO UPLOAD CONTROL ON IT.** `myPhotos()` sits further down the same tab,
+  reads *Add your own photos* and files against a NAMED PAST night. Two controls
+  on one screen both meaning "add a photo" and pointing at different buckets is
+  the label collision rule 1 exists to refuse. This panel gets a camera onto a
+  **phone**; that one puts a file into a **night**.
+- **NO JOIN CODE MEANS THE REASON, NOT A DEAD QR.** `/snap` never falls back to
+  the house room, so a code drawn without one would be scanned and refused.
+- **THE QR SITS ON WHITE AND IS 168px.** It is held up across a bar: a code on a
+  tinted panel reads slowly on a cheap camera, and the moment it is being
+  scanned is the moment nobody has.
+- **IT COST A LINE-BUDGET RAISE, AND THE SEAM IS NAMED** —
+  `console-community.js` went 1600 → 1620 with `console-photos.js` recorded as
+  owed. The comment on the panel was cut twice to fit first; a third cut would
+  have left the newest code in the file the least documented.

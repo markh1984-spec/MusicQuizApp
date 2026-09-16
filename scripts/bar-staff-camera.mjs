@@ -93,6 +93,8 @@ try {
   await desk.evaluate(() => document.querySelector('form')?.requestSubmit());
   await desk.waitForTimeout(2500);
 
+  const mineNewPage = () => deskCtx.newPage();
+
   const lib = (await host('/api/library')).body;
   const pack = (lib.quiz || lib.text || [])[0] || (lib.quizzes || [])[0];
   await host('/api/host/launch', { game: 'quiz', packId: pack.id, replace: true, venue: 'The Bar Staff Arms' });
@@ -224,22 +226,51 @@ try {
   });
   check('a mistyped code reaches nobody\'s room', junk.status >= 400, `HTTP ${junk.status}`);
 
-  /* ------------------------ and with no code, the button says so rather than
-   * drawing a QR at a page that then says the link is missing its room. The
-   * HOUSE room is the case: it has no join code, and a control view on the
-   * host key resolves to it. */
-  const houseHand = await browser.newPage({ viewport: { width: 390, height: 780 } });
-  await houseHand.goto(`${BASE}/host?key=${KEY}`);
-  await houseHand.waitForSelector('.snap-hand', { timeout: 15000 });
-  const noCode = await houseHand.evaluate(() => {
-    const b = document.querySelector('.snap-hand');
-    return { words: b.textContent.trim(), off: b.disabled, qr: Boolean(document.querySelector('.snap-qr')) };
+  /* ------------------- the code is HANDED OVER from Community > Photos, and
+   * that is the only place it is. It moved off the control view on 16
+   * September 2026: the console is the laptop with the HDMI in it, so a camera
+   * BUTTON there points at nothing. */
+  // Straight to the door in the URL. Pressing the door CHIP navigates, which
+  // destroys the evaluate context mid-call — the chip is a link, by design.
+  await desk.goto(`${BASE}/console?door=community&tab=photos`, { waitUntil: 'load' });
+  await desk.waitForSelector('.cams-qr', { timeout: 20000 }).catch(() => {});
+  const onPhotos = await desk.evaluate(() => {
+    const qr = document.querySelector('.cams-qr');
+    const url = document.querySelector('.cams-url');
+    if (!qr) return { drawn: false };
+    const r = qr.getBoundingClientRect();
+    qr.scrollIntoView({ block: 'center' });
+    return {
+      drawn: true,
+      wide: Math.round(r.width),
+      src: qr.getAttribute('src') || '',
+      url: (url && url.textContent) || '',
+      heading: (document.querySelector('.cams h3') || {}).textContent || '',
+    };
   });
-  check('with no join code the hand-over is inert', noCode.off, JSON.stringify(noCode.words));
-  check('and the reason is in the LABEL, where a phone can read it',
-    /no code/i.test(noCode.words), JSON.stringify(noCode.words));
-  check('and no code is drawn at a page that would refuse it', !noCode.qr);
-  await houseHand.close();
+  check('Community > Photos draws the camera code', onPhotos.drawn);
+  check('it is big enough to scan across a bar', (onPhotos.wide || 0) >= 140, `${onPhotos.wide}px`);
+  check('the code points at /snap with this room on it',
+    /snap/.test(decodeURIComponent(onPhotos.src || '')) && onPhotos.url.includes(joinCode),
+    onPhotos.url);
+  check('and it is called what it is', /camera/i.test(onPhotos.heading || ''),
+    JSON.stringify(onPhotos.heading));
+
+  /* -------- and the control view no longer carries a camera of its own ----- */
+  const hostPage = await mineNewPage();
+  await hostPage.goto(`${BASE}/host`, { waitUntil: 'load' });
+  await hostPage.waitForSelector('.panel.photos', { timeout: 15000 });
+  const stripped = await hostPage.evaluate(() => ({
+    camera: Boolean(document.querySelector('.mine-pick')),
+    hand: Boolean(document.querySelector('.snap-hand')),
+    killSwitch: Boolean(document.querySelector('.panel.photos [data-a="toggle"]')),
+    bin: Boolean(document.querySelector('.panel.photos .host-photo')),
+  }));
+  check('the quiz screen carries no camera any more', !stripped.camera && !stripped.hand,
+    JSON.stringify(stripped));
+  check('but the kill switch stayed, which is the one that must be immediate',
+    stripped.killSwitch);
+  await hostPage.close();
 
   check('nothing threw on the bar\'s phone', errors.length === 0, errors.join(' | '));
   await bar.close();

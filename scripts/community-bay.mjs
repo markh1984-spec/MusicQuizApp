@@ -567,18 +567,47 @@ try {
        * hover before (`filter: brightness(1.25)` on a 22px dot, a change you
        * could not find). What is measured is the rendered box moving.
        */
+      /*
+       * SCROLLED INTO VIEW *BEFORE* THE RESTING READ, AND THE SCROLL IS PINNED
+       * ACROSS BOTH.
+       *
+       * `getBoundingClientRect()` is VIEWPORT-relative and `hover()` scrolls
+       * whatever it is pointed at into view — so a link sitting off the top of
+       * a phone screen was measured at -204 at rest and +404 hovered, and this
+       * check reported a 608px "lift" that was the page moving underneath it.
+       * It only ever passed because the link happened to already be on screen,
+       * which a panel added ABOVE it on the same tab quietly ended.
+       *
+       * **AND THE PRESS INHERITED IT SILENTLY, WHICH IS THE WORSE HALF.**
+       * `box` was taken before that scroll, so `mouse.move(box.x, box.y)`
+       * aimed at where the link USED to be: the press landed on nothing, the
+       * edge check read the resting 2px — and *"it presses DOWN"* passed on
+       * 404 -> 405, a hair of noise. **A guard that reports success it did not
+       * have is this repo's commonest fault wearing the guard's own hat.**
+       *
+       * So: settle first, measure after, and assert nothing scrolled in
+       * between — which is what stops this coming back the next time somebody
+       * adds a panel to this tab.
+       */
       const a = page.locator('.bay-head .bay-head-live');
+      await a.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(220);
       const box = await a.boundingBox();
-      const resting = await page.evaluate(() => {
+      const where = () => page.evaluate(() => {
         const el = document.querySelector('.bay-head .bay-head-live');
-        return { y: el.getBoundingClientRect().top, shadow: getComputedStyle(el).boxShadow };
+        return {
+          y: el.getBoundingClientRect().top,
+          shadow: getComputedStyle(el).boxShadow,
+          scrolled: window.scrollY + (document.querySelector('.consolecols')?.scrollTop || 0),
+        };
       });
+      const resting = await where();
       await a.hover();
       await page.waitForTimeout(220);
-      const hovered = await page.evaluate(() => {
-        const el = document.querySelector('.bay-head .bay-head-live');
-        return { y: el.getBoundingClientRect().top, shadow: getComputedStyle(el).boxShadow };
-      });
+      const hovered = await where();
+      check(`${label}: nothing scrolled between the two readings`,
+        Math.abs(hovered.scrolled - resting.scrolled) < 1,
+        `${resting.scrolled} -> ${hovered.scrolled}`);
       check(`${label}: the link LIFTS under the pointer`, hovered.y < resting.y - 0.4,
         `${resting.y.toFixed(1)} -> ${hovered.y.toFixed(1)}`);
       check(`${label}: and gains a shadow`, hovered.shadow !== resting.shadow && hovered.shadow !== 'none');

@@ -1558,13 +1558,11 @@ body.host::after { display: none; }
   border-bottom-color: var(--bad);
 }
 .host .panel button.minor:disabled { opacity: 0.6; cursor: default; }
-/* A LABEL WEARING A BUTTON'S FACE HAS TO CENTRE ITS OWN TEXT.
-   `.host .minor` puts a 44px floor under every pressable thing on this page —
-   the touch floor — and a `<button>` centres its content inside that for free
-   where an `inline-block` label leaves the words sitting at the top of a box
-   a third taller than they are. The one control this applies to is the
-   quizmaster's own camera in the photos panel, which is a label because it
-   wraps a hidden file input: there is no button that opens a file picker. */
+/* A LABEL WEARING A BUTTON'S FACE HAS TO CENTRE ITS OWN TEXT — `.host .minor`
+   puts a 44px floor under every pressable thing on this page and a `<button>`
+   centres inside that for free, where an `inline-block` label does not. Kept
+   for the next label that wraps a hidden file input; there is no button that
+   opens a file picker. */
 .host .panel label.minor { display: inline-flex; align-items: center; }
 /* Back, as an arrow. It keeps a WHOLE CELL rather than being shrunk to fit
    the glyph: this is the undo, pressed in the dark with a mic in the other
@@ -11914,18 +11912,14 @@ body.dj .head .score { color: var(--ink); }
 .snap-empty { grid-column: 1 / -1; color: var(--ink-dim); text-align: center; padding: 12px 0; }
 .snap-shut { text-align: center; }
 
-/* The bar's own code, folded open under the camera row on the control view.
-   `flex-basis: 100%` because `.mine-add` is a wrapping flex row and this is a
-   block, not a control beside the other two. */
-.snap-qr {
-  flex: 1 0 100%;
-  display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; align-items: center;
-  margin-top: 8px; padding: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--panel-line); border-radius: var(--r-card);
+/* ---- "Cameras for tonight", Community > Photos — see camerasPanel() -------
+   A code somebody holds a phone up to across a bar, so it is bigger than a
+   decoration and sits on WHITE: a QR on a tinted panel is one a cheap camera
+   reads slowly, and the moment it is scanned in is the moment nobody has. */
+.cams { display: grid; gap: 10px; }
+.cams-row { display: grid; justify-items: start; gap: 6px; }
+.cams-qr {
+  width: 168px; height: 168px; display: block;
+  border-radius: var(--r-field); background: #fff; padding: 8px;
 }
-.snap-qr img { width: 120px; height: 120px; display: block; border-radius: var(--r-field); background: #fff; }
-.snap-url { color: var(--ink-dim); margin-top: 6px; word-break: break-all; }
-@media (max-width: 480px) {
-  .snap-qr { grid-template-columns: 1fr; justify-items: center; text-align: center; }
-}
+.cams-url { color: var(--ink-dim); word-break: break-all; }
