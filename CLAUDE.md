@@ -1012,6 +1012,51 @@ into that same bucket from that same evening."*
 
 Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
 
+### THE BAR STAFF'S CAMERA — `/snap`, opened with the room's own join code
+
+`public/assets/snap.js`, `POST /api/snap`, `node scripts/bar-staff-camera.mjs`.
+*"one of the bar staff could also get access to this… and then they all go into
+one like shared bucket."*
+
+- **A PAGE WITH NO IDENTITY, like `/play`, `/v` and `/wall`.** A seat is a paid
+  thing, a password to remember and the whole console including the answer key;
+  joining the room puts the bar on the leaderboard. **No player, no caption, no
+  row on the board.**
+- **THE JOIN CODE IS THE HANDLE — a revocable staff key was offered and turned
+  down.** Anybody holding the code can already upload by joining, so a key is a
+  lock beside an open door — and it would need a store that survives a deploy.
+  **The cost, accepted: one person cannot be shut out.**
+- **ONE BUCKET** — through `photos.add()` and nothing else, so one bin press
+  clears the projector, `/wall`, the grid and the night's folder together.
+- **NO NEW ROLE ON THE WIRE — it opens a `role=wall` stream**, which is already
+  *is the camera open, and what landed*. **RULE 1 IS SWEPT, NOT CHECKED**: the
+  guard asserts no question, key, reveal, options, board, player id or token.
+- **`capture="environment"` HERE AND NOT ON THE CONTROL VIEW** — staff want the
+  camera in one tap; the quizmaster wants the library too.
+- **KILL SWITCH YES, BREAK PLAN NO**, as the control view's camera decided.
+  **NO CODE AT ALL IS AN ERROR, not the house room** — this link is always
+  HANDED over, so a missing code means it was handed over broken.
+- **THE CODE IS SHOWN, NEVER SENT** — a QR on the photo panel. **The fold is a
+  MODULE BINDING**, that panel's second lesson in a day.
+- **`snap` WENT IN `RESERVED`** — third time that list has paid.
+
+Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
+
+### A KIND TEST WRITTEN WHEN THERE WERE TWO GAMES — the FOURTH sighting, on the shelf
+
+- **A PACK CARD'S LINE READ `quiz ? questions : tracks`, so a deck of playing
+  cards said "52 tracks".** Named per kind now (`UNIT` in `console-packs.js`),
+  **with an unnamed kind falling back to its track count** so a fifth game reads
+  as it always would rather than printing `undefined`.
+- **AND `shortTitle()` TRIMMED *Card Bingo* TO "Card".** The trim drops a
+  REDUNDANT game word and is right for every pack named after a SUBJECT; a deck
+  is the one pack whose name IS the game's. **`GAME_WORDS` is NAMED, never
+  derived from the shape** — *leave at least two words* was measured against the
+  real library first and breaks "Madonna", "Metallica", "2006" and "1980s".
+- **CARD BINGO'S TAB IS CONSOLE-ONLY AND THAT STANDS** — there is no generator,
+  no editor and no pack file, so a Workshop shelf would hold one card with
+  nothing to do to it.
+
 ### A WORD IN ONE EAR — `src/notes.js`, one phone and never the room
 
 *"Say someone is being a bit cheeky I can send them a message saying 'stop
@@ -4143,6 +4188,7 @@ node scripts/two-screens.mjs            # two outputs, a real account, quiz -> b
 node scripts/second-laptop.mjs          # the wall on a spare laptop
 node scripts/funniest-photo.mjs         # does the room's vote reach a drink?
 node scripts/my-own-camera.mjs          # his own photo, into the same bucket
+node scripts/bar-staff-camera.mjs       # the bar's camera — same bucket, and nothing else
 ```
 
 **The rules these commands run on, and each was learned expensively — the full

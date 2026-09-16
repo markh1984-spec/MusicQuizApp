@@ -1727,6 +1727,13 @@ async function handleGet(req, res, url, route) {
    * bookmarked. See `wallView()` for what it is told.
    */
   if (route === '/wall') return serveFile(res, config.publicDir, 'wall.html'), true;
+  /*
+   * THE BAR STAFF'S CAMERA. Open, like `/play`, `/v` and `/wall`, and for the
+   * identical reason: it is handed to somebody with no account who never will
+   * have one. It gives out nothing on its own — the join code in the address
+   * has to be a real one, and `roomForPhone()` refuses anything else.
+   */
+  if (route === '/snap') return serveFile(res, config.publicDir, 'snap.html'), true;
   if (route === '/play') return serveFile(res, config.publicDir, 'play.html'), true;
   // Where a scanned voucher lands. Open, like /play and the sign-in page:
   // it hands out nothing on its own, the code in the address has to be right.
@@ -7165,6 +7172,58 @@ async function handleWrite(req, res, url, route) {
     const result = roomForPhone(req, url, body).session.runPlayerAction(action, body);
     // 200 either way: the phone shows its own feedback, and a rejected action
     // is a normal thing (too late, already answered), not an error.
+    return sendJson(res, 200, result), true;
+  }
+
+  /*
+   * ---- A PHOTOGRAPH FROM SOMEBODY WORKING THE ROOM ----------------------
+   *
+   * Asked for as *"one of the bar staff could also get access to this… and
+   * then they all go into one like shared bucket."*
+   *
+   * **IT IS THE ROOM'S OWN JOIN CODE AND NOTHING ELSE**, which was a decision
+   * rather than the easy option. A revocable staff key was the alternative and
+   * it buys nothing here: anybody holding the code can already upload by
+   * joining the room, so a key would be a lock on a door standing beside an
+   * open one — and it would need a store that survives a deploy, which on this
+   * host means the private repo and a new way for a Thursday to go wrong.
+   *
+   * **NO PLAYER, SO NO ROW ON THE BOARD** — the whole point. `POST /api/photo`
+   * needs a joined phone and would put the bar on the leaderboard and the
+   * projector; here the photograph lands with an empty `teamName`, exactly as
+   * the quizmaster's own does, and the screen only draws a caption when there
+   * is one.
+   *
+   * **IT ADDS NO REACH THAT THE JOIN CODE DID NOT ALREADY CARRY.** The same
+   * store, the same cap, the same kill switch and the same bin. What it
+   * removes is the team, which is the only thing anybody wanted removed.
+   *
+   * **THE KILL SWITCH APPLIES; THE BREAK PLAN DOES NOT** — the control view's
+   * own camera made this call first. `photosWanted()` also answers *is a
+   * camera being offered to PHONES right now*, which is a question about the
+   * gaps in the night; somebody carrying glasses is not on that clock.
+   */
+  if (route === '/api/snap' && req.method === 'POST') {
+    // Refuses a junk code outright rather than handing back the house room —
+    // see `roomForPhone()`. A link given out broken must read as broken.
+    const room = roomForPhone(req, url);
+
+    let bytes;
+    try {
+      bytes = await readBody(req, MAX_BYTES);
+    } catch {
+      return sendJson(res, 200, { ok: false, reason: 'too_big' }), true;
+    }
+
+    const result = room.photos.add(bytes, {
+      contentType: req.headers['content-type'],
+      playerId: '',
+      teamName: '',
+      // Read on the raw file in the browser before the shrink's canvas stripped
+      // the EXIF. Never a gate; it only decides gallery eligibility later.
+      camera: url.searchParams.get('camera') !== '0',
+    });
+    if (result.ok) pushState(room);
     return sendJson(res, 200, result), true;
   }
 

@@ -1227,9 +1227,22 @@ export function packCard(kind, pack) {
   const ownersJob = can(FEATURES.CATALOGUE);
 
   const roundCount = (pack.rounds || []).length; // said by the round squares, so not by the meta line
-  const detail = kind === 'quiz'
-    ? `${pack.questionCount} question${pack.questionCount === 1 ? '' : 's'}`
-    : `${pack.trackCount} track${pack.trackCount === 1 ? '' : 's'}`;
+  /*
+   * WHAT A PACK HOLDS, NAMED PER KIND — and it was `quiz ? questions : tracks`,
+   * which is *a kind test written when there were two games* for the fourth
+   * time in this repo. Card Bingo arrived and a deck of playing cards read
+   * **"52 tracks"** on the shelf: nothing threw, every test passed, and the
+   * one line on the card whose job is to say what you are about to launch was
+   * describing a different game.
+   *
+   * **A KIND THIS DOES NOT NAME FALLS BACK TO ITS TRACK COUNT**, which is what
+   * every non-quiz did before — so a fifth game reads as it always would have
+   * rather than printing `undefined`, and the fix is one line beside its
+   * siblings rather than a branch somewhere else.
+   */
+  const UNIT = { quiz: ['question', pack.questionCount], cards: ['card', pack.trackCount] };
+  const [word, howMany] = UNIT[kind] || ['track', pack.trackCount];
+  const detail = `${howMany} ${word}${howMany === 1 ? '' : 's'}`;
 
   const played = playedLine(pack);
 

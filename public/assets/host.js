@@ -448,6 +448,9 @@ function votePanel(s) {
  */
 let myPhotoSaid = '';
 
+/** Whether the bar's own code is showing. A module binding, for the reason above. */
+let snapQrOpen = false;
+
 /**
  * THE QUIZMASTER'S OWN CAMERA — asked for as *"an app on my phone... that I
  * take photos and it goes into that same bucket from that same evening."*
@@ -473,7 +476,7 @@ let myPhotoSaid = '';
  * batch rule, and for its reasons: firing six at once is six writes racing on
  * one folder, on a pub's wifi.
  */
-function myCameraRow(info) {
+function myCameraRow(info, joinCode) {
   /*
    * THE REASON A CONTROL IS OFF GOES ON THE CONTROL, AND IT OUTRANKS WHATEVER
    * HAPPENED LAST.
@@ -496,10 +499,37 @@ function myCameraRow(info) {
         Add your own photo
         <input type="file" accept="image/*" multiple hidden ${shut ? 'disabled' : ''}>
       </label>
+      <button class="minor snap-hand" ${shut ? 'disabled' : ''}>Hand it to the bar</button>
       <span class="tiny mine-said">${esc(shut
         ? 'Photos are switched off, so there is nowhere for one to go yet.'
         : (myPhotoSaid || 'Yours goes in with the room\u2019s.'))}</span>
     </div>`);
+
+  /*
+   * THE BAR STAFF'S CAMERA, HANDED OVER AS A CODE ON THIS SCREEN.
+   *
+   * Asked for as *"one of the bar staff could also get access to this"*. It
+   * sits with the quizmaster's own camera because it is the same act from the
+   * other side of the bar, and because a control belongs with what it acts on:
+   * everything in this panel is *photographs going up in this room*.
+   *
+   * **IT IS SHOWN, NEVER SENT.** A staff member holds a phone up to this one
+   * and scans it — no email, no message, no address to type in a dark pub. The
+   * code is drawn by the server's own encoder at `/qr.svg`, the same one the
+   * comeback slide and the advert offers use.
+   *
+   * **ORDINARY, NEVER THE GRADIENT.** There is one filled button on any screen
+   * and on the control view it is the onwards button at the foot.
+   *
+   * **AND THE FOLD IS A MODULE BINDING, NOT THE MARKUP** — the second lesson
+   * this panel has taught in a day. It is rebuilt on every state push and a
+   * photograph landing IS a push, so a code opened by hiding an element would
+   * shut itself the moment anybody in the room sent one, while a member of
+   * staff was pointing a camera at it.
+   */
+  const hand = row.querySelector('.snap-hand');
+  hand.textContent = snapQrOpen ? 'Hide the code' : 'Hand it to the bar';
+  hand.addEventListener('click', () => { snapQrOpen = !snapQrOpen; if (state) draw(state); });
 
   const input = row.querySelector('input');
   const label = row.querySelector('.mine-pick');
@@ -540,6 +570,19 @@ function myCameraRow(info) {
     say(done === 1 ? 'Added — it is on the screen now.' : `${done} added.`);
     label.classList.remove('is-busy');
   });
+  if (snapQrOpen && !shut) {
+    const link = `${location.origin}/snap${joinCode ? `?g=${encodeURIComponent(joinCode)}` : ''}`;
+    row.appendChild(node(`
+      <div class="snap-qr">
+        <img src="/qr.svg?text=${encodeURIComponent(link)}" alt="">
+        <div class="tiny">
+          <b>Let them scan this.</b> It opens a camera and nothing else \u2014 no
+          scores, no answers, no team on the board. Their photos land here with
+          everybody else\u2019s.
+          <div class="snap-url">${esc(link.replace(/^https?:\/\//, ''))}</div>
+        </div>
+      </div>`));
+  }
   return row;
 }
 
@@ -578,7 +621,7 @@ function photoPanel(s) {
    * leaves the description reading as a note about the button. Two dim grey
    * lines stacked, the second explaining the thing three rows up.
    */
-  el.querySelector('.tiny').after(myCameraRow(info));
+  el.querySelector('.tiny').after(myCameraRow(info, s.joinCode || ''));
   el.querySelector('.clear')?.addEventListener('click', () => {
     if (confirm(`Delete all ${info.count} photos?\n\nThis cannot be undone.`)) act('photosClear', {});
   });

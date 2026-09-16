@@ -424,13 +424,32 @@ export function packLookAttrs(pack, kind) {
  * **It falls back to the full title when the trim empties it**, or a pack
  * somebody called "The Quiz" would draw a card with no name on it.
  */
+/*
+ * THE WORDS THIS APP USES FOR ITS OWN GAMES, which is what the trim below may
+ * not leave somebody holding.
+ *
+ * Found on the shelf: *Card Bingo* came out as **"Card"**. The trim exists to
+ * drop a REDUNDANT suffix — the card's edge colour already says which game it
+ * is — and it is right for every pack named after a SUBJECT, which is nearly
+ * all of them: *The Madonna Quiz* to "Madonna", *1980s Music Bingo* to
+ * "1980s". A deck is the one pack whose name IS the game's, so the trim took
+ * the subject and left the qualifier.
+ *
+ * **NAMED RATHER THAN DERIVED FROM THE SHAPE.** "Leave at least two words" was
+ * the obvious rule and was measured against the real library first: it breaks
+ * "Madonna", "Metallica", "2006" and "1980s", every one of which is a perfectly
+ * good one-word name. The thing wrong with "Card" is not its length.
+ */
+const GAME_WORDS = new Set(['card', 'cards', 'quiz', 'bingo', 'music', 'deck']);
+
 export function shortTitle(title) {
   const full = String(title || '');
   const cut = full
     .replace(/^the\s+/i, '')
     .replace(/\s*(music\s+)?(quiz|bingo)\s*$/i, '')
     .trim();
-  return cut || full;
+  if (!cut || GAME_WORDS.has(cut.toLowerCase())) return full;
+  return cut;
 }
 
 /**

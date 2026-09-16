@@ -215,6 +215,9 @@ export const RESERVED = [
   // whole reason this list is a TEST rather than a habit. Caught the same hour
   // the route was written.
   'wall',
+  // `snap` is the bar staff's camera — same reasoning as `wall` above, and
+  // "The Snap" is as plausible a pub name as any on this list.
+  'snap',
 ];
 
 /**

@@ -536,3 +536,93 @@ worker that has cached `host.js` is a control view running last week's code in
 front of a room — the one failure mode this app cannot afford, bought for an
 offline mode nobody needs in a pub with the wifi working well enough to upload
 photographs.
+
+---
+
+## THE BAR STAFF'S CAMERA — `/snap`, the join code, and no third store
+
+Asked for on 16 September 2026, immediately after the quizmaster's own camera:
+*"what would be really good as well is if, say, one of the bar staff could also
+get access to this. So they can take photos, I can take photos, people can
+upload their own photos, and then they all go into one like shared bucket."*
+
+### It is a third kind of person, and the app already had the shape for it
+
+There were two obvious builds and both are wrong:
+
+- **A seat on the quizmaster's account.** Seats are a paid thing, it is a
+  password somebody behind a bar has to remember, and it hands them the whole
+  console — the answer key included, which is rule 1 given away for a camera.
+- **Joining the room as a player.** Free, already possible, and it puts the bar
+  on the leaderboard and on the projector. The same fault the quizmaster's own
+  camera was built to avoid, one person along.
+
+So it is the thing `/play`, `/v` and `/wall` already are: **a page with no
+identity at all**, open, handing out nothing on its own.
+
+### The join code is the handle — chosen over a revocable key, and here is why
+
+The alternative was a staff key the quizmaster mints and can revoke. It was put
+to him as an option and the join code won, on two arguments:
+
+- **It adds no reach the code did not already carry.** Anybody holding the join
+  code can upload today by joining the room. A revocable key would be a lock
+  fitted beside an open door.
+- **It needs no store, and a store here is a real cost.** `data/` is wiped on
+  every deploy, so a key that survives means the private repo, a read, a write
+  and one more thing that can be halfway through when a room sits down. The
+  join code already survives — it is why a printed QR still works — so this
+  inherits that for nothing.
+
+**What it does NOT do is let the quizmaster shut out one person.** That is the
+accepted cost, and it is the same cost the join code has always carried.
+
+### One bucket, which is the word he used
+
+`POST /api/snap` goes through `photos.add()` and nothing else — the same store
+as the room's phones, the quizmaster's own camera, the projector strip, `/wall`
+and the night's folder in the private repo. One bin press on the control view
+takes a photograph off all of them. There is no second list and nothing
+downstream knows where a picture came from.
+
+`POST /api/past-photo/<night>` remains the other half and is untouched: that one
+files against a NAMED night, straight to the repo, for the car park and the
+Monday.
+
+### The decisions inside it
+
+- **NO NEW ROLE ON THE WIRE.** The page opens a `role=wall` stream. `wallView()`
+  is already exactly *is the camera open, and what has landed* — built field by
+  field, and already swept by the second screen's guard. A `role=snap` would be
+  a fourth payload to hold against rule 1 for no field this page does not get.
+- **RULE 1 HOLDS FOR A FOURTH SCREEN, AND IT IS SWEPT RATHER THAN CHECKED.**
+  This link goes to somebody who does not work for the quizmaster, on a phone he
+  will never see again. `bar-staff-camera.mjs` asserts the whole payload carries
+  no question, no answer key, no reveal, no options, no leaderboard, no player id
+  and no token — the funniest-photo guard's discipline, because a named check
+  only ever catches the field somebody thought of.
+- **NO CAPTION**, like the quizmaster's own.
+- **`capture="environment"` HERE, UNLIKE THE CONTROL VIEW.** The quizmaster's
+  own camera deliberately leaves it off so one control covers *photograph the
+  room now* and *send the three good ones from earlier*. Bar staff are working:
+  they want the camera, now, in one tap, and a library picker in the way is a
+  step in a job somebody is doing between pulling pints.
+- **THE KILL SWITCH APPLIES; THE BREAK PLAN DOES NOT** — the control view's own
+  camera made this call first, and for the same reason: `photosWanted()` also
+  answers *what is being offered to PHONES right now*, which is a question about
+  the gaps in the night. Somebody carrying glasses is not on that clock.
+- **NO CODE AT ALL IS AN ERROR HERE, NOT THE HOUSE ROOM.** `/wall` falls back
+  because a spare laptop with no code is the owner's own projector; this link is
+  always *handed* to somebody, so a missing code means it was handed over broken
+  and the page says so.
+- **THE PILE IS SHOWN BACK.** Somebody working a room needs to know the last one
+  landed and what has already been taken. It is also what makes *photos are
+  switched off* visible before the button is pressed rather than after.
+- **THE CODE IS SHOWN, NEVER SENT** — a button on the control view's photo panel
+  draws a QR at `/qr.svg`, the encoder the comeback slide already uses. No email,
+  no address typed in a dark pub. **The fold is a module binding**, the second
+  time that panel has taught it: it is rebuilt on every state push and a
+  photograph landing IS a push, so a code hidden by an element would shut itself
+  while staff were pointing a camera at it.
+- **`snap` WENT IN `RESERVED`.** Third time that list has paid — *The Snap* is
+  as plausible a pub name as *The Wall*.

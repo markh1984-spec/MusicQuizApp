@@ -11879,3 +11879,53 @@ body.dj .head .score { color: var(--ink); }
   .join-steps { display: none; }
   .wall-shots { max-height: 100%; }
 }
+
+/* ---- /snap — the bar staff's camera, see public/assets/snap.js ------------
+   A page with one job, so it is one column with the control in the middle of
+   the thumb's reach and the pile under it. It shares `body.play`'s ground
+   rather than the projector's: this is held in a hand, not hung on a wall. */
+.snap .wrap { max-width: 520px; }
+.snap-box { display: grid; gap: 12px; justify-items: stretch; }
+.snap-box h1 { font-size: var(--fs-title); margin: 0; }
+.snap-box .sub { color: var(--ink-dim); margin: 0; }
+
+/* THE ONE FILLED GRADIENT ON THE PAGE — "the night" role, which is right here:
+   this page holds exactly one thing worth pressing, so the rule that says at
+   most one per screen is satisfied by there being one control at all.
+   A `<label>` rather than a button because it wraps a hidden file input —
+   there is no button that opens a camera — so it centres its own text, which
+   a button would have done for free. */
+.snap-take {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 64px; padding: 16px 20px;
+  border: 0; border-radius: var(--r-card);
+  font: inherit; font-size: var(--fs-head); font-weight: 900;
+  color: #12000c; background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  cursor: pointer; text-align: center;
+}
+.snap-take.is-busy { opacity: 0.6; pointer-events: none; }
+.snap-said { color: var(--ink-dim); min-height: 1.2em; text-align: center; }
+
+/* The pile, so somebody working the room can see the last one landed and what
+   has already been taken. Small on purpose — it is a check, not a gallery. */
+.snap-shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.snap-shot { margin: 0; aspect-ratio: 1 / 1; overflow: hidden; border-radius: var(--r-field); }
+.snap-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.snap-empty { grid-column: 1 / -1; color: var(--ink-dim); text-align: center; padding: 12px 0; }
+.snap-shut { text-align: center; }
+
+/* The bar's own code, folded open under the camera row on the control view.
+   `flex-basis: 100%` because `.mine-add` is a wrapping flex row and this is a
+   block, not a control beside the other two. */
+.snap-qr {
+  flex: 1 0 100%;
+  display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; align-items: center;
+  margin-top: 8px; padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-line); border-radius: var(--r-card);
+}
+.snap-qr img { width: 120px; height: 120px; display: block; border-radius: var(--r-field); background: #fff; }
+.snap-url { color: var(--ink-dim); margin-top: 6px; word-break: break-all; }
+@media (max-width: 480px) {
+  .snap-qr { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+}
