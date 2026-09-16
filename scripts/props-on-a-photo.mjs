@@ -75,7 +75,20 @@ try {
 
   const lib = (await api('/api/library')).body;
   const pack = (lib.quiz || lib.text || [])[0] || (lib.quizzes || [])[0];
-  await api('/api/host/launch', { game: 'quiz', packId: pack.id, replace: true, venue: 'The Googly Arms' });
+  /*
+   * A SEASONAL LOOK, BECAUSE THE DEFAULT ONE IS THE HALF THAT CANNOT BREAK.
+   *
+   * This ran on `default`, where `stickersFor()` returns an EMPTY seasonal
+   * tray — so the whole seasonal branch of the sheet never executed, and a
+   * `ReferenceError` on `LOOKS` in that branch shipped with this guard green,
+   * `node --check` happy and 1996 tests passing. On Halloween, Christmas,
+   * Valentines, summer, Eurovision or an international night the camera drew
+   * NOTHING on either page.
+   *
+   * Halloween rather than a tour of all six: one look proves the branch runs,
+   * and the six differ only in which drawings are in the tray.
+   */
+  await api('/api/host/launch', { game: 'quiz', packId: pack.id, replace: true, venue: 'The Googly Arms', look: 'halloween' });
   const joinCode = ((await api('/api/library')).body.running || {}).joinCode || '';
   check('a night is up with a join code', joinCode.length >= 4, joinCode);
 
@@ -121,6 +134,17 @@ try {
     const chips = await page.locator('.cam-props:not(.cam-props-season) .cam-prop').count();
     check(`${label}: the props tray is drawn`, chips > 0, `${chips} props`);
     if (!chips) return;
+
+    /*
+     * AND THE SEASONAL ROW, WHICH IS A DIFFERENT BRANCH OF THE SAME BUILD.
+     * Setting the look above buys nothing unless something looks at what it
+     * drew — the tray heading is named from `LOOKS`, which is exactly the
+     * statement that was missing.
+     */
+    const season = await page.locator('.cam-props-season .cam-prop').count();
+    const seasonName = (await page.locator('.cam-season-name').textContent().catch(() => '')) || '';
+    check(`${label}: the seasonal row is drawn too`, season > 0, `${season} seasonal props`);
+    check(`${label}: and the season is NAMED on it`, /halloween/i.test(seasonName), JSON.stringify(seasonName));
 
     // What the picture looks like before anything is stuck on it. Sampled off
     // the canvas rather than read out of a state object: a prop in an array is

@@ -7219,6 +7219,27 @@ async function handleWrite(req, res, url, route) {
    * gaps in the night; somebody carrying glasses is not on that clock.
    */
   if (route === '/api/snap' && req.method === 'POST') {
+    /*
+     * NO CODE AT ALL IS AN ERROR HERE, AND THE ROUTE HAS TO SAY SO ITSELF.
+     *
+     * `roomForPhone()` hands back the HOUSE room when no code is given, which
+     * is right for `/api/photo` and `/api/join` — his own projector, and every
+     * card printed before rooms existed. It is wrong for this one, and the
+     * page, the console panel and CLAUDE.md all said it could not happen while
+     * the route did it: a bare `POST /api/snap` with no code, no cookie and no
+     * key returned `{ok:true}` and put a photograph on the house room's
+     * projector. That is an unauthenticated write, reachable by guessing a
+     * short path.
+     *
+     * A junk code was already refused; it was the ABSENT one that fell
+     * through, which is the shape `roomForPhone()` itself records — *falling
+     * back to HOUSE is the same fault wearing a friendlier face*.
+     *
+     * Refused BEFORE the body is read, so a flood costs nothing.
+     */
+    if (!tidyCode(url.searchParams.get('g') || '')) {
+      return sendJson(res, 400, { error: 'That link is missing its room.' }), true;
+    }
     // Refuses a junk code outright rather than handing back the house room —
     // see `roomForPhone()`. A link given out broken must read as broken.
     const room = roomForPhone(req, url);

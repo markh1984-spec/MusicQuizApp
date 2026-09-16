@@ -38,6 +38,22 @@
 import { esc, node } from './client.js';
 import { drawFiltered, toJpeg, looksCameraTaken } from './filters.js';
 import { stickersFor, stickerSvg, drawStickers, stickerAt, placed, preloadStickers, trayOrder, withRecent } from './stickers.js';
+/*
+ * `LOOKS` NAMES THE SEASON ON THE TRAY'S OWN HEADING, and it is imported here
+ * because the extraction very nearly lost it.
+ *
+ * The move out of `play.js` narrowed that file's import to what `play.js`
+ * still used, and this one statement travelled to a file with no `LOOKS` in
+ * it — the SECOND instance of the `const STORE_KEY` fault in the same commit.
+ * It is a hard `ReferenceError` in an ES module, thrown BEFORE the sheet is
+ * appended, so on any seasonal look the camera silently did nothing on
+ * `/play` and stuck `busy` for the rest of the night on `/snap`.
+ *
+ * `node --check` cannot see it and `npm test` was 1996/1996 green, because
+ * `props-on-a-photo.mjs` ran on the DEFAULT look, where `seasonal.length` is
+ * 0 and the line never runs. The guard now walks a seasonal look too.
+ */
+import { LOOKS } from './looks.js';
 
 /** What they reached for last time, on this handset. See stickers.js. */
 const RECENT_KEY = 'musicquiz.props';

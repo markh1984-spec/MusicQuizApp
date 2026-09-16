@@ -197,6 +197,23 @@ export function closeVote(state, { now, random = Math.random, reward = NO_PRIZE,
     // more means the app broke a tie, and the projector says so rather than
     // presenting a coin toss as a landslide.
     tied: level.length,
+    /*
+     * WHY THERE IS NO DRINK, WHEN THERE IS NO DRINK — and it is not always
+     * the same reason.
+     *
+     * The phone and the host's panel printed *"No prize was on the table, so
+     * no code was issued"* for every codeless win, which is a lie whenever a
+     * prize IS on the table: a photograph from the camera code (`/snap`) has
+     * `playerId: ''` by design — there is no player, which is the whole point
+     * of that page — so there is nobody to give a drink to. On a karaoke
+     * night, where the camera code is the only camera most people use, that
+     * is the COMMON case and the app was blaming the venue's prize list for
+     * it.
+     *
+     * Spread in ONLY when there is something to say, so an ordinary win is
+     * byte-for-byte the payload it always was.
+     */
+    ...(reward && !pick.playerId ? { noOwner: true } : {}),
   };
 
   /*

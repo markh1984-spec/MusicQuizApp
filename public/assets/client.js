@@ -818,7 +818,10 @@ export function photoVotePanel(s, act) {
         </div>
         <div class="tiny">${w.code
       ? `Their drink is on their phone — code ${esc(w.code)}.`
-      : 'No prize was on the table, so no code was issued.'}</div>
+      : w.noOwner
+        ? `That one came from the camera code, so there is no phone to send a
+           drink to. Hand it over at the bar if you want to.`
+        : 'No prize was on the table, so no code was issued.'}</div>
         <div class="row"><button class="btn" id="voteAgain">Run another one</button></div>
       </div>`);
     el.querySelector('#voteAgain').addEventListener('click', () => act('photoVoteDrop'));
