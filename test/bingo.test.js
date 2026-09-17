@@ -1415,3 +1415,105 @@ test('THE CONTROL VIEW SAYS WHEN NOBODY LEFT CAN CLAIM THE PRIZE', () => {
   // The rule itself is untouched — this is a note, not a lift.
   assert.equal(game.claim(dave.id).prize, false);
 });
+
+// ------------------------------------------------- hold these back (dontPlay)
+
+/*
+ * THE SONGS A PRIZE-HOLDER STILL NEEDS, SO THE HOST CAN PLAY SOMETHING ELSE.
+ *
+ * `claim()` already refuses a second prize, so this changes nothing about who
+ * wins. What it prevents is the ROOM reaching the moment: a table shouting
+ * bingo and the host having to say no into a microphone. Asked for on a gig
+ * day in those words.
+ */
+test('the host is told which songs would carry a prize-holder to the next prize', () => {
+  const { game } = makeGame();
+  const dave = game.join({ name: 'Dave' });
+  game.join({ name: 'Bob' });
+  game.setRewards(['Drink', 'Drink', 'Drink', '\u00a310 bar tab']);
+
+  winLine(game, dave);
+  assert.equal(game.claim(dave.id).ok, true);
+  // Before Play on the prize has just gone and there is nothing to avoid yet.
+  assert.equal(game.hostView().dontPlay, undefined);
+
+  game.playOn();
+  // Walk Dave in until he is close enough to be worth holding back.
+  for (let i = 0; i < dave.card.length && game.squaresAway(dave) > 2; i += 1) {
+    if (!game.isGood(dave, i)) {
+      game.call(dave.card[i]);
+      game.mark({ playerId: dave.id, index: i, marked: true });
+    }
+  }
+  const rows = game.hostView().dontPlay || [];
+  const mine = rows.find((r) => r.name === 'Dave');
+  assert.ok(mine, 'Dave holds a prize and is close, so he is listed');
+  assert.ok(mine.tracks.length, 'with the songs standing between him and it');
+  for (const t of mine.tracks) {
+    assert.ok(dave.card.includes(t.id), 'every song listed is on his own card');
+    assert.ok(!game.state.called.includes(t.id),
+      'and has NOT been played — one already called cannot help anybody');
+  }
+});
+
+test('somebody who has not won is never listed, however close they are', () => {
+  const { game } = makeGame();
+  const dave = game.join({ name: 'Dave' });
+  const bob = game.join({ name: 'Bob' });
+  game.setRewards(['Drink', 'Drink']);
+  // Bob one square off the line and holding nothing.
+  const line = game.lines()[0];
+  for (const i of line.slice(0, -1)) {
+    game.call(bob.card[i]);
+    game.mark({ playerId: bob.id, index: i, marked: true });
+  }
+  winLine(game, dave);
+  game.claim(dave.id);
+  game.playOn();
+  const rows = game.hostView().dontPlay || [];
+  assert.ok(!rows.some((r) => r.name === 'Bob'),
+    'holding no prize, Bob can still win — which songs help him is nobody\'s business');
+});
+
+test('RULE 1: the songs somebody needs never reach the projector or a phone', () => {
+  const { game } = makeGame();
+  const dave = game.join({ name: 'Dave' });
+  const bob = game.join({ name: 'Bob' });
+  game.setRewards(['Drink', 'Drink']);
+  winLine(game, dave);
+  game.claim(dave.id);
+  game.playOn();
+  for (let i = 0; i < dave.card.length && game.squaresAway(dave) > 2; i += 1) {
+    if (!game.isGood(dave, i)) {
+      game.call(dave.card[i]);
+      game.mark({ playerId: dave.id, index: i, marked: true });
+    }
+  }
+  assert.ok((game.hostView().dontPlay || []).length, 'the host has it');
+  assert.ok(!JSON.stringify(game.screenView()).includes('dontPlay'), 'the projector does not');
+  assert.ok(!JSON.stringify(game.playerView(bob.id)).includes('dontPlay'), 'nor does a phone');
+});
+
+test('a prize-holder too far off to matter is left out, so the panel stays short', () => {
+  const { game } = makeGame();
+  const dave = game.join({ name: 'Dave' });
+  game.join({ name: 'Bob' });
+  game.setRewards(['Drink', 'Drink']);
+  winLine(game, dave);
+  game.claim(dave.id);
+  game.playOn();
+  // Straight after the line, a full house is most of the card away.
+  assert.ok(game.squaresAway(dave) > 3, 'far off by construction');
+  assert.equal(game.hostView().dontPlay, undefined,
+    'a wall of twelve titles is not something a host can act on mid-round');
+});
+
+test('squaresNeeded and squaresAway can never disagree', () => {
+  const { game } = makeGame();
+  const p = game.join({ name: 'Who' });
+  for (let i = 0; i < 6; i += 1) {
+    assert.equal(game.squaresNeeded(p).length, game.squaresAway(p));
+    game.call(p.card[i]);
+    game.mark({ playerId: p.id, index: i, marked: true });
+  }
+});

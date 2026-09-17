@@ -336,12 +336,50 @@ function playersPanel(s, act) {
         s.stalled === 1 ? 'card is' : 'cards are'} complete and already holding a prize — nobody
         else can claim this one. Play on, start a new round, or hand it over yourself.</div>`
       : '';
+  /*
+   * DO NOT PLAY THESE — the songs that would take somebody who has already
+   * won to the next prize.
+   *
+   * Asked for on a gig day, and the reason is the ROOM rather than the rules:
+   * *"if that song plays anyway, and Dave calls bingo anyway, and I'm going
+   * 'oh but Dave, you can't win another prize' — Dave's going to be pissed
+   * off."* `claim()` already refuses the second prize, so this changes nothing
+   * about who wins; it lets the host play something else in that slot so the
+   * room never reaches the moment.
+   *
+   * **IT CANNOT THROW.** This panel sits on the control view, which is item 4
+   * of the protected surface — the screen the whole night is driven from. A
+   * field that arrives in an older shape, or not at all, has to leave that
+   * screen exactly as it is rather than take it down mid-round, so every read
+   * below is defended and the whole block is one optional string.
+   *
+   * **ONLY WHEN THERE IS SOMETHING TO SAY**, like `stalled` above it: a
+   * heading over an empty list is furniture on the one screen that has to stay
+   * scannable in a dark pub.
+   */
+  const dontPlay = (Array.isArray(s.dontPlay) ? s.dontPlay : [])
+    .filter((row) => row && Array.isArray(row.tracks) && row.tracks.length);
+  const avoid = !dontPlay.length ? '' : `
+    <div class="dontplay">
+      <h3>Hold these back</h3>
+      <div class="tiny">They cannot win the next prize. Play something else and
+        nobody has to be told.</div>
+      ${dontPlay.map((row) => `
+        <div class="dp-row">
+          <span class="dp-who">${esc(row.name || 'Someone')}</span>
+          <span class="dp-songs">${row.tracks.map((t) => esc(
+    `${t.title || 'Unknown'}${t.artist ? ` — ${t.artist}` : ''}`,
+  )).join(' · ')}</span>
+        </div>`).join('')}
+    </div>`;
+
   const el = node(`
     <div>
     <div class="joinq-slot"></div>
     <div class="panel">
       <h3>${s.onesAway} one square away — closest first</h3>
       ${stalled}
+      ${avoid}
       <div class="plist">
         ${closest.map((p) => `
           <div class="prow" data-id="${esc(p.id)}" data-name="${esc(p.name)}">

@@ -1590,6 +1590,29 @@ body.host::after { display: none; }
   .book-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 
+/* HOLD THESE BACK — the songs that would carry a prize-holder to the next
+   prize, on the bingo control view.
+
+   GOLD, because it is about a PRIZE, which is what gold means everywhere in
+   this app — and it has to be read at a glance off a laptop in a dark pub,
+   between two tracks, while somebody is talking to you.
+
+   Not red: nothing has gone wrong. Red would say the app had made a mistake,
+   where this is a note about what to do next. */
+.dontplay {
+  margin: 8px 0 10px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--gold) 8%, transparent);
+}
+.dontplay h3 { margin: 0 0 2px; color: var(--gold); font-size: var(--fs-head); }
+.dp-row { display: flex; gap: 8px; align-items: baseline; margin-top: 6px; flex-wrap: wrap; }
+.dp-who { font-weight: 800; color: var(--gold); white-space: nowrap; }
+/* The songs are the thing being scanned, so they take the readable size and
+   the full brightness — the name is only there to say whose they are. */
+.dp-songs { color: var(--ink); font-size: var(--fs-body); }
+
 .plist { display: grid; gap: 6px; }
 .prow {
   display: flex; align-items: center; gap: 8px;

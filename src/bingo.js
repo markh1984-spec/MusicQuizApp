@@ -77,6 +77,20 @@ export function stagePlan(prizes = 2) {
  * lines, and completing all three is a full house, so two line stages is the
  * most that leaves the last prize meaning anything.
  */
+/**
+ * HOW CLOSE SOMEBODY HAS TO BE BEFORE IT IS WORTH HOLDING A SONG BACK.
+ *
+ * **BECAUSE THE LIST IS ONLY USEFUL WHILE IT IS SHORT.** A prize-holder who
+ * still needs twelve songs is not about to win anything, and printing twelve
+ * titles on the control view is a wall on the one screen that has to stay
+ * scannable between two tracks in a dark pub — it is also not a thing anybody
+ * can act on. Somebody two squares off is, which is the case this was asked
+ * for: *"Dave won the first prize and he's one off the second one."*
+ *
+ * A constant with a note rather than a setting, until somebody misses it.
+ */
+const CLOSE_ENOUGH_TO_HOLD_BACK = 3;
+
 export function maxPrizes(shape) {
   return Math.max(1, Math.min(5, cardLines(shape).length));
 }
@@ -1098,24 +1112,40 @@ export class BingoGame {
    * every phone in the room.
    */
   squaresAway(player) {
+    return this.squaresNeeded(player).length;
+  }
+
+  /**
+   * WHICH squares stand between this player and the prize being played for —
+   * the same search `squaresAway()` has always run, returning the set rather
+   * than only its size.
+   *
+   * **ONE FUNCTION, because two copies of this maths is one copy getting
+   * fixed.** `squaresAway()` is read by the host's list, by `onesAway`, by the
+   * stall check and by the sort order; this is read by the host's "do not play
+   * these" panel. They must never disagree about how far off somebody is.
+   */
+  squaresNeeded(player) {
     const stage = this.stage;
     if (stage === TARGETS.FULL) {
-      return player.card.filter((_, i) => !this.isGood(player, i)).length;
+      return player.card.map((_, i) => i).filter((i) => !this.isGood(player, i));
     }
     const missing = this.lines().map((line) => line.filter((i) => !this.isGood(player, i)));
     const wanted = Math.min(stage, missing.length);
 
-    let best = Infinity;
+    let best = null;
     const pick = (from, left, union) => {
-      if (union.size >= best) return;              // already worse than one we have
-      if (left === 0) { best = union.size; return; }
-      if (missing.length - from < left) return;    // not enough lines left to make it up
+      if (best && union.size >= best.size) return;  // already worse than one we have
+      if (left === 0) { best = union; return; }
+      if (missing.length - from < left) return;     // not enough lines left to make it up
       for (let i = from; i < missing.length; i++) {
         pick(i + 1, left - 1, new Set([...union, ...missing[i]]));
       }
     };
     pick(0, wanted, new Set());
-    return best === Infinity ? this.squareCount : best;
+    // No line can be completed at all — the old code answered `squareCount`
+    // here, so the LENGTH this returns has to come to the same thing.
+    return best ? [...best] : player.card.map((_, i) => i);
   }
 
   /** The tension metric: how many teams need one more track. */
@@ -1505,6 +1535,49 @@ export class BingoGame {
       .sort((a, b) => a.away - b.away || a.name.localeCompare(b.name));
 
     view.onesAway = view.players.filter((p) => p.away === 1).length;
+
+    /*
+     * WHAT NOT TO PLAY NEXT — the songs standing between somebody who has
+     * ALREADY WON and the next prize.
+     *
+     * *"If that song plays anyway, and Dave calls bingo anyway, and I'm going
+     * 'oh, but Dave, you can't win another prize' — Dave's going to be pissed
+     * off."*
+     *
+     * **THE STAND-DOWN IS CORRECT AND THAT IS NOT THE PROBLEM.** `claim()`
+     * already refuses a second prize outright, so nothing here changes who
+     * wins. What it changes is whether the room ever reaches the moment — a
+     * table shouting bingo, sixty people turning round, and the host having to
+     * say no into a microphone. The rule is right and the scene is bad, and the
+     * host can avoid the scene by playing something else in that slot.
+     *
+     * **NOT PLAYED IS THE FILTER, NOT UNMARKED.** A track that has been called
+     * and not ticked is gone — it is not coming round again, so listing it
+     * would be telling the host to avoid a song that cannot help anybody.
+     *
+     * **PRIZE-HOLDERS ONLY.** For everybody else this is the answer to "which
+     * songs would help them win", which is nobody's business including the
+     * host's — and a panel listing every card in the room is unreadable in a
+     * dark pub. It is also why this is HOST-ONLY and sits behind rule 1 like
+     * every other key: it is a read of somebody's card.
+     */
+    view.dontPlay = this.playerList()
+      .filter((p) => this.holdsAPrize(p.id) && this.squaresAway(p) <= CLOSE_ENOUGH_TO_HOLD_BACK)
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        tracks: this.squaresNeeded(p)
+          .map((i) => p.card[i])
+          .filter((id) => !this.state.called.includes(id))
+          .map((id) => this.track(id))
+          .filter(Boolean)
+          .map((t) => ({ id: t.id, title: t.title, artist: t.artist })),
+      }))
+      // Somebody holding a prize with nothing left to avoid is a row that says
+      // nothing — the panel is a list of songs, so a name with no songs is
+      // noise on the one screen that must stay scannable.
+      .filter((row) => row.tracks.length);
+    if (!view.dontPlay.length) delete view.dontPlay;
     /*
      * THE ROUND CAN STALL, AND THE HOST IS THE ONE WHO CAN UNSTICK IT.
      *
