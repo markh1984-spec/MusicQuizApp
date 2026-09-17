@@ -928,8 +928,6 @@ drink… perhaps you could let the crowd vote on their favourite as well?"*
   `withdrawVouchersNoLongerOwed()`**, **no `round` stamp** so bingo cannot hold
   it back. **`pub-unchanged` says IDENTICAL and is silent about all of it.**
 
-Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
-
 ### THE SECOND SCREEN — `/wall`, the photo code and the photographs, and nothing else
 
 `wallView()` in `server.js`, `public/assets/wall.js`, `node
@@ -947,7 +945,6 @@ and photo uploads."*
   identical view. **AND IT TAKES NO SOUND**: `room.sting` stays `role ===
   'screen'`, so the soundboard comes out of the one laptop wired to the PA.
 - **A NEW TOP-LEVEL ROUTE GOES IN `RESERVED`** — *The Wall* is a pub name.
-  Second time that list has paid.
 - **IT NEEDS NO COOKIE, WHICH IS WHAT LETS IT RUN ON A SPARE LAPTOP** —
   `second-laptop.mjs` drives a real `?g=` from a browser that has never seen the
   app. **A mistyped code shows NOBODY's photographs.**
@@ -959,8 +956,6 @@ and photo uploads."*
   content runs past the bottom. **Ask the ELEMENTS where they end**, and **fill
   the grid first**. **A MEDIA QUERY ADDS NO SPECIFICITY** either — fourth
   sighting. **Measure after.**
-
-Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
 
 ### THE CAMERAS ARE ONE QR ON COMMUNITY > PHOTOS — `/snap`, never a button
 
@@ -997,9 +992,9 @@ quiz… I click community and I've got the QR codes."*
   COOKIE**, so `?key=` plus a cookie is the HOUSE room, which has no code.
 - **NO SERVICE WORKER, EVER** — every push is a deploy, and a cached page is a
   control view running last week's code in front of a room.
-- **`snap` WENT IN `RESERVED`** — third time that list has paid.
+- **`snap` WENT IN `RESERVED` TOO** — that list has now paid three times.
 
-Full reasoning: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
+Full reasoning for all three: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
 
 ### THE CAMERA SHEET IS ONE FILE AND BOTH CAMERAS OPEN IT — `camera-sheet.js`
 
@@ -1812,23 +1807,32 @@ sells nothing.
 
 **AND THEN EVERYTHING ELSE ABOUT THE PLAYERS FOLLOWED** — *"photos can migrate
 to community as well now, and anything else to do with the people who do the
-quizzing."* Three tabs: **Quiz league**, **Photos**, **What they asked for**:
+quizzing."* Four tabs: **Quiz league**, **Photos**, **Quiz requests**, and
+**Venues**:
 
+- **VENUES IS A MOVE, NOT A COPY** — *"everything to do with photos and
+  marketing needs to belong in community including this."* ONE
+  `venuesSection()` in three modes, never a second section to drift: the
+  **Workshop** keeps the record, the **Console** picks a pub up for tonight,
+  **Community** holds the **photo overlay and nothing else**. **The overlay
+  LEFT the Workshop card** — two places to set one thing is "where do I change
+  this?" with two answers. **A shut card says its own DOOR's subject** ("No
+  photo overlay", never "No prizes set").
 - **ORGANISED BY VENUE, because a venue IS a community.**
 - **THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — not a duplicate.** On Past
-  gigs a photo is EVIDENCE; on Community it is the room. **What is not
-  duplicated is the CODE** — `nightPhotos()`.
+  gigs a photo is EVIDENCE; on Community it is the room. **The CODE is not
+  duplicated** — `nightPhotos()`.
 - **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT** — *"what the room asked
   for"* MOVED off the Music Quiz tab rather than being copied.
-- **`asksPanel({ whenEmpty })` — the same panel answers two pages**, one
-  argument, so the triage keeps one definition.
+- **`asksPanel({ whenEmpty })` — the same panel answers two pages**, so the
+  triage keeps one definition.
 - **AND ONE POINT FOR EVERY NIGHT PLAYED, ON TOP OF THE BEST SIX.** **THE
   LADDER THEREFORE PAYS NOTHING BELOW SEVENTH**, or one point is paid twice
   under two names.
 - **A TEAM'S BEST SIX NIGHTS COUNT — a running total is not the league**, which
   punishes absence absolutely. **AND A PLAIN AVERAGE BREAKS THE OTHER HALF**: it
-  puts a team that played ONCE AND WON above one that won five of ten.
-  **SUMMED, NOT DIVIDED.** `COUNTING_NIGHTS = 6` is a constant with a note.
+  puts a team that played ONCE AND WON above one that won five of ten. **SUMMED,
+  NOT DIVIDED.** `COUNTING_NIGHTS = 6` is a constant with a note.
 - **A NAME IS FILTERED AT THE DOOR, NEVER IN THE ROOM** — `clean-names.js`,
   off a live table with a racial slur ninth in it. The projector, the phones
   and the console are UNCHANGED; only the public page and the report mask
@@ -1839,20 +1843,17 @@ quizzing."* Three tabs: **Quiz league**, **Photos**, **What they asked for**:
   spaces stripped — **never do that pass on the ordinary list.** **THE CONSOLE
   SHOWS THE REAL NAME AND MARKS IT**, or a name vanishes off a table with no
   way to tell which.
-- **AND A HUMAN OVERRULES THE LIST, IN BOTH DIRECTIONS** — it hides "The Pen
-  Is Mightier" and publishes a spoonerism it cannot see. Keyed by `teamKey()`,
+- **AND A HUMAN OVERRULES THE LIST, IN BOTH DIRECTIONS**, keyed by `teamKey()`
   so a ruling follows the team all season. **A RULING THAT ONLY RESTATES THE
   FILTER IS CLEARED, NOT STORED**, or a later change to the word list silently
   cannot reach that name. **ONE CONTROL PER TABLE, FOLDED.** **THE ROW'S KEY
   TRAVELS WITH THE ROW.**
 - **ONE ROOM FOR THE WHOLE PHOTO STORY — `galleryRoomFor()`**, never `HOUSE`.
-  **The hazard was written down and left** — how a noted hazard becomes a bug.
 - **THE SUITE MUST NEVER NEED THE PHOTO TOKEN** — `photo-repo-stub.mjs`.
 - **THE STORAGE RULES ARE NAMED IN THE `docs/` INDEX BELOW AND LIVE IN
   [`docs/gigs/photos.md`](docs/gigs/photos.md)** — `inOrder()` per room,
   `tryGetFile()`, the read-back sha, `coverPhotos()`, the lamps and the pins.
-  They were written out here AND named there, which is one list paid for twice
-  by every session. **Read them before touching any of them.**
+  **Read them before touching any of them.**
 - **A GALLERY IS PAID FOR ONCE — not per photo, not per visitor. Nothing
   deciding who may see a photo is cached with it**, and **the browser window is
   NOT lengthened past a day.**
@@ -1961,18 +1962,16 @@ half**, on a public page.
 - **THE KEY KEPT IS THE `id:` ONE.** Whether a table is published and every
   ruling on a team name are stored against it, so folding onto the bare name
   unpublishes a table and drops every override.
-- **THE COST, ACCEPTED KNOWINGLY:** two pubs sharing a name merge — already
-  true on the name-only path, and why venue names carry a town.
-- **AND A THIRD TIME, WEARING A URL — `sameVenueSlug()` in `slugs.js`.** One
-  pub slugged `station-tap-wokingham` and `station-tap`, filtered with `===`,
-  so each address showed half of it. A public address has no id, so **the fold
-  happens on the SLUGS**: **SYMMETRICALLY**, and **on a HYPHEN, never mid-word**
+- **THE COST, ACCEPTED KNOWINGLY:** two pubs sharing a name merge — why venue
+  names carry a town.
+- **AND A THIRD TIME, WEARING A URL — `sameVenueSlug()` in `slugs.js`.** A
+  public address has no id, so **the fold happens on the SLUGS**: **SYMMETRICALLY**, and **on a HYPHEN, never mid-word**
   (`crown` must not match `crownley`); an EMPTY slug matches nothing. **THREE
   call sites and the third was the night page's own PREV/NEXT ARROWS.**
   `test/slugs.test.js` forbids a bare `venueSlug(x) === y` in `server.js` —
   **the pattern, not the symptom**, which is what finds the third one
 
-### THE COMMUNITY BAY IS THE TAB YOU ARE ON — a wall, or a venue rail
+### THE COMMUNITY BAY IS THE TAB YOU ARE ON — a wall, a rail, a count
 
 `communityBench(active)` in `console-community.js`. *"Anything that loads
 should load onto the top bar bit — the photos in a 3 x 6 grid, and quiz league
@@ -1996,10 +1995,19 @@ up there too."*
 - **THE WALL IS FETCHED ONCE PER PAGE LOAD AND STOPS ASKING** — newest first
   until eighteen, never past `WALL_NIGHTS`. In a module binding: the bay is
   rebuilt on every push.
+- **EVERY TAB ANSWERS, OR THE BAY TALKS ABOUT ANOTHER TAB.** `summaryBench()`
+  is the LEAGUE'S and was the fallback, so Venues opened under *"Nothing
+  running yet"* — `venuesBench()` now. **A new Community tab needs its own
+  bench**, never the fallback.
+- **AND EVERY BAY IS CAPPED FROM 900px — `max-height: var(--bay-h)`, with its
+  own `overflow-y`.** The `height` rule sits inside the FRAME's query, which
+  names a height as well as a width, so a wide-but-short laptop had no cap at
+  all and a night with ninety photographs grew the bay to whatever it came to.
+  **A `max-height`, never a `height`** — a forced one pads a short window out
+  with empty panel — and **a capped box without `overflow-y` CLIPS**, which is
+  worse than scrolling because nothing throws.
 - **`node scripts/community-bay.mjs` IS THE GUARD, and it measures GEOMETRY** —
-  every door's bay against the launch bar's, squashed rail headings, whether the
-  page scrolls, and that pressing a rail button, a night and a picture each
-  change what is drawn.
+  see `docs/console.md` for what it checks.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 

@@ -1124,7 +1124,7 @@ export const TABS = [
      */
     id: 'venues',
     /*
-     * BEHIND BOTH DOORS, because a venue is two different things.
+     * BEHIND THREE DOORS, because a venue is three different things.
      *
      * In the Workshop it is a record you maintain — the address, the usual
      * fee, where to send them, the advert slides. On the Console it is a
@@ -1132,13 +1132,21 @@ export const TABS = [
      * pub's prizes, its voucher and what the night gets filed under, and
      * `venueDrag` has done exactly that since the drop zones were built. The
      * cards were simply behind a door you would not be standing at ten
-     * minutes before a gig.
-     *
-     * Asked for in those words: *"need to add venues to the console so you
-     * can drag which venue you're at, as that will load up the venue
-     * settings."*
+     * minutes before a gig. Asked for in those words: *"need to add venues to
+     * the console so you can drag which venue you're at, as that will load up
+     * the venue settings."*
      */
-    doors: ['console', 'workshop'],
+    /*
+     * AND BEHIND COMMUNITY, WHICH IS THE THIRD THING A VENUE IS — *"everything
+     * to do with photos and marketing needs to belong in community including
+     * this."* Workshop maintains the record, the Console picks it up for
+     * tonight, Community dresses what the room sends in.
+     *
+     * **IT IS A MOVE, NOT A COPY.** The photo overlay LEFT the Workshop card
+     * when it arrived here: two places to set one thing is "where do I change
+     * this?" having two answers.
+     */
+    doors: ['console', 'workshop', 'community'],
     needs: FEATURES.INVOICES,
     label: 'Venues',
     blurb: 'The places you play, and what they put up as prizes.',

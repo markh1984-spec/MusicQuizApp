@@ -272,6 +272,20 @@ export function venuesSection() {
      */
     const findOnly = doorNow() === 'console';
     /*
+     * THE COMMUNITY DOOR SHOWS THE MARKETING HALF AND NOTHING ELSE.
+     *
+     * *"everything to do with photos and marketing needs to belong in
+     * community."* So the overlay is here and the prizes, the usual night, the
+     * link and the advert slides stay in the Workshop — a venue's gig
+     * logistics are not its marketing, and putting all of it on both doors
+     * would be the same record maintained in two places.
+     *
+     * A MODE rather than a second section: one `venuesSection()` means the
+     * card cannot drift into two versions of itself, which is what happened to
+     * the two "Venues" headings this file already records.
+     */
+    const brandOnly = doorNow() === 'community';
+    /*
      * ONE "VENUES" HEADING, NOT TWO. `tabBody()` in console.js already draws
      * the shared gradient tab-head heading on every door except Console — so
      * this panel's OWN heading only needs to appear where that one is
@@ -305,7 +319,10 @@ export function venuesSection() {
         ${findOnly ? `<h2 class="tab-own-head">Venues</h2>
           <div class="tiny">Tap a pub to make it tonight's. To set its usual night,
             its prizes or where to send them, open it in ${goTo('workshop', 'venues', 'the Workshop')}.</div>` : ''}
-        ${findOnly ? '' : `<div class="tiny">Set the prizes here and they fill themselves in when you
+        ${!brandOnly ? '' : `<div class="tiny">Open a pub to give it a photo overlay &mdash; the frame that
+            goes on every photograph from that room. Its prizes, its usual night and
+            its advert slides live in ${goTo('workshop', 'venues', 'the Workshop')}.</div>`}
+        ${findOnly || brandOnly ? '' : `<div class="tiny">Set the prizes here and they fill themselves in when you
           launch a night at this venue. Give a venue its usual night and the
           launch bar knows whose night tonight is — and the big screen ends the
           night with “Back here Thursday 20th”, worked out from it. The billing
@@ -317,7 +334,7 @@ export function venuesSection() {
           </div>` : ''}
         <div class="venue-list">
           ${!all.length ? `<div class="tiny">No venues yet. ${
-  findOnly ? `Add one in ${goTo('workshop', 'venues', 'the Workshop')}.`
+  findOnly || brandOnly ? `Add one in ${goTo('workshop', 'venues', 'the Workshop')}.`
     : `Add one below, or on ${goTo('post', 'invoices', 'the Invoices tab')}.`}</div>`
     : !venues.length ? `<div class="tiny">Nothing matches “${esc(venueQuery)}”.</div>`
       : venues.map((v) => {
@@ -339,8 +356,22 @@ export function venuesSection() {
                 ${open ? '<button class="minor danger v-del">Remove</button>' : ''}
               </div>
               ${open ? '' : `<div class="tiny venue-gist">${
-  esc([night || 'No usual night', prizes.length ? prizes[0] : 'No prizes set'].join(' · '))}</div>`}
+  // A SHUT CARD SAYS WHAT ITS OWN DOOR IS ABOUT. The prizes and the usual
+  // night are the Workshop's and the Console's subject; on Community the one
+  // fact worth a line is whether this pub has a frame yet, and printing "No
+  // prizes set" on a marketing page sends somebody to the wrong tab to fix it.
+  esc(brandOnly
+    ? (v.hasOverlay ? 'Photo overlay set' : 'No photo overlay')
+    : [night || 'No usual night', prizes.length ? prizes[0] : 'No prizes set'].join(' · '))}</div>`}
               ${!open ? '' : `
+              <!--
+                THE GIG LOGISTICS STAY IN THE WORKSHOP. A venue's usual night,
+                where to send the room and the logo on the winner's voucher are
+                facts about running a night there, not about promoting it — so
+                the Community door does not draw them, and there is still one
+                place each of them is edited.
+              -->
+              ${brandOnly ? '' : `
               <label class="venue-night">Usual night
                 <select class="v-night">
                   <option value="">No usual night</option>
@@ -389,6 +420,15 @@ export function venuesSection() {
                   ${v.logo ? '<button class="minor danger v-logo-off">Remove</button>' : ''}
                 </span>
               </div>
+`}
+              <!--
+                AND THE OVERLAY IS THE COMMUNITY DOOR'S, ONLY. *"Everything to
+                do with photos and marketing needs to belong in community,
+                including this."* A MOVE, not a copy: two cards offering the
+                same upload is one venue record maintained in two places, which
+                is the collision this file already has a rule about.
+              -->
+              ${!brandOnly ? '' : `
               <!-- THE PHOTO OVERLAY, under the logo because they are the same
                    kind of thing — the venue's standing artwork rather than a
                    decision about tonight — and because the blurb has to say
@@ -414,6 +454,8 @@ export function venuesSection() {
                   ${v.hasOverlay ? '<button class="minor danger v-over-off">Remove</button>' : ''}
                 </span>
               </div>
+`}
+              ${brandOnly ? '' : `
               ${advertsForVenue(v.name)}
               <!-- AS MANY PRIZES AS THE VENUE ACTUALLY PUTS UP.
                    It was three fixed boxes, because a pub quiz pays first,
@@ -437,11 +479,11 @@ export function venuesSection() {
               <button class="minor v-reward-add" type="button">Add a prize</button>
               <button class="minor v-save" hidden>Save it</button>
               ${can(FEATURES.PAST_GIGS) ? headcountBlock(v.name) : ''}
-              ${can(FEATURES.LEAGUE) ? leagueBlock(v.name) : ''}`}
+              ${can(FEATURES.LEAGUE) ? leagueBlock(v.name) : ''}`}`}
             </div>`;
       }).join('')}
         </div>
-        ${findOnly ? '' : `
+        ${findOnly || brandOnly ? '' : `
         <div class="venue-add">
           <input class="venue-new" type="text" maxlength="60" placeholder="The Station Tap, Wokingham">
           <button class="role-make venue-add-go">Add a venue</button>
@@ -528,9 +570,18 @@ export function venuesSection() {
         });
       }
       const save = card.querySelector('.v-save');
-      // A shut card has no controls to wire — its name and its one line are
-      // the whole of it.
-      if (!save) continue;
+      /*
+       * A shut card has no controls to wire — its name and its one line are
+       * the whole of it.
+       *
+       * **AND AN OPEN ONE MAY BE MISSING HALF OF THEM.** The Community door
+       * draws the overlay and nothing else, so there is no Save button and no
+       * prize list on that card — and `if (!save) continue` would have skipped
+       * the overlay wiring with it, leaving the one control that door exists
+       * for inert. Every block below asks for its OWN markup rather than
+       * leaning on a button from another door being there.
+       */
+      if (!card.classList.contains('open')) continue;
       for (const box of card.querySelectorAll('.v-reward, .v-night, .v-link')) {
         box.addEventListener('input', () => { save.hidden = false; });
         box.addEventListener('change', () => { save.hidden = false; });
@@ -545,43 +596,45 @@ export function venuesSection() {
        * list reading 1st, 3rd, 4th.
        */
       const prizes = card.querySelector('.venue-prizes');
-      const renumber = () => {
-        [...prizes.querySelectorAll('.reward-row')].forEach((row, i) => {
-          row.dataset.place = String(i + 1);
-          row.querySelector('.reward-place').textContent = placeLabel(i + 1);
-          row.querySelector('.v-reward').dataset.i = String(i);
+      if (prizes) {
+        const renumber = () => {
+          [...prizes.querySelectorAll('.reward-row')].forEach((row, i) => {
+            row.dataset.place = String(i + 1);
+            row.querySelector('.reward-place').textContent = placeLabel(i + 1);
+            row.querySelector('.v-reward').dataset.i = String(i);
+          });
+        };
+        prizes.addEventListener('click', (ev) => {
+          const off = ev.target.closest('.reward-off');
+          if (!off) return;
+          // Never nought rows: the last one empties rather than disappearing, so
+          // the card cannot end up with nothing to type in.
+          if (prizes.querySelectorAll('.reward-row').length <= 1) {
+            prizes.querySelector('.v-reward').value = '';
+          } else {
+            off.closest('.reward-row').remove();
+            renumber();
+          }
+          save.hidden = false;
         });
-      };
-      prizes.addEventListener('click', (ev) => {
-        const off = ev.target.closest('.reward-off');
-        if (!off) return;
-        // Never nought rows: the last one empties rather than disappearing, so
-        // the card cannot end up with nothing to type in.
-        if (prizes.querySelectorAll('.reward-row').length <= 1) {
-          prizes.querySelector('.v-reward').value = '';
-        } else {
-          off.closest('.reward-row').remove();
-          renumber();
-        }
-        save.hidden = false;
-      });
-      card.querySelector('.v-reward-add')?.addEventListener('click', () => {
-        const rows = prizes.querySelectorAll('.reward-row').length;
-        if (rows >= MAX_REWARDS) return;
-        const at = rows + 1;
-        const row = node(`
-          <label class="reward-row" data-place="${at}">
-            <span class="reward-place">${esc(placeLabel(at))}</span>
-            <input class="v-reward" data-i="${at - 1}" type="text" maxlength="80"
-              placeholder="Nothing for this place">
-            <button class="reward-off" type="button" aria-label="Remove this prize">&times;</button>
-          </label>`);
-        prizes.appendChild(row);
-        const box = row.querySelector('.v-reward');
-        box.addEventListener('input', () => { save.hidden = false; });
-        box.focus();
-        save.hidden = false;
-      });
+        card.querySelector('.v-reward-add')?.addEventListener('click', () => {
+          const rows = prizes.querySelectorAll('.reward-row').length;
+          if (rows >= MAX_REWARDS) return;
+          const at = rows + 1;
+          const row = node(`
+            <label class="reward-row" data-place="${at}">
+              <span class="reward-place">${esc(placeLabel(at))}</span>
+              <input class="v-reward" data-i="${at - 1}" type="text" maxlength="80"
+                placeholder="Nothing for this place">
+              <button class="reward-off" type="button" aria-label="Remove this prize">&times;</button>
+            </label>`);
+          prizes.appendChild(row);
+          const box = row.querySelector('.v-reward');
+          box.addEventListener('input', () => { save.hidden = false; });
+          box.focus();
+          save.hidden = false;
+        });
+      }
       /*
        * The logo saves ON ITS OWN rather than waiting for "Save it".
        *
@@ -697,7 +750,7 @@ export function venuesSection() {
         if (overSaid) overSaid.textContent = '';
         saveOverlay('');
       });
-      save.addEventListener('click', async () => {
+      save?.addEventListener('click', async () => {
         save.disabled = true;
         save.textContent = 'Saving…';
         const id = card.dataset.id;

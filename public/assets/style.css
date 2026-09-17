@@ -3361,6 +3361,40 @@ body.screen { cursor: none; overflow: hidden; }
  * get to. **Do not collapse this to one number**: a single threshold either
  * takes the frame away from a 1500x900 laptop that fits it perfectly well, or
  * keeps it at 960x760 where it does not fit at all. */
+/* EVERY BAY IS CAPPED FROM 900px, WHETHER OR NOT THE FRAME IS PINNED.
+
+   The `height: var(--bay-h)` rule below lives inside the frame's own media
+   query — which names a HEIGHT as well as a width, because a pinned frame is a
+   height decision. So on a laptop that is wide enough but not TALL enough
+   (1000x900 say: under 1150 wide, under 965 tall) neither clause matched and
+   there was no cap at all: every bay became whatever its content came to.
+   Measured — workshop 375, Post gig 170, Community 73 — three doors, three
+   heights, and the top of the page changing shape on every press.
+
+   It shows on COMMUNITY because that is the one door whose bay is DATA: a wall
+   of photographs or a season's table, where the other three carry roughly
+   fixed furniture and nobody notices. A night with ninety photos in it is the
+   case this exists for.
+
+   A `max-height` rather than a `height`, deliberately: on a short window a
+   forced height pads a small bay out with empty panel, which is the opposite
+   of the problem. This only ever stops one running away.
+
+   `overflow-y` comes with it and is not optional — a capped box without it
+   CLIPS, and a clipped overflow is worse than a scrolling one because nothing
+   throws and the control is simply unreachable. That is a rule this app has
+   already been bitten by on this very frame.
+
+   Still nothing below 900px: there is no frame there, the page scrolls, and
+   the bay is most of a phone screen by design. */
+@media (min-width: 900px) {
+  .doorhead > .panel.bench {
+    max-height: var(--bay-h);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
 @media (min-width: 1150px) and (min-height: 850px),
        (min-width: 900px) and (min-height: 965px) {
   /* `dvh` because a mobile-shaped browser window reports `vh` including the

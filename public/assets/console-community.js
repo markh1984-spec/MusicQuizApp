@@ -112,8 +112,26 @@ function leaguesNow() {
  */
 export function communityBench(active) {
   if (active === 'photos') return photoWall();
+  if (active === 'venues') return venuesBench();
   if (active === 'league' && leaguesNow().length) return leagueBay();
   return summaryBench();
+}
+
+/* THE VENUES TAB NEEDS ITS OWN BENCH, or the bay talks about another tab:
+ * `summaryBench()` is the LEAGUE'S and was the fallback, so Venues opened
+ * under "Nothing running yet — a league builds itself out of the nights you
+ * file", over a list of pubs and photo overlays. **IT COUNTS AND DOES
+ * NOT DISPLAY** — the frames are on the cards, beside the pub each belongs to
+ * and the checkerboard. **No gallery here** without deciding what a press does. */
+function venuesBench() {
+  const all = library.venueRecords || [];
+  const framed = all.filter((v) => v.hasOverlay).length;
+  const head = all.length ? `${framed} of ${all.length} pub${all.length === 1 ? '' : 's'} dressed` : 'No venues yet';
+  const line = !all.length
+    ? `Nothing to dress until there is a pub. Add your venues in ${goTo('workshop', 'venues', 'the Workshop')}.`
+    : framed === all.length ? 'Every venue has a photo overlay — every night you publish comes out branded.'
+      : 'Open a pub below to give it one. Without a frame its photographs publish plain.';
+  return node(`<div class="panel launchbar bench community-bench"><div class="bench-head"><b>${head}</b><span class="tiny">${line}</span></div></div>`);
 }
 
 /**

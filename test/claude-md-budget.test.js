@@ -1033,7 +1033,27 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * whole before you raise the number. Nothing was deleted here that forbids
  * anything.
  */
-const BUDGET = 258_000;
+/*
+ * RAISED TO 258,600 ON 17 SEPTEMBER 2026, for venues moving onto the Community
+ * door — and 631 bytes of the ~1,100 were paid before the number moved, by the
+ * rule the note above set: trim the SECOND sentence of a bullet first.
+ *
+ * What was trimmed, so the next session can see what "a retelling" looks like:
+ * three CONTIGUOUS sections each ended with the identical `Full reasoning:
+ * docs/gigs/photos-on-the-night.md` line, which is one pointer paid for three
+ * times; two bullets said a new route goes in `RESERVED`, one counting to two
+ * and one to three; "The hazard was written down and left — how a noted hazard
+ * becomes a bug" retold a lesson the rule beside it already carries; and the
+ * slug fold kept an anecdote about `station-tap-wokingham` that the
+ * prohibition under it states outright. Nothing that FORBIDS anything went.
+ *
+ * What was worth the remaining 470 is the half a session would undo by
+ * accident: a venue's settings now live behind THREE doors with one section in
+ * three modes, and the obvious "tidy-up" is to put the photo overlay back on
+ * the Workshop card beside the logo — which is the same record maintained in
+ * two places. That has to be read before the work, not after it.
+ */
+const BUDGET = 258_600;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
