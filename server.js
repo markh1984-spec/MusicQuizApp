@@ -2432,6 +2432,30 @@ async function handleGet(req, res, url, route) {
     return sendJson(res, 200, { quizzes: seen.quizzes, loaded: room.session.pack.id }), true;
   }
   // The console's library: every quiz and every bingo pack you have saved.
+  /*
+   * THE VENUE'S PHOTO OVERLAY, on its own so it never rides in a payload.
+   *
+   * One venue at a time, asked for by the card that is about to draw it — see
+   * `hasOverlay` in the library payload for why it cannot travel with the
+   * record.
+   *
+   * **IN `handleGet`, AND IT WAS WRITTEN INTO `handleWrite` FIRST.** GET and
+   * HEAD are dispatched to this function and nothing else is, so a GET defined
+   * beside the venue PUTs is dead code that reads as a feature — which is
+   * exactly how the gallery publish route 404ed, in the other direction. The
+   * dispatch is one `if` at the top of the request handler; read it before
+   * putting a route anywhere.
+   */
+  if (route.startsWith('/api/invoices/customers/') && route.endsWith('/overlay')) {
+    if (!allowed(req, res, url, FEATURES.INVOICES)) return true;
+    const room = roomForHost(req, url);
+    await ensureInvoicesRestored(room);
+    const id = decodeURIComponent(route.slice('/api/invoices/customers/'.length, -'/overlay'.length));
+    const customer = room.invoices.customers.find((c) => c.id === id);
+    if (!customer) return sendJson(res, 404, { error: 'No such venue.' }), true;
+    return sendJson(res, 200, { overlay: customer.overlay || '' }), true;
+  }
+
   if (route === '/api/library') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const libRoom = roomForHost(req, url);
@@ -2742,6 +2766,17 @@ async function handleGet(req, res, url, route) {
            * it would ride in every state push at a lobby.
            */
           logo: c.logo || '',
+          /*
+           * WHETHER there is a photo overlay, never the overlay itself.
+           *
+           * It is up to 512KB against the logo's 64, and this record rides in
+           * every console payload — the logo's own note in `invoices.js` says
+           * that is exactly what makes a full-size image unaffordable here. So
+           * the Venues tab learns there is one from a boolean and fetches the
+           * picture from `/api/invoices/customers/<id>/overlay` only when it
+           * actually draws it.
+           */
+          hasOverlay: Boolean(c.overlay),
         })),
       /*
        * The diary's exceptions: one-offs and nights off.

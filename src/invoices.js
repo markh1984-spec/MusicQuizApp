@@ -70,6 +70,52 @@ export const LOGO_PX = 128;
 export const MAX_LOGO_BYTES = 64 * 1024;
 
 /**
+ * THE VENUE'S PHOTO OVERLAY — a whole designed frame, not a logo.
+ *
+ * Asked for after the two-corner watermark was mocked up: *"I need nano banana
+ * to design the actual filter because it's a dedicated image generator — can I
+ * upload this filter somewhere so that specific filter is overlaid onto all the
+ * photos from that venue?"* It is the better answer, and it deletes code: one
+ * `drawImage` instead of a layout engine, and the design is his.
+ *
+ * **1080 BECAUSE EVERY PHOTO IN THIS APP IS 1080 SQUARE.** `camera-sheet.js`
+ * redraws each upload at `drawFiltered(canvas, source, PLAIN, 1080)` with
+ * `square: true`, so an overlay at 1080x1080 composites 1:1 — no scaling, no
+ * aspect maths, and no way for it to land crooked on a portrait photo.
+ *
+ * **PNG ONLY, AND THE REASON IS ALPHA.** JPEG cannot hold transparency at all,
+ * so a JPEG "overlay" is an opaque square that hides the photograph completely.
+ * `cleanOverlay()` refuses anything else, and the console refuses an image with
+ * no transparent pixels BEFORE it is sent — an image generator hands back an
+ * opaque picture by default, which is the trap this feature walks into first.
+ *
+ * **IT IS FAR BIGGER THAN A LOGO, SO IT MAY NEVER RIDE IN A PAYLOAD.** The
+ * logo's own note above says it is affordable only because it is small; this is
+ * up to eight times that. `venueRecords` carries a BOOLEAN and the image has a
+ * route of its own — see `server.js`.
+ */
+export const OVERLAY_PX = 1080;
+export const MAX_OVERLAY_BYTES = 512 * 1024;
+
+/**
+ * A venue's photo overlay, or nothing.
+ *
+ * PNG alone, unlike `cleanLogo()`, which takes three types: a logo sits on a
+ * plate and may be opaque, an overlay covers a photograph and must not be.
+ *
+ * **DROPPED RATHER THAN REJECTED, like the logo** — an overlay is decoration
+ * on a published photograph, and failing the save would cost somebody the
+ * prizes they happened to be editing at the time.
+ */
+export function cleanOverlay(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(raw)) return '';
+  if (raw.length > MAX_OVERLAY_BYTES) return '';
+  return raw;
+}
+
+/**
  * A venue logo, or nothing. Never anything else.
  *
  * Data URLs only, and only the three image types every browser draws. The
@@ -490,6 +536,10 @@ export class Invoices {
        * in every console payload.
        */
       logo: cleanLogo(customer.logo),
+      // The photo overlay, kept on the record like the logo and for the same
+      // reason — it backs itself up with everything else and cannot 404 on the
+      // night it matters. Unlike the logo it never travels in a payload.
+      overlay: cleanOverlay(customer.overlay),
     };
     if (!clean.name) throw new Error('A customer needs a name.');
     const at = this.data.customers.findIndex((c) => c.id === clean.id);
@@ -511,7 +561,7 @@ export class Invoices {
    * fields the gig-night side of the record owns, and it moves each one only
    * if it was actually sent.
    */
-  setVenueDetails(id, { rewards, usualNight, link, logo } = {}) {
+  setVenueDetails(id, { rewards, usualNight, link, logo, overlay } = {}) {
     const customer = this.data.customers.find((c) => c.id === id);
     if (!customer) return null;
     if (rewards !== undefined) {
@@ -531,6 +581,9 @@ export class Invoices {
     // Same "only if it was sent" rule, so saving a prize cannot drop a logo.
     // An empty string is a deliberate REMOVAL and has to be allowed through.
     if (logo !== undefined) customer.logo = cleanLogo(logo);
+    // And the overlay, same rule again: only if it was sent, and an empty
+    // string is a deliberate removal rather than a no-op.
+    if (overlay !== undefined) customer.overlay = cleanOverlay(overlay);
     this.save();
     return customer;
   }

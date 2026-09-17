@@ -17,6 +17,28 @@ decision from the host first.
 **DELETE AN ITEM FROM HERE THE MOMENT IT IS BUILT.**
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
+### 0. UPLOAD THE TWO LOGOS — you asked to be reminded
+
+**Only you can do these and the field is already waiting.** Built 17 September
+2026: a venue card now takes a **Photo overlay** — Venues tab, open a venue,
+under *Their logo*.
+
+- **The Station Tap overlay** → Venues ▸ The Station Tap ▸ Photo overlay. A
+  **square PNG with a see-through background**; an opaque one is refused,
+  because it would cover every photograph rather than decorate it. The card
+  previews it over a chequer and says how see-through it is.
+- **The Station Tap logo** → the same card, *Their logo*, if it is not there
+  already. That one is the winner's voucher and is a different job.
+- **Pub Champions** goes INSIDE the overlay artwork rather than anywhere in the
+  app. That was the decision that deleted work: one designed frame per venue,
+  made in an image generator, beats the app compositing two logos it has to lay
+  out itself.
+
+**Still to build, and it waits on nothing but time:** compositing the overlay
+onto published photographs, in the browser, at publish time — never onto the
+stored original, because photos go on the projector all night and *a venue's
+logo goes on the winner's voucher and nowhere else*.
+
 ### 0a. NAME THE DJ APP — one word, thirty seconds
 
 **Only you can do this and everything else about it is built.** A DJ set runs

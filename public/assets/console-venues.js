@@ -18,6 +18,16 @@ import { FEATURES } from './plans.js';
  */
 let openVenue = '';
 let venueQuery = '';
+/*
+ * WHAT THE LAST OVERLAY UPLOAD MEASURED, IN A MODULE BINDING RATHER THAN THE
+ * MARKUP.
+ *
+ * Saving calls `load()`, which redraws every venue card — so a line written
+ * straight into the element is wiped by the very success it was reporting.
+ * `snap.js`'s own `say()` records this exact fault; this is the same fix.
+ * Keyed by venue, so one card's reading never appears under another's.
+ */
+let overlaySaid = { id: '', words: '' };
 
 /**
  * SHRINK A LOGO IN THE BROWSER, before it is ever sent.
@@ -95,6 +105,83 @@ const shrinkLogo = (file) => shrinkImage(file, {
   px: LOGO_PX, maxBytes: MAX_LOGO_BYTES,
   tooBig: 'That logo is too detailed to store. A simpler or smaller one will work.',
 });
+
+/**
+ * THE VENUE'S PHOTO OVERLAY — a designed frame, sized to the photograph.
+ *
+ * 1080 because every photo this app stores is exactly 1080 square
+ * (`camera-sheet.js` redraws each upload at that size, `square: true`), so the
+ * overlay composites 1:1 and cannot land crooked.
+ *
+ * **IT IS FORCED TO PNG WHATEVER ARRIVES, AND THE ALPHA IS CHECKED.** An image
+ * generator hands back an opaque picture unless it is asked very specifically
+ * not to — and an opaque overlay does not decorate a photograph, it REPLACES
+ * it. Every photo from that venue would become a picture of the frame, on a
+ * published gallery, silently. So the transparency is measured here, before
+ * anything is sent, and an opaque one is refused with the reason.
+ */
+const OVERLAY_PX = 1080;
+const MAX_OVERLAY_BYTES = 512 * 1024;
+
+function readOverlay(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read that file.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('That does not look like an image.'));
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = OVERLAY_PX;
+        canvas.height = OVERLAY_PX;
+        const ctx = canvas.getContext('2d');
+        // No fill: transparency has to survive, and it is the whole point here.
+        ctx.drawImage(img, 0, 0, OVERLAY_PX, OVERLAY_PX);
+
+        /*
+         * HOW MUCH OF IT IS SEE-THROUGH, and how much of the MIDDLE is not.
+         *
+         * Two different questions. Fully opaque is a refusal — it would hide
+         * every photograph. A covered middle is only a warning: it is where
+         * faces are, but a quizmaster may genuinely want a band across it and
+         * refusing that would be the app overruling a design decision.
+         */
+        const { data } = ctx.getImageData(0, 0, OVERLAY_PX, OVERLAY_PX);
+        let clear = 0;
+        let middleSolid = 0;
+        let middle = 0;
+        const lo = OVERLAY_PX * 0.25;
+        const hi = OVERLAY_PX * 0.75;
+        for (let i = 0; i < data.length; i += 4) {
+          const px = (i / 4) % OVERLAY_PX;
+          const py = Math.floor((i / 4) / OVERLAY_PX);
+          if (data[i + 3] < 24) clear += 1;
+          if (px > lo && px < hi && py > lo && py < hi) {
+            middle += 1;
+            if (data[i + 3] > 200) middleSolid += 1;
+          }
+        }
+        const total = OVERLAY_PX * OVERLAY_PX;
+        const clearPct = Math.round((clear / total) * 100);
+        if (clearPct < 5) {
+          reject(new Error('That image has no see-through background, so it would '
+            + 'cover the photographs completely. Export it as a PNG with a '
+            + 'transparent background and try again.'));
+          return;
+        }
+        const out = canvas.toDataURL('image/png');
+        if (out.length > MAX_OVERLAY_BYTES) {
+          reject(new Error('That overlay is too detailed to store. A simpler one, '
+            + 'or one with more of it left clear, will work.'));
+          return;
+        }
+        resolve({ overlay: out, clearPct, middlePct: Math.round((middleSolid / middle) * 100) });
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 const shrinkAdvertImage = (file) => shrinkImage(file, {
   px: ADVERT_PX, maxBytes: MAX_ADVERT_BYTES,
@@ -302,6 +389,31 @@ export function venuesSection() {
                   ${v.logo ? '<button class="minor danger v-logo-off">Remove</button>' : ''}
                 </span>
               </div>
+              <!-- THE PHOTO OVERLAY, under the logo because they are the same
+                   kind of thing — the venue's standing artwork rather than a
+                   decision about tonight — and because the blurb has to say
+                   which one goes WHERE. Two picture uploads on one card is the
+                   label collision this app keeps a rule about, so neither is
+                   called "image" and each names its own destination. -->
+              <div class="venue-logo-row venue-over-row">
+                <span class="venue-logo-what">
+                  <b>Photo overlay</b><br>
+                  <span class="tiny">Goes on every photo from this venue when you
+                    publish the night &mdash; your branding and theirs, in one
+                    design. A square PNG with a <b>see-through background</b>;
+                    anything solid would hide the photographs. Never on the big
+                    screen and never on the saved originals.</span>
+                  <span class="tiny venue-over-said">${
+  overlaySaid.id === v.id ? esc(overlaySaid.words) : ''}</span>
+                </span>
+                <span class="venue-logo-side">
+                  <span class="venue-over-pic${v.hasOverlay ? '' : ' is-empty'}"></span>
+                  <label class="minor venue-logo-pick">${v.hasOverlay ? 'Change' : 'Add one'}
+                    <input class="v-over" type="file" accept="image/png,image/*" hidden>
+                  </label>
+                  ${v.hasOverlay ? '<button class="minor danger v-over-off">Remove</button>' : ''}
+                </span>
+              </div>
               ${advertsForVenue(v.name)}
               <!-- AS MANY PRIZES AS THE VENUE ACTUALLY PUTS UP.
                    It was three fixed boxes, because a pub quiz pays first,
@@ -503,6 +615,88 @@ export function venuesSection() {
         }
       });
       card.querySelector('.v-logo-off')?.addEventListener('click', () => saveLogo(''));
+
+      /*
+       * THE PHOTO OVERLAY — saved on its own like the logo, and PREVIEWED,
+       * because an overlay is the one upload here you cannot judge from its
+       * own thumbnail.
+       *
+       * It is transparent by definition, so a plain `<img>` of it on a dark
+       * card shows almost nothing. The preview draws it over a checkerboard,
+       * which is the only way to SEE where the see-through parts are — and
+       * seeing that is the whole reason he wanted to upload one today.
+       *
+       * The image is fetched on its own rather than read off the record: it is
+       * up to 512KB and `venueRecords` carries a boolean for exactly that
+       * reason. One request, only for a card that has one.
+       */
+      const overPick = card.querySelector('.v-over');
+      const overSaid = card.querySelector('.venue-over-said');
+      const overPic = card.querySelector('.venue-over-pic');
+
+      const paintOverlay = (dataUrl) => {
+        if (!overPic) return;
+        overPic.classList.toggle('is-empty', !dataUrl);
+        overPic.replaceChildren();
+        if (!dataUrl) return;
+        const img = document.createElement('img');
+        img.className = 'venue-over-img';
+        img.alt = '';
+        img.src = dataUrl;
+        overPic.appendChild(img);
+      };
+
+      if (overPic && venues.find((v) => v.id === card.dataset.id)?.hasOverlay) {
+        invoiceApi(`/api/invoices/customers/${encodeURIComponent(card.dataset.id)}/overlay`)
+          .then((d) => paintOverlay(d && d.overlay))
+          .catch(() => { /* the card is still usable without the preview */ });
+      }
+
+      const saveOverlay = async (overlay) => {
+        try {
+          await invoiceApi(`/api/invoices/customers/${encodeURIComponent(card.dataset.id)}/rewards`, {
+            method: 'PUT',
+            // ONLY the overlay, same rule as the logo above.
+            body: JSON.stringify({ overlay }),
+          });
+          await load();
+        } catch (err) {
+          alert(err.message || 'Could not save that.');
+        }
+      };
+      overPick?.addEventListener('change', async () => {
+        const file = overPick.files && overPick.files[0];
+        if (!file) return;
+        overlaySaid = { id: card.dataset.id, words: 'Checking it…' };
+        if (overSaid) overSaid.textContent = overlaySaid.words;
+        try {
+          const { overlay, clearPct, middlePct } = await readOverlay(file);
+          paintOverlay(overlay);
+          /*
+           * WHAT IT MEASURED, SAID OUT LOUD. A covered middle is allowed and
+           * is usually a mistake, so it is a sentence rather than a refusal —
+           * the app does not overrule somebody's own design, it tells them
+           * what it can see.
+           */
+          overlaySaid = {
+            id: card.dataset.id,
+            words: `${clearPct}% of it is see-through`
+              + (middlePct > 25 ? ` — but ${middlePct}% of the middle is solid, which is where faces go.` : '.'),
+          };
+          if (overSaid) overSaid.textContent = overlaySaid.words;
+          await saveOverlay(overlay);
+        } catch (err) {
+          overlaySaid = { id: '', words: '' };
+          if (overSaid) overSaid.textContent = '';
+          alert(err.message || 'Could not use that image.');
+        }
+      });
+      card.querySelector('.v-over-off')?.addEventListener('click', () => {
+        paintOverlay('');
+        overlaySaid = { id: '', words: '' };
+        if (overSaid) overSaid.textContent = '';
+        saveOverlay('');
+      });
       save.addEventListener('click', async () => {
         save.disabled = true;
         save.textContent = 'Saving…';
