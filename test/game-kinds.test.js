@@ -102,3 +102,57 @@ test('a round tab is NOT offered as a game, however much it looks like one', () 
     assert.ok(!GAME_KINDS.includes(id), `${id} is a round shelf, not a game`);
   }
 });
+
+/*
+ * AND EVERY GAME KIND HAS A SHELF TO RESOLVE AGAINST.
+ *
+ * `shelfOf()` was `kind === 'bingo' ? library.bingo : library.quizzes` in two
+ * modules — the kind test written when there were two games, fifth sighting.
+ * Card Bingo fell into the `else` and resolved against the QUIZZES, where a
+ * deck has never been, so Tonight decided the pack was not there and threw it
+ * out again. By drag and by tap, silently, with the card still looking
+ * draggable — and Tonight is the only way to launch, so the whole game was
+ * unreachable from the console while every screen drew correctly.
+ */
+/*
+ * `console-state.js` READS `localStorage` AT MODULE LOAD, being a browser file
+ * — so node needs the shim before the import, not after. It is the smallest
+ * stand-in that satisfies the two calls that run, deliberately: a fuller fake
+ * would be a second implementation of the browser to keep correct.
+ */
+function withLocalStorage() {
+  if (!globalThis.localStorage) {
+    const box = new Map();
+    globalThis.localStorage = {
+      getItem: (k) => (box.has(k) ? box.get(k) : null),
+      setItem: (k, v) => box.set(k, String(v)),
+      removeItem: (k) => box.delete(k),
+    };
+  }
+  return import('../public/assets/console-state.js');
+}
+
+test('every kind on GAME_KINDS resolves to its OWN shelf, never the quizzes', async () => {
+  const state = await withLocalStorage();
+  state.setLibrary({
+    quizzes: [{ id: 'a-quiz' }],
+    bingo: [{ id: 'a-bingo' }],
+    cards: [{ id: 'deck' }],
+  });
+  assert.deepEqual(state.shelfOf('quiz').map((p) => p.id), ['a-quiz']);
+  assert.deepEqual(state.shelfOf('bingo').map((p) => p.id), ['a-bingo']);
+  assert.deepEqual(state.shelfOf('cards').map((p) => p.id), ['deck'],
+    'a deck comes off the CARDS shelf — this is the bug that made Card Bingo unlaunchable');
+  assert.deepEqual(state.shelfOf('made-up'), [],
+    'an unknown kind gets nothing rather than quietly borrowing the quizzes');
+});
+
+test('GAME_KINDS and shelfOf cannot part company', async () => {
+  const shell = fs.readFileSync(new URL('../public/assets/console.js', import.meta.url), 'utf8');
+  const kinds = JSON.parse((shell.match(/GAME_KINDS = (\[[^\]]*\])/) || [])[1].replace(/'/g, '"'));
+  const state = await withLocalStorage();
+  state.setLibrary({ quizzes: [{ id: 'q' }], bingo: [{ id: 'b' }], cards: [{ id: 'c' }] });
+  for (const k of kinds) {
+    assert.equal(state.shelfOf(k).length, 1, `${k} is on GAME_KINDS but has no shelf in shelfOf()`);
+  }
+});

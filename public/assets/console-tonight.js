@@ -17,7 +17,7 @@ import {
 } from './console-tonight-mix.js';
 import { renderSlots } from './console-tonight-mix-ui.js';
 import { lastNightWarning, noPrizesReason, venuePrizeWarning } from './console-warnings.js';
-import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, me, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
+import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, me, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfOf, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
 import { nowNextRows } from './console-venues.js';
 import { GAME_KINDS, TABS, can, doorNow, goTo, goToDoor, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone } from './console.js';
 import { clashTonight, nightKey, tonight, upcoming } from './diary.js';
@@ -626,8 +626,7 @@ export function launchBar() {
    * on the filtered shelf, so `applyShow()` returned early and **Tonight drew
    * empty with nothing said**: the server reports no `problems`, the file
    * being fine. */
-  const shelvesFor = (kind) => ((kind === 'bingo' ? library.bingo : library.quizzes) || [])
-    .filter((p) => !p.locked && !p.broken);
+  const shelvesFor = (kind) => shelfOf(kind).filter((p) => !p.locked && !p.broken);
   if (!games.length) return node('<div></div>');
 
   const el = node(`

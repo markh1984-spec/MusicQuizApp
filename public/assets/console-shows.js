@@ -7,12 +7,12 @@
  */
 
 import { binIcon, esc, node, postJson } from './client.js';
-import { library, setShowDrag } from './console-state.js';
+import { library, setShowDrag, shelfOf } from './console-state.js';
 import { dragging, loadShow, night } from './console-tonight.js';
 import { doorNow, goTo, hostKey, keyed, load, render } from './console.js';
 import { itemsOf } from './show-parts.js';
 
-export const shelfFor = (kind) => ((kind === 'bingo' ? library.bingo : library.quizzes) || []);
+export const shelfFor = (kind) => shelfOf(kind);
 
 /**
  * What a pack is CALLED, from its id.

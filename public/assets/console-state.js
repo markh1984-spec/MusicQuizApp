@@ -167,3 +167,37 @@ export function setShowDrag(v) { showDrag = v; }
 export function setNightDrag(v) { nightDrag = v; }
 export function setPendingInvoice(v) { pendingInvoice = v; }
 export function setBook(v) { book = v; }
+
+/**
+ * WHICH SHELF A GAME'S PACKS COME OFF — named per kind, never "the other one".
+ *
+ * **THIS WAS `kind === 'bingo' ? library.bingo : library.quizzes`, IN TWO
+ * PLACES, AND IT IS THE KIND TEST WRITTEN WHEN THERE WERE TWO GAMES — the
+ * fifth sighting.** Two games is the only arrangement in which an `else` names
+ * anything, and Card Bingo arrived as a third: `cards` fell through to
+ * `library.quizzes`, where a deck has never been. So Tonight resolved the deck
+ * against the wrong shelf, decided it was not there and threw it straight back
+ * out — by drag AND by tap, with nothing thrown and the card still on the
+ * shelf looking perfectly draggable.
+ *
+ * Tonight is the only way to launch, so the game was unreachable from the
+ * console while every screen drew correctly. Reported in one line: *"I can't
+ * drag the playing card bingo onto the launch screen."*
+ *
+ * **A MAP, so a fifth game names its own shelf or gets nothing** — an unknown
+ * kind answers an empty list rather than quietly borrowing the quizzes.
+ * `GAME_KINDS` in `console.js` is the list this has to keep up with, and
+ * `test/game-kinds.test.js` is what fails when it does not.
+ *
+ * **HERE because it is read by BOTH `console-tonight.js` and
+ * `console-shows.js`**, which each had their own copy — and two copies of one
+ * rule is one copy getting fixed.
+ */
+export function shelfOf(kind) {
+  const shelves = {
+    quiz: library && library.quizzes,
+    bingo: library && library.bingo,
+    cards: library && library.cards,
+  };
+  return shelves[kind] || [];
+}
