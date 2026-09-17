@@ -1144,10 +1144,8 @@ body.phone {
    big as the question. 13px rather than the console's 12.5: this is read in a
    dark room on a phone held at arm's length, not at a laptop. */
 .phone .tiny { font-size: var(--fs-note); line-height: 1.45; color: var(--ink-dim); }
-/* Except the camera warning, which is the house exception — warnings and money
-   are read once, at a moment that matters, and being quiet there costs
-   somebody something real. */
-.phone .cam-warn { font-size: var(--fs-body); }
+/* The camera warning is the house exception to the line above, and it is set
+   on the COMPONENT rather than here — see `.tiny.cam-warn` further down. */
 
 .phone input[type="text"] {
   width: 100%;
@@ -4511,6 +4509,29 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   background: none; border: 0; color: var(--ink-dim);
   font-size: var(--fs-sub); cursor: pointer; padding: 4px 8px;
 }
+/*
+ * THE WARNING IS SIZED ON THE COMPONENT, BECAUSE THE COMPONENT IS SHARED NOW.
+ *
+ * `warnings and money` are the house exception to `.tiny`: read once, at a
+ * moment that matters, and being quiet there costs somebody something real.
+ * `--fs-body` names that in the ladder — *"body copy in a panel, and a warning
+ * that must not go quiet"*.
+ *
+ * It lived on `.phone .cam-warn`, which was right while the sheet was only on
+ * `/play`. `camera-sheet.js` now opens on `/snap` too, whose body is
+ * `play snap` and carries no `phone` — so BOTH `.phone` rules missed it and the
+ * consent notice landed on the page default at 16px. It read fine, which is the
+ * problem: it was an accident that happened to look deliberate, and the next
+ * change to a base size would have moved it with nothing pointing at why.
+ *
+ * **`.tiny.cam-warn`, NOT `.cam-warn`, and that is the whole reason this is not
+ * a one-word edit.** The element carries both classes, and `.phone .tiny` above
+ * is specificity 0,2,0 — a bare `.cam-warn` is 0,1,0 and LOSES to it, so the
+ * notice would have shrunk to 13px on the phone while looking fixed in the
+ * diff. Two classes match that weight and this rule sits later, so it wins on
+ * `/play` and applies on its own on `/snap`. One size, both cameras.
+ */
+.tiny.cam-warn { font-size: var(--fs-body); }
 .cam-warn { color: var(--gold); }
 .cam-pick {
   display: block; margin-top: 12px; padding: 18px;
