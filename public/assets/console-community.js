@@ -56,6 +56,7 @@ import { asksPanel, galleryAddress, groupByVenue, nightPhotos } from './console-
 import { bayColumns, bayHead, bayRail } from './console-bay.js';
 import { NO_VENUE, nightDroppedOnPub, venuePicker, whyNoVenue } from './console-night-venue.js';
 import { venueSlug } from './slugs.js';
+import { framedSaveInto } from './console-photo-export.js';
 
 /** Every venue with a league running, best-supported first. */
 function leaguesNow() {
@@ -118,19 +119,16 @@ export function communityBench(active) {
 }
 
 /* THE VENUES TAB NEEDS ITS OWN BENCH, or the bay talks about another tab:
- * `summaryBench()` is the LEAGUE'S and was the fallback, so Venues opened
- * under "Nothing running yet — a league builds itself out of the nights you
- * file", over a list of pubs and photo overlays. **IT COUNTS AND DOES
- * NOT DISPLAY** — the frames are on the cards, beside the pub each belongs to
- * and the checkerboard. **No gallery here** without deciding what a press does. */
+ * `summaryBench()` is the LEAGUE'S fallback, so Venues opened under "Nothing
+ * running yet". **IT COUNTS, IT DOES NOT DISPLAY** — frames are on the cards. */
 function venuesBench() {
   const all = library.venueRecords || [];
   const framed = all.filter((v) => v.hasOverlay).length;
   const head = all.length ? `${framed} of ${all.length} pub${all.length === 1 ? '' : 's'} dressed` : 'No venues yet';
   const line = !all.length
-    ? `Nothing to dress until there is a pub. Add your venues in ${goTo('workshop', 'venues', 'the Workshop')}.`
-    : framed === all.length ? 'Every venue has a photo overlay — every night you publish comes out branded.'
-      : 'Open a pub below to give it one. Without a frame its photographs publish plain.';
+    ? `Nothing to dress yet. Add venues in ${goTo('workshop', 'venues', 'the Workshop')}.`
+    : framed === all.length ? 'Every venue has a frame, so every export comes out branded.'
+      : 'Open a pub below to give it one — without a frame its photographs export plain.';
   return node(`<div class="panel launchbar bench community-bench"><div class="bench-head"><b>${head}</b><span class="tiny">${line}</span></div></div>`);
 }
 
@@ -536,6 +534,7 @@ function photoWall() {
       <button class="community-big" type="button" aria-label="Back to the photographs">
         <img src="${esc(shot.url)}" alt="">
       </button>`);
+    framedSaveInto(over, keyed(shot.url), openNight || shot, library.venueRecords || []);
     over.addEventListener('click', () => { openShot = null; over.remove(); });
     (body.closest('.bay-side') || body).appendChild(over);
   };
@@ -801,10 +800,11 @@ async function loadWall() {
     } catch { continue; }
     // Where it was taken, on the picture's own tooltip — the wall is mixed by
     // definition, so a thumbnail with no answer to "which night was that" is a
-    // picture you cannot go and find again.
+    // picture you cannot find again. The night rides on the shot itself too, or
+    // it cannot be exported with that pub's frame on it.
     const where = `${readable(night.night)}${night.venue ? ` — ${night.venue}` : ''}`;
     for (const p of one.photos || []) {
-      shots.push({ url: p.url, where });
+      shots.push({ url: p.url, where, night: night.night, venue: night.venue || '' });
       if (shots.length >= WALL_MAX) break;
     }
   }

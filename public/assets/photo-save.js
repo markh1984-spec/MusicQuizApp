@@ -185,8 +185,47 @@ export function stampMark(ctx, w, h, words, mark = null) {
   ctx.restore();
 }
 
-/** The photograph at its own size, with the mark on it, as a JPEG blob. */
-async function stamped(img, words) {
+/**
+ * THE VENUE'S OWN FRAME, OVER THE WHOLE PHOTOGRAPH.
+ *
+ * A pub designs one square PNG with a see-through middle — their branding and
+ * the quizmaster's in one piece of artwork — and it goes over every photograph
+ * from that room on the way out. **The stored photograph is never touched**:
+ * this is drawn at SAVE time, in the browser, exactly as the watermark below
+ * it already was, so the original in the private repo stays clean and a venue
+ * that changes its artwork changes every future export rather than needing a
+ * re-upload of the night.
+ *
+ * **STRETCHED TO THE WHOLE CANVAS, not fitted.** Both are 1080 square by
+ * decision — `drawFiltered()` makes every photograph square and the upload
+ * refuses anything that is not — so a fit would be a no-op on every real pair
+ * and a silent letterbox on the day one of them changes. Stretching says what
+ * it does.
+ *
+ * **IT DEGRADES, LIKE EVERYTHING ELSE ON THIS PATH.** A frame that will not
+ * decode must cost the frame and never the photograph: somebody saving a
+ * picture to put on Facebook gets it unframed rather than getting nothing.
+ */
+async function frameOver(ctx, w, h, overlay) {
+  if (!overlay) return false;
+  try {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = () => reject(new Error('the overlay would not decode'));
+      img.src = overlay;
+    });
+    if (!img.naturalWidth) return false;
+    ctx.drawImage(img, 0, 0, w, h);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** The photograph at its own size, with the frame and the mark on it. */
+async function stamped(img, words, overlay) {
   const w = img.naturalWidth;
   const h = img.naturalHeight;
   const canvas = document.createElement('canvas');
@@ -194,6 +233,10 @@ async function stamped(img, words) {
   canvas.height = h;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(img, 0, 0, w, h);
+  // THE VENUE'S FRAME FIRST, THE APP'S MARK ON TOP. A pub's artwork is a
+  // border round the edges and the mark sits in a corner, so drawing the frame
+  // last would bury the one thing that says where the photograph came from.
+  await frameOver(ctx, w, h, overlay);
   // AWAITED, never fired-and-checked — see `loadMark()`.
   stampMark(ctx, w, h, words, await loadMark());
   return new Promise((resolve) => {
@@ -215,7 +258,7 @@ async function stamped(img, words) {
  *
  * Resolves to `true` when something left; `false` means say so out loud.
  */
-export async function savePhoto(src, { words = '', filename = 'photo.jpg' } = {}) {
+export async function savePhoto(src, { words = '', filename = 'photo.jpg', overlay = '' } = {}) {
   const img = new Image();
   // Same origin, so nothing taints the canvas — but stated, because the day
   // photographs move to object storage this is the line that has to change.
@@ -227,7 +270,7 @@ export async function savePhoto(src, { words = '', filename = 'photo.jpg' } = {}
   img.src = src;
   await ready;
 
-  const blob = await stamped(img, words);
+  const blob = await stamped(img, words, overlay);
   if (!blob) return false;
 
   const file = new File([blob], filename, { type: 'image/jpeg' });
