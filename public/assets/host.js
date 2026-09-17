@@ -1183,7 +1183,8 @@ function buildActions(s) {
   const order = s.runningOrder;
   const atLastRoundBoard = s.phase === 'round_board' && s.roundIndex >= s.roundCount - 1;
   const continuing = Boolean(order && order.nextKind) && atLastRoundBoard;
-  const continueWord = continuing && order.nextKind === 'bingo' ? 'the bingo' : 'the quiz';
+  const continueWord = continuing && order.nextKind === 'cards' ? 'the card bingo'
+    : continuing && order.nextKind === 'bingo' ? 'the bingo' : 'the quiz';
 
   const label = continuing ? `Continue to ${continueWord}` : ({
     lobby: 'Start the quiz',

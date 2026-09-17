@@ -94,6 +94,9 @@ const LAUNCHERS = {
    * therefore left alone.
    */
   cards: {
+    // BUILT IN: there is no file, no shelf and nothing to own, so the launch
+    // routes skip the pack-ownership check for it. `packlessKind()` below.
+    builtIn: true,
     load: () => deckPack(),
     list: () => [{ ...deckPack(), tracks: undefined, trackCount: 52 }],
     make: (pack, opts) => new BingoGame({ pack, ...opts }),
@@ -145,17 +148,39 @@ const MAX_ORDER_PARTS = 8;
  * longer exists, a round that is not there) still run per part exactly as
  * they do for an ordinary launch.
  */
+/**
+ * ONE PACK, LAUNCHED WHOLE — every kind but the quiz, which is composed out
+ * of rounds. Asked of `LAUNCHERS` rather than written as a list, so a fourth
+ * game is a whole-pack part the day it is added.
+ */
+export function wholePackKind(kind) {
+  return Boolean(kind && kind !== 'quiz' && LAUNCHERS[kind]);
+}
+
+/** A kind with no pack to own — the built-in deck. The launch routes skip the library check for it. */
+export function packlessKind(kind) {
+  return Boolean(LAUNCHERS[kind] && LAUNCHERS[kind].builtIn);
+}
+
 function normaliseSegments(segments) {
   const list = Array.isArray(segments) ? segments : [];
   return list.map((s) => {
-    if (s && s.kind === 'bingo') {
+    /*
+     * A WHOLE-PACK PART — bingo, card bingo, anything that is one pack
+     * launched whole — keeps ITS OWN KIND. This read `kind === 'bingo'` and
+     * everything else fell through to "a quiz with no rounds", which the
+     * filter below drops: a running order of card bingo then music bingo
+     * launched as the music bingo alone and answered 200. The kind test
+     * written when there were two games, sixth sighting.
+     */
+    if (s && wholePackKind(s.kind)) {
       const packId = String((s && s.packId) || '').trim();
       if (!packId) return null;
       const shape = s.shape && Number(s.shape.rows) && Number(s.shape.cols)
         ? { rows: Number(s.shape.rows), cols: Number(s.shape.cols) }
         : null;
       const prizes = Math.max(0, Math.min(5, Number(s.prizes) || 0));
-      return { kind: 'bingo', packId, shape, prizes };
+      return { kind: s.kind, packId, shape, prizes };
     }
     const order = Array.isArray(s && s.order) ? s.order : [];
     if (!order.length) return null;
@@ -1220,11 +1245,11 @@ export class Session {
      * mixed one, and for bingo, which has no `composeQuiz` of its own.
      */
     for (const seg of list) {
-      if (seg.kind === 'bingo') {
+      if (seg.kind !== 'quiz') {
         try {
-          LAUNCHERS.bingo.load(this.config, seg.packId, this.paths);
+          LAUNCHERS[seg.kind].load(this.config, seg.packId, this.paths);
         } catch {
-          throw new Error(`There is no bingo pack called ${seg.packId} any more.`);
+          throw new Error(`There is no ${seg.kind} pack called ${seg.packId} any more.`);
         }
       } else {
         composeQuiz(seg.order, (id) => LAUNCHERS.quiz.load(this.config, id, this.paths));
@@ -1381,9 +1406,9 @@ export class Session {
   describeOrderParts(list) {
     return (list || []).map((seg) => {
       try {
-        if (seg.kind === 'bingo') {
-          const pack = LAUNCHERS.bingo.load(this.config, seg.packId, this.paths);
-          return { kind: 'bingo', id: pack.id, title: pack.title };
+        if (seg.kind !== 'quiz') {
+          const pack = LAUNCHERS[seg.kind].load(this.config, seg.packId, this.paths);
+          return { kind: seg.kind, id: pack.id, title: pack.title };
         }
         const pack = composeQuiz(seg.order, (id) => LAUNCHERS.quiz.load(this.config, id, this.paths));
         /*
@@ -1414,8 +1439,8 @@ export class Session {
 
   startOrderSegment(list, pos, opts, carry, scores = null, teams = null, prevState = null) {
     const seg = list[pos];
-    const started = seg.kind === 'bingo'
-      ? this.launch('bingo', seg.packId, { ...opts, shape: seg.shape, prizes: seg.prizes })
+    const started = seg.kind !== 'quiz'
+      ? this.launch(seg.kind, seg.packId, { ...opts, shape: seg.shape, prizes: seg.prizes })
       : this.launch('quiz', null, { ...opts, order: seg.order });
     /*
      * `launch()` above just cleared all three of these (`runningOrder`,

@@ -59,10 +59,12 @@ export const DEFAULT_BINGO_PRIZES = 2;
  * all, by design — see CLAUDE.md) produced `{kind:'quiz', rounds: []}`, an
  * empty quiz slot standing in for the actual bingo game.
  */
-export function slotsFromSimple({ currentPack, lbExtra, lbOff, packOf }) {
+export function slotsFromSimple({ currentPack, lbExtra, lbOff, packOf, kind = 'bingo' }) {
   if (!currentPack) return [];
   if (!Array.isArray(currentPack.rounds)) {
-    return [{ kind: 'bingo', packId: currentPack.id, shape: null, prizes: DEFAULT_BINGO_PRIZES }];
+    // `kind` is the tab the pack was picked on — a deck is not a music bingo
+    // pack, and a slot that said so sent `bingo:deck` to the server.
+    return [{ kind: kind === 'quiz' ? 'bingo' : kind, packId: currentPack.id, shape: null, prizes: DEFAULT_BINGO_PRIZES }];
   }
   // ONE SLOT PER ROUND, like `addQuizPackSlot()` — a night converting into
   // this shape must look the same as one built in it, or the row rearranges
@@ -100,7 +102,7 @@ export function placedRounds(slots) {
  */
 export function moveRoundToSlot(slots, { packId, round }, toIndex) {
   const target = slots[toIndex] || null;
-  if (target && (target.kind === 'bingo' || target.packId !== packId)) return slots;
+  if (target && (target.kind !== 'quiz' || target.packId !== packId)) return slots;
 
   const width = Math.max(slots.length, toIndex + 1);
   const cleared = Array.from({ length: width }, (_, i) => slots[i] || null).map((slot, i) => {
@@ -241,9 +243,11 @@ export function hasPack(slots, packId) {
 }
 
 /** Add a bingo pack as its own new slot, with the night-wide defaults until its own control changes them. */
-export function addBingoSlot(slots, pack, { shape = null, prizes = DEFAULT_BINGO_PRIZES, at } = {}) {
+export function addBingoSlot(slots, pack, { shape = null, prizes = DEFAULT_BINGO_PRIZES, at, kind = 'bingo' } = {}) {
   if (hasPack(slots, pack.id)) return slots;
-  return placeAt(slots, { kind: 'bingo', packId: pack.id, shape, prizes }, at);
+  // `kind` is carried, never assumed: a card-bingo deck is a whole-pack part
+  // exactly like a bingo game, and the server launches it by its OWN kind.
+  return placeAt(slots, { kind, packId: pack.id, shape, prizes }, at);
 }
 
 /** Remove a whole slot — the tile's own × button, same gesture as today's pack tile. */
@@ -274,8 +278,8 @@ export function segmentsFromSlots(slots) {
   const segments = [];
   for (const slot of slots) {
     if (!slot) continue;
-    if (slot.kind === 'bingo') {
-      segments.push({ kind: 'bingo', packId: slot.packId, shape: slot.shape || null, prizes: slot.prizes || 0 });
+    if (slot.kind !== 'quiz') {
+      segments.push({ kind: slot.kind, packId: slot.packId, shape: slot.shape || null, prizes: slot.prizes || 0 });
       continue;
     }
     const order = slot.rounds.map((round) => ({ packId: slot.packId, round }));
@@ -321,7 +325,7 @@ export function gapIdsOfSlot(slots, at) {
   let inQuiz = false;
   for (let i = 0; i < list.length; i += 1) {
     const slot = list[i];
-    if (slot.kind === 'bingo') {
+    if (slot.kind !== 'quiz') {
       part += 1;
       inQuiz = false;
       order = 0;

@@ -77,7 +77,8 @@ export function bingoActions(s, act, minor) {
    */
   const order = s.runningOrder;
   const continuing = Boolean(order && order.nextKind);
-  const continueWord = continuing && order.nextKind === 'bingo' ? 'the bingo' : 'the quiz';
+  const continueWord = continuing && order.nextKind === 'cards' ? 'the card bingo'
+    : continuing && order.nextKind === 'bingo' ? 'the bingo' : 'the quiz';
 
   /*
    * AND THE TWO LABELS THAT NAME A TRACK HAVE TO NAME A CARD ON A DECK NIGHT.

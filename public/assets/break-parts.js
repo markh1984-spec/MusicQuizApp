@@ -241,9 +241,9 @@ export function breakSlots(parts = [], roundsIn = () => 0) {
       kind: 'lobby',
       // "Doors" for the first part, because that is when it is; a later part's
       // lobby is the gap while the host sets the next thing up.
-      label: at === 0 ? 'Doors' : `Before the ${part.kind === 'bingo' ? 'bingo' : 'quiz'}`,
+      label: at === 0 ? 'Doors' : `Before the ${part.kind === 'quiz' ? 'quiz' : 'bingo'}`,
     });
-    if (part.kind === 'bingo') return;
+    if (part.kind !== 'quiz') return;
     const rounds = Math.max(0, Number(roundsIn(part, at)) || 0);
     // The board after the LAST round of the LAST part is the final.
     const boards = at === list.length - 1 ? rounds - 1 : rounds;

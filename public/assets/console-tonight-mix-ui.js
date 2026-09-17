@@ -191,8 +191,8 @@ export function renderSlots(slots, {
       if (!pack) return;
       // `at` — the slot this was actually dropped on. It used to append and
       // ignore the target, so a bingo let go over slot 2 turned up in slot 4.
-      commit(fromShelf.kind === 'bingo'
-        ? addBingoSlot(slots, pack, { at })
+      commit(fromShelf.kind !== 'quiz'
+        ? addBingoSlot(slots, pack, { at, kind: fromShelf.kind })
         : addQuizPackSlot(slots, pack, at));
     });
   }
@@ -325,6 +325,11 @@ export function renderSlots(slots, {
    * the half that was worth having up here: you can read six tiles at a
    * glance and only tap the one you want to change.
    */
+  /** A deck deals one hand of thirteen; there is no card shape to choose and one prize a round. */
+  function handSaid() {
+    return '<div class="mix-bingo-said tiny">13 cards each \u00b7 a prize a round</div>';
+  }
+
   function bingoSaid(slot, pack) {
     const shape = slot.shape || packOwnShape(pack);
     const n = slot.prizes || DEFAULT_BINGO_PRIZES;
@@ -434,9 +439,14 @@ export function renderSlots(slots, {
   }
 
   function filledTile(slot, at) {
-    const isBingo = slot.kind === 'bingo';
+    // A WHOLE-PACK part is anything that is not a quiz — music bingo, card
+    // bingo — and only MUSIC bingo carries a card shape and a prize count.
+    // This read `=== 'bingo'`, so a deck tile went down the quiz branch and
+    // threw on `slot.rounds.length`; the row stopped repainting in silence.
+    const isBingo = slot.kind !== 'quiz';
+    const musicBingo = slot.kind === 'bingo';
     const pack = packOf(slot.packId) || { id: slot.packId, title: slot.packId, trackCount: 40, cardSize: 4 };
-    const look = packLookAttrs(pack, isBingo ? 'bingo' : isBreakoutPack(pack) ? 'breakout' : 'quiz');
+    const look = packLookAttrs(pack, isBingo ? slot.kind : isBreakoutPack(pack) ? 'breakout' : 'quiz');
     const one = !isBingo && slot.rounds.length === 1;
     const name = one ? roundName(pack, slot.rounds[0]) : shortTitle(pack.title);
     const tile = node(`
@@ -448,7 +458,7 @@ export function renderSlots(slots, {
           <span class="drag-grip" aria-hidden="true" title="Drag to move this round">${gripIcon()}</span>
           <b class="lb-tile-name">${esc(name)}</b>
         </div>
-        ${isBingo ? bingoSaid(slot, pack) : one ? typeLine(pack, slot.rounds[0]) : roundDots(slot, at)}
+        ${musicBingo ? bingoSaid(slot, pack) : isBingo ? handSaid() : one ? typeLine(pack, slot.rounds[0]) : roundDots(slot, at)}
       </div>`);
 
     tile.querySelector('.lb-tile-off').addEventListener('mousedown', (ev) => ev.stopPropagation());

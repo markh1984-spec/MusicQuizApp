@@ -26,7 +26,7 @@ import {
 
 /** How many photographs the fanned pile on a night's card shows. */
 const COVER_PHOTOS = 3;
-import { Session } from './src/session.js';
+import { Session, wholePackKind, packlessKind } from './src/session.js';
 import { saveQuiz, deleteQuiz, validateQuiz, normaliseQuiz, loadQuiz, reviewWarnings, setWarningChecked, ROUND_TYPES } from './src/quizzes.js';
 import { recueQuiz } from './src/recue.js';
 import { validateBingoPack, normaliseBingoPack, minimumTracks, CARD_SHAPES, shapeLabel, maxPrizes, defaultPrizes, stagePlan, stageLabel } from './src/bingo.js';
@@ -8138,7 +8138,9 @@ async function handleWrite(req, res, url, route) {
        * other side of that line: it is not an interruption, it is a beginning,
        * and it is exactly where "you need to sort the payment out" belongs.
        */
-      const wanted = String(body.game || 'quiz') === 'bingo' ? FEATURES.BINGO : FEATURES.QUIZ;
+      // A quiz needs QUIZ; every other kind is a bingo of some sort and needs
+      // BINGO. This read `=== 'bingo'`, so Card Bingo was gated on QUIZ.
+      const wanted = String(body.game || 'quiz') === 'quiz' ? FEATURES.QUIZ : FEATURES.BINGO;
       const launcher = allowed(req, res, url, wanted);
       if (!launcher) return true;
       /*
@@ -8152,7 +8154,7 @@ async function handleWrite(req, res, url, route) {
        * library" is a sentence somebody can act on, and a silent failure at
        * launch is the worst possible moment for one.
        */
-      const launchKind = String(body.game || 'quiz') === 'bingo' ? 'bingo' : 'quiz';
+      const launchKind = String(body.game || 'quiz');
       /*
        * EVERY PACK IN THE RUNNING ORDER IS CHECKED, not just the one in
        * `packId` — and getting this wrong would be a gate that runs backwards.
@@ -8166,9 +8168,11 @@ async function handleWrite(req, res, url, route) {
       const wantedOrder = (launchKind === 'quiz' && Array.isArray(body.order))
         ? body.order.slice(0, MAX_ROUNDS)
         : null;
-      const needed = wantedOrder && wantedOrder.length
-        ? [...new Set(wantedOrder.map((r) => String((r && r.packId) || '')))]
-        : [String(body.packId)];
+      // The deck is built in — nothing to own, so nothing to check.
+      const needed = packlessKind(launchKind) ? []
+        : wantedOrder && wantedOrder.length
+          ? [...new Set(wantedOrder.map((r) => String((r && r.packId) || '')))]
+          : [String(body.packId)];
       for (const id of needed) {
         if (isOwnPack(launchKind, id, room.paths)) continue;
         if (canPlayPack(whoIs(req, url), id, packDating(launchKind, id, room))) continue;
@@ -8421,21 +8425,26 @@ async function handleWrite(req, res, url, route) {
     if (action === 'launchOrder') {
       const rawSegments = Array.isArray(body.segments) ? body.segments : [];
       const segments = rawSegments.map((s) => {
-        if (s && s.kind === 'bingo') {
-          return { kind: 'bingo', packId: String((s && s.packId) || ''), shape: s.shape, prizes: s.prizes };
+        // Every whole-pack kind keeps its own — see `wholePackKind()`.
+        if (s && wholePackKind(s.kind)) {
+          return { kind: s.kind, packId: String((s && s.packId) || ''), shape: s.shape, prizes: s.prizes };
         }
         const order = Array.isArray(s && s.order) ? s.order.slice(0, MAX_ROUNDS) : [];
         return { kind: 'quiz', order };
-      }).filter((s) => (s.kind === 'bingo' ? s.packId : s.order.length));
+      }).filter((s) => (s.kind !== 'quiz' ? s.packId : s.order.length));
 
       // Every pack in every part, checked the same way `launch` checks its
       // one pack (or its own single-kind running order) — a Bronze account
       // must not be able to smuggle a Gold pack in as part 3 of a night.
       const neededQuiz = new Set();
       const neededBingo = new Set();
+      let neededGame = false;
       for (const s of segments) {
-        if (s.kind === 'bingo') neededBingo.add(s.packId);
-        else for (const r of s.order) neededQuiz.add(String((r && r.packId) || ''));
+        if (s.kind === 'quiz') for (const r of s.order) neededQuiz.add(String((r && r.packId) || ''));
+        else {
+          neededGame = true;
+          if (!packlessKind(s.kind)) neededBingo.add(s.packId);
+        }
       }
       for (const id of neededQuiz) {
         if (isOwnPack('quiz', id, room.paths)) continue;
@@ -8450,7 +8459,7 @@ async function handleWrite(req, res, url, route) {
       // Gate on whichever kinds tonight actually uses — a quiz-only account
       // running a quiz-only running order must not be asked about bingo.
       if (neededQuiz.size && !allowed(req, res, url, FEATURES.QUIZ)) return true;
-      if (neededBingo.size && !allowed(req, res, url, FEATURES.BINGO)) return true;
+      if (neededGame && !allowed(req, res, url, FEATURES.BINGO)) return true;
       const live = session.inProgress();
       if (live && !body.replace) {
         return sendJson(res, 409, {

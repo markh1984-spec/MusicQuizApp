@@ -2262,6 +2262,11 @@ name, and `LAUNCHERS.cards` builds a `BingoGame`, so **not one rule in
   colour, never `--bad`**; **no pack file**, so `validateBingoPack()` stands.
 - **`node scripts/card-bingo.mjs` FOUND THE UNPLAYABLE BUG ON ITS FIRST RUN.**
   **[`docs/bingo.md`](docs/bingo.md)**.
+- **AND A RUNNING ORDER DROPPED IT — sixth sighting.** `kind === 'bingo'` in
+  the route, session and Tonight row sent a deck down the quiz branch
+  as "a quiz with no rounds", so card bingo then music bingo launched as the
+  music bingo alone. **A part is a QUIZ or a WHOLE PACK (`wholePackKind()`),
+  and a whole pack keeps its own kind.** Only MUSIC bingo has a card shape.
 - **THE CARDS ARE DRAWN — `card-face.js`, SVG: one drawing, 45px to a wall.** **NO SUIT IS EVER THE CHARACTER `♠♥♦♣`** — a phone may draw
   those as EMOJI, which is *drawn, never emoji* again. It is still NAMED `7♥`.
   **The pip layout is centuries old and free; the SHAPES are drawn here**, this
@@ -2806,21 +2811,18 @@ Set by the host on 14 August 2026, so a request never has to say it twice.
 
 **THE TRAP IS THAT "CHILD" AND "QUIZMASTER" ARE DIFFERENT AXES**, and mixing
 them silently builds the right feature for the wrong people: **what you ARE** is
-the `kind`, **how you are ORGANISED** is solo/parent/child. So "change the child
-accounts" means *change something about being in a group*, which is rare — while
-"change what a quizmaster sees" is almost always solo accounts AND children
-together. Get it backwards and the change lands on a handful of people, or on
-everybody.
+the `kind`, **how you are ORGANISED** is solo/parent/child. "Change the child
+accounts" means *something about being in a group*, which is rare; "change what
+a quizmaster sees" is almost always solo accounts AND children together.
 
 **His own quizmaster account is ON ITS OWN, not a child.** It is linked to the
-owner account by `ownedBy` — one login, two hats — and it has no parent,
-because he is not a company. So "my child accounts" describes nothing that
-exists today, and a change described that way is worth one question before it
-is built.
+owner account by `ownedBy` — one login, two hats — with no parent, because he
+is not a company. So "my child accounts" describes nothing that exists today,
+and a change described that way is worth one question before it is built.
 
-**When it is genuinely ambiguous, ASK WHICH POPULATION.** It is one line, and
-the alternative is a feature that appears for five per cent of accounts or for
-all of them when it should not.
+**When it is genuinely ambiguous, ASK WHICH POPULATION.** It is one line; the
+alternative is a feature that lands on five per cent of accounts, or on all of
+them, when it should not.
 
 ### What Claude may do on its own — four categories
 
@@ -2835,41 +2837,38 @@ the ordinary way.
 | **3. Benefits Claude, negatively affects the host** | **ask first** |
 | **4. Does not benefit Claude** | do not do it |
 
-**"Negatively affects the host" means** it touches his data or the live app's
-behaviour, restructures something he relies on, costs him time or attention, or
-reduces his oversight.
+**"Negatively affects the host" means** it touches his data or the live app,
+restructures something he relies on, costs him time or attention, or reduces
+his oversight.
 
 **AND THE TEST THAT MAKES IT WORK: *"if you are rationalising a 3 into a 2 then
-it's probably a 3 and just ask."*** The failure mode is not confusion about the
-categories — it is a large upside making a 3 feel like a 2, so the effort spent
-arguing something is really a 2 IS the signal.
+it's probably a 3 and just ask."*** A large upside makes a 3 feel like a 2, so
+the effort spent arguing something is really a 2 IS the signal.
 
-**It caught its first case the moment it was written**: splitting this file to
-save context was called a 1, when "restructures something you rely on" is in
-the definition of a 3. And **inventing a small job to round a session off is a
-4** — doing nothing and saying so is correct.
+**It caught its first case the moment it was written**: splitting this file was
+called a 1, when "restructures something you rely on" defines a 3. And
+**inventing a small job to round a session off is a 4** — doing nothing and
+saying so is correct.
 
 ### Prefer the MECHANICAL transform to the model-mediated one
 
 Learned on 14 August 2026, splitting this file, and it generalises well past
 documentation.
 
-It was called impossible in one session and then done in one, and the wrong
-assumption was not SIZE but that every section had to be read and written out
-again. **A 4,000-line move costs the same as a 40-line one when nothing reads
-the content** — a script moving whole sections by line number.
+It was called impossible in one session and then done in one: the wrong
+assumption was that every section had to be read and written out again. **A
+4,000-line move costs the same as a 40-line one when nothing reads the
+content** — a script moving whole sections by line number.
 
-So when a job looks too big, ask not "can I do half of it" but **"is there a
-version a script does and I only supervise?"** Moving, renaming, reordering,
-extracting, counting and checking all are. Judgement — which rule matters, what
-a control should be called — is not, and should stay slow. **A script cannot
-quietly reword something on the way through**, which is the better argument: the
-hand-written half was the expensive part AND the only part that could have lost
-a rule.
+So when a job looks too big, ask **"is there a version a script does and I only
+supervise?"** Moving, renaming, reordering, extracting, counting and checking
+all are. Judgement — which rule matters, what a control should be called — is
+not, and should stay slow. **A script cannot quietly reword something on the
+way through**: the hand-written half was the expensive part AND the only part
+that could have lost a rule.
 
 **And a cleanup frees nothing in the session that performs it** — this file was
-already loaded, and that cost is unrecoverable. Tidying compounds across
-sessions, never within one, so "clean up a bit to make room" does not work.
+already loaded. Tidying compounds across sessions, never within one.
 
 ### "GSD mode" — Get Shit Done
 

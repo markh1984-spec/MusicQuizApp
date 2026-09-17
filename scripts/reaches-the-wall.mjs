@@ -157,7 +157,13 @@ try {
   }
 
   // ---- 3. a score fixed at the final reaches the winner slide
-  for (let i = 0; i < 40; i += 1) {
+  // AS MANY PRESSES AS THE PACK NEEDS. Forty was written against a short pack;
+  // the shelf's first multi-round quiz is now forty questions, which is eighty
+  // presses before the boards — so this stalled on a reveal and blamed the
+  // wall. A bound is a safety net, not a guess at the length of the night.
+  // The listing carries counts, not questions, so this is a CEILING and the
+  // `final` check below is what actually stops it.
+  for (let i = 0; i < 400; i += 1) {
     const state = await (await fetch(`${BASE}/api/state?role=screen`)).json();
     if (state.phase === 'final') break;
     await post('next', {});

@@ -1796,7 +1796,7 @@ export function launchBar() {
      * dropdowns two inches below. Reported live, off a screenshot.
      */
     const mixed = Boolean(lbSlots);
-    const hasBingo = mixed ? lbSlots.some((s) => s && s.kind === 'bingo') : Boolean(pack && !(pack.rounds || []).length);
+    const hasBingo = mixed ? lbSlots.some((s) => s && s.kind !== 'quiz') : Boolean(pack && !(pack.rounds || []).length);
     const hasQuiz = mixed ? lbSlots.some((s) => s && s.kind === 'quiz') : !hasBingo;
 
     /*
@@ -2380,7 +2380,9 @@ export function launchBar() {
       bingo pack while quiz is picked. Off the LIBRARY: see `shelvesFor()`. */
   const packOnShelf = (kind, id) => shelvesFor(kind).find((p) => p.id === id);
   /** Any pack of any kind, for `renderSlots()`. Library-wide, same reason. */
-  const anyPack = (id) => packOnShelf('quiz', id) || packOnShelf('bingo', id);
+  // EVERY shelf, by the console's own list of kinds — a deck was on neither of
+  // the two named here, so its Tonight tile printed its id.
+  const anyPack = (id) => GAME_KINDS.map((kind) => packOnShelf(kind, id)).find(Boolean);
 
   /** Tonight, in order: the chosen pack and anything dropped in after it. */
   const lbPacks = () => [currentPack, ...lbExtra.map(packOf)].filter(Boolean);
@@ -2643,7 +2645,7 @@ export function launchBar() {
     const parts = segmentsFromSlots(lbSlots).length;
     const placed = (lbSlots || []).filter(Boolean);
     const rounds = placed.reduce((n, s2) => n + (s2.kind === 'quiz' ? (s2.rounds || []).length : 0), 0);
-    const games = placed.filter((slot) => slot.kind === 'bingo').length;
+    const games = placed.filter((slot) => slot.kind !== 'quiz').length;
     const says = [rounds ? `${rounds} round${rounds === 1 ? '' : 's'}` : '',
       games ? `${games} bingo game${games === 1 ? '' : 's'}` : ''].filter(Boolean).join(' + ');
     goBtn.disabled = !parts;
@@ -2678,15 +2680,16 @@ export function launchBar() {
     const items = itemsOf(showRunning.show);
     if (items.length < 2) return null;
     const segments = items.map((item) => {
-      if (item.kind === 'bingo') {
+      if (item.kind !== 'quiz') {
         /* EACH PART'S OWN, falling back to the night's — a mixed show saves a
            card per bingo part, and `night.*` is what the settings row wrote
-           for the part currently picked. */
+           for the part currently picked. A deck takes neither. */
+        const bingo = item.kind === 'bingo';
         return {
-          kind: 'bingo',
+          kind: item.kind,
           packId: item.packId,
-          shape: item.shape || night.shape,
-          prizes: Number(item.prizes) || night.prizes,
+          shape: bingo ? (item.shape || night.shape) : null,
+          prizes: bingo ? (Number(item.prizes) || night.prizes) : 0,
         };
       }
       const order = (item.order && item.order.length)
@@ -2699,7 +2702,7 @@ export function launchBar() {
          button label read, so it is the truth here too. */
       return { kind: 'quiz', order: order.filter((r) => !isOff(r.packId, r.round)) };
     });
-    if (segments.some((s) => (s.kind === 'bingo' ? !s.packId : !s.order.length))) return null;
+    if (segments.some((s) => (s.kind !== 'quiz' ? !s.packId : !s.order.length))) return null;
     return segments;
   }
 
@@ -3374,8 +3377,8 @@ export function launchBar() {
      */
     // AND A QUIZ PACK GOES THIS WAY TOO NOW — that is what bursts it. The
     // launch collapses the row back; see `simpleNight()`.
-    if (kind === 'bingo' || kind !== gameOf().id || lbSlots || (from.rounds || []).length) {
-      if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf });
+    if (kind !== 'quiz' || kind !== gameOf().id || lbSlots || (from.rounds || []).length) {
+      if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf, kind: gameOf().id });
       /*
        * `at` — WHICH SLOT IT WAS DROPPED ON, when it was dropped on one.
        * Undefined for a drop that landed on the panel rather than a square,
@@ -3383,8 +3386,8 @@ export function launchBar() {
        * above is about: a drag that stopped an inch short has not asked for a
        * position, so inventing one for it would be worse than appending.
        */
-      const next = kind === 'bingo'
-        ? addBingoSlot(lbSlots, from, { at })
+      const next = kind !== 'quiz'
+        ? addBingoSlot(lbSlots, from, { at, kind })
         : addQuizPackSlot(lbSlots, from, at);
       if (tooLong(next)) return;
       lbSlots = next;
@@ -3836,9 +3839,9 @@ function tonightAsShow(name, segmentsNow) {
      nothing writes, since `setPickedBingo()` puts them on the SLOT once there
      is more than one part, so a 3x3 one-prize interlude came back as the
      pack's own 4x4. That pair stays for an ordinary one-game night. */
-  const items = segments.map((seg) => (seg.kind === 'bingo'
+  const items = segments.map((seg) => (seg.kind !== 'quiz'
     ? {
-      kind: 'bingo',
+      kind: seg.kind,
       packId: seg.packId,
       ...(seg.shape ? { shape: seg.shape } : {}),
       ...(seg.prizes ? { prizes: seg.prizes } : {}),

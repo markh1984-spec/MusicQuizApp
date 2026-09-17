@@ -182,3 +182,46 @@ test('launchOrder says what it is about to destroy, same as an ordinary launch',
     assert.ok(body.live, 'the 409 did not say what was about to be destroyed');
   });
 });
+
+/*
+ * CARD BINGO IS A WHOLE-PACK PART LIKE MUSIC BINGO, AND IT WAS DROPPED.
+ *
+ * The route read `kind === 'bingo'` and sent everything else down the quiz
+ * branch as "a quiz with no rounds", which the filter then removed — so a
+ * night of card bingo then music bingo launched as the music bingo alone and
+ * answered 200. The console's own slot said `bingo:deck`, which the server
+ * refused as a bingo pack that does not exist. Either way the night he asked
+ * for could not be launched. The kind test written when there were two games,
+ * sixth sighting.
+ */
+test('a card-bingo part survives a running order, and is the part that plays first', async () => {
+  const bingoId = aRealBingo();
+  await withServer(async (base) => {
+    const res = await fetch(`${base}/api/host/launchOrder`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Host-Key': KEY },
+      body: JSON.stringify({
+        segments: [
+          { kind: 'cards', packId: 'deck' },
+          { kind: 'bingo', packId: bingoId, prizes: 2 },
+        ],
+        replace: true,
+      }),
+    });
+    const body = await res.json();
+    assert.equal(res.status, 200, `launchOrder answered ${res.status}: ${JSON.stringify(body)}`);
+
+    const screen = await (await fetch(`${base}/api/state?role=screen`)).json();
+    assert.equal(screen.game, 'cards', 'the deck was dropped from the running order');
+    const host = await (await fetch(`${base}/api/state?role=host&key=${KEY}`)).json();
+    assert.equal(host.runningOrder.total, 2, 'a two-part night arrived as one part');
+    assert.equal(host.runningOrder.nextKind, 'bingo');
+
+    const adv = await fetch(`${base}/api/host/advanceOrder`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Host-Key': KEY },
+    });
+    assert.equal(adv.status, 200);
+    const after = await (await fetch(`${base}/api/state?role=screen`)).json();
+    assert.equal(after.game, 'bingo', 'the projector did not follow the switch from the deck into the bingo');
+  });
+});

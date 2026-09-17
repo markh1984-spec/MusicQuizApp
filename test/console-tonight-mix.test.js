@@ -310,3 +310,14 @@ test('gapIdsOfSlot: two packs in one part keep counting up the SAME part', () =>
   assert.deepEqual(gapIdsOfSlot(slots, 3), ['p0:r3']);
   assert.equal(gapIdsOfSlot(slots, 4).length, 0, 'there is no fifth tile');
 });
+
+test('a whole-pack slot keeps ITS OWN kind on the way to the server — a deck is not a bingo pack', () => {
+  const deck = { id: 'deck', title: 'Card Bingo' };
+  const row = addBingoSlot([], deck, { kind: 'cards' });
+  assert.deepEqual(row, [{ kind: 'cards', packId: 'deck', shape: null, prizes: 2 }]);
+  const segs = segmentsFromSlots([...row, { kind: 'bingo', packId: 'mbc-5', shape: null, prizes: 2 }]);
+  assert.deepEqual(segs.map((s) => `${s.kind}:${s.packId}`), ['cards:deck', 'bingo:mbc-5']);
+  // and converting an ordinary card-bingo night into the mixed row says what it was
+  const simple = slotsFromSimple({ currentPack: deck, lbExtra: [], lbOff: new Set(), packOf: () => null, kind: 'cards' });
+  assert.equal(simple[0].kind, 'cards');
+});

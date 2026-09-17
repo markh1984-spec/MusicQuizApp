@@ -73,7 +73,7 @@ export const PHONE_SAYS = {
  * counting a different night.
  */
 function roundsInSegment(segment) {
-  if (!segment || segment.kind === 'bingo') return 0;
+  if (!segment || segment.kind !== 'quiz') return 0;
   return (segment.order || []).length;
 }
 
@@ -212,7 +212,7 @@ export function gapsOfPack(segments, packId, at) {
   const live = new Set(breaksOf(parts).map((b) => b.id));
   const out = [];
   parts.forEach((part, n) => {
-    if (part.kind === 'bingo') {
+    if (part.kind !== 'quiz') {
       // Its own lobby — but never the very first, which is the doors and has
       // a dial of its own in the head.
       if (String(part.packId || '') === want && n > 0) out.push(`p${n}:lobby`);
