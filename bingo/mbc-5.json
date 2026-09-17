@@ -1,0 +1,253 @@
+{
+  "id": "mbc-5",
+  "kind": "bingo",
+  "title": "MBC 5 - UK Chart",
+  "subtitle": "40 tracks. Tap them as you hear them.",
+  "cardRows": 4,
+  "cardCols": 4,
+  "cardSize": 4,
+  "notes": "UK chart pop, R&B and dance, 2000-2019. Written to sit beside MBC 3 and MBC 4 without repeating either.",
+  "createdAt": "2026-09-17T18:00:00.000Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Fill Me In",
+      "artist": "Craig David",
+      "year": 2000
+    },
+    {
+      "id": "t2",
+      "title": "7 Days",
+      "artist": "Craig David",
+      "year": 2000
+    },
+    {
+      "id": "t3",
+      "title": "Rehab",
+      "artist": "Amy Winehouse",
+      "year": 2006
+    },
+    {
+      "id": "t4",
+      "title": "Bonkers",
+      "artist": "Dizzee Rascal, Armand Van Helden",
+      "year": 2009
+    },
+    {
+      "id": "t5",
+      "title": "Rolling in the Deep",
+      "artist": "Adele",
+      "year": 2010
+    },
+    {
+      "id": "t6",
+      "title": "Someone Like You",
+      "artist": "Adele",
+      "year": 2011
+    },
+    {
+      "id": "t7",
+      "title": "Pass Out",
+      "artist": "Tinie Tempah",
+      "year": 2010
+    },
+    {
+      "id": "t8",
+      "title": "Price Tag",
+      "artist": "Jessie J, B.o.B",
+      "year": 2011
+    },
+    {
+      "id": "t9",
+      "title": "Domino",
+      "artist": "Jessie J",
+      "year": 2011
+    },
+    {
+      "id": "t10",
+      "title": "R.I.P.",
+      "artist": "Rita Ora, Tinie Tempah",
+      "year": 2012
+    },
+    {
+      "id": "t11",
+      "title": "Hot Right Now",
+      "artist": "DJ Fresh, Rita Ora",
+      "year": 2012
+    },
+    {
+      "id": "t12",
+      "title": "Changed the Way You Kiss Me",
+      "artist": "Example",
+      "year": 2011
+    },
+    {
+      "id": "t13",
+      "title": "Dance with Me Tonight",
+      "artist": "Olly Murs",
+      "year": 2011
+    },
+    {
+      "id": "t14",
+      "title": "Troublemaker",
+      "artist": "Olly Murs, Flo Rida",
+      "year": 2012
+    },
+    {
+      "id": "t15",
+      "title": "What Makes You Beautiful",
+      "artist": "One Direction",
+      "year": 2011
+    },
+    {
+      "id": "t16",
+      "title": "Story of My Life",
+      "artist": "One Direction",
+      "year": 2013
+    },
+    {
+      "id": "t17",
+      "title": "Feel So Close",
+      "artist": "Calvin Harris",
+      "year": 2011
+    },
+    {
+      "id": "t18",
+      "title": "Sweet Nothing",
+      "artist": "Calvin Harris, Florence Welch",
+      "year": 2012
+    },
+    {
+      "id": "t19",
+      "title": "Anything Could Happen",
+      "artist": "Ellie Goulding",
+      "year": 2012
+    },
+    {
+      "id": "t20",
+      "title": "Burn",
+      "artist": "Ellie Goulding",
+      "year": 2013
+    },
+    {
+      "id": "t21",
+      "title": "Next to Me",
+      "artist": "Emeli Sande",
+      "year": 2012
+    },
+    {
+      "id": "t22",
+      "title": "Read All About It, Pt. III",
+      "artist": "Emeli Sande",
+      "year": 2012
+    },
+    {
+      "id": "t23",
+      "title": "Wings",
+      "artist": "Little Mix",
+      "year": 2012
+    },
+    {
+      "id": "t24",
+      "title": "Black Magic",
+      "artist": "Little Mix",
+      "year": 2015
+    },
+    {
+      "id": "t25",
+      "title": "Feel the Love",
+      "artist": "Rudimental, John Newman",
+      "year": 2012
+    },
+    {
+      "id": "t26",
+      "title": "Waiting All Night",
+      "artist": "Rudimental, Ella Eyre",
+      "year": 2013
+    },
+    {
+      "id": "t27",
+      "title": "Latch",
+      "artist": "Disclosure, Sam Smith",
+      "year": 2012
+    },
+    {
+      "id": "t28",
+      "title": "La La La",
+      "artist": "Naughty Boy, Sam Smith",
+      "year": 2013
+    },
+    {
+      "id": "t29",
+      "title": "Love Me Again",
+      "artist": "John Newman",
+      "year": 2013
+    },
+    {
+      "id": "t30",
+      "title": "Rather Be",
+      "artist": "Clean Bandit, Jess Glynne",
+      "year": 2014
+    },
+    {
+      "id": "t31",
+      "title": "Symphony",
+      "artist": "Clean Bandit, Zara Larsson",
+      "year": 2017
+    },
+    {
+      "id": "t32",
+      "title": "Nobody to Love",
+      "artist": "Sigma",
+      "year": 2014
+    },
+    {
+      "id": "t33",
+      "title": "I Got U",
+      "artist": "Duke Dumont, Jax Jones",
+      "year": 2014
+    },
+    {
+      "id": "t34",
+      "title": "Hold My Hand",
+      "artist": "Jess Glynne",
+      "year": 2015
+    },
+    {
+      "id": "t35",
+      "title": "King",
+      "artist": "Years & Years",
+      "year": 2015
+    },
+    {
+      "id": "t36",
+      "title": "Never Forget You",
+      "artist": "MNEK, Zara Larsson",
+      "year": 2015
+    },
+    {
+      "id": "t37",
+      "title": "You Don’t Know Me",
+      "artist": "Jax Jones, RAYE",
+      "year": 2016
+    },
+    {
+      "id": "t38",
+      "title": "2002",
+      "artist": "Anne-Marie",
+      "year": 2018
+    },
+    {
+      "id": "t39",
+      "title": "Don’t Call Me Up",
+      "artist": "Mabel",
+      "year": 2019
+    },
+    {
+      "id": "t40",
+      "title": "Ladbroke Grove",
+      "artist": "AJ Tracey",
+      "year": 2019
+    }
+  ]
+}
