@@ -56,7 +56,7 @@ import { asksPanel, galleryAddress, groupByVenue, nightPhotos } from './console-
 import { bayColumns, bayHead, bayRail } from './console-bay.js';
 import { NO_VENUE, nightDroppedOnPub, venuePicker, whyNoVenue } from './console-night-venue.js';
 import { venueSlug } from './slugs.js';
-import { framedSaveInto } from './console-photo-export.js';
+import { framedSaveInto, showcaseSaveInto } from './console-photo-export.js';
 
 /** Every venue with a league running, best-supported first. */
 function leaguesNow() {
@@ -118,9 +118,8 @@ export function communityBench(active) {
   return summaryBench();
 }
 
-/* THE VENUES TAB NEEDS ITS OWN BENCH, or the bay talks about another tab:
- * `summaryBench()` is the LEAGUE'S fallback, so Venues opened under "Nothing
- * running yet". **IT COUNTS, IT DOES NOT DISPLAY** — frames are on the cards. */
+/* THE VENUES TAB NEEDS ITS OWN BENCH, or the bay talks about another tab —
+ * `summaryBench()` is the LEAGUE'S fallback. **IT COUNTS, IT DOES NOT SHOW.** */
 function venuesBench() {
   const all = library.venueRecords || [];
   const framed = all.filter((v) => v.hasOverlay).length;
@@ -547,6 +546,8 @@ function photoWall() {
       wall: true,
       controlsInto: nightControls,
       onOpen: openIt,
+      onData: (d) => showcaseSaveInto(nightControls, { ...openNight, cover: d.cover },
+        library.venueRecords || [], keyed),
     });
     el.appendChild(bayColumns(rail(openNight.night), [
       bayHead(readable(openNight.night), openNight.venue || '', liveLink(openNight)), body,
@@ -798,10 +799,9 @@ async function loadWall() {
       one = await r.json();
       if (!r.ok) continue;
     } catch { continue; }
-    // Where it was taken, on the picture's own tooltip — the wall is mixed by
-    // definition, so a thumbnail with no answer to "which night was that" is a
-    // picture you cannot find again. The night rides on the shot itself too, or
-    // it cannot be exported with that pub's frame on it.
+    // Where it was taken, on the picture's own tooltip — the wall is mixed, so a
+    // thumbnail with no answer to "which night was that" is one you cannot find
+    // again. The night rides on the shot too, or it cannot be exported framed.
     const where = `${readable(night.night)}${night.venue ? ` — ${night.venue}` : ''}`;
     for (const p of one.photos || []) {
       shots.push({ url: p.url, where, night: night.night, venue: night.venue || '' });

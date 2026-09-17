@@ -126,3 +126,64 @@ export function framedSaveInto(into, url, night, records) {
   return saver;
 }
 
+
+/**
+ * SAVE THE NIGHT'S SHOWCASE — the three the public index already fans out.
+ *
+ * *"Per night I want to be able to choose three showcase photos that get the
+ * overlay that I can then post to socials"*, and then the half that decides
+ * the shape: *"it should be the same three showcase photos that are used for
+ * this purpose."*
+ *
+ * **SO IT DOES NOT PICK ANYTHING.** The choosing already exists — the pin on
+ * each photograph, capped at `MAX_PINS`, which is what `coverPhotos()` reads
+ * to build the night's card on the gallery. A second "showcase" list here
+ * would be a second answer to one question, and the two would part on the
+ * first night somebody re-pinned. The server SENDS `cover`; this walks it.
+ *
+ * **ONE AT A TIME, AWAITED.** Three simultaneous canvases is three copies of a
+ * 1080-square photograph plus the frame in memory on a laptop that is also
+ * running a quiz, and a browser given three downloads in one tick drops two of
+ * them. Slower and all three arrive.
+ *
+ * **IT COUNTS WHAT ACTUALLY LEFT**, never what it tried: `savePhoto()` answers
+ * false when a share sheet was dismissed, and "Saved 3" over two files is this
+ * repo's commonest fault wearing a number.
+ */
+export function showcaseSaveInto(into, night, records, keyedUrl) {
+  const cover = (night && Array.isArray(night.cover) ? night.cover : []).filter(Boolean);
+  if (!cover.length) return null;
+  const btn = node(`<button class="minor showcase-save" type="button">Save the showcase (${cover.length})</button>`);
+
+  btn.addEventListener('click', async () => {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    const venue = (night && night.venue) || '';
+    let overlay = '';
+    try {
+      overlay = await venueFrame(venue, records);
+    } catch { /* unframed beats nothing */ }
+    let went = 0;
+    for (const [i, name] of cover.entries()) {
+      btn.textContent = `Saving ${i + 1} of ${cover.length}…`;
+      try {
+        const ok = await savePhoto(keyedUrl(`/past-photo/${encodeURIComponent(night.night)}/${encodeURIComponent(name)}`), {
+          words: String((me && (me.brand || me.name)) || ''),
+          filename: saveName(venue, night.night || '', i, ''),
+          overlay,
+        });
+        if (ok !== false) went += 1;
+      } catch { /* one that will not save must not stop the other two */ }
+    }
+    btn.textContent = went === cover.length
+      ? `Saved ${went}${overlay ? ' with the frame' : ' — no frame on this pub'}`
+      : `Saved ${went} of ${cover.length}`;
+    setTimeout(() => {
+      btn.textContent = `Save the showcase (${cover.length})`;
+      btn.disabled = false;
+    }, 3200);
+  });
+
+  into.appendChild(btn);
+  return btn;
+}

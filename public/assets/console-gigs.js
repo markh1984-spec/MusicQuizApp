@@ -708,8 +708,16 @@ export async function nightPhotos(body, night, opts = {}) {
    * - `wall`         lay them out as a grid rather than a sideways strip
    * - `controlsInto` where the publish control goes, if not under the pictures
    * - `onOpen`       called with a photo instead of following its link
+   * - `onData`       handed the night's payload once it has arrived, so a
+   *                  caller can build a control out of something only this
+   *                  fetch knows — the SHOWCASE, which is `cover` on that
+   *                  payload. Given the data rather than asking again: a
+   *                  second request for a list already on its way is how the
+   *                  console and the page it describes come to disagree.
    */
-  const { wall = false, controlsInto = null, onOpen = null } = opts;
+  const {
+    wall = false, controlsInto = null, onOpen = null, onData = null,
+  } = opts;
   if (!night.hasPhotos) return;
 
   const loading = node('<div class="tiny">Loading photos…</div>');
@@ -723,6 +731,8 @@ export async function nightPhotos(body, night, opts = {}) {
     loading.textContent = err.message;
     return;
   }
+  // Never fatal: a caller's control failing must not cost the photographs.
+  if (onData) { try { onData(data); } catch { /* the pictures still draw */ } }
   /*
    * THE COUNT SAYS HOW MANY WILL ACTUALLY SHOW, NOT JUST HOW MANY THERE ARE.
    *

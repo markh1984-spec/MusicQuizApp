@@ -3269,6 +3269,25 @@ async function handleGet(req, res, url, route) {
       // that flickers.
       published: await isPublished(gigRoomId, night),
       maxPins: MAX_PINS,
+      /*
+       * THE SHOWCASE — the same three the public index fans out on this
+       * night's card, so the console and the gallery cannot disagree about
+       * which photographs lead.
+       *
+       * *"It should be the same three showcase photos that are used for this
+       * purpose."* He is right, and the way to hold it is to SEND the answer
+       * rather than let the browser work one out: `coverPhotos()` is pins
+       * first and then a spread to fill, and a second implementation of that
+       * in the console is a second thing to drift. It is the same call and the
+       * same constant the index itself uses, a few hundred lines down.
+       */
+      cover: coverPhotos(
+        files.map((f) => safePhotoName(f.name)).filter(Boolean)
+          .filter((name) => showsOnGallery(name, rulings[photoKey(night, name)])),
+        night,
+        pinnedHere,
+        COVER_PHOTOS,
+      ),
       photos: files
         .map((f) => safePhotoName(f.name))
         .filter(Boolean)
