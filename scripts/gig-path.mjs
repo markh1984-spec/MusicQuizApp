@@ -73,9 +73,10 @@ const check = (name, ok, detail = '') => {
   console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${name}${ok || !detail ? '' : `\n         ${detail}`}`);
 };
 
+let browser;
 try {
 
-  const browser = await chromium.launch();
+  browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 1000 } });
   const watch = (p, who) => {
     p.on('pageerror', (e) => errors.push(`${who}: ${e.message}`));
@@ -121,6 +122,32 @@ try {
   await con.goto(consoleUrl, { waitUntil: 'load' });
   await con.waitForSelector('.pack-card', { timeout: 20000 });
   check('the console draws its pack shelf', (await con.$$('.pack-card')).length > 0);
+
+  /*
+   * A VENUE WITH PRIZES, PICKED — Launch stands down without one, and so does
+   * the quiet launch a tap fires. This walkthrough predates the gate and stood
+   * at "Pick a venue with prizes on it" for a fortnight, reporting the gig
+   * path unsafe over a night it had not set up.
+   */
+  await con.evaluate(async (key) => {
+    const H = { 'Content-Type': 'application/json', 'X-Host-Key': key };
+    const mk = await fetch('/api/invoices/customers', { method: 'POST', headers: H, body: JSON.stringify({ name: 'The Gig Path Arms' }) });
+    const c = ((await mk.json()).customers || []).find((x) => x.name === 'The Gig Path Arms');
+    await fetch(`/api/invoices/customers/${encodeURIComponent(c.id)}/rewards`, { method: 'PUT', headers: H, body: JSON.stringify({ rewards: ['A pint', 'A half', 'Crisps'] }) });
+  }, KEY);
+  await con.reload({ waitUntil: 'load' });
+  await con.waitForSelector('.pack-card', { timeout: 20000 });
+  // NOT REMEMBERED ON THE DEVICE, BY DECISION — so it is picked again after
+  // every reload, exactly as a host has to.
+  const pickVenue = async () => {
+    await con.evaluate(async () => {
+      document.querySelector('.lb-where')?.click();
+      await new Promise((r) => setTimeout(r, 500));
+      [...document.querySelectorAll('.lb-venues button')].find((b) => /Gig Path Arms/.test(b.textContent))?.click();
+    });
+    await con.waitForTimeout(1000);
+  };
+  await pickVenue();
 
   await tab('quiz');
   await con.waitForSelector('.lb-go', { timeout: 20000 });
@@ -296,6 +323,7 @@ try {
   await con.waitForSelector('.lb-go', { timeout: 20000 });
   check('Stop brings the launch bar back', Boolean(await con.$('.lb-go')));
 
+  await pickVenue();
   await tab('bingo');
   await con.waitForSelector('.pack-card', { timeout: 20000 });
   const bbox = await con.locator('.pack-card').first().boundingBox();
@@ -326,10 +354,13 @@ try {
   await phone.waitForTimeout(2000);
   check('reloading the phone gives the SAME card', (await cardOf()) === card1);
 
-  await browser.close();
 } catch (err) {
   failures += 1;
   console.error('\nthe walkthrough fell over:', err.message);
+} finally {
+  // ON EVERY PATH. A browser left open after a throw is what kept this
+  // process alive for ever after printing its verdict.
+  await browser?.close().catch(() => {});
 }
 
 if (errors.length) {
