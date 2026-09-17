@@ -2168,9 +2168,8 @@ bingo winners on thursday didn't receive a QR code"*.
   PAINTERS** — the first build sat in `paintGo()` alone and gated nothing,
   `paintOrder()` being the painter a burst pack goes through. **THE SERVER
   STILL LAUNCHES**: a refusal there costs the night.
-  **AND THE QUIET LAUNCH STANDS DOWN TOO** — a tapped pack is on the wall
-  and a room joins what is on the wall. `no-prizes-no-launch.mjs` picks
-  through the SEARCH BOX, the one path to the one-pack branch.
+  **AND THE QUIET LAUNCH STANDS DOWN TOO** — a room joins what is on the
+  wall. `no-prizes-no-launch.mjs` picks through the SEARCH BOX.
 - **SO PRESSING *Prizes* AFTERWARDS PAYS ANYBODY ALREADY OWED.** Both engines
   said it "takes effect for the NEXT prize onwards" — true, and the bug. **Both
   catch-ups are IDEMPOTENT.**
