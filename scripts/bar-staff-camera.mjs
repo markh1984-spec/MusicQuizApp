@@ -23,6 +23,8 @@
  */
 
 import path from 'node:path';
+import { mkdtempSync, rmSync, readdirSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
 
 import { startApp } from './helpers/live-app.mjs';
@@ -30,6 +32,7 @@ import { startApp } from './helpers/live-app.mjs';
 const require = createRequire(import.meta.url);
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 
+const ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 const KEY = 'bar-staff';
 const QM = { email: 'qm@example.com', password: 'quizmaster passphrase' };
 
@@ -40,8 +43,30 @@ const QM = { email: 'qm@example.com', password: 'quizmaster passphrase' };
  * host key the link would be handed over with nothing on it and the guard
  * would be measuring a page that cannot exist in a pub.
  */
+/*
+ * AND THE PRIVATE REPO IS STUBBED, BECAUSE THIS GUARD NEVER LOOKED IN IT.
+ *
+ * It asserted the projector, the wall and the quizmaster's grid — all three of
+ * which read the LIVE state — and passed for as long as `/api/snap` existed
+ * while the route never called `fileAway()`. So a photograph the bar took was
+ * on screen all night and absent from the night's folder, from Past gigs and
+ * from the gallery, and every assertion here was green.
+ *
+ * *A guard that quietly tests nothing is worse than no guard, because it is
+ * believed* — and the half it was not testing is the half that has to survive
+ * the next deploy.
+ */
+const REPO = mkdtempSync(path.join(tmpdir(), 'bar-repo-'));
 const { base: BASE, stop } = await startApp({
   key: KEY,
+  env: {
+    GH_STUB_DIR: REPO,
+    PHOTO_REPO: 'someone/photos',
+    PHOTO_TOKEN: 'stub',
+    // `startApp` spawns plain `server.js`, so the stub rides in on NODE_OPTIONS
+    // rather than needing a second way to start the app.
+    NODE_OPTIONS: `--import ${path.join(ROOT, 'test', 'helpers', 'photo-repo-stub.mjs')}`,
+  },
   async seed(dir) {
     const { Accounts } = await import('/home/user/MusicQuizApp/src/accounts.js');
     const book = new Accounts(path.join(dir, 'accounts.json'));
@@ -205,6 +230,46 @@ try {
   check('the projector is not showing a phantom team',
     (((await screenState()) || {}).playerCount || 0) === 0);
 
+  /* --------------------------- and it survives the deploy: into the private repo */
+
+  /*
+   * THE HALF THAT IS NOT ON SCREEN. `data/` is wiped by every deploy and every
+   * push is a deploy, so a photograph that only ever reached the live state is
+   * one that is gone by the next docs change — missing from the night's
+   * folder, from Past gigs and from the gallery, which are all served out of
+   * the repo rather than out of `data/`.
+   *
+   * Checked BEFORE the bin press below, which is what takes it away again.
+   *
+   * `fileAway()` is fire-and-forget behind the reply, so this polls rather
+   * than reading once.
+   */
+  const inRepo = () => {
+    const found = [];
+    const walk = (dir) => {
+      for (const name of readdirSync(dir)) {
+        const full = path.join(dir, name);
+        if (statSync(full).isDirectory()) walk(full);
+        else found.push(full.slice(REPO.length));
+      }
+    };
+    try { walk(REPO); } catch { /* nothing filed yet */ }
+    return found;
+  };
+  /*
+   * NAMED PRECISELY, because the first version of this counted `accounts.json`
+   * and `library-stats.json` — the app's OWN backups, which go to the same
+   * repository — and went green with nothing filed. A guard aimed at "did any
+   * file appear" measures the backup loop, not the photograph.
+   *
+   * So: under `photos/<room>/<night>/`, and an image. `photoFolder()` in
+   * `past-gigs.js` is the shape.
+   */
+  const shots = () => inRepo().filter((f) => /^\/photos\/.+\/\d{4}-\d{2}-\d{2}\/.+\.jpe?g$/i.test(f));
+  await settled(async () => shots().length);
+  check('the bar\'s photograph reaches the private repo, so it survives a deploy',
+    shots().length > 0, shots()[0] || `nothing under photos/ — repo holds ${inRepo().join(', ') || 'nothing'}`);
+
   /* ------------------------------ the pile is shown back, and the bin clears it */
 
   await bar.waitForFunction(() => document.querySelectorAll('.snap-shot').length > 0,
@@ -289,6 +354,8 @@ try {
 } finally {
   await browser.close();
   await stop();
+  // Leave nothing behind, the same rule the app's own temp directories follow.
+  rmSync(REPO, { recursive: true, force: true });
 }
 
 console.log(failures ? `\n${failures} FAILED` : '\nAll good.');

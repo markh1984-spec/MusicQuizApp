@@ -7315,7 +7315,34 @@ async function handleWrite(req, res, url, route) {
       });
       backUpPropUse();
     } catch { /* never fatal */ }
-    if (result.ok) pushState(room);
+    if (result.ok) {
+      pushState(room);
+      /*
+       * AND IT IS FILED AWAY, THE SAME AS A PLAYER'S — which this route did
+       * not do, so a photograph the BAR took lived on the projector and
+       * `/wall` and nowhere else.
+       *
+       * `data/` is wiped by every deploy and every push is a deploy, so
+       * "nowhere else" meant gone by the next docs change. Past gigs and the
+       * gallery are both served out of the private repo (`photoBytes()`), so
+       * the bar's pictures were missing from the night's folder, from the
+       * evidence shown to a landlord and from anything published afterwards —
+       * silently, and worst on exactly the night somebody handed the camera
+       * round the most.
+       *
+       * **IT BREAKS "ONE BUCKET" FROM THE OTHER END.** That rule is written as
+       * *one bin press clears the projector, `/wall`, the grid and the night's
+       * folder together* — true of the bin, and the reason nobody noticed is
+       * that the folder half was never filled. `photos.add()` really was the
+       * one door in; `fileAway()` is the one door out, and only one of the two
+       * routes through it was calling it.
+       *
+       * Fire-and-forget behind the reply, exactly as `/api/photo` does it: the
+       * phone gets its answer first and the picture is on screen either way,
+       * because this is only ever about surviving the restart.
+       */
+      fileAway(room, result.photo);
+    }
     return sendJson(res, 200, result), true;
   }
 
