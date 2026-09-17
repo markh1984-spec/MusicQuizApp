@@ -245,7 +245,6 @@ function openCamera() {
     // Tonight's look, from the game state — the same value that paints the
     // projector and this page, so the props cannot disagree with either.
     look: (state && state.look) || DEFAULT_LOOK,
-    heading: 'Put a photo on the big screen',
     /*
      * WHERE IT ACTUALLY ENDS UP, said at the moment the photo is handed over
      * rather than in a policy nobody opens. This used to name only the big
@@ -256,34 +255,31 @@ function openCamera() {
      * public by itself.
      */
     /*
-     * AND IT SAYS PROMOTION, BECAUSE THIS IS THE MOMENT CONSENT IS GIVEN.
+     * TWO SHORT SENTENCES, AND IT WAS FIFTY WORDS.
      *
-     * Asked for on 17 September 2026: *"on the photo upload bit where it says
-     * photos may be used to promote the night… so that I don't have any
-     * consent issues going forwards"*.
+     * *"that explainer is WAY TOO LONG… just 'send up a photo' and 'photos may
+     * be used to promote the night' is fine, I can edit and delete photos
+     * anyway"* — and he is right by this project's own rule: say what it is,
+     * then one line. Five lines of `.tiny` on a phone in a dark pub is a wall,
+     * and a wall is scrolled past, so the long version protected nobody.
      *
-     * **THE TERMS PAGE CANNOT DO THIS JOB.** `terms.html` is the contract with
-     * the QUIZMASTER — its own second paragraph says the subscription is sold
-     * to hosts "not to the players in the room" — so a promotion clause there
-     * is agreed to by everybody except the person in the photograph. The only
-     * place a player is told is here, on the sheet, before they press send.
+     * **THE PROMOTION LINE IS THE ONE THAT HAS TO BE HERE.** `terms.html` is
+     * the contract with the QUIZMASTER — sold to hosts "not to the players in
+     * the room" — so the only place the person in the photograph is told is
+     * this sheet, before they press send.
      *
-     * **AND THE WAY BACK OUT IS NAMED IN THE SAME BREATH**, which was his own
-     * instruction: *"if you want them taken down we can do that too — I'm not
-     * out here trying to hold people to ransom over their photos."* A notice
-     * that takes a permission without saying how to withdraw it is the version
-     * that causes the complaint it was written to avoid.
+     * **"Keep it decent" STAYS, at three words.** It is the only thing between
+     * a room and a rude photograph six feet wide, on the one screen this app
+     * has no filter on by decision.
      *
-     * It names the QUIZMASTER rather than an address, because that is the
-     * person standing in the room and the only one who can press the bin. Do
-     * not promise a self-serve takedown here — there is no such control, and a
-     * legal line naming one that does not exist is the fault `legal-pages.test.js`
-     * already guards on the refunds page.
+     * **AND THE TAKEDOWN LEFT WITHOUT LOSS.** It is in `privacy.html`, and the
+     * quizmaster can bin any photograph from the console — his own reason for
+     * cutting it. **WHEN it appears left without loss too**: the card after a
+     * send already says *"It goes up on the big screen at the next break"*,
+     * which is the moment somebody is actually asking.
      */
-    warn: 'No approval — it goes up between questions. Keep it decent. Goes on '
-      + 'the big screen tonight, on this night\u2019s photo page if your '
-      + 'quizmaster shares it, and may be used to promote the night. Ask your '
-      + 'quizmaster any time if you would rather it came down.',
+    heading: 'Send up a photo',
+    warn: 'Keep it decent. Photos may be used to promote the night.',
     // A joined phone, because `/api/photo` wants a player id. Not a security
     // boundary — it stops a stray request putting an unattributed picture on a
     // projector, which is the route's own wording.

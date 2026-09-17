@@ -124,14 +124,11 @@ function build() {
     say('');
     openCameraSheet({
       look,
-      heading: 'Send a photo to the screen',
-      // The same notice a player's phone carries, for the same reason — see
-      // `play.js`. Both cameras feed one bucket, so both have to say what
-      // happens to what lands in it.
-      warn: 'No approval — it goes up between questions. Keep it decent. Goes on '
-        + 'the big screen tonight, on this night\u2019s photo page if the '
-        + 'quizmaster shares it, and may be used to promote the night. Ask the '
-        + 'quizmaster any time if you would rather it came down.',
+      heading: 'Send up a photo',
+      // Word for word what a player's phone says — see `play.js` for why it is
+      // two sentences and why the promotion line has to be on the sheet. Both
+      // cameras feed one bucket, so both say what happens to what lands in it.
+      warn: 'Keep it decent. Photos may be used to promote the night.',
       file: files[0],
       async send({ blob, camera, shown, used }) {
         const tally = `&shown=${encodeURIComponent(shown.join(','))}&used=${encodeURIComponent(used.join(','))}`;
