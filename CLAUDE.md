@@ -25,25 +25,24 @@ is a trap, and it has caught a session once: the picture-drawing step was
 nearly rebuilt because the plan for it was still sitting in the list.
 
 **`TODO.md` IS THE LIVE LIST AND THREE AREAS SIT BESIDE IT IN `todo/`** —
-marketing, the gallery, the console's UI work. Each is named with one line in
+marketing, the gallery, the console's UI work, each named with one line in
 `TODO.md`, so **reading `TODO.md` still tells you everything that is
-outstanding**; it is 31KB rather than 124KB, and you open the one area your
-job is in. That is the same rule as `docs/`, applied to the list.
+outstanding**. Same rule as `docs/`, applied to the list.
 
 **And the reasoning behind everything here is in `docs/`** — see *Where the
 reasoning lives* below. Open the one you are touching; do not read them all.
 
 **THE CONTEXT BUDGET, and it is why all of this is split.** `CLAUDE.md` loads
 in full every session and `TODO.md` is opened by every session, so those two
-are what a session pays before it does anything. They are held near 138KB and
-40KB by `test/claude-md-budget.test.js` and `test/todo-budget.test.js` —
-raise a budget deliberately, and expect the diff to say so. Everything else is
-**read on demand**: open the `docs/` page you are touching, the `todo/` area
-your job is in, and the console module named for the tab. **Use the agents in
-`.claude/agents/` for anything that means reading widely** — `locator` to find
-where something lives, `sweeper` to audit, `gig-guard` to run the checks,
-`screenshotter` to measure a screen. An agent's context is not yours, so a
-question answered by an agent costs a paragraph instead of a file.
+are what a session pays before it does anything — held by
+`test/claude-md-budget.test.js` and `test/todo-budget.test.js`. **Raise a
+budget deliberately, and expect the diff to say so.** Everything else is **read
+on demand**: the `docs/` page you are touching, the `todo/` area your job is
+in, the console module named for the tab. **Use the agents in `.claude/agents/`
+for anything that means reading widely** — `locator` to find where something
+lives, `sweeper` to audit, `gig-guard` to run the checks, `screenshotter` to
+measure a screen. An agent's context is not yours, so a question answered by an
+agent costs a paragraph instead of a file.
 
 ---
 
@@ -2015,17 +2014,14 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
 `public/home.html`. Full reasoning: **[`docs/business.md`](docs/business.md)**.
 
-- **`/` NOW LEADS TO THE SHOP WINDOW.** It sent anybody not signed in to
-  `/login` — a password box for an account they do not have — while the page
-  selling the thing sat at `/home`, reachable only by typing it. Signed in is
-  UNCHANGED, so nobody who works here walks past the marketing.
+- **`/` NOW LEADS TO THE SHOP WINDOW** — it sent anybody not signed in to a
+  password box for an account they do not have. **Signed in is UNCHANGED.**
 - **ONE ARGUMENT, NOT TWO — the host's own**: *"you can sell it as a QM who
-  uses this software could be a better option as a host as well."* A split
-  landing gives each half a weaker pitch; this gives both the same one, because
-  the evidence half (headcounts, the report, the gallery, the league, the
-  comeback slide, advert scans) is the DEMO to a quizmaster and the PROOF to a
-  venue. It leads on *"Be the quizmaster they book again"*, not "run the night
-  from one laptop" — true, and it sold an operations tool.
+  uses this software could be a better option as a host as well."* The evidence
+  half is the DEMO to a quizmaster and the PROOF to a venue, so a split landing
+  would give each a weaker pitch. It leads on *"Be the quizmaster they book
+  again"*, never "run the night from one laptop" — true, and it sold an
+  operations tool.
 - **REAL SCREENS, because a drawn mock is the one thing a buyer cannot check** —
   and the one there was also quietly WRONG. **Fixture teams only, never a real
   face or name in the public repo.** WebP: 4.6MB → 180KB. **Under `/assets/`,
@@ -2611,8 +2607,7 @@ touching; do not read them all.**
 `test/claude-md-budget.test.js` asserts the byte count, that every `docs/` link
 resolves, and that no decision exists in the doc without being named here.
 **Pay for a new rule by trimming an old one to its prohibition** before raising
-the budget. **And the index below names only what is NOT already a heading
-here.**
+the budget. **The index below names only what is NOT already a heading here.**
 
 **A mechanical split is only safe where the boundary is STRUCTURAL** — pointed
 at prose it threw away the Owner/Parent/Child table and every lobby-games rule,
@@ -2732,45 +2727,34 @@ costs.
 
 - Ask before assuming, especially anything costing money or needing an account.
 - Explain deployment like he is doing it for the first time, because he is.
-- Keep the code readable — he will be editing it between gigs.
+- Keep the code readable — he edits it between gigs.
 - **KEEP EVERYTHING IN THE CHAT. Do not send him somewhere else to read
-  something.** Set on 14 August 2026, on a phone, and stated plainly: *"I want
-  everything where possible to take place in this chat, so I don't have to go
-  elsewhere."* A link is a context switch, and on a phone it is a bad one.
-- **A prompt he has to paste gets a COPY BUTTON**, which in practice means a
-  fenced code block in the reply — most clients put one on automatically. The
-  rule came from *"the prompt must ALWAYS have a copy button"*, and the first
-  version of it was wrong: it said publish an artifact, which satisfied the
-  copy button and broke the rule above. **He wanted the button, not the
-  page.** Only build an artifact when he asks for one, or when the thing
-  genuinely needs to be a page. Never hide a prompt behind a URL.
-- **OFFER UI CHOICES AS OPTIONS HE CAN TAP, never as prose.** Set on 14 August
-  2026 in his own words: *"I love the fact that you give me four different
-  options based on a UI change — I'm on my phone, and being able to make quick
-  decisions on UI increases my productivity massively."* So when a UI decision
-  has real forks, put them up as options with a small mock-up of each rather
-  than describing them in a paragraph. He is usually on a phone; a paragraph
-  costs him a round trip and a tap costs nothing. **Recommend one and say
-  why** — that is not avoiding a view, it is making his answer cheap.
-- **RENDER THE OPTIONS BEFORE ASKING HIM TO CHOOSE** — *"render examples to
-  make my choice more informed"*. A UI question arrives WITH a picture of each
-  option, never an ASCII sketch or a description. **Built from the real
+  something** — *"I want everything where possible to take place in this chat,
+  so I don't have to go elsewhere."* A link is a context switch.
+- **A prompt he has to paste gets a COPY BUTTON** — in practice a fenced code
+  block, which most clients put one on. *"The prompt must ALWAYS have a copy
+  button."* The first version said publish an artifact, which broke the rule
+  above: **he wanted the button, not the page.** Only build an artifact when he
+  asks for one. **Never hide a prompt behind a URL.**
+- **OFFER UI CHOICES AS OPTIONS HE CAN TAP, never as prose** — *"I love the
+  fact that you give me four different options based on a UI change — I'm on my
+  phone, and being able to make quick decisions on UI increases my productivity
+  massively."* A UI decision with real forks goes up as options with a mock-up
+  of each. **Recommend one and say why** — that makes his answer cheap.
+- **RENDER THE OPTIONS BEFORE ASKING HIM TO CHOOSE** — a UI question arrives
+  WITH a picture of each option, never an ASCII sketch. **Built from the real
   `style.css` and the real markup**, or the comparison is of something else.
 - **SEND THE SCREENSHOT; DO NOT OPEN IT** — *"delivered to me, and then that
   context reclaimed immediately after"*. **Context cannot be reclaimed** once an
-  image is read, but it never has to go in: `SendUserFile` costs a line,
-  `Read` on a full-page shot 2–4k tokens. An agent MEASURES, the file is SENT,
-  and it is opened **only when the judgement is Claude's own** — *"do
-  these figures read at 200px"* needs eyes, *"does this look right"* does not.
+  image is read, but it never has to go in: `SendUserFile` costs a line, `Read`
+  on a full-page shot 2–4k tokens. An agent MEASURES, the file is SENT, and it
+  is opened **only when the judgement is Claude's own**.
 - **SHOW A SCREENSHOT FOR EVERY UI CHANGE. This is a rule, not a nicety** —
-  set by the host on 14 August 2026: *"whenever you change the UI of anything
-  in this app you MUST show me, since the UI of this app is extremely
-  important."* Not "when building screens" and not only for new ones: a
-  one-line CSS change counts, because that is exactly the size of change that
-  looks fine in a diff and wrong on a projector. **A before AND an after where
-  something was broken**, so the fault is visible rather than described — the
-  join-corner fix below is the shape to copy. Screenshot at the size the thing
-  is actually used at: 1280x720 for the projector, 320-430px for a phone.
+  *"whenever you change the UI of anything in this app you MUST show me."* A
+  one-line CSS change counts: that is exactly the size of change that looks
+  fine in a diff and wrong on a projector. **A before AND an after where
+  something was broken.** At the size the thing is used at — 1280x720 for the
+  projector, 320-430px for a phone.
 - Presentation matters: projected in a dark room to paying customers. Big type,
   high contrast, readable from the back.
 
@@ -2890,12 +2874,12 @@ sessions, never within one, so "clean up a bit to make room" does not work.
 ### "GSD mode" — Get Shit Done
 
 **If he types `GSD mode`, switch to it and STAY in it until the to-do list is
-done or he says otherwise.** He is at the laptop knocking through a list, not
-thinking something over, and every extra word is in the way: **open with the
-numbered to-do list itself**, minimum context, **URLs always as clickable
-links**, a link rather than a question, YES or NO where possible, one line per
-step. **Argue in normal mode, not in GSD mode** — but the rules that stop things
-going wrong still apply, in one line.
+done or he says otherwise.** He is at the laptop knocking through a list, so
+every extra word is in the way: **open with the numbered to-do list itself**,
+minimum context, **URLs always as clickable links**, a link rather than a
+question, YES or NO where possible, one line per step. **Argue in normal mode,
+not in GSD mode** — the rules that stop things going wrong still apply, in one
+line.
 
 **The full mode is in [`docs/modes.md`](docs/modes.md) — open it when he types
 it.** It is there rather than here because it governs a minority of sessions
@@ -2964,6 +2948,27 @@ front of him on every change instead of the two that mattered.
 push could land badly and push anyway unless he says hold. **The note is the
 value, not the delay**: he restarts a lobby in ten seconds knowing what
 happened, and cannot diagnose it at all if nobody said.
+
+**AND THE ROOM A DEPLOY LEAVES BEHIND BLOCKED EVERY LAUNCH — the gig on 17
+September 2026, lost to KaraFun.** After a restart the room comes back around
+`pickPack()`'s first pack — **2006 Intros**, top of the list by title — with
+`launched: false`, a lobby and a join code, and the pub joins it.
+**`inProgress()` counted those phones and never asked whether anybody had
+LAUNCHED**, so every tap's quiet launch took a 409 and swallowed it by design:
+*"every single one is launching 2006 intros… the console isn't changing
+state."* Launch offered to end a running night and wipe its scores — about a
+lobby the server built by itself.
+
+- **A LOADED PACK AT THE LOBBY IS NOT A NIGHT, and `inProgress()` asks now.**
+  **Only an explicit `launched === false`**, absent still meaning launched —
+  **and only at the LOBBY**, because the control view drives whatever is
+  loaded and a quiz off the boot pack has real scores. **REVERSES a pinned
+  test**: *waiting in a lobby* is now *in a LAUNCHED lobby*.
+- **EVERY OTHER GUARD LAUNCHES ITS OWN NIGHT FIRST, so none had been in the
+  state a deploy leaves** — `node scripts/after-a-deploy.mjs` starts there.
+  **AND ITS FIRST VERSION PASSED ON THE HOST KEY**, whose house room has no
+  join code, so every phone landed there by the *no code at all* fallback. **A
+  real signed-in quizmaster, and `joinCode` is the field `play.js` posts.**
 
 ### "Sweep mode" — find everything, change nothing
 
@@ -3239,9 +3244,8 @@ anything at all". **The same prize as third place.** All tested:
 - **A draw voucher has NO PLACE** — `place: mine.place || 1` would tell somebody
   who finished eleventh they had won the quiz.
 
-A band BELOW the podium, never on it, with the count printed. Entry is FREE, so
-there is nothing to work around; **if a venue ever charges per team this needs
-looking at again.**
+A band BELOW the podium, never on it, with the count printed. Entry is FREE;
+**if a venue ever charges per team this needs looking at again.**
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
@@ -4181,6 +4185,7 @@ node scripts/funniest-photo.mjs         # does the room's vote reach a drink?
 node scripts/bar-staff-camera.mjs       # the camera code — same bucket, and nothing else
 node scripts/props-on-a-photo.mjs       # do the googly eyes go on, on BOTH cameras?
 node scripts/no-prizes-no-launch.mjs    # can a night launch with nobody to pay?
+node scripts/after-a-deploy.mjs         # after a restart, can the host still launch?
 ```
 
 **The rules these commands run on, and each was learned expensively — the full

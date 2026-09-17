@@ -205,6 +205,9 @@ test('an empty game is not something a launch has to protect', () => {
 
 test('a launch says what it is about to destroy, with the player count in it', () => {
   withGame((session) => {
+    // LAUNCHED FIRST, which is the whole of the distinction below: this is a
+    // night somebody put up, not the pack the server loaded at boot.
+    session.launch(session.kind, session.pack.id);
     session.engine.join('Team One');
     session.engine.join('Team Two');
 
@@ -218,18 +221,57 @@ test('a launch says what it is about to destroy, with the player count in it', (
 });
 
 /*
- * ANY joined player counts, lobby or not.
+ * ANY joined player counts, lobby or not — ONCE SOMEBODY HAS LAUNCHED.
  *
- * The obvious version guards a game that is past the lobby — but forty people
- * who have typed a team name and are waiting for the first question have
- * something to lose too, and "everybody type your name in again" is not a
- * thing anybody says on a mic.
+ * The obvious version guards a game that is past the lobby, and that is still
+ * wrong: forty people who have typed a team name and are waiting for the first
+ * question have something to lose too, and "everybody type your name in again"
+ * is not a thing anybody says on a mic.
  */
-test('somebody waiting in the lobby counts as somebody with something to lose', () => {
+test('somebody waiting in a LAUNCHED lobby counts as somebody with something to lose', () => {
   withGame((session) => {
+    session.launch(session.kind, session.pack.id);
     assert.equal(session.engine.state.phase, 'lobby');
     session.engine.join('Only Me');
     assert.equal(session.inProgress().players, 1);
+  });
+});
+
+/*
+ * AND THE OTHER HALF, WHICH REVERSES THE PINNED TEST ABOVE FOR ONE CASE AND
+ * COST A GIG BY NOT DOING SO.
+ *
+ * `boot()` always builds a game so the projector is never blank, and on a host
+ * with no permanent disk that is the state after EVERY deploy — the room comes
+ * back around the first pack in the list, `launched: false`, showing a lobby
+ * and a join code. The pub joins it, because the code is on the wall.
+ *
+ * Every tap on the launch bar then sent a quiet launch with no `replace`, got
+ * a 409 and swallowed it: *"every single one is launching 2006 intros… the
+ * console isn't changing state."* Nothing on that screen was a night. There
+ * was nothing to protect and the app protected it anyway.
+ */
+test('a lobby nobody launched is not a night, however many phones are in it', () => {
+  withGame((session) => {
+    assert.equal(session.engine.state.launched, false, 'a booted room should not read as launched');
+    session.engine.join('Dave');
+    session.engine.join('The Quizzinators');
+    assert.equal(session.inProgress(), null, 'the boot pack blocked a launch the host had to be able to make');
+  });
+});
+
+/*
+ * BUT ONLY AT THE LOBBY. The control view drives whatever is loaded, so a host
+ * CAN play a whole quiz off the boot pack without ever pressing Launch — real
+ * questions, real scores, `launched` still false. Once it has left the lobby
+ * it is somebody's night whoever started it.
+ */
+test('an unlaunched game that has been driven past the lobby is still protected', () => {
+  withGame((session) => {
+    session.engine.join('Dave');
+    session.engine.start();
+    assert.notEqual(session.engine.state.phase, 'lobby');
+    assert.ok(session.inProgress(), 'a game in play was thrown away because nobody pressed Launch');
   });
 });
 

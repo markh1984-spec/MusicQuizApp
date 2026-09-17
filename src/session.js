@@ -761,6 +761,39 @@ export class Session {
    */
   inProgress() {
     if (!this.engine || !this.pack) return null;
+    /*
+     * A LOADED PACK SITTING AT THE LOBBY IS NOT A NIGHT — and not asking cost
+     * a real gig.
+     *
+     * `boot()` always builds a game so the projector is never blank, and on a
+     * host with no permanent disk that is the state after EVERY deploy: the
+     * room comes back around `pickPack()`'s first pack — *2006 Intros*, the
+     * top of the list by title — with `launched: false`, a lobby and a join
+     * code on the wall. The pub then does what a pub does and joins it.
+     *
+     * From there every tap on the launch bar fired `switchIfFree()`, which
+     * sends no `replace`, so the route answered 409 and the quiet launch
+     * SWALLOWED it by design. Nothing moved, nothing was said, and the live
+     * line went on naming a quiz nobody had chosen: *"every single one is
+     * launching 2006 intros… the console isn't changing state."* Pressing
+     * Launch got as far as a dialog saying a running night would be ended and
+     * its scores wiped — about a lobby the server had built by itself, which
+     * is exactly the sentence this app trains a host not to accept.
+     *
+     * `state.launched` has said which of the two this is since Unlaunch was
+     * built; `inProgress()` was never taught to ask. **Only an explicit
+     * `false`**, for the reason recorded everywhere else it is read: a state
+     * written before the field existed is on disk because somebody launched
+     * it, so absent has to keep meaning launched.
+     *
+     * **AND ONLY AT THE LOBBY.** The control view drives whatever is loaded,
+     * so a host can play a whole quiz off the boot pack without pressing
+     * Launch — real questions, real scores, `launched` still false. Once it
+     * has left the lobby it is somebody's night whoever started it, and the
+     * warning is right to stand.
+     */
+    const state = this.engine.state || {};
+    if (state.launched === false && state.phase === 'lobby') return null;
     const players = this.engine.playerList().length;
     if (!players) return null;
     return {
