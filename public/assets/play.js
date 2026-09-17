@@ -255,9 +255,35 @@ function openCamera() {
      * as much as naming the page — the quizmaster publishes, so nothing goes
      * public by itself.
      */
+    /*
+     * AND IT SAYS PROMOTION, BECAUSE THIS IS THE MOMENT CONSENT IS GIVEN.
+     *
+     * Asked for on 17 September 2026: *"on the photo upload bit where it says
+     * photos may be used to promote the night… so that I don't have any
+     * consent issues going forwards"*.
+     *
+     * **THE TERMS PAGE CANNOT DO THIS JOB.** `terms.html` is the contract with
+     * the QUIZMASTER — its own second paragraph says the subscription is sold
+     * to hosts "not to the players in the room" — so a promotion clause there
+     * is agreed to by everybody except the person in the photograph. The only
+     * place a player is told is here, on the sheet, before they press send.
+     *
+     * **AND THE WAY BACK OUT IS NAMED IN THE SAME BREATH**, which was his own
+     * instruction: *"if you want them taken down we can do that too — I'm not
+     * out here trying to hold people to ransom over their photos."* A notice
+     * that takes a permission without saying how to withdraw it is the version
+     * that causes the complaint it was written to avoid.
+     *
+     * It names the QUIZMASTER rather than an address, because that is the
+     * person standing in the room and the only one who can press the bin. Do
+     * not promise a self-serve takedown here — there is no such control, and a
+     * legal line naming one that does not exist is the fault `legal-pages.test.js`
+     * already guards on the refunds page.
+     */
     warn: 'No approval — it goes up between questions. Keep it decent. Goes on '
-      + 'the big screen tonight — and on this night\u2019s photo page if your '
-      + 'quizmaster shares it.',
+      + 'the big screen tonight, on this night\u2019s photo page if your '
+      + 'quizmaster shares it, and may be used to promote the night. Ask your '
+      + 'quizmaster any time if you would rather it came down.',
     // A joined phone, because `/api/photo` wants a player id. Not a security
     // boundary — it stops a stray request putting an unattributed picture on a
     // projector, which is the route's own wording.

@@ -125,9 +125,13 @@ function build() {
     openCameraSheet({
       look,
       heading: 'Send a photo to the screen',
+      // The same notice a player's phone carries, for the same reason — see
+      // `play.js`. Both cameras feed one bucket, so both have to say what
+      // happens to what lands in it.
       warn: 'No approval — it goes up between questions. Keep it decent. Goes on '
-        + 'the big screen tonight — and on this night\u2019s photo page if the '
-        + 'quizmaster shares it.',
+        + 'the big screen tonight, on this night\u2019s photo page if the '
+        + 'quizmaster shares it, and may be used to promote the night. Ask the '
+        + 'quizmaster any time if you would rather it came down.',
       file: files[0],
       async send({ blob, camera, shown, used }) {
         const tally = `&shown=${encodeURIComponent(shown.join(','))}&used=${encodeURIComponent(used.join(','))}`;
