@@ -319,9 +319,10 @@ export function venuesSection() {
         ${findOnly ? `<h2 class="tab-own-head">Venues</h2>
           <div class="tiny">Tap a pub to make it tonight's. To set its usual night,
             its prizes or where to send them, open it in ${goTo('workshop', 'venues', 'the Workshop')}.</div>` : ''}
-        ${!brandOnly ? '' : `<div class="tiny">Open a pub to give it a photo overlay &mdash; the frame that
-            goes on every photograph from that room. Its prizes, its usual night and
-            its advert slides live in ${goTo('workshop', 'venues', 'the Workshop')}.</div>`}
+        ${!brandOnly ? '' : `<div class="tiny">Open a pub to give it its artwork &mdash; the frame
+            that goes on its photographs, and the logo that goes on the winner&rsquo;s
+            voucher. Its prizes, its usual night and its advert slides live in
+            ${goTo('workshop', 'venues', 'the Workshop')}.</div>`}
         ${findOnly || brandOnly ? '' : `<div class="tiny">Set the prizes here and they fill themselves in when you
           launch a night at this venue. Give a venue its usual night and the
           launch bar knows whose night tonight is — and the big screen ends the
@@ -361,15 +362,25 @@ export function venuesSection() {
   // fact worth a line is whether this pub has a frame yet, and printing "No
   // prizes set" on a marketing page sends somebody to the wrong tab to fix it.
   esc(brandOnly
-    ? (v.hasOverlay ? 'Photo overlay set' : 'No photo overlay')
+    // BOTH, or a pub with half its artwork done reads as having none.
+    ? [v.hasOverlay ? 'Photo frame' : 'No photo frame', v.logo ? 'logo' : 'no logo'].join(' \u00b7 ')
     : [night || 'No usual night', prizes.length ? prizes[0] : 'No prizes set'].join(' · '))}</div>`}
               ${!open ? '' : `
               <!--
-                THE GIG LOGISTICS STAY IN THE WORKSHOP. A venue's usual night,
-                where to send the room and the logo on the winner's voucher are
-                facts about running a night there, not about promoting it — so
-                the Community door does not draw them, and there is still one
-                place each of them is edited.
+                THE GIG LOGISTICS STAY IN THE WORKSHOP. A venue's usual night
+                and where to send the room are facts about running a night
+                there rather than about how it is dressed — so the Community
+                door does not draw them, and there is one place each is edited.
+
+                BUT THE LOGO FOLLOWED THE FRAME, and the reason is what asking
+                cost: *"Ahhhhh yes the overlay and the logo are separate —
+                probably need a separate upload feature for each?"* They always
+                WERE two uploads. What caused that was having them on two
+                DOORS, so uploading one looked like it had covered the other,
+                and the frame silently did not appear on the photographs. Both
+                are a picture of the pub that the app puts on something, so
+                they belong on one card — and the first person to hit the split
+                hit it on a gig day.
               -->
               ${brandOnly ? '' : `
               <label class="venue-night">Usual night
@@ -389,6 +400,15 @@ export function venuesSection() {
                 <input class="v-link" type="url" inputmode="url" maxlength="300"
                   value="${esc(v.link || '')}" placeholder="thecrown.co.uk/whats-on">
               </label>
+`}
+              <!--
+                AND THE OVERLAY IS THE COMMUNITY DOOR'S, ONLY. *"Everything to
+                do with photos and marketing needs to belong in community,
+                including this."* A MOVE, not a copy: two cards offering the
+                same upload is one venue record maintained in two places, which
+                is the collision this file already has a rule about.
+              -->
+              ${!brandOnly ? '' : `
               <!-- THE VENUE'S OWN LOGO, for the winner's voucher. Beside the
                    prizes because it is the same kind of thing: the venue's
                    standing arrangement rather than a decision about tonight.
@@ -420,26 +440,18 @@ export function venuesSection() {
                   ${v.logo ? '<button class="minor danger v-logo-off">Remove</button>' : ''}
                 </span>
               </div>
-`}
-              <!--
-                AND THE OVERLAY IS THE COMMUNITY DOOR'S, ONLY. *"Everything to
-                do with photos and marketing needs to belong in community,
-                including this."* A MOVE, not a copy: two cards offering the
-                same upload is one venue record maintained in two places, which
-                is the collision this file already has a rule about.
-              -->
-              ${!brandOnly ? '' : `
               <!-- THE PHOTO OVERLAY, under the logo because they are the same
                    kind of thing — the venue's standing artwork rather than a
-                   decision about tonight — and because the blurb has to say
-                   which one goes WHERE. Two picture uploads on one card is the
-                   label collision this app keeps a rule about, so neither is
-                   called "image" and each names its own destination. -->
+                   decision about tonight. **TWO PICTURE UPLOADS ON ONE CARD IS
+                   THE LABEL COLLISION THIS APP KEEPS A RULE ABOUT**, so neither
+                   is called "image", each names its own DESTINATION in its
+                   first line, and the two headings share no word: a *logo* goes
+                   on a voucher, a *frame* goes round a photograph. -->
               <div class="venue-logo-row venue-over-row">
                 <span class="venue-logo-what">
-                  <b>Photo overlay</b><br>
-                  <span class="tiny">Goes on every photo from this venue when you
-                    publish the night &mdash; your branding and theirs, in one
+                  <b>Photo frame</b><br>
+                  <span class="tiny">Goes round every photo from this venue when you
+                    save one for socials &mdash; your branding and theirs, in one
                     design. A square PNG with a <b>see-through background</b>;
                     anything solid would hide the photographs. Never on the big
                     screen and never on the saved originals.</span>
