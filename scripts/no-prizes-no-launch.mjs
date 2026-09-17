@@ -100,6 +100,35 @@ try {
   const warn = await page.locator('.lb-say-none').first().textContent().catch(() => '');
   check('  ...and the warning above carries the LINK', /Venues tab/i.test(warn || ''), JSON.stringify((warn || '').slice(0, 80)));
 
+  /*
+   * AND A SINGLE BINGO PACK — the one shape this gate MISSED. A quiz bursts
+   * into a tile per round and reaches `paintOrder()`'s copy of the gate; a
+   * lone bingo pack never bursts, so it went through `paintGo()`, whose
+   * one-pack branch returned before the gate ran. Every bingo night launched
+   * past it, which is exactly the night the winner's phone came up blank on.
+   */
+  // Through the SEARCH BOX, which is the path that reaches `paintGo()`'s
+  // one-pack branch (a tap bursts a pack into tiles and takes the other one).
+  // Picking there also fires the quiet launch, so the ROOM is checked too: a
+  // gate on the button alone is decorative if the tap has already put the
+  // night up.
+  // A fresh bar, so the row is the plain one whose dotted slot opens the box.
+  await page.reload({ waitUntil: 'load' }); await page.waitForSelector('.launchbar'); await page.waitForTimeout(1500);
+  await pickVenue(page, 'The Dry Arms');
+  const before = await page.evaluate(() => fetch('/api/library').then((r) => r.json()).then((l) => l.running.packId));
+  await page.locator('.lb-drop').first().click(); await page.waitForTimeout(400);
+  // The box lists the game the picker is on — quiz by default.
+  await page.evaluate(() => { const g = document.querySelector('.lb-game'); if (g) { g.value = 'bingo'; g.dispatchEvent(new Event('change', { bubbles: true })); } });
+  await page.waitForTimeout(400);
+  await page.fill('.lb-text', 'Bingo');
+  await page.waitForTimeout(600);
+  await page.locator('.lb-hit').first().click(); await page.waitForTimeout(1500);
+  const dryBingo = await go();
+  check('a lone BINGO pack with no prizes stands Launch down too', dryBingo.disabled === true, JSON.stringify(dryBingo));
+  check('  ...naming the pub', /Dry Arms/.test(dryBingo.text), JSON.stringify(dryBingo.text));
+  const after = await page.evaluate(() => fetch('/api/library').then((r) => r.json()).then((l) => l.running.packId));
+  check('  ...and the quiet launch did NOT put it on the big screen', after === before, `room went from ${before} to ${after}`);
+
   // Now give that venue prizes — Launch must come back.
   await page.evaluate((id) => fetch(`/api/invoices/customers/${encodeURIComponent(id)}/rewards`, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' },

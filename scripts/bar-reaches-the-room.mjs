@@ -71,6 +71,27 @@ try {
   console.log('\nWHAT THE BAR SAYS, WHAT IT SENDS, WHAT THE ROOM GETS\n');
 
   /*
+   * A VENUE WITH PRIZES, PICKED. Launch stands down without one, and since the
+   * prize gate reached the quiet launch a tapped pack does not go up either —
+   * so this guard, which presses the real button, has to set the night up the
+   * way a real one is.
+   */
+  await page.evaluate(async (key) => {
+    const H = { 'Content-Type': 'application/json', 'X-Host-Key': key };
+    const mk = await fetch('/api/invoices/customers', { method: 'POST', headers: H, body: JSON.stringify({ name: 'The Wet Arms' }) });
+    const c = ((await mk.json()).customers || []).find((x) => x.name === 'The Wet Arms');
+    await fetch(`/api/invoices/customers/${encodeURIComponent(c.id)}/rewards`, { method: 'PUT', headers: H, body: JSON.stringify({ rewards: ['A pint', 'A half', 'Crisps', 'A pint', 'A half'] }) });
+  }, KEY);
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForTimeout(2000);
+  await page.evaluate(async () => {
+    document.querySelector('.lb-where')?.click();
+    await new Promise((r) => setTimeout(r, 500));
+    [...document.querySelectorAll('.lb-venues button')].find((b) => /Wet Arms/.test(b.textContent))?.click();
+  });
+  await page.waitForTimeout(1000);
+
+  /*
    * A BINGO PACK, WITH NOBODY TOUCHING THE PICKERS — which is the case the
    * default was lost in, and the ordinary way a bingo night is set up.
    */

@@ -1404,6 +1404,10 @@ export function launchBar() {
   }
 
   async function switchIfFree(pack, kind) {
+    // THE QUIET LAUNCH ANSWERS TO THE PRIZE GATE TOO — a room joins what is on
+    // the big screen, so a night with nobody to pay was up before Launch could
+    // stand down. The button says why; this just does not go up.
+    if (noPrizesReason(venueNow(), library && library.venueRecords)) { paintLive(); return; }
     try {
       await postJson('/api/host/launch', {
         game: kind,
@@ -3199,9 +3203,11 @@ export function launchBar() {
       goBtn.textContent = rounds === roundsOf(packs[0]).length
         ? `Launch ${packs[0].title}`
         : `Launch ${packs[0].title} — ${rounds} round${rounds === 1 ? '' : 's'}`;
-      return;
+    } else {
+      goBtn.textContent = `Launch tonight — ${packs.length} packs, ${rounds} round${rounds === 1 ? '' : 's'}`;
     }
-    goBtn.textContent = `Launch tonight — ${packs.length} packs, ${rounds} round${rounds === 1 ? '' : 's'}`;
+    // AFTER EVERY BRANCH THAT LEAVES THE BUTTON LIVE — the one-pack branch
+    // returned above this, so a pack picked from the search box dodged the gate.
     standDownWithoutPrizes();
   }
 

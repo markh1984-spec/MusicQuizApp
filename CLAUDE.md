@@ -700,13 +700,11 @@ the one navigational use of a colour that means first place everywhere. It is
 a tint of `--hot` with its own outline — on-scheme, obviously "you are here",
 and deliberately NOT the full gradient, which means "press this" and would be
 the loudest thing in the app sitting on the one control there is no point
-pressing. A `rgba` fallback is declared before the `color-mix`, or a projector
-too old for it loses the fill entirely.
+pressing. A `rgba` fallback is declared before the `color-mix`.
 
 **The hat switch already followed the scheme** and was left alone. The B/S/G
 rungs keep the metals, because there the colour IS the meaning — and they are
-only ever drawn for the owner: `/api/me` sends `tiers: []` to a real
-quizmaster, so the control does not exist on anybody else's account.
+only ever drawn for the owner (`/api/me` sends `tiers: []` to a quizmaster).
 
 ### GIGS IS EVIDENCE. CALENDAR IS ORGANISATION.
 
@@ -2170,7 +2168,9 @@ bingo winners on thursday didn't receive a QR code"*.
   PAINTERS** — the first build sat in `paintGo()` alone and gated nothing,
   `paintOrder()` being the painter a burst pack goes through. **THE SERVER
   STILL LAUNCHES**: a refusal there costs the night.
-  `no-prizes-no-launch.mjs`.
+  **AND THE QUIET LAUNCH STANDS DOWN TOO** — a tapped pack is on the wall
+  and a room joins what is on the wall. `no-prizes-no-launch.mjs` picks
+  through the SEARCH BOX, the one path to the one-pack branch.
 - **SO PRESSING *Prizes* AFTERWARDS PAYS ANYBODY ALREADY OWED.** Both engines
   said it "takes effect for the NEXT prize onwards" — true, and the bug. **Both
   catch-ups are IDEMPOTENT.**
