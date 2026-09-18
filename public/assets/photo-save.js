@@ -293,12 +293,20 @@ export async function framedBlob(src, { words = '', overlay = '' } = {}) {
   return stamped(await loadPhoto(src), words, overlay);
 }
 
-export async function savePhoto(src, { words = '', filename = 'photo.jpg', overlay = '' } = {}) {
+export async function savePhoto(src, { words = '', filename = 'photo.jpg', overlay = '', share = true } = {}) {
   const blob = await framedBlob(src, { words, overlay });
   if (!blob) return false;
 
   const file = new File([blob], filename, { type: 'image/jpeg' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+  /*
+   * SHARE SHEET OR STRAIGHT TO DOWNLOADS. On a phone the share sheet is the
+   * right thing — there is no Downloads folder to root around in. On the
+   * console it is a laptop, and the host asked for the framed exports to just
+   * land in Downloads rather than make him pick a target for each of three.
+   * So `share: false` skips the sheet and downloads; the public gallery keeps
+   * the default and the sheet it has always had.
+   */
+  if (share && navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
       await navigator.share({ files: [file] });
       return true;

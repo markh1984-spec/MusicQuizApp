@@ -101,6 +101,8 @@ export function framedSaveInto(into, url, night, records) {
         words: String((me && (me.brand || me.name)) || ''),
         filename: saveName(venue, (night && night.night) || '', 0, ''),
         overlay,
+        // The console is a laptop — straight to Downloads, not the share sheet.
+        share: false,
       });
       /*
        * `savePhoto` answers FALSE when nothing actually left — a share sheet
@@ -238,13 +240,15 @@ export function showcaseSaveInto(into, night, records, keyedUrl) {
           words: String((me && (me.brand || me.name)) || ''),
           filename: saveName(venue, night.night || '', i, ''),
           overlay,
+          // Straight to the Downloads folder, one after another — no share sheet.
+          share: false,
         });
         if (ok !== false) went += 1;
       } catch { /* one that will not save must not stop the other two */ }
     }
     btn.textContent = went === cover.length
-      ? `Saved ${went}${overlay ? ' with the frame' : ' — no frame on this pub'}`
-      : `Saved ${went} of ${cover.length}`;
+      ? `Downloaded ${went}${overlay ? ' with the frame' : ' — no frame on this pub'}`
+      : `Downloaded ${went} of ${cover.length}`;
     setTimeout(() => {
       btn.textContent = `Save the showcase (${cover.length})`;
       btn.disabled = false;
