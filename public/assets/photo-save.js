@@ -233,12 +233,23 @@ async function stamped(img, words, overlay) {
   canvas.height = h;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(img, 0, 0, w, h);
-  // THE VENUE'S FRAME FIRST, THE APP'S MARK ON TOP. A pub's artwork is a
-  // border round the edges and the mark sits in a corner, so drawing the frame
-  // last would bury the one thing that says where the photograph came from.
-  await frameOver(ctx, w, h, overlay);
+  /*
+   * THE VENUE'S FRAME IS THE WHOLE DESIGN — THE APP'S MARK IS THE FALLBACK.
+   *
+   * A pub's overlay is a designed frame made in an image generator, and the
+   * decision behind it (TODO item 0) is that Pub Champions and the venue's own
+   * logo go INSIDE that artwork rather than the app compositing two logos it
+   * has to lay out itself. So when the frame draws, that IS the branding: the
+   * app's own quizmaster-name mark on top would sit over the venue logo and
+   * say the same thing twice, which is exactly what the host reported.
+   *
+   * So the mark is stamped ONLY when there is no frame — the public gallery,
+   * which never had one, and a pub with no overlay uploaded yet. Both keep the
+   * plain watermark they have always had. `frameOver` returns whether it drew.
+   */
+  const framed = await frameOver(ctx, w, h, overlay);
   // AWAITED, never fired-and-checked — see `loadMark()`.
-  stampMark(ctx, w, h, words, await loadMark());
+  if (!framed) stampMark(ctx, w, h, words, await loadMark());
   return new Promise((resolve) => {
     // 0.92 rather than the 0.85 an upload uses: this one is going onto a
     // Facebook page that will compress it again, and the two stack.
