@@ -1115,9 +1115,9 @@ topbar, the frame or the bay heights.** What must not be undone:
   media query is two decisions the moment it names two axes.**
 - **`main` IS A FLEX COLUMN — never give it a row template.**
 - **THE SHELF IS SIX ACROSS, BY DECISION. Do not "fix" a squeezed card by
-  dropping a column** — both grids move.
-- **`setViewportSize()` IN A LOOP IS NON-DETERMINISTIC HERE** — navigate fresh
-  per width, polling until two readings agree.
+  dropping a column.**
+- **`setViewportSize()` IN A LOOP IS NON-DETERMINISTIC HERE** — navigate
+  fresh per width.
 - **THE FINISH LAYER at the foot of `style.css` owns selection, caret,
   `:focus-visible` and the card hover** — one named block.
 
@@ -1132,7 +1132,7 @@ Every one lived in a band no guard looked at. The measurements are in
   is not six-across being dropped.**
 - **`#hatSlot` IS A BARE `<span>`, SO IT HAD `min-width: auto`.** **The
   switch shrinks below 560 too** — a door off the screen is not affordable.
-- **`console-frame.mjs` LOOKS AT 768 AND 320**, the band nothing measured.
+- **`console-frame.mjs` LOOKS AT 768 AND 320.**
 
 ### A ROOM ID IS A PATH, AND `?q=` NAMES AN ACCOUNT OR NOBODY
 
@@ -1433,10 +1433,9 @@ board), `src/arcade.js` (the scores, shared by both engines),
   The names the first three resemble are Namco's and Atari's and this app is
   SOLD — a legal line, not a taste one. **An unnamed game keeps inviting the
   wrong name.**
-- **PILE UP IS DELETED, AND TETRIS IS STILL THE REASON.** **The shapes were
-  not the only thing held protectable in *Tetris Holding v. Xio*** — the well
-  and the piece behaviour went too, and this app is SOLD. **Do not rebuild
-  it.**
+- **PILE UP IS DELETED, AND TETRIS IS STILL THE REASON** — *Tetris Holding v.
+  Xio* held the well and the piece behaviour protectable too, and this app is
+  SOLD. **Do not rebuild it.**
 - **LAST ORDERS REPLACED IT, and its legal line is a DIFFERENT one.** Taito
   owns the NAME and the sprites, **not** a formation descending on a defender.
   So: **not called Space Invaders, no crab/squid/octopus, no 5x11, no saucer,
@@ -1921,8 +1920,8 @@ sections?"* `bayRail()` / `bayColumns()` / `bayHead()`, drawn by Post gig
   its children and the rail always overflows. The rows survived on `min-height:
   44px`; the pub headings had no floor and rendered at **2px with their text in
   the DOM**.
-- **THE DRAGS SURVIVED because they were on the PANEL, not a slot inside it**
-  — and each empty state keeps its drop zone.
+- **THE DRAGS are on the PANEL, not a slot inside it**, and each empty state
+  keeps its drop zone.
 
 ### ONE PUB IS ONE LEAGUE — the id key and the typed name are the same room
 
@@ -2062,6 +2061,16 @@ Hung GitHub behind the real server and drove a night. Four things waited:
 - **THE LIBRARY'S FOUR RESTORES AND THE ACCESS CHECK GO OUT AT ONCE, AND A
   FAILED RESTORE BACKS OFF A MINUTE** (`restoreOnce`) — never latched as
   empty, never retried per request either.
+
+### TWO DEVICES, ONE QUIZ — a move carries the cursor it was pressed against
+
+`host-cursor.js`, imported by `host.js` AND `server.js`. The host drives a
+night from a phone and the laptop; the per-device double-tap guard cannot see
+the other device, so Next on both was two questions gone. **A MOVE sent with
+`seen` is refused (409, with the FRESH view) when the cursor has moved on;
+one sent without is never refused** — every guard and older client is
+untouched. **The cursor is what a MOVE changes, never `version`**, which
+every answer bumps. `two-devices.mjs` presses both at once.
 
 ### THE READY LINE IS A LIGHT, NEVER A GATE — `console-ready.js`
 
@@ -2267,8 +2276,7 @@ name, and `LAUNCHERS.cards` builds a `BingoGame`, so **not one rule in
 - **THE HAND IS DEALT SORTED, NEVER SORTED AT RENDER** — `marks[i]` is a
   POSITION. **Its name is its TITLE**, so no payload changed; **red is its own
   colour, never `--bad`**; **no pack file**, so `validateBingoPack()` stands.
-- **`node scripts/card-bingo.mjs` FOUND THE UNPLAYABLE BUG ON ITS FIRST RUN.**
-  **[`docs/bingo.md`](docs/bingo.md)**.
+- **[`docs/bingo.md`](docs/bingo.md)**.
 - **AND A RUNNING ORDER DROPPED IT — sixth sighting.** `kind === 'bingo'` in
   the route, session and Tonight row sent a deck down the quiz branch
   as "a quiz with no rounds", so card bingo then music bingo launched as the
@@ -2341,10 +2349,9 @@ symptoms, all live for any team night and none of them throwing.
   THE TEAM'S SCORE IS FROZEN FOR THE LENGTH OF A QUESTION TOO**: an average
   built from live scores is the `scoreBefore` leak wearing an average.
 - **THE HOST'S PLAYING PANEL LISTS PHONES, because that is what its controls
-  act on.** Built from `leaderboard()`, every row carried a `team:` id and
-  `adjustScore`/`renamePlayer`/`removePlayer` answered `{ok:false}` **in
-  silence**. **The ordinary night's rows are untouched, with a test pinning the
-  field list.**
+  act on** — a `team:` id made every control answer `{ok:false}` in silence.
+  **The ordinary night's rows are untouched, with a test pinning the field
+  list.**
 - **AND THE HOST IS TOLD WHO THE ROOM KNOWS — `whoIsThat()`.** **The handset is
   KEPT beside the team, not folded away** — the tally counts PICKS, so
   deduplicating would leave the names disagreeing with the number above them.
@@ -3574,16 +3581,11 @@ pack is theoretically just an amalgamation of the other three."*
   PACK would be a descriptor that lies about what is in your hand. The bench
   learns `shelfRoundDrag` and benches the round's PACK, which is what its TAP
   already does.
-- **AND THE GUARD WAS THE THING AT FAULT, both times.** `REACH` scrolled the
-  NEAREST scroller and stopped — with a banner up AND a night running the rail
-  gives 110px of a 220px drop and the frame scrolls the rest. **A finger does
-  not stop at the first box**, so it walks out through every `auto`/`scroll`
-  one now, never an `overflow: hidden` one — verified by making the rail
-  unscrollable. And **the one-row rule was gated on a WIDTH while the cost it
-  protects is a PINNED-FRAME cost**: at 960x760 the page scrolls and the
-  owner's bar is ~936px in 960, so it demanded one row where two are right.
-  **Gated on `framed`** — *keep the gate at the CONTAINER's number*. It checks
-  less, deliberately.
+- **AND THE GUARD WAS THE THING AT FAULT, both times.** `REACH` stopped at
+  the nearest scroller; **a finger does not stop at the first box**, so it
+  walks out through every `auto`/`scroll` one, never an `overflow: hidden`
+  one. And **the one-row rule is gated on `framed`, not a width** — *keep the
+  gate at the CONTAINER's number*. It checks less, deliberately.
 
 ### A TAB ID IS NOT A GAME KIND, AND A SHELF IS NOT THE LIBRARY
 
@@ -4187,6 +4189,7 @@ node scripts/every-game.mjs             # every game and round type, end to end
 node scripts/prizes-fuzz.mjs            # every prize count, word and tie
 node scripts/github-down.mjs            # GitHub gone quiet — does a night still run?
 node scripts/ready-light.mjs            # does the launch bar's ready line go green?
+node scripts/two-devices.mjs            # two control views — does a press land once?
 node scripts/gig-build.mjs              # THE MONDAY BUILD: all of the above, one verdict
 ```
 

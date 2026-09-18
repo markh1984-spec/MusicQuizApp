@@ -14,6 +14,7 @@ import {
   esc, node, ServerClock, Live, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights,
   rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote, playsACard, photoVotePanel,
 } from './client.js';
+import { hostCursor } from './host-cursor.js';
 import { paintScheme } from './schemes.js';
 import { bingoPanels, bingoActions } from './host-bingo.js';
 import { djPanels, djActions, djWhere } from './host-dj.js';
@@ -131,8 +132,19 @@ async function act(action, body = {}) {
      * instead — and *a control that reports success it did not have is this
      * repo's commonest fault* has a twin: one stuck on "sending".
      */
-    return await postJson(`/api/host/${action}`, body, { 'X-Host-Key': hostKey });
+    return await postJson(`/api/host/${action}`, { seen: hostCursor(state), ...body }, { 'X-Host-Key': hostKey });
   } catch (err) {
+    /*
+     * ALREADY DONE ON THE OTHER DEVICE. The server hands the fresh view back
+     * with the refusal (`host-cursor.js`), so this screen catches up rather
+     * than reporting a fault — the room saw the move happen once, which is
+     * exactly what was wanted.
+     */
+    if (err.status === 409 && err.data && err.data.stale && err.data.view) {
+      draw(err.data.view);
+      toast('Already done — on your other screen');
+      return undefined;
+    }
     toast(whyRefused(err));
     return undefined;
   }

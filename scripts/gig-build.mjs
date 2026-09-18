@@ -67,6 +67,7 @@ export const GUARDS = [
   { name: 'two-screens',           core: true,  why: 'two outputs, a real account, quiz -> bingo' },
   { name: 'a-word-in-your-ear',    core: true,  why: 'does a message reach one phone and no other?' },
   { name: 'ready-light',           core: true,  why: 'does the launch bar\'s ready line go green, and back?' },
+  { name: 'two-devices',           core: true,  why: 'two control views, one quiz — does a press land once?' },
   // ---- the rest of the app: run with --full
   { name: 'community-bay',         core: false, why: 'does the Community bay still fit the frame?' },
   { name: 'pages-scroll',          core: false, why: 'can a person actually scroll each page?' },

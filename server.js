@@ -106,6 +106,7 @@ import { upcoming } from './public/assets/diary.js';
 import { calendarIcs } from './src/ics.js';
 import { FEATURES, TIERS, TIER_PACKS, tierFor, whyNot, entitlements, packsFor, packFilter, canPlayPack, can, switchedOn, PAYING, PACK_PENCE, TRIAL_DAYS, REFERRAL_BONUS_DAYS } from './public/assets/plans.js';
 import { lobbyGameFor, lobbyGamesFor, ANY_LOBBY_GAME } from './public/assets/lobby-games.js';
+import { hostCursor, MOVES as HOST_MOVES } from './public/assets/host-cursor.js';
 import {
   publishedNights, isPublished, setPublished, readableNight,
   photoDecisions, photoKey, setPhotoDecision, photoPins, setPhotoPin, MAX_PINS,
@@ -1910,7 +1911,14 @@ async function handleGet(req, res, url, route) {
   }
   if (route === '/health') {
     const house = rooms.get(HOUSE);
-    return sendJson(res, 200, { ok: true, game: house.session.kind, phase: house.session.engine.state.phase, rooms: rooms.all().length }), true;
+    // `streams` and `rss` are for `scripts/long-night.mjs`, which watches
+    // both across sixty phones and forty questions: a stream that is not let
+    // go of when a phone leaves, or a heap that only ever grows, is a server
+    // that falls over at half past ten on a busy Thursday.
+    return sendJson(res, 200, {
+      ok: true, game: house.session.kind, phase: house.session.engine.state.phase, rooms: rooms.all().length,
+      streams: hub.count(), rss: process.memoryUsage().rss,
+    }), true;
   }
 
   // ---- static
@@ -8831,6 +8839,19 @@ async function handleWrite(req, res, url, route) {
       return sendJson(res, 200, { ok: true, cleared: n }), true;
     }
 
+    /*
+     * TWO DEVICES, ONE QUIZ — see `host-cursor.js`. A move that names the
+     * cursor it was pressed against is refused when that cursor has already
+     * moved on, with the FRESH view in the reply so the device repaints to
+     * what the other one did. Only when `seen` is sent: every guard, every
+     * fuzz and any older client that does not send it is untouched.
+     */
+    if (typeof body.seen === 'string' && HOST_MOVES.has(action)) {
+      const now = hostCursor(session.hostView());
+      if (body.seen !== now) {
+        return sendJson(res, 409, { ok: false, stale: true, error: 'Already done on another device', view: session.hostView() }), true;
+      }
+    }
     const ok = session.run(action, body);
     if (ok === undefined) return sendJson(res, 404, { error: 'Unknown action: ' + action }), true;
     const view = session.hostView();
