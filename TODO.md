@@ -374,6 +374,16 @@ change; the numbers themselves need nothing.
 ---
 
 
+### 6b. SPLIT `server.js` — waiting for the 21 September deploy to run a week
+
+**Decided 18 September 2026, do it last.** Item 7 of the stability review: a
+9,675-line file is where a "called but never imported" fault hides. **The map
+is in [`docs/server-map.md`](docs/server-map.md)** — families by line range,
+what crosses them, the likely cut. Mechanical by line number like the console
+split. **Not in the same deploy as the other five stability changes**: if it
+breaks something it must be the only thing that changed that week. Needs the
+full `gig-build.mjs` before and after, and a week with no other push after it.
+
 ### 7. ONLINE MODE'S VIDEO — native, on Cloudflare. **Parked, not started**
 
 The switch is built (`state.online`, the In the room / Online control in

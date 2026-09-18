@@ -80,8 +80,17 @@ function paint() {
 function startPolling() {
   if (timer) return;
   const tick = async () => {
-    // Stop when the line has left the page and nothing has rebuilt it.
-    if (!current || !current.isConnected) { latest = null; clearInterval(timer); timer = null; return; }
+    /*
+     * STOP WHEN THE LINE HAS LEFT THE PAGE and nothing has rebuilt it — but
+     * not on the first tick. `readyLine()` hands its node BACK to the caller,
+     * who attaches it, so at the moment this first runs the node is still
+     * detached: the first build checked `isConnected` here, cleared its own
+     * interval before ever asking the server, and the light sat on "checking
+     * the server…" for ever. Found by the screenshot, with every unit test
+     * green — *a test that the payload is right proves nothing about whether
+     * anybody drew it.* `scripts/ready-light.mjs` waits for the green now.
+     */
+    if (current && !current.isConnected && latest !== null) { latest = null; clearInterval(timer); timer = null; return; }
     if (document.visibilityState !== 'visible') return;
     try {
       const res = await fetch(keyed('/api/host/ready'), { cache: 'no-store' });
@@ -92,5 +101,6 @@ function startPolling() {
     paint();
   };
   timer = setInterval(tick, POLL_MS);
-  tick();
+  // After the caller has attached the node, never before.
+  setTimeout(tick, 0);
 }

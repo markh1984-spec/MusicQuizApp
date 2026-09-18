@@ -66,6 +66,7 @@ export const GUARDS = [
   { name: 'console-controls',      core: true,  why: 'and does pressing one do what it says?' },
   { name: 'two-screens',           core: true,  why: 'two outputs, a real account, quiz -> bingo' },
   { name: 'a-word-in-your-ear',    core: true,  why: 'does a message reach one phone and no other?' },
+  { name: 'ready-light',           core: true,  why: 'does the launch bar\'s ready line go green, and back?' },
   // ---- the rest of the app: run with --full
   { name: 'community-bay',         core: false, why: 'does the Community bay still fit the frame?' },
   { name: 'pages-scroll',          core: false, why: 'can a person actually scroll each page?' },

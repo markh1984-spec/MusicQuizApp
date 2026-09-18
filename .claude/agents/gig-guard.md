@@ -35,8 +35,8 @@ node scripts/pub-unchanged.mjs <commit> [--ignore field,field]
 **Before a Monday deploy it is one command instead: `node scripts/gig-build.mjs`**
 — the two above, then every protected-surface guard by name, one verdict
 (SAFE TO DEPLOY / DO NOT DEPLOY), each guard's output in `data/gig-build/`.
-It takes about forty minutes; report its last line and the name and log of
-anything that failed.
+The core set takes about five minutes (`--full` adds the slow ones); report
+its last line and the name and log of anything that failed.
 
 `npm test` says the tests pass. **`pub-unchanged.mjs` says something stronger
 and far more useful**: that the actual bytes a projector and a phone receive,

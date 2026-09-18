@@ -2011,10 +2011,9 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
   body and granted hands anybody Gold for nothing, the pack-id trap wearing a
   price. Validated against `TIERS`.
 - **`accounts.create()` DROPS WHAT IT DOES NOT DESTRUCTURE, SILENTLY.**
-- **A NEW TEST FILE CAN MAKE THE SUITE FLAKY — a different test each run.**
-  **Attribute a flake by stashing INCLUDING UNTRACKED FILES.** **A flaky suite
-  is worse than a slow one**: slow gets skipped, flaky teaches you to ignore
-  red.
+- **A NEW TEST FILE CAN MAKE THE SUITE FLAKY.** **Attribute a flake by
+  stashing INCLUDING UNTRACKED FILES.** **A flaky suite is worse than a slow
+  one**: flaky teaches you to ignore red.
 
 - **A fact is on ACCOUNT, a switch is on SETTINGS, a price is in the SHOP** —
   or Settings becomes a bin.
@@ -2070,7 +2069,9 @@ Hung GitHub behind the real server and drove a night. Four things waited:
 open on THIS room (`/api/host/ready`, on `SUPPORT_QUIET`, counts per room),
 the venue's prizes. **It repeats `noPrizesReason()`'s answer and never its
 decision**; a poll that fails says so and changes nothing. One interval, a
-leaf like `console-warnings.js`.
+leaf like `console-warnings.js`. **Its first tick ran before the node was
+attached and cancelled itself** — every test green, the light never lit.
+`ready-light.mjs` waits for the GREEN, then for it to go off again.
 
 ### A PHOTOGRAPH IS READ FROM MEMORY, THEN DISK, THEN GITHUB
 
@@ -2118,8 +2119,7 @@ metal, the ones above locked; pressing one opens a card naming what it holds.
   shrank the switch alone and the owner's bar ran off a 390px screen. **Not the
   44px touch floor**: a mouse presses this.
 - **BUILT FROM `ladderFor()`, never written out**; **`NOT_BUILT` says "not yet"**.
-- **`.tier-row` WAS ALREADY `owner.js`'S** and won at equal specificity from
-  3,300 lines lower, silently. It is `.rung-row`.
+- **`.tier-row` WAS ALREADY `owner.js`'S**, silently. It is `.rung-row`.
 
 Full reasoning: **[`docs/business.md`](docs/business.md)**.
 
@@ -3983,12 +3983,10 @@ descriptor, the branding, the receipts and the payouts are all per account.
   whenever no provider was set, deployed included, so **anybody could activate an
   account on an address they do not own**. **Loopback, never an env var.**
 - **A BOUGHT PACK GOES IN `account.bought`, NEVER IN `account.packs`** — that
-  field is the owner's OVERRIDE, returned INSTEAD of the tier's scope, so a bought
-  id there takes Bronze's eight starter packs away and keeps winning after an
-  UPGRADE: **paying £20 would hand somebody fewer packs than £10.** `bought` only
-  ADDS; **`packFilter()` is the one place either is consulted.** Its evergreen
-  branch takes the union too, which is **what leaves anything to sell SILVER** —
-  a TOPICAL pack.
+  field is the owner's OVERRIDE, returned INSTEAD of the tier's scope: **paying
+  £20 would hand somebody fewer packs than £10.** `bought` only ADDS;
+  **`packFilter()` is the one place either is consulted.** Its evergreen branch
+  takes the union too — **what leaves anything to sell SILVER**, a TOPICAL pack.
 - **AND A £3 PACK MAY NOT BUY GOOD STANDING.** A purchase arrives as the SAME
   event as a subscription with no tier price, so it read as `started` →
   `active`. **`mode` splits them**, and **no mode at all still reads as a
@@ -4188,6 +4186,7 @@ node scripts/after-a-deploy.mjs         # after a restart, can the host still la
 node scripts/every-game.mjs             # every game and round type, end to end
 node scripts/prizes-fuzz.mjs            # every prize count, word and tie
 node scripts/github-down.mjs            # GitHub gone quiet — does a night still run?
+node scripts/ready-light.mjs            # does the launch bar's ready line go green?
 node scripts/gig-build.mjs              # THE MONDAY BUILD: all of the above, one verdict
 ```
 
