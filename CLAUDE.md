@@ -4185,6 +4185,7 @@ node scripts/bar-staff-camera.mjs       # the camera code — same bucket, and n
 node scripts/props-on-a-photo.mjs       # do the googly eyes go on, on BOTH cameras?
 node scripts/no-prizes-no-launch.mjs    # can a night launch with nobody to pay?
 node scripts/after-a-deploy.mjs         # after a restart, can the host still launch?
+node scripts/every-game.mjs             # every game and round type, end to end
 ```
 
 **The rules these commands run on, and each was learned expensively — the full
@@ -4265,8 +4266,8 @@ mid-quiz and mid-bingo, checking every score, card and mark comes back; and QR
 output decoded with a real scanner across versions 1–10.
 
 **A full software audit was run before handing out a second login — see
-`AUDIT.md`**, which also records what an audit from a container CANNOT tell
-you: real iOS Safari, pub wifi, a projector, and the photo round trip.
+`AUDIT.md`**, which records what a container CANNOT tell you: real iOS Safari,
+pub wifi, a projector, and the photo round trip.
 
 ## The host key rotates on every deploy unless HOST_KEY is set
 
