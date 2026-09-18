@@ -492,6 +492,20 @@ written down as it happens rather than discovered on an invoice.
 
 ---
 
+### 8. THE LAPTOP AS THE FALLBACK SERVER — parked until you say
+
+Item 8 of the stability review, 18 September 2026. The app has no
+dependencies and the projector is already on your laptop, so the laptop could
+run the server on its own hotspot and the venue's wifi and Render would both
+stop being single points of failure. **Parked by you**: *"I'll look at this
+once the others are done. Bear in mind the idea for this software is that I
+want to sell it to QMs and I doubt most will want to go to this sort of
+effort."* Right — for a customer the answer is the platform being reliable,
+which the other seven were. Costs if picked up: a travel router (about £40; a
+laptop hotspot will not hold sixty phones), two to three days, and the real
+problem is two copies of your data — Past gigs, the league and the photos
+live on Render, so a night run on the laptop has to be synced back.
+
 ## Where the rest of this went
 
 **This file is the LIVE list. Everything else moved on 14 August 2026**, so

@@ -1219,3 +1219,38 @@ that does nothing when pressed is worse than the problem it was avoiding.
 **They never expire, by decision.** The card carries the date it was won, so a
 bar can judge a code from October turning up in March. The app does not make
 that call on the venue's behalf.
+
+
+## Every score write goes through one funnel — 18 September 2026
+
+The leaderboard is memoised on the engine until `changed()` runs, and
+`changed()` is the LAST thing a host action does. So any code that writes a
+score and then reads the board in the same action reads the board from before
+the write. That shape had bitten three times — a card key naming one field,
+positions snapshotted off a stale board — and the fourth was `adjustScore()`
+at the final: a host tying two scores in front of the room, the vouchers paid
+off the old board, nobody paid, every test green.
+
+`bumpScore()` and `setScore()` are the only two places `player.score` is
+written, and both drop the cache as the write lands. The session's carried
+roster, which used to poke `p.score` directly across a part boundary, asks
+the engine. `test/score-writes.test.js` reads the engine as text with the
+comments stripped and refuses a third writer; it was verified by putting one
+back. The class is gone rather than the instance.
+
+## Two devices, one quiz — a move carries the cursor it was pressed against
+
+The host drives a night from a phone and from the laptop with the HDMI in
+it. `host.js` has a per-device double-tap guard; it cannot see the other
+device, so Next pressed on both within a second was two questions gone, one
+of them never asked. `public/assets/host-cursor.js` is shared by the control
+view and the server: a cursor is the things a MOVE changes — the phase, which
+question, whether it is revealed, the bingo round and stage, how many tracks
+are called — and deliberately NOT the state version, which every answer bumps
+(a Next after sixty answers is not stale). Every move carries the cursor the
+device was looking at; the server refuses one whose cursor has moved on with
+a 409 that carries the fresh view, and the losing screen repaints to what the
+other one did and says "Already done — on your other screen". A press with no
+cursor is never refused, so every guard, every fuzz and any older client is
+untouched. `scripts/two-devices.mjs` presses both at once, over HTTP and in
+two real control views.

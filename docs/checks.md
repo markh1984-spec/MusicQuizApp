@@ -232,3 +232,16 @@ fails the moment a named guard stops existing.
   now reports beside `streams`), and that every stream is let go of when the
   phones leave. First run: 97MB with the room in, 125MB at the end of forty
   questions, all sixty streams released within a quarter of a second.
+
+## The ready line is checked by watching it go green — `scripts/ready-light.mjs`
+
+The first build of the launch bar's ready line never polled: its first tick
+ran before the caller had attached the node, saw it detached, and cleared its
+own interval. Every unit test was green and the route answered when asked
+directly; the screenshot agent caught it because the two captures were
+byte-identical. The guard opens the real console, watches the line say not
+ready with no projector open, opens the projector on the room's own code,
+waits for "Ready for tonight" in green, closes the projector and waits for it
+to go off again, then rebuilds the bar to prove a fresh line still polls.
+Sixth sighting of *a test that the payload is right proves nothing about
+whether anybody drew it*.

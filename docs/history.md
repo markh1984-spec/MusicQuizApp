@@ -10,6 +10,45 @@ unpicked. Read the relevant part before changing anything here.
 
 ## Current state
 
+**Live as of 18 September 2026 — the stability week, in two deploys:**
+
+Set off by the gig on 17 September, lost to KaraFun because the room a deploy
+leaves behind blocked every launch. The host's brief afterwards: *"once it's
+running I want it to be flawless and never fail in the night"* — and *"I'm
+not doing anything till next Thursday now but everything must be perfect by
+then."* Eight structural changes were proposed with their costs; he declined
+one and parked one:
+
+- **Declined: Auto-Deploy off and a Render disk** (*"don't see the need for
+  1 at all"*). So a push is still a deploy that wipes `data/`, and the
+  discipline is the release train instead.
+- **Parked: the laptop as the server** — he will look once the rest is done,
+  and doubts a quizmaster he sells to would go to that effort. Right: the
+  answer for a customer is the platform being reliable, which is the other
+  seven.
+
+What went live, all guarded:
+
+- **Prizes** (`prizes-fuzz.mjs`): a bingo round's prize is the NEXT on the
+  table, not the stage's slot; a score fixed at the final moves the drinks;
+  the draw takes the LAST prize on the table (the code always did — the
+  notes had said third).
+- **The Monday build** (`gig-build.mjs`): the suite, `pub-unchanged` against
+  what is LIVE, and every protected-surface guard by name, one verdict in
+  about six minutes. Nothing is pushed without it.
+- **GitHub off the hot path** (`github-down.mjs`): every call has a deadline,
+  the boot restore runs together and retries, a request waits three seconds
+  for its backup and no more, the console's first load costs one deadline.
+- **The score-write funnel**, **the ready line** (a light, never a gate — and
+  its first build never polled, caught by the screenshot), **two devices, one
+  quiz** (a move carries its cursor), **the wifi-blip and long-night guards**.
+- **`server.js` is a shell** — forty modules in `src/http/`, cut on line
+  numbers, `test/server-split.test.js` holding it there. Done the same day
+  it was mapped because the window to Thursday was open.
+
+Both deploys were confirmed live by `/health` answering with the new
+`streams` and `rss` fields.
+
 **Live as of 25 August 2026 — team names are filtered at the door:**
 
 Reported off a live league table with a racial slur ninth in it: *"I don't

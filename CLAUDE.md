@@ -546,6 +546,9 @@ opening a second file.
 - **The name stacks — the possessive above, the app underlining it** — **it splits on the APP NAME, never on the last word.**
 - **One type ladder, ten steps, named for the JOB**
 - **ONE MENU, built in one place, on every page a quizmaster drives**
+- **A push goes out on a Monday, after `gig-build.mjs` prints SAFE TO DEPLOY, and on no other day**
+- **The draw takes the LAST prize on the table**
+- **Auto-Deploy off and a Render disk — declined, 18 September 2026**
 
 ## The GUI rules — what a control looks like is decided by what it DOES
 
@@ -2915,17 +2918,12 @@ owner page, the editor, Past gigs, invoices, adverts, the shop, chat, teams,
 online mode, the account work. None is reachable from a pub night: breaking one
 costs a Monday rather than an evening.
 
-**TWO GUARDS COVER EXACTLY THAT PATH, both before anything lands on a gig day:**
-
-- **`node scripts/pub-unchanged.mjs <commit> --ignore <new fields>`** — every
-  payload a projector and a phone receive, at every phase of every pack, against
-  a commit you trust, plus one night over HTTP on both apps.
-- **Press Launch in a real browser** and check a game is actually running
-  afterwards — for a quiz AND for a bingo pack, which take different fields. The
-  engine is rarely the hazard; **the console's launch form is**, and no unit test
-  presses a button.
-
-The second gets skipped and is the one that would stop a night.
+**ONE COMMAND COVERS THAT PATH — `node scripts/gig-build.mjs`, before
+anything goes live:** the suite, **`pub-unchanged.mjs` against what is LIVE**
+(every payload a projector and a phone receive, at every phase of every pack),
+and every guard that **presses Launch in a real browser** and drives a night —
+the engine is rarely the hazard, **the console's launch form is**, and no unit
+test presses a button. Named in the script, never counted.
 
 **AND ON 15 AUGUST 2026 IT WAS SKIPPED, AND LAUNCH WENT LIVE BROKEN** — a
 function never imported, 1,150 tests green because none executed the file.

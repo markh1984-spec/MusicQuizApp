@@ -593,3 +593,45 @@ with no Subscribe button. Worth remembering if anybody ever reverts that.
 Verified by putting four faults back: the missing mark (re-sends on every boot),
 a sweep that stamps and never sends, a group seat warned about its parent's
 trial, and the notice being burned with no provider configured.
+
+
+### GitHub is off the hot path — 18 September 2026
+
+Every backup, the join-code book, the photographs and the accounts restore
+go through the GitHub API, on 5,000 calls an hour shared across all of them.
+The rule was that nothing on the protected surface waits on it, and it was
+true by inspection; `scripts/github-down.mjs` hung the API behind the real
+server and found four places it was not. The design that came out:
+
+- **Every call carries a deadline** — `GITHUB_READ_TIMEOUT_MS` (8s) for a
+  read, `GITHUB_TIMEOUT_MS` (20s) for a write, as `AbortSignal.timeout()` in
+  the one `api()` function in `src/github.js`. `fetch()` has none of its
+  own, and `restoreFromBackup()` runs before `server.listen()`, so a GitHub
+  that accepted the connection and never answered was a deploy that never
+  came up. A timeout comes out of `fetch()` like any other failure, so every
+  existing `try/catch` already turns it into `{ ok: false }`.
+- **The boot restore reads together and retries the two a night cannot run
+  without.** Nine reads in a row was nine deadlines. They go out at once now;
+  the accounts book and the join codes are read through `tryGetFile()`,
+  which keeps "could not look" apart from "nothing there", and a failed read
+  schedules another go a minute later for as long as it keeps failing. Every
+  block only ever fills an EMPTY store, so a retry cannot write a backup over
+  tonight's data.
+- **A request waits `BACKUP_WAIT_MS` (3s) for its backup and answers
+  `ok: false`.** Sign-in, every invoice write and publishing a night awaited
+  their backup, each for a reason; none meant "hold the browser for the whole
+  deadline if GitHub has gone quiet". `within()` in `src/http/helpers.js`
+  races the write against the budget; the write still finishes in the
+  background and still logs. On a good day GitHub answers in well under a
+  second and nothing changes.
+- **The console's first request after a deploy restores four files at once,
+  with the access check beside them**, and a failed restore or access check
+  is remembered for a minute (`restoreOnce`'s backoff, `backupStatus`'s
+  shorter cache for a bad answer) rather than retried on every load — never
+  latched as "empty", never paid for per request either.
+
+Two things the guard turned up that are worth knowing on their own: sign-in
+was awaiting a GitHub write before answering, so on a bad day at GitHub it
+took twenty seconds ten minutes before a gig; and a failed accounts restore
+at boot was never retried, so a deploy during an outage left nobody able to
+sign in until the next restart.
