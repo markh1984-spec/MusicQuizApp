@@ -288,3 +288,72 @@ that was lost on 17 September.
 Render settings worth a glance the same day: `HOST_KEY` (or `?key=` bookmarks
 die per deploy), `TZ=Europe/London` (belt and braces — the server runs in UTC),
 and that the uptime monitor above exists.
+
+---
+
+## THE FLAKE THAT NAMED THE WRONG FEATURE — 18 September 2026
+
+`test/gallery-publish-loop.test.js` → *"SIGNING IN IS ENOUGH — the drafts show
+without a host key anywhere"* failed roughly one run in three, and every time
+it did, it pointed at the gallery. The gallery was fine. **Every assertion in
+the test had already passed**; it fell over in its own `finally`:
+
+```
+error: "ENOTEMPTY: directory not empty, rmdir '/tmp/publoop-qiohMP'"
+  at withApp (test/gallery-publish-loop.test.js:71:5)  → rmSync
+```
+
+### What it actually was
+
+`child.kill()` **sends a signal and waits for nothing**. The helper killed the
+server and deleted its `DATA_DIR` on the very next line, while the process was
+still alive and still flushing — `state.json`, the join-code book, the photo
+disk cache. `rmSync` walks a tree and then `rmdir`s it, so a file landing
+behind the walk turns the whole teardown into a throw.
+
+Two things made it expensive out of proportion to the one-line cause:
+
+- **It named a working feature.** The failure reads as *the drafts do not show*,
+  so the reflex is to go and read `gallery.js`, `published.json`, the room
+  resolution — and the answer is not in any of them. That is the most costly
+  shape a flake can have.
+- **It only bit under `gig-build`.** Run from a terminal it almost never lost
+  the race: 9 clean runs in a row, including four at `--concurrency=16` and two
+  with browser guards loading the machine. Spawned the way the release script
+  spawns it — from node, `stdin: 'ignore'`, both streams through pipes — it lost
+  the race on the FIRST attempt. So the thing that caught it was reproducing the
+  **invocation**, not the load. Twice it printed **DO NOT DEPLOY** over a suite
+  that was green.
+
+### The fix, and the second fault it uncovered
+
+**Wait for the process to be gone, then delete** — `once(child, 'exit')`, with a
+two-second backstop so a wedged server surfaces as itself rather than as a
+runner timeout with no stack. `rmSync` also takes `maxRetries` now, as belt and
+braces rather than as the fix.
+
+`restart()` had the same race pointing the other way: kill, sleep 300ms, bind
+the same port again. A server slower than that to release its socket meant the
+replacement never came up, and the test then failed on whatever it asked first.
+It waits too.
+
+**And the port was guessed**, which this file already forbids — *a guessed port
+fails to bind silently, so every measurement is then about somebody else's
+process.* Both copies picked one from a small range at MODULE level, so every
+test in a file shared it and two files could collide. `freePort()` has existed
+for months and is asked per run.
+
+### One helper, because there were two copies
+
+`gallery-publish-loop.test.js` and `photo-rotate.test.js` each carried a private
+`withApp()`. They had drifted only in their temp-directory prefixes and their
+port ranges — and they shared **both** faults. That is this repo's oldest lesson
+wearing another hat: *two copies is one that gets fixed.* They both call
+`test/helpers/stub-app.mjs` now, and neither test body changed.
+
+### Verified by putting it back
+
+Twelve consecutive clean runs through the gig-build invocation. Then the `await`
+was removed from `stopped()` and the same twelve-run hunt failed on run seven.
+A fix for a flake that is not demonstrated to fail again without it is a
+coincidence, not a fix.

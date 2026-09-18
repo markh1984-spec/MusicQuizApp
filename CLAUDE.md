@@ -1002,15 +1002,13 @@ quiz… I click community and I've got the QR codes."*
   PHONES being offered*. **NO CODE AT ALL IS AN ERROR, not the house room** —
   this link is always HANDED over. **`whoIs()` READS THE HOST KEY BEFORE THE
   COOKIE**, so `?key=` plus a cookie is the HOUSE room, which has no code.
-- **AND A WAY IN FROM THE CAMERA ROLL, BESIDE THE SHUTTER** — *"I sometimes
-  take photos from my phone out of habit and I want a place to upload from my
-  photos app if I forgot to use the QR code."* **`capture="environment"` IS A
-  ONE-WAY DOOR**: an input carrying it never offers the library, so a photo
-  taken on the ordinary Camera app could not be sent at all. **Not the
-  turned-down second button, which was INSIDE the sheet.** **ONE HANDLER, the
-  SAME sheet**, or a picked photo skips the props or is sized twice. **One at a
-  time** — the props are per photograph; bulk is `myPhotos()`, against a NAMED
-  past night.
+- **AND A WAY IN FROM THE CAMERA ROLL, BESIDE THE SHUTTER.**
+  **`capture="environment"` IS A ONE-WAY DOOR**: an input carrying it never
+  offers the library, so a photo taken on the ordinary Camera app could not be
+  sent at all. **Not the turned-down second button, which was INSIDE the
+  sheet.** **ONE HANDLER, the SAME sheet**, or a picked photo skips the props
+  or is sized twice. **One at a time** — the props are per photograph; bulk is
+  `myPhotos()`, against a NAMED past night.
 - **NO SERVICE WORKER, EVER** — every push is a deploy, and a cached page is a
   control view running last week's code in front of a room.
 - **`snap` WENT IN `RESERVED` TOO** — that list has now paid three times.
@@ -1808,12 +1806,13 @@ quizzing."* Four tabs: **Quiz league**, **Photos**, **Quiz requests**, and
   gigs a photo is EVIDENCE; on Community it is the room. **The CODE is not
   duplicated** — `nightPhotos()`.
 - **AND *ADD YOUR OWN PHOTOS* IS IN THE BAY HEAD — `console-my-photos.js`, a
-  LEAF.** It was in the list UNDERNEATH, a different region from the
-  photographs it adds to. **A STATED EXCEPTION to *the bottom is controls, the
-  top displays the thing*** — the rail lamp's, kept honest because what it adds
-  lands in the bay below. **ONE control beside the ONE link; a second starts a
-  collection.** **MOVED, never copied** — `community-bay.mjs` asserts one.
-  **`wallShots` did not come with it**; the caller passes `onAdded`.
+  LEAF.** It was in the list UNDERNEATH, a different region from the photographs
+  it adds to. **A STATED EXCEPTION to *the bottom is controls, the top displays
+  the thing*** — the rail lamp's, kept honest because what it adds lands in the
+  bay below. **ONE control beside the ONE link.** **MOVED, never copied**;
+  `community-bay.mjs` asserts one. **`wallShots` did not come with it** — the
+  caller passes `onAdded`. **PRESENT AND INERT ON THE WALL**, the view this tab
+  OPENS on, **the reason ON it**.
 - **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT** — *"what the room asked
   for"* MOVED off the Music Quiz tab rather than being copied.
 - **`asksPanel({ whenEmpty })` — the same panel answers two pages**, so the
@@ -2137,35 +2136,34 @@ first fifty people to open a gallery after one each spent a GitHub call against
 
 ### THE PHOTOGRAPHS LIVE IN AN OBJECT STORE NOW — and a delete is finally a delete
 
-`src/r2.js`, the `which === 'photos'` delegation at the top of `src/github.js`,
-`scripts/photos-to-r2.mjs`, `node scripts/photos-in-a-bucket.mjs`. **A deleted
-photo leaves the repo but NOT git history** is a rule in this file and it is the
-wrong promise for pictures of the public: the bin cleared every screen and left
-the bytes for ever, sixty copies of one joke could never be reclaimed, and the
-repository could only grow.
+`src/r2.js`, the `which === 'photos'` delegation in `src/github.js`,
+`scripts/photos-to-r2.mjs`, `photos-in-a-bucket.mjs`. **A deleted
+photo leaves the repo but NOT git history** is a rule in this file and the wrong
+promise for pictures of the public: the bin cleared every screen and left the
+bytes for ever, so the repository could only grow.
 
 - **IT IS S3's API, NOT A SUPPLIER.** Ordinary REST plus SigV4, so it runs on
   R2, B2, MinIO or Amazon by changing one endpoint. **No file names a
   supplier**, and **no dependency**: SigV4 is HMAC-SHA256.
 - **INERT WITHOUT THE FOUR VARIABLES, AND THE SWAP IS AT ONE CHOKE POINT** —
   `github.js` delegates its photo calls, so **not one of the twenty call sites
-  changed** and the return shapes are identical. **`{ok:false}` is not empty**,
-  or a blank gallery goes in front of a room and caches itself.
+  changed** and the shapes are identical. **`{ok:false}` is not empty**, or a
+  blank gallery goes in front of a room and caches itself.
 - **READS FALL BACK TO GITHUB; WRITES DO NOT, AND LISTINGS ARE UNIONED** —
   *the archives are UNIONED, never swapped*, so the migration never has to run
   and a night filed in both places is ONE night. **A fallback happens on a MISS, never on a FAILURE**, or a failing
   store pushes its whole read load back onto the limit it exists to escape.
-- **THE BIN REACHES BOTH WHILE BOTH EXIST**, or a deleted photograph comes
-  back the next time the store misses and the read falls through.
-- **THE SCRIPT IS FOR DELETING THE REPOSITORY AFTERWARDS, AND THAT IS THE WHOLE
-  PRIZE** — copying changes nothing until the old repo is GONE. It reads every
-  byte back and **leaves the repository untouched**; a human deletes it.
+- **THE BIN REACHES BOTH WHILE BOTH EXIST**, or a deleted photograph comes back
+  when the store misses and the read falls through.
+- **THE SCRIPT IS FOR DELETING THE REPOSITORY AFTERWARDS — THE WHOLE PRIZE.**
+  Copying changes nothing until the old repo is GONE. It reads every byte back
+  and **leaves the repository untouched**; a human deletes it.
 - **RFC 3986, NOT `encodeURIComponent`** — they differ on `! ' ( ) *` and S3
-  signs ITS spelling of the path, so one character is a 403 that reads exactly
-  like a bad key.
-- **THE SIGNATURE IS NOT PROVEN BY THE SUITE** — no test here holds keys and
-  none ever should. **`checkAccess()` WRITES and removes**: a key that can list
-  but not put reads as a working one. The migration runs it first.
+  signs ITS spelling of the path, so one character is a 403 reading as a bad
+  key.
+- **THE SIGNATURE IS NOT PROVEN BY THE SUITE** — no test holds keys and none
+  should. **`checkAccess()` WRITES and removes**: a key that can list but not
+  put reads as a working one.
 
 ### A RUDE PHOTO IS FLAGGED FOR REVIEW, NEVER DELETED — `src/moderation.js`
 
@@ -2765,13 +2763,11 @@ costs.
   load-bearing, an 18px dot gets a 44px hit area, and **a ruling that only
   restates the DEFAULT is CLEARED, not stored.**
 - **A STAR MEANS PUBLIC — starring PUBLISHES, hiding UNSTARS**, in the two
-  writers sharing `published.json`: a starred photo the page would never show
-  was present, lit and ignored. **One direction only** — un-starring never
-  hides. **The BROWSER only keeps up.** `star-means-public.mjs` presses both.
+  writers sharing `published.json`: a starred photo the page would never show was
+  present, lit and ignored. **One direction only** — un-starring never hides.
 
-### THE SHOWCASE IS THE SOCIALS POST — `insta-caption.js`, and the app never sends it
+### THE SHOWCASE IS THE SOCIALS POST — `insta-caption.js`, and nothing is sent
 
-*"Use the showcase photos as the photos I post to Instagram."*
 `postKitInto()`/`postedInto()` in `console-photo-export.js`, `posted` in
 `published.json`, `POST /api/past-gigs/posted`.
 
@@ -2779,21 +2775,20 @@ costs.
   publishing API for a personal account, and *do not build a send that skips
   the reading* settles it anyway. **The app prepares, the human reads, the
   human posts** — `reply-draft.js`'s shape, third time.
-- **ONE PRESS DOES BOTH HALVES** — the caption to the clipboard and the three
-  squares to Downloads, which drag into instagram.com as a carousel. **The
-  clipboard goes FIRST, inside the gesture**; a refused one selects the text
-  and the photos still go.
+- **ONE PRESS DOES BOTH HALVES** — caption to the clipboard, three squares to
+  Downloads, dragged into instagram.com as a carousel. **The clipboard goes
+  FIRST, inside the gesture**; a refused one selects the text and the photos go
+  anyway.
 - **NOTHING NEW IS COLLECTED** — venue, headcount (**the MAX across the games,
-  never the sum**), the next date from `upcoming()`, and the address **passed
-  IN**: `console-gigs.js` imports the export module, so building it there too
-  is a link that 404s in one place.
-- **SILENCE WHERE THERE IS NOTHING TRUE TO SAY**, the comeback band's rule.
+  never the sum**), the next date from `upcoming()`, the address **passed IN**
+  (`console-gigs.js` imports the export module). **SILENCE WHERE THERE IS
+  NOTHING TRUE TO SAY.**
 - **THE WINNING TEAM IS DELIBERATELY NOT IN THE CAPTION** — a public naming
-  they never agreed to, and `clean-names.js` is on the SERVER by design.
-  **Do not add it without masking it there first.**
+  they never agreed to, and `clean-names.js` is on the SERVER. **Do not add it
+  without masking it there first.**
 - **`posted` IS A MARK, NEVER A GATE** — nothing refuses anything; the rail
-  just says what is outstanding, so the pile shrinks on its own. **A FOURTH
-  HALF OF `published.json`, and every writer carries it.**
+  says what is outstanding, so the pile shrinks on its own. **A FOURTH HALF OF
+  `published.json`, and every writer carries it.**
 - **THE PUBLISH LAMP ASKS FIRST, NAMES THE NIGHT AND THE CONSEQUENCE, AND
   SAYING NO CHANGES NOTHING.** **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW
   MANY THERE ARE.**
@@ -4354,6 +4349,12 @@ account is in [`docs/checks.md`](docs/checks.md):**
   DOCUMENTED.** Deleting the `/api/past-gigs` gate and leaving a comment saying
   `FEATURES.PAST_GIGS` kept `gates.test.js` 22/22. Every such search goes through
   `withoutComments()`, and the claims that matter are FIRED too.
+- **`kill()` SENDS A SIGNAL AND WAITS FOR NOTHING — `test/helpers/stub-app.mjs`.**
+  Two files killed the app and deleted its `DATA_DIR` on the NEXT LINE, still
+  flushing: **ENOTEMPTY out of the `finally`, every assertion having passed**,
+  naming a feature that worked. **Only bit under `gig-build`**, printing DO NOT
+  DEPLOY over a green suite. **Wait for `exit`, then delete**; the restart waits
+  too. **ONE helper — two copies shared both faults, the other a GUESSED PORT.**
 - **EVERY GUARD AND TEST THAT SPAWNS THE APP GOES THROUGH THE HELPERS —
   `scripts/helpers/live-app.mjs`, `test/helpers/live-server.mjs`.** A guessed
   port fails to bind SILENTLY, so every measurement is then about somebody

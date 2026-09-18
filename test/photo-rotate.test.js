@@ -32,46 +32,22 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { withStubbedApp } from './helpers/stub-app.mjs';
+
+/*
+ * THE SHARED HELPER, named for this file's temp directories so `/tmp` still
+ * says which test left one behind. The copy that used to live here guessed a
+ * port and deleted the data directory while the server was still writing to
+ * it — see `stub-app.mjs`, which is where both faults are now fixed once.
+ */
+const withApp = (run) => withStubbedApp(run, { prefix: 'rotate' });
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const STUB = join(ROOT, 'test', 'helpers', 'photo-repo-stub.mjs');
 const NIGHT = '2026-08-20';
 const PASSWORD = 'a longer pass phrase';
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** A port of its own per run, so two of these cannot half-connect. */
-const PORT = 49600 + Math.floor(Math.random() * 300);
-
-async function withApp(run) {
-  const data = mkdtempSync(join(tmpdir(), 'rotate-'));
-  const repo = mkdtempSync(join(tmpdir(), 'rotate-gh-'));
-  const env = {
-    ...process.env,
-    PORT: String(PORT), HOST_KEY: 'not-used-here', DATA_DIR: data,
-    GH_STUB_DIR: repo, PHOTO_REPO: 'someone/photos', PHOTO_TOKEN: 'stub',
-  };
-  let server = spawn(process.execPath, ['--import', STUB, 'server.js'],
-    { cwd: ROOT, env, stdio: 'ignore' });
-  const base = `http://127.0.0.1:${PORT}`;
-  const up = async () => {
-    for (let i = 0; i < 60; i += 1) {
-      try { await fetch(base); return; } catch { await wait(200); }
-    }
-    throw new Error('the server never came up');
-  };
-  const restart = async () => {
-    server.kill(); await wait(300);
-    server = spawn(process.execPath, ['--import', STUB, 'server.js'], { cwd: ROOT, env, stdio: 'ignore' });
-    await up();
-  };
-  try {
-    await up();
-    await run({ base, data, repo, restart });
-  } finally {
-    server.kill();
-    rmSync(data, { recursive: true, force: true });
-    rmSync(repo, { recursive: true, force: true });
-  }
-}
 
 const post = (base, path, body, cookie = '') => fetch(`${base}${path}`, {
   method: 'POST',

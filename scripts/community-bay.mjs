@@ -523,6 +523,31 @@ try {
     await page.goto(`${BASE}/console?key=${KEY}&door=community&tab=photos`, { waitUntil: 'load' });
     await page.addStyleTag({ content: '.backup-warn, main > .panel.warn { display: none !important; }' });
     await page.waitForTimeout(2200);
+    /*
+     * THE WALL IS WHAT THIS TAB OPENS ON, and it is where the control was
+     * MISSING — reported as a screenshot of this exact view with *"where is
+     * it? couldn't find it?"* on it. **Present and inert, never absent**: the
+     * button keeps its place and says what it wants, exactly as Launch does.
+     */
+    const onWall = await page.evaluate(() => {
+      const el = document.querySelector('.bay-head .mine-pick.is-head');
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return {
+        words: el.textContent.trim(),
+        off: el.classList.contains('is-off'),
+        live: Boolean(el.querySelector('input[type="file"]')),
+        seen: r.width > 0 && r.height > 0,
+      };
+    });
+    check(`${label}: the wall carries the control too, not just an open night`,
+      Boolean(onWall && onWall.seen), JSON.stringify(onWall));
+    if (onWall) {
+      check(`${label}: and it is INERT there, with no file picker behind it`,
+        onWall.off && !onWall.live, JSON.stringify(onWall));
+      check(`${label}: the reason is ON the control`, /pick a night/i.test(onWall.words), onWall.words);
+    }
+
     await page.locator('.tabbody .venue-top').first().click();
     await page.waitForTimeout(500);
     await page.locator('.tabbody .photo-night-top').first().click();

@@ -11437,6 +11437,21 @@ body.landing {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
 }
 .mine-pick.is-head:focus-within { outline: 2px solid var(--hot); outline-offset: 2px; }
+/* HOLLOW, SAYING WHAT IT WANTS — Launch's own treatment for a control that is
+   present and inert. It keeps the SHAPE and the position, which is the whole
+   point of not letting it disappear, and drops the face and the lit edge so
+   nothing about it says "press me". */
+.mine-pick.is-head.is-off {
+  cursor: default; pointer-events: none;
+  /* The generic `.mine-pick.is-off` above dims to 0.6, which is right for a
+     control gone temporarily busy and wrong for one whose whole job here is
+     to be FOUND. The off-ness is said in words and in the dashed edge. */
+  opacity: 1;
+  background: none;
+  border: 1px dashed var(--panel-line);
+  color: var(--ink-dim);
+  font-weight: 700;
+}
 @media (prefers-reduced-motion: reduce) {
   .mine-pick.is-head { transition: none; }
   .mine-pick.is-head:hover, .mine-pick.is-head:active { transform: none; }

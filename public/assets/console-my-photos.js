@@ -14,7 +14,7 @@
  * a second door would have a different thing to forget.
  */
 
-import { node } from './client.js';
+import { node, esc } from './client.js';
 import { shrinkPhoto } from './filters.js';
 import { keyed } from './console.js';
 
@@ -69,7 +69,28 @@ import { keyed } from './console.js';
  * its own progress in its label, because a separate status line in a baseline
  * flex row would drop the head onto two lines the moment it said anything.
  */
-export function myPhotos(night, { compact = false, onAdded = () => {} } = {}) {
+export function myPhotos(night, { compact = false, onAdded = () => {}, why = '' } = {}) {
+  /*
+   * **PRESENT AND INERT, NEVER ABSENT** — the rule this app already sets for
+   * Launch and for *Keep this as a show*, both of which were built appearing
+   * and disappearing and both of which were reported as clunky in the same
+   * words: *a control that comes and goes is one you cannot learn the position
+   * of.*
+   *
+   * It was missed here, and the report was the plainest kind — a screenshot of
+   * the wall with *"where is it? couldn't find it?"* on it. The wall is what
+   * this tab OPENS on, so the first thing anybody sees is the one view with no
+   * control in it, and the way to make it appear is to pick a night in a rail
+   * that gives no hint it is the way in.
+   *
+   * So the head carries the button either way, and **the reason it is off goes
+   * ON it** rather than floating beside it — the other half of the same rule.
+   */
+  if (why) {
+    const off = node(`<span class="mine-pick is-head is-off" aria-disabled="true"
+      title="${esc(why)}">${esc(why)}</span>`);
+    return off;
+  }
   const wrap = compact
     ? node(`
       <label class="mine-pick is-head">

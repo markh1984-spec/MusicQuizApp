@@ -602,7 +602,10 @@ function photoWall() {
     loadWall().then(draw).catch(() => draw([]));
   }
   el.appendChild(bayColumns(rail(''), [
-    bayHead('The wall', `The last ${WALL_MAX} pictures the rooms sent.`), body,
+    bayHead('The wall', `The last ${WALL_MAX} pictures the rooms sent.`,
+      // The wall is what this tab opens on, so it is where the control has to
+      // be findable — hollow, saying what it wants, exactly as Launch does.
+      myPhotos(null, { compact: true, why: 'Add photos — pick a night first' })), body,
   ]));
   return el;
 }
