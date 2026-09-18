@@ -1,5 +1,5 @@
 /**
- * CAN A LANDLORD ACTUALLY SAVE A PHOTOGRAPH, AND IS THE QUIZMASTER'S NAME ON IT?
+ * CAN A MATE BE SENT A PHOTOGRAPH — AND IS THE QUIZMASTER'S NAME IN THE BYTES?
  *
  * ---
  *
@@ -16,15 +16,21 @@
  * picture had not finished arriving, or the mark is drawn off the bottom edge.
  * **None of that throws and none of it shows in a diff.**
  *
- * So this presses the real control on a real published gallery and then looks
- * at the BYTES that came out:
+ * The public page's control is SHARE now — *"I want share this photo but no
+ * save option"* — and the watermarked download is the quizmaster's own, on the
+ * console. Both halves are still checked here, because this is where a real
+ * browser and a real published gallery already are:
  *
  *   - the night is seeded, published, and opened in a real browser;
- *   - the Save is found, and a finger is put on it (`elementFromPoint`);
- *   - it is pressed, and a file has to actually leave;
- *   - the file is decoded again and the bottom-right corner SAMPLED — the
- *     source is a flat bright colour, so the dark plate either landed on it or
- *     the watermark is not there;
+ *   - the Share is found, and a finger is put on it (`elementFromPoint`);
+ *   - it is pressed with the sheet stubbed, and the LINK it was handed is read:
+ *     the night, the photograph, and no host key on it;
+ *   - a fresh browser with no cookie follows that link and has to land on the
+ *     same photograph, enlarged — which is the whole of "links back to the
+ *     site";
+ *   - and `framedBlob()` is called directly, its bottom-right corner SAMPLED —
+ *     the source is a flat bright colour, so the dark plate either landed on it
+ *     or the watermark is not there;
  *   - and the photograph itself has to survive, so the middle is sampled too.
  *
  * The source JPEG is made by the browser rather than checked in: the fixtures
@@ -35,6 +41,7 @@
  */
 
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
@@ -161,48 +168,38 @@ try {
   check('a visitor with no cookie sees the published photographs', shots === 3, `${shots} on the wall`);
 
   await page.locator('.gal-shot').first().click();
-  await page.waitForSelector('.gal-save', { timeout: 5000 }).catch(() => {});
+  await page.waitForSelector('.gal-share', { timeout: 5000 }).catch(() => {});
 
   /*
-   * PUT A FINGER ON IT. In the document, has a size and can be pressed are
-   * three different questions, and this control sits inside a full-screen
-   * button whose only job is to close — so "painted over" is the exact way it
-   * would fail.
+   * AND THERE IS NO SAVE ON THIS PAGE — *"I want share this photo but no save
+   * option."* A removal gets an assertion like anything else: the pill is
+   * styled for the CONSOLE's own copy, so it would draw perfectly if somebody
+   * put the markup back while tidying.
    */
-  const reachable = await page.evaluate(() => {
-    const el = document.querySelector('.gal-save');
-    if (!el) return 'not drawn';
-    const r = el.getBoundingClientRect();
-    if (!r.width || !r.height) return 'no size';
-    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-    return el.contains(hit) || hit === el ? 'yes' : `covered by ${hit && hit.className}`;
-  });
-  check('the Save can actually be pressed', reachable === 'yes', reachable);
+  check('the public picture offers no save', await page.locator('.gal-save').count() === 0,
+    'a Save came back onto the public gallery');
 
-  const waitDownload = page.waitForEvent('download', { timeout: 20000 });
-  await page.locator('.gal-save').click();
-
-  let saved = null;
-  let named = '';
-  try {
-    const dl = await waitDownload;
-    named = dl.suggestedFilename();
-    saved = await dl.path();
-  } catch { /* reported below */ }
-  check('pressing it actually sends a file', Boolean(saved), named || 'nothing left the page');
-
-  check('the overlay did not shut under the press',
-    await page.locator('.gal-big').count() === 1,
-    'the photograph closed instead of saving');
-
-  check('the file is named for the pub and the night',
-    /station-tap/.test(named) && /2026|august/i.test(named), named);
-
-  /* --------------------------------- and the mark is really in the bytes */
-
-  if (saved) {
-    const out = `data:image/jpeg;base64,${readFileSync(saved).toString('base64')}`;
-    const seen = await page.evaluate(async (src) => {
+  /* ------------- and the watermark composite still puts the name in the bytes
+   *
+   * `photo-save.js` is the console's now, not this page's — but this is where
+   * the pixel-level assertions live, and a real browser is what they need. So
+   * the module is called DIRECTLY in the page rather than through a control
+   * that is no longer there: the bug this guards against (the mic's `src` set
+   * and `complete` checked in one breath, so the logo never landed for anybody)
+   * is in the compositing, not in the button.
+   */
+  {
+    const seen = await page.evaluate(async () => {
+      const mod = await import('/assets/photo-save.js');
+      const blob = await mod.framedBlob(
+        document.querySelector('.gal-big-pic > .gal-photo').src,
+        { words: "Mark's Quizporium" },
+      );
+      const src = await new Promise((res) => {
+        const fr = new FileReader();
+        fr.onload = () => res(fr.result);
+        fr.readAsDataURL(blob);
+      });
       const img = new Image();
       await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = src; });
       const c = document.createElement('canvas');
@@ -259,11 +256,11 @@ try {
         middleKept: !darkened(at(Math.round(c.width / 2), Math.round(c.height / 3))),
         topLeftClean: !darkened(at(40, 40)),
       };
-    }, out);
+    });
 
-    check('the saved file is the photograph at its own size',
+    check('the composite is the photograph at its own size',
       seen.w === 900 && seen.h === 1200, `${seen.w}x${seen.h}`);
-    check('the mark is on the bottom-right of the saved file', seen.markedCorner,
+    check('the mark is on the bottom-right of it', seen.markedCorner,
       'the corner is still the bare photograph');
     check('and the LOGO is on it, not only the words', seen.logoDrawn,
       'the plate and the name landed and the mark did not');
@@ -271,12 +268,113 @@ try {
       'the picture came back dark — the canvas drew the mark and lost the photo');
   }
 
+  /* ---------------------------------------------------------------- SHARE
+   *
+   * *"So instead of saving they can share to their mates and it links back to
+   * the site."* The link is the feature, so it is the link that is checked:
+   * what the share sheet is actually HANDED, that it carries no key, and that
+   * following it as a stranger lands on that same photograph. A share button
+   * that opens the sheet with the wrong address in it draws perfectly.
+   */
+  const shareReach = await page.evaluate(() => {
+    const el = document.querySelector('.gal-share');
+    if (!el) return 'not drawn';
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return 'no size';
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    if (!hit) return 'off the screen';
+    return el.contains(hit) || hit === el ? 'yes' : `covered by ${hit.className}`;
+  });
+  check('the Share can actually be pressed', shareReach === 'yes', shareReach);
+
+  await page.evaluate(() => {
+    window.__shared = [];
+    navigator.share = (d) => { window.__shared.push(d); return Promise.resolve(); };
+  });
+  await page.locator('.gal-share').click();
+  await wait(300);
+  const shared = await page.evaluate(() => (window.__shared || [])[0] || null);
+  check('pressing it opens the share sheet with a link on it',
+    Boolean(shared && shared.url), JSON.stringify(shared));
+  check('the link names the night and the photograph',
+    Boolean(shared && shared.url.includes(NIGHT) && /#p=p0\.jpg$/.test(shared.url)),
+    shared && shared.url);
+  check('and it carries no host key', Boolean(shared) && !/[?&]key=/.test(shared.url), shared && shared.url);
+  check('the photograph did not shut under the press',
+    await page.locator('.gal-big').count() === 1, 'it closed instead of sharing');
+
+  if (shared && shared.url) {
+    const mate = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await mate.goto(shared.url);
+    await mate.waitForSelector('.gal-big-pic > .gal-photo', { timeout: 8000 }).catch(() => {});
+    const landed = await mate.evaluate(() => {
+      const img = document.querySelector('.gal-big-pic > .gal-photo');
+      return img ? img.getAttribute('src') : '';
+    });
+    check('a mate following it lands on that photograph, enlarged',
+      /p0\.jpg/.test(landed || ''), landed || 'no photograph opened');
+    await mate.close();
+  }
+
+  /*
+   * AND A PREVIEW LINK MAY NOT PUT THE KEY IN A GROUP CHAT.
+   *
+   * The one thing that would make this feature a liability: a quizmaster checks
+   * a night on a `?key=` link, presses Share, and hands out the key to their own
+   * console. `shareLink()` builds the address from scratch for exactly this
+   * reason — everything else on the page uses `linked()`, which carries it on
+   * purpose — so the refusal is checked on a visit that HAS one.
+   */
+  await page.goto(`${base}/gallery?n=${NIGHT}&key=not-used-here&as=visitor`);
+  await page.waitForSelector('.gal-shot img', { timeout: 10000 }).catch(() => {});
+  await page.locator('.gal-shot').first().click();
+  await page.waitForSelector('.gal-share', { timeout: 5000 }).catch(() => {});
+  await page.evaluate(() => {
+    window.__shared = [];
+    navigator.share = (d) => { window.__shared.push(d); return Promise.resolve(); };
+  });
+  await page.locator('.gal-share').click();
+  await wait(300);
+  const fromPreview = await page.evaluate(() => (window.__shared || [])[0] || null);
+  check('a share from a preview link leaves the key and the stand-down behind',
+    Boolean(fromPreview) && !/[?&]key=/.test(fromPreview.url) && !/[?&]as=/.test(fromPreview.url),
+    fromPreview && fromPreview.url);
+
+  /*
+   * A PICTURE OF THE PAIR, at the two widths a phone actually is — the controls
+   * are a LOOK as much as a mechanism, and two pills that fit at 390 and wrap
+   * at 320 is the thing a measurement will not tell anybody.
+   */
+  if (process.env.SHOT_DIR) {
+    for (const width of [390, 320]) {
+      // A FRESH PAGE PER WIDTH, never `setViewportSize` in a loop — that is
+      // non-deterministic here, and this repo has the note.
+      const shot = await browser.newPage({ viewport: { width, height: 844 } });
+      await shot.goto(`${base}/gallery?n=${NIGHT}`);
+      await shot.waitForSelector('.gal-shot img', { timeout: 10000 }).catch(() => {});
+      await shot.locator('.gal-shot').first().click();
+      await shot.waitForSelector('.gal-share', { timeout: 5000 }).catch(() => {});
+      await wait(400);
+      await shot.screenshot({ path: join(process.env.SHOT_DIR, `gallery-share-${width}.png`) });
+      await shot.close();
+    }
+  }
+
   check('nothing threw on the page', boom.length === 0, boom.join(' | '));
 } finally {
   await browser.close().catch(() => {});
-  server.kill();
-  rmSync(data, { recursive: true, force: true });
-  rmSync(repo, { recursive: true, force: true });
+  /*
+   * WAITED FOR, NEVER JUST SIGNALLED — `kill()` returns before the process has
+   * gone, and deleting its DATA_DIR on the next line raced a server still
+   * flushing state: ENOTEMPTY out of this very block, with every assertion
+   * above it passed. The same fault cost a day in the suite.
+   */
+  if (server.exitCode === null && server.signalCode === null) {
+    server.kill();
+    await Promise.race([once(server, 'exit'), wait(2000)]);
+  }
+  rmSync(data, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  rmSync(repo, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
 }
 
 console.log(failures ? `\n${failures} FAILED` : '\nAll good.');

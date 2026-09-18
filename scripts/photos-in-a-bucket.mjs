@@ -27,7 +27,7 @@
  */
 
 import { spawn } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -147,6 +147,23 @@ try {
   const after = await (await get(`/api/gallery/${NIGHT}?q=${roomId}`)).json();
   check('and the gallery is down to three', (after.photos || []).length === 3,
     `${(after.photos || []).length} photos`);
+
+  /*
+   * AND NOTHING BUT PHOTOGRAPHS WENT INTO THE BUCKET.
+   *
+   * This is the assertion that was missing on 18 September 2026, and the fault
+   * it would have caught cost a live gallery. `inStore()` read
+   * `which === 'photos' || which === 'private'`, so the accounts book and the
+   * join-code book — which have nothing to do with photographs — were written to
+   * the bucket and then read from it FIRST, shadowing the good copies in the
+   * repository for good. An account has been created, signed in and published a
+   * night by this point in the run, so if `'private'` is in the store there is a
+   * file up here to find.
+   */
+  const root = readdirSync(shelf);
+  check('and NOTHING but photographs went into the bucket',
+    root.length === 1 && root[0] === 'photos',
+    `the bucket's root holds: ${root.join(', ')} — the accounts book and the join codes belong in the repository`);
 } catch (err) {
   failures += 1;
   console.log('  FAIL threw:', err.stack || err.message);

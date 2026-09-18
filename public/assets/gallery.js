@@ -22,7 +22,6 @@
  */
 
 import { esc, node, brandMark, brandWords } from './client.js';
-import { savePhoto, saveName } from './photo-save.js';
 import { matchNightSlug, nightSlug, readVenuePath } from './slugs.js';
 
 const body = document.getElementById('galBody');
@@ -127,6 +126,36 @@ const consoleLink = () => '/console?door=community&tab=photos'
 /** A link back to this page — the venue's own address, or the plain one. */
 const home = () => linked(VENUE ? `/${VENUE}/gallery` : '/gallery');
 
+/**
+ * THE ADDRESS OF ONE PHOTOGRAPH, FOR SENDING TO SOMEBODY ELSE.
+ *
+ * **NOT `linked()`, and that is the whole reason this exists as its own
+ * function.** `linked()` carries the host key and the visitor stand-down,
+ * because they are facts about THIS visit — so a quizmaster checking a night on
+ * a `?key=` preview link and pressing Share would post their own console key
+ * into a group chat. `?q=` DOES go on: it names whose gallery this is, and
+ * without it a plain `/gallery` link lands on nobody's.
+ *
+ * The photograph is named in the HASH rather than a parameter: it is a place in
+ * a page rather than a different page, the server never needs to know about it,
+ * and a name that has since been binned simply opens the night.
+ */
+const shareLink = (night, name) => {
+  const path = VENUE ? `/${VENUE}/gallery/${nightSlug(night)}` : '/gallery';
+  const qs = new URLSearchParams();
+  if (!VENUE) qs.set('n', night);
+  if (Q) qs.set('q', Q);
+  const q = qs.toString();
+  return `${path}${q ? `?${q}` : ''}#p=${encodeURIComponent(name)}`;
+};
+
+/** Which photograph the address in the bar is asking for, if any. */
+const photoInHash = () => {
+  const m = /^#p=(.+)$/.exec(location.hash || '');
+  if (!m) return '';
+  try { return decodeURIComponent(m[1]); } catch { return ''; }
+};
+
 /** A link INTO one night, in whichever address style this page arrived on. */
 const nightLink = (night) => (VENUE
   ? linked(`/${VENUE}/gallery/${nightSlug(night)}`)
@@ -146,19 +175,15 @@ const nightLink = (night) => (VENUE
  * a missing logo is not a reason to show somebody an error.
  */
 /*
- * WHOSE NIGHT IT WAS, KEPT — because a saved photograph carries it.
- *
- * The header has always drawn this and thrown it away. A download stamps the
- * name onto the file, so it has to survive the fetch rather than be read back
- * out of the DOM, where it is two spans and a stacking rule.
+ * THE NAME WAS ALSO KEPT IN A BINDING HERE, for the watermark a save stamped on
+ * the file. The save left this page (*"I want share this photo but no save
+ * option"*) and the binding went with it: a value nothing reads is the same
+ * promise as a field on a view nothing draws.
  */
-let brandName = '';
-
 fetch(keyed('/api/brand'))
   .then((r) => r.json())
   .then((d) => {
     const slot = document.getElementById('brand');
-    brandName = String((d && d.name) || '');
     if (slot) slot.innerHTML = `${brandMark(26)}${brandWords(d.name, d.appName || '')}`;
     if (d.name) document.title = `Photos — ${d.name}`;
   })
@@ -665,56 +690,135 @@ function wireBigPicture(grid, photos, data = {}) {
     open.remove();
     open = null;
     document.body.classList.remove('gal-zoomed');
+    // The address goes back to the night's own. Left behind, a reload or a
+    // shared link would reopen a photograph nobody was looking at.
+    if (photoInHash()) {
+      try { history.replaceState(null, '', location.pathname + location.search); } catch { /* as above */ }
+    }
   };
 
   const show = (at) => {
     close();
     const p = photos[at];
     if (!p) return;
-    // The frame goes on a wrapper sized to the photo, not the whole button, so
-    // it lands on the picture rather than the letterboxing around it.
+    /*
+     * The photograph and the frame are two images that size THEMSELVES, both
+     * centred in the same box — see `.gal-big-pic` in the stylesheet for why a
+     * wrapper may not be the one deciding the shape. `is-framed` gives the pair
+     * one ratio, the frame's, so they land on the same pixels.
+     */
     const frameSrc = data.frame ? esc(keyed(data.frame)) : '';
     const framed = frameSrc
       ? `<img class="gal-frame" src="${frameSrc}" alt="" aria-hidden="true">`
       : '';
     open = node(`
       <button class="gal-big" type="button" aria-label="Close this photo">
-        <span class="gal-big-pic">
-          <img src="${esc(keyed(p.url))}" alt="A photo from the night">
+        <span class="gal-big-pic${frameSrc ? ' is-framed' : ''}">
+          <img class="gal-photo" src="${esc(keyed(p.url))}" alt="A photo from the night">
           ${framed}
         </span>
-        <span class="gal-save" role="button" tabindex="0">Save this photo</span>
+        <span class="gal-acts">
+          <span class="gal-share" role="button" tabindex="0">Share this photo</span>
+        </span>
       </button>`);
-    const saver = open.querySelector('.gal-save');
-    const save = async (ev) => {
+    /*
+     * THE FRAME'S OWN SHAPE, READ OFF THE FRAME. Every venue frame so far is
+     * square and the stylesheet assumes that until this fires — but a venue
+     * uploads its own artwork, so the day one is not square the assumption is
+     * a stretched logo again. Read from its pixels, and `complete` as well as
+     * `load` because a cached frame is decoded before this line runs.
+     */
+    const frameEl = open.querySelector('.gal-frame');
+    if (frameEl) {
+      const shape = () => {
+        if (!frameEl.naturalWidth || !frameEl.naturalHeight) return;
+        frameEl.parentElement.style.setProperty('--gal-frame', `${frameEl.naturalWidth} / ${frameEl.naturalHeight}`);
+      };
+      frameEl.addEventListener('load', shape);
+      if (frameEl.complete) shape();
+    }
+    /*
+     * SHARE THIS PHOTO — A LINK BACK HERE, NOT A COPY OF THE FILE, AND THE
+     * ONLY CONTROL ON THE PICTURE.
+     *
+     * Asked for as *"so instead of saving they can share to their mates and it
+     * links back to the site."* That second half is the feature: a saved JPEG
+     * arriving in a group chat says nothing about who ran the night, where it
+     * was or that there are ninety more — a link says all three and brings
+     * them to the quizmaster's own page. It is also the half that works: the
+     * share sheet takes FILES unreliably (iOS Safari refuses them often enough
+     * that `savePhoto()` still has a download fallback for it), and takes a URL
+     * everywhere.
+     *
+     * **AND SAVE WAS TAKEN OFF THIS PAGE** — *"I want share this photo but no
+     * save option."* One control is the whole point: a stranger who has just
+     * enlarged a photograph of their own table wants to send it to somebody,
+     * and a second pill beside it is a decision to make first. The watermarked
+     * download is NOT gone — it is the quizmaster's own, on the console
+     * (`framedSaveInto`, `showcaseSaveInto`), which is where the marketing
+     * actually gets done. A venue can still long-press the picture, as it
+     * always could; what it no longer gets from this page is the name stamped
+     * on the copy, which was the whole of that feature.
+     *
+     * **THE ADDRESS IS BUILT BY `shareLink()`, NEVER READ OFF THE BAR** — the
+     * bar can hold a host key.
+     *
+     * **A CANCELLED SHARE MAY NOT SAY IT WORKED.** Somebody who opens the
+     * sheet and thinks again gets `AbortError`, which is not a failure and is
+     * not a success: the label goes straight back to what it was.
+     *
+     * With no share sheet — every laptop — the link goes on the clipboard
+     * instead, which is the same two-step a landlord already does by hand.
+     * `writeText` has to be called INSIDE the gesture, so nothing is awaited
+     * before it.
+     */
+    const sharer = open.querySelector('.gal-share');
+    const shareIt = async (ev) => {
       ev.stopPropagation();
-      if (saver.dataset.busy) return;
-      saver.dataset.busy = '1';
-      saver.textContent = 'Saving…';
-      try {
-        await savePhoto(keyed(p.url), {
-          words: brandName,
-          filename: saveName(data.venue, data.when || data.night, at, ''),
-          // The venue's frame if the night has one — baked into the download
-          // exactly as it is shown, so a shared copy carries the branding. With
-          // no frame `savePhoto` falls back to the app's own watermark.
-          overlay: data.frame ? keyed(data.frame) : '',
-        });
-        saver.textContent = 'Saved';
-      } catch {
-        // SAID OUT LOUD, on the control. A save that quietly did nothing is
-        // somebody standing behind a bar wondering whether they pressed it.
-        saver.textContent = 'That would not save — try again';
+      if (sharer.dataset.busy) return;
+      const url = new URL(shareLink(data.night || nightIn(), p.name || ''), location.href).href;
+      const words = data.venue ? `Photos from ${data.venue}` : 'Photos from the quiz';
+      const settle = (said) => {
+        sharer.dataset.busy = '1';
+        sharer.textContent = said;
+        setTimeout(() => {
+          sharer.textContent = 'Share this photo';
+          delete sharer.dataset.busy;
+        }, 2400);
+      };
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: words, text: words, url });
+          return;
+        } catch (err) {
+          // Thought better of it — say nothing at all.
+          if (err && err.name === 'AbortError') return;
+        }
       }
-      setTimeout(() => {
-        saver.textContent = 'Save this photo';
-        delete saver.dataset.busy;
-      }, 2400);
+      try {
+        await navigator.clipboard.writeText(url);
+        settle('Link copied');
+      } catch {
+        // SAID OUT LOUD, and it names the way round: the address bar is already
+        // this exact link, because opening a photograph writes it there.
+        settle('Copy the link from the address bar');
+      }
     };
-    saver.addEventListener('click', save);
-    saver.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Enter' || ev.key === ' ') save(ev);
+    sharer.addEventListener('click', shareIt);
+    sharer.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') shareIt(ev);
     });
+
+    /*
+     * AND THE ADDRESS BAR NAMES THE PHOTOGRAPH WHILE IT IS OPEN.
+     *
+     * `replaceState`, never `pushState`: Back belongs to the page somebody
+     * arrived from, and a lightbox that eats it is worse than one that cannot
+     * be linked to. It makes the shared link round-trip — a photograph opened
+     * from one opens the same photograph — and it is what lets the clipboard
+     * fallback above tell the truth.
+     */
+    try { history.replaceState(null, '', `#p=${encodeURIComponent(p.name || '')}`); } catch { /* a hash is a nicety */ }
     open.addEventListener('click', close);
     document.body.appendChild(open);
     // The page behind it must not scroll under the picture — a flick meant for
@@ -733,6 +837,20 @@ function wireBigPicture(grid, photos, data = {}) {
   // than one per picture: the grid is rebuilt when a night changes, and a
   // per-element listener would leak with it.
   document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') close(); });
+
+  /*
+   * AND A SHARED LINK OPENS THE PHOTOGRAPH IT NAMES.
+   *
+   * Matched on the NAME rather than a position, because a position moves the
+   * moment a photograph is binned and the link would then open somebody else's.
+   * A name that is no longer there opens nothing and leaves the night's wall
+   * up, which is the honest answer and reads as an ordinary gallery.
+   */
+  const wanted = photoInHash();
+  if (wanted) {
+    const at = photos.findIndex((p) => p.name === wanted);
+    if (at >= 0) show(at);
+  }
 }
 
 /*

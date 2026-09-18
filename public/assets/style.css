@@ -10315,39 +10315,89 @@ body.gallery { padding: 0; }
            max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
 }
 .gal-big img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--r-card); }
-/* THE PHOTO AND ITS FRAME, as one unit sized to the picture. The wrapper is
-   inline-block so it shrinks to the contained photo — not the whole button —
-   and the frame `inset: 0` then lands on the picture rather than the black
-   letterboxing around it. `object-fit: fill` matches the save's composite. */
+/* ---- THE PHOTO AND ITS FRAME, AS ONE UNIT — AND A WRAPPER MAY NOT DECIDE
+   THE SHAPE OF IT.
+
+   Reported off the live page: *"on enlarge the logos seem to distort and leave
+   the picture frame."* The wrapper carried `max-width: 100%` and `max-height:
+   100%` and the picture inside it stretched to fill that box — and **two max
+   constraints applied to one box do not preserve a ratio**: in a 1000x820
+   window they gave 976x796, so a 1080 SQUARE photograph was drawn at 1.226 and
+   every logo on the frame with it. Not a portrait-only fault; EVERY enlarged
+   photograph on this page was the wrong shape, and the frame tracked it
+   faithfully, which is what made it look like the frame had come loose.
+
+   So the wrapper is the whole area and decides nothing. **Each image sizes
+   ITSELF** — a replaced element with `max-width`/`max-height` and auto sizes
+   fits both axes and keeps its ratio, which is the one thing a box cannot do —
+   and both are centred, so two images given the SAME ratio land on the same
+   pixels with no geometry to keep in step.
+
+   `min-width`/`min-height: 0` is load-bearing on the wrapper: a flex item's
+   automatic minimum is its content, and without it the window cannot shrink
+   the pair at all. */
 .gal-big-pic {
-  position: relative; display: flex; line-height: 0;
-  max-width: 100%; max-height: 100%; min-width: 0; min-height: 0;
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%; min-width: 0; min-height: 0; line-height: 0;
 }
-/* `min-height: 0` on both is what lets `max-height: 100%` actually shrink the
-   photo to the window — without it the picture keeps its natural height and
-   overflows, and the frame (which tracks the wrapper) no longer lands on it. */
-.gal-big-pic > img { max-width: 100%; max-height: 100%; min-width: 0; min-height: 0; display: block; }
+.gal-big-pic > img {
+  max-width: 100%; max-height: 100%; width: auto; height: auto;
+  min-width: 0; min-height: 0; display: block;
+}
+/* THE FRAMED UNIT TAKES THE FRAME'S OWN SHAPE, AND THE PHOTOGRAPH IS FITTED
+   INSIDE IT — never the other way round. A venue's frame is a designed square
+   with its logos laid out in it, so stretching it onto a portrait photograph
+   distorts the one thing on the page that belongs to somebody else. Fitting the
+   photograph instead costs a mount down each side, which is what a frame looks
+   like, and `frameOver()` in `photo-save.js` composites a download the same way
+   — the page and the file a landlord saves may not disagree.
+
+   `--gal-frame` is set from the frame image's own pixels when it loads, so a
+   frame that is not square is not assumed to be. Square until it arrives:
+   every venue frame so far is one, and it is the harmless guess. */
+.gal-big-pic.is-framed > img { aspect-ratio: var(--gal-frame, 1); object-fit: contain; }
+.gal-big-pic.is-framed > .gal-photo { background: var(--bg); }
 .gal-big-pic .gal-frame {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  object-fit: fill; border-radius: var(--r-card);
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  border-radius: var(--r-card);
 }
-/* SAVE THIS PHOTO — an ORDINARY control, on the picture it acts on.
+/* SAVE — an ORDINARY control, on the picture it acts on. The public page's own
+   copy is gone; this styles the console's.
    Outlined rather than filled: the gallery has no gradient button on it and a
    filled one here would be the loudest thing on a page whose whole job is the
    photograph. Pinned to the bottom so it never lands on a face, and 44px tall
    because a landlord presses it with a thumb. */
-.gal-save {
+/* ONE CONTROL ON THE PICTURE, AND IT IS SHARE — *"I want share this photo but
+   no save option."* The row is still a row: it is what carries the pin, so no
+   control has to, and it wraps rather than running a long label off the side of
+   a 320px phone. `.gal-save` keeps its look here because the CONSOLE still
+   borrows it (`gal-save community-save`) — the watermarked download is the
+   quizmaster's own tool and never left. */
+/* AND THE CONSOLE'S OWN SAVE IS PINNED BY THE SAME RULE. It borrows this
+   pill (`gal-save community-save`) and, until the row existed, it borrowed the
+   PLACEMENT off `.gal-save` as well — so moving the pin onto the row silently
+   dropped that button into the flow of the console's overlay. Named here
+   instead: one rule, two callers, nothing to keep in step. */
+.gal-acts, .gal-save.community-save {
   position: absolute; z-index: 1;
   left: 50%; transform: translateX(-50%);
   bottom: max(18px, calc(env(safe-area-inset-bottom) + 10px));
+}
+.gal-acts {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  align-items: center; justify-content: center;
+  max-width: calc(100% - 24px);
+}
+.gal-save, .gal-share {
   display: inline-flex; align-items: center; justify-content: center;
   min-height: 44px; padding: 0 18px;
   border: 1px solid rgba(255, 255, 255, 0.38); border-radius: var(--r-pill);
   background: rgba(8, 8, 14, 0.62); color: #fff;
   font: 600 15px/1 var(--ui, system-ui), sans-serif; letter-spacing: 0.01em;
-  cursor: pointer; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  text-align: center; cursor: pointer;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
 }
-.gal-save:hover { background: rgba(8, 8, 14, 0.82); border-color: rgba(255, 255, 255, 0.6); }
+.gal-save:hover, .gal-share:hover { background: rgba(8, 8, 14, 0.82); border-color: rgba(255, 255, 255, 0.6); }
 /* THE PAGE BEHIND IT DOES NOT SCROLL — a flick meant for the photograph would
    otherwise move the wall somebody is about to come back to, which is the
    scroll the overlay exists to preserve. */

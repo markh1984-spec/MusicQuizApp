@@ -28,9 +28,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+import { freePort } from './helpers/live-server.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const KEY = 'own-photos-test-key';
@@ -40,7 +43,9 @@ const JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(
 
 async function withServer(run) {
   const dir = mkdtempSync(join(tmpdir(), 'own-photos-'));
-  const port = 4950 + (process.pid % 800);
+  // ASKED FOR, never guessed — a guessed port binds silently onto somebody
+  // else's process, and this file shared one across all four tests.
+  const port = await freePort();
   const child = spawn(process.execPath, ['server.js'], {
     cwd: ROOT,
     // PHOTO_REPO deliberately absent: the branch a fresh deployment hits, and
@@ -62,8 +67,17 @@ async function withServer(run) {
     assert.ok(up, 'the server never came up');
     await run(base);
   } finally {
+    /*
+     * WAITED FOR, THEN DELETED. `kill()` sends a signal and waits for nothing,
+     * so deleting the data directory on the next line raced a server still
+     * flushing `state.json` into it — ENOTEMPTY out of this `finally`, with all
+     * four assertions already passed, naming a route that works. See
+     * `test/helpers/stub-app.mjs` for the full account; this file is the third
+     * copy of the same two faults.
+     */
     child.kill('SIGKILL');
-    rmSync(dir, { recursive: true, force: true });
+    await Promise.race([once(child, 'exit'), new Promise((r) => setTimeout(r, 2000))]);
+    rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 }
 

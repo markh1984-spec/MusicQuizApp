@@ -861,22 +861,17 @@ control view. **A performer's prompt, not a status readout** — a quizmaster
 behind a microphone cannot see sixty phones, and what is on them decides what
 they say next.
 
-- **IT NAMES ITS SUBJECT.** `whereLabel()` an inch above says where the GAME
-  has got to; this says what the PHONES have got. Two bare one-line statuses
-  side by side is the label collision this file keeps recording, and the fix it
-  already prescribes is to keep the noun and add the audience — so it always
+- **IT NAMES ITS SUBJECT** — `whereLabel()` an inch above says where the GAME
+  has got to. Two bare statuses side by side is a label collision, so it always
   reads *"On their phones: …"* and never stands alone.
 - **ONE FUNCTION, and every phase must answer.** A host who says something the
-  phones are not offering has said it OUT LOUD to sixty people who then go
-  looking for a button that is not there. There is a test walking `PHASES` and
-  `BINGO_PHASES` themselves rather than a typed list, so a new phase cannot
-  silently leave the line blank.
+  phones are not offering has said it OUT LOUD to sixty people. The test walks
+  `PHASES` and `BINGO_PHASES` themselves, never a typed list.
 - **WHAT IS OVER THE TOP WINS**, exactly as on the projector: a scoreboard or
   an advert is a flag rather than a phase, so the quiz underneath carries on —
   but it is not what anybody is holding.
 - **Derived on the CLIENT from state the host already has**, so no payload
-  changed and the guard stayed byte-identical. It is host-only by construction:
-  a note to one person about everybody else.
+  changed. Host-only by construction.
 
 ### THE DRINKS STAY IN THEIR POCKET — across nights, and with no login
 
@@ -2149,6 +2144,23 @@ bytes for ever, so the repository could only grow.
   `github.js` delegates its photo calls, so **not one of the twenty call sites
   changed** and the shapes are identical. **`{ok:false}` is not empty**, or a
   blank gallery goes in front of a room and caches itself.
+- **AND IT IS `'photos'` ALONE. `'private'` IS THE ACCOUNTS BOOK AND THE JOIN
+  CODES, AND NAMING IT COST A LIVE GALLERY.** `inStore()` said both for one
+  evening while the comment above it said photos only. `PHOTO_REPO` was then
+  unset for two minutes: the book was looked for in the bucket, MISSED, had no
+  repository to fall through to, and the app wrote its own fresh state up there
+  — **and the store is read FIRST, so those files shadowed the good copies for
+  good.** `/api/gallery` answered `nights: []` with nothing in the log, because
+  the book decides which room it reads. **`readyFor('private')` asks the REPO**,
+  never *"somewhere to put a photograph"*, so an unset variable is SAID; and
+  **`leagues-published.json` is `'photos'`** — it lives in the photo folder
+  beside `published.json`, and two neighbours in two stores is the read-and-write
+  disagreement again. **`photos-in-a-bucket.mjs` asserts the bucket's root holds
+  nothing but `photos/`**, and `why-no-nights.mjs` prints the two books side by
+  side without printing a secret. The repair is
+  `private-out-of-the-bucket.mjs`, which **refuses to write over a richer file**
+  — newer by time is not better. All of it:
+  **[`docs/gigs/photos-in-a-bucket.md`](docs/gigs/photos-in-a-bucket.md)**.
 - **READS FALL BACK TO GITHUB; WRITES DO NOT, AND LISTINGS ARE UNIONED** —
   *the archives are UNIONED, never swapped*, so the migration never has to run
   and a night filed in both places is ONE night. **A fallback happens on a MISS, never on a FAILURE**, or a failing
@@ -2807,7 +2819,9 @@ costs.
 - **A VENUE SAVES A PHOTO WITH THE QUIZMASTER'S NAME ON IT — `photo-save.js`.**
   They could always save one, so **NO new gate; one would be theatre**;
   **the WATERMARK is the feature.** **Drawn in the BROWSER**, never the server.
-  **Share sheet first.** **On the big picture ONLY**, never one per tile.
+  **Share sheet first.** **On the big picture ONLY**, never one per tile. **AND
+  IT IS THE CONSOLE'S NOW, NOT THE PUBLIC PAGE'S** — see the frame-and-share
+  section below.
 - **WHAT A PHOTOGRAPH DOES ON THE NIGHT — the ask, the vote and the second
   screen — IS IN
   [`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**, and
@@ -3909,6 +3923,41 @@ Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
   parses, as a host with a username on it.
 
 Full reasoning: **[`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)**.
+
+### THE FRAME KEEPS ITS OWN SHAPE, AND A SHARE IS A LINK
+
+`.gal-big-pic` in `style.css`, `shareLink()` in `gallery.js`, `framedBox()` in
+`photo-save.js`. *"On enlarge the logos seem to distort and leave the picture
+frame"*, then *"a share this photo button… it links back to the site."*
+
+- **TWO MAX CONSTRAINTS ON ONE BOX DO NOT PRESERVE A RATIO.** The wrapper
+  carried both and the picture stretched to fill it, so in a 1000x820 window
+  EVERY enlarged photograph was drawn 976x796 whatever shape it was, the frame
+  faithfully with it. **A WRAPPER MAY NOT DECIDE THE SHAPE** — each image sizes
+  ITSELF and both are centred, so one ratio lands them on the same pixels.
+- **THE UNIT TAKES THE FRAME'S SHAPE AND THE PHOTOGRAPH IS FITTED INSIDE IT** —
+  a venue's artwork is the one thing on the picture that may not be reshaped.
+  **`--gal-frame` is read off the frame's own pixels**, never assumed square,
+  and **the SAVE composites the same way** (`framedBox()`) — a square photo in
+  a square frame is byte-identical to before. **AND A PHOTOGRAPH IS NOT SQUARE
+  ANY MORE**: `myPhotos()` sends `square: false`, so the comment claiming
+  `drawFiltered()` squares everything had been false since the camera roll got
+  a way in.
+- **A SHARE IS A LINK, NEVER THE FILE** — the sheet takes files unreliably, and
+  a JPEG in a group chat says nothing about whose night it was or that there are
+  ninety more. **`shareLink()` builds the address from scratch, never
+  `linked()`**: a share from a `?key=` preview would post the console key into a
+  group chat. **The photograph is named in the HASH** and matched by NAME, never
+  a position, which moves the moment one is binned. **A cancelled share may not
+  say it worked** (`AbortError`), and with no sheet the link goes on the
+  clipboard INSIDE the gesture. **The hash is written with `replaceState`, never
+  `pushState`** — Back belongs to the page somebody arrived from, and it is what
+  makes *"copy the link from the address bar"* true.
+- **AND SHARE IS THE ONLY CONTROL ON THE PICTURE — *"I want share this photo but
+  no save option."*** **The watermarked download is not gone, it is the
+  CONSOLE's** (`framedSaveInto`, `showcaseSaveInto`), so `photo-save.js` and
+  `.gal-save` both stay and **the bytes are still checked** — by calling
+  `framedBlob()` rather than a control that no longer exists.
 
 ### WHERE A PAST NIGHT WAS IS SAID AFTERWARDS — `console-night-venue.js`
 

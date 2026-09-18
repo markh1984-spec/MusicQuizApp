@@ -1114,8 +1114,40 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * THREE RAISES IN A DAY IS THE SIGNAL, NOT THE PROBLEM: the app grew three
  * features. If a fourth wants paying for, split a section into `docs/` rather
  * than trimming a fifth sentence.
+ *
+ * AND TO 268,250, the fourth, for the enlarged photograph: the frame keeping its
+ * own shape, Share, and Save leaving that page. Three asks minutes apart about
+ * one screen, so they are one section.
+ *
+ * THE SPLIT THE NOTE ABOVE ASKS FOR IS WHERE THE REASONING WENT — all of it is
+ * in `docs/gigs/gallery-page.md`, ~9KB, including the table of three layouts
+ * rendered in a browser before one was chosen. What could NOT go is the
+ * prohibitions, and each is here because a session would otherwise undo it by
+ * tidying: A WRAPPER MAY NOT DECIDE THE SHAPE (two maxima on one box clamp the
+ * axes independently — invisible in a diff, and invisible to a green guard for
+ * a fortnight); the frame's artwork may not be reshaped; `shareLink()` may not
+ * be replaced with `linked()`, which would put the host key in a group chat and
+ * reads exactly like a tidy-up removing a duplicate function; and `.gal-save`
+ * and `photo-save.js` stay although the public page no longer presses either,
+ * so neither is deleted as dead code. ~700 bytes were paid for it first, off
+ * the `phonesAre()` section's tails and this section's own first draft.
  */
-const BUDGET = 266_100;
+/*
+ * AND TO 269,300, a fifth the same evening, and this one is not a feature: the
+ * object store was routed the ACCOUNTS BOOK as well as the photographs, and an
+ * unset variable for two minutes left a fresh book in the bucket shadowing the
+ * good one — a live gallery answering `nights: []` with nothing in the log.
+ *
+ * A rule that costs an outage when it is not written down is the cheapest byte
+ * in this file. It names the prohibition (`'photos'` alone), the two halves that
+ * had to move with it (`readyFor('private')` and `leagues-published.json`), and
+ * the two scripts that would now catch it — because the next session's instinct,
+ * looking at `inStore()`, is that one word reads like an oversight and belongs
+ * back in. ~270 of it is the link to the new `docs/` file the section was split
+ * into, which is the cheapest byte here: a file nothing points at is work nobody
+ * opens, which this repo has shipped three times.
+ */
+const BUDGET = 269_550;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

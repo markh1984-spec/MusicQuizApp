@@ -30,8 +30,9 @@ import * as store from './r2.js';
  * ---- WHERE THE PHOTOGRAPHS ACTUALLY LIVE -------------------------------
  *
  * **WHEN AN OBJECT STORE IS CONFIGURED IT TAKES OVER `which === 'photos'`,
- * AND NOTHING ELSE CHANGES.** Twenty call sites pass that word; none of them
- * had to learn a second store. Read `src/r2.js` for why the move was made at
+ * AND NOTHING ELSE CHANGES — `inStore()` below is the one place that decides,
+ * and it means `'photos'` ALONE.** Twenty call sites pass that word; none of
+ * them had to learn a second store. Read `src/r2.js` for why the move was made at
  * all — the short version is that a delete in a git repository is not a
  * delete, and this app stores pictures of the public.
  *
@@ -58,7 +59,39 @@ import * as store from './r2.js';
  * this store exists to get out from under — and worse, it would hide a broken
  * store behind a slow one for as long as the old repo still answered.
  */
-const inStore = (which) => (which === 'photos' || which === 'private') && store.configured();
+/*
+ * ---- AND `'private'` IS NOT IN THE STORE, WHICH COST A GALLERY
+ *
+ * This read `(which === 'photos' || which === 'private')` for one evening, and
+ * the comment directly above it said *"takes over `which === 'photos'`, AND
+ * NOTHING ELSE CHANGES"* the whole time. **A comment that claims the opposite is
+ * where the next bug hides** — fourth sighting in this repo, and the most
+ * expensive.
+ *
+ * `'private'` is the accounts book and the join-code book. Neither is a
+ * photograph: they are small, they hold no faces, and git history is exactly
+ * the right promise for them — *the backup IS the data* on a host that wipes
+ * its disk every deploy. The store was bought because a delete in a repository
+ * is not a delete, which is a decision about pictures of the public and about
+ * nothing else.
+ *
+ * **WHAT IT ACTUALLY DID, on the night the photographs were migrated.**
+ * `PHOTO_REPO` was unset for a few minutes with the bucket configured, so
+ * `photosRepoConfigured()` still said yes, `accounts.json` was looked for in the
+ * bucket, MISSED, and had no repository to fall through to — *"No accounts
+ * yet"*. The app then wrote its own fresh state up there. Restoring
+ * `PHOTO_REPO` could not undo it: **the store is read FIRST, so those files
+ * shadowed the good copies in the repository permanently**, and one of them
+ * decides which room the public gallery reads. Every screen drew perfectly and
+ * `/api/gallery` answered `{"nights":[],"preview":true}` with nothing in the
+ * log.
+ *
+ * `leagues-published.json` moved the other way for the same reason — it lives
+ * INSIDE a room's photo folder, beside `published.json`, which has always been
+ * `'photos'`. Two neighbours in one folder kept in two different stores is the
+ * same fault standing still.
+ */
+const inStore = (which) => which === 'photos' && store.configured();
 /** Is the OLD repository still there to fall back to? Usually, during a move. */
 const alsoInRepo = () => Boolean(process.env.PHOTO_REPO && (process.env.PHOTO_TOKEN || process.env.GITHUB_TOKEN));
 
@@ -138,7 +171,13 @@ function settings(which = 'app') {
  */
 function readyFor(which) {
   if (which === 'packs') return packsRepoConfigured();
-  if (which === 'photos' || which === 'private') return photosRepoConfigured();
+  if (which === 'photos') return photosRepoConfigured();
+  // AND `'private'` NEEDS THE REPOSITORY, not "somewhere to put a photograph".
+  // With the bucket set and `PHOTO_REPO` unset this said YES for one evening, so
+  // the accounts book was looked for where it never was, found missing, and
+  // reported as *"No accounts yet"* — an empty app, and nothing on any screen
+  // saying a backup was not configured. See `inStore()` above.
+  if (which === 'private') return privateRepoConfigured();
   return githubConfigured();
 }
 
@@ -158,9 +197,18 @@ export function packsRepoName() {
   return process.env.PACKS_REPO || '';
 }
 
-/** The private repo, by its other name. Same repo, different reason for it. */
+/**
+ * The accounts book, the join codes and the invoice records — the same
+ * repository as the photographs, and a DIFFERENT question from theirs.
+ *
+ * It used to answer `photosRepoConfigured()`, which is *"is there somewhere to
+ * put a photograph"* and which an object store answers. These books are not
+ * photographs and the store is not where they go, so with a bucket set and
+ * `PHOTO_REPO` unset the honest answer is NO — and saying so is what puts the
+ * missing variable on the console instead of an empty accounts book.
+ */
 export function privateRepoConfigured() {
-  return photosRepoConfigured();
+  return alsoInRepo();
 }
 
 export function photosRepoConfigured() {

@@ -51,6 +51,17 @@ import { teamKey } from './league.js';
  * it is where a room's private things live, and putting this somewhere else
  * would mean a second folder to configure for no gain.
  */
+/*
+ * `'photos'` IS THE STORE THIS FILE IS KEPT IN, NOT `'private'`.
+ *
+ * It sits INSIDE the room's photo folder, beside `published.json`, which has
+ * always been `'photos'`. Both words resolve to the same repository, so this is
+ * not a move — the difference is that an object store takes the PHOTO folder
+ * over, and two neighbours in one folder kept in two stores is how a published
+ * table reads back as *"Not published"* the day one of them moves. That is the
+ * fault this file already carries a scar for, wearing a third hat: **a read and
+ * a write that disagree about where something is kept is invisible.**
+ */
 function listPath(roomId) {
   return `${photoFolder(roomId)}/leagues-published.json`;
 }
@@ -109,7 +120,7 @@ async function readDecisionsNow(roomId) {
   if (!photosRepoConfigured()) return { ...NOTHING };
   let raw = null;
   try {
-    raw = await getFile(listPath(roomId), 'private');
+    raw = await getFile(listPath(roomId), 'photos');
   } catch {
     return { ...NOTHING };
   }
@@ -231,7 +242,7 @@ async function setLeagueRunningNow(roomId, key, on) {
     listPath(roomId),
     JSON.stringify({ venues, names: held.names, running }, null, 2),
     `${on ? 'Run' : 'Stop'} the league at ${key}`,
-    'private',
+    'photos',
   );
   if (res && res.ok === false) return { ok: false, error: res.error || 'Could not save that.' };
   return { ok: true, running, venues };
@@ -272,7 +283,7 @@ async function setNameDecisionNow(roomId, name, decision) {
     listPath(roomId),
     JSON.stringify({ venues: have.venues, names, running: have.running }, null, 2),
     decision ? `${decision === 'allow' ? 'Allow' : 'Hide'} the team name ${key}` : `Clear the ruling on ${key}`,
-    'private',
+    'photos',
   );
   if (res && res.ok === false) return { ok: false, error: res.error || 'Could not save that.' };
   return { ok: true, names };
@@ -327,7 +338,7 @@ async function setVenuePublishedNow(roomId, key, on) {
     // shows up weeks later when somebody notices a name has come back.
     JSON.stringify({ venues: sorted, names: decided.names, running: decided.running }, null, 2),
     `${on ? 'Publish' : 'Unpublish'} the league table for ${key}`,
-    'private',
+    'photos',
   );
   if (res && res.ok === false) return { ok: false, error: res.error || 'Could not save that.' };
   return { ok: true, venues: sorted };

@@ -196,18 +196,22 @@ export function stampMark(ctx, w, h, words, mark = null) {
  * that changes its artwork changes every future export rather than needing a
  * re-upload of the night.
  *
- * **STRETCHED TO THE WHOLE CANVAS, not fitted.** Both are 1080 square by
- * decision — `drawFiltered()` makes every photograph square and the upload
- * refuses anything that is not — so a fit would be a no-op on every real pair
- * and a silent letterbox on the day one of them changes. Stretching says what
- * it does.
+ * **DRAWN AT ITS OWN SHAPE, AND THE PHOTOGRAPH IS FITTED INTO IT.** It was
+ * stretched onto whatever shape the photograph was, on the reasoning that
+ * `drawFiltered()` squares every photograph on the way in — which stopped
+ * being true the day the quizmaster's own camera roll got a way in
+ * (`myPhotos()` sends `square: false`, because cropping a picture of a full
+ * room throws away the half that shows how full it was). So a portrait
+ * photograph came out with every logo on the frame stretched sideways, the
+ * fault the host reported on the enlarged view. A frame is somebody else's
+ * artwork: it is the one thing on the picture that may not be reshaped.
  *
  * **IT DEGRADES, LIKE EVERYTHING ELSE ON THIS PATH.** A frame that will not
  * decode must cost the frame and never the photograph: somebody saving a
  * picture to put on Facebook gets it unframed rather than getting nothing.
  */
-async function frameOver(ctx, w, h, overlay) {
-  if (!overlay) return false;
+async function loadFrame(overlay) {
+  if (!overlay) return null;
   try {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -216,23 +220,54 @@ async function frameOver(ctx, w, h, overlay) {
       img.onerror = () => reject(new Error('the overlay would not decode'));
       img.src = overlay;
     });
-    if (!img.naturalWidth) return false;
-    ctx.drawImage(img, 0, 0, w, h);
-    return true;
+    return img.naturalWidth && img.naturalHeight ? img : null;
   } catch {
-    return false;
+    return null;
   }
+}
+
+/*
+ * THE MOUNT — what shows beside a photograph that is not the frame's shape.
+ * `--bg`, the app's own ground, so the file a landlord saves matches the page
+ * it was saved from; a JPEG has no transparency, so this is a decision rather
+ * than something that can be left out.
+ */
+const MOUNT = '#07070e';
+
+/**
+ * The box a framed photograph comes out in: the FRAME's shape, big enough to
+ * hold the whole photograph, with the photograph centred in it. A square photo
+ * in a square frame gives back exactly what it was handed — dx, dy zero and no
+ * mount — so every export up to now is byte-identical.
+ */
+function framedBox(pw, ph, frame) {
+  const scale = Math.max(pw / frame.naturalWidth, ph / frame.naturalHeight);
+  const w = Math.round(frame.naturalWidth * scale);
+  const h = Math.round(frame.naturalHeight * scale);
+  const fit = Math.min(w / pw, h / ph);
+  const dw = Math.round(pw * fit);
+  const dh = Math.round(ph * fit);
+  return { w, h, dx: Math.round((w - dw) / 2), dy: Math.round((h - dh) / 2), dw, dh };
 }
 
 /** The photograph at its own size, with the frame and the mark on it. */
 async function stamped(img, words, overlay) {
-  const w = img.naturalWidth;
-  const h = img.naturalHeight;
+  const pw = img.naturalWidth;
+  const ph = img.naturalHeight;
+  // The frame is loaded BEFORE the canvas is sized, because its shape is what
+  // decides that size — and a frame that will not decode must leave the
+  // photograph exactly as it was.
+  const frame = await loadFrame(overlay);
+  const box = frame ? framedBox(pw, ph, frame) : { w: pw, h: ph, dx: 0, dy: 0, dw: pw, dh: ph };
   const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
+  canvas.width = box.w;
+  canvas.height = box.h;
   const ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, w, h);
+  if (box.dw !== box.w || box.dh !== box.h) {
+    ctx.fillStyle = MOUNT;
+    ctx.fillRect(0, 0, box.w, box.h);
+  }
+  ctx.drawImage(img, box.dx, box.dy, box.dw, box.dh);
   /*
    * THE VENUE'S FRAME IS THE WHOLE DESIGN — THE APP'S MARK IS THE FALLBACK.
    *
@@ -245,11 +280,12 @@ async function stamped(img, words, overlay) {
    *
    * So the mark is stamped ONLY when there is no frame — the public gallery,
    * which never had one, and a pub with no overlay uploaded yet. Both keep the
-   * plain watermark they have always had. `frameOver` returns whether it drew.
+   * plain watermark they have always had. `loadFrame()` returning null is the
+   * one condition, so a frame that would not decode keeps the mark.
    */
-  const framed = await frameOver(ctx, w, h, overlay);
+  if (frame) ctx.drawImage(frame, 0, 0, box.w, box.h);
   // AWAITED, never fired-and-checked — see `loadMark()`.
-  if (!framed) stampMark(ctx, w, h, words, await loadMark());
+  else stampMark(ctx, box.w, box.h, words, await loadMark());
   return new Promise((resolve) => {
     // 0.92 rather than the 0.85 an upload uses: this one is going onto a
     // Facebook page that will compress it again, and the two stack.

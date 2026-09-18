@@ -1261,3 +1261,170 @@ gallery at once — the correction-reaches-every-copy rule, wearing a frame.
 - **IT RESTS ON A CAMERA PHOTO SHOWING**, which since the same day is the
   gallery default again (`showsByDefault()` = `isCameraFile()`, see
   `photos.md`). A framed gallery of picked photos would be an empty gallery.
+
+## THE FRAME CAME LOOSE ON THE ENLARGED PHOTO — 18 September 2026
+
+Reported off the live page, with a screenshot: *"on enlarge the logos seem to
+distort and leave the picture frame, can we keep it consistent?"*
+
+### The cause was the wrapper, and it was never portrait-only
+
+`.gal-big-pic` held the photograph and the frame as one unit, and it carried
+`max-width: 100%` and `max-height: 100%` with the picture inside stretching to
+fill whatever box that gave. **Two maximum constraints applied to one box do
+not preserve a ratio**: they clamp the axes independently, so in a 1000x820
+window the wrapper came out 976x796 — and the photograph was drawn at 1.226
+whatever shape it actually was. A 1080 SQUARE photograph too. The frame tracked
+it faithfully, which is exactly what made it read as the frame having come
+loose: it had not moved at all, the whole unit was the wrong shape.
+
+**`scripts/gallery-frame.mjs` was green throughout, and the reason is worth
+keeping.** Its one alignment check asked whether the frame's box equalled the
+photograph's box — which was TRUE, both being the same wrong box — and every
+fixture it drew was 1080 square, the one shape where a stretch and a fit are
+the same picture. It now seeds a portrait photograph as well and asks three
+questions instead of one: are the boxes the same, is the frame drawn at its own
+ratio, and is the photograph fitted rather than cropped.
+
+### A wrapper may not decide the shape
+
+The fix is not a better wrapper. A box cannot fit two maxima and keep a ratio,
+but **a replaced element can** — an `<img>` with `max-width`/`max-height` and
+auto sizes has done it natively since the beginning. So the wrapper became the
+whole available area and decides nothing, and each image sizes itself and is
+centred in it. Two images given the same ratio then land on the same pixels
+with no geometry to keep in step, which is a stronger guarantee than the
+previous arrangement had even when it worked.
+
+Three layouts were rendered in a real browser before choosing:
+
+| | photograph | frame | verdict |
+|---|---|---|---|
+| shrink-wrapped wrapper, no clamps | 976x1301 | same | keeps the ratio and **runs 240px off the top of the window** — a percentage `max-height` against an auto-height parent is ignored |
+| **two replaced siblings, one ratio** | **796x796** | **same** | on screen, undistorted |
+| frame in flow, photo absolute | 976x796 | same | the wrapper's clamps squash the frame too |
+
+### The unit takes the FRAME's shape, and the photograph is fitted into it
+
+The second decision, and the one with a cost. A venue's frame is a designed
+square with its logos laid out inside it, and it is the one thing on that page
+that belongs to somebody else — so it may not be reshaped. The photograph can
+be: fitting it inside the frame costs a mount down each side of a portrait
+picture, which is what a frame looks like.
+
+The alternatives were both worse. `cover` on the frame keeps its ratio and
+crops it, taking the corner logos off. `contain` on the frame puts a shrunken
+square of branding in the middle of a taller photograph with the top and bottom
+unframed. And cropping the PHOTOGRAPH to the frame is refused by the rule the
+enlarged view already carries — *a crop is right on a wall of thumbnails and
+wrong here*.
+
+`--gal-frame` carries the ratio and is read off the frame image's own pixels
+when it loads, never assumed: every venue frame so far is square, and a venue
+uploads its own artwork, so the day one is not square an assumption is a
+stretched logo again. Square until it arrives, which is the harmless guess.
+
+### And the download had to move with it
+
+`frameOver()` in `photo-save.js` stretched the overlay onto the photograph's own
+dimensions, on a reason written into the file: *"both are 1080 square by
+decision — `drawFiltered()` makes every photograph square and the upload refuses
+anything that is not."* That stopped being true the day the quizmaster's own
+camera roll got a way in — `myPhotos()` sends `square: false` deliberately,
+because cropping a picture of a full room throws away the half that shows how
+full it was. **A comment claiming the opposite is where the next bug hides**, for
+the fourth time in this repo.
+
+So `framedBox()` sizes the canvas to the frame's shape, big enough to hold the
+whole photograph, and centres the photograph in it. A square photograph in a
+square frame gives back exactly what it was handed — the offsets are zero, the
+mount is never painted — so every export made up to now is byte-identical. The
+mount is `#07070e`, the app's own `--bg`, the same colour the page shows, because
+a JPEG has no transparency and the page and the file a landlord saves may not
+disagree.
+
+## SHARE THIS PHOTO — 18 September 2026
+
+Asked for straight after: *"can we have a 'share this photo' button so instead of
+saving they can share to their mates and it links back to the site?"*
+
+### It shares a LINK, and that is the feature rather than a limitation
+
+A saved JPEG arriving in a group chat says nothing: not whose night it was, not
+which pub, not that there are ninety more photographs. A link says all three and
+lands on the quizmaster's own page, with the venue frame already on it, the
+headcount line and the booking address underneath. It is also the half that
+works — the share sheet takes FILES unreliably enough that `savePhoto()` already
+has a download fallback for it, and takes a URL everywhere.
+
+### The address is built from scratch, and that is not fussiness
+
+`shareLink()` is its own function beside `linked()`, which every other link on
+the page uses. `linked()` carries the host key and `?as=visitor`, on purpose,
+because they are facts about the visit in progress. **A quizmaster checking a
+night on a `?key=` preview link and pressing Share would have posted their own
+console key into a group chat.** `?q=` does ride along, because it names whose
+gallery this is and a plain `/gallery` link without it lands on nobody's.
+
+The photograph is named in the hash — `#p=p3.jpg`. It is a place in a page
+rather than a different page, so the server never had to learn about it, and it
+is matched on the NAME rather than a position: a position moves the moment a
+photograph is binned, and the link would then open somebody else's. A name that
+is no longer there opens nothing and leaves the night's wall up, which reads as
+an ordinary gallery.
+
+Opening a photograph writes that hash with `replaceState` — never `pushState`,
+because Back belongs to the page somebody arrived from and a lightbox that eats
+it is worse than one that cannot be linked to. It makes a shared link
+round-trip, and it is what lets the last fallback below tell the truth.
+
+### What happens when there is no share sheet, and when somebody thinks again
+
+Every laptop: the link goes on the clipboard instead, which is the same two-step
+a landlord already does by hand. `writeText` is called inside the gesture, the
+rule the socials post kit already carries. If even that is refused, the control
+says *"Copy the link from the address bar"* — true, because the address bar is
+already this exact link.
+
+And a cancelled share says nothing at all. `navigator.share` rejects with
+`AbortError` when somebody opens the sheet and thinks better of it, which is
+neither a failure nor a success, so the label goes straight back to what it was.
+**A control that reports success it did not have is this repo's commonest
+fault**, and the two ways to get this one wrong are to say *Shared* on a cancel
+and to say nothing on a real failure.
+
+`scripts/photo-to-socials.mjs` presses the real button with the sheet stubbed
+and looks at what it was handed: the night, the photograph, no key, and the
+stand-down gone. Then it follows the link in a fresh browser with no cookie and
+asserts that the same photograph opens, enlarged — which is the whole of *"it
+links back to the site"*.
+
+### And then Save left the page
+
+*"I want share this photo but no save option."* Straight after, and it is the
+clutter rule doing its job: a stranger who has just enlarged a photograph of
+their own table wants to send it to somebody, and a second pill beside the one
+they want is a decision to make first.
+
+**The watermarked download is not gone — it moved to whose job it always was.**
+`photo-save.js` still composites, and the console still presses it in two places
+(`framedSaveInto` on an opened photograph, `showcaseSaveInto` on the post kit),
+which is where the marketing actually gets done: on a laptop, on a Monday, by
+the person whose name is on the file. What a VENUE loses from the public page is
+the name stamped on their copy — the long-press they always had still works, and
+gives them the photograph plain.
+
+So nothing was deleted as dead code. `.gal-save` keeps its rule because the
+console's copy wears the class, and `.gal-acts` keeps being a row because it is
+what carries the pin — no control has to know where it sits. What DID go is
+`brandName`, the module binding this page kept the quizmaster's name in purely so
+a save could stamp it: a value nothing reads is the same broken promise as a
+field on a view nothing draws.
+
+The pixel-level assertions stayed too, which matters more than it looks. They
+are the ones that caught the mark's `src` being set and `complete` checked in one
+breath — a bug that meant the logo never landed for anybody, ever, while the dark
+plate underneath it said yes. `scripts/photo-to-socials.mjs` calls `framedBlob()`
+directly in the page now instead of pressing a button that is no longer there,
+and asserts that the public picture offers no save, because a removal is a
+decision and the pill is still styled.
