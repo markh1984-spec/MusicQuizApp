@@ -68,6 +68,8 @@ export const GUARDS = [
   { name: 'a-word-in-your-ear',    core: true,  why: 'does a message reach one phone and no other?' },
   { name: 'ready-light',           core: true,  why: 'does the launch bar\'s ready line go green, and back?' },
   { name: 'two-devices',           core: true,  why: 'two control views, one quiz — does a press land once?' },
+  { name: 'wifi-blip',             core: true,  why: 'the wifi drops on each screen in turn — does it come back right?' },
+  { name: 'long-night',            core: true,  why: 'sixty phones, forty questions — memory, streams and push latency' },
   // ---- the rest of the app: run with --full
   { name: 'community-bay',         core: false, why: 'does the Community bay still fit the frame?' },
   { name: 'pages-scroll',          core: false, why: 'can a person actually scroll each page?' },

@@ -213,3 +213,22 @@ One command, one verdict. The suite, `pub-unchanged` against
 guard by name, each to its own log under `data/gig-build/`. `--full` adds the
 slow and cosmetic ones; `--only <name>` runs one. `test/gig-build.test.js`
 fails the moment a named guard stops existing.
+
+## Three more guards for the things a gig night actually does — 18 September 2026
+
+- **`two-devices.mjs`** — the host drives a night from a phone AND the laptop.
+  Two control views press Next together; the night moves one question. The
+  mechanism is `host-cursor.js`: a move carries the cursor it was pressed
+  against, the server refuses one whose cursor has moved on and hands back the
+  fresh view, and a press with no cursor is never refused.
+- **`wifi-blip.mjs`** — Playwright's `setOffline` takes a phone, the projector
+  and the control view off the network in turn, mid-question, across the
+  reveal, across a Next. Each blipped device has a TWIN that stayed online,
+  and the check is that the two agree afterwards — nothing in the guard knows
+  what a screen should say, only that two must say the same thing.
+- **`long-night.mjs`** — sixty phones with real SSE streams, forty questions,
+  everybody answering every one. It measures fan-out to the sixtieth phone
+  (single-digit milliseconds), memory from `/health` (`rss`, which the route
+  now reports beside `streams`), and that every stream is let go of when the
+  phones leave. First run: 97MB with the room in, 125MB at the end of forty
+  questions, all sixty streams released within a quarter of a second.

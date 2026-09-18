@@ -1115,7 +1115,7 @@ topbar, the frame or the bay heights.** What must not be undone:
   media query is two decisions the moment it names two axes.**
 - **`main` IS A FLEX COLUMN — never give it a row template.**
 - **THE SHELF IS SIX ACROSS, BY DECISION. Do not "fix" a squeezed card by
-  dropping a column.**
+  dropping a column**
 - **`setViewportSize()` IN A LOOP IS NON-DETERMINISTIC HERE** — navigate
   fresh per width.
 - **THE FINISH LAYER at the foot of `style.css` owns selection, caret,
@@ -1132,7 +1132,7 @@ Every one lived in a band no guard looked at. The measurements are in
   is not six-across being dropped.**
 - **`#hatSlot` IS A BARE `<span>`, SO IT HAD `min-width: auto`.** **The
   switch shrinks below 560 too** — a door off the screen is not affordable.
-- **`console-frame.mjs` LOOKS AT 768 AND 320.**
+- **`console-frame.mjs` LOOKS AT 768 AND 320**
 
 ### A ROOM ID IS A PATH, AND `?q=` NAMES AN ACCOUNT OR NOBODY
 
@@ -2070,7 +2070,10 @@ the other device, so Next on both was two questions gone. **A MOVE sent with
 `seen` is refused (409, with the FRESH view) when the cursor has moved on;
 one sent without is never refused** — every guard and older client is
 untouched. **The cursor is what a MOVE changes, never `version`**, which
-every answer bumps. `two-devices.mjs` presses both at once.
+every answer bumps. `two-devices.mjs` presses both at once. **`wifi-blip.mjs`
+drops each screen's network in turn and checks it against a twin that stayed
+online** — nothing there knows what a screen should say, only that two must
+agree.
 
 ### THE READY LINE IS A LIGHT, NEVER A GATE — `console-ready.js`
 
@@ -2375,9 +2378,8 @@ with `lobby-sound.js`), the `Sounds` panel in `host.js`, `POST
   IS SOLD** — a licence must cover commercial redistribution.
 - **SYNTHESISED IS THE FLOOR, NOT THE CEILING.** **Anything with ARTICULATION
   needs a recording.**
-- **"YOUR MUM" IS THE BROWSER'S OWN `speechSynthesis`.** **A missing voice is a
-  silent no-op, never a throw.** **The guard CANNOT measure it**, so it asserts
-  it was SPOKEN rather than reading zero as a pass.
+- **"YOUR MUM" IS THE BROWSER'S OWN `speechSynthesis`.** **A missing voice is
+  a silent no-op, never a throw.**
 - **ONE AUDIO LAYER — `audio-kit.js`; the POLICY stays with each caller**: the
   lobby is gated on a phone's preference and the host's switch, the soundboard
   on nothing — **the press IS the decision**.
@@ -2386,14 +2388,11 @@ with `lobby-sound.js`), the `Sounds` panel in `host.js`, `POST
   Screen view only, **and it EXPIRES** (`STING_TTL_MS`). **Played before
   `draw()` draws.**
 - **THE ID IS VALIDATED AGAINST `stings.js`'S OWN LIST** — the `packId` trap.
-- **A BROWSER IS SILENT UNTIL THE PAGE IS TAPPED, and reports no error.** The
-  arm chip is bottom LEFT, never near the code.
-- **THE PANEL IS SHUT BY DEFAULT** — **the board is the job, the soundboard
-  the garnish.** **The open flag is a module binding**, or a view rebuilt on
-  every answer shuts itself mid-press. **The guard OPENS it and presses a real
-  button** — the API path proves the noise and not the thumb.
+- **A BROWSER IS SILENT UNTIL THE PAGE IS TAPPED.** The arm chip is bottom
+  LEFT, never near the code.
+- **THE PANEL IS SHUT BY DEFAULT.** **The open flag is a module binding**, or
+  a view rebuilt on every answer shuts itself mid-press.
 - **A `GainNode` DEFAULTS TO 1.0 — NEVER START A NODE BEFORE ITS ENVELOPE.**
-  `soundboard.mjs` measures a peak CEILING and samples the SIGNAL.
 
 Full reasoning: **[`docs/sound.md`](docs/sound.md)**.
 
@@ -4190,6 +4189,8 @@ node scripts/prizes-fuzz.mjs            # every prize count, word and tie
 node scripts/github-down.mjs            # GitHub gone quiet — does a night still run?
 node scripts/ready-light.mjs            # does the launch bar's ready line go green?
 node scripts/two-devices.mjs            # two control views — does a press land once?
+node scripts/wifi-blip.mjs              # the wifi drops on each screen — does it come back right?
+node scripts/long-night.mjs             # sixty phones, forty questions — memory and latency
 node scripts/gig-build.mjs              # THE MONDAY BUILD: all of the above, one verdict
 ```
 
