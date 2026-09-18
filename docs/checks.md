@@ -255,9 +255,10 @@ before a gig week:
 1. **Real phones on real networks** — your own on mobile data, one other on
    the wifi, iOS Safari and Android. Join, answer, airplane mode for ten
    seconds mid-question, back. `wifi-blip.mjs` on a real handset.
-2. **The first minute** — open the console cold and time it. The free tier
-   spins down after fifteen idle minutes; an uptime monitor on `/health`
-   every five minutes removes the cold start and doubles as the alarm.
+2. **The first minute** — open the console cold and time it. The app is on
+   Render's Starter plan, which never spins down, so a slow first load is a
+   fault rather than a cold start. An uptime monitor on `/health` every five
+   minutes is still worth having as the alarm.
 3. **The prize path** — a real venue with prizes, a short quiz to the final,
    scan the winner's code with a second phone, see the bar page say redeemed
    and the code leave the winner's phone.

@@ -618,7 +618,7 @@ Nothing to do. 🔗 https://github.com/markh1984-spec/MusicQuizApp/branches
 
 # PART 2 — Render ✅ mostly done
 
-Service is created, in Frankfurt, on the free tier.
+Service is created, in Frankfurt, on the Starter plan ($7 a month).
 
 ## Lobby games — what is left
 

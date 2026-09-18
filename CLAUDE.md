@@ -810,7 +810,7 @@ contact details already on the pub's own website — encrypting data whose whole
 purpose is to be handed out is theatre. **No card details are stored and none
 ever will be.** Server-side encryption where the SERVER holds the key buys
 almost nothing and costs everything in the one shape this app has been bitten
-by: the free tier wipes the disk every deploy, so the backup IS the data, and
+by: Render wipes the disk every deploy, so the backup IS the data, and
 losing the key makes the invoice book landfill. **AND INVOICING IS OPTIONAL**,
 which is the host's own clincher — the data is there because somebody chose to
 put it there.
@@ -2042,7 +2042,7 @@ month when the AI is cheap and the server is not.
 - **NAMED IN THE TOTAL** — a total silently absorbing a number you set months
   ago is one you stop trusting.
 - **`restore()` NAMES IT — the whitelist trap for the FOURTH time.** It runs at
-  boot, so on the free tier a field in `contents()` but not `restore()` is
+  boot, so on Render a field in `contents()` but not `restore()` is
   written, read back, dropped and saved as dropped, every deploy, in silence. A
   figure on disk WINS over the backup.
 - **ABSENT WHEN UNSET**, like the budget: an older ledger is byte-identical.
@@ -4283,8 +4283,8 @@ This locked him out of his own console, on his phone, the first time he went
 to make an account.
 
 `hostKey()` in `src/config.js` uses `HOST_KEY` when set, and otherwise
-**invents one and writes it to `data/`** — empty again after every deploy on
-the free tier. So each deploy silently hands out a different key and every
+**invents one and writes it to `data/`** — empty again after every deploy. So
+each deploy silently hands out a different key and every
 bookmark stops working, with nothing on screen explaining why. The startup
 banner now says so (`hostKeyIsTemporary()`).
 
@@ -4297,13 +4297,11 @@ variable and it is step A of TODO.md.
 ## The host's deployment
 
 - Live app: **https://musicquizapp.onrender.com**
-- Render service: `srv-d9pnk0e417fc73bvjdkg` (Frankfurt, free tier)
+- Render service: `srv-d9pnk0e417fc73bvjdkg` (Frankfurt, **Starter, $7 a month — not the free tier. It never spins down; the disk is still wiped on every deploy**)
 - Repo: https://github.com/markh1984-spec/MusicQuizApp
 
-Render's newer UI nests the service inside a project. `/project/prj-…` is the
-wrong level and its "environment groups" are unrelated to environment
-variables; `/web/srv-…` is the right one. **Do not send him to the project
-page.**
+Render's newer UI nests the service inside a project: `/web/srv-…` is the
+right level. **Do not send him to the project page.**
 
 ---
 
