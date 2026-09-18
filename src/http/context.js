@@ -63,6 +63,7 @@ import { comeBackFor, nextNightAt, comeBackText } from '../comeback.js';
 import { isComposed, MAX_ROUNDS } from '../running-order.js';
 import { applyBilling, billingEmail } from '../billing.js';
 import { PropUse, ENOUGH_TO_JUDGE } from '../prop-use.js';
+import { Flight } from '../flight.js';
 // The prop list, shared with the phone exactly like schemes and break-parts —
 // so the tally and the tray can never disagree about which props exist.
 import { STICKERS } from '../../public/assets/stickers.js';
@@ -172,6 +173,15 @@ export const spend = new Spend(paths.spend);
  * loop that lied.
  */
 export const propUse = new PropUse(paths.propUse);
+/*
+ * THE FLIGHT RECORDER — see `src/flight.js`. Built here so it exists before
+ * any route or room does, and wrapping the console from this moment so every
+ * `[backup]`/`[trials]`/`[http]` line the app prints is already an entry.
+ * The tail of the last run is read back first: a crash's final lines are the
+ * ones worth having after the restart that follows it.
+ */
+export const flight = new Flight(path.join(config.dataDir, 'flight.jsonl')).load();
+flight.captureConsole();
 
 /*
  * One room per quizmaster.

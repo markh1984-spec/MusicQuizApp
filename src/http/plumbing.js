@@ -1,7 +1,7 @@
 /**
  * HTTP PLUMBING — send, read, origins. Moved whole from server.js.
  */
-import { HOST_KEY, config, http } from './context.js';
+import { HOST_KEY, config, flight, http } from './context.js';
 import { timingSafeEqual } from './gates.js';
 
 // ----------------------------------------------------------------- helpers
@@ -12,7 +12,32 @@ export function send(res, status, body, headers = {}) {
 }
 
 export function sendJson(res, status, data) {
+  if (status >= 400) noteRefusal(res, status, data);
   send(res, status, JSON.stringify(data), { 'Content-Type': 'application/json; charset=utf-8' });
+}
+
+/*
+ * A REFUSAL IS A LINE IN THE FLIGHT RECORDER, whatever route sent it.
+ *
+ * One hook here rather than a note in each of two hundred routes, so the next
+ * route written is covered. The room comes off `res.flightRoom`, which the
+ * host and phone routes set the moment they resolve one — a 409 on a launch
+ * and a refused answer both land under the night they happened on. Two kinds
+ * of noise are left out by name: the 401 every signed-out page load takes
+ * from `/api/me`, and 404s off the static tree.
+ */
+const QUIET_REFUSALS = new Set(['/api/me', '/api/has-accounts', '/api/brand']);
+function noteRefusal(res, status, data) {
+  try {
+    const req = res.req;
+    const route = req && req.url ? req.url.split('?')[0] : '';
+    if (status === 401 && QUIET_REFUSALS.has(route)) return;
+    if (status === 404 && !route.startsWith('/api/')) return;
+    const why = data && typeof data.error === 'string' ? data.error : '';
+    flight.note('http', `${status} ${req ? req.method : ''} ${route}`, {
+      room: res.flightRoom || null, level: status >= 500 ? 'fail' : 'warn', data: why || null,
+    });
+  } catch { /* the recorder must never be the thing that throws */ }
 }
 
 /** Raw bytes, refused rather than truncated once they go over the limit. */

@@ -2,7 +2,9 @@
  * GET ROUTES — me. Moved whole out of `handleGet()` in server.js;
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
-import { FEATURES, TIERS, accounts, config, entitlements, rooms, sellableTiers, stripeConfigured } from './context.js';
+import { FEATURES, TIERS, accounts, config, entitlements, rooms, sellableTiers, stripeConfigured, flight } from './context.js';
+import { Flight } from '../flight.js';
+import { selfTestResult } from '../self-test.js';
 import { sendJson } from './plumbing.js';
 import { SESSION_COOKIE, brandForRoom, cookie, galleryRoomFrom, roomForHost, roomForPhone, roomIdFor, schemeForRoom, summarise, whoIs } from './identity.js';
 import { allowed } from './gates.js';
@@ -212,6 +214,25 @@ export async function getMe(req, res, url, route) {
       appName: config.appName,
     }), true;
   }
+  /*
+   * WHAT THE APP SAW TONIGHT — the flight recorder, read back. Your own
+   * room's lines plus the server-wide failures; the owner may ask for `all`.
+   * The text is built here so the Copy button on the Help tab and a curl
+   * from a laptop produce the identical report.
+   */
+  if (route === '/api/flight' && req.method === 'GET') {
+    const account = whoIs(req, url);
+    if (!account) return sendJson(res, 401, { error: 'Sign in first', signIn: '/login' }), true;
+    const room = roomForHost(req, url);
+    const owner = account.bootstrap || account.role === 'owner';
+    const entries = flight.recent({ room: room.id, all: owner && url.searchParams.get('all') === '1', limit: 300 });
+    const st = selfTestResult();
+    return sendJson(res, 200, {
+      room: room.id, entries, text: Flight.text(entries),
+      selfTest: st ? { ok: st.ok, at: st.at, ms: st.ms, steps: st.steps, failed: st.failed } : null,
+    }), true;
+  }
+
   if (route === '/api/state') {
     const role = url.searchParams.get('role') || 'screen';
     // The projector and the phones are open by design; only the control view

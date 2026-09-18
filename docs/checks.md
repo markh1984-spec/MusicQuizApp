@@ -232,6 +232,15 @@ fails the moment a named guard stops existing.
   now reports beside `streams`), and that every stream is let go of when the
   phones leave. First run: 97MB with the room in, 125MB at the end of forty
   questions, all sixty streams released within a quarter of a second.
+- **`flight-recorder.mjs`** — the flight recorder (`src/flight.js`) and the
+  boot self-test (`src/self-test.js`), driven the way a bad night goes: a
+  launch, a phone, a launch refused over the live room (409, with its reason),
+  a press the engine turns down, a phone's own report under its join code, a
+  throw in the console's script in a real browser, and a second quizmaster who
+  must see none of it. Then the Help tab draws the record and Copy puts it on
+  the clipboard. Verified by taking things away: with `res.flightRoom` unset
+  the phone's line files under nobody; with the `client.js` listener gone the
+  synthetic throw never arrives.
 
 ## The ready line is checked by watching it go green — `scripts/ready-light.mjs`
 
@@ -251,6 +260,13 @@ whether anybody drew it*.
 The guards run Chromium in a container. These are the things only a human at
 a real venue-shaped table can check, and they are the checklist for the day
 before a gig week:
+
+**FIRST, BEFORE ANYTHING ELSE: open the console, My account → Help → *What the
+app saw tonight*.** The line under the heading says whether the server's own
+self-test passed on the instance the deploy produced; the record under it is
+what the boot saw. If anything below goes wrong, press **Copy** there and
+paste it into the chat — that text is the whole bug report, and it is the hour
+that was lost on 17 September.
 
 1. **Real phones on real networks** — your own on mobile data, one other on
    the wifi, iOS Safari and Android. Join, answer, airplane mode for ten

@@ -1,6 +1,7 @@
 /** MY ACCOUNT — who you are, what you pay for, the shop, and getting help. */
 
 import { esc, node, postJson, binIcon } from './client.js';
+import { flightPanel } from './console-flight.js';
 import { generate } from './console-generate.js';
 import { packCard, packPrice, preview } from './console-packs.js';
 import { accountsExist, library, me, setAccountsExist } from './console-state.js';
@@ -49,6 +50,7 @@ export function helpSection() {
   wrap.appendChild(node(faqPanelHtml()));
   wrap.appendChild(supportPanel());
   wrap.appendChild(supportLogPanel());
+  wrap.appendChild(flightPanel());
   return wrap;
 }
 

@@ -11,7 +11,8 @@
  * works the same either way.
  */
 
-import { HOST_KEY, HOUSE, WARN_DAYS, accounts, brandFor, can, config, daysLeft, dueEnded, dueWarning, emailConfigured, emailProvider, hostKeyIsTemporary, http, hub, keepKeyAlive, rooms, sendEmail, trialEndedEmail, trialEndingEmail } from './src/http/context.js';
+import { HOST_KEY, HOUSE, WARN_DAYS, accounts, brandFor, can, config, daysLeft, dueEnded, dueWarning, emailConfigured, emailProvider, flight, hostKeyIsTemporary, http, hub, keepKeyAlive, rooms, sendEmail, trialEndedEmail, trialEndingEmail } from './src/http/context.js';
+import { runSelfTest } from './src/self-test.js';
 import { send, sendJson } from './src/http/plumbing.js';
 import { brandForRoom } from './src/http/identity.js';
 import { supportGuard } from './src/http/support-log.js';
@@ -171,6 +172,24 @@ server.listen(config.port, () => {
   setInterval(() => {
     sweepTrials().catch((err) => console.warn('[trials] sweep failed:', err.message));
   }, TRIAL_SWEEP_MS).unref();
+
+  /*
+   * THE FLIGHT RECORDER SEES THE BOOT, then the server plays a night against
+   * itself — `src/self-test.js`. A second after listen, so a room reconnecting
+   * after the deploy is served first; `unref()`, so it can never hold the
+   * process open. The verdict goes on `/health` and into the recorder, and a
+   * failure is said in the log too — Render shows that page, the pub does not.
+   */
+  flight.note('boot', `Server up on :${config.port}, ${rooms.all().length} rooms, ${accounts.all.length} accounts`);
+  setTimeout(() => {
+    runSelfTest({ config, port: config.port }).then((result) => {
+      if (result.ok) flight.note('selftest', `passed ${result.steps} steps in ${result.ms}ms`);
+      else {
+        flight.note('selftest', `FAILED: ${result.failed.join('; ')}`, { level: 'fail' });
+        console.error('[selftest] FAILED:', result.failed.join('; '));
+      }
+    }).catch((err) => flight.note('selftest', `could not run: ${err.message}`, { level: 'fail' }));
+  }, 1000).unref();
 
   if (!accounts.all.length) {
     console.log('');

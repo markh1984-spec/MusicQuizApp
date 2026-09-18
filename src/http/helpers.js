@@ -248,7 +248,7 @@ export async function backUpArchive(room) {
  * exist for.
  *
  * @param {Set} done   the module's own "restored" set, kept per kind
- * @param {Map} flight the in-flight promises, same key
+ * @param {Map} inFlight the in-flight promises, same key
  * @param {string} id  the room
  * @param {function} run  does the restore; RESOLVES only when it read cleanly
  */
@@ -264,9 +264,9 @@ export async function backUpArchive(room) {
  */
 export const RESTORE_BACKOFF_MS = 60_000;
 export const restoreFailedAt = new WeakMap();   // done Set -> Map<id, ms>
-export async function restoreOnce(done, flight, id, run) {
+export async function restoreOnce(done, inFlight, id, run) {
   if (done.has(id)) return;
-  if (flight.has(id)) { await flight.get(id); return; }
+  if (inFlight.has(id)) { await inFlight.get(id); return; }
   if (!restoreFailedAt.has(done)) restoreFailedAt.set(done, new Map());
   const failed = restoreFailedAt.get(done);
   if (failed.has(id) && Date.now() - failed.get(id) < RESTORE_BACKOFF_MS) return;
@@ -275,8 +275,8 @@ export async function restoreOnce(done, flight, id, run) {
     // `undefined` from a restore that never says is treated as success, so a
     // future one that forgets to return cannot retry on every request.
     if (ok !== false) { done.add(id); failed.delete(id); } else failed.set(id, Date.now());
-  })().finally(() => flight.delete(id));
-  flight.set(id, going);
+  })().finally(() => inFlight.delete(id));
+  inFlight.set(id, going);
   await going;
 }
 

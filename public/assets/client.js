@@ -1146,11 +1146,18 @@ export class Live {
 }
 
 export async function postJson(url, body, headers = {}) {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...headers },
-    body: JSON.stringify(body || {}),
-  });
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...headers },
+      body: JSON.stringify(body || {}),
+    });
+  } catch (err) {
+    // The server never saw this one, so only the browser can say it happened.
+    if (!url.includes('/api/flight')) reportToFlight('net', `POST ${url} did not send: ${err.message}`, null, 'warn');
+    throw err;
+  }
   const text = await res.text();
   let data = {};
   try { data = text ? JSON.parse(text) : {}; } catch { data = { error: text }; }
@@ -1172,6 +1179,53 @@ export async function postJson(url, body, headers = {}) {
  * before rooms existed says — that fallback is why nothing had to be reprinted.
  */
 const ROOM_KEY = 'musicquiz.room';
+
+/*
+ * WHAT THIS BROWSER SAW GO WRONG GOES TO THE FLIGHT RECORDER — `src/flight.js`.
+ *
+ * The server already writes down every refusal it sends and every phase a
+ * night reaches; what it cannot see is a phone whose script threw, or a
+ * request that never arrived. So every page that imports this file reports
+ * those two things: an uncaught error, a rejection nobody caught, and a POST
+ * that did not send. One short line each, a dozen per page load at most, and
+ * a failure to report is swallowed — the recorder must never be the thing
+ * that breaks a phone.
+ *
+ * Here rather than in each page because this file has no page of its own
+ * and every screen imports it, which is the rule for shared code. The room
+ * is the join code the page holds; the console's own reports carry no code
+ * and the server files them under the signed-in quizmaster instead.
+ */
+const FLIGHT_MAX = 12;
+let flightSent = 0;
+
+export function reportToFlight(kind, msg, data = null, level = 'fail') {
+  if (typeof fetch !== 'function' || typeof location === 'undefined' || flightSent >= FLIGHT_MAX) return;
+  flightSent += 1;
+  try {
+    const body = {
+      kind, level,
+      msg: String(msg || '').slice(0, 300),
+      data: data === null || data === undefined ? null : String(data).slice(0, 600),
+      page: location.pathname,
+      joinCode: roomCode(),
+    };
+    fetch('/api/flight', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true }).catch(() => {});
+  } catch { /* nothing — see above */ }
+}
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('error', (e) => {
+    const where = e.filename ? `${String(e.filename).split('/').pop()}:${e.lineno || 0}` : null;
+    reportToFlight('browser', e.message || 'error', where);
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    const reason = e.reason;
+    const msg = reason && reason.message ? reason.message : String(reason);
+    const stack = reason && reason.stack ? String(reason.stack).split('\n').slice(0, 3).join(' | ') : null;
+    reportToFlight('browser', `unhandled: ${msg}`, stack);
+  });
+}
 
 export function roomCode() {
   let fromUrl = '';

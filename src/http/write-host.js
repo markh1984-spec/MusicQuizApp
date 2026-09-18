@@ -2,7 +2,7 @@
  * WRITE ROUTES — host. Moved whole out of `handleWrite()` in server.js;
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
-import { ANY_LOBBY_GAME, FEATURES, HOST_MOVES, MAX_ROUNDS, accounts, canPlayPack, comeBackFor, config, entitlements, fullLibrary, hostCursor, isOwnPack, isSting, listOwn, lobbyGameFor, lobbyGamesFor, packlessKind, photosRepoConfigured, pickIdeas, reports, wholePackKind } from './context.js';
+import { ANY_LOBBY_GAME, FEATURES, HOST_MOVES, MAX_ROUNDS, accounts, canPlayPack, comeBackFor, config, entitlements, flight, fullLibrary, hostCursor, isOwnPack, isSting, listOwn, lobbyGameFor, lobbyGamesFor, packlessKind, photosRepoConfigured, pickIdeas, reports, wholePackKind } from './context.js';
 import { readJson, sendJson } from './plumbing.js';
 import { packDating, photoLinkFor, roomForHost, whoIs } from './identity.js';
 import { allowed } from './gates.js';
@@ -19,6 +19,8 @@ export async function writeHost(req, res, url, route) {
     // prevent.
     const room = roomForHost(req, url);
     const { session, photos } = room;
+    // So a refusal from here down is filed under this night — see `sendJson`.
+    res.flightRoom = room.id;
 
     // Launching a different game is the one action that replaces the engine.
     if (action === 'launch') {
@@ -297,6 +299,7 @@ export async function writeHost(req, res, url, route) {
         // Never awaited: a host pressing Launch with a room waiting does not
         // care whether GitHub is having a good day.
         backUpLibraryStats();
+        flight.note('launch', `Launched ${session.kind} "${session.pack && session.pack.title || session.pack && session.pack.id || '?'}"`, { room: room.id });
         return sendJson(res, 200, { ok: true, started, view: session.hostView() }), true;
       } catch (err) {
         return sendJson(res, 400, { error: err.message }), true;
@@ -446,6 +449,7 @@ export async function writeHost(req, res, url, route) {
         // grace; and both spend it only once the night is actually on.
         accounts.useLastNight(whoIs(req, url));
         backUpLibraryStats();
+        flight.note('launch', `Launched ${session.kind} "${session.pack && session.pack.title || session.pack && session.pack.id || '?'}"`, { room: room.id });
         return sendJson(res, 200, { ok: true, started, view: session.hostView() }), true;
       } catch (err) {
         return sendJson(res, 400, { error: err.message }), true;
@@ -579,6 +583,12 @@ export async function writeHost(req, res, url, route) {
     }
     const ok = session.run(action, body);
     if (ok === undefined) return sendJson(res, 404, { error: 'Unknown action: ' + action }), true;
+    // A press the engine turned down, said out loud: "reveal refused:
+    // not_a_question" on a night is exactly the line that explains a host
+    // pressing a button that did nothing.
+    if (ok === false || (ok && typeof ok === 'object' && ok.ok === false)) {
+      flight.note('press', `${action} refused${ok && ok.reason ? `: ${ok.reason}` : ''}`, { room: room.id, level: 'warn' });
+    }
     const view = session.hostView();
     // Start the track for an intro question, without making anybody wait for
     // it. The reply goes back first and the question is already on the

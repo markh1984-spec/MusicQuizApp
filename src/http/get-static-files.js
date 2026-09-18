@@ -3,6 +3,7 @@
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
 import { HOUSE, config, faviconSvg, fs, hub, path, rooms } from './context.js';
+import { selfTestResult } from '../self-test.js';
 import { send, sendJson } from './plumbing.js';
 import { MIME, serveFile } from './static.js';
 
@@ -28,9 +29,13 @@ export async function getStaticFiles(req, res, url, route) {
     // both across sixty phones and forty questions: a stream that is not let
     // go of when a phone leaves, or a heap that only ever grows, is a server
     // that falls over at half past ten on a busy Thursday.
+    // `selfTest` is the boot-time run-through in `src/self-test.js`: null
+    // until it has run, then ok/at/ms and the names of any failed steps.
+    const st = selfTestResult();
     return sendJson(res, 200, {
       ok: true, game: house.session.kind, phase: house.session.engine.state.phase, rooms: rooms.all().length,
       streams: hub.count(), rss: process.memoryUsage().rss,
+      selfTest: st ? { ok: st.ok, at: st.at, ms: st.ms, steps: st.steps, failed: st.failed } : null,
     }), true;
   }
 

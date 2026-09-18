@@ -1,7 +1,7 @@
 /**
  * THE VIEWS AND THE PUSH — what each screen is told, and how it is told. Moved whole from server.js.
  */
-import { FEATURES, HOUSE, STING_TTL_MS, accounts, can, config, cueOffsetMs, hooks, hub, playTrack, rooms, spotifyConfigured, switchedOn } from './context.js';
+import { FEATURES, HOUSE, STING_TTL_MS, accounts, can, config, cueOffsetMs, hooks, hub, playTrack, rooms, spotifyConfigured, switchedOn, flight } from './context.js';
 import { brandForRoom, schemeForRoom } from './identity.js';
 
 // ------------------------------------------------------------- broadcasting
@@ -286,6 +286,7 @@ export function pushState(room) {
   pushQueued.add(id);
   queueMicrotask(() => {
     pushQueued.delete(id);
+    if (room) notePhase(room);
     // Only the phones and screens watching THIS room. Broadcasting to everyone
     // would put one quizmaster's question on another's projector.
     hub.broadcast('state', viewFor, (client) => (client.room ? client.room.id : HOUSE) === id);
@@ -294,3 +295,23 @@ export function pushState(room) {
 
 
 hooks.pushState = pushState;
+
+/*
+ * WHERE THE NIGHT HAS GOT TO, once per change rather than once per push — a
+ * push goes out on every answer. Read straight off the state, so it costs a
+ * string compare on the busy path and nothing else.
+ */
+const lastPhaseOf = new Map();
+function notePhase(room) {
+  try {
+    const s = room.session.engine.state;
+    const where = s.phase === 'question' || s.phase === 'reveal'
+      ? `${s.phase} r${(s.roundIndex ?? 0) + 1} q${(s.questionIndex ?? 0) + 1}`
+      : s.phase;
+    const key = `${room.session.kind}:${where}`;
+    if (lastPhaseOf.get(room.id) === key) return;
+    lastPhaseOf.set(room.id, key);
+    const players = s.players ? Object.keys(s.players).length : 0;
+    flight.note('phase', `${room.session.kind} → ${where}`, { room: room.id, data: `${players} phones` });
+  } catch { /* the recorder must never be the thing that throws */ }
+}

@@ -1160,9 +1160,7 @@ key.
   else's room to a caller who asked for nonsense.
 - **AN UNKNOWN `?q=` STILL ANSWERS AS AN EMPTY GALLERY**, deliberately: a 404
   would let anybody probe which account ids are real. It lands on ONE reserved
-  room now instead of minting a room, a join code and a backup push per junk
-  string — `rooms.get()` never evicts and `codeFor()` persists, so an open URL
-  was a memory leak and a GitHub-quota leak at once.
+  room — `rooms.get()` never evicts, so an open URL was a memory leak.
 - **AND A JOIN CODE IS REFUSED THE SAME WAY — `roomForPhone()`.** It fell back
   to HOUSE, so `/play?g=ZZZZ` said *"You're in"* under the owner's branding,
   minted a real id and token in the OWNER'S room, and served his loaded quiz to
@@ -1170,12 +1168,10 @@ key.
   raced, so a printed QR could stop resolving after a deploy and the whole room
   joined the owner's game. **NO CODE AT ALL is still the house room** — his own
   projector, and every card printed before rooms existed.
-- **AND THE CODE BOOK IS WRITTEN ONE AT A TIME, NEWEST BOOK WINS.** One page
-  load fired N concurrent unawaited PUTs of the same file, each carrying the
-  snapshot taken when it was queued: **four of six quizmasters' printed QR
-  codes changed across a restart.** Coalescing to the latest is safe precisely
-  because each is the WHOLE book. **A failure is said out loud** — a silent one
-  is a printed QR found dead by a room in front of a projector.
+- **AND THE CODE BOOK IS WRITTEN ONE AT A TIME, NEWEST BOOK WINS** — N
+  concurrent PUTs of one file changed **four of six quizmasters' printed QR
+  codes across a restart.** Safe because each is the WHOLE book. **A failure is
+  said out loud.**
 - **`galleryAsked` AND `galleryTarget` ARE TWO VALUES.** One is *was a gallery
   named* (which stands the owner's preview shortcut down); the other is *which
   room that resolves to*. Folding them hands the shortcut back on a junk `?q=`.
@@ -1318,15 +1314,13 @@ league band both compared venue STRINGS, and one did not even trim.
 
 ### THE SUPPORT LOG IS MATCHED EXACTLY, NEVER BY PREFIX
 
-`SUPPORT_QUIET` in `server.js`. A prefix match covered every `/api/me/*`
-WRITE, and a route that did not exist let every SSE reconnect evict real
-entries. **A route belongs on that list when a LINE would be noise, never when
-the ACT is dull.**
+`SUPPORT_QUIET`. A prefix match covered every `/api/me/*` WRITE and let every
+SSE reconnect evict real entries. **A route belongs on that list when a LINE
+would be noise, never when the ACT is dull.**
 
 **AND `safe()` STRIPS `calendarKey` AND `reset`.** The calendar key IS a
-credential — one GET with no cookie returns somebody's whole diary — and it rode
-out on every `/api/me`. `/api/calendar/link` is the route that exists to hand it
-over.
+credential and it rode out on every `/api/me`; `/api/calendar/link` is the
+route that exists to hand it over.
 
 ### TWO MORE WHITELISTS THAT DROPPED WHAT THEY DID NOT NAME
 
@@ -1385,12 +1379,10 @@ rule 1 says is a rename rather than an argument:
 
 ### A FIELD ON A VIEW IS A PROMISE THAT SOMETHING DRAWS IT
 
-`canStart`, `msRemaining` and `rounds` were built on every host push and read by
-nothing — `rounds` mapped the whole pack each time, and during a question a host
-push is every time a team answers. `teamScores()`'s `members` list was the same,
-with a `key` that was always `undefined`. **Removed rather than left**: the
-arcade board sat in a payload for as long as the feature existed with nobody
-drawing it. If the control view wants a round list, draw one.
+`canStart`, `msRemaining`, `rounds` and `teamScores()`'s `members` were built on
+every host push and read by nothing. **Removed rather than left** — the arcade
+board sat in a payload for as long as the feature existed with nobody drawing
+it. If the control view wants a round list, draw one.
 
 ### THE LOBBY GAMES — AND NONE OF THEM IS NAMED AFTER THE ONE YOU ARE THINKING OF
 
@@ -2056,41 +2048,54 @@ Hung GitHub behind the real server and drove a night. Four things waited:
 
 - **`fetch()` HAS NO TIMEOUT, AND `restoreFromBackup()` RUNS BEFORE
   `listen()`** — a deploy during a bad hour at GitHub was an app that never
-  came up. `GITHUB_TIMEOUT_MS` (20s, writes) and `GITHUB_READ_TIMEOUT_MS` (8s)
-  in `github.js`; **every call carries one.**
-- **THE BOOT RESTORES RUN TOGETHER, AND THE ACCOUNTS ARE ASKED AGAIN** —
-  nine reads in a row was nine deadlines; a failed accounts read left nobody
-  able to sign in until the next restart. `tryGetFile` plus a retry a minute
-  later, only ever into an EMPTY store.
+  came up. `GITHUB_TIMEOUT_MS` (20s) and `GITHUB_READ_TIMEOUT_MS` (8s); **every
+  call carries one.**
+- **THE BOOT RESTORES RUN TOGETHER, AND THE ACCOUNTS ARE ASKED AGAIN** a
+  minute later, only ever into an EMPTY store.
 - **A REQUEST WAITS FOR ITS BACKUP `BACKUP_WAIT_MS` (3s) AND ANSWERS
-  `ok: false`** — sign-in, the invoice writes and publishing a night all
-  awaited a write. `within()` in `server.js`; the write still finishes.
-- **THE LIBRARY'S FOUR RESTORES AND THE ACCESS CHECK GO OUT AT ONCE, AND A
-  FAILED RESTORE BACKS OFF A MINUTE** (`restoreOnce`) — never latched as
-  empty, never retried per request either.
+  `ok: false`** — `within()`; the write still finishes.
+- **A FAILED LIBRARY RESTORE BACKS OFF A MINUTE** (`restoreOnce`) — never
+  latched as empty, never retried per request.
 
 ### TWO DEVICES, ONE QUIZ — a move carries the cursor it was pressed against
 
-`host-cursor.js`, imported by `host.js` AND `server.js`. The host drives a
-night from a phone and the laptop; the per-device double-tap guard cannot see
-the other device, so Next on both was two questions gone. **A MOVE sent with
-`seen` is refused (409, with the FRESH view) when the cursor has moved on;
-one sent without is never refused** — every guard and older client is
-untouched. **The cursor is what a MOVE changes, never `version`**, which
-every answer bumps. `two-devices.mjs` presses both at once. **`wifi-blip.mjs`
-drops each screen's network in turn and checks it against a twin that stayed
-online** — nothing there knows what a screen should say, only that two must
-agree.
+`host-cursor.js`, imported by `host.js` AND the server. Next on a phone and
+the laptop at once was two questions gone. **A MOVE sent with `seen` is
+refused (409, with the FRESH view) when the cursor has moved on; one sent
+without is never refused.** **The cursor is what a MOVE changes, never
+`version`.** `two-devices.mjs` presses both; **`wifi-blip.mjs` drops each
+screen's network in turn and checks it against a twin that stayed online.**
 
 ### THE READY LINE IS A LIGHT, NEVER A GATE — `console-ready.js`
 
-*"Ready for tonight"* on the launch bar: the server answering, a projector
-open on THIS room (`/api/host/ready`, on `SUPPORT_QUIET`, counts per room),
-the venue's prizes. **It repeats `noPrizesReason()`'s answer and never its
-decision**; a poll that fails says so and changes nothing. One interval, a
-leaf like `console-warnings.js`. **Its first tick ran before the node was
-attached and cancelled itself** — every test green, the light never lit.
-`ready-light.mjs` waits for the GREEN, then for it to go off again.
+*"Ready for tonight"* on the launch bar: the server, a projector on THIS room
+(`/api/host/ready`, on `SUPPORT_QUIET`), the prizes. **It repeats
+`noPrizesReason()`'s answer and never its decision**; a failed poll changes
+nothing. **Its first tick ran before the node was attached and cancelled
+itself** — every test green, the light never lit. `ready-light.mjs` waits for
+the GREEN, then for it to go off again.
+
+### A BROKEN NIGHT WRITES ITSELF DOWN — `src/flight.js`, and the server self-tests at boot
+
+*"literally anything that goes wrong, you can have a report so you can action
+it straight away"* — after a launch that would not go took an hour to diagnose.
+
+- **ONE RECORDER, FED FROM FIVE PLACES NOBODY HAS TO REMEMBER**: `console.warn`
+  and `console.error` are WRAPPED, `sendJson()` notes every answer of 400 or
+  more **with its reason and the room off `res.flightRoom`**, the host route
+  notes launches and refused presses, `pushState()` notes a phase change per
+  room, and every browser reports a throw or a POST that did not send through
+  `POST /api/flight` (`reportToFlight()` in `client.js`). **A route that
+  resolves a room sets `res.flightRoom`**, or its refusals file under nobody.
+- **A ROOM READS ITS OWN LINES PLUS THE SERVER-WIDE FAILURES, NEVER ANOTHER
+  ROOM'S** — `recent()`; the owner may ask `all`. A ring of 2,000, mirrored to
+  `data/flight.jsonl` and read back at boot — **a courtesy, never a store**.
+- **THE SERVER PLAYS A NIGHT AGAINST ITSELF A SECOND AFTER LISTEN** —
+  `src/self-test.js`, a throwaway `Session` on a temp disk, rule 1 asked
+  mid-question, a reload, then its own pages over HTTP. **Never a real room,
+  never a throw** — the verdict is `selfTest` on `/health` and in the recorder.
+- **IT IS READ ON THE HELP TAB WITH A COPY BUTTON** — `console-flight.js`, a
+  leaf. **The pasted text IS the bug report.** `flight-recorder.mjs` drives it.
 
 ### A PHOTOGRAPH IS READ FROM MEMORY, THEN DISK, THEN GITHUB
 
@@ -2106,20 +2111,17 @@ first fifty people to open a gallery after one each spent a GitHub call against
 - **THE KEY MAPPING MUST BE INJECTIVE** — `/` → `~` served one photograph in
   place of another. `encodeURIComponent`, hashed past 200 chars. **Do not lean
   on `safePhotoName()`.**
-- **A `..` MAY NOT WALK OUT.** The test writes a sentinel OUTSIDE the
-  folder.
-- **NOTHING DECIDING WHO MAY SEE A PHOTO IS CACHED WITH IT**, as before.
-- **Object storage would fix the git-history problem**, and is why to consider it.
+- **A `..` MAY NOT WALK OUT** — the test writes a sentinel OUTSIDE the folder.
+- **NOTHING DECIDING WHO MAY SEE A PHOTO IS CACHED WITH IT.**
+- **Object storage would fix the git-history problem.**
 
 ### THE CONTENTS API SENDS ZERO BYTES FOR A FILE OVER 1MB, AND CALLS IT 200
 
 `tryGetFile()` / `rawGet()` in `src/github.js`. Above the inline limit GitHub
-answers 200 with `content: ''` — a good string, so the type check passed and
-`Buffer.from('', 'base64')` returned an **empty buffer as a success**: a broken
-photograph with `ok: true`, nothing logged, nothing retried. **`size` tells them
-apart**, and the raw media type has no ceiling so it asks AGAIN; a failure there
-is `ok: false`. Both uploads shrink first — **but `MAX_BYTES` is 3MB and a
-crowded pub is the densest thing you can hand a JPEG encoder.**
+answers 200 with `content: ''`, which read as an **empty buffer with `ok:
+true`**. **`size` tells them apart** and the raw media type is asked AGAIN; a
+failure there is `ok: false`. **`MAX_BYTES` is 3MB and a crowded pub is the
+densest thing you can hand a JPEG encoder.**
 
 Full reasoning: **[`docs/gigs/photos.md`](docs/gigs/photos.md)**.
 
@@ -4190,6 +4192,7 @@ node scripts/ready-light.mjs            # does the launch bar's ready line go gr
 node scripts/two-devices.mjs            # two control views — does a press land once?
 node scripts/wifi-blip.mjs              # the wifi drops on each screen — does it come back right?
 node scripts/long-night.mjs             # sixty phones, forty questions — memory and latency
+node scripts/flight-recorder.mjs        # does a broken night write itself down, and can the host copy it?
 node scripts/gig-build.mjs              # THE MONDAY BUILD: all of the above, one verdict
 ```
 

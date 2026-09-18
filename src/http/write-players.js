@@ -2,9 +2,9 @@
  * WRITE ROUTES — players. Moved whole out of `handleWrite()` in server.js;
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
-import { CHECKS_ONLY, FEATURES, MAX_BYTES, OWNER_ONLY, changesTheLibrary, ideaLabel, nightOfGig, ownsPlayer, propUse, searchTracks, spotifyConfigured, tidyCode } from './context.js';
+import { CHECKS_ONLY, FEATURES, MAX_BYTES, OWNER_ONLY, changesTheLibrary, flight, ideaLabel, nightOfGig, ownsPlayer, propUse, searchTracks, spotifyConfigured, tidyCode } from './context.js';
 import { readBody, readJson, sendJson } from './plumbing.js';
-import { roomForPhone, whoIs } from './identity.js';
+import { roomForHost, roomForPhone, whoIs } from './identity.js';
 import { allowed } from './gates.js';
 import { photosWanted, pushState } from './views.js';
 import { backUpAsks, backUpPropUse, fileAway } from './helpers.js';
@@ -77,9 +77,30 @@ export async function writePlayers(req, res, url, route) {
     })), true;
   }
 
+  /*
+   * ---- WHAT A BROWSER SAW GO WRONG — `src/flight.js` -----------------------
+   *
+   * Open, like every phone route: a phone has no login, and a phone that
+   * cannot report a failure is the one whose failure takes an hour to find.
+   * It files under the room the join code names, or the signed-in
+   * quizmaster's own room for a console page. The body is capped and every
+   * field is cut to a line by the recorder, so the worst a stranger can do
+   * with it is write a short sentence into a log they cannot read.
+   */
+  if (route === '/api/flight' && req.method === 'POST') {
+    const body = await readJson(req, 4096);
+    const room = whoIs(req, url) ? roomForHost(req, url) : roomForPhone(req, url, body);
+    const kind = String(body.kind || 'browser').slice(0, 24);
+    flight.note(kind, `${String(body.page || '')} ${String(body.msg || '')}`.trim(), {
+      room: room.id, level: body.level === 'warn' ? 'warn' : 'fail', data: body.data ?? null,
+    });
+    return sendJson(res, 200, { ok: true }), true;
+  }
+
   if (route === '/api/join' && req.method === 'POST') {
     const body = await readJson(req);
     const room = roomForPhone(req, url, body);
+    res.flightRoom = room.id;
     const player = room.session.joinPlayer({ playerId: body.playerId, token: body.token, name: body.name, tryId: body.tryId });
     // A game that will not hold any more phones. Says so rather than handing
     // back an empty team, which the phone would draw as a joined player with
@@ -207,7 +228,9 @@ export async function writePlayers(req, res, url, route) {
   if (['/api/answer', '/api/answer-breakout', '/api/mark', '/api/claim', '/api/wandered', '/api/say', '/api/team', '/api/arcade', '/api/note-read', '/api/photo-vote'].includes(route) && req.method === 'POST') {
     const body = await readJson(req);
     const action = route.slice('/api/'.length);
-    const result = roomForPhone(req, url, body).session.runPlayerAction(action, body);
+    const room = roomForPhone(req, url, body);
+    res.flightRoom = room.id;
+    const result = room.session.runPlayerAction(action, body);
     // 200 either way: the phone shows its own feedback, and a rejected action
     // is a normal thing (too late, already answered), not an error.
     return sendJson(res, 200, result), true;

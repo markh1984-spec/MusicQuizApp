@@ -45,6 +45,14 @@ What went live, all guarded:
 - **`server.js` is a shell** — forty modules in `src/http/`, cut on line
   numbers, `test/server-split.test.js` holding it there. Done the same day
   it was mapped because the window to Thursday was open.
+- **The flight recorder and the boot self-test** (`flight-recorder.mjs`),
+  asked for last: *"literally anything that goes wrong, you can have a report
+  so you can action it straight away."* The server writes down every refusal
+  with its reason, every phase a night reaches, every warning it prints and
+  everything a phone or a console saw throw, per room; it plays a night
+  against itself a second after every boot and puts the verdict on
+  `/health`; and the Help tab reads it all back under *What the app saw
+  tonight* with a Copy button. The pasted text is the bug report.
 
 Both deploys were confirmed live by `/health` answering with the new
 `streams` and `rss` fields.

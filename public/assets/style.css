@@ -6662,6 +6662,16 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   padding: 6px 0; border-top: 1px solid var(--panel-line);
   font-size: var(--fs-note);
 }
+
+/* WHAT THE APP SAW TONIGHT — the flight recorder on the Help tab. The record
+   is a <pre> so a line stays a line when it is copied; it scrolls sideways
+   inside its own box rather than pushing the page. */
+.flight-panel .flight-text {
+  margin: 8px 0; padding: 10px 12px; max-height: 320px; overflow: auto;
+  font-size: var(--fs-mini); line-height: 1.5; white-space: pre; color: var(--ink-dim);
+  background: rgba(0, 0, 0, 0.25); border: 1px solid var(--panel-line); border-radius: var(--r-field);
+}
+.flight-panel .flight-self.bad { color: var(--bad); }
 .support-row .tiny { flex: 0 0 auto; min-width: 132px; }
 
 /* "Still need help?" — shown while there is still time to answer, not at the
