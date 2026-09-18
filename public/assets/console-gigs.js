@@ -669,7 +669,13 @@ export async function fillNightDetail(body, night) {
   const under = node('<div class="bench-under"></div>');
   await nightPhotos(body, night, { wall: true, controlsInto: under, onData: (d) => { data = d; } });
   body.appendChild(under);
-  if (data) showcaseInto(under, { ...night, cover: data.cover }, library.venueRecords || [], keyed);
+  if (data) {
+    // The address is built HERE and handed over — `galleryAddress()` lives in
+    // this file and the export module imports the other way, so a second copy
+    // over there is a link that works in one place and 404s in the other.
+    showcaseInto(under, { ...night, cover: data.cover, posted: data.posted },
+      library.venueRecords || [], keyed, galleryAddress(night.night, night.venue || ''));
+  }
   /*
    * WHERE IT WAS, SAID HERE TOO. A night whose photographs arrived with no
    * game launched — run off KaraFun with the camera code on the wall — sits

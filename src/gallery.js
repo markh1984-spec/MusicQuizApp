@@ -141,20 +141,32 @@ function readAll(roomId) {
 }
 
 async function readAllNow(roomId) {
-  if (!photosRepoConfigured()) return { nights: [], photos: {}, pins: {} };
+  if (!photosRepoConfigured()) return { nights: [], photos: {}, pins: {}, posted: [] };
   let raw = null;
   try {
     raw = await getFile(listPath(roomId), 'photos');
   } catch {
-    return { nights: [], photos: {}, pins: {} };
+    return { nights: [], photos: {}, pins: {}, posted: [] };
   }
-  if (!raw) return { nights: [], photos: {}, pins: {} };
+  if (!raw) return { nights: [], photos: {}, pins: {}, posted: [] };
   try {
     const parsed = JSON.parse(raw.toString('utf8'));
     const nights = Array.isArray(parsed) ? parsed : parsed.nights;
     const photos = (!Array.isArray(parsed) && parsed.photos) || {};
     const pins = (!Array.isArray(parsed) && parsed.pins) || {};
+    const posted = (!Array.isArray(parsed) && parsed.posted) || [];
     return {
+      /*
+       * WHICH NIGHTS HAVE ALREADY GONE OUT ON SOCIALS — a list of dates, the
+       * same shape as `nights` above and validated the same way.
+       *
+       * It is a MARK, not a gate: nothing anywhere reads this to decide what
+       * may be done, only to say what is outstanding. That is the whole point
+       * — *a feature that generates a QUEUE somebody has to work is expensive;
+       * one that serves itself is cheap* — so the list of nights still to post
+       * shrinks on its own rather than living in somebody's head.
+       */
+      posted: (posted || []).map((n) => String(n || '')).filter(isNightFolder).sort().reverse(),
       nights: (nights || [])
         .map((n) => String(n || ''))
         // Validated on the way OUT as well as in: this file is in a repo a
@@ -187,7 +199,7 @@ async function readAllNow(roomId) {
         .filter(([, names]) => names.length)),
     };
   } catch {
-    return { nights: [], photos: {}, pins: {} };
+    return { nights: [], photos: {}, pins: {}, posted: [] };
   }
 }
 
@@ -326,12 +338,72 @@ async function publishNow(roomId, night, on) {
     // of bug that only shows up weeks later when somebody notices a photo has
     // come back. EVERY writer of this file has to carry the halves it is not
     // changing; there is a test walking them.
-    JSON.stringify({ nights: sorted, photos: held.photos, pins: held.pins }, null, 2),
+    JSON.stringify({ nights: sorted, photos: held.photos, pins: held.pins, posted: held.posted }, null, 2),
     `${on ? 'Publish' : 'Unpublish'} the gallery for ${night}`,
     'photos',
   );
   if (res && res.ok === false) return { ok: false, error: res.error || 'Could not save that.' };
   return { ok: true, nights: sorted };
+}
+
+/**
+ * WHICH NIGHTS HAVE ALREADY BEEN POSTED TO SOCIALS.
+ *
+ * *"I want to use the showcase photos as the photos I post to Instagram, I
+ * want a quick workflow for this purpose."* The photographs and the caption
+ * are the easy half; the half that costs a Monday is remembering which nights
+ * you have already done — so the app keeps that instead of the person.
+ *
+ * **A MARK, NEVER A GATE.** Nothing reads this to decide what may happen: a
+ * night marked posted can be posted again, and one that is not is not nagged
+ * about. It exists so a list can say what is outstanding, which is this app's
+ * standing rule about queues — the pile has to be able to shrink on its own.
+ *
+ * **IT LIVES BESIDE THE PUBLISHED NIGHTS RATHER THAN IN A FILE OF ITS OWN.**
+ * `published.json` is already read once per page for the lamps, so this rides
+ * in free; a second file would be a second request on every list and a second
+ * thing to restore. The rude-photo flags went the other way for a reason that
+ * does not apply here — those are written by a BACKGROUND robot, which must
+ * never race a human's publish. This is only ever written by a person
+ * pressing a button, through the same queue as everything else in the file.
+ */
+export async function postedNights(roomId) {
+  return (await readAll(roomId)).posted;
+}
+
+/** Has this one already gone out? */
+export async function isPosted(roomId, night) {
+  if (!isNightFolder(night)) return false;
+  return (await postedNights(roomId)).includes(night);
+}
+
+/** Mark a night posted, or take the mark off — it is only ever a human. */
+export async function setPosted(roomId, night, on) {
+  if (!isNightFolder(night)) return { ok: false, error: 'That is not a night.' };
+  if (!photosRepoConfigured()) {
+    return { ok: false, error: 'The photo store is not set up, so there is nowhere to record this.' };
+  }
+  return inOrder(roomId, () => postNow(roomId, night, on));
+}
+
+async function postNow(roomId, night, on) {
+  const held = await readAll(roomId);
+  const have = held.posted;
+  const want = on ? [...new Set([...have, night])] : have.filter((n) => n !== night);
+  if (want.length === have.length && want.every((n) => have.includes(n))) {
+    return { ok: true, posted: have };
+  }
+  const sorted = [...want].sort().reverse();
+  const res = await putFile(
+    listPath(roomId),
+    // Every other half rides along untouched — the rule this file has had
+    // since it held two, and the one a fourth is exactly when it gets missed.
+    JSON.stringify({ nights: held.nights, photos: held.photos, pins: held.pins, posted: sorted }, null, 2),
+    `${on ? 'Mark' : 'Unmark'} ${night} as posted`,
+    'photos',
+  );
+  if (res && res.ok === false) return { ok: false, error: res.error || 'Could not save that.' };
+  return { ok: true, posted: sorted };
 }
 
 /**
@@ -386,7 +458,7 @@ async function decideNow(roomId, night, name, decision) {
     listPath(roomId),
     // The nights ride along untouched — see the note on the publish writer
     // above. The pins do NOT always: see the unstar just above.
-    JSON.stringify({ nights: held.nights, photos, pins }, null, 2),
+    JSON.stringify({ nights: held.nights, photos, pins, posted: held.posted }, null, 2),
     decision ? `${decision === 'on' ? 'Show' : 'Hide'} ${key} on the gallery` : `Clear the ruling on ${key}`,
     'photos',
   );
@@ -466,7 +538,7 @@ async function pinNow(roomId, night, name, on) {
   }
   const res = await putFile(
     listPath(roomId),
-    JSON.stringify({ nights: held.nights, photos, pins }, null, 2),
+    JSON.stringify({ nights: held.nights, photos, pins, posted: held.posted }, null, 2),
     `${on ? 'Pin' : 'Unpin'} ${key} on the gallery card`,
     'photos',
   );

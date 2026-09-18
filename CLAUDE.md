@@ -2754,6 +2754,34 @@ costs.
   was present, lit and ignored. **One direction only** — un-starring never
   hides. **The BROWSER only keeps up**, settling on the reply.
   `star-means-public.mjs` presses both.
+
+### THE SHOWCASE IS THE SOCIALS POST — `insta-caption.js`, and the app never sends it
+
+*"I want to use the showcase photos as the photos I post to Instagram, I want
+a quick workflow."* `postKitInto()`/`postedInto()` in `console-photo-export.js`,
+`posted` in `published.json`, `POST /api/past-gigs/posted`.
+
+- **NOTHING POSTS TO INSTAGRAM AND NOTHING EVER SHOULD.** There is no
+  publishing API for a personal account — Meta's wants a Business account, a
+  linked Page and an app review — and *do not build a send that skips the
+  reading* settles it anyway. **The app prepares, the human reads, the human
+  posts**, `reply-draft.js`'s shape for the third time.
+- **ONE PRESS DOES BOTH HALVES** — the caption to the clipboard and the three
+  framed squares to Downloads, which drag into instagram.com as a carousel.
+  **The clipboard goes FIRST, inside the gesture**; a refused clipboard
+  selects the text and the photos still go.
+- **NOTHING NEW IS COLLECTED** — venue, headcount (**the MAX across the games,
+  never the sum**), the next date from `upcoming()`, the address from
+  `galleryAddress()`, **passed IN** because `console-gigs.js` imports the
+  export module and two copies of one URL is a link that 404s.
+- **SILENCE WHERE THERE IS NOTHING TRUE TO SAY**, the comeback band's rule.
+- **THE WINNING TEAM IS DELIBERATELY NOT IN THE CAPTION** — a public naming
+  they never agreed to, and `clean-names.js` is on the SERVER by design, so
+  the browser holds the real name and no safe way to judge it. **Do not add it
+  without masking it on the server.**
+- **`posted` IS A MARK, NEVER A GATE** — nothing refuses anything; it only
+  lets the rail say what is outstanding, so the pile shrinks on its own.
+  **A FOURTH HALF OF `published.json`, and every writer carries it.**
 - **THE PUBLISH LAMP ASKS FIRST, NAMES THE NIGHT AND THE CONSEQUENCE, AND
   SAYING NO CHANGES NOTHING.** **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW
   MANY THERE ARE.**
@@ -4245,7 +4273,7 @@ node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 node scripts/photo-to-socials.mjs       # can a pub save a photo, with your name on?
 node scripts/photo-to-start.mjs         # is the photo ask real, and the skip?
 node scripts/rude-photo.mjs              # is a rude photo flagged and marked?
-node scripts/star-means-public.mjs      # does starring a photo publish it, and hiding unstar it?
+node scripts/star-means-public.mjs      # starring publishes it — and does the socials post kit work?
 node scripts/photos-in-a-bucket.mjs     # the gallery off an object store — does the bin mean it?
 node scripts/photos-to-r2.mjs           # move the photographs off GitHub (--go to do it)
 node scripts/second-screen.mjs          # the second display: the code and the photos

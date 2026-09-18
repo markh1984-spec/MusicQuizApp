@@ -1085,7 +1085,19 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * delete. Nothing was trimmed to pay for it because nothing here was fat
  * enough to be worth the risk of reading a rule out by accident.
  */
-const BUDGET = 263_500;
+/*
+ * RAISED TO 265,400 ON 18 SEPTEMBER 2026, for the socials post kit — and, like
+ * the object store above it, this is a raise rather than a trim because the
+ * section is almost entirely prohibitions a session would undo while being
+ * helpful. "Wire up the Instagram API" is the obvious improvement and it is
+ * wrong twice over (no API for a personal account, and `do not build a send
+ * that skips the reading`). "Put the winning team in the caption" is the
+ * obvious nicety and it is a public naming nobody agreed to, with the word
+ * filter deliberately out of reach on the server. And `posted` becoming a gate
+ * — refusing, nagging, hiding — turns the one thing that REDUCES a Monday into
+ * another queue. None of those read as mistakes from a diff.
+ */
+const BUDGET = 265_400;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

@@ -5040,6 +5040,34 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .showcase-strip { margin: 10px 0 6px; }
 .showcase-row { display: flex; gap: 8px; margin-top: 6px; align-items: flex-start; }
 .showcase-pic { flex: 1 1 0; min-width: 0; max-height: 170px; object-fit: contain; border-radius: var(--r-field); background: rgba(0, 0, 0, 0.35); }
+
+/* THE SOCIALS POST KIT — the caption above the one button that readies it.
+   A textarea is a "choose" control, so it takes the field treatment every
+   other box on this console has: same fill, same border, same 10px radius. */
+.insta-kit { margin: 10px 0 8px; }
+.insta-cap {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: var(--r-field);
+  /* The same fill a select and a text box take on this console — a text box
+     and a dropdown look identical, which is the GUI rule. */
+  background-color: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--panel-line);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-body);
+  line-height: 1.45;
+  resize: vertical;
+}
+.insta-posted { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+/* Lit, never filled — it is a MARK that something happened, not the thing to
+   press next, and the one filled gradient on a console belongs to Launch. */
+.console .insta-posted button.insta-done.is-on {
+  border-color: color-mix(in srgb, var(--good) 55%, transparent);
+  color: var(--good);
+}
+
 .community-wall .cphoto-pin svg { width: 12px; height: 12px; }
 
 .cphoto-acts {

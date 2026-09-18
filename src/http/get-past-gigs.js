@@ -2,7 +2,7 @@
  * GET ROUTES — past-gigs. Moved whole out of `handleGet()` in server.js;
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
-import { COVER_PHOTOS, FEATURES, MAX_PINS, coverPhotos, isNightFolder, isPublished, leagueAfter, listAdvertPacks, listArchive, listDirs, mergeGigs, nameDecisions, nightHeadcount, nightReportFilename, nightReportPdf, photoDecisions, photoFolder, photoKey, photoPins, photosRepoConfigured, publicName, publicTable, publishedNights, safePhotoName, sameVenue, showsOnGallery, teamKey, totals, photoFlags, flagKey } from './context.js';
+import { COVER_PHOTOS, FEATURES, MAX_PINS, coverPhotos, isNightFolder, isPublished, leagueAfter, listAdvertPacks, listArchive, listDirs, mergeGigs, nameDecisions, nightHeadcount, nightReportFilename, nightReportPdf, photoDecisions, photoFolder, photoKey, photoPins, photosRepoConfigured, postedNights, publicName, publicTable, publishedNights, safePhotoName, sameVenue, showsOnGallery, teamKey, totals, photoFlags, flagKey } from './context.js';
 import { send, sendJson } from './plumbing.js';
 import { galleryRoomFor, gigRoomsFor, nightFiles } from './identity.js';
 import { allowed } from './gates.js';
@@ -65,11 +65,17 @@ export async function getPastGigs(req, res, url, route) {
     const up = photosRepoConfigured()
       ? new Set(await publishedNights(galleryRoomFor(req, url)))
       : new Set();
+    // AND WHICH HAVE ALREADY GONE OUT ON SOCIALS. Out of the same one file as
+    // `up` — `readAll()` caches it per room, so this costs no second request.
+    const out = photosRepoConfigured()
+      ? new Set(await postedNights(galleryRoomFor(req, url)))
+      : new Set();
     return sendJson(res, 200, {
       nights: nights.map((n) => ({
         ...n,
         ...(unbilled.has(n.night) ? { unbilled: true } : {}),
         published: up.has(n.night),
+        posted: out.has(n.night),
       })),
       // So the page can say why there are no pictures against an old night,
       // rather than implying nobody took any.
@@ -238,6 +244,9 @@ export async function getPastGigs(req, res, url, route) {
       // button that has to fetch before it knows its own label is a button
       // that flickers.
       published: await isPublished(gigRoomId, night),
+      // Whether it has already gone out on socials — the same one file, so no
+      // second request, and the button knows its own label on the first paint.
+      posted: photosRepoConfigured() && (await postedNights(gigRoomId)).includes(night),
       maxPins: MAX_PINS,
       /*
        * THE SHOWCASE — the same three the public index fans out on this

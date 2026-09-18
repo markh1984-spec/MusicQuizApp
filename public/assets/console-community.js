@@ -309,7 +309,7 @@ function photoRail() {
         key: night.night,
         group: pub.name,
         name: readable(night.night),
-        note: whyNoVenue(night),
+        note: [whyNoVenue(night), night.posted ? 'Posted' : ''].filter(Boolean).join(' · '),
         lamp: {
           on: up,
           said: up
@@ -546,8 +546,8 @@ function photoWall() {
       wall: true,
       controlsInto: nightControls,
       onOpen: openIt,
-      onData: (d) => showcaseInto(nightControls, { ...openNight, cover: d.cover },
-        library.venueRecords || [], keyed),
+      onData: (d) => showcaseInto(nightControls, { ...openNight, cover: d.cover, posted: d.posted },
+        library.venueRecords || [], keyed, galleryAddress(openNight.night, openNight.venue || '')),
     });
     el.appendChild(bayColumns(rail(openNight.night), [
       bayHead(readable(openNight.night), openNight.venue || '', liveLink(openNight)), body,

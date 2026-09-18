@@ -27,8 +27,10 @@
  * again.
  */
 
-import { node } from './client.js';
-import { me } from './console-state.js';
+import { node, esc } from './client.js';
+import { library, me } from './console-state.js';
+import { captionFor } from './insta-caption.js';
+import { upcoming } from './diary.js';
 import { framedBlob, savePhoto, saveName } from './photo-save.js';
 import { invoiceApi } from './console-invoices.js';
 
@@ -213,20 +215,151 @@ export function showcasePreviewInto(into, night, records, keyedUrl) {
   return strip;
 }
 
-/** The strip and the save button together — one call for the Community bay. */
-export function showcaseInto(into, night, records, keyedUrl) {
+/**
+ * THE WHOLE POST KIT — the framed three, the caption, one press, and a mark
+ * saying it has gone out.
+ *
+ * *"I want to use the showcase photos as the photos I post to Instagram, I
+ * want a quick workflow for this purpose."*
+ *
+ * **INSTAGRAM IS NOT POSTED TO FROM HERE AND NEVER WILL BE.** There is no
+ * publishing API for a personal account — Meta's needs a Business or Creator
+ * account, a linked Page and an app review — and the rule this app already
+ * follows says it anyway: *do not build a send that skips the reading*. So
+ * the shape is `reply-draft.js`'s, for the third time: **the app prepares,
+ * the human reads, the human posts.**
+ *
+ * **ONE PRESS DOES BOTH HALVES**, because the two halves are useless apart:
+ * three files in Downloads with no words, or words with no pictures. It puts
+ * the caption on the clipboard and saves the three, so what is left is
+ * dragging them into instagram.com and pressing paste. The caption is ABOVE
+ * the button and editable — that is the reading, and it is the point.
+ *
+ * **THE CLIPBOARD CAN BE REFUSED AND THE PHOTOS STILL GO.** A browser can
+ * decline a clipboard write; losing the caption is a paste away from fixed,
+ * and a press that did nothing because of it would be the control-that-reports-
+ * success fault wearing a permission prompt.
+ *
+ * @param {string} address the night's public gallery URL, or '' — passed IN
+ *                         rather than built here: `galleryAddress()` lives in
+ *                         `console-gigs.js`, which imports THIS file, and two
+ *                         copies of one URL is a link that 404s in one place.
+ */
+export function showcaseInto(into, night, records, keyedUrl, address = '') {
   showcasePreviewInto(into, night, records, keyedUrl);
-  return showcaseSaveInto(into, night, records, keyedUrl);
+  const kit = postKitInto(into, night, address);
+  const save = showcaseSaveInto(into, night, records, keyedUrl, kit);
+  postedInto(into, night, keyedUrl);
+  return save;
 }
 
-export function showcaseSaveInto(into, night, records, keyedUrl) {
+/**
+ * The caption, drafted and editable. Returns `{ copy() }` so the save button
+ * can take the words with it — ONE press for the whole post.
+ */
+export function postKitInto(into, night, address = '') {
+  const draft = captionFor({
+    night,
+    gallery: address,
+    // The diary's own projection — residencies forward, one-offs typed, nights
+    // off removed. Asking it rather than keeping a second idea of "next
+    // Thursday" is what stops the caption and the calendar disagreeing.
+    nextNight: () => upcoming({
+      venues: (library && library.venueRecords) || [],
+      bookings: (library && library.bookings) || [],
+      weeks: 6,
+    }),
+  });
+  const wrap = node(`<div class="insta-kit">
+    <div class="tiny">The caption — read it, change it, it goes with the photos.</div>
+    <textarea class="insta-cap" rows="8" spellcheck="true">${esc(draft)}</textarea>
+  </div>`);
+  const box = wrap.querySelector('.insta-cap');
+  into.appendChild(wrap);
+  return {
+    words: () => box.value,
+    copy: async () => {
+      try {
+        await navigator.clipboard.writeText(box.value);
+        return true;
+      } catch {
+        /*
+         * A REFUSED CLIPBOARD IS NOT A FAILED PRESS. Selecting the text is the
+         * honest fallback — one ⌘C away, rather than a button that reports
+         * nothing happening.
+         */
+        try { box.focus(); box.select(); } catch { /* nothing left to try */ }
+        return false;
+      }
+    },
+  };
+}
+
+/**
+ * HAS THIS NIGHT GONE OUT? — a mark, never a gate.
+ *
+ * The half that costs a Monday is not the posting, it is remembering which
+ * nights are still to do. Nothing reads this to refuse anything: a night
+ * marked posted can be posted again, and one that is not is never nagged
+ * about. **A feature that generates a QUEUE somebody has to work is expensive;
+ * one that serves itself is cheap** — so the rail can say what is outstanding
+ * and the pile shrinks on its own.
+ */
+export function postedInto(into, night, keyedUrl) {
+  const row = node(`<div class="insta-posted">
+    <button class="minor insta-done" type="button"></button>
+    <a class="minor" href="https://www.instagram.com/" target="_blank" rel="noopener">Open Instagram</a>
+  </div>`);
+  const btn = row.querySelector('.insta-done');
+  let on = Boolean(night && night.posted);
+  const paint = () => {
+    btn.classList.toggle('is-on', on);
+    btn.textContent = on ? 'Posted ✓' : 'Mark as posted';
+    btn.title = on
+      ? 'You have posted this night. Click to take the mark off.'
+      : 'Marks this night done, so the list can say which are still to post.';
+    btn.setAttribute('aria-pressed', String(on));
+  };
+  paint();
+  btn.addEventListener('click', async () => {
+    // The same optimistic pattern as the lamps: flip now, settle on the reply,
+    // and put it back with a reason rather than a silent revert.
+    const was = on;
+    on = !on;
+    paint();
+    try {
+      const res = await fetch(keyedUrl('/api/past-gigs/posted'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ night: night.night, on }),
+      });
+      if (!res.ok) throw new Error(((await res.json().catch(() => ({}))).error) || 'Could not save that.');
+      document.dispatchEvent(new CustomEvent('night-posted-changed', { detail: { night: night.night, on } }));
+    } catch (err) {
+      on = was;
+      paint();
+      btn.title = err.message;
+    }
+  });
+  into.appendChild(row);
+  return row;
+}
+
+export function showcaseSaveInto(into, night, records, keyedUrl, kit = null) {
   const cover = (night && Array.isArray(night.cover) ? night.cover : []).filter(Boolean);
   if (!cover.length) return null;
-  const btn = node(`<button class="minor showcase-save" type="button">Save the showcase (${cover.length})</button>`);
+  const ready = kit ? `Copy the caption &amp; save the ${cover.length}` : `Save the showcase (${cover.length})`;
+  const btn = node(`<button class="minor showcase-save" type="button">${ready}</button>`);
 
   btn.addEventListener('click', async () => {
     if (btn.disabled) return;
     btn.disabled = true;
+    /*
+     * THE CLIPBOARD FIRST, INSIDE THE GESTURE. A browser only allows a
+     * clipboard write while it still believes a person is pressing something,
+     * and three photographs later it does not.
+     */
+    const copied = kit ? await kit.copy() : null;
     const venue = (night && night.venue) || '';
     let overlay = '';
     try {
@@ -246,11 +379,12 @@ export function showcaseSaveInto(into, night, records, keyedUrl) {
         if (ok !== false) went += 1;
       } catch { /* one that will not save must not stop the other two */ }
     }
+    const words = copied === null ? '' : copied ? ' · caption copied' : ' · caption NOT copied, it is selected above';
     btn.textContent = went === cover.length
-      ? `Downloaded ${went}${overlay ? ' with the frame' : ' — no frame on this pub'}`
-      : `Downloaded ${went} of ${cover.length}`;
+      ? `Downloaded ${went}${overlay ? ' with the frame' : ' — no frame on this pub'}${words}`
+      : `Downloaded ${went} of ${cover.length}${words}`;
     setTimeout(() => {
-      btn.textContent = `Save the showcase (${cover.length})`;
+      btn.innerHTML = ready;
       btn.disabled = false;
     }, 3200);
   });

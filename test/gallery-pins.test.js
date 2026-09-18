@@ -23,8 +23,8 @@ import assert from 'node:assert/strict';
 process.env.PHOTO_REPO = 'someone/photos';
 process.env.PHOTO_TOKEN = 'stub';
 
-const { setPhotoPin, photoPins, setPublished, publishedNights, setPhotoDecision, photoDecisions, MAX_PINS } =
-  await import('../src/gallery.js');
+const { setPhotoPin, photoPins, setPublished, publishedNights, setPhotoDecision, photoDecisions,
+  setPosted, postedNights, isPosted, MAX_PINS } = await import('../src/gallery.js');
 const { coverPhotos, showsOnGallery, galleryPhotosOf } = await import('../src/photos.js');
 
 const NIGHT = '2026-08-20';
@@ -270,5 +270,72 @@ test('starring one already starred and public writes nothing at all', async () =
     const again = await setPhotoPin(ROOM, NIGHT, 'a.jpg', true);
     assert.equal(again.ok, true);
     assert.equal(JSON.stringify([...repo.files]), before, 'a no-op press wrote the file');
+  } finally { repo.restore(); }
+});
+
+/*
+ * ---- THE FOURTH HALF: WHICH NIGHTS HAVE GONE OUT ON SOCIALS -------------
+ *
+ * `published.json` held three halves and now holds four, and the rule it has
+ * carried since it held two is that EVERY writer carries the ones it is not
+ * changing. A fourth is exactly when that gets forgotten — the failure being
+ * silent, and only noticed weeks later when something a human set comes back.
+ */
+
+test('a night can be marked posted, and unmarked', async () => {
+  const repo = stubRepo();
+  try {
+    assert.deepEqual(await postedNights(ROOM), []);
+    assert.equal(await isPosted(ROOM, NIGHT), false);
+    assert.equal((await setPosted(ROOM, NIGHT, true)).ok, true);
+    assert.equal(await isPosted(ROOM, NIGHT), true);
+    assert.equal((await setPosted(ROOM, NIGHT, false)).ok, true);
+    assert.deepEqual(await postedNights(ROOM), []);
+  } finally { repo.restore(); }
+});
+
+test('EVERY WRITER CARRIES THE POSTED LIST', async () => {
+  const repo = stubRepo();
+  try {
+    await setPosted(ROOM, NIGHT, true);
+    // …the publish writer,
+    await setPublished(ROOM, NIGHT, true);
+    assert.deepEqual(await postedNights(ROOM), [NIGHT], 'publishing wiped the posted list');
+    // …the ruling writer,
+    await setPhotoDecision(ROOM, NIGHT, 'b-picked.jpg', 'on');
+    assert.deepEqual(await postedNights(ROOM), [NIGHT], 'a lamp wiped the posted list');
+    // …and the pin writer.
+    await setPhotoPin(ROOM, NIGHT, 'a.jpg', true);
+    assert.deepEqual(await postedNights(ROOM), [NIGHT], 'a star wiped the posted list');
+    // And it carries the other three in turn.
+    await setPosted(ROOM, NIGHT, false);
+    assert.deepEqual(await publishedNights(ROOM), [NIGHT], 'the posted mark wiped the nights');
+    assert.deepEqual((await photoPins(ROOM))[NIGHT], ['a.jpg'], 'the posted mark wiped the pins');
+    assert.deepEqual(await photoDecisions(ROOM), { [`${NIGHT}/b-picked.jpg`]: 'on' },
+      'the posted mark wiped the rulings');
+  } finally { repo.restore(); }
+});
+
+test('IT IS A MARK AND NEVER A GATE — a posted night can go out again', async () => {
+  /*
+   * Nothing reads this to refuse anything. The whole value is that a list can
+   * say what is outstanding, so the pile shrinks on its own rather than living
+   * in somebody's head — and a mark that started refusing things would be a
+   * queue rather than a relief from one.
+   */
+  const repo = stubRepo();
+  try {
+    await setPosted(ROOM, NIGHT, true);
+    assert.equal((await setPosted(ROOM, NIGHT, true)).ok, true, 'a second press was refused');
+    assert.deepEqual(await postedNights(ROOM), [NIGHT]);
+  } finally { repo.restore(); }
+});
+
+test('a date that is not a night is refused before anything is written', async () => {
+  const repo = stubRepo();
+  try {
+    const bad = await setPosted(ROOM, 'not-a-night', true);
+    assert.equal(bad.ok, false);
+    assert.equal(repo.files.size, 0, 'a bad date wrote the file');
   } finally { repo.restore(); }
 });

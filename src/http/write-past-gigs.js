@@ -2,7 +2,7 @@
  * WRITE ROUTES — past-gigs. Moved whole out of `handleWrite()` in server.js;
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
-import { FEATURES, isNightFolder, isVenueKey, noteNightVenue, setLeagueRunning, setNameDecision, setNightVenue, setPublished, setVenuePublished } from './context.js';
+import { FEATURES, isNightFolder, isVenueKey, noteNightVenue, setLeagueRunning, setNameDecision, setNightVenue, setPosted, setPublished, setVenuePublished } from './context.js';
 import { readJson, sendJson } from './plumbing.js';
 import { galleryRoomFor, gigRoomsFor } from './identity.js';
 import { allowed } from './gates.js';
@@ -55,6 +55,22 @@ export async function writePastGigs(req, res, url, route) {
     if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
     const body = await readJson(req);
     const done = await setPublished(galleryRoomFor(req, url), String(body.night || ''), body.on !== false);
+    return sendJson(res, done.ok ? 200 : 400, done), true;
+  }
+
+  /*
+   * MARK A NIGHT AS POSTED TO SOCIALS, or take the mark off.
+   *
+   * The publish route's twin, deliberately — same gate, same room, same file,
+   * same shape — because it answers the same KIND of question about a night
+   * and the two are read side by side in the rail. **It is a mark and never a
+   * gate**: nothing refuses anything because of it, so there is no way for
+   * this to stop somebody posting a night twice if they want to.
+   */
+  if (route === '/api/past-gigs/posted' && req.method === 'POST') {
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
+    const body = await readJson(req);
+    const done = await setPosted(galleryRoomFor(req, url), String(body.night || ''), body.on !== false);
     return sendJson(res, done.ok ? 200 : 400, done), true;
   }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * A STAR MEANS PUBLIC — pressed with a real mouse, on the real console.
+ * A STAR MEANS PUBLIC, AND THE POST KIT UNDER IT — pressed with a real mouse.
  *
  * ---
  *
@@ -55,7 +55,7 @@ const post = (p, b, c = '') => fetch(`${base}${p}`, { method: 'POST', headers: {
 const get = (p, c = '') => fetch(`${base}${p}`, { headers: c ? { Cookie: c } : {} });
 
 const browser = await chromium.launch();
-console.log('\nA STAR MEANS PUBLIC — pressed, on the real console\n');
+console.log('\nA STAR MEANS PUBLIC, AND THE POST KIT UNDER IT\n');
 try {
   await up();
   const made = await (await post('/api/signup', { email: 'qm@example.com', password: PW, name: 'Mark' })).json();
@@ -152,11 +152,56 @@ try {
   const shot = join(data, 'star-means-public.png');
   await page.locator(tile).screenshot({ path: shot });
   console.log(`\n  tile: ${shot}`);
+
+  /*
+   * ---- AND THE POST KIT UNDER IT ----------------------------------------
+   *
+   * The caption, the one press that readies a post, and the mark saying a
+   * night has gone out. All three draw in the tab body under the photographs,
+   * and a panel that draws perfectly and does nothing is this repo's
+   * commonest fault — so the mark is PRESSED and the page reloaded.
+   */
+  await page.click(`${tile} .cphoto-pin`);   // star it so there IS a showcase
+  await wait(2500);
+  await page.goto(`${base}/console?door=post&night=${NIGHT}`, { waitUntil: 'load' });
+  await page.waitForSelector('.insta-cap', { timeout: 20_000 });
+  const cap = await page.evaluate(() => {
+    const box = document.querySelector('.insta-cap');
+    const btn = document.querySelector('.showcase-save');
+    const done = document.querySelector('.insta-done');
+    return {
+      words: box ? box.value : '',
+      save: btn ? btn.textContent.trim() : '',
+      posted: done ? done.textContent.trim() : '',
+      link: Boolean(document.querySelector('.insta-posted a[href*="instagram.com"]')),
+    };
+  });
+  check('the caption is drafted off what the app already knows',
+    /Station Tap/.test(cap.words) && /#pubquiz/.test(cap.words), JSON.stringify(cap.words));
+  check('one press readies the whole post', /Copy the caption/.test(cap.save), cap.save);
+  check('and there is a link to where you post it', cap.link);
+
+  await page.click('.insta-done');
+  await wait(2000);
+  await page.goto(`${base}/console?door=post&night=${NIGHT}`, { waitUntil: 'load' });
+  await page.waitForSelector('.insta-done', { timeout: 20_000 });
+  const marked = await page.evaluate(() => {
+    const done = document.querySelector('.insta-done');
+    return { text: done.textContent.trim(), on: done.classList.contains('is-on') };
+  });
+  check('MARKED AS POSTED, AND IT SURVIVES A RELOAD',
+    marked.on && /Posted/.test(marked.text), JSON.stringify(marked));
+
+  const kit = join(data, 'post-kit.png');
+  await page.locator('.photo-night-controls, .gig-photos').first().screenshot({ path: kit }).catch(async () => {
+    await page.screenshot({ path: kit, fullPage: true });
+  });
+  console.log(`  kit:  ${kit}`);
 } catch (err) {
   failures += 1;
   console.log('  FAIL threw:', err.stack || err.message);
 } finally {
   await browser.close(); server.kill();
 }
-console.log(failures ? `\n${failures} FAILED\n` : '\nALL GOOD — a star means public, in both directions.\n');
+console.log(failures ? `\n${failures} FAILED\n` : '\nALL GOOD — a star means public, and the post kit drafts, presses and remembers.\n');
 process.exit(failures ? 1 : 0);
