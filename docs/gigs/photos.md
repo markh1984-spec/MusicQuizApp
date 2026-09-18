@@ -979,6 +979,18 @@ when a control is BUILT is a bug waiting for the first thing that stops
 rebuilding. The gap dial, the pack card's *in Tonight* ghosting and this are the
 same fault three times.
 
+## The pin is a showcase star now, top-left — 18 September 2026
+
+Reverses the section below, deliberately. The host asked for the free
+top-left corner to *"select showcase photos for the gallery"* — for the
+control that already did exactly that: `coverPhotos()` takes the pinned three
+first, and the socials export uses the same three. What was wrong was the
+words (*"on the night's card"*) and the shape (a pin says "keep", not
+"lead with"). Two options were rendered from the real stylesheet and he chose
+the star in the top-left. **ONE control, still** — a second one in another
+corner for the same three is the collision this app has a rule against. The
+class, the route and the storage keep the name `pin`.
+
 ## The pin looks like a pin now — 1 September 2026
 
 *"Love the tooltip for this but can the actual symbol be more obviously like a

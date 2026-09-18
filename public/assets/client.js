@@ -391,6 +391,19 @@ export function binIcon(size = 18) {
  * states — the button's own colour says whether it is pinned, so there is no
  * second drawing to keep in step.
  */
+/**
+ * THE SHOWCASE STAR — the three photographs a night leads with, on the
+ * gallery and in the socials export. Filled, because at 14px on a dark
+ * thumbnail an outline star is five thin lines and a filled one is a star.
+ */
+export function starIcon(size = 14) {
+  return `
+    <svg class="star-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor"
+         stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 2.5l2.9 6.2 6.8.8-5 4.7 1.3 6.8L12 17.6 6 21l1.3-6.8-5-4.7 6.8-.8z"/>
+    </svg>`;
+}
+
 export function pinIcon(size = 18) {
   return `
     <svg class="pin-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"

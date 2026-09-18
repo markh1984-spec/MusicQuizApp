@@ -1,6 +1,6 @@
 /** GIGS — the evidence: headcounts, what the room asked for, and nights run. */
 
-import { binIcon, pinIcon, esc, node } from './client.js';
+import { binIcon, starIcon, esc, node } from './client.js';
 import { galleryPath, nightSlug, venueSlug } from './slugs.js';
 import { library, me, nightBench, setGigsSeen, setNightDrag } from './console-state.js';
 import { dragging, putNightOnBench } from './console-tonight.js';
@@ -858,7 +858,7 @@ export async function nightPhotos(body, night, opts = {}) {
      */
     const shot = node(`<figure class="cphoto filed">
       <img src="${esc(p.url)}" alt="" loading="lazy" decoding="async">
-      <button class="cphoto-pin ${p.pinned ? 'is-on' : ''}" type="button">${pinIcon(15)}</button>
+      <button class="cphoto-pin ${p.pinned ? 'is-on' : ''}" type="button">${starIcon(14)}</button>
       <button class="cphoto-pub ${p.onGallery ? 'is-on' : 'is-off'}" type="button"></button>
       <button class="cphoto-bin" type="button" aria-label="Delete this photo">${binIcon(15)}</button>
     </figure>`);
@@ -1002,9 +1002,17 @@ export async function nightPhotos(body, night, opts = {}) {
     let pinTimer = null;
     const paintPin = () => {
       pin.classList.toggle('is-on', pinned);
+      /*
+       * IT SAYS SHOWCASE, BECAUSE THAT IS WHAT IT IS. This read "on the
+       * night's card", and the host asked for a fourth corner to pick the
+       * showcase photos with — for the control that already did exactly that.
+       * A control nobody recognises is a control that does not exist. The
+       * class stays `cphoto-pin`: the storage, the route and the guards are
+       * all named for it, and a rename buys nothing a thumb can see.
+       */
       const why = pinned
-        ? "On this night's card. Click to take it off."
-        : `Put this on the night's card. Up to ${night.maxPins || 3}.`;
+        ? 'Showcase — one of the three this night leads with. Click to take it off.'
+        : `Showcase — the gallery leads with the three you star, and so does the socials export. Up to ${night.maxPins || 3}.`;
       pin.title = why;
       pin.setAttribute('aria-label', why);
       pin.setAttribute('aria-pressed', String(pinned));
