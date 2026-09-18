@@ -1870,29 +1870,29 @@ quizzing."* Four tabs: **Quiz league**, **Photos**, **Quiz requests**, and
 
 `--bay-h` in `style.css`, on `.doorhead > .panel.bench`, from 900px up. A hard
 rule: *"the bay at the top ALWAYS has the same dimensions as the launch bay,
-this must be consistent across sections."* It was 386px on the Console, 194 on
-Workshop and Post gig, and whatever the data came to on Community — so the top
-of the page changed shape on every door press, and under a fixed frame that
+this must be consistent across sections."* The bays were all different, so the
+top of the page changed shape on every door press — which under a fixed frame
 moves the tab column and everything below it.
 
 - **THE VALUE IS THE LAUNCH BAR'S OWN OPEN PANEL HEIGHT, MEASURED** — the
-  panel, not the doorhead. Two values: the row wraps below 1150px..
-- **AND THE RULE IS ABOUT THE BAY, NOT THE DOORHEAD.** With a night running the
-  Console's doorhead is **573px and the other three 386**, carrying a SECOND
-  panel. **Every BAY is 362px on every door. DO NOT RAISE `--bay-h` TO 549 TO
-  EVEN THEM UP**: it spends 187px of tab column on three doors PERMANENTLY,
-  leaving **234px against the frame's own 200px floor**. **Nor put the running
-  panel on the other doors.**
-- **AND THE GUARD MEASURED IT IDLE, so both sides read 386 and it agreed with
-  itself.** It launches a quiz and lets two phones in, and **names the
-  Console's two panels** so a third is looked at.
+  panel, not the doorhead. Two values, the row wrapping below 1150px:
+  **494/377 since 18 Sept**, `--bench-poster` being `--bay-h` LESS 128. **THE GUARD'S WIDTHS WERE ALL ONE SIDE OF 1150** — the
+  narrow number was 69px out, unseeable; both bands now.
+  **The FRAME gates did NOT move** — they are the CONSOLE's doorhead, which the
+  token never sizes.
+- **AND THE RULE IS ABOUT THE BAY, NOT THE DOORHEAD** — with a night running
+  the Console's carries a SECOND panel. **DO NOT RAISE `--bay-h` TO MATCH THE
+  DOORHEAD**: ~190px of tab column spent on three doors PERMANENTLY, against
+  the frame's 200px floor. **Nor put the running panel on the other doors.**
+- **AND THE GUARD MEASURED IT IDLE, so both sides agreed with itself.** It
+  launches a quiz and lets two phones in, and **names the Console's panels** so
+  a third is looked at.
 - **THE BAR ITSELF IS NOT GIVEN THE HEIGHT.** It is the REFERENCE, it folds to
   a line on purpose, and clipping the one panel on the protected launch path to
-  a stylesheet number is not a trade worth making.
-- **BELOW 900px THERE IS NO RULE**, there being no frame — the bar is 745px on
-  a phone.
-- **A FIXED BOX LETS THE CONTENT STOP WORRYING** — anything SCROLLS INSIDE IT,
-  so nothing needs a row cap or an "and N more".
+  a stylesheet number is not worth it.
+- **BELOW 900px THERE IS NO RULE** — no frame.
+- **A FIXED BOX LETS THE CONTENT STOP WORRYING** — it SCROLLS INSIDE, so
+  nothing needs a row cap or "and N more".
 
 ### EVERY BAY IS A RAIL AND WHAT IT PICKED — `console-bay.js`
 

@@ -3316,8 +3316,14 @@ body.screen { cursor: none; overflow: hidden; }
 /* THE BAY HEIGHT EVERY DOOR SHARES — the launch bar's own open height,
    measured rather than chosen. Two values because the bar's settings row wraps
    below 1150px and the bar gets taller; see the rule further down. */
-@media (min-width: 900px) { :root { --bay-h: 425px; } }
-@media (min-width: 1150px) { :root { --bay-h: 362px; } }
+/* RE-MEASURED 18 September 2026 — 425/362 to 494/377. The bar had grown and
+   nobody had looked: `community-bay.mjs` failed 14 assertions on the wide
+   number for long enough that it was reported as "the last known red". The
+   NARROW number was 69px out and NOTHING was checking it, the guard's four
+   widths being 1500, 1280, 1280 and 390 — so it only ever measured one of the
+   two bands. It measures both now. */
+@media (min-width: 900px) { :root { --bay-h: 494px; } }
+@media (min-width: 1150px) { :root { --bay-h: 377px; } }
 
 /* AND IT NEEDS A MINIMUM HEIGHT TOO, WHICH IS THE SAME ARGUMENT AS THE WIDTH.
  *
@@ -3327,7 +3333,9 @@ body.screen { cursor: none; overflow: hidden; }
  * statement about how much ROOM there is, and height was never checked.
  *
  * A 476px-tall window is a browser not maximised on a laptop, and the bay
- * alone is 425 of it. The frame pinned the bay and the topbar and handed
+ * alone is most of it (494 in this band — re-measured 18 September 2026, and
+ * the number the two gates below are still set against is the CONSOLE's own
+ * doorhead, which `--bay-h` does not size). The frame pinned the bay and the topbar and handed
  * `.consolecols` ZERO height — inside a `.wrap` that is `overflow: hidden`, so
  * the tab column and the whole pack shelf were 592px down a 515px frame and
  * simply not on the page. Reported as *"the sub menu is still missing from the
@@ -3341,11 +3349,14 @@ body.screen { cursor: none; overflow: hidden; }
  * over, which is why this was caught by looking at the render and not at the
  * numbers.
  *
- * So under 700px of height the console SCROLLS, exactly as it does under
+ * So under the heights below the console SCROLLS, exactly as it does under
  * 900px of width — the arrangement that has always worked, rather than a
- * fixed frame with nowhere to put anything. 700 is the topbar (73) plus the
- * bay (425) plus a readable tab column (200), so the frame exists precisely
- * where it can hold what it promises. */
+ * fixed frame with nowhere to put anything. Each is the topbar (73) plus the
+ * CONSOLE's doorhead in that band (570 wide, 663 narrow — its launch bar plus
+ * the running panel) plus a readable tab column (~200), so the frame exists
+ * precisely where it can hold what it promises. **They are the Console's
+ * doorhead and not `--bay-h`**: the bar is never given the token, so
+ * re-measuring the bay does not move these — checked when it was. */
 /* TWO COLUMNS IS A WIDTH DECISION AND THE PINNED FRAME IS A HEIGHT ONE — they
    were in the same block and gating that block on height took the SIDEBAR away
    with it. On a short window the tabs went full width above the shelf, which
@@ -10516,8 +10527,12 @@ body.gal-zoomed { overflow: hidden; }
    TWO NUMBERS, BECAUSE `--bay-h` IS TWO. Each is the row the poster sits in:
    the bay, less the panel's own head and padding, less the pack-actions row
    and the gap above it. They move with `--bay-h` and nothing else. */
-:root { --bench-poster: 297px; }
-@media (min-width: 1150px) { :root { --bench-poster: 234px; } }
+/* `--bay-h` LESS 128 AT BOTH WIDTHS — the panel's own head and padding, the
+   pack-actions row and the gap above it, which are the same either side of
+   1150. Re-measured with `--bay-h` above; a poster left behind would make the
+   bench the one bay that did not fill. */
+:root { --bench-poster: 366px; }
+@media (min-width: 1150px) { :root { --bench-poster: 249px; } }
 @media (min-width: 900px) {
   .bench.launchbar > .bench-body {
     flex: 1 1 auto;

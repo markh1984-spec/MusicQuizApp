@@ -92,3 +92,59 @@ Every one lived in a band no guard looked at.
 - **AND `console-frame.mjs` NOW LOOKS AT 768 AND 320** — its sizes ran 390 then
   960, leaving the 561-899 band unmeasured. **Its one-row rule moved from 431px
   to 900px.**
+
+---
+
+## `--bay-h` RE-MEASURED — 18 September 2026
+
+`community-bay.mjs` had been failing 14 assertions for long enough to be
+described as "the last known red": the bay was **362px** and the launch bar's
+own open panel was **377px**. The rule is *the bay at the top ALWAYS has the
+same dimensions as the launch bay*, so the token simply had not been
+re-measured after the bar grew.
+
+**Both numbers were wrong, and only one of them could ever have been caught.**
+
+| band | token said | the bar actually is |
+|---|---|---|
+| ≥ 1150px | 362px | **377px** |
+| 900–1149px | 425px | **494px** |
+
+The narrow number was **69px out**. The guard's four widths were 1500, 1280,
+1280 and 390 — all of them on one side of 1150, or below 900 where the rule
+does not apply — so it had only ever measured one of the two values `--bay-h`
+has. It runs a `mid` width of 1000px now, inside the band where the bar's
+settings row has wrapped. The frame is off at that height by its own gate, so
+the framed checks stand down there without being told to.
+
+`--bench-poster` moved with it, because it is `--bay-h` less 128 at both widths
+— the panel's own head and padding, the pack-actions row and the gap above it,
+which are the same either side of 1150. A poster left behind would have made
+the Workshop the one bay that did not fill.
+
+### The frame gates did NOT move, and that is worth knowing
+
+The two `@media (min-width:…) and (min-height:…)` gates look like they should
+track the bay, and they do not: they are set against the **Console's own
+doorhead** — 570px wide-band, 663px narrow — which is its launch bar plus the
+running panel. **The bar is deliberately never given `--bay-h`**, so
+re-measuring the token cannot move them. Checked rather than assumed:
+`console-frame.mjs` is green at every size, including `tight` at 960x760.
+
+The prose beside those gates still derived 700px from "the topbar (73) plus the
+bay (425) plus a readable tab column (200)", naming a value that no longer
+exists and an input that was never the right one. Corrected — *a comment that
+claims the opposite is where the next bug hides.*
+
+### And the new guard leg was wrong before the app was
+
+The check that the bay head's *Add photos* control can actually be pressed
+failed at 390px with `pressable: false`, which reads as "something is on top of
+it". Nothing was: `elementFromPoint()` is **viewport-relative and answers
+`null` for a point outside it**, and on a phone there is no frame, so the page
+scrolls and the head sits below the fold. The control was fine; the guard was
+measuring a point that was not on screen.
+
+It scrolls the control into view before reading now, and reports `null`
+distinctly from "covered by X" — because *"something covers it"* is not a
+diagnosis, and neither is a false one. Fourth sighting of this trap.

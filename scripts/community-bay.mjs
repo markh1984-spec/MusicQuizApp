@@ -167,7 +167,17 @@ const check = (name, ok, detail = '') => {
 try {
   const browser = await chromium.launch();
 
-  for (const [label, width, height] of [['desk', 1500, 900], ['laptop', 1280, 900], ['short', 1280, 720], ['phone', 390, 844]]) {
+  /*
+   * FOUR WIDTHS AND THEY WERE ALL ON ONE SIDE OF 1150 — 1500, 1280, 1280 and
+   * 390 — so this guard only ever measured ONE of `--bay-h`'s two values. The
+   * wide one was 15px out and failed 14 assertions until somebody looked; the
+   * NARROW one was 69px out and nothing here could ever have said so.
+   *
+   * `mid` is 1000px: inside the 900–1149 band, where the launch bar's settings
+   * row has wrapped and the bar is taller. The frame is off at that height by
+   * design (it wants 965), so the framed checks stand down there on their own.
+   */
+  for (const [label, width, height] of [['desk', 1500, 900], ['laptop', 1280, 900], ['mid', 1000, 900], ['short', 1280, 720], ['phone', 390, 844]]) {
     /*
      * THE EQUAL-BAY RULE ONLY EXISTS BECAUSE OF THE FRAME, so it is checked
      * only where the frame is on. Its stated reason is that a bay which
@@ -594,6 +604,16 @@ try {
     const add = await page.evaluate(() => {
       const el = document.querySelector('.bay-head .mine-pick.is-head');
       if (!el) return null;
+      /*
+       * SCROLLED IN BEFORE IT IS MEASURED, and that is not belt and braces.
+       * `elementFromPoint()` is VIEWPORT-relative and answers `null` for a
+       * point outside it — which is indistinguishable from "something is on
+       * top" if you only look at whether the hit matches. On a phone there is
+       * no frame, so the page scrolls and the bay head is below the fold: the
+       * first version of this check called a perfectly good control dead.
+       * Fourth sighting of the same trap in this repo.
+       */
+      el.scrollIntoView({ block: 'center' });
       const head = el.closest('.bay-head').getBoundingClientRect();
       const r = el.getBoundingClientRect();
       const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
@@ -605,6 +625,14 @@ try {
         inside: r.right <= head.right + 1 && r.left >= head.left - 1,
         // A <label> wrapping an input: the press can land on either.
         pressable: Boolean(hit) && (el === hit || el.contains(hit)),
+        // WHAT IS ON TOP, when it is not. "Something covers it" is not a
+        // diagnosis; the class of the thing covering it is.
+        // WHAT IS ON TOP, when it is not — "something covers it" is not a
+        // diagnosis. `null` means the point was outside the viewport, which
+        // the scroll above is there to make impossible.
+        covered: hit
+          ? (el === hit || el.contains(hit) ? '' : `${hit.tagName.toLowerCase()}.${String(hit.className || '').replace(/\s+/g, '.')}`)
+          : 'nothing there — off the viewport',
         // The touch floor, same as its neighbour.
         tall: r.height >= 32,
       };
