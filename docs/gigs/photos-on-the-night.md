@@ -819,3 +819,67 @@ too, because it joins fresh on every run and never asks a phone to come back.
 `second-laptop.mjs` caught it, on the one assertion in the suite that sends a
 photograph from a phone that has been sitting there — which is the whole
 argument for keeping a guard that rejoins rather than one that only joins.
+
+
+---
+
+## A PHOTO YOU ALREADY TOOK — the camera roll beside the shutter
+
+*"I sometimes take photos from my phone out of habit and I want a place to
+upload from my photos app if I forgot to use the QR code."*
+
+`/snap`'s one button carries `capture="environment"`, and the note beside it
+explains why: it puts somebody straight into their camera, which is the right
+first press for a person carrying a tray of glasses, with no picker in the way.
+
+**What that note did not say is that the attribute is a ONE-WAY DOOR.** An
+input carrying `capture` never offers the photo library at all — it is not a
+default that can be dismissed, it is the only destination. So a photograph
+taken thirty seconds earlier on the ordinary Camera app could not be sent from
+this page under any circumstances, and the page whose entire job is *get a
+picture onto the screen* had no way to accept one that already existed.
+
+### It is not the second button that was turned down
+
+This file already records a refusal that looks like the same thing: *"a second
+'choose a photo' button inside the sheet would be a tap between the shutter and
+the screen."* That still stands, and this is not it. That one was **inside the
+sheet**, on the path a photograph takes after it has been taken. This is
+**beside the shutter, on the page before it** — so the camera path is the same
+single press it has always been, and the new control is only reachable by
+somebody who came looking for it.
+
+The shutter keeps the one filled gradient. The camera roll is an ordinary
+outlined control at the 44px floor: a photograph you took earlier is the rarer
+errand, and *fill means commitment*.
+
+### One handler, and the same sheet
+
+Both inputs run `take()`, which opens `openCameraSheet()` with the file. That
+matters more than it looks:
+
+- the **props** go on a picked photograph exactly as they go on a taken one,
+  which is what *"can I have the googly eyes etc. functionality in both"* asked
+  for in the first place;
+- the **sizing** is the sheet's single 1080-square redraw, so a picked
+  photograph is not the only one on the wall that is a different shape;
+- and the **refusal wording**, the prop tally and the `busy` guard keep one
+  definition each.
+
+Two copies of any of those is one that gets fixed.
+
+### One at a time, and that is the model rather than a limit
+
+The camera roll picker could take `multiple`. It does not, because the props
+are **per photograph** — a tray of forty-two applied to one picture at a time —
+so a multi-select would mean either a queue of sheets or silently dropping the
+tray for everything after the first.
+
+Bulk already exists and is deliberately different: **_Add your own photos_ on
+the console** (`myPhotos()`) takes as many as you like, with no props, and
+files them **against a named past night** rather than against the clock. That
+is the one to use on a Monday, and it is the only one that can be, because
+`/api/snap` dates a photograph by when it lands.
+
+So the split is: **`/snap` is tonight, one at a time, with props. The console is
+afterwards, in bulk, against the night it belongs to.**

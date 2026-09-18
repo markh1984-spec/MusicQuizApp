@@ -1096,8 +1096,14 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * filter deliberately out of reach on the server. And `posted` becoming a gate
  * — refusing, nagging, hiding — turns the one thing that REDUCES a Monday into
  * another queue. None of those read as mistakes from a diff.
+ *
+ * AND TO 265,700 THE SAME DAY, for the camera roll beside `/snap`'s shutter —
+ * `capture="environment"` being a one-way door is the kind of fact a session
+ * rediscovers by reverting the fix. ~430 bytes were paid for it FIRST, by
+ * trimming tails off the object-store, star and post-kit sections written
+ * hours earlier; nothing that FORBIDS anything went.
  */
-const BUDGET = 265_400;
+const BUDGET = 265_700;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

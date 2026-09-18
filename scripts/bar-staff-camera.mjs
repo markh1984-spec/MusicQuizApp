@@ -223,6 +223,7 @@ try {
   const mine = onWall[0] || {};
   check('it carries no caption', !mine.teamName, JSON.stringify(mine.teamName));
 
+
   /* ---------------------------------------------- and NOT on the leaderboard */
 
   const board = ((await hostState()) || {}).players || [];
@@ -280,6 +281,43 @@ try {
   await host('/api/host/photoRemove', { id: mine.id });
   const after = await settled(async () => ((await screenState()).photos || []).length);
   check('one bin press takes it off everything', after === before, `${after} left`);
+
+  /* ------------------------------------ AND ONE YOU ALREADY TOOK GOES TOO */
+  /*
+   * *"I sometimes take photos from my phone out of habit and I want a place to
+   * upload from my photos app if I forgot to use the QR code."*
+   *
+   * The shutter carries `capture="environment"`, which is a ONE-WAY DOOR: an
+   * input with it never offers the camera roll, so a photograph taken thirty
+   * seconds earlier on the ordinary Camera app could not be sent at all. The
+   * second way in is beside it, and it has to reach the SAME sheet — a picked
+   * photograph that skipped the props, or that was sized twice, would be the
+   * only one on the wall that was different.
+   */
+  const both = await bar.evaluate(() => {
+    const shutter = document.querySelector('.snap-take input');
+    const roll = document.querySelector('.snap-pick input');
+    return {
+      shutter: Boolean(shutter) && shutter.getAttribute('capture') === 'environment',
+      roll: Boolean(roll),
+      // The whole point: the second one must NOT carry it, or it opens the
+      // camera exactly like the first and the page has two of one button.
+      rollIsLibrary: Boolean(roll) && !roll.hasAttribute('capture'),
+    };
+  });
+  check('the shutter still goes straight to the camera', both.shutter, JSON.stringify(both));
+  check('AND THERE IS A WAY IN FROM THE CAMERA ROLL', both.roll && both.rollIsLibrary, JSON.stringify(both));
+
+  const wasUp = await settled(async () => ((await screenState()).photos || []).length);
+  await bar.setInputFiles('.snap-pick input[type="file"]', {
+    name: 'took-this-earlier.jpg', mimeType: 'image/jpeg', buffer: JPEG,
+  });
+  await bar.waitForSelector('.cam-send', { timeout: 15000 });
+  check('a photo you already took opens the SAME sheet, props and all',
+    await bar.evaluate(() => Boolean(document.querySelector('.cam-props, .cam-tray, .cam-send'))));
+  await bar.locator('.cam-send').click();
+  const nowUp = await settled(async () => ((await screenState()).photos || []).length);
+  check('and it lands in the same one bucket', nowUp === wasUp + 1, `${wasUp} -> ${nowUp}`);
 
   /* ------------------------------------------- the switch reaches this page too */
 

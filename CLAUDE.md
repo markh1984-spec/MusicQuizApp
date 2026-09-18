@@ -948,7 +948,7 @@ one of the output screens… I would need a second screen for that second QR cod
 and photo uploads."*
 
 - **IT WAS SMALL BECAUSE PHOTOGRAPHS LIVE ON THE ROOM, NOT THE GAME** — no
-  engine, no phase, no game, and **a relaunch does not take the wall with it**.
+  engine, no phase, no game; **a relaunch does not take the wall with it**.
 - **IT CANNOT SHOW THE QUIZ, STRUCTURALLY** — `wallView()` does not BUILD a
   question, so rule 1 holds for a third screen. **The guard SWEEPS the
   projector's payload**, and **a new role must not fall into `viewFor()`'s
@@ -1002,6 +1002,15 @@ quiz… I click community and I've got the QR codes."*
   PHONES being offered*. **NO CODE AT ALL IS AN ERROR, not the house room** —
   this link is always HANDED over. **`whoIs()` READS THE HOST KEY BEFORE THE
   COOKIE**, so `?key=` plus a cookie is the HOUSE room, which has no code.
+- **AND A WAY IN FROM THE CAMERA ROLL, BESIDE THE SHUTTER** — *"I sometimes
+  take photos from my phone out of habit and I want a place to upload from my
+  photos app if I forgot to use the QR code."* **`capture="environment"` IS A
+  ONE-WAY DOOR**: an input carrying it never offers the library, so a photo
+  taken on the ordinary Camera app could not be sent at all. **Not the
+  turned-down second button, which was INSIDE the sheet.** **ONE HANDLER, the
+  SAME sheet**, or a picked photo skips the props or is sized twice. **One at a
+  time** — the props are per photograph; bulk is `myPhotos()`, against a NAMED
+  past night.
 - **NO SERVICE WORKER, EVER** — every push is a deploy, and a cached page is a
   control view running last week's code in front of a room.
 - **`snap` WENT IN `RESERVED` TOO** — that list has now paid three times.
@@ -2130,8 +2139,7 @@ repository could only grow.
 
 - **IT IS S3's API, NOT A SUPPLIER.** Ordinary REST plus SigV4, so it runs on
   R2, B2, MinIO or Amazon by changing one endpoint. **No file names a
-  supplier**, and **no dependency** — SigV4 is SHA-256 and HMAC-SHA256, which
-  this app already computes by hand for the Stripe webhook.
+  supplier**, and **no dependency**: SigV4 is HMAC-SHA256.
 - **INERT WITHOUT THE FOUR VARIABLES, AND THE SWAP IS AT ONE CHOKE POINT** —
   `github.js` delegates its photo calls, so **not one of the twenty call sites
   changed** and the return shapes are identical. **`{ok:false}` is not empty**,
@@ -2752,36 +2760,33 @@ costs.
 - **A STAR MEANS PUBLIC — starring PUBLISHES, hiding UNSTARS**, in the two
   writers sharing `published.json`: a starred photo the page would never show
   was present, lit and ignored. **One direction only** — un-starring never
-  hides. **The BROWSER only keeps up**, settling on the reply.
-  `star-means-public.mjs` presses both.
+  hides. **The BROWSER only keeps up.** `star-means-public.mjs` presses both.
 
 ### THE SHOWCASE IS THE SOCIALS POST — `insta-caption.js`, and the app never sends it
 
-*"I want to use the showcase photos as the photos I post to Instagram, I want
-a quick workflow."* `postKitInto()`/`postedInto()` in `console-photo-export.js`,
-`posted` in `published.json`, `POST /api/past-gigs/posted`.
+*"Use the showcase photos as the photos I post to Instagram."*
+`postKitInto()`/`postedInto()` in `console-photo-export.js`, `posted` in
+`published.json`, `POST /api/past-gigs/posted`.
 
 - **NOTHING POSTS TO INSTAGRAM AND NOTHING EVER SHOULD.** There is no
-  publishing API for a personal account — Meta's wants a Business account, a
-  linked Page and an app review — and *do not build a send that skips the
-  reading* settles it anyway. **The app prepares, the human reads, the human
-  posts**, `reply-draft.js`'s shape for the third time.
+  publishing API for a personal account, and *do not build a send that skips
+  the reading* settles it anyway. **The app prepares, the human reads, the
+  human posts** — `reply-draft.js`'s shape, third time.
 - **ONE PRESS DOES BOTH HALVES** — the caption to the clipboard and the three
-  framed squares to Downloads, which drag into instagram.com as a carousel.
-  **The clipboard goes FIRST, inside the gesture**; a refused clipboard
-  selects the text and the photos still go.
+  squares to Downloads, which drag into instagram.com as a carousel. **The
+  clipboard goes FIRST, inside the gesture**; a refused one selects the text
+  and the photos still go.
 - **NOTHING NEW IS COLLECTED** — venue, headcount (**the MAX across the games,
-  never the sum**), the next date from `upcoming()`, the address from
-  `galleryAddress()`, **passed IN** because `console-gigs.js` imports the
-  export module and two copies of one URL is a link that 404s.
+  never the sum**), the next date from `upcoming()`, and the address **passed
+  IN**: `console-gigs.js` imports the export module, so building it there too
+  is a link that 404s in one place.
 - **SILENCE WHERE THERE IS NOTHING TRUE TO SAY**, the comeback band's rule.
 - **THE WINNING TEAM IS DELIBERATELY NOT IN THE CAPTION** — a public naming
-  they never agreed to, and `clean-names.js` is on the SERVER by design, so
-  the browser holds the real name and no safe way to judge it. **Do not add it
-  without masking it on the server.**
-- **`posted` IS A MARK, NEVER A GATE** — nothing refuses anything; it only
-  lets the rail say what is outstanding, so the pile shrinks on its own.
-  **A FOURTH HALF OF `published.json`, and every writer carries it.**
+  they never agreed to, and `clean-names.js` is on the SERVER by design.
+  **Do not add it without masking it there first.**
+- **`posted` IS A MARK, NEVER A GATE** — nothing refuses anything; the rail
+  just says what is outstanding, so the pile shrinks on its own. **A FOURTH
+  HALF OF `published.json`, and every writer carries it.**
 - **THE PUBLISH LAMP ASKS FIRST, NAMES THE NIGHT AND THE CONSEQUENCE, AND
   SAYING NO CHANGES NOTHING.** **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW
   MANY THERE ARE.**

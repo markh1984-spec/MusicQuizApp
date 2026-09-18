@@ -12129,7 +12129,22 @@ body.dj .head .score { color: var(--ink); }
   color: #12000c; background: linear-gradient(120deg, var(--hot), var(--hot-2));
   cursor: pointer; text-align: center;
 }
-.snap-take.is-busy { opacity: 0.6; pointer-events: none; }
+.snap-take.is-busy, .snap-pick.is-busy { opacity: 0.6; pointer-events: none; }
+
+/* THE SECOND WAY IN — ORDINARY, never a second gradient. The rule is one
+   filled gradient per screen, and the shutter is it: a photograph you took a
+   moment ago is the rarer errand, so it reads as the quieter control and the
+   camera path is unchanged. Outlined, at the 44px touch floor. */
+.snap-pick {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 10px 16px;
+  border-radius: var(--r-field);
+  border: 1px solid var(--panel-line);
+  border-bottom: 2px solid color-mix(in srgb, var(--hot) 60%, transparent);
+  background: rgba(255, 255, 255, 0.05);
+  font: inherit; font-size: var(--fs-note); font-weight: 800;
+  color: var(--ink); cursor: pointer; text-align: center;
+}
 .snap-said { color: var(--ink-dim); min-height: 1.2em; text-align: center; }
 
 /* The pile, so somebody working the room can see the last one landed and what

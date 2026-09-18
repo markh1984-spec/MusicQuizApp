@@ -86,12 +86,43 @@ function build() {
         Take a photo
         <input type="file" accept="image/*" capture="environment" hidden>
       </label>
+      <label class="snap-pick">
+        Choose one you already took
+        <input type="file" accept="image/*" hidden>
+      </label>
       <div class="tiny snap-said" id="snapSaid">${esc(said)}</div>
       <div class="snap-shots" id="snapShots"></div>
     </div>`));
 
   const input = cardEl.querySelector('.snap-take input');
   const label = cardEl.querySelector('.snap-take');
+  /*
+   * AND A WAY IN FROM THE CAMERA ROLL — asked for directly: *"I sometimes take
+   * photos from my phone out of habit and I want a place to upload from my
+   * photos app if I forgot to use the QR code."*
+   *
+   * **`capture="environment"` IS A ONE-WAY DOOR.** It is the right first press
+   * for somebody carrying glasses — straight into the camera, no picker in the
+   * way — and that decision stands. What it also does is make the camera the
+   * ONLY way in: an input carrying it never offers the library, so a photo
+   * taken thirty seconds earlier on the ordinary Camera app could not be sent
+   * at all.
+   *
+   * **THIS IS NOT THE "second choose-a-photo button" THAT WAS TURNED DOWN.**
+   * That one was *inside the sheet*, a tap between the shutter and the screen.
+   * This is beside the shutter on the page before it, so the camera path is
+   * the same number of presses it has always been.
+   *
+   * **ONE AT A TIME, AND THAT IS THE POINT RATHER THAN A LIMIT.** Both ways in
+   * run the SAME sheet, so a picked photograph gets the props, the mirror and
+   * the 1080 square exactly as a taken one does — and the props are per
+   * photograph, so `multiple` here would mean either a queue of sheets or
+   * silently dropping the tray. Bulk with no props already exists in the
+   * console (*Add your own photos*), filed against a NAMED past night, which
+   * is the other half of this and the one to use on a Monday.
+   */
+  const pick = cardEl.querySelector('.snap-pick input');
+  const pickLabel = cardEl.querySelector('.snap-pick');
 
   /*
    * AND THE PROPS COME WITH IT — the whole point of this change.
@@ -115,12 +146,12 @@ function build() {
    * here would be two answers to one question and the bar's photographs would
    * be the only ones on the wall that were not square.
    */
-  input.addEventListener('change', () => {
-    const files = [...(input.files || [])];
-    input.value = '';
+  const take = (from, lit) => {
+    const files = [...(from.files || [])];
+    from.value = '';
     if (!files.length || busy) return;
     busy = true;
-    label.classList.add('is-busy');
+    lit.classList.add('is-busy');
     say('');
     openCameraSheet({
       look,
@@ -158,8 +189,13 @@ function build() {
      * somebody had already closed.
      */
     busy = false;
-    label.classList.remove('is-busy');
-  });
+    lit.classList.remove('is-busy');
+  };
+
+  // Two ways in, ONE handler — the sheet, the sizing, the prop tally and the
+  // refusal wording are all decisions, and two copies is one that gets fixed.
+  input.addEventListener('change', () => take(input, label));
+  pick.addEventListener('change', () => take(pick, pickLabel));
   built = true;
 }
 
