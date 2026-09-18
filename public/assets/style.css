@@ -11402,6 +11402,46 @@ body.landing {
 .mine-pick.is-busy, .mine-pick.is-off { opacity: 0.6; pointer-events: none; }
 .mine-said { color: var(--ink-dim); }
 
+/* ---- THE RIGHT-HAND END OF A BAY HEAD -------------------------------------
+   Two things now sit there on an open night: the way to add your own
+   photographs, and the night's public address. The GROUP takes the auto margin
+   so the pair travels to the far end together — `.bay-head-live` keeps its own
+   for every other bay, where it is still the only thing out there. */
+.bay-head-end { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bay-head-end .bay-head-live { margin-left: 0; }
+
+/* THE SAME OBJECT AS THE LINK BESIDE IT — a top-lit face, the account's colour
+   on the bottom edge, `--r-field`. Two controls on one line that did not match
+   would read as one of them being broken, and this app's ordinary button is
+   *never a flat grey box*. It is NOT given the gradient: Launch owns that, and
+   the head of a bay is not where the one filled control on a screen belongs. */
+.mine-pick.is-head {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 34px; padding: 6px 13px;
+  border-radius: var(--r-field);
+  font: inherit; font-size: var(--fs-note); font-weight: 800;
+  color: var(--ink);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom: 2px solid var(--hot);
+  transition: transform 90ms ease, box-shadow 90ms ease, background 90ms ease;
+}
+.mine-pick.is-head:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.07));
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+.mine-pick.is-head:active {
+  transform: translateY(1px); border-bottom-width: 1px; box-shadow: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+}
+.mine-pick.is-head:focus-within { outline: 2px solid var(--hot); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .mine-pick.is-head { transition: none; }
+  .mine-pick.is-head:hover, .mine-pick.is-head:active { transform: none; }
+}
+
 @media (min-width: 900px) {
   .baycols { grid-template-columns: 190px minmax(0, 1fr); }
   /* Each column scrolls on its own inside the fixed bay: a quizmaster with ten

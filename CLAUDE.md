@@ -1807,6 +1807,13 @@ quizzing."* Four tabs: **Quiz league**, **Photos**, **Quiz requests**, and
 - **THE PHOTOS MOVED AND PAST GIGS KEPT ITS GRID — not a duplicate.** On Past
   gigs a photo is EVIDENCE; on Community it is the room. **The CODE is not
   duplicated** — `nightPhotos()`.
+- **AND *ADD YOUR OWN PHOTOS* IS IN THE BAY HEAD — `console-my-photos.js`, a
+  LEAF.** It was in the list UNDERNEATH, a different region from the
+  photographs it adds to. **A STATED EXCEPTION to *the bottom is controls, the
+  top displays the thing*** — the rail lamp's, kept honest because what it adds
+  lands in the bay below. **ONE control beside the ONE link; a second starts a
+  collection.** **MOVED, never copied** — `community-bay.mjs` asserts one.
+  **`wallShots` did not come with it**; the caller passes `onAdded`.
 - **A READ-ONLY SUMMARY MAY REPEAT; A QUEUE MAY NOT** — *"what the room asked
   for"* MOVED off the Music Quiz tab rather than being copied.
 - **`asksPanel({ whenEmpty })` — the same panel answers two pages**, so the
@@ -2145,16 +2152,14 @@ repository could only grow.
   changed** and the return shapes are identical. **`{ok:false}` is not empty**,
   or a blank gallery goes in front of a room and caches itself.
 - **READS FALL BACK TO GITHUB; WRITES DO NOT, AND LISTINGS ARE UNIONED** —
-  *the archives are UNIONED, never swapped*, applied to a half-done move. The
-  migration therefore never has to run, and a night filed in both places is ONE
-  night. **A fallback happens on a MISS, never on a FAILURE**, or a failing
+  *the archives are UNIONED, never swapped*, so the migration never has to run
+  and a night filed in both places is ONE night. **A fallback happens on a MISS, never on a FAILURE**, or a failing
   store pushes its whole read load back onto the limit it exists to escape.
 - **THE BIN REACHES BOTH WHILE BOTH EXIST**, or a deleted photograph comes
   back the next time the store misses and the read falls through.
 - **THE SCRIPT IS FOR DELETING THE REPOSITORY AFTERWARDS, AND THAT IS THE WHOLE
-  PRIZE** — copying the files across changes nothing until the old repo is
-  GONE, its history being the thing erased. It copies the working tree, reads
-  every byte back, and **leaves the repository untouched**; a human deletes it.
+  PRIZE** — copying changes nothing until the old repo is GONE. It reads every
+  byte back and **leaves the repository untouched**; a human deletes it.
 - **RFC 3986, NOT `encodeURIComponent`** — they differ on `! ' ( ) *` and S3
   signs ITS spelling of the path, so one character is a 403 that reads exactly
   like a bad key.
@@ -2733,7 +2738,9 @@ second before touching a drag handler.**
 
 **[`docs/gigs.md`](docs/gigs.md)** — venues, prizes, the diary, past nights,
 getting paid; **[`docs/gigs/photos.md`](docs/gigs/photos.md)** is the
-photographs' own half, and
+photographs' own,
+**[`docs/gigs/photos-to-socials.md`](docs/gigs/photos-to-socials.md)** the
+Monday after, and
 **[`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)** the public
 page's — its address, its index, what a stranger sees and what serving it
 costs.

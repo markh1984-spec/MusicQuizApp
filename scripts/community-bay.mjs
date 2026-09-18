@@ -549,6 +549,50 @@ try {
       };
     });
     check(`${label}: the bay head links to the live gallery`, Boolean(link && link.seen), `${link && link.href}`);
+
+    /*
+     * AND THE WAY TO ADD YOUR OWN PHOTOGRAPHS IS UP THERE TOO — *"if that
+     * already exists can we put it in a more obvious place."*
+     *
+     * It does exist, and it was in the night's row in the list UNDERNEATH: a
+     * different region of the page from the photographs it adds to, so finding
+     * it meant scrolling past the bay you were looking at. It is in the head
+     * now, beside the link, which is a STATED exception to *the bottom is
+     * controls, the top displays the thing* — the rail lamp's exception, and
+     * kept honest the same way: what it adds lands in the bay directly below.
+     *
+     * **PUT A FINGER ON IT.** *In the document*, *has a size* and *can be
+     * pressed* are three questions, and the gap between them has bitten this
+     * repo five times — so `elementFromPoint()` at its middle has to come back
+     * to the control itself, not to whatever is painted over it.
+     */
+    const add = await page.evaluate(() => {
+      const el = document.querySelector('.bay-head .mine-pick.is-head');
+      if (!el) return null;
+      const head = el.closest('.bay-head').getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return {
+        words: el.textContent.trim(),
+        input: Boolean(el.querySelector('input[type="file"]')),
+        multiple: Boolean(el.querySelector('input[multiple]')),
+        seen: el.getClientRects().length > 0,
+        inside: r.right <= head.right + 1 && r.left >= head.left - 1,
+        // A <label> wrapping an input: the press can land on either.
+        pressable: Boolean(hit) && (el === hit || el.contains(hit)),
+        // The touch floor, same as its neighbour.
+        tall: r.height >= 32,
+      };
+    });
+    check(`${label}: the bay head carries "add your own photos"`, Boolean(add && add.seen),
+      JSON.stringify(add));
+    if (add) {
+      check(`${label}: and it can actually be pressed`, add.pressable, JSON.stringify(add));
+      check(`${label}: it takes several at once`, add.input && add.multiple, JSON.stringify(add));
+      check(`${label}: it stays inside the head and matches its neighbour`,
+        add.inside && add.tall, JSON.stringify(add));
+      check(`${label}: it says what it does`, /photo/i.test(add.words), add.words);
+    }
     if (link) {
       check(`${label}: and the link points at this night`, /gallery/.test(link.href), link.href);
       check(`${label}: it opens in its own tab, not over the console`, link.blank);
@@ -922,13 +966,21 @@ try {
     await page.locator('.doorhead .bay-rail-group').first().click();
     await page.waitForTimeout(600);
 
-    const mine = await page.locator('.tabbody .mine-add input[type=file]').count();
-    const hittable = await page.evaluate(() => {
-      const l = document.querySelector('.tabbody .mine-pick');
-      return l ? Math.round(l.getBoundingClientRect().height) : 0;
-    });
-    check(`${label}: you can add your own photos to the night`, mine === 1, `${mine}`);
-    check(`${label}: and the control is big enough to press`, hittable >= 36, `${hittable}px`);
+    /*
+     * IT MOVED TO THE BAY HEAD, AND IT MOVED RATHER THAN BEING COPIED.
+     *
+     * *"If that already exists can we put it in a more obvious place."* It is
+     * checked up there in full a few hundred lines above; what this asserts is
+     * the other half — that there is exactly ONE of it. Two controls meaning
+     * "add a photo" on one screen is the collision rule 1 refuses, and a move
+     * that leaves the old one behind is the commonest way to cause one.
+     */
+    const mine = await page.evaluate(() => ({
+      head: document.querySelectorAll('.bay-head .mine-pick input[type=file]').length,
+      body: document.querySelectorAll('.tabbody .mine-pick input[type=file]').length,
+    }));
+    check(`${label}: you can add your own photos to the night`, mine.head === 1, JSON.stringify(mine));
+    check(`${label}: and there is only ONE of that control`, mine.body === 0, JSON.stringify(mine));
     if (framed) {
       // The BAY, not the doorhead — see the reference. This door carries no
       // running panel, so the two differ only by the doorhead's own margin.

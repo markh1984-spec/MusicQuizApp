@@ -46,7 +46,6 @@ import { esc, node } from './client.js';
 // `filters.js` has no page and no boot code — only exported functions — which
 // is what makes importing it here safe. Importing from a module with top-level
 // listeners is what once hung the whole console on "Loading your library…".
-import { shrinkPhoto } from './filters.js';
 // `keyed` comes from the shell, exactly as `console-gigs.js` takes it — the
 // established pattern here, and safe because it is a hoisted function
 // declaration rather than something read while the shell is half-built.
@@ -57,6 +56,7 @@ import { bayColumns, bayHead, bayRail } from './console-bay.js';
 import { NO_VENUE, nightDroppedOnPub, venuePicker, whyNoVenue } from './console-night-venue.js';
 import { venueSlug } from './slugs.js';
 import { framedSaveInto, showcaseInto } from './console-photo-export.js';
+import { myPhotos } from './console-my-photos.js';
 
 /** Every venue with a league running, best-supported first. */
 function leaguesNow() {
@@ -541,7 +541,6 @@ function photoWall() {
   if (openNight) {
     nightControls = node('<div class="photo-night-controls"></div>');
     nightControls.appendChild(venuePicker(openNight));
-    nightControls.appendChild(myPhotos(openNight));
     nightPhotos(body, openNight, {
       wall: true,
       controlsInto: nightControls,
@@ -549,8 +548,21 @@ function photoWall() {
       onData: (d) => showcaseInto(nightControls, { ...openNight, cover: d.cover, posted: d.posted },
         library.venueRecords || [], keyed, galleryAddress(openNight.night, openNight.venue || '')),
     });
+    /*
+     * ONE NODE FOR THE TWO THINGS ON THE RIGHT-HAND END. `bayHead()` takes a
+     * single extra and stays a leaf that knows nothing about galleries, so the
+     * pairing is made here rather than by teaching it to take a list.
+     */
+    const headEnd = node('<div class="bay-head-end"></div>');
+    headEnd.appendChild(myPhotos(openNight, {
+      compact: true,
+      // The wall is stale the moment one lands, and a wall that does not hold
+      // the picture you just watched it accept is worse than a slow one.
+      onAdded: () => { wallShots = null; renderKeepingPlace(); },
+    }));
+    headEnd.appendChild(liveLink(openNight));
     el.appendChild(bayColumns(rail(openNight.night), [
-      bayHead(readable(openNight.night), openNight.venue || '', liveLink(openNight)), body,
+      bayHead(readable(openNight.night), openNight.venue || '', headEnd), body,
     ]));
     return el;
   }
@@ -595,96 +607,6 @@ function photoWall() {
   return el;
 }
 
-
-/**
- * THE QUIZMASTER'S OWN PHOTOGRAPHS OF THE ROOM.
- *
- * Asked for on 29 August 2026: *"would be good to be able to add room photos
- * to the gallery that everyone sees, that I take from my own phone?"*
- *
- * **THE ROOM'S CAMERA IS SIXTY PHONES POINTED AT EACH OTHER.** What a venue
- * wants to be shown is the place FULL — the bar three deep, forty heads
- * looking at a projector — and that is a picture only the person at the front
- * takes. Every photo the gallery has ever held came in through a player's
- * phone, so the one shot that actually sells the night was the one with no way
- * in.
- *
- * **IT IS FILED AGAINST THE NIGHT IN THE URL, never against today.** The
- * room's own photo store dates a picture by the clock when it lands, so
- * anything sent on the Friday would file itself under the Friday. Naming the
- * night is what lets him do this in the car park, or on the Monday.
- *
- * **SCALED DOWN HERE, BEFORE IT IS SENT.** A modern phone photograph is five
- * to eight megabytes and the route caps at three — and this is a quizmaster on
- * pub wifi, which is the connection this app protects above all others.
- * `square: false`, unlike a player's photo: a picture of a room is a room, and
- * cropping it to a square for a wall of thumbnails would throw away the half
- * that shows how full it was.
- *
- * **ONE AT A TIME, IN ORDER, with the count going up as they land.** Firing
- * six at once is six GitHub writes racing on one folder, and a progress line
- * that only moves at the end reads as a page that has hung.
- */
-function myPhotos(night) {
-  const wrap = node(`
-    <div class="mine-add">
-      <label class="minor mine-pick">
-        Add your own photos
-        <input type="file" accept="image/*" multiple hidden>
-      </label>
-      <span class="tiny mine-said">Yours go on the gallery — they are what sells the night.</span>
-    </div>`);
-  const input = wrap.querySelector('input');
-  const said = wrap.querySelector('.mine-said');
-  const label = wrap.querySelector('.mine-pick');
-
-  input.addEventListener('change', async () => {
-    const files = [...(input.files || [])];
-    input.value = '';
-    if (!files.length) return;
-    label.classList.add('is-busy');
-    let done = 0;
-    for (const file of files) {
-      said.textContent = `Sending ${done + 1} of ${files.length}…`;
-      try {
-        const blob = await shrink(file);
-        const res = await fetch(keyed(`/api/past-photo/${encodeURIComponent(night.night)}`), {
-          method: 'POST',
-          headers: { 'Content-Type': 'image/jpeg' },
-          body: blob,
-        });
-        const out = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(out.error || 'Could not add that one.');
-        done += 1;
-      } catch (err) {
-        said.textContent = err.message;
-        label.classList.remove('is-busy');
-        return;
-      }
-    }
-    said.textContent = `${done} added.`;
-    label.classList.remove('is-busy');
-    /*
-     * THE WALL IS STALE NOW, so it is dropped rather than left showing the
-     * night as it was a moment ago — the one thing worse than a slow wall is
-     * one that does not have the picture you just watched it accept.
-     */
-    wallShots = null;
-    renderKeepingPlace();
-  });
-  return wrap;
-}
-
-/**
- * A phone photograph, down to something a pub's wifi can carry.
- *
- * `shrinkPhoto()` in `filters.js` holds the numbers now — the quizmaster's own
- * camera on the control view wants the identical ones, and this app's oldest
- * lesson is that two copies is one that gets a number changed.
- */
-function shrink(file) {
-  return shrinkPhoto(file);
-}
 
 /**
  * THE NIGHT'S OWN PUBLIC ADDRESS, IN THE HEAD OF THE BAY.

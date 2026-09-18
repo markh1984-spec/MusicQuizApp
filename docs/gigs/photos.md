@@ -1720,130 +1720,15 @@ longer produce.
 
 ---
 
-## THE SHOWCASE IS THE SOCIALS POST — 18 September 2026
+## AND GETTING THEM OUT TO SOCIALS IS ITS OWN FILE
 
-*"Going forward I want to use the showcase photos as the photos I post to
-Instagram, I want a quick workflow for this purpose."*
+Two sections moved whole to
+**[`photos-to-socials.md`](photos-to-socials.md)** on 18 September 2026, when
+this one crossed 100KB for the second time and `test/docs-index.test.js` said
+so: **the showcase as an Instagram post** (the caption, the one press, the
+`posted` mark, and why nothing here talks to Instagram) and **where *Add your
+own photos* lives** (the bay head, and the exception that allows it).
 
-Half of it already existed: the three starred photographs, framed with the
-venue's overlay, and a button that saves them. What was missing was everything
-either side — the words, and knowing which nights were still to do.
-
-### What is not possible, said first
-
-**There is no way for this app to post to Instagram, and there should not be.**
-Meta's content-publishing API needs an Instagram Business or Creator account
-linked to a Facebook Page plus an app review — a dependency on Meta, a pile of
-Monday admin, and a permanent obligation to keep up with their deprecations,
-for a button. It is also the wrong shape by this project's own rule: *do not
-build a send that skips the reading.* A caption naming the wrong pub, the wrong
-headcount or a date that moved lands on the relationship the quizmaster is paid
-to keep.
-
-So the goal is not "post for you". It is **from a finished gig to a posted grid
-in under a minute, with no blank page to fill** — `reply-draft.js`'s shape for
-the third time in this codebase: the app prepares, the human reads, the human
-sends.
-
-### Why it ends on the laptop, not the phone
-
-The first design was a QR off the console onto the phone, on the assumption
-that posting to Instagram means posting from the phone. Two things killed it:
-
-- **A web page cannot hand images to Instagram's composer.** The
-  `instagram://` scheme has no documented action that takes media, and the
-  Stories variant needs native pasteboard access — a real app with the
-  Facebook SDK, not mobile Safari. The best a page can do is
-  `navigator.share({ files })`, which drops the caption when files are present
-  and is [documented as unreliable with files on iOS
-  Safari](https://developer.apple.com/forums/thread/665812) — sharing the text
-  instead of the image.
-- **instagram.com takes a carousel.** Since 2021 the desktop web uploader
-  accepts drag-and-drop of multiple files — [up to 20 in one
-  carousel](https://www.hopperhq.com/blog/how-to-post-to-instagram-from-desktop/)
-  — plus Reels and Stories. All three showcase exports are already 1080
-  squares, so the one real carousel trap (mixed aspect ratios being cropped to
-  a shared orientation) cannot bite.
-
-He does his admin on a laptop. So the workflow stays on the laptop: **press
-once, drag three files into instagram.com, paste.**
-
-### One press, two halves
-
-`Copy the caption & save the three` does both, because either alone is
-useless — three files in Downloads with no words, or words with no pictures.
-
-**The clipboard write goes first, inside the gesture.** A browser only permits
-one while it still believes a person is pressing something, and three
-photographs and a frame composite later it does not. **A refused clipboard
-selects the text instead and the photographs still go**: losing the caption is
-a ⌘C away from fixed, and a press that did nothing because of a permission
-prompt would be the control-reports-success-it-did-not-have fault wearing a new
-hat.
-
-The caption sits **above** the button, in a real editable box. That is the
-reading, and it is the whole point of the shape.
-
-### The caption collects nothing new
-
-Every line is something the app already holds:
-
-- the **venue** off the night;
-- the **headcount**, which is the **max across the night's games, never the
-  sum** — `headcounts.js` has held that rule for months, because a quiz and the
-  bingo after it are the same forty people;
-- the **next date at that pub**, from `upcoming()` — the same projection the
-  calendar draws and the comeback slide reads, so the caption cannot disagree
-  with either. It is filtered to *this* venue: a caption under photographs of
-  The Station Tap saying "back Tuesday" about The Crown reads as carelessness
-  to the pub it names;
-- the **gallery address**, from `galleryAddress()` — **passed in** rather than
-  rebuilt, because that function lives in `console-gigs.js`, which imports the
-  export module, and two copies of one URL is a link that works in one place
-  and 404s in the other;
-- and a **town hashtag**, off the end of the venue name (venue names carry a
-  town, which is why *one pub is one league* works at all).
-
-**Silence where there is nothing true to say** — the comeback band's own rule.
-No venue, no venue line. Nothing in the diary, no "back on" line; a guessed
-date is worse than no date, because he will paste it without re-reading the
-part he did not ask for.
-
-### The winning team is deliberately left out
-
-Two reasons, either sufficient:
-
-- **A team's name in a caption HE posts is a public naming they never agreed
-  to.** The public league page masks names for exactly this, and the gallery's
-  own rule is *names and points, never faces* — a caption is louder than a
-  table.
-- **`clean-names.js` lives on the server by design**, so the word never reaches
-  the wire. The browser therefore holds the real team name and has no safe way
-  to judge it, and a second copy of that word list in a browser module is the
-  thing this repo refuses everywhere else.
-
-He reads the caption before it goes. If he wants to name them, he knows them.
-**Do not add the winner without masking it on the server first.**
-
-### `posted` is a mark, and it must never become a gate
-
-The photographs and the words are the easy half. The half that costs a Monday
-is remembering which nights are still to do — so the app keeps that instead of
-the person, as a fourth list in `published.json` beside the published nights,
-the per-photo rulings and the card pins.
-
-**Nothing reads it to refuse anything.** A night marked posted can be posted
-again; one that is not is never nagged about. It exists so the rail can say
-what is outstanding and the pile shrinks on its own, which is this project's
-standing rule about queues: *a feature that generates a queue somebody has to
-work is expensive; one that serves itself is cheap.* The moment it starts
-refusing, hiding or chasing, it has become the thing it was built to remove.
-
-**It lives beside the other three rather than in a file of its own.**
-`published.json` is already read once per page for the lamps, so this rides in
-free. The rude-photo flags went the other way for a reason that does not apply
-here: those are written by a background robot, which must never race a human's
-publish. This is only ever written by a person pressing a button, through the
-same per-room queue as everything else in the file — and **every writer carries
-the three halves it is not changing**, which a fourth is exactly the moment to
-forget. There is a test walking all four.
+**The boundary is the same one the first split used.** This file is where a
+photograph LIVES — stored, served, published. That one is what happens to it
+on a Monday, when it is being used to win the next booking.

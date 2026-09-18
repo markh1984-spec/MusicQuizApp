@@ -1102,8 +1102,20 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * rediscovers by reverting the fix. ~430 bytes were paid for it FIRST, by
  * trimming tails off the object-store, star and post-kit sections written
  * hours earlier; nothing that FORBIDS anything went.
+ *
+ * AND TO 266,100, third and last on 18 September, for *Add your own photos*
+ * moving into the bay head. It is a STATED EXCEPTION to a rule this file sets
+ * two sections earlier — the bottom is controls, the top displays the thing —
+ * so it has to be written down beside the rule it bends, or the next session
+ * reads the two, believes the control is misplaced, and moves it back to where
+ * nobody could find it. ~370 bytes were trimmed first, off this rule's own
+ * first draft and two object-store tails.
+ *
+ * THREE RAISES IN A DAY IS THE SIGNAL, NOT THE PROBLEM: the app grew three
+ * features. If a fourth wants paying for, split a section into `docs/` rather
+ * than trimming a fifth sentence.
  */
-const BUDGET = 265_700;
+const BUDGET = 266_100;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
