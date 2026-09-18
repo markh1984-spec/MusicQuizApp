@@ -6,6 +6,7 @@ import { library, me, nightBench, setGigsSeen, setNightDrag } from './console-st
 import { dragging, putNightOnBench } from './console-tonight.js';
 import { hostKey, keyed } from './console.js';
 import { tonight } from './diary.js';
+import { venuePicker } from './console-night-venue.js';
 
 /*
  * WHICH VENUE CARD IS OPEN — module-level, same as `openVenue` in
@@ -650,6 +651,16 @@ export async function fillNightDetail(body, night) {
   actions.appendChild(report);
 
   await nightPhotos(body, night);
+  /*
+   * AND WHERE IT WAS, SAID HERE TOO. A night whose photographs arrived with no
+   * game launched — run off KaraFun with the camera code on the wall — sits
+   * under "No venue on these" with, on this door, nothing that could move it:
+   * the picker lived on Community alone. "Do it over there" must be a link to
+   * there, and the same control is better than a link. AFTER the photographs,
+   * so it is under them when there are any and still there when there are
+   * none — `nightPhotos()` returns early on a night with no photos.
+   */
+  body.appendChild(venuePicker(night));
 }
 
 /**

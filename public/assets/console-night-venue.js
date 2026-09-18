@@ -25,7 +25,7 @@
 
 import { esc, node } from './client.js';
 import { keyed, renderKeepingPlace } from './console.js';
-import { library } from './console-state.js';
+import { gigsSeen, library } from './console-state.js';
 
 /**
  * THE ONE HEADING IN THE PHOTOS RAIL THAT IS NOT A PUB.
@@ -183,6 +183,15 @@ export async function saveNightVenue(night, venue, said = null, onTrouble = () =
     // it; naming one settles that too, and the note under the row is built
     // from these three fields.
     night.venueMixed = false;
+    // AND THE COPY THE POST GIG RAIL DRAWS FROM. `gigsSeen` is replaced by
+    // every fetch of the archive, so the object under the picker can be an
+    // older twin of the one in the rail — patched by key, or the night saved
+    // and the rail went on filing it under "No venue on these" until a reload.
+    for (const twin of gigsSeen) {
+      if (twin !== night && twin.night === night.night) {
+        Object.assign(twin, { venue: night.venue, venueId: night.venueId, venueMixed: false });
+      }
+    }
     onTrouble('');
   } catch (err) {
     // Under the picker when there is one; otherwise in the rail, under the

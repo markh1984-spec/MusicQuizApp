@@ -47,6 +47,7 @@ import { FEATURES } from './plans.js';
 import { fillNightDetail } from './console-gigs.js';
 import { packActionsMarkup, preview, wirePackActions } from './console-packs.js';
 import { editPopover } from './console-editor-popover.js';
+import { NO_VENUE, nightDroppedOnPub } from './console-night-venue.js';
 import { shelfFor } from './console-shows.js';
 import { dragging, putNightOnBench, putOnBench } from './console-tonight.js';
 import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
@@ -348,7 +349,7 @@ export function nightBenchPanel() {
   const railRows = () => {
     const byPub = new Map();
     for (const n of gigsSeen) {
-      const name = n.venue || 'No venue on these';
+      const name = n.venue || NO_VENUE;
       const key = name.trim().toLowerCase();
       if (!byPub.has(key)) byPub.set(key, { name, nights: [] });
       byPub.get(key).nights.push(n);
@@ -419,6 +420,14 @@ export function nightBenchPanel() {
         onFold: () => draw(night),
         onPick: (key) => putNightOnBench(key),
         empty: 'Nothing filed yet.',
+        // A night dragged under a pub's heading is filed there — the same
+        // gesture Community's rail takes; the tap is the picker under the
+        // photographs, because HTML5 drag never fires on touch.
+        drag: {
+          onDrop: (group, key) => nightDroppedOnPub(
+            gigsSeen.find((n) => n.night === key), group, () => {},
+          ),
+        },
       }),
       side,
     );
