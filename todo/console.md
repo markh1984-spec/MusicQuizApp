@@ -10,6 +10,58 @@ the parent file.
 
 ---
 
+### A MODERN LOOK — a redesign, not more UI patches (added 18 September 2026)
+
+Asked for directly: *"this app still looks pretty poorly designed… I need it
+to look a lot more modern rather than an app from a sci-fi film from the
+mid-noughties. A complete UI redesign at some point — doesn't need to be
+today, but it does need to be done."* **This is the one blocked on his visual
+direction, which is why it is a list entry and not a build.**
+
+**The dated look has ONE main cause: neon-on-black.** `--bg` is `#07070e`, the
+accents are hot pink (`--hot #ff2e88`), cyan (`--cool #4bd8ff`) and gold, and
+behind everything sit coloured glows (`--glow-1/2`) and two drifting blobs
+(`--drift-1/2`). That is the sci-fi-HUD signature. Three things compound it:
+**117 linear-gradients + 21 radial** (modern is mostly flat), **font-weight
+800/900 nearly everywhere** (no light/heavy contrast), and **no chosen
+typeface** — the system `Segoe UI` stack, which reads as unfinished.
+
+**It is mostly a TOKEN RE-SKIN, not a rebuild — that is the good news.** The
+design SYSTEM is already there and sound: the five control roles, one gradient
+angle, three radii (10/14/999), gold-means-trophy, the metals. Everything
+routes through tokens (`--bg`, `--hot`, the `--surf-*` set, one
+`font-family`), so changing the palette, the glows, the font and the default
+weight moves most of the app at once. Same mechanical-transform logic the code
+already uses.
+
+**THE DISTINCTION THAT DECIDES EVERYTHING: the console is not the projector.**
+Dark neon is CORRECT on the projector and the in-room phone — a stage, in a
+dark room, read from the back; Linear-style restraint would be wrong there.
+Where the 2005 look costs him is the **console** (used in daylight) and the
+**sales page** (the first thing a buyer judges). So redesign those toward
+modern and restrained; keep the in-room screens a deliberate, refined "show"
+aesthetic. **Do not redesign the projector to look like a SaaS dashboard.**
+
+**The four levers, in order of impact:** palette (off pure neon-on-black,
+account colour as one restrained accent not a glow); type (one real Google
+Fonts pairing — the fastest jump to modern, one token plus a link); weight and
+space (stop defaulting to 800/900; hierarchy from a few bold headings and more
+breathing room); flatten (fewer gradients, softer shadows, depth from layering
+not glow).
+
+**The safe way, and why it is cheap:** `pub-unchanged` compares PAYLOADS not
+CSS and the screenshot guards catch visual regressions, so a token-first
+re-skin does not threaten the protected launch path. No build step is not an
+obstacle — tokens are already how the app is themed.
+
+**WHAT IS BLOCKED ON HIM:** the visual DIRECTION. The next step fits how he
+likes UI calls — build three or four real directions for the console (rendered
+from the real `style.css` and markup, not sketches) as screenshots he taps
+between; he picks one; then it is a mechanical token migration with the guards
+watching. **Do not start the re-skin before he has chosen a direction.**
+
+---
+
 ### SPLIT `launchBar()` — the next seam, and the only one left
 
 **The console split is DONE and is not in this list.** `console.js` is a shell
