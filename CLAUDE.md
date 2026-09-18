@@ -2081,12 +2081,12 @@ for it to go off.
 it straight away"* — after a launch that would not go took an hour to diagnose.
 
 - **ONE RECORDER, FED FROM FIVE PLACES NOBODY HAS TO REMEMBER**: `console.warn`
-  and `console.error` are WRAPPED, `sendJson()` notes every 400-and-up **with
-  its reason and the room off `res.flightRoom`**, the host route notes launches
-  and refused presses, `pushState()` notes a phase change per room, and every
-  browser reports a throw or a dropped POST through `POST /api/flight`
-  (`reportToFlight()` in `client.js`). **A route that resolves a room sets
-  `res.flightRoom`**, or its refusals file under nobody.
+  /`console.error` are WRAPPED, `sendJson()` notes every 400-and-up **with its
+  reason and the room off `res.flightRoom`**, the host route notes launches and
+  refused presses, `pushState()` notes a phase change per room, and every
+  browser reports a throw or a dropped POST through `POST /api/flight`. **A
+  route that resolves a room sets `res.flightRoom`**, or its refusals file
+  under nobody.
 - **A ROOM READS ITS OWN LINES PLUS THE SERVER-WIDE FAILURES, NEVER ANOTHER
   ROOM'S** — `recent()`. A ring of 2,000, mirrored to `data/flight.jsonl` and
   read back at boot — **a courtesy, never a store**.
@@ -2118,6 +2118,32 @@ first fifty people to open a gallery after one each spent a GitHub call against
   on `safePhotoName()`.**
 - **A `..` MAY NOT WALK OUT** — the test writes a sentinel OUTSIDE the folder.
 - **NOTHING DECIDING WHO MAY SEE A PHOTO IS CACHED WITH IT.** Object storage would fix the git-history problem.
+
+### A RUDE PHOTO IS FLAGGED FOR REVIEW, NEVER DELETED — `src/moderation.js`
+
+*"at the end of each night, any nakedness needs to be flagged so I can quickly
+delete the topless photos and bullshit."* Full decision in `todo/gallery.md`.
+
+- **FLAG, NEVER DELETE** — a score per photo when it is FILED (`fileAway`),
+  written to `flags.json` beside the photos, and the flagged ones **sort to the
+  front of the night's grid with a red "Review" pill** (`console-gigs.js`). The
+  bin the host already has does the deleting; a machine never destroys a photo.
+- **A HOSTED API, NOT A MODEL, AND NOT A SKIN HEURISTIC** — Google Cloud Vision
+  SafeSearch, a plain POST like the Imagen one. A browser or server model
+  breaks *no dependencies*; **a skin-tone check in plain JS fires on every
+  close-up face and is biased by skin colour — forbidden, twice.**
+- **INERT WITHOUT A KEY, AND A FAILED CHECK IS NOT A FLAG** — unscored is
+  unflagged, an outage costs a review that is exactly today's, never a held
+  photo. It feeds a REVIEW LIST, not a publish gate; **the projector path is
+  untouched — only the kill switch protects the room.**
+- **`flags.json` IS ITS OWN FILE, NOT `published.json` — `src/photo-flags.js`,
+  own queue.** A background robot's write must never revert a human's publish
+  or pin, the race that file carries the scar of.
+- **SafeSearch IS A SEPARATE GOOGLE API** — `GOOGLE_API_KEY` covers it once
+  Vision is enabled on the project; **`VISION_URL` is the seam a test drives.**
+  Priced in `src/spend.js` (`kind: 'moderation'`). `rude-photo.mjs` drives it.
+  **The three-showcase-with-overlay export already exists (`showcaseSaveInto`)
+  — do not rebuild it.**
 
 ### THE CONTENTS API SENDS ZERO BYTES FOR A FILE OVER 1MB, AND CALLS IT 200
 
@@ -3906,8 +3932,6 @@ pay."*
   answers whether** (`me.lastNightLeft`): re-derived from `status` it would
   warn a seat whose parent had already spent the night. **It names what still
   works FIRST**, and **it is not red** — tonight runs.
-- **`console-warnings.js` IS A SEAM, TAKEN RATHER THAN A FIFTH PAYMENT ON THE
-  LINE CAP** — `console-breaks.js`'s shape. A leaf, handed what it needs.
 - **AND THE CONSOLE'S OWN GATE HAS TO AGREE WITH THE ROUTE'S —
   `entitlements(account, { asIfPaying })`.** The route allowed the night and
   every test passed, while `can()` reads `entitlements.features`, EMPTY on a
@@ -4181,6 +4205,7 @@ node scripts/sign-in-link.mjs           # forgot your password — can you get i
 node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 node scripts/photo-to-socials.mjs       # can a pub save a photo, with your name on?
 node scripts/photo-to-start.mjs         # is the photo ask real, and the skip?
+node scripts/rude-photo.mjs              # is a rude photo flagged and marked?
 node scripts/second-screen.mjs          # the second display: the code and the photos
 node scripts/two-screens.mjs            # two outputs, a real account, quiz -> bingo
 node scripts/second-laptop.mjs          # the wall on a spare laptop

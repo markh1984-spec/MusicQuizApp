@@ -429,22 +429,20 @@ expensive part), **nothing baked into an image**, and **no latency in the live
 path** — score in the background after `fileAway`, the way the photo already
 reaches the repository after the phone has had its answer.
 
-#### What to build
+#### BUILT 18 September 2026 — the flag pipeline, inert until Vision is enabled
 
-- **A score per photo, taken when it is filed.** A likelihood-only check is
-  enough — the `GOOGLE_API_KEY` that draws round-2 artwork already exists, but
-  **SafeSearch is a separate API that has to be enabled on the project**, which
-  is a setup step for the host rather than a code change.
-- **Kept in a sidecar beside the photos**, `photos/<room>/<night>/flags.json`,
-  exactly like `published.json` — the disk is wiped on deploy, the repo is not,
-  and the list of which pictures are questionable belongs with them.
-- **FLAGGED PHOTOS SORT TO THE FRONT OF THE NIGHT, marked.** That is the whole
-  value: a review of 102 photographs becomes a look at the three worth looking
-  at. It composes with what already exists — flag, then the bin, then the
-  publish button, which is a flow the host already has.
-- **BUILD IT SO IT WORKS WITH NO KEY AT ALL**: unscored is simply unflagged,
-  the column stays empty, and nothing about the night changes. Then enabling
-  the API switches it on without a deploy.
+The rule is in CLAUDE.md (*A RUDE PHOTO IS FLAGGED FOR REVIEW*): a SafeSearch
+score per photo when it is filed (`src/moderation.js`), a `flags.json` sidecar
+(`src/photo-flags.js`), and flagged photos sorted to the front of the night's
+grid with a red "Review" pill (`console-gigs.js`). `rude-photo.mjs` drives it.
+
+**THE ONE THING LEFT IS THE HOST'S, not a code change: enable the Cloud Vision
+API on the Google project so `GOOGLE_API_KEY` covers SafeSearch.** Until then
+it is inert — unscored is unflagged and the night reads as it does today. Check
+first whether the existing AI-Studio key covers Vision, or whether it wants its
+own key; if it does, `VISION_URL` and a second key are the seam. What is NOT
+built is the gallery-publish gate below (the flag feeds a review list, not a
+publish gate) and the joke.
 
 #### And only after that, the joke
 

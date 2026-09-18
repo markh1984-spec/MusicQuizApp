@@ -1063,7 +1063,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * sentences across the flight, github-down, ready-line and support-log
  * sections; nothing that FORBIDS anything went.
  */
-const BUDGET = 259_000;
+/*
+ * RAISED TO 260,600 ON 18 SEPTEMBER 2026, for the rude-photo check — a genuine
+ * new feature (`src/moderation.js`) whose rule is load-bearing prohibitions:
+ * flag-never-delete, a hosted API and NOT a skin heuristic (forbidden twice),
+ * inert-without-key, and its own sidecar file so a robot cannot revert a
+ * human's publish. ~500 of the ~1,600 were paid first by tightening the
+ * flight-recorder, lapsed-subscription and this rule's own prose; nothing that
+ * FORBIDS anything went.
+ */
+const BUDGET = 260_600;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

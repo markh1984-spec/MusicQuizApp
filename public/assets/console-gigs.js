@@ -810,6 +810,17 @@ export async function nightPhotos(body, night, opts = {}) {
    * count, so the bench's own size stops depending on how many pictures
    * somebody took.
    */
+  /*
+   * THE FLAGGED ONES COME FIRST — the whole value of the rude-photo check
+   * (`src/moderation.js`). A review of ninety photographs becomes a look at
+   * the two or three worth looking at, and the bin is one tap away on each.
+   * `Array.sort` is stable, so everything else keeps the order it arrived in;
+   * `adult` sorts ahead of `racy`, and both ahead of the clean ones. Nothing
+   * is flagged unless the Vision key is set, so an ordinary night is untouched.
+   */
+  const flagRank = (f) => (f === 'adult' ? 0 : f === 'racy' ? 1 : 2);
+  data.photos.sort((a, b) => flagRank(a.flagged) - flagRank(b.flagged));
+
   const grid = node(`<div class="${wall ? 'community-wall' : 'night-strip'}"></div>`);
   for (const p of data.photos) {
     /*
@@ -874,8 +885,18 @@ export async function nightPhotos(body, night, opts = {}) {
      * different things are never adjacent under a thumb. The lamp keeps the
      * right-hand corner it already had.
      */
-    const shot = node(`<figure class="cphoto filed">
+    /*
+     * FLAGGED FOR A LOOK — the rude-photo check thought this one might be
+     * rude. A red-ringed tile with a "Review" pill, sorted to the front. It
+     * NEVER deletes and it is not a verdict — the host looks and decides, with
+     * the bin right there. The title says exactly that, in one line.
+     */
+    const flagPill = p.flagged
+      ? `<span class="cphoto-flag" title="Flagged for a look — the check thought this one might be rude. Delete it or leave it.">Review</span>`
+      : '';
+    const shot = node(`<figure class="cphoto filed${p.flagged ? ' flagged' : ''}">
       <img src="${esc(p.url)}" alt="" loading="lazy" decoding="async">
+      ${flagPill}
       <button class="cphoto-pin ${p.pinned ? 'is-on' : ''}" type="button">${starIcon(14)}</button>
       <button class="cphoto-rot" type="button" title="Turn it a quarter turn" aria-label="Turn this photo a quarter turn clockwise">${rotateIcon(13)}</button>
       <button class="cphoto-pub ${p.onGallery ? 'is-on' : 'is-off'}" type="button"></button>

@@ -4880,6 +4880,27 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 /* A green edge means it is in the private repo and safe from a restart. */
 .cphoto.filed { border-color: rgba(47, 224, 122, 0.5); }
 
+/* ---- FLAGGED FOR A LOOK — the rude-photo check thought this one might be
+ * rude (src/moderation.js). A red ring plus a "Review" pill, and the tile is
+ * sorted to the front of the night. It is a WARNING to look, never a verdict:
+ * the host reads it off the grid and the bin is already in the corner. Red is
+ * the app's attention colour, allowed here because "look at this one" is
+ * exactly the good/wrong pair red and green carry across this grid. */
+.cphoto.flagged { border-color: var(--bad); box-shadow: 0 0 0 2px rgba(255, 77, 94, 0.35); }
+.cphoto-flag {
+  /* TOP CENTRE — all four corners already hold a control (pin, lamp, rotate,
+     bin), so the flag takes the free middle of the top edge where it reads at
+     a glance and covers nothing. */
+  position: absolute; top: 6px; left: 50%; transform: translateX(-50%); z-index: 3;
+  padding: 3px 9px; border-radius: var(--r-pill);
+  font-size: var(--fs-tag); font-weight: 800; letter-spacing: 0.02em;
+  color: #fff; background: var(--bad);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  pointer-events: none; white-space: nowrap;
+}
+.community-wall .cphoto-flag { top: 5px; padding: 2px 8px; }
+
 /* ---- THE BIN ON A FILED PHOTO, bottom right.
  *
  * BOTTOM RIGHT BECAUSE THE TOP OF A PHOTO IS WHERE FACES ARE — this sits over

@@ -78,6 +78,10 @@ export const PRICES = {
     google: { low: 3, medium: 6, high: 11 },
     openai: { low: 1, medium: 4, high: 14 },
   },
+  // The rude-photo check — Google Cloud Vision SafeSearch, ~£1.20 per thousand
+  // images, so 0.12p each. A busy night of fifty photos is about 6p. Per
+  // supplier like the images above, and priced high for an unknown one.
+  moderation: { google: 0.12 },
   /*
    * Cached input, as MULTIPLES of the model's ordinary input rate.
    *
@@ -130,6 +134,12 @@ export function imagePrices(provider = '') {
 export function imagePence({ provider = '', quality = 'medium', images = 1 } = {}) {
   const table = imagePrices(provider);
   const each = table[quality] ?? table.medium;
+  return each * (Number(images) || 0);
+}
+
+/** What one rude-photo check cost — see `src/moderation.js`. */
+export function moderationPence({ provider = 'google', images = 1 } = {}) {
+  const each = PRICES.moderation[provider] ?? PRICES.moderation.google;
   return each * (Number(images) || 0);
 }
 
@@ -368,11 +378,13 @@ export class Spend {
     try {
       const pence = kind === 'image'
         ? imagePence({ provider, quality, images })
-        : claudePence({ model, tokensIn, tokensOut, cacheRead, cacheWrite, searches });
+        : kind === 'moderation'
+          ? moderationPence({ provider, images })
+          : claudePence({ model, tokensIn, tokensOut, cacheRead, cacheWrite, searches });
 
       const row = {
         at: this.now(),
-        kind: kind === 'image' ? 'image' : 'claude',
+        kind: (kind === 'image' || kind === 'moderation') ? kind : 'claude',
         what: String(what).slice(0, 80),
         packId: String(packId).slice(0, 80),
         ...(model ? { model } : {}),
@@ -421,7 +433,7 @@ export class Spend {
     for (const row of recent) {
       const pence = Number(row.pence) || 0;
       searches += Number(row.searches) || 0;
-      if (row.kind === 'image') image += pence; else claude += pence;
+      if (row.kind === 'image' || row.kind === 'moderation') image += pence; else claude += pence;
 
       const month = monthKey(row.at);
       byMonth.set(month, (byMonth.get(month) || 0) + pence);

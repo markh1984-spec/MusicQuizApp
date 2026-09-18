@@ -53,6 +53,24 @@ What went live, all guarded:
   against itself a second after every boot and puts the verdict on
   `/health`; and the Help tab reads it all back under *What the app saw
   tonight* with a Copy button. The pasted text is the bug report.
+- **The owner reads any account's flight record** (`/api/flight?account=…`,
+  the picker on the owner's Tonight tab), so a quizmaster's launch problem is
+  read from the owner console — the host's standing rule that a fix for his own
+  account is reachable for every other one.
+- **A Render disk — the host reversed the 18 Sept decline**, so a deploy no
+  longer wipes the running night. `DATA_DIR` is the whole wiring, no code
+  change; the GitHub backup stays the source of truth, and Auto-Deploy stays
+  off via the release train. His to switch on (the steps are on record).
+- **The rude-photo check** (`rude-photo.mjs`), asked for: *"at the end of each
+  night, any nakedness needs to be flagged so I can quickly delete the topless
+  photos."* Google Cloud Vision SafeSearch scores each photo as it is filed,
+  flagged ones sort to the front of the night's grid with a "Review" pill, and
+  the bin is one tap. It flags, never deletes; it is inert until the host
+  enables the Vision API. The three-showcase-with-overlay export he also asked
+  for was already built (`showcaseSaveInto`).
+- **The UI redesign is on the list** (`todo/console.md`), blocked on his visual
+  direction: the dated look is neon-on-black, the fix is mostly a token
+  re-skin of the console and sales page, and the projector stays a dark stage.
 
 Both deploys were confirmed live by `/health` answering with the new
 `streams` and `rss` fields.

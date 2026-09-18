@@ -2,7 +2,7 @@
  * GET ROUTES — past-gigs. Moved whole out of `handleGet()` in server.js;
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
-import { COVER_PHOTOS, FEATURES, MAX_PINS, coverPhotos, isNightFolder, isPublished, leagueAfter, listAdvertPacks, listArchive, listDirs, mergeGigs, nameDecisions, nightHeadcount, nightReportFilename, nightReportPdf, photoDecisions, photoFolder, photoKey, photoPins, photosRepoConfigured, publicName, publicTable, publishedNights, safePhotoName, sameVenue, showsOnGallery, teamKey, totals } from './context.js';
+import { COVER_PHOTOS, FEATURES, MAX_PINS, coverPhotos, isNightFolder, isPublished, leagueAfter, listAdvertPacks, listArchive, listDirs, mergeGigs, nameDecisions, nightHeadcount, nightReportFilename, nightReportPdf, photoDecisions, photoFolder, photoKey, photoPins, photosRepoConfigured, publicName, publicTable, publishedNights, safePhotoName, sameVenue, showsOnGallery, teamKey, totals, photoFlags, flagKey } from './context.js';
 import { send, sendJson } from './plumbing.js';
 import { galleryRoomFor, gigRoomsFor, nightFiles } from './identity.js';
 import { allowed } from './gates.js';
@@ -227,6 +227,9 @@ export async function getPastGigs(req, res, url, route) {
     const rulings = photosRepoConfigured() ? await photoDecisions(gigRoomId) : {};
     // Which ones a human chose for this night's card on the public index.
     const pinnedHere = photosRepoConfigured() ? (await photoPins(gigRoomId))[night] || [] : [];
+    // Which ones the rude-photo check flagged, so the console can sort them to
+    // the front — see `src/moderation.js`. Empty when nothing is set up.
+    const flags = photosRepoConfigured() ? await photoFlags(gigRoomId) : {};
     return sendJson(res, 200, {
       night,
       // Whether this night is on the public gallery, so the control that puts
@@ -285,6 +288,13 @@ export async function getPastGigs(req, res, url, route) {
           // difference between "we thought you uploaded this" and "you turned
           // it off", which are different things to want to change.
           ruled: rulings[photoKey(night, name)] || '',
+          /*
+           * FLAGGED FOR REVIEW by the rude-photo check — 'adult' / 'racy' / ''.
+           * The console sorts these to the front and marks them, so a review
+           * of ninety photographs becomes a look at the three worth looking
+           * at. Empty unless the Vision key is set and the check fired.
+           */
+          flagged: flags[flagKey(night, name)] || '',
         })),
     }), true;
   }

@@ -1,7 +1,7 @@
 /**
  * BACKUPS, RESTORES AND THE HELPERS THAT SAT BETWEEN THE TWO ROUTE HANDLERS. Moved whole from server.js — the backup/restore machinery (restoreOnce and the four ensure*Restored move together, with their Sets), and the domain helpers for invoices, owner money, adverts and pack liveness that were interleaved with them. Cut per function into their own homes when there is a reason to.
  */
-import { FEATURES, HOUSE, PHASES, accounts, backupPath, can, checkAccess, config, countOwn, deleteFile, dropNight, fs, fullLibrary, getFile, githubConfigured, hooks, isCleanForPublic, isComposed, leaguesRunning, listAdvertPacks, listArchive, loadQuiz, mergeGigs, packsRepoConfigured, path, paths, photoFolder, photosRepoConfigured, privateRepoConfigured, propUse, putFile, putFiles, readPack, readStats, reports, restoreArchive, rooms, safeAdvertFile, serialiseArchive, spend, suggestions, teamKey, toPence, totals, tryGetFile, tryListDir, venueKeyOf } from './context.js';
+import { FEATURES, HOUSE, PHASES, accounts, backupPath, can, checkAccess, config, countOwn, deleteFile, dropNight, flagKey, fs, fullLibrary, getFile, githubConfigured, hooks, moderationConfigured, scorePhoto, setPhotoFlag, spendRecorder, isCleanForPublic, isComposed, leaguesRunning, listAdvertPacks, listArchive, loadQuiz, mergeGigs, packsRepoConfigured, path, paths, photoFolder, photosRepoConfigured, privateRepoConfigured, propUse, putFile, putFiles, readPack, readStats, reports, restoreArchive, rooms, safeAdvertFile, serialiseArchive, spend, suggestions, teamKey, toPence, totals, tryGetFile, tryListDir, venueKeyOf } from './context.js';
 import { whoIs } from './identity.js';
 import { pushState } from './views.js';
 
@@ -1143,6 +1143,17 @@ export async function fileAway(room, photo) {
   if (result.ok) {
     photos.markFiled(photo.id);
     pushState(room);
+    /*
+     * THE RUDE-PHOTO CHECK — background, inert without a Vision key, and it
+     * never blocks the file-away it rides behind. A flag sorts this photo to
+     * the front of the night's grid for review; it never deletes and never
+     * touches the room. See `src/moderation.js` and `src/photo-flags.js`.
+     */
+    if (moderationConfigured()) {
+      scorePhoto(read.bytes, { onSpend: spendRecorder(spend) })
+        .then((r) => (r.level ? setPhotoFlag(room.id, photo.night, photo.file, r.level) : null))
+        .catch(() => { /* a flag that will not settle costs the flag, never the photo */ });
+    }
   } else {
     console.warn('[photos] could not file one away:', result.error);
   }

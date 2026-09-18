@@ -85,6 +85,7 @@ export const GUARDS = [
   { name: 'sign-in-link',          core: false, why: 'forgot your password — can you get in?' },
   { name: 'photo-to-socials',      core: false, why: 'can a pub save a photo, with your name on?' },
   { name: 'photo-to-start',        core: false, why: 'is the photo ask real, and the skip?' },
+  { name: 'rude-photo',            core: false, why: 'is a rude photo flagged, sorted to the front and marked?' },
   { name: 'second-screen',         core: false, why: 'the second display: the code and the photos' },
   { name: 'second-laptop',         core: false, why: 'the wall on a spare laptop' },
   { name: 'funniest-photo',        core: false, why: "does the room's vote reach a drink?" },
