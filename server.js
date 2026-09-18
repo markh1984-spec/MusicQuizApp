@@ -3934,8 +3934,9 @@ async function handleGet(req, res, url, route) {
     res.writeHead(200, {
       'Content-Type': name.endsWith('.png') ? 'image/png' : name.endsWith('.webp') ? 'image/webp' : 'image/jpeg',
       'Content-Length': bytes.length,
-      // A filed photo never changes — it is written once and never rewritten —
-      // so a page of forty of them should not fetch forty every time it opens.
+      // A filed photo all but never changes — a quarter turn is the one edit
+      // it takes — so a page of forty of them should not fetch forty every
+      // time it opens. The console busts its own copy after a turn.
       'Cache-Control': 'private, max-age=86400',
     });
     return res.end(bytes), true;
@@ -5820,6 +5821,58 @@ async function handleWrite(req, res, url, route) {
     const done = await setPhotoPin(galleryRoomFor(req, url), night, name, on);
     if (!done.ok) return sendJson(res, 400, { error: done.error || 'Could not save that.' }), true;
     return sendJson(res, 200, { ok: true, night, name, pinned: on, pins: done.pins }), true;
+  }
+
+  /*
+   * A FILED PHOTOGRAPH TURNED A QUARTER TURN — the one edit a filed photo takes.
+   *
+   * Phones file some photographs on their side. The BROWSER rotates (a canvas,
+   * the same code that frames one for the socials) and sends the new bytes
+   * here, which write OVER the same name in the private repo — so every reader
+   * (this console, the wall, the public gallery, the export) gets the turned
+   * one without a ruling to remember and apply in five places. The name stays
+   * the name, so the lamp, the star and the gallery's links all still hold.
+   *
+   * THE SECOND EVENT THAT CAN MAKE A CACHED PICTURE WRONG, after a delete —
+   * the memory and disk copies go, and the console re-points its own <img>.
+   * A browser that fetched the old one keeps it for up to a day (`/past-photo/`
+   * says `max-age=86400`); that is the cost of forty thumbnails not being
+   * forty fetches, and a rotation is not worth losing it over.
+   */
+  if (route.startsWith('/api/past-photo/') && req.method === 'PUT') {
+    if (!allowed(req, res, url, FEATURES.PAST_GIGS)) return true;
+    const parts = route.slice('/api/past-photo/'.length).split('/');
+    const night = decodeURIComponent(parts[0] || '');
+    const name = safePhotoName(decodeURIComponent(parts[1] || ''));
+    if (!isNightFolder(night) || !name || parts.length !== 2) {
+      return sendJson(res, 404, { error: 'No photo there.' }), true;
+    }
+    if (!photosRepoConfigured()) {
+      return sendJson(res, 400, { error: 'The private photo repository is not set up, so there is nothing to change.' }), true;
+    }
+    let bytes;
+    try {
+      bytes = await readBody(req, MAX_BYTES);
+    } catch {
+      return sendJson(res, 413, { error: 'That photo is too big.' }), true;
+    }
+    // THE BYTES MUST BE THE KIND THE NAME SAYS. The name is what every reader
+    // serves a Content-Type off, so a JPEG written under a .png name is a
+    // picture that decodes by luck.
+    const sniffed = sniffType(bytes);
+    const ext = sniffed && extensionFor(sniffed);
+    if (!ext || !name.toLowerCase().endsWith(ext)) {
+      return sendJson(res, 415, { error: 'That is not the same kind of picture as the one it replaces.' }), true;
+    }
+    const key = `${photoFolder(galleryRoomFor(req, url))}/${night}/${name}`;
+    // A name that is not on this night is a write that would CREATE a file the
+    // listing has never heard of, under a name nobody chose.
+    if (!(await photoBytes(key))) return sendJson(res, 404, { error: 'No photo there.' }), true;
+    const done = await putFile(key, bytes, `${night} — a photo turned`, 'photos');
+    if (done && done.ok === false) return sendJson(res, 502, { error: done.error || 'Could not save that.' }), true;
+    dropPhoto(key);
+    dropPhotoFromDisk(key);
+    return sendJson(res, 200, { ok: true, night, name }), true;
   }
 
   if (route.startsWith('/api/past-photo/') && req.method === 'DELETE') {

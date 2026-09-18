@@ -404,6 +404,17 @@ export function starIcon(size = 14) {
     </svg>`;
 }
 
+/** A quarter turn, clockwise — the only edit a filed photograph takes. */
+export function rotateIcon(size = 14) {
+  return `
+    <svg class="rotate-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+      <path d="M20 12a8 8 0 1 1-2.6-5.9"/>
+      <path d="M20 3v5h-5"/>
+    </svg>`;
+}
+
 export function pinIcon(size = 18) {
   return `
     <svg class="pin-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"

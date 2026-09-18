@@ -29,7 +29,7 @@
 
 import { node } from './client.js';
 import { me } from './console-state.js';
-import { savePhoto, saveName } from './photo-save.js';
+import { framedBlob, savePhoto, saveName } from './photo-save.js';
 import { invoiceApi } from './console-invoices.js';
 
 /**
@@ -150,6 +150,73 @@ export function framedSaveInto(into, url, night, records) {
  * false when a share sheet was dismissed, and "Saved 3" over two files is this
  * repo's commonest fault wearing a number.
  */
+/**
+ * THE SHOWCASE, AS IT WILL POST — the three the night leads with, drawn with
+ * the venue's frame and the mark, from the SAME drawing the export saves.
+ *
+ * Asked for after the star: *"can I also have a view where I can see the
+ * three showcase photos with the overlay"*. A framed picture cannot be judged
+ * from a thumbnail with a corner lamp on it, and the alternative was saving
+ * three files to look at them. It redraws when a star changes
+ * (`photo-pins-changed`, fired by the tile) — a preview that shows last
+ * minute's three is worse than none.
+ */
+export function showcasePreviewInto(into, night, records, keyedUrl) {
+  const strip = node(`<div class="showcase-strip">
+    <div class="tiny showcase-said">The showcase, framed — what the gallery leads with and the export saves.</div>
+    <div class="showcase-row"></div>
+  </div>`);
+  const row = strip.querySelector('.showcase-row');
+  const said = strip.querySelector('.showcase-said');
+  const words = String((me && (me.brand || me.name)) || '');
+  let run = 0;
+
+  const draw = async (cover) => {
+    const mine = ++run;
+    const names = (Array.isArray(cover) ? cover : []).filter(Boolean);
+    if (!names.length) {
+      row.replaceChildren();
+      said.textContent = 'Star up to three photos and they show here, framed.';
+      return;
+    }
+    let overlay = '';
+    try { overlay = await venueFrame((night && night.venue) || '', records); } catch { /* unframed */ }
+    if (mine !== run) return;
+    said.textContent = overlay
+      ? 'The showcase, framed — what the gallery leads with and the export saves.'
+      : 'The showcase — no frame on this pub yet, so these post plain.';
+    const pics = await Promise.all(names.map(async (name) => {
+      try {
+        const blob = await framedBlob(keyedUrl(`/past-photo/${encodeURIComponent(night.night)}/${encodeURIComponent(name)}`), { words, overlay });
+        return blob ? URL.createObjectURL(blob) : '';
+      } catch { return ''; }
+    }));
+    if (mine !== run) return;
+    row.replaceChildren(...pics.filter(Boolean).map((src) => node(`<img class="showcase-pic" src="${src}" alt="">`)));
+  };
+
+  draw(night && night.cover);
+  document.addEventListener('photo-pins-changed', async (ev) => {
+    if (!strip.isConnected) return;
+    if (ev.detail && ev.detail.night && ev.detail.night !== night.night) return;
+    // The cover is decided on the SERVER (pins first, then a spread), so ask
+    // it rather than guess which three a new star displaced.
+    try {
+      const res = await fetch(keyedUrl(`/api/past-gigs/${encodeURIComponent(night.night)}`));
+      const data = res.ok ? await res.json() : null;
+      if (data) draw(data.cover);
+    } catch { /* the strip keeps what it had */ }
+  });
+  into.appendChild(strip);
+  return strip;
+}
+
+/** The strip and the save button together — one call for the Community bay. */
+export function showcaseInto(into, night, records, keyedUrl) {
+  showcasePreviewInto(into, night, records, keyedUrl);
+  return showcaseSaveInto(into, night, records, keyedUrl);
+}
+
 export function showcaseSaveInto(into, night, records, keyedUrl) {
   const cover = (night && Array.isArray(night.cover) ? night.cover : []).filter(Boolean);
   if (!cover.length) return null;

@@ -258,7 +258,8 @@ async function stamped(img, words, overlay) {
  *
  * Resolves to `true` when something left; `false` means say so out loud.
  */
-export async function savePhoto(src, { words = '', filename = 'photo.jpg', overlay = '' } = {}) {
+/** Load a same-origin photograph into an Image the canvas may read. */
+export async function loadPhoto(src) {
   const img = new Image();
   // Same origin, so nothing taints the canvas — but stated, because the day
   // photographs move to object storage this is the line that has to change.
@@ -269,8 +270,20 @@ export async function savePhoto(src, { words = '', filename = 'photo.jpg', overl
   });
   img.src = src;
   await ready;
+  return img;
+}
 
-  const blob = await stamped(img, words, overlay);
+/**
+ * THE FRAMED PHOTOGRAPH AS BYTES — what the socials export saves and what the
+ * showcase preview shows, from ONE drawing, so the preview cannot show a
+ * frame the export would not put on.
+ */
+export async function framedBlob(src, { words = '', overlay = '' } = {}) {
+  return stamped(await loadPhoto(src), words, overlay);
+}
+
+export async function savePhoto(src, { words = '', filename = 'photo.jpg', overlay = '' } = {}) {
+  const blob = await framedBlob(src, { words, overlay });
   if (!blob) return false;
 
   const file = new File([blob], filename, { type: 'image/jpeg' });

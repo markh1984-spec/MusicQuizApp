@@ -1,12 +1,14 @@
 /** GIGS — the evidence: headcounts, what the room asked for, and nights run. */
 
-import { binIcon, starIcon, esc, node } from './client.js';
+import { binIcon, rotateIcon, starIcon, esc, node } from './client.js';
 import { galleryPath, nightSlug, venueSlug } from './slugs.js';
 import { library, me, nightBench, setGigsSeen, setNightDrag } from './console-state.js';
 import { dragging, putNightOnBench } from './console-tonight.js';
 import { hostKey, keyed } from './console.js';
 import { tonight } from './diary.js';
 import { venuePicker } from './console-night-venue.js';
+import { loadPhoto } from './photo-save.js';
+import { showcaseInto } from './console-photo-export.js';
 
 /*
  * WHICH VENUE CARD IS OPEN — module-level, same as `openVenue` in
@@ -650,17 +652,33 @@ export async function fillNightDetail(body, night) {
   });
   actions.appendChild(report);
 
-  await nightPhotos(body, night);
   /*
-   * AND WHERE IT WAS, SAID HERE TOO. A night whose photographs arrived with no
+   * THE GRID, NOT THE STRIP. One row scrolled sideways was built so the bench
+   * had a fixed height "whatever the count" — and the bay is capped and
+   * scrolls now, so the ceiling it bought is already there. What it cost was
+   * reported off a night of 108: *"UI issues all over the place"* — a hundred
+   * tiles in one sideways row, the first cut off at the edge, is not a thing
+   * you can star three of. Same wall Community draws, six across.
+   *
+   * AND WHAT SITS UNDER THE PHOTOGRAPHS, IN ORDER: the showcase — the three,
+   * framed, and the button that saves them — then where the night was, then
+   * the gallery. The publish control is handed a container so `nightPhotos()`
+   * leaves it to this door to place, LAST: putting a night up is the final act.
+   */
+  let data = null;
+  const under = node('<div class="bench-under"></div>');
+  await nightPhotos(body, night, { wall: true, controlsInto: under, onData: (d) => { data = d; } });
+  body.appendChild(under);
+  if (data) showcaseInto(under, { ...night, cover: data.cover }, library.venueRecords || [], keyed);
+  /*
+   * WHERE IT WAS, SAID HERE TOO. A night whose photographs arrived with no
    * game launched — run off KaraFun with the camera code on the wall — sits
    * under "No venue on these" with, on this door, nothing that could move it:
-   * the picker lived on Community alone. "Do it over there" must be a link to
-   * there, and the same control is better than a link. AFTER the photographs,
-   * so it is under them when there are any and still there when there are
-   * none — `nightPhotos()` returns early on a night with no photos.
+   * the picker lived on Community alone. Still there on a night with no
+   * photographs at all — `nightPhotos()` returns early on one.
    */
-  body.appendChild(venuePicker(night));
+  under.appendChild(venuePicker(night));
+  if (data) under.appendChild(galleryToggle(night.night, data.published, night.venue));
 }
 
 /**
@@ -859,6 +877,7 @@ export async function nightPhotos(body, night, opts = {}) {
     const shot = node(`<figure class="cphoto filed">
       <img src="${esc(p.url)}" alt="" loading="lazy" decoding="async">
       <button class="cphoto-pin ${p.pinned ? 'is-on' : ''}" type="button">${starIcon(14)}</button>
+      <button class="cphoto-rot" type="button" title="Turn it a quarter turn" aria-label="Turn this photo a quarter turn clockwise">${rotateIcon(13)}</button>
       <button class="cphoto-pub ${p.onGallery ? 'is-on' : 'is-off'}" type="button"></button>
       <button class="cphoto-bin" type="button" aria-label="Delete this photo">${binIcon(15)}</button>
     </figure>`);
@@ -1039,6 +1058,9 @@ export async function nightPhotos(body, night, opts = {}) {
             if (!res.ok) throw new Error(out.error || 'Could not change that.');
             pinSaved = want;
             trouble('');
+            // The showcase strip redraws off this — the three are decided on
+            // the server, so it asks rather than guesses.
+            document.dispatchEvent(new CustomEvent('photo-pins-changed', { detail: { night: night.night } }));
           } catch (err) {
             pinned = pinSaved;
             paintPin();
@@ -1046,6 +1068,48 @@ export async function nightPhotos(body, night, opts = {}) {
           }
         });
       }, WRITE_AFTER);
+    });
+
+    /*
+     * A QUARTER TURN, CLOCKWISE, IN THE BOTTOM-LEFT — the corner the star left.
+     * The browser turns it (a canvas), the server writes the bytes over the
+     * same name, and this tile re-points its own <img> past the day-long
+     * browser cache. Encoded as the kind the NAME says, because that is what
+     * every reader serves a Content-Type off.
+     */
+    const rot = shot.querySelector('.cphoto-rot');
+    rot.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      if (rot.disabled) return;
+      rot.disabled = true;
+      const img = shot.querySelector('img');
+      const url = `/past-photo/${encodeURIComponent(night.night)}/${encodeURIComponent(p.name)}`;
+      try {
+        const src = await loadPhoto(keyed(url) + '&v=' + Date.now());
+        const canvas = document.createElement('canvas');
+        canvas.width = src.naturalHeight;
+        canvas.height = src.naturalWidth;
+        const ctx = canvas.getContext('2d');
+        ctx.translate(canvas.width, 0);
+        ctx.rotate(Math.PI / 2);
+        ctx.drawImage(src, 0, 0);
+        const lower = p.name.toLowerCase();
+        const type = lower.endsWith('.png') ? 'image/png' : lower.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, type, 0.92));
+        if (!blob) throw new Error('This browser could not turn it.');
+        const res = await fetch(keyed(`/api/past-photo/${encodeURIComponent(night.night)}/${encodeURIComponent(p.name)}`), {
+          method: 'PUT', headers: { 'Content-Type': type }, body: blob,
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Could not turn that.');
+        img.src = keyed(url) + '&v=' + Date.now();
+        trouble('');
+        document.dispatchEvent(new CustomEvent('photo-pins-changed', { detail: { night: night.night } }));
+      } catch (err) {
+        trouble(err.message);
+      } finally {
+        rot.disabled = false;
+      }
     });
 
     shot.querySelector('.cphoto-bin').addEventListener('click', async (ev) => {

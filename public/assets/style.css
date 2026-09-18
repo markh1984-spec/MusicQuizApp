@@ -4997,6 +4997,28 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 .cphoto-pin:hover { transform: scale(1.15); }
 @media (prefers-reduced-motion: reduce) { .cphoto-pin:hover { transform: none; } }
 .community-wall .cphoto-pin { width: 18px; height: 18px; top: 5px; left: 5px; }
+/* THE QUARTER TURN, bottom-left — the corner the star vacated. Same body as
+   the star so the four corners read as one set; never lit, it is a verb. */
+.cphoto-rot {
+  position: absolute; bottom: 8px; left: 8px; z-index: 2;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; padding: 0; border-radius: 999px; cursor: pointer;
+  color: rgba(255, 255, 255, 0.85); background: rgba(10, 8, 16, 0.72);
+  border: 2px solid rgba(10, 8, 16, 0.75);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+.cphoto-rot::after { content: ''; position: absolute; inset: -13px; }
+.cphoto-rot:hover { transform: scale(1.15); }
+.cphoto-rot:disabled { opacity: 0.5; cursor: default; }
+@media (prefers-reduced-motion: reduce) { .cphoto-rot:hover { transform: none; } }
+.community-wall .cphoto-rot { width: 18px; height: 18px; bottom: 5px; left: 5px; }
+.community-wall .cphoto-rot svg { width: 11px; height: 11px; }
+/* THE SHOWCASE, FRAMED — three whole pictures in a row, never cropped: the
+   frame is the point, and a square crop hides its edges. */
+.bench-under { display: grid; gap: 10px; margin-top: 10px; }
+.showcase-strip { margin: 10px 0 6px; }
+.showcase-row { display: flex; gap: 8px; margin-top: 6px; align-items: flex-start; }
+.showcase-pic { flex: 1 1 0; min-width: 0; max-height: 170px; object-fit: contain; border-radius: var(--r-field); background: rgba(0, 0, 0, 0.35); }
 .community-wall .cphoto-pin svg { width: 12px; height: 12px; }
 
 .cphoto-acts {
@@ -11294,6 +11316,11 @@ body.landing {
   .bay-rail { overflow-y: auto; min-height: 0; }
   .bay-side { overflow: hidden; }
   .bay-side > .lg-table { overflow-y: auto; display: block; }
+  /* AND THE POST GIG BENCH'S DETAIL — a hundred photographs, the picker and
+     the showcase under them. `.bay-side` clips, so anything the league's
+     table rule did not name was cut off at the bay's edge with no way to
+     reach it: "Where this was" drew half a line and stopped. */
+  .bay-side > .bench-detail { overflow-y: auto; min-height: 0; }
   .bay-body { overflow-y: auto; }
 }
 /* A PHONE GETS THREE ACROSS. Six 52px thumbnails is a contact sheet nobody can

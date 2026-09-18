@@ -56,7 +56,7 @@ import { asksPanel, galleryAddress, groupByVenue, nightPhotos } from './console-
 import { bayColumns, bayHead, bayRail } from './console-bay.js';
 import { NO_VENUE, nightDroppedOnPub, venuePicker, whyNoVenue } from './console-night-venue.js';
 import { venueSlug } from './slugs.js';
-import { framedSaveInto, showcaseSaveInto } from './console-photo-export.js';
+import { framedSaveInto, showcaseInto } from './console-photo-export.js';
 
 /** Every venue with a league running, best-supported first. */
 function leaguesNow() {
@@ -546,7 +546,7 @@ function photoWall() {
       wall: true,
       controlsInto: nightControls,
       onOpen: openIt,
-      onData: (d) => showcaseSaveInto(nightControls, { ...openNight, cover: d.cover },
+      onData: (d) => showcaseInto(nightControls, { ...openNight, cover: d.cover },
         library.venueRecords || [], keyed),
     });
     el.appendChild(bayColumns(rail(openNight.night), [
