@@ -11,6 +11,7 @@ import fs from 'node:fs';
 
 import { Engine, PHASES, cleanTeamName, faceKey, MAX_PLAYERS } from '../src/engine.js';
 import { POINTS_CORRECT, POINTS_PER_WHOLE_SECOND, POINTS_FIRST_CORRECT } from '../src/scoring.js';
+import { serverSource } from './server-source.js';
 
 const START = 1_700_000_000_000;
 
@@ -1865,7 +1866,7 @@ test('faceKey is stable for a person and gives nothing back', () => {
  * answer, and a real fault on a real night would be buried in the noise.
  */
 test('a malformed request body is answered 400, not 500', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
   const at = server.indexOf('async function readJson');
   assert.ok(at > 0, 'readJson has gone');
   const fn = server.slice(at, at + 1400);

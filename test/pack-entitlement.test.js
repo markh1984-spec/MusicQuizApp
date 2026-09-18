@@ -26,6 +26,7 @@ import { packsFor, canPlayPack, TIER_PACKS, TIERS, PACK_PENCE, FEATURES, can } f
 import { Accounts } from '../src/accounts.js';
 
 import { fileURLToPath } from 'node:url';
+import { serverSource } from './server-source.js';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -284,7 +285,7 @@ test('once Bronze is a starter set, a Bronze reader is pointed at Silver', () =>
  * in as a Silver account against a running server, not by reading the code.
  */
 test('the dated-pack gate opens the file, and reads the PACK rather than the wrapper', () => {
-  const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const server = serverSource();
   const dating = server.match(/function packDating[\s\S]*?\n}/);
   assert.ok(dating, 'packDating has gone — the read and launch gates cannot see a date any more');
   assert.match(dating[0], /const \{ pack \}/,
@@ -314,7 +315,7 @@ test('the dated-pack gate opens the file, and reads the PACK rather than the wra
  * loop back to a single id.
  */
 test('the launch gate checks EVERY pack in a running order, not just the first', () => {
-  const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const server = serverSource();
   const at = server.indexOf('const launchKind =');
   assert.ok(at > 0, 'the launch gate has moved');
   const gate = server.slice(at, at + 1400);
@@ -327,7 +328,7 @@ test('the launch gate checks EVERY pack in a running order, not just the first',
 });
 
 test('reading a pack you do not hold is refused, not just launching it', () => {
-  const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const server = serverSource();
   const guard = server.match(/function mayReadPack[\s\S]*?\n}/);
   assert.ok(guard, 'mayReadPack has gone — the pack read routes are open again');
   assert.match(guard[0], /canPlayPack/, 'the read gate no longer asks what they hold');
@@ -351,7 +352,7 @@ test('reading a pack you do not hold is refused, not just launching it', () => {
  * would be decoration rather than a lever.
  */
 test('a pack you have not bought is sent with nothing of the pack in it', () => {
-  const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const server = serverSource();
   const shop = server.match(/function withShop[\s\S]*?\n}/);
   assert.ok(shop, 'withShop has gone');
   assert.match(shop[0], /search[\s\S]{0,40}playlist/,

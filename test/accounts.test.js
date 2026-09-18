@@ -14,6 +14,7 @@ import path from 'node:path';
 
 import { Accounts, verify, hashPassword, checkPassword, normaliseEmail, safe } from '../src/accounts.js';
 import { FEATURES, can, featuresFor, activeFeatures } from '../public/assets/plans.js';
+import { serverSource } from './server-source.js';
 
 const AT = Date.parse('2026-08-07T20:00:00.000Z');
 
@@ -665,7 +666,7 @@ test('a backup taken AFTER a sign-in carries it through a deploy', () => {
  * before the browser has the cookie.
  */
 test('the sign-in and sign-out routes back the accounts up', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
   for (const route of ['/api/sign-in', '/api/sign-out']) {
     const at = server.indexOf(`if (route === '${route}' && req.method === 'POST')`);
     assert.ok(at > 0, `${route} has moved`);

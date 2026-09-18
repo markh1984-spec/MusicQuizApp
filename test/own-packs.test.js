@@ -36,6 +36,7 @@ import {
 } from '../src/own-packs.js';
 import { changesTheLibrary, OWNER_ONLY } from '../src/gates.js';
 import { FEATURES, FEATURE_TIER, featuresFor, can } from '../public/assets/plans.js';
+import { serverSource } from './server-source.js';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -431,7 +432,7 @@ test('and it is not an owner-only route either', () => {
  * is the check that fails when somebody adds a fifth route.
  */
 test('every own-pack route asks for the own-packs feature', () => {
-  const source = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const source = serverSource();
   const lines = source.split('\n');
   const found = [];
   lines.forEach((line, i) => {
@@ -456,7 +457,7 @@ test('every own-pack route asks for the own-packs feature', () => {
  * because of what they pay the owner, which is not an upsell.
  */
 test('a tier can never take away a pack they wrote', () => {
-  const source = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const source = serverSource();
   const match = source.match(/function onlyTheirPacks[\s\S]*?\n}/);
   assert.ok(match, 'onlyTheirPacks has gone');
   assert.match(match[0], /p\.mine/,
@@ -488,7 +489,7 @@ test('a paying quizmaster on the bottom rung has it', () => {
  * owner's own page directly under a feature that promises they cannot read it.
  */
 test('the owner overview names nothing about a pack somebody wrote', () => {
-  const source = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const source = serverSource();
   const route = source.slice(source.indexOf("route === '/api/owner/overview'"));
   const block = route.slice(0, route.indexOf('\n  }\n'));
   assert.match(block, /isOwnPack/, 'the overview no longer asks whether a pack is theirs');
@@ -502,7 +503,7 @@ test('the owner overview names nothing about a pack somebody wrote', () => {
  * owner's page, and a play count is a fact about a pack the owner cannot see.
  */
 test("the owner's catalogue figures never read a quizmaster's own library", () => {
-  const source = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const source = serverSource();
   const fn = source.match(/function cataloguePerformance\(\)[\s\S]*?\n}/);
   assert.ok(fn, 'cataloguePerformance has gone');
   assert.ok(!/listOwn/.test(fn[0]), "the owner's catalogue figures include somebody's own packs");

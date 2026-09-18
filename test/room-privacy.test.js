@@ -28,6 +28,7 @@ import { withServer as live, } from './helpers/live-server.mjs';
 import { config as appConfig } from '../src/config.js';
 import { saveAdvertPack, listAdvertPacks } from '../src/adverts.js';
 import { archiveResults, listArchive } from '../src/library.js';
+import { serverSource } from './server-source.js';
 
 function sandbox() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'privacy-'));
@@ -169,7 +170,7 @@ test('another room gets a folder of its own, under its account id', () => {
  * true, because it is one line and it reads as a tidy-up waiting to happen.
  */
 test('THE HOST VIEW IGNORES A JOIN CODE — the projector and phones follow it, the control view never does', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
 
   for (const route of ["route === '/api/state'", "route === '/api/stream'"]) {
     const at = server.indexOf(route);
@@ -199,7 +200,7 @@ test('THE HOST VIEW IGNORES A JOIN CODE — the projector and phones follow it, 
  * second quizmaster yet — which is exactly how long it would have survived.
  */
 test('an advert backup carries the room, and only the house keeps the flat path', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
   const at = server.indexOf('function advertBackup(');
   assert.ok(at > 0, 'the advert backup path has moved');
   const body = server.slice(at, at + 700);
@@ -227,7 +228,7 @@ test('an advert backup carries the room, and only the house keeps the flat path'
  * always safe, and the only person it would have broken is the second login.
  */
 test('join codes are kept, and restored before anybody scans anything', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
   assert.match(server, /onCodes:[\s\S]{0,200}backUpCodes/, 'nothing backs the join codes up any more');
   assert.match(server, /rooms\.restoreCodes\(/, 'the join codes are never read back');
 

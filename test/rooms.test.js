@@ -20,6 +20,7 @@ import path from 'node:path';
 
 import { Rooms, HOUSE, newCode, tidyCode } from '../src/rooms.js';
 import { config as appConfig, paths as appPaths } from '../src/config.js';
+import { serverSource } from './server-source.js';
 
 function sandbox() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rooms-'));
@@ -297,7 +298,7 @@ test('the guard is only advisory — a deliberate launch still replaces the game
  * never on the machine anybody is testing on.
  */
 test('the launch route asks the session what is live, and offers a second press', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
   const at = server.indexOf("if (action === 'launch')");
   assert.ok(at > 0, 'the launch route has moved');
   /*

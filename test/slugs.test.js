@@ -21,6 +21,7 @@ import {
   RESERVED, matchNightSlug, nightSlug, nightSlugExact, readVenuePath, venueSlug,
   sameVenueSlug,
 } from '../public/assets/slugs.js';
+import { serverSource } from './server-source.js';
 
 test('a venue name becomes something somebody could type', () => {
   assert.equal(venueSlug('The Station Tap, Wokingham'), 'station-tap-wokingham');
@@ -91,7 +92,7 @@ test('A VENUE ADDRESS CANNOT SHADOW A ROUTE THIS APP ALREADY SERVES', () => {
    * add `/leaderboard`, and the failure is a public page answering with the
    * wrong file.
    */
-  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const src = serverSource();
   const found = new Set();
   for (const m of src.matchAll(/route === '\/([a-z0-9._-]+)'/g)) found.add(m[1]);
   for (const m of src.matchAll(/route\.startsWith\('\/([a-z0-9._-]+)\//g)) found.add(m[1]);
@@ -160,7 +161,7 @@ test('EVERY VENUE COMPARISON IN server.js GOES THROUGH IT', () => {
    * this bug still live on that route — the arrows were the third site and
    * were found only by grepping for the pattern rather than the symptom.
    */
-  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8')
+  const src = serverSource()
     .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   const bare = src.match(/venueSlug\([^)]*\)\s*[!=]==/g) || [];
   assert.deepEqual(bare, [],

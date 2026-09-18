@@ -771,6 +771,20 @@ split, so not one body changed.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 
+### THE SERVER IS A SHELL AND A DIRECTORY OF MODULES — `src/http/`
+
+Cut on line numbers on 18 September 2026, the console's transform. `server.js`
+is the dispatcher, two route lists and the boot tail; `context.js` holds the
+imports and the singletons and **imports nothing from `src/http/`** — `Rooms`
+gets its callbacks through `hooks`, filled in by the modules that define
+them. **A route family is one function, tried in order; the order is the old
+function's.** **Never declare a function inside a family** — three were, the
+next family could not see them, and three routes answered 500 with the suite
+green. **Anything reading the server as text reads all of it** —
+`test/server-source.js`. `test/server-split.test.js` holds the leaf, the
+read-only imports, the named lists, the budgets, and that every module-level
+name a module uses is imported or defined. [`docs/server-map.md`](docs/server-map.md).
+
 ### CHANGING TAB DOES NOT MOVE THE PAGE
 
 `renderKeepingPlace()` in `console.js`. Tabs are one page with the middle
@@ -1090,27 +1104,21 @@ September 2026 to pay for the Stripe section. **Read it before touching the
 topbar, the frame or the bay heights.** What must not be undone:
 
 - **A GRID ITEM DEFAULTS TO `min-width: auto` TOO, and a clipped overflow is
-  worse than a scrolling one** — nothing throws and the control is
-  unreachable. **A fix that relieves pressure has to be followed to where the
-  pressure went**: constraining the topbar moved it onto the menu, and **a
-  door you cannot see does not exist.**
+  worse than a scrolling one.** **A fix that relieves pressure has to be
+  followed to where the pressure went** — **a door you cannot see does not
+  exist.**
 - **A MEDIA QUERY ON THE WINDOW IS THE WRONG TOOL THE MOMENT A CONTAINER CAPS
   WHAT YOU ARE PROTECTING** — `.console .wrap` caps the bar at 1180px: **keep
   the gate at the CONTAINER's number.**
-- **THE BAR GOES ON A DIET; WRAPPING IS ONLY THE FALLBACK**, scoped with
-  `:has(.hat-switch)` to the OWNER's bar — **a fix for one account must not
-  land on everybody** — and **it never takes the possessive.**
+- **THE BAR GOES ON A DIET; WRAPPING IS ONLY THE FALLBACK**, scoped to the
+  OWNER's bar — **a fix for one account must not land on everybody.**
 - **WHAT IS PLAYING NOW IS WORDED IN ONE PLACE — `nowPlaying()`.** The SHORT
   form is a different job, not an abbreviation.
 - **NOTHING RESTATES `overflow` AFTER `.console .wrap`'S PAIR** — a trailing
   shorthand wiped the `overflow-y: auto` above it and the frame CLIPPED.
-  FOURTH sighting of shorthand-beats-longhand, inside ONE block.
-  **`console-frame.mjs` turns a REAL wheel**: a programmatic scroll succeeds
-  on a clipped box.
+  **`console-frame.mjs` turns a REAL wheel.**
 - **THE FIXED FRAME NEEDS A MINIMUM HEIGHT, TWO NUMBERS BECAUSE THE DOORHEAD
-  IS TWO HEIGHTS. Do not collapse it to one.** Letting the bay shrink instead
-  painted over the tab column — **the numbers said fixed and the render said
-  broken**, which is why the screenshot is the check.
+  IS TWO HEIGHTS. Do not collapse it to one.** The screenshot is the check.
 - **TWO COLUMNS IS A WIDTH DECISION; THE PINNED FRAME IS A HEIGHT ONE** — **a
   media query is two decisions the moment it names two axes.**
 - **`main` IS A FLEX COLUMN — never give it a row template.**
@@ -1207,21 +1215,17 @@ Full reasoning: **[`docs/dj.md`](docs/dj.md)**.
 - **TYPED IS FIRST-CLASS, NOT DEGRADED** — his DJ software reads off the
   TITLE. **Search is a POST because it carries the TOKEN** — every phone spends
   his ONE Spotify token — and **not configured is SAID OUT LOUD.**
-- **THE LINE THE DJ PASTES IS WORDED ON THE SERVER**; **the copy button says
-  *Selected* when it could not.** **`APP_NAME` in `dj-door.js` is ONE constant,
-  MARKED as a placeholder.**
+- **THE LINE THE DJ PASTES IS WORDED ON THE SERVER.** **`APP_NAME` in
+  `dj-door.js` is ONE constant, MARKED as a placeholder.**
 - **IT IS NOT ON THE CONSOLE'S GAME PICKER, and `game-kinds.test.js` NAMES
   that exception** — there is no DJ pack to play.
 - **EVERY ENGINE MUST ANSWER THE SHARED CONTRACT —
-  `test/engine-contract.test.js`.** Four went missing in an afternoon:
-  **`touch()`, which `/api/stream` calls, so every phone got a 500 instead of
-  a live connection** — the game dead, every payload correct when asked for
-  directly; `playerList()`, which `inProgress()` counts before ANY launch; and
-  six off the shared dispatch. **`perGame` read `quiz ? … : bingo` — two games
-  is the only arrangement in which "the other one" names anything.**
-- **ITS OWN DOMAIN IS `DJ_HOST` — ONE SERVICE, NO SECOND $7.** **The bare
-  domain SERVES the door**, and **the visitor's host BEATS `PUBLIC_URL`**.
-  **Unset changes nothing.**
+  `test/engine-contract.test.js`.** Four went missing in an afternoon,
+  **`touch()` among them, so every phone got a 500 instead of a live
+  connection**. **`perGame` read `quiz ? … : bingo` — two games is the only
+  arrangement in which "the other one" names anything.**
+- **ITS OWN DOMAIN IS `DJ_HOST` — ONE SERVICE.** **The visitor's host BEATS
+  `PUBLIC_URL`**; **unset changes nothing.**
 - **NO PRICE AND NO GATE YET** — signed in is the whole check, and gating on
   `FEATURES.QUIZ` answers a pricing question by accident.
 
@@ -2126,12 +2130,11 @@ metal, the ones above locked; pressing one opens a card naming what it holds.
   inert**, or Gold is free. His keeps INITIALS and this spells WORDS.
 - **A LOCKED RUNG IS PRESSABLE** — `disabled` swallows the press and the sell is
   the point. **NOT A NATIVE `title`**: a card, one listener for all rows.
-- **THE OWNER'S OWN RUNGS ARE 30 x 34 WITH 5px BETWEEN THEM**, the hat switch
-  beside them 34px, and **the 560px diet must take BOTH down together** — it
-  shrank the switch alone and the owner's bar ran off a 390px screen. **Not the
-  44px touch floor**: a mouse presses this.
+- **THE OWNER'S OWN RUNGS ARE 30 x 34 WITH 5px BETWEEN THEM**, and **the 560px
+  diet must take the hat switch down with them.** **Not the 44px touch floor**:
+  a mouse presses this.
 - **BUILT FROM `ladderFor()`, never written out**; **`NOT_BUILT` says "not yet"**.
-- **`.tier-row` WAS ALREADY `owner.js`'S**, silently. It is `.rung-row`.
+- **It is `.rung-row`** — `.tier-row` was already `owner.js`'s.
 
 Full reasoning: **[`docs/business.md`](docs/business.md)**.
 
@@ -2622,9 +2625,8 @@ resolves, and that no decision exists in the doc without being named here.
 the budget. **The index below names only what is NOT already a heading here.**
 
 **A mechanical split is only safe where the boundary is STRUCTURAL** — pointed
-at prose it threw away the Owner/Parent/Child table and every lobby-games rule,
-the first paragraph here being the CONTEXT and the rule below it. **If more has
-to come out, move whole named sections by hand and read what is left.**
+at prose it threw away a table and every lobby-games rule. **Move whole named
+sections by hand and read what is left.**
 
 **[`docs/engine.md`](docs/engine.md)** — phases, scoring, and what each screen is told
 
@@ -2998,7 +3000,8 @@ read-heavy job belongs.
 ## Layout
 
 ```
-server.js              routing, SSE, static files
+server.js              the shell: the dispatcher and the boot; the routes are src/http/
+src/http/              context (the singletons), the helpers, one file per route family
 src/rooms.js           a room per quizmaster: their game, photos and join code
 src/session.js         which game is running; the server talks only to this
 src/engine.js          the quiz state machine and its three views
@@ -3976,13 +3979,11 @@ descriptor, the branding, the receipts and the payouts are all per account.
   nothing. **Ask whether they said anything FIRST.** Stored since the sales page
   and drawn by nothing: *a field on a view is a promise that something draws it.*
   **Only where it DIFFERS from their rung, and never in gold.**
-- **A SIGNUP MAY BE REFUSED AND A JOIN MAY NOT — the asymmetry is the opposite
-  of rule 4's**, nobody signing up being mid-gig. **`SIGNUPS_PER_HOUR` is a
-  SAFETY number** like `MAX_TEAMS`, **refusing BEFORE it writes** (it RESERVES an
-  address), and **it does not cover a distributed flood and says so**. **The
-  password link only comes back in the body on a LOCAL run** — it came back
-  whenever no provider was set, deployed included, so **anybody could activate an
-  account on an address they do not own**. **Loopback, never an env var.**
+- **A SIGNUP MAY BE REFUSED AND A JOIN MAY NOT** — nobody signing up is
+  mid-gig. **`SIGNUPS_PER_HOUR` is a SAFETY number**, **refusing BEFORE it
+  writes**. **The password link only comes back in the body on a LOCAL run** —
+  **loopback, never an env var** — or anybody could activate an account on an
+  address they do not own.
 - **A BOUGHT PACK GOES IN `account.bought`, NEVER IN `account.packs`** — that
   field is the owner's OVERRIDE, returned INSTEAD of the tier's scope: **paying
   £20 would hand somebody fewer packs than £10.** `bought` only ADDS;

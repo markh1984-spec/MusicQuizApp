@@ -17,6 +17,7 @@ import path from 'node:path';
 import { photoFolder, isNightFolder, nightOfGig, mergeGigs, safePhotoName, sameVenue, setNightVenue, noteNightVenue } from '../src/past-gigs.js';
 import { archiveResults, serialiseArchive, restoreArchive, listArchive, HOUSE_ROOM } from '../src/library.js';
 import { nightOf } from '../src/photos.js';
+import { serverSource } from './server-source.js';
 
 function tempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'gigs-'));
@@ -397,7 +398,7 @@ test('a night with photographs and no archive record has no venue', () => {
  * sites that had it.
  */
 test('no past-gigs route joins one room\'s archive to another room\'s photos', () => {
-  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8')
+  const src = serverSource()
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
 

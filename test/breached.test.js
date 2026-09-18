@@ -141,6 +141,7 @@ import { fileURLToPath } from 'node:url';
 
 import { withServer } from './helpers/live-server.mjs';
 import { Accounts } from '../src/accounts.js';
+import { serverSource } from './server-source.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -150,7 +151,7 @@ test('EVERY ROUTE THAT SETS A PASSWORD CHECKS IT — named, not counted', () => 
    * over. So the routes are NAMED, and a new one that sets a password without
    * the check fails here rather than shipping.
    */
-  const src = readFileSync(join(ROOT, 'server.js'), 'utf8');
+  const src = serverSource();
   /*
    * THE METHOD IS PART OF THE NEEDLE, and the first version left it out.
    * `/api/me/password` appears twice in `server.js` — once on the

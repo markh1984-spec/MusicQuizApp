@@ -16,6 +16,7 @@ import {
   FEATURES, TIERS, FEATURE_TIER, DEFAULT_TIER,
   can, featuresFor, activeFeatures, whyNot, entitlements,
   tierFor, tierInUse, tierRank, featuresAt, ladderFor, packsFor, packFilter, boughtBy, TIER_PACKS, FEATURE_META, switchable, SWITCHABLE, NOT_BUILT } from '../public/assets/plans.js';
+import { serverSource } from './server-source.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -450,7 +451,7 @@ test('the owner can read their own past nights but a quizmaster cannot export ph
  * mode is silent: photos would simply keep working.
  */
 test('turning photos off is enforced, not just hidden', () => {
-  const source = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const source = serverSource();
   assert.match(source, /function photosWanted\(/, 'the helper has gone');
   assert.match(source, /switchedOn\(account, FEATURES\.PHOTOS\)/,
     'photosWanted no longer reads the account preference');

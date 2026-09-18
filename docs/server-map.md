@@ -1,12 +1,37 @@
-# A map of `server.js`, for the split — 18 September 2026
+# `server.js` is a shell now — the split, 18 September 2026
 
-`server.js` is 9,675 lines. The console was split into a shell plus a module
-per door by moving whole blocks by line number, and the same is planned here —
-**after the 21 September deploy has run a week**, so that if the split breaks
-something it is the only change on the live app that week. This is the map an
-agent produced from the file as it stood on 18 September; line numbers drift
-with every edit, so re-check the family boundaries before cutting, and cut on
-the boundaries rather than the single-function ends.
+Done the same day it was mapped, by a script cutting on line numbers (the
+console's transform): `server.js` is 281 lines — the request dispatcher, the
+two route lists and the boot tail — and everything else is in `src/http/`:
+
+- `context.js` — every import the routes need and the singletons (`hub`,
+  `accounts`, `rooms`…), re-exported. **It imports nothing from `src/http/`**,
+  so it is the leaf; `Rooms` gets its three callbacks through `hooks`, which
+  `views.js` and `helpers.js` fill in as they load, because reaching back
+  for `pushState()` would be the circular import.
+- `views.js`, `plumbing.js`, `identity.js`, `gates.js`, `static.js`,
+  `support-log.js`, `card-art.js`, `helpers.js` — the helper families, each
+  moved whole. `helpers.js` is the 1,400-line span that sat between the two
+  handlers, still interleaving backups with domain helpers; cut it per
+  function when there is a reason.
+- `get-*.js` and `write-*.js` — one function per route family, the body
+  lifted unchanged out of `handleGet()`/`handleWrite()`, ending `return
+  false`. The shell tries them in the order they sat in the one function.
+
+Three helpers had been declared INSIDE the handlers and used by more than one
+family — `offerRoomId`, `refuseBreached`, `postALink`. None closes over a
+handler local, so they lifted unchanged into `identity.js`. The first cut left
+them behind and three routes answered 500 with the suite otherwise green;
+`test/server-split.test.js` now refuses a function declared inside a family,
+and checks every module either defines or imports every module-level name it
+uses — the check that found `...trialEndingEmail(` being read as a property
+access by the cut script and left out of the shell's imports.
+
+Forty tests read the server as text; they read all of it now through
+`test/server-source.js`, in the shell's order, so "matched before" still
+means what it did.
+
+The map below is what the cut was made from, kept for the next cut.
 
 ## What is different from the console split
 

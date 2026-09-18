@@ -9,6 +9,7 @@ import { withServer as live } from './helpers/live-server.mjs';
 
 import { OWNER_ONLY, changesTheLibrary } from '../src/gates.js';
 import { consoleSource, withoutComments } from './console-source.js';
+import { serverSource } from './server-source.js';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -25,7 +26,7 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
  * section at the foot of this file for that — but it does stop the one failure
  * mode where a check goes green the moment somebody explains what they removed.
  */
-const serverCode = () => withoutComments(fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8'));
+const serverCode = () => withoutComments(serverSource());
 
 /*
  * These come straight out of a safety sweep: signing in as a quizmaster and

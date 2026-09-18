@@ -28,6 +28,7 @@ import { join } from 'node:path';
 
 import { publishedNights, isPublished, setPublished, readableNight } from '../src/gallery.js';
 import { freePort } from './helpers/live-server.mjs';
+import { serverSource } from './server-source.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 
@@ -215,7 +216,7 @@ test('THE GALLERY AND THE GIGS TAB READ THE SAME ROOM', async () => {
    * nothing made them agree**, which is why the guard is a comparison rather
    * than an assertion about either one.
    */
-  const src = readFileSync(join(ROOT, 'server.js'), 'utf8');
+  const src = serverSource();
   const gallery = src.slice(src.indexOf('const galleryRoomId'), src.indexOf('/gallery-photo/') + 4000);
   assert.ok(
     !/isPublished\(HOUSE|photoFolder\(HOUSE\)|publishedNights\(HOUSE\)/.test(gallery),
@@ -265,7 +266,7 @@ test('A QUIZMASTER CAN ONLY EVER DELETE OUT OF THEIR OWN NIGHTS', () => {
    * A text check, deliberately: what is being asserted is the ABSENCE of a
    * parameter, and absence is the one thing an HTTP test cannot demonstrate.
    */
-  const src = readFileSync(join(ROOT, 'server.js'), 'utf8');
+  const src = serverSource();
   const at = src.indexOf("route.startsWith('/api/past-photo/') && req.method === 'DELETE'");
   assert.ok(at > 0, 'the delete route has gone');
   const body = src.slice(at, at + 1400);

@@ -22,6 +22,7 @@ import { Accounts } from '../src/accounts.js';
 import { applyBilling, readEvent, BILLING_EVENTS, billingEmail } from '../src/billing.js';
 import { ladderFor, can, whyNot, FEATURES, FEATURE_TIER } from '../public/assets/plans.js';
 import { Suggestions, PACK_REQUEST_KIND } from '../src/suggestions.js';
+import { serverSource } from './server-source.js';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PASSWORD = 'a-long-test-password';
@@ -308,7 +309,7 @@ test('a pack request is Gold, and every other kind stays open to everybody', () 
  * matched it.
  */
 test('the kind is gated where it is received, not where it is drawn', () => {
-  const server = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  const server = serverSource();
   const at = server.indexOf("if (route === '/api/suggestions' && req.method === 'POST')");
   assert.ok(at > 0, 'the suggestions route has moved');
   const route = server.slice(at, at + 1800);

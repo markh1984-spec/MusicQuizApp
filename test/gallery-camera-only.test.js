@@ -30,6 +30,7 @@ import path from 'node:path';
 import {
   Photos, isCameraFile, NOT_CAMERA_SUFFIX, showsOnGallery, showsByDefault, galleryPhotosOf,
 } from '../src/photos.js';
+import { serverSource } from './server-source.js';
 
 /** The smallest thing `sniffType()` will accept as a JPEG. */
 const JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(64, 1)]);
@@ -133,7 +134,7 @@ test('an unknown ruling falls back to the default rather than becoming a third s
  * two expressions are one function now, and this says so.
  */
 test('THE CLEARING RULE AND THE FALLBACK ARE ONE FUNCTION', () => {
-  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8')
+  const src = serverSource()
     .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   assert.match(src, /on === showsByDefault\(name\)/,
     'the ruling route is not asking showsByDefault() — a second copy of the default has crept back');
@@ -168,7 +169,7 @@ test('ALL FOUR READERS ASK THE ONE FUNCTION', () => {
    * `galleryPhotosOf()` counts as asking: it is `showsOnGallery()` over a
    * list, in the module that owns the decision.
    */
-  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const src = serverSource();
   /*
    * THE COMMENTS COME OUT FIRST, and this was found by putting the fault back.
    *

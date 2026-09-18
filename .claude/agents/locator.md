@@ -1,6 +1,6 @@
 ---
 name: locator
-description: Find where something lives in this codebase and report back file:line with a short summary. Use whenever the answer is "which file and which function does X", especially when it would otherwise mean reading console.js (5,900 lines) or server.js (4,800 lines) in full. Read-only — it never edits.
+description: Find where something lives in this codebase and report back file:line with a short summary. Use whenever the answer is "which file and which function does X", especially when it would otherwise mean reading console.js (5,900 lines) or the server (`server.js` is the shell; the routes are one file per family in `src/http/`) in full. Read-only — it never edits.
 tools: Read, Grep, Glob, Bash
 model: sonnet
 ---

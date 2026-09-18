@@ -33,6 +33,7 @@ import { FAQ, ROOM_CEILING, faqHtml, faqPanelHtml } from '../public/assets/faq.j
 import { PACK_PENCE, TRIAL_DAYS, REFERRAL_BONUS_DAYS } from '../public/assets/plans.js';
 import { MAX_PLAYERS } from '../src/engine.js';
 import { RESERVED } from '../public/assets/slugs.js';
+import { serverSource } from './server-source.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
@@ -59,7 +60,7 @@ test('EVERY LINK IN AN ANSWER GOES SOMEWHERE THIS APP SERVES', () => {
    * Checked against `server.js` itself rather than a typed list, so a route
    * being renamed fails here.
    */
-  const server = read('server.js');
+  const server = serverSource();
   const links = [...words.matchAll(/\]\((\/[^)]*)\)/g)].map((m) => m[1]);
   assert.ok(links.length, 'no answer links anywhere — has the markdown pass changed?');
   for (const href of links) {

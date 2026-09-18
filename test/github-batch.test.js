@@ -20,6 +20,7 @@ import assert from 'node:assert/strict';
 
 import { putFiles, getFile, tryGetFile, listDir, tryListDir } from '../src/github.js';
 import fs from 'node:fs';
+import { serverSource } from './server-source.js';
 
 const realFetch = globalThis.fetch;
 const realEnv = { ...process.env };
@@ -237,7 +238,7 @@ test('NO RESTORE LATCHES BEFORE IT KNOWS THE READ WORKED', () => {
    * without booting the app — and what it pins is the SHAPE, which is what
    * would have caught this in all four places at once.
    */
-  const src = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8')
+  const src = serverSource()
     // Comments first: three guards in this repo have gone green on the note
     // explaining a fix rather than on the code.
     .replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');

@@ -40,6 +40,7 @@ import fs from 'node:fs';
 import { Engine } from '../src/engine.js';
 import { BingoGame } from '../src/bingo.js';
 import { DjSet } from '../src/dj.js';
+import { serverSource } from './server-source.js';
 
 /** Every engine answers all of these, whatever game it is. */
 const CONTRACT = [
@@ -127,7 +128,7 @@ test('every engine call in session.js and server.js is one of the two lists', ()
    * with no entry anywhere, which is how all four of today's got in.
    */
   const src = fs.readFileSync(new URL('../src/session.js', import.meta.url), 'utf8')
-    + fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+    + serverSource();
   const called = new Set([...src.matchAll(/\.engine\.(\w+)\s*\(/g)].map((m) => m[1]));
   assert.ok(called.size > 20, 'found almost no engine calls — this guard is measuring nothing');
 

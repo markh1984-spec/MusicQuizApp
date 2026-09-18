@@ -23,6 +23,7 @@ import path from 'node:path';
 import { Accounts } from '../src/accounts.js';
 import { withServer as live } from './helpers/live-server.mjs';
 import { consoleSource } from './console-source.js';
+import { serverSource } from './server-source.js';
 
 function book(now = () => 1_000_000) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'support-'));
@@ -157,7 +158,7 @@ test('nothing is written to the log while the door is shut', () => {
  * not open a subscriber's account either.
  */
 test('server.js has no way into an account except your own or an open door', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
   const branch = server.match(/const mine = hat[\s\S]{0,600}?\n\s*if \(hat &&[^\n]*\)/);
   assert.ok(branch, 'the acting branch in whoIs has been restructured — re-read this test');
   assert.match(branch[0], /accounts\.supportOpen\(hat\.id\)/,
@@ -167,7 +168,7 @@ test('server.js has no way into an account except your own or an open door', () 
 });
 
 test('the host key cannot act as anybody, with or without a grant', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
   const whoIs = server.slice(server.indexOf('function whoIs('), server.indexOf('function roomForHost('));
   // The key returns the bootstrap identity before the acting cookie is ever
   // read. If that order ever flipped, a key would be a way into any account.
@@ -186,7 +187,7 @@ test('the host key cannot act as anybody, with or without a grant', () => {
  * what happened rather than which endpoint was called.
  */
 test('the log is written in words a subscriber would use, not route paths', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
   assert.match(server, /function supportWords\(/, 'the log is back to printing raw routes');
   assert.match(server, /Looked at your pack library/);
   // Anything unmapped still gets logged rather than dropped — an ugly line
@@ -205,7 +206,7 @@ test('the log is written in words a subscriber would use, not route paths', () =
  * mid-night" is how one of them quietly becomes wrong.
  */
 test('server.js refuses to enter a game with people in it, and blocks host actions inside', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
   assert.match(server, /rooms\.get\(them\.id\)\.busy[\s\S]{0,400}409/,
     'support access can be taken into a night somebody is in the middle of');
   assert.match(server, /SUPPORT_NEVER = \['\/api\/host\/'\]/,
@@ -223,7 +224,7 @@ test('server.js refuses to enter a game with people in it, and blocks host actio
  * than no entry, because they will believe it.
  */
 test('the log tells looking apart from changing, on their OWN packs too', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
   const words = server.slice(server.indexOf('function supportWords'));
   const mine = words.slice(words.indexOf("route.startsWith('/api/mine/')"), words.indexOf("route.startsWith('/api/invoices')"));
   assert.match(mine, /read \?/, 'a GET of their own packs is still logged as a write');
@@ -232,7 +233,7 @@ test('the log tells looking apart from changing, on their OWN packs too', () => 
 });
 
 test('the owner cannot extend a grant from inside the session', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
   // FORWARD FROM THE ROUTE, BY LENGTH — never between two names. `supportWords`
   // now mentions `/api/me/prefs` as well, hundreds of lines ABOVE this route,
   // so slicing between the two ran backwards and matched nothing: a test that
@@ -261,7 +262,7 @@ test('the owner cannot extend a grant from inside the session', () => {
  * Two meanings on one field name. The flag is `inSupport` now.
  */
 test('THE GUARD READS THE ACTING FLAG, NEVER THE GRANT ON AN ACCOUNT', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
   // Forward from the function, by length — `supportWords` is defined ABOVE
   // this one, so slicing between the two names runs backwards and matches
   // nothing, which is a test that passes for the wrong reason.
@@ -312,7 +313,7 @@ test('the support panel reads the grant off `me`, which is already the account',
  * somebody moving the logging call above the return.
  */
 test('nothing a subscriber does in their OWN account is ever written down', () => {
-  const server = fs.readFileSync(new URL('../server.js', import.meta.url), 'utf8');
+  const server = serverSource();
   const at = server.indexOf('function supportGuard');
   const guard = server.slice(at, at + 1200);
 
