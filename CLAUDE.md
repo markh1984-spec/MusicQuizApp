@@ -140,14 +140,12 @@ promotes a host breaks.
 
 Two smaller notes, both worth having before anybody builds this:
 
-- **A child has exactly one parent.** A venue in two pub groups, or a
-  quizmaster employed by two companies, is a real thing in the world and a mess
-  in the data — resolve it as one parent plus an ordinary marketplace booking
-  for the second, which the attribution model already covers.
+- **A child has exactly one parent.** A venue in two pub groups is a real
+  thing in the world and a mess in the data — resolve it as one parent plus an
+  ordinary marketplace booking for the second.
 - **Nesting is not needed and should not be built** until somebody asks. A pub
-  group with regions is a parent of parents; it is a fair thing to want and it
-  doubles every scoping question, so it waits for a customer rather than an
-  imagination.
+  group with regions is a parent of parents; it doubles every scoping question,
+  so it waits for a customer rather than an imagination.
 
 ### THE FIRST SLICE IS BUILT — accounts, entitlements, scoping. Not invoicing, not venue specifics.
 
@@ -2020,11 +2018,10 @@ Full reasoning: **[`docs/console.md`](docs/console.md)**.
   would give each a weaker pitch. It leads on *"Be the quizmaster they book
   again"*, never "run the night from one laptop" — true, and it sold an
   operations tool.
-- **REAL SCREENS, because a drawn mock is the one thing a buyer cannot check** —
-  and the one there was also quietly WRONG. **Fixture teams only, never a real
-  face or name in the public repo.** WebP: 4.6MB → 180KB. **Under `/assets/`,
-  never a new top-level prefix** — one of those ate `/api/gallery`.
-  **`width`/`height` are MEASURED**, or the page jumps as it loads.
+- **REAL SCREENS, because a drawn mock is the one thing a buyer cannot check.**
+  **Fixture teams only, never a real face or name in the public repo.** WebP.
+  **Under `/assets/`, never a new top-level prefix** — one of those ate
+  `/api/gallery`. **`width`/`height` are MEASURED**, or the page jumps.
 - **A RUNG WITH NO BUTTON IS A PRICE LIST.** Each tier goes to
   `/signup?tier=…`, riding through as `?ref=` already did — recorded as
   **`wantedTier`, which MUST NEVER BECOME `tier`**: a rung read out of a request
@@ -2931,26 +2928,30 @@ IT.**
 ### A PUSH IS A DEPLOY, AND A DEPLOY ON A GIG NIGHT IS AN OUTAGE
 
 Render watches `MusicQuizApp`, so **every push restarts the server and wipes
-`data/`** — the projector loses its stream, the code in `data/room-codes.json`
-stops resolving, and a tab left open shows a lobby that no longer exists.
-**A docs file is as dangerous as an engine rewrite when the cost is the
-restart rather than the diff.**
+`data/`** — the projector loses its stream and the room comes back on a
+placeholder. **A docs file is as dangerous as an engine rewrite when the cost
+is the restart rather than the diff.**
 
 **PUSH AS SOON AS IT IS READY. HE SAYS WHEN NOT TO** — *"can you please just
 always push ASAP I'll let you know otherwise."* **This REVERSES the ask-first
-rule that stood here before it**, and it is his call: he is the only person who
-knows whether a room is sitting down, and asking every time put a question in
-front of him on every change instead of the two that mattered.
+rule that stood here before it**: he is the only person who knows whether a
+room is sitting down.
 
 **What does NOT change is why a deploy is the risk.** Say it in one line when a
-push could land badly and push anyway unless he says hold. **The note is the
-value, not the delay**: he restarts a lobby in ten seconds knowing what
-happened, and cannot diagnose it at all if nobody said.
+push could land badly and push anyway unless he says hold.
+
+**THURSDAY IS A GIG DAY AND IS FROZEN — no push after midday UK, none.** Set
+the morning after nine pushes on a Thursday cost a gig. And
+**every push first runs `gig-path.mjs`, `after-a-deploy.mjs` and
+`pub-unchanged.mjs`** — the walkthrough, the state a deploy leaves, the bytes.
+**He wants to run every night**, so the rule is a stopgap: the structural fix
+is Auto-Deploy OFF on Render (a push stops being a deploy) and a disk (a
+deploy stops being an outage). Delete this paragraph when both are done.
 
 **AND THE ROOM A DEPLOY LEAVES BEHIND BLOCKED EVERY LAUNCH — the gig on 17
-September 2026, lost to KaraFun.** After a restart the room comes back around
-`pickPack()`'s first pack — **2006 Intros**, top of the list by title — with
-`launched: false`, a lobby and a join code, and the pub joins it.
+September 2026, lost to KaraFun.** After a restart the room comes back on
+`pickPack()`'s first pack — **2006 Intros** — with `launched: false`, a lobby
+and a join code, and the pub joins it.
 **`inProgress()` counted those phones and never asked whether anybody had
 LAUNCHED**, so every tap's quiet launch took a 409 and swallowed it by design:
 *"every single one is launching 2006 intros… the console isn't changing
