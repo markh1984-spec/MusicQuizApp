@@ -151,7 +151,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
  *
  * RAISED TO 140,100 ON 23 AUGUST 2026, for one index line: the public
  * gallery now only holds photos that looked like a camera took them —
- * `photos.js`'s `NOT_CAMERA_SUFFIX`/`isCameraFile()`, checked twice in
+ * `photos.js`'s `ROOM_SUFFIX`/`isHousePhoto()`, checked twice in
  * server.js for the same reason the publish gate is. Full reasoning in
  * `docs/gigs.md`; this is the pointer, same shape as every other gallery
  * entry already in this index.

@@ -302,7 +302,9 @@ export async function writePlayers(req, res, url, route) {
       playerId: '',
       teamName: '',
       // Read on the raw file in the browser before the shrink's canvas stripped
-      // the EXIF. Never a gate; it only decides gallery eligibility later.
+      // the EXIF. Never a gate, and it no longer decides the gallery either:
+      // this route carries no playerId, which is what marks it as the HOUSE
+      // camera's own — see ROOM_SUFFIX in photos.js.
       camera: url.searchParams.get('camera') !== '0',
     });
     /*

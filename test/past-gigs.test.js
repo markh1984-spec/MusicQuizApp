@@ -55,7 +55,7 @@ test('a photo name has to be one this app issued', () => {
 });
 
 test('the one exception is the -picked marker photos.js writes, and only that word', () => {
-  // NOT_CAMERA_SUFFIX in photos.js — a photo the gallery filter holds back.
+  // ROOM_SUFFIX in photos.js — a photo the gallery filter holds back.
   assert.equal(safePhotoName('pm1a2b30-picked.jpg'), 'pm1a2b30-picked.jpg');
   // Still not an open door for an arbitrary hyphenated name.
   assert.equal(safePhotoName('pm1a2b30-anything.jpg'), '');

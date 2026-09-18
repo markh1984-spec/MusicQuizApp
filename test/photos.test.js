@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { Photos, sniffType, extensionFor, nightOf, MAX_BYTES, MAX_PHOTOS, isCameraFile, NOT_CAMERA_SUFFIX } from '../src/photos.js';
+import { Photos, sniffType, extensionFor, nightOf, MAX_BYTES, MAX_PHOTOS, isHousePhoto, ROOM_SUFFIX } from '../src/photos.js';
 
 function tempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'mmm-photos-'));
@@ -286,37 +286,55 @@ test('reading a photo back gives the bytes that were stored', () => {
 });
 
 /*
- * WHICH PHOTOS THE PUBLIC GALLERY MAY LATER HOLD — asked for directly: the
- * screen still takes anything, but only what looked like a camera took it
- * should be eligible for the gallery afterward. `camera` is read client-side
- * (looksCameraTaken() in filters.js, before the upload's own canvas redraw
- * strips the file's EXIF) and carried through as a filename marker rather
- * than a second file — see the note in add().
+ * WHICH PHOTOS THE PUBLIC GALLERY MAY LATER HOLD — the screen still takes
+ * anything, and the gallery afterwards starts with the HOUSE camera's own.
+ *
+ * The marker is the SOURCE: a punter's handset always carries a `playerId`,
+ * the house camera (`/api/snap`) never does. It replaced an EXIF guess that
+ * was wrong inconsistently — see `ROOM_SUFFIX` in photos.js.
  */
-test('a camera photo keeps a plain filename; one that is not carries the marker', () => {
+test('a house-camera photo keeps a plain filename; one the room sent carries the marker', () => {
   const dir = tempDir();
   try {
     const photos = new Photos(dir, () => 1000);
-    const cam = photos.add(jpeg(), { contentType: 'image/jpeg', camera: true });
-    const picked = photos.add(jpeg(), { contentType: 'image/jpeg', camera: false });
-    assert.ok(!cam.photo.file.includes(NOT_CAMERA_SUFFIX));
-    assert.ok(picked.photo.file.includes(NOT_CAMERA_SUFFIX));
-    assert.equal(cam.photo.camera, true);
-    assert.equal(picked.photo.camera, false);
-    assert.equal(isCameraFile(cam.photo.file), true);
-    assert.equal(isCameraFile(picked.photo.file), false);
+    const house = photos.add(jpeg(), { contentType: 'image/jpeg', playerId: '' });
+    const room = photos.add(jpeg(), { contentType: 'image/jpeg', playerId: 'p7' });
+    assert.ok(!house.photo.file.includes(ROOM_SUFFIX));
+    assert.ok(room.photo.file.includes(ROOM_SUFFIX));
+    assert.equal(isHousePhoto(house.photo.file), true);
+    assert.equal(isHousePhoto(room.photo.file), false);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
 
-test('camera defaults to false — an old caller, or one that never answers, is held back rather than assumed genuine', () => {
+test('the EXIF flag no longer decides the marker — only which door it came through', () => {
+  /*
+   * THE POINT OF THE CHANGE, pinned. A punter photograph whose EXIF survived
+   * used to publish itself while the identical one from a stripped handset did
+   * not — same sort of photo, opposite outcome, decided by invisible metadata.
+   * Now `camera` is recorded and ignored: the room's is the room's either way.
+   */
+  const dir = tempDir();
+  try {
+    const photos = new Photos(dir, () => 1000);
+    const roomWithExif = photos.add(jpeg(), { contentType: 'image/jpeg', playerId: 'p1', camera: true });
+    const houseNoExif = photos.add(jpeg(), { contentType: 'image/jpeg', playerId: '', camera: false });
+    assert.equal(isHousePhoto(roomWithExif.photo.file), false,
+      'a punter photo published itself because its EXIF survived');
+    assert.equal(isHousePhoto(houseNoExif.photo.file), true,
+      "the house camera's own photo was held back for want of an EXIF tag");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('no playerId at all is the house camera, not a punter', () => {
   const dir = tempDir();
   try {
     const photos = new Photos(dir, () => 1000);
     const result = photos.add(jpeg(), { contentType: 'image/jpeg' });
-    assert.equal(result.photo.camera, false);
-    assert.equal(isCameraFile(result.photo.file), false);
+    assert.equal(isHousePhoto(result.photo.file), true);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

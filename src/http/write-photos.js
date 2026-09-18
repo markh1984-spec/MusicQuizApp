@@ -104,7 +104,7 @@ export async function writePhotos(req, res, url, route) {
     /*
      * `mine` IN THE NAME, so a photograph the quizmaster added is tellable
      * from one the room sent — for a bin, for a count, and for whatever wants
-     * to know later. It carries no `-picked`, so `isCameraFile()` lets it
+     * to know later. It carries no `-picked`, so `isHousePhoto()` lets it
      * through to the gallery, which is the whole point of the feature.
      */
     const name = `mine${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}${ext}`;
@@ -151,7 +151,7 @@ export async function writePhotos(req, res, url, route) {
      * could never reach this photograph again.
      *
      * **IT MUST BE THE SAME FUNCTION `showsOnGallery()` FALLS BACK TO.** This
-     * used to say `isCameraFile(name)` — the old default written out a second
+     * used to say `isHousePhoto(name)` — the old default written out a second
      * time — and when the default was flipped, leaving this behind would have
      * been silent and nasty: pressing a lamp RED on a `-picked` photograph
      * computes "that agrees with the guess", clears the ruling, and the new

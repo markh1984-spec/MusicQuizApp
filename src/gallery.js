@@ -232,12 +232,12 @@ export function photoKey(night, name) {
  * click one for each purpose… there may be some that were uploaded but are
  * appropriate for a public gallery that I can switch on."*
  *
- * **THIS IS THE SAME SHAPE AS THE TEAM-NAME OVERRIDE, deliberately.** A guess
+ * **THIS IS THE SAME SHAPE AS THE TEAM-NAME OVERRIDE, deliberately.** A rule
  * decides by default and a human who was in the room can overrule it, in BOTH
- * directions — because the guess is wrong both ways. `looksCameraTaken()`
- * misses a real photograph whose EXIF a share sheet stripped, and it passes a
- * screenshot somebody took with their own camera app. One override with two
- * values answers both; a one-way "allow" control would have left the second
+ * directions. The default is the SOURCE now (`ROOM_SUFFIX` in photos.js): the
+ * house camera's own go up, the room's wait. Both directions still earn their
+ * keep — a punter photograph can be the best of the night, and one of your own
+ * can be a blurred floor — so a one-way "allow" control would leave half of it
  * with no answer at all.
  *
  * @returns {Promise<Record<string, 'on'|'off'>>} empty on any doubt, which

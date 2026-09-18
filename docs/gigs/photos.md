@@ -1389,19 +1389,38 @@ model, the one-decision rule, the count question — and this page holds the lot
 **Read it before touching the lamps, the publish control, the gallery page or the
 photo cache.**
 
-- **THE CAMERA GATE IS BACK — a photograph goes on the gallery only if a camera
-  looks to have taken it, unless a human switches it on** (`showsByDefault()`
-  returns `isCameraFile(name)`). It was reversed to show-all on 2 September 2026
-  when the EXIF guess held back EVERY photo of a real night, and restored once
-  the bar camera (`/snap`) and the prop sheet gave a RELIABLE camera signal —
-  the host's own promotional shots mark `camera: true` by CODE PATH, not EXIF,
-  so they always pass; the September failure now needs a night on which the host
-  took none of their own. **The lamp is the backstop and the half that makes it
-  safe**: a real player photo whose EXIF a share sheet stripped starts OFF and
-  is one press to put ON. **THE DEFAULT IS WRITTEN OUT ONCE** — a second copy in
-  `/api/gallery-photo/` (`on === showsByDefault(name)`) is what let the flip be a
-  single function body; a copy that hard-codes `isCameraFile(name)` there would
-  make a RED lamp clear itself. `test/gallery-camera-only.test.js` guards it.
+- **THE GALLERY GATE IS THE SOURCE, NOT A GUESS ABOUT THE FILE** — a photograph
+  shows unless the ROOM sent it (`showsByDefault()` returns
+  `isHousePhoto(name)`). The marker is written from `playerId` at upload:
+  `/api/snap` (the house camera — the quizmaster's phone and the bar's, on one
+  shared code) carries none, a punter's handset always does. Asked for in those
+  words: *"separate it out on my photos and then punter photos, and the punter
+  photos are red by default — I go through and click green on the ones I want,
+  and star the three best for the showcase."*
+  **IT REPLACED AN EXIF GUESS, AND CONSISTENCY IS THE REASON.**
+  `looksCameraTaken()` read the `Make` tag before the upload's canvas stripped
+  it — wrong in both directions and, worse, wrong UNPREDICTABLY: two punters
+  send the same sort of photograph, one handset keeps the tag, and the app
+  published one on a public page and held the other back. That is not a rule
+  anybody can state to a venue; this one is a sentence. It also settles the
+  consent question properly — a stranger's face reaching a public page should
+  not hinge on a metadata tag. The earlier EXIF gate was torn out entirely on
+  2 September 2026 for hiding EVERY photograph of a real night; that failure
+  came from the gate being a guess about a FILE, where this is a fact about a
+  ROUTE and cannot mistake a quizmaster's own photograph for a punter's.
+  **THE VALUE ON DISK IS UNCHANGED** (`-picked`), so every photograph already
+  filed still resolves and `safePhotoName()`'s one optional group still matches;
+  only what WRITES it moved. Old nights cannot be reclassified — their names do
+  not record which door they came through — so the clean rule starts with the
+  next night and the rest are curated by hand.
+  **THE PROJECTOR AND THE WALL ARE UNTOUCHED**: a punter's photo is still fun on
+  the night, which is the whole point. This decides the public gallery
+  afterwards and nothing else.
+  **THE LAMP IS THE BACKSTOP AND NAMES WHICH REASON IT IS** — off because the
+  room sent it, or off because a human said so — since those are different
+  things to want to change. **THE DEFAULT IS WRITTEN OUT ONCE**
+  (`on === showsByDefault(name)` in `/api/gallery-photo/`), or a red lamp clears
+  itself. `test/gallery-camera-only.test.js` guards it.
 - **A LAMP PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH.**
   **NO WORDS**, so `title` and `aria-label` are load-bearing and the 18px dot
   gets a 44px hit area. **FILLED, which is not a break of

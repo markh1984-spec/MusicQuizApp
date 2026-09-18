@@ -193,7 +193,7 @@ export function mergeGigs(archived = [], photoNights = []) {
  * photo is one of our own ids with a known extension; anything else is not
  * something this app filed.
  *
- * The one optional `-picked` marker (`NOT_CAMERA_SUFFIX` in photos.js) is
+ * The one optional `-picked` marker (`ROOM_SUFFIX` in photos.js) is
  * part of that same scheme, not an exception to it — `add()` is still the
  * only thing that writes it, in the one place it is allowed to appear.
  */

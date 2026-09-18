@@ -42,61 +42,71 @@ export const MAX_BYTES = 3 * 1024 * 1024;
 const ALLOWED = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
 
 /**
- * MARKS A PHOTO AS NOT LOOKING LIKE A CAMERA TOOK IT — asked for directly:
- * *"if people upload photos for a bit of a laugh, I don't necessarily want
- * those going into the gallery, but them appearing on the screen can be
- * fun."* Detected client-side (`looksCameraTaken()` in `public/assets/
- * filters.js`) from EXIF the upload's own canvas redraw would otherwise
- * strip, and carried from there into the filename rather than a second
- * file — see the note in `add()`. It never keeps a photo off the projector,
- * only off the public gallery later; `/api/gallery/<night>` in server.js is
- * the one place that reads this.
+ * MARKS A PHOTO AS ONE THE ROOM SENT, rather than one the house camera took.
+ *
+ * *"Separate it out on my photos and then punter photos, and the punter photos
+ * are red by default."* The two are told apart by WHICH DOOR the upload came
+ * through, which this app knows for certain: `/api/snap` (the house camera —
+ * the quizmaster's own phone or the bar's, on one shared code) carries no
+ * `playerId`, and `/api/photo` from a punter's handset always carries one.
+ *
+ * **THAT REPLACED AN EXIF GUESS, AND THE REASON IS CONSISTENCY.** It used to be
+ * `looksCameraTaken()` — a read of the EXIF `Make` tag before the upload's own
+ * canvas stripped it. That is wrong in both directions and, worse, wrong
+ * INCONSISTENTLY: two punters send the same sort of photograph, one handset
+ * kept the tag and one did not, and the app published one of them on a public
+ * page and held the other back. A rule nobody can predict is not a rule, and it
+ * is not one you can state to a venue. This one is a sentence: *your own photos
+ * go up, anything the room sends waits for you.*
+ *
+ * **THE VALUE ON DISK IS UNCHANGED** — every photograph already filed carries
+ * `-picked` or does not, and `safePhotoName()` in `past-gigs.js` matches
+ * exactly that one optional group. Renaming the marker would strand five weeks
+ * of files. What changed is what WRITES it, not what it spells.
+ *
+ * It never keeps a photo off the projector or the wall — a punter's photo is
+ * still fun on the night, which is the whole point. It decides the public
+ * gallery afterwards and nothing else.
  */
-export const NOT_CAMERA_SUFFIX = '-picked';
+export const ROOM_SUFFIX = '-picked';
 
-/** Whether a filename this app issued was marked NOT camera-taken. */
-export function isCameraFile(name) {
-  return !String(name || '').includes(NOT_CAMERA_SUFFIX);
+/** Whether a filename this app issued came from the HOUSE camera, not the room. */
+export function isHousePhoto(name) {
+  return !String(name || '').includes(ROOM_SUFFIX);
 }
 
 /**
- * WITH NO HUMAN RULING, DOES A PHOTOGRAPH GO ON THE GALLERY? ONLY IF A CAMERA
- * LOOKS TO HAVE TAKEN IT.
+ * WITH NO HUMAN RULING, DOES A PHOTOGRAPH GO ON THE GALLERY? ONLY IF THE HOUSE
+ * CAMERA TOOK IT.
  *
  * *"I generally will only want photos taken with a camera on the night to
- * appear on the gallery."* The default is camera-taken; a picked photo waits
- * for the host to switch it ON.
+ * appear on the gallery"*, then the shape that made it reliable: *"separate it
+ * out on my photos and then punter photos, and the punter photos are red by
+ * default — I go through and click green on the ones I want."*
  *
- * **THIS WAS THE RULE, WAS REVERSED ON 2 SEPTEMBER 2026, AND IS BACK — AND THE
- * REVERSAL'S REASON HAS TO BE HELD IN VIEW OR IT SIMPLY RECURS.** The gate
- * `isCameraFile(name)` once *failed on every photograph of a real night*: a
- * night said published and showed nothing, because modern phones shoot HEIC
- * and a share sheet strips the EXIF `looksCameraTaken()` reads, so a genuine
- * camera shot off a PLAYER'S phone arrives looking picked. That failure is
- * real and unchanged, and it is why this is a DEFAULT and not a wall:
+ * So the default is the SOURCE (see `ROOM_SUFFIX`): the quizmaster's and the
+ * bar's own photographs show, everything the room sent waits for a green lamp.
  *
- * - **The host's own promotional photographs are reliable now, where in
- *   September they were not.** The bar camera (`/snap`) and the prop camera
- *   sheet CAPTURE live and mark `camera: true` by the code path, never by
- *   EXIF — so the photographs a quizmaster takes to show a venue always pass.
- *   A whole-night-blank now needs a night on which the host took none of
- *   their own, which is a different and rarer thing than the September bug.
- * - **The lamp is the backstop, and it is the half that makes this safe.** A
- *   real player photograph whose EXIF a share sheet stripped starts OFF and is
- *   one press to put ON — `showsOnGallery(name, 'on')`. The cost the host
- *   accepted knowingly is that curation moves from *hide the odd meme* to
- *   *switch on the odd good upload*.
+ * **THE HISTORY MATTERS, BECAUSE THIS GATE HAS FAILED BEFORE.** An EXIF-based
+ * version hid EVERY photograph of a real night — a gallery that said published
+ * and showed nothing — and was torn out on 2 September 2026. That failure came
+ * from the gate being a GUESS about a file. This one is a fact about a route,
+ * so it cannot mistake a quizmaster's own photograph for a punter's.
  *
- * `isCameraFile()` is the guess; it is wrong both ways (a share sheet strips a
- * real one, a screenshot keeps a fake one), which is exactly why the human
- * ruling overrules it in both directions.
+ * Two things keep it honest, and both already exist:
+ *
+ * - **The lamp overrules it, per photo, in both directions.** A punter
+ *   photograph worth publishing is one press.
+ * - **The console counts what will ACTUALLY show** before anything is
+ *   published — *"none on the gallery — the green dots decide"* — so a night
+ *   cannot go public empty without somebody being told.
  *
  * **IT TAKES THE NAME**, which is the whole mechanism: the marker rides in the
  * filename (`add()` writes it once, at upload), so the default is a pure read
  * of a name every reader already holds.
  */
 export function showsByDefault(name) {
-  return isCameraFile(name);
+  return isHousePhoto(name);
 }
 
 /**
@@ -131,7 +141,7 @@ export function showsOnGallery(name, said) {
  * one call, so the two places that need it cannot ask it differently.
  *
  * **THIS EXISTS BECAUSE THEY DID.** The night LIST counted with
- * `isCameraFile()` while the night's own PAGE filtered with
+ * `isHousePhoto()` while the night's own PAGE filtered with
  * `showsOnGallery()`, one screen apart, under a comment claiming they matched.
  * Switching a single photograph off by hand then left the list saying
  * "12 photos" over a page that opened on 11, and switching a night's whole set
@@ -336,7 +346,13 @@ export class Photos {
      * decided once, here, and every later reader — the gallery filter, the
      * console's own badge — just looks at the name it already has.
      */
-    const name = id + (camera ? '' : NOT_CAMERA_SUFFIX) + ext;
+    /*
+     * WHICH DOOR IT CAME THROUGH, not what its EXIF claimed. A punter's handset
+     * always carries a `playerId`; the house camera (`/api/snap`) never does,
+     * and neither does the quizmaster adding one to a filed night. See
+     * `ROOM_SUFFIX` for why a fact beats the guess this replaced.
+     */
+    const name = id + (playerId ? ROOM_SUFFIX : '') + ext;
 
     try {
       fs.mkdirSync(this.dir, { recursive: true });
@@ -349,7 +365,9 @@ export class Photos {
       id, file: name, at, playerId, teamName, filter, bytes: bytes.length, night: nightOf(at),
       // Best-effort, read client-side before the upload's own canvas redraw
       // stripped the file's EXIF — see looksCameraTaken() in filters.js.
-      // Never gates the projector; only decides gallery eligibility later.
+      // RECORDED AND NO LONGER CONSULTED: the gallery gate is the SOURCE now
+      // (see ROOM_SUFFIX). Kept because it is a true fact about the file and
+      // costs a boolean, not because anything reads it.
       camera: Boolean(camera),
     };
     this.state.items.push(item);

@@ -95,10 +95,16 @@ try {
     archivedAt: Date.parse(`${NIGHT}T21:30:00Z`), venue: VENUE, venueId: venue.id,
     leaderboard: [{ name: 'Beer Pressure', score: 2000, position: 1, faceKey: '' }],
   }));
-  // CAMERA photos (no -picked marker) — the default gate is back, so a picked
-  // one would be hidden and there would be nothing to frame.
+  /*
+   * FOUR FROM THE HOUSE CAMERA AND ONE FROM THE ROOM. The gallery gate is the
+   * SOURCE now (`isHousePhoto()`): a name carrying `-picked` is one a punter's
+   * handset sent, and it waits for a green lamp rather than publishing itself.
+   * Seeded here so the READ path is proven over real HTTP — the write half
+   * (`playerId` decides the marker) is pinned in gallery-camera-only.test.js.
+   */
   const dir = join(repo, 'photos', roomId, NIGHT); mkdirSync(dir, { recursive: true });
   for (let i = 0; i < 4; i += 1) writeFileSync(join(dir, `p${i}.jpg`), bytes);
+  writeFileSync(join(dir, 'p9-picked.jpg'), bytes);
   const pub = await post('/api/past-gigs/publish', { night: NIGHT, on: true }, cookie);
   check('the night publishes', pub.status === 200, `${pub.status}`);
 
@@ -107,7 +113,10 @@ try {
 
   const nightJson = await (await get(`/api/gallery/${NIGHT}?q=${roomId}`)).json();
   check('the night payload names the frame', /gallery-frame/.test(nightJson.frame || ''), JSON.stringify(nightJson.frame));
-  check('the night shows its camera photos', (nightJson.photos || []).length === 4, `${(nightJson.photos || []).length} photos`);
+  check('the night shows the house camera\'s four', (nightJson.photos || []).length === 4, `${(nightJson.photos || []).length} photos`);
+  check('and the one the room sent stays off the public page',
+    !(nightJson.photos || []).some((p) => String(p.name).includes('-picked')),
+    JSON.stringify((nightJson.photos || []).map((p) => p.name)));
 
   const page = await browser.newPage({ viewport: { width: 1000, height: 820 } });
   await page.goto(`${base}/gallery?q=${roomId}&n=${NIGHT}`, { waitUntil: 'load' });

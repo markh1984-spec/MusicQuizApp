@@ -274,7 +274,7 @@ export async function getGallery(req, res, url, route) {
      * THE RULINGS, ONCE FOR THE WHOLE LIST — the same read the night's own
      * page makes below, and it has to be the same QUESTION as well.
      *
-     * This counted with `isCameraFile()` alone while the page filtered with
+     * This counted with `isHousePhoto()` alone while the page filtered with
      * `showsOnGallery()`, so the comment underneath — "see the matching filter
      * below" — described a filter that did not match. Switching one photo off
      * by hand left the list saying "12 photos" over a page that opened on 11,
@@ -468,7 +468,7 @@ export async function getGallery(req, res, url, route) {
        * ONLY WHAT LOOKED LIKE A CAMERA TOOK IT — asked for directly: a
        * photo picked from the gallery "for a laugh" is fine on the big
        * screen that night, and stays there, but does not belong on the
-       * public page shown to a venue afterward. `isCameraFile()` reads the
+       * public page shown to a venue afterward. `isHousePhoto()` reads the
        * one marker `add()` in photos.js ever wrote — see its own note for
        * why that is a filename rather than a second file to keep in step.
        */
@@ -486,7 +486,7 @@ export async function getGallery(req, res, url, route) {
   /*
    * One photo, proxied. The repo is private, so a direct link is a 404 in
    * anybody's browser — and the published check is repeated HERE rather than
-   * trusted from the listing, because a URL can be typed. `isCameraFile` is
+   * trusted from the listing, because a URL can be typed. `isHousePhoto` is
    * repeated for the same reason: the listing already leaves a non-camera
    * photo off the page, but its name was on the projector all night and this
    * route must refuse it too, not just decline to advertise it.

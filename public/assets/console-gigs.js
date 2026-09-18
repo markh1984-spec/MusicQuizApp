@@ -845,7 +845,7 @@ export async function nightPhotos(body, night, opts = {}) {
     /*
      * "SCREEN ONLY" — a photo a camera did not take, read from the SAME
      * `-picked` marker `/api/gallery/<night>` filters on server-side (see
-     * `isCameraFile()` in photos.js): nothing new is fetched to say this,
+     * `isHousePhoto()` in photos.js): nothing new is fetched to say this,
      * the filename the review already has is the whole answer. Never
      * "hidden" — the point of showing this HERE, before publishing, is that
      * nobody is surprised later by a photo that quietly is not on the page.
@@ -931,23 +931,27 @@ export async function nightPhotos(body, night, opts = {}) {
        * than over a list, which is where the last one was a nuisance.
        */
       /*
-       * OFF CAN ONLY MEAN "YOU TURNED IT OFF" NOW — the camera guess stopped
-       * being the gate on 2 September 2026 (`showsByDefault()`), so the old
-       * second branch described a state that can no longer happen. A tooltip
-       * explaining an impossible reason is worse than none: it sends somebody
-       * looking for a setting that is not there.
+       * OFF HAS TWO REASONS AGAIN, AND THEY ARE DIFFERENT THINGS TO WANT TO
+       * CHANGE — *"the punter photos are red by default and I go through and
+       * click green on the ones I want."*
        *
-       * The `-picked` marker survives as a NOTE on a photograph that is still
-       * ON, because "this one came off a camera roll" is worth a second look
-       * before a night goes public — which is the job the guess is actually
-       * good at.
+       * A photograph the ROOM sent is off because nobody has said otherwise;
+       * one the house camera took is off only because a human turned it off.
+       * Collapsing those into one sentence is what makes somebody hunt for a
+       * setting that is not there — so the lamp names which it is, off the
+       * `ruled` the server already sends beside the name.
+       *
+       * `-picked` is the SOURCE marker now (see `ROOM_SUFFIX` in photos.js),
+       * not the old EXIF guess, so this reads a fact rather than a hunch.
        */
-      const picked = String(p.name || '').includes('-picked');
+      const fromRoom = String(p.name || '').includes('-picked');
       const why = live
-        ? (picked
-          ? 'On the public gallery — though it did not look like a camera took it, so worth a look before you publish. Click to take it off.'
+        ? (fromRoom
+          ? 'On the public gallery — the room sent this one and you put it up. Click to take it off.'
           : 'On the public gallery for this night. Click to take it off.')
-        : 'You have taken this one off the public gallery. Click to put it back.';
+        : (p.ruled === 'off'
+          ? 'You have taken this one off the public gallery. Click to put it back.'
+          : 'The room sent this one, so it is waiting for you. Click to put it on the public gallery.');
       pill.title = why;
       pill.setAttribute('aria-label', why);
       pill.setAttribute('aria-pressed', String(live));

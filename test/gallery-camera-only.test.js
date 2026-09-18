@@ -1,24 +1,23 @@
 /**
- * ONLY WHAT A CAMERA TOOK GOES ON THE PUBLIC GALLERY.
+ * ONLY THE HOUSE CAMERA'S OWN PHOTOGRAPHS GO STRAIGHT ONTO THE PUBLIC GALLERY.
  *
- * Asked for again on 29 August 2026: *"can we make it so only photos actually
- * taken on the night appear on the gallery on the website, and the uploaded
- * photos can go on the screen but aren't accessible? Uploaded photos are funny
- * but aren't good promo for the night."*
+ * Asked for as *"only photos actually taken on the night appear on the gallery
+ * — uploaded photos are funny but aren't good promo"*, and settled in the shape
+ * that made it reliable: *"separate it out on my photos and then punter photos,
+ * and the punter photos are red by default — I click green on the ones I want."*
  *
- * **THE MECHANISM ALREADY EXISTED AND NOTHING TESTED IT**, which is why this
- * file does rather than the feature being built a second time. `add()` writes
- * the marker into the filename, `isCameraFile()` reads it, and `server.js`
- * checks it twice — once when listing a night and again on the single-photo
- * route, because a URL can be typed. A rule with no assertion on it is one
- * refactor away from being a rule nobody applies, and this one fails SILENTLY:
- * the page still loads, it just has somebody's meme on it.
+ * **THE GATE IS THE SOURCE, NOT A GUESS ABOUT THE FILE.** A punter's handset
+ * carries a `playerId`; the house camera (`/api/snap`, the quizmaster's phone
+ * and the bar's on one code) never does. The EXIF version of this gate was torn
+ * out on 2 September 2026 for hiding EVERY photograph of a real night, and its
+ * deeper fault was inconsistency — two punters, one tag survives, opposite
+ * outcomes. A rule you cannot predict is not one you can state to a venue.
  *
- * **THE PROJECTOR IS UNAFFECTED AND THERE IS A CASE FOR IT BELOW.** The whole
- * point is that a picked photo is fine on the night — *"them appearing on the
- * screen can be fun"* — so this must never turn into a rule that keeps one out
- * of the room. It is a VIEW, like the two-screens rule and the name filter:
- * the same photo, said differently depending on who is looking.
+ * **THE PROJECTOR IS UNAFFECTED AND THERE IS A CASE FOR IT BELOW.** A punter's
+ * photo is still fine on the night — *"them appearing on the screen can be
+ * fun"* — so this must never become a rule that keeps one out of the room. It
+ * is a VIEW, like the two-screens rule and the name filter: the same photo,
+ * said differently depending on who is looking.
  */
 
 import test from 'node:test';
@@ -28,7 +27,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import {
-  Photos, isCameraFile, NOT_CAMERA_SUFFIX, showsOnGallery, showsByDefault, galleryPhotosOf,
+  Photos, isHousePhoto, ROOM_SUFFIX, showsOnGallery, showsByDefault, galleryPhotosOf,
 } from '../src/photos.js';
 import { serverSource } from './server-source.js';
 
@@ -41,33 +40,34 @@ function room() {
   return new Photos(dir, () => (t += 1000));
 }
 
-test('a photo the camera took carries no marker, and the gallery takes it', () => {
+test('a house-camera photo carries no marker, and the gallery takes it', () => {
   const shots = room();
-  const out = shots.add(JPEG, { contentType: 'image/jpeg', camera: true });
+  const out = shots.add(JPEG, { contentType: 'image/jpeg', playerId: '' });
   assert.equal(out.ok, true);
-  assert.equal(out.photo.file.includes(NOT_CAMERA_SUFFIX), false);
-  assert.equal(isCameraFile(out.photo.file), true);
+  assert.equal(out.photo.file.includes(ROOM_SUFFIX), false);
+  assert.equal(isHousePhoto(out.photo.file), true);
 });
 
-test('a photo picked off the phone is marked, and the gallery refuses it', () => {
+test('a photo the room sent is marked, and the gallery holds it back', () => {
   const shots = room();
-  const out = shots.add(JPEG, { contentType: 'image/jpeg', camera: false });
+  const out = shots.add(JPEG, { contentType: 'image/jpeg', playerId: 'p7' });
   assert.equal(out.ok, true);
-  assert.equal(out.photo.file.includes(NOT_CAMERA_SUFFIX), true);
-  assert.equal(isCameraFile(out.photo.file), false);
+  assert.equal(out.photo.file.includes(ROOM_SUFFIX), true);
+  assert.equal(isHousePhoto(out.photo.file), false);
 });
 
-test('camera defaults to FALSE, so an unknown photo is kept off the gallery', () => {
+test('THE EXIF FLAG DOES NOT DECIDE IT — the door does', () => {
   /*
-   * IT ERRS THE SAFE WAY, and that is the calibration rather than an accident.
-   * `looksCameraTaken()` needs a JPEG with an EXIF Make tag; a photo that has
-   * been through a share sheet may have lost it. The two mistakes are not
-   * equal — a real photo left off the public page costs the quizmaster one
-   * picture out of forty, and a meme ON it is what he said is bad promo.
+   * The whole reason the source replaced the guess. A punter photograph whose
+   * EXIF happened to survive used to publish itself, while the identical one
+   * off a handset that stripped it did not. Same photo, opposite outcome,
+   * decided by metadata nobody can see.
    */
   const shots = room();
-  const out = shots.add(JPEG, { contentType: 'image/jpeg' });
-  assert.equal(isCameraFile(out.photo.file), false);
+  const roomShot = shots.add(JPEG, { contentType: 'image/jpeg', playerId: 'p1', camera: true });
+  const houseShot = shots.add(JPEG, { contentType: 'image/jpeg', playerId: '', camera: false });
+  assert.equal(isHousePhoto(roomShot.photo.file), false);
+  assert.equal(isHousePhoto(houseShot.photo.file), true);
 });
 
 test('a marked photo is still in the room list, because the screen still shows it', () => {
@@ -75,8 +75,8 @@ test('a marked photo is still in the room list, because the screen still shows i
   // turned "not on the public page" into "not on the projector", which is the
   // opposite of what was asked for.
   const shots = room();
-  const picked = shots.add(JPEG, { contentType: 'image/jpeg', camera: false });
-  const taken = shots.add(JPEG, { contentType: 'image/jpeg', camera: true });
+  const picked = shots.add(JPEG, { contentType: 'image/jpeg', playerId: 'p2' });
+  const taken = shots.add(JPEG, { contentType: 'image/jpeg', playerId: '' });
   assert.equal(shots.list().length, 2);
   assert.ok(shots.list().some((i) => i.file === picked.photo.file));
   assert.ok(shots.list().some((i) => i.file === taken.photo.file));
@@ -125,7 +125,7 @@ test('an unknown ruling falls back to the default rather than becoming a third s
  * This is the trap the reversal walked into and stepped over. `/api/gallery-photo/`
  * clears a ruling that only restates the default, so that a later change to
  * the default can still reach the photograph. It had the OLD default written
- * out a second time as `isCameraFile(name)` — so flipping `showsOnGallery()`
+ * out a second time as `isHousePhoto(name)` — so flipping `showsOnGallery()`
  * alone would have made pressing a lamp RED on a `-picked` photograph compute
  * "that agrees with the guess", clear the ruling, and let the new default put
  * the photograph straight back ON.
@@ -138,7 +138,7 @@ test('THE CLEARING RULE AND THE FALLBACK ARE ONE FUNCTION', () => {
     .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   assert.match(src, /on === showsByDefault\(name\)/,
     'the ruling route is not asking showsByDefault() — a second copy of the default has crept back');
-  assert.equal(src.includes('on === isCameraFile(name)'), false,
+  assert.equal(src.includes('on === isHousePhoto(name)'), false,
     'the route still uses the old camera guess as the default it compares against');
   // And the fallback itself, so the pair cannot drift from the other side.
   for (const name of ['p1abc.jpg', 'p1abc-picked.jpg']) {
