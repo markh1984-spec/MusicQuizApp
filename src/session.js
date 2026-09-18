@@ -1575,7 +1575,7 @@ export class Session {
       // scoreboard and `join()` has just made them an ordinary contestant.
       if (rec.organiser) p.organiser = true;
       if (this.kind === 'quiz' && typeof rec.score === 'number') {
-        p.score = rec.score;
+        this.engine.setScore(p, rec.score);
         p.correctCount = rec.correctCount || 0;
         p.answeredCount = rec.answeredCount || 0;
         p.totalResponseMs = rec.totalResponseMs || 0;

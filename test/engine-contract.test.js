@@ -75,7 +75,11 @@ const PER_KIND = {
   quiz: ['start', 'next', 'back', 'reveal', 'skipQuestion', 'redoQuestion', 'goTo',
     'setStartsIn', 'showScoreboard', 'showPhotoSlide', 'showAdvert', 'setOrganiser',
     'joinTeam', 'makeTeam', 'adjustScore', 'resetScores', 'finish', 'answer',
-    'answerBreakout', 'wandered', 'msRemaining', 'isExpired', 'clampPointers', 'say'],
+    'answerBreakout', 'wandered', 'msRemaining', 'isExpired', 'clampPointers', 'say',
+    // The roster carried across a part boundary hands a quiz part its scores
+    // through the engine's own funnel (`bumpScore`/`setScore`), behind the
+    // same `kind === 'quiz'` check that used to write `p.score` directly.
+    'setScore'],
   bingo: ['start', 'call', 'uncall', 'undoLastCall', 'playOn', 'newRound', 'finish',
     'mark', 'claim', 'syncTarget'],
   /*

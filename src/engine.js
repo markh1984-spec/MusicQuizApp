@@ -832,7 +832,7 @@ export class Engine {
     if (!p) return false;
     const n = Math.round(Number(delta));
     if (!Number.isFinite(n)) return false;
-    p.score += n;
+    this.bumpScore(p, n);
     /*
      * A SCORE FIXED AT THE FINAL MOVES THE DRINKS WITH IT. The vouchers are
      * issued the moment the final is reached, and this is the one control a
@@ -845,12 +845,12 @@ export class Engine {
      * was spent. Back-then-Next did this already, by passing the final again.
      *
      * THE BOARD IS CACHED, AND THE CACHE IS CLEARED BY `changed()` — which
-     * runs AFTER this. Left alone, both calls read the board from before the
-     * nudge and paid nobody: the first build of this did exactly that, every
-     * test passing. Forget it FIRST.
+     * runs AFTER this. The first build of this wrote `p.score += n` and then
+     * paid off a board from before the nudge: nobody paid, every test green.
+     * `bumpScore()` is why that cannot recur — every score write drops the
+     * cache as it lands.
      */
     if (this.state.phase === PHASES.FINAL) {
-      this.forgetBoard();
       this.issueVouchers();
       this.drawLuckyDip();
     }
@@ -1178,6 +1178,31 @@ export class Engine {
   forgetBoard() {
     this._board = null;
     this._positions = null;
+  }
+
+  /**
+   * EVERY SCORE WRITE GOES THROUGH HERE, AND THE REASON IS THE CACHE ABOVE.
+   *
+   * The leaderboard is memoised until `changed()` runs, which is the LAST
+   * thing a host action does — so any code that moves a score and then reads
+   * the board in the same action reads the board from before the move.
+   * Three faults in this file were that one shape: a card key naming one
+   * field, positions snapshotted off a stale board, and `adjustScore()` at
+   * the final paying drinks off a leaderboard the nudge had not reached.
+   *
+   * A write that drops the cache as it lands removes the CLASS rather than
+   * the instance. `test/score-writes.test.js` reads this file as text and
+   * fails on any `.score =` outside these two methods — a rule nobody has to
+   * remember is the only kind that holds.
+   */
+  bumpScore(player, delta) {
+    player.score += delta;
+    this.forgetBoard();
+  }
+
+  setScore(player, value) {
+    player.score = value;
+    this.forgetBoard();
   }
 
   // ----------------------------------------------------------------- phases
@@ -2163,7 +2188,7 @@ export class Engine {
        * undefined behaviour: the finishing order, and therefore who got the
        * voucher, went arbitrary. On the round type that exists to be a laugh.
        */
-      p.score -= a.points || 0;
+      this.bumpScore(p, -(a.points || 0));
       p.answeredCount = Math.max(0, p.answeredCount - 1);
       if (a.correct) p.correctCount = Math.max(0, p.correctCount - 1);
       p.totalResponseMs = Math.max(0, p.totalResponseMs - (a.responseMs || 0));
@@ -2194,7 +2219,7 @@ export class Engine {
     for (const v of Object.values(this.state.vouchers || {})) v.carried = true;
     this.state.luckyDip = null;
     for (const p of this.playerList()) {
-      p.score = 0;
+      this.setScore(p, 0);
       p.correctCount = 0;
       p.answeredCount = 0;
       p.totalResponseMs = 0;
@@ -2317,7 +2342,7 @@ export class Engine {
       points,
     };
 
-    player.score += points;
+    this.bumpScore(player, points);
     player.answeredCount++;
     player.totalResponseMs += responseMs;
     if (correct) player.correctCount++;

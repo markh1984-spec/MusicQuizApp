@@ -8035,6 +8035,15 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    See `lastNightWarning()` in `console-tonight.js`. */
 .lb-say-money { color: var(--ink); }
 .lb-say-money b { color: var(--gold); }
+/* THE READY LIGHT. Green means good everywhere in this app, so "Ready for
+   tonight" takes it and nothing else on the line does; not ready is plain ink
+   (nothing has gone wrong, something is still to do), and only a server that
+   is not answering is red — that IS wrong. See `console-ready.js`. */
+.lb-ready { color: var(--ink); }
+.lb-ready b { color: var(--ink); }
+.lb-ready-ok b { color: var(--good, #3ddc84); }
+.lb-ready-down b { color: var(--bad); }
+.lb-ready a { color: inherit; text-decoration: underline; }
 
 .lb-tile {
   position: relative; display: flex; flex-direction: column; justify-content: flex-end;

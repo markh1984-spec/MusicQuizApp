@@ -1745,3 +1745,32 @@ Moved to **[`console/chrome.md`](console/chrome.md)** on 9 September 2026, when
 this file crossed its own 100,000-byte cap for the third time. It holds the
 sweep of 25 August 2026 finding by finding, and the three things that did not
 fit, with every measurement. CLAUDE.md keeps the prohibitions.
+
+## The ready line — a light on the launch bar, never a gate, 18 September 2026
+
+Asked for as a structural change rather than a feature: *"once it's running I
+want it to be flawless and never fail in the night."* Every guard in
+`scripts/` proves the app works in a container. Nothing told the quizmaster at
+the venue, at seven o'clock with the room filling up, that it works HERE.
+
+`console-ready.js` draws one line into the launch bar's warning slot, through
+the same `paintGaps()` array as the last-night and prize warnings, so it costs
+`console-tonight.js` no lines at all — that module was one line under its cap.
+It says three things: the server is answering (the poll itself coming back), a
+projector is open on THIS room, and the venue's prizes are set. The second is
+the only fact the browser cannot know for itself, so `GET /api/host/ready`
+counts the hub's open streams **per room** — somebody else's projector is no
+comfort — and sits on `SUPPORT_QUIET` because it is polled every five seconds
+while the console is visible. The third repeats `noPrizesReason()`'s ANSWER
+and never its decision: the prize gate stands Launch down for its own
+fail-open reasons, and this line only ever reads.
+
+Why a light and not a gate: a light that is wrong must not stop a night. A poll
+that fails says "the server is not answering" in red — the one state that IS
+wrong — and changes nothing else on the bar. Not ready is plain ink, because
+nothing has gone wrong yet; ready is green, the one colour that means good
+everywhere in this app.
+
+The bar is rebuilt on every render, so the line registers itself as it is
+built and one module-level interval repaints whichever copy is on the page,
+stopping when none is. There is one interval, ever.

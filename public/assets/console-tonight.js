@@ -16,7 +16,7 @@ import {
   moveRoundToSlot, segmentsFromSlots, simpleNight, slotsFromSimple,
 } from './console-tonight-mix.js';
 import { renderSlots } from './console-tonight-mix-ui.js';
-import { lastNightWarning, noPrizesReason, venuePrizeWarning } from './console-warnings.js';
+import { lastNightWarning, noPrizesReason, venuePrizeWarning } from './console-warnings.js'; import { readyLine } from './console-ready.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, me, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfOf, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
 import { nowNextRows } from './console-venues.js';
 import { GAME_KINDS, TABS, can, doorNow, goTo, goToDoor, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone } from './console.js';
@@ -2743,7 +2743,7 @@ export function launchBar() {
     const segments = segmentsNow();
     night.breaks = prunePlan(night.breaks, segments);
     if (sayEl) {
-      const warns = [lastNightWarning(me), prizeWarning()].filter(Boolean);
+      const warns = [readyLine({ venueName: venueNow(), prizesOk: Array.isArray(library && library.venueRecords) ? !noPrizesReason(venueNow(), library.venueRecords) : null }), lastNightWarning(me), prizeWarning()].filter(Boolean);
       sayEl.replaceChildren(...warns);
       sayEl.hidden = !warns.length;
     }

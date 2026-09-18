@@ -198,8 +198,22 @@ rooms.get(HOUSE);
 let backupCheck = { at: 0, result: null };
 async function backupStatus() {
   if (!githubConfigured()) return { ok: false, error: 'not set up' };
-  if (backupCheck.result && Date.now() - backupCheck.at < 5 * 60 * 1000) return backupCheck.result;
-  const result = await checkAccess();
+  /*
+   * A GOOD ANSWER IS KEPT FOR FIVE MINUTES, A BAD ONE FOR ONE. It used to
+   * keep only the good one, so with GitHub gone quiet every console load
+   * paid a full read deadline to be told the same thing — on the request the
+   * console cannot draw without. A minute is long enough that a bad hour
+   * costs one wait, and short enough that "backup working again" is not an
+   * hour late. `scripts/github-down.mjs`.
+   */
+  const keepFor = backupCheck.result && backupCheck.result.ok ? 5 * 60 * 1000 : 60 * 1000;
+  if (backupCheck.result && Date.now() - backupCheck.at < keepFor) return backupCheck.result;
+  let result;
+  try {
+    result = await checkAccess();
+  } catch (err) {
+    result = { ok: false, error: err.message };
+  }
   backupCheck = { at: Date.now(), result };
   return result;
 }
@@ -1556,7 +1570,9 @@ const MAX_SEATS = 50;
 
 const SUPPORT_QUIET = ['/api/state', '/api/stream', '/health', '/api/me', '/api/brand', '/api/has-accounts',
   // Every phone on a card night asks this once. A line each is sixty lines.
-  '/api/card-art'];
+  '/api/card-art',
+  // The console's ready light asks this every few seconds while it is open.
+  '/api/host/ready'];
 
 /**
  * What a support session did, in words a subscriber would use.
@@ -2456,6 +2472,34 @@ async function handleGet(req, res, url, route) {
     return sendJson(res, 200, { overlay: customer.overlay || '' }), true;
   }
 
+  /*
+   * IS TONIGHT READY — the facts only the server holds.
+   *
+   * The launch bar's ready line names three things a quizmaster checks at
+   * seven o'clock with the room filling up: the server is answering, a
+   * projector is open on THIS room, and the venue has prizes on it. The third
+   * the console already knows; the first is this request coming back at all;
+   * the second is here, because only the hub knows which streams are open.
+   * Counted by ROOM, never overall — somebody else's projector is no comfort.
+   *
+   * Polled, so it is on `SUPPORT_QUIET`, and it carries nothing a phone could
+   * not already see: counts, not names. It never gates anything — a light
+   * that is wrong must not stop a night, so the console draws it and draws
+   * nothing else off it.
+   */
+  if (route === '/api/host/ready') {
+    if (!whoIs(req, url)) return sendJson(res, 401, { error: 'Sign in first' }), true;
+    const room = roomForHost(req, url);
+    let screens = 0;
+    let phones = 0;
+    for (const c of hub.clients) {
+      if (c.room !== room) continue;
+      if (c.role === 'screen') screens += 1;
+      else if (c.role === 'player') phones += 1;
+    }
+    return sendJson(res, 200, { screens, phones }), true;
+  }
+
   if (route === '/api/library') {
     if (!allowed(req, res, url, FEATURES.LIBRARY)) return true;
     const libRoom = roomForHost(req, url);
@@ -2470,16 +2514,25 @@ async function handleGet(req, res, url, route) {
      * Invoices tab, at which point they reappeared. Somebody's venues looking
      * deleted is not a thing to leave to a lucky click.
      */
-    await ensureInvoicesRestored(libRoom);
+    //
     // Their own packs come back from the backup the first time they look, on a
     // host that wipes its disk every deploy. Awaited, because a library drawn
-    // without them looks exactly like a library that has lost them.
-    await ensureOwnPacksRestored(libRoom);
-    // And their past nights, for the same reason and by the same rule.
-    await ensureArchiveRestored(libRoom);
-    // And their venue slides, which live in the packs repository under their
-    // own room — the house's are in the main repo and arrive with the deploy.
-    await ensureAdvertsRestored(libRoom);
+    // without them looks exactly like a library that has lost them. Their past
+    // nights and their venue slides (the packs repository, under their own
+    // room) for the same reason and by the same rule.
+    //
+    // ALL FOUR AT ONCE. They are four files in different repositories with
+    // nothing between them, and awaited one after another the console after a
+    // deploy waited four GitHub round trips — or, with GitHub gone quiet, four
+    // deadlines in a row before it drew anything. `scripts/github-down.mjs`.
+    const [, , , , backup] = await Promise.all([
+      ensureInvoicesRestored(libRoom),
+      ensureOwnPacksRestored(libRoom),
+      ensureArchiveRestored(libRoom),
+      ensureAdvertsRestored(libRoom),
+      // And whether the backup works at all, which is its own round trip.
+      backupStatus(),
+    ]);
     const everything = fullLibrary(config, libRoom.id, listOwn(libRoom.paths, { imageDir: config.imageDir }));
     // The console sees the whole catalogue: theirs to play, the rest to buy.
     // Everything they do not hold comes back stripped — see withShop.
@@ -2500,7 +2553,6 @@ async function handleGet(req, res, url, route) {
       bingo: (everything.bingo || []).filter((p) => !p.mine).length,
       blurb: fullLibraryTier(whoIs(req, url)),
     };
-    const backup = await backupStatus();
     const { session } = roomForHost(req, url);
     const me = whoIs(req, url);
     /*
@@ -4178,10 +4230,36 @@ function invoiceBackupName(room) {
   return room.id === HOUSE ? 'invoicing.json' : `invoicing-${room.id}.json`;
 }
 
+/**
+ * A REQUEST WAITS FOR A BACKUP THIS LONG AND NO LONGER.
+ *
+ * Sign-in, every invoice write and publishing a night all `await` their
+ * backup before answering, and each had a reason (the sign-in's is written
+ * above its call). What none of them meant was *and if GitHub has gone quiet,
+ * hold the browser for the whole deadline* — `scripts/github-down.mjs`
+ * measured a sign-in at one full timeout and a venue save at two, ten
+ * minutes before a gig being exactly when somebody does both. So the write
+ * is still started, still finishes in the background, and still logs; the
+ * REQUEST stops waiting for it after this long and answers `ok: false`,
+ * which every caller already handles as "not confirmed". On a good day
+ * GitHub answers in well under a second and nothing changes.
+ */
+const BACKUP_WAIT_MS = Number(process.env.BACKUP_WAIT_MS) || 3_000;
+async function within(promise, ms = BACKUP_WAIT_MS) {
+  let timer;
+  const late = new Promise((resolve) => { timer = setTimeout(() => resolve({ ok: false, error: `still writing after ${ms}ms` }), ms); });
+  if (timer.unref) timer.unref();
+  try {
+    return await Promise.race([promise, late]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function backUpInvoices(room) {
   if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
   try {
-    return await putFile(invoiceBackupName(room), room.invoices.serialise(), 'Update invoices', 'private');
+    return await within(putFile(invoiceBackupName(room), room.invoices.serialise(), 'Update invoices', 'private'));
   } catch (err) {
     return { ok: false, error: err.message };
   }
@@ -4217,7 +4295,7 @@ function archiveBackupName(room) {
 async function backUpArchive(room) {
   if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
   try {
-    return await putFile(archiveBackupName(room), serialiseArchive(room.paths.archive), 'Update past nights', 'private');
+    return await within(putFile(archiveBackupName(room), serialiseArchive(room.paths.archive), 'Update past nights', 'private'));
   } catch (err) {
     return { ok: false, error: err.message };
   }
@@ -4258,14 +4336,29 @@ async function backUpArchive(room) {
  * @param {string} id  the room
  * @param {function} run  does the restore; RESOLVES only when it read cleanly
  */
+/**
+ * A RESTORE THAT FAILED IS TRIED AGAIN — BUT NOT ON EVERY REQUEST.
+ *
+ * "Never latched" is the rule above and it stands: a bad morning at GitHub
+ * must not be remembered as "there were no past nights". But retried on
+ * every request, a hung GitHub made every console load wait a full read
+ * deadline for the same answer. So a failure is remembered for
+ * `RESTORE_BACKOFF_MS` and the next request inside that window draws with
+ * what is on disk; the one after it asks again. Keyed per latch set, per room.
+ */
+const RESTORE_BACKOFF_MS = 60_000;
+const restoreFailedAt = new WeakMap();   // done Set -> Map<id, ms>
 async function restoreOnce(done, flight, id, run) {
   if (done.has(id)) return;
   if (flight.has(id)) { await flight.get(id); return; }
+  if (!restoreFailedAt.has(done)) restoreFailedAt.set(done, new Map());
+  const failed = restoreFailedAt.get(done);
+  if (failed.has(id) && Date.now() - failed.get(id) < RESTORE_BACKOFF_MS) return;
   const going = (async () => {
     const ok = await run();
     // `undefined` from a restore that never says is treated as success, so a
     // future one that forgets to return cannot retry on every request.
-    if (ok !== false) done.add(id);
+    if (ok !== false) { done.add(id); failed.delete(id); } else failed.set(id, Date.now());
   })().finally(() => flight.delete(id));
   flight.set(id, going);
   await going;
@@ -4447,7 +4540,7 @@ async function backUpCodes(serialised) {
 async function backUpAccounts() {
   if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
   try {
-    return await putFile('accounts.json', accounts.serialise(), 'Update accounts', 'private');
+    return await within(putFile('accounts.json', accounts.serialise(), 'Update accounts', 'private'));
   } catch (err) {
     return { ok: false, error: err.message };
   }
@@ -4470,6 +4563,28 @@ async function backUpAccounts() {
  * GitHub that is having a bad morning must not stop a quiz night starting — the
  * host key still works either way.
  */
+/**
+ * EVERYTHING COMES BACK AT ONCE, AND A GITHUB THAT CANNOT BE REACHED IS
+ * RETRIED RATHER THAN FORGOTTEN.
+ *
+ * This runs BEFORE `server.listen()`, deliberately (see the call site). It
+ * used to be nine reads in a row, each awaited — so with GitHub hung the
+ * boot took nine timeouts before the app answered a single request, and
+ * before `GITHUB_TIMEOUT_MS` existed it took for ever. The reads are of
+ * different files into different stores and none depends on another, so
+ * they go out together: one round trip on a good day, one timeout on a bad
+ * one. `scripts/github-down.mjs` measures exactly that.
+ *
+ * AND THE TWO THAT A NIGHT CANNOT RUN WITHOUT ARE ASKED AGAIN. `getFile()`
+ * says `null` for "nothing there" and "could not look" alike — right for a
+ * first boot, wrong for the accounts book: a deploy during a bad hour at
+ * GitHub came up with no accounts, nobody could sign in, and NOTHING tried
+ * again until the next restart. The accounts and the join codes are read
+ * through `tryGetFile()`, which keeps the distinction, and a failed read
+ * schedules another go a minute later, for as long as it keeps failing. Every
+ * block only ever fills an EMPTY store, so a retry can never write a backup
+ * over tonight's data.
+ */
 async function restoreFromBackup() {
   if (!privateRepoConfigured()) {
     if (!accounts.all.length) {
@@ -4477,61 +4592,26 @@ async function restoreFromBackup() {
     }
     return;
   }
-  if (!accounts.all.length) {
-    const saved = await getFile('accounts.json', 'private');
-    if (saved) {
-      const result = accounts.restore(saved.toString('utf8'));
+  let unreachable = false;
+  const restoreAccounts = async () => {
+    if (accounts.all.length) return;
+    const read = await tryGetFile('accounts.json', 'private');
+    if (!read.ok) { unreachable = true; console.warn('[accounts] could not reach the backup:', read.error); return; }
+    if (read.body) {
+      const result = accounts.restore(read.body.toString('utf8'));
       if (result.ok) console.log(`[accounts] restored ${result.accounts} account(s) from the private repository`);
       else console.warn('[accounts] could not restore the backup:', result.reason);
     } else {
       console.log('[accounts] nothing backed up yet — this is a first boot, or nobody has been added.');
     }
-  }
-  if (reports.isEmpty()) {
-    const saved = await getFile('reports.json', 'private');
-    if (saved) {
-      const result = reports.restore(saved.toString('utf8'));
-      if (result.ok) console.log(`[reports] restored ${result.reports} question report(s)`);
-    }
-  }
-
-  if (suggestions.isEmpty()) {
-    const saved = await getFile('suggestions.json', 'private');
-    if (saved) {
-      const result = suggestions.restore(saved.toString('utf8'));
-      if (result.ok) console.log(`[suggestions] restored ${result.suggestions} suggestion(s)`);
-    }
-  }
-
-  if (spend.isEmpty()) {
-    const saved = await getFile('spend.json', 'private');
-    if (saved) {
-      const result = spend.restore(saved.toString('utf8'));
-      if (result.ok) console.log(`[spend] restored ${result.rows} row(s) of what the AI has cost`);
-    }
-  }
-
-  /*
-   * The prop tally. `data/` is wiped on every deploy, so without this it would
-   * reset several times a week and never reach the threshold where its numbers
-   * mean anything — the backup IS the storage here rather than a safety net.
-   */
-  if (propUse.isEmpty()) {
-    const saved = await getFile('data/prop-use.json', 'private');
-    if (saved) {
-      const result = propUse.restore(saved.toString('utf8'));
-      if (result.ok) console.log(`[props] restored the tally for ${result.props} prop(s)`);
-    }
-  }
-
-  // The house invoice book. Every other room's is restored the first time that
-  // quizmaster opens their Invoices tab, because rooms are created lazily and
-  // this runs once at boot — see ensureInvoicesRestored below.
-  await ensureInvoicesRestored(rooms.get(HOUSE));
-  // And the house's past nights. Every other room's comes back the first time
-  // that quizmaster opens their console, for the same lazy-rooms reason.
-  await ensureArchiveRestored(rooms.get(HOUSE));
-
+  };
+  const restoreStore = (name, store, file, label) => async () => {
+    if (!store.isEmpty()) return;
+    const saved = await getFile(file, 'private');
+    if (!saved) return;
+    const result = store.restore(saved.toString('utf8'));
+    if (result.ok) console.log(`[${name}] restored ${label(result)}`);
+  };
   /*
    * The join codes, before anybody's phone arrives.
    *
@@ -4540,34 +4620,59 @@ async function restoreFromBackup() {
    * after a restart, and by then it is too late to discover the code should
    * have been something else.
    */
-  const restoredCodes = await getFile('room-codes.json', 'private').catch(() => null);
-  if (restoredCodes) {
-    const result = rooms.restoreCodes(restoredCodes.toString('utf8'));
+  const restoreCodes = async () => {
+    const read = await tryGetFile('room-codes.json', 'private');
+    if (!read.ok) { unreachable = true; console.warn('[rooms] could not reach the join-code backup:', read.error); return; }
+    if (!read.body) return;
+    const result = rooms.restoreCodes(read.body.toString('utf8'));
     if (result.ok) console.log(`[rooms] restored ${result.codes} join code(s) from the private repository`);
-  }
-
+  };
   /*
    * Play counts, and the same rule as everything else: only into an empty
    * file. A disk that already has counts on it is ahead of any backup, and
    * writing the backup over it would undo tonight's launches.
    */
-  const statsFile = path.join(config.dataDir, 'library-stats.json');
-  if (!fs.existsSync(statsFile)) {
+  const restoreStats = async () => {
+    const statsFile = path.join(config.dataDir, 'library-stats.json');
+    if (fs.existsSync(statsFile)) return;
     const saved = await getFile('library-stats.json', 'private');
-    if (saved) {
-      try {
-        const text = saved.toString('utf8');
-        JSON.parse(text); // refuse a corrupt backup rather than write it back
-        fs.mkdirSync(config.dataDir, { recursive: true });
-        fs.writeFileSync(statsFile, text, 'utf8');
-        console.log('[library] restored play counts from the private repository');
-      } catch (err) {
-        console.warn('[library] could not restore play counts:', err.message);
-      }
+    if (!saved) return;
+    try {
+      const text = saved.toString('utf8');
+      JSON.parse(text); // refuse a corrupt backup rather than write it back
+      fs.mkdirSync(config.dataDir, { recursive: true });
+      fs.writeFileSync(statsFile, text, 'utf8');
+      console.log('[library] restored play counts from the private repository');
+    } catch (err) {
+      console.warn('[library] could not restore play counts:', err.message);
     }
+  };
+
+  await Promise.all([
+    restoreAccounts(),
+    restoreStore('reports', reports, 'reports.json', (r) => `${r.reports} question report(s)`)(),
+    restoreStore('suggestions', suggestions, 'suggestions.json', (r) => `${r.suggestions} suggestion(s)`)(),
+    restoreStore('spend', spend, 'spend.json', (r) => `${r.rows} row(s) of what the AI has cost`)(),
+    // The prop tally. `data/` is wiped on every deploy, so without this it
+    // would reset several times a week and never reach the threshold where
+    // its numbers mean anything — the backup IS the storage here.
+    restoreStore('props', propUse, 'data/prop-use.json', (r) => `the tally for ${r.props} prop(s)`)(),
+    // The house invoice book and past nights. Every other room's come back
+    // the first time that quizmaster opens their console, because rooms are
+    // created lazily and this runs once at boot — see ensureInvoicesRestored.
+    ensureInvoicesRestored(rooms.get(HOUSE)),
+    ensureArchiveRestored(rooms.get(HOUSE)),
+    restoreCodes(),
+    restoreStats(),
+  ].map((p) => p.catch((err) => console.warn('[restore] failed:', err.message))));
+
+  if (unreachable) {
+    console.warn(`[restore] GitHub could not be reached — trying again in ${RESTORE_RETRY_MS / 1000}s`);
+    setTimeout(() => { restoreFromBackup().catch(() => {}); }, RESTORE_RETRY_MS).unref();
   }
 }
-
+/** How long to wait before asking GitHub again for a backup it could not hand over. */
+const RESTORE_RETRY_MS = 60_000;
 /**
  * Bring one room's invoice book back from the private repo, once.
  *
@@ -5394,9 +5499,11 @@ async function ensureOwnPacksRestored(room) {
   await restoreOnce(ownPacksRestored, ownPacksInFlight, room.id, async () => {
     if (countOwn(room.paths)) return true;   // disk wins, always
     let missed = 0;
-    for (const kind of ['quiz', 'bingo']) {
+    // Both kinds at once — two listings in a row was two deadlines in a row
+    // with GitHub gone quiet, on the console's first request after a deploy.
+    await Promise.all(['quiz', 'bingo'].map(async (kind) => {
       const dir = kind === 'quiz' ? room.paths.ownQuizzes : room.paths.ownBingo;
-      if (!dir) continue;
+      if (!dir) return;
       const listing = await tryListDir(`packs/${room.id}/${kind}`, 'packs');
       // A LISTING THAT FAILED IS NOT AN EMPTY LIBRARY. Latched, it meant a
       // quizmaster's own packs were gone for the process's lifetime with the
@@ -5405,7 +5512,7 @@ async function ensureOwnPacksRestored(room) {
       if (!listing.ok) {
         console.warn(`[own-packs] could not list ${kind} for ${room.id}:`, listing.error);
         missed += 1;
-        continue;
+        return;
       }
       for (const file of listing.files) {
         if (!file.name.endsWith('.json')) continue;
@@ -5420,7 +5527,7 @@ async function ensureOwnPacksRestored(room) {
         }
       }
       if (listing.files.length) console.log(`[own-packs] restored ${listing.files.length} ${kind} pack(s) for room ${room.id}`);
-    }
+    }));
     return missed === 0;
   });
 }
@@ -6108,7 +6215,7 @@ async function handleWrite(req, res, url, route) {
      * Awaited, because the whole point is that it is on disk in the repository
      * before the browser has the cookie. It can never throw: `backUpAccounts()`
      * catches everything and reports, so a GitHub having a bad morning makes a
-     * sign-in slower and never refuses one.
+     * sign-in slower — by `BACKUP_WAIT_MS` at most — and never refuses one.
      */
     await backUpAccounts();
     return sendJson(res, 200, {
@@ -9550,7 +9657,17 @@ function shutdown(signal) {
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('uncaughtException', (err) => {
-  // Never take the quiz down over one bad request. Log it and carry on.
+  /*
+   * Never take the quiz down over one bad request. Log it and carry on.
+   *
+   * THIS ALSO CATCHES AN UNHANDLED PROMISE REJECTION. Node's default
+   * (`--unhandled-rejections=throw`, since 15) raises a rejection nobody
+   * caught as an uncaught exception, so a background backup, a photo push or
+   * an email send that fails without a `.catch()` lands HERE rather than
+   * killing the process mid-quiz. That only holds while nothing sets
+   * `--unhandled-rejections=strict`, which bypasses this handler and exits —
+   * `test/rejection-survives.test.js` pins both halves.
+   */
   console.error('[server] uncaught:', err);
   for (const room of rooms.all()) room.store.flush();
 });

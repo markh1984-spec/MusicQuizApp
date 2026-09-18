@@ -179,3 +179,37 @@ list has stopped being a test** — which is the conclusion `imports-present.js`
 had already written down about itself, and `markup-balance.test.js` about
 counting tags, and which had to be reached a third time before it stuck. The
 short list that never lies beats the clever one that needs arguing with.
+
+## GitHub gone quiet — `scripts/github-down.mjs`, 18 September 2026
+
+The rule was that nothing on the protected surface waits on GitHub, and it was
+true by inspection. Hanging the API behind the real server
+(`test/helpers/github-hangs-stub.mjs`, loaded with `--import` through the app
+helper's new `nodeArgs`) found four places it was not:
+
+- `fetch()` has no timeout and `restoreFromBackup()` runs before
+  `server.listen()`, so a deploy during a bad hour at GitHub never came up.
+  Every call now carries `AbortSignal.timeout()` — 8s for a read, 20s for a
+  write — and the stub had to hold the event loop open like a real socket does,
+  or Node exited mid-boot with "unsettled top-level await" instead of waiting.
+- The boot restore was nine reads in a row. They go out together now, and the
+  two a night cannot run without (the accounts, the join codes) are read
+  through `tryGetFile()` and retried a minute later while they keep failing.
+- Sign-in, every invoice write and publishing a night awaited their backup.
+  `within()` caps that wait at `BACKUP_WAIT_MS` and answers `ok: false`; the
+  write carries on in the background.
+- The console's first request after a deploy restored four files one after
+  another and then ran the access check. All five go out at once, a failed
+  access check is cached for a minute, and a failed restore backs off a minute
+  rather than being retried on every request.
+
+The guard measures each request in milliseconds, so the limits are the budgets
+by name, not a feeling about "fast".
+
+## The Monday build — `scripts/gig-build.mjs`
+
+One command, one verdict. The suite, `pub-unchanged` against
+`origin/MusicQuizApp` (what is LIVE, never HEAD), then every protected-surface
+guard by name, each to its own log under `data/gig-build/`. `--full` adds the
+slow and cosmetic ones; `--only <name>` runs one. `test/gig-build.test.js`
+fails the moment a named guard stops existing.

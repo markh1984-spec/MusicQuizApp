@@ -1012,15 +1012,11 @@ nothing on it.
   anything else is how that sweep quietly stops sweeping.
 - **`/api/snap` RECORDS THE PROP TALLY TOO**, or `prop-use.js` measures the
   room rather than the app, in the table that decides which drawings to delete.
-- **THE GUARD WAS WRITTEN BEFORE THE MOVE** — `props-on-a-photo.mjs`. Nothing
-  had ever run one line of `openCamera()`. **`boundingBox()` IS
-  VIEWPORT-RELATIVE AND THE SHEET IS TALLER THAN A PHONE**, so the canvas and
-  the tray are never both on screen: scroll each in and re-measure. Second
-  sighting in a week.
-- **AND THE MOVE DELETED `const STORE_KEY` WITH THE BINDINGS ABOVE IT** —
-  swallowed by `loadMe()`'s own `try`, so **every phone silently stopped
-  remembering itself**, which is rule 5, live. Caught by `second-laptop.mjs`
-  and by nothing else.
+- **`props-on-a-photo.mjs` RUNS `openCamera()`.** **`boundingBox()` IS
+  VIEWPORT-RELATIVE AND THE SHEET IS TALLER THAN A PHONE**: scroll each in
+  and re-measure.
+- **AND THE MOVE DELETED `const STORE_KEY`**, swallowed by `loadMe()`'s own
+  `try` — rule 5, live. Caught by `second-laptop.mjs` and nothing else.
 
 ### A KIND TEST WRITTEN WHEN THERE WERE TWO GAMES — the FOURTH sighting, on the shelf
 
@@ -1131,16 +1127,12 @@ Every one lived in a band no guard looked at. The measurements are in
 **[`docs/console/chrome.md`](docs/console/chrome.md)**; the rules are:
 
 - **THE LOBBY'S JOIN PANEL IS CAPPED BY THE SCREEN'S HEIGHT** — `min(100%,
-  72vh)`, and **72vh is measured, not chosen**. A QR code is square, so on a
-  wide, short projector the code was 166px off a page that does not scroll.
-- **THREE ACROSS BETWEEN 561 AND 779px, AND BOTH GRIDS MOVE TOGETHER** —
-  `aspect-ratio` plus `min-height` propagates to a minimum WIDTH, and at 561
-  the cards overlapped by 28px. **This is not six-across being dropped.**
-- **`#hatSlot` IS A BARE `<span>`, SO IT HAD `min-width: auto`** — third
-  sighting on this bar. **The switch shrinks below 560 too**: a label losing
-  its tail is what this bar can afford; a door off the screen is not.
-- **`console-frame.mjs` LOOKS AT 768 AND 320** — its sizes ran 390 then 960,
-  leaving the 561-899 band unmeasured.
+  72vh)`, **measured, not chosen**: a square QR ran off a short projector.
+- **THREE ACROSS BETWEEN 561 AND 779px, AND BOTH GRIDS MOVE TOGETHER.** **This
+  is not six-across being dropped.**
+- **`#hatSlot` IS A BARE `<span>`, SO IT HAD `min-width: auto`.** **The
+  switch shrinks below 560 too** — a door off the screen is not affordable.
+- **`console-frame.mjs` LOOKS AT 768 AND 320**, the band nothing measured.
 
 ### A ROOM ID IS A PATH, AND `?q=` NAMES AN ACCOUNT OR NOBODY
 
@@ -1149,11 +1141,8 @@ Every one lived in a band no guard looked at. The measurements are in
 key.
 
 - **A ROOM'S FILES ARE `path.join(dataDir, 'rooms', roomId)`, so `..` WALKS
-  OUT** — and `..` alone resolves to `dataDir` ITSELF, which is the HOUSE
-  room's own `state.json`. `GET /api/brand?q=..` minted a shadow room over the
-  projector's crash-recovery file, `POST /api/join` wrote a player into it, and
-  the next restart booted the room from a stranger's state. **That is protected
-  surface item 5, from two unauthenticated GETs.**
+  OUT** — onto the HOUSE room's own `state.json`: a shadow room over the
+  crash-recovery file, from two unauthenticated GETs.
 - **REFUSED, NEVER QUIETLY SWAPPED FOR THE HOUSE ROOM.** `get()` throws a
   `badRequest` on anything outside the alphabet this app actually mints. Falling
   back to HOUSE is the same fault wearing a friendlier face — it hands somebody
@@ -1293,10 +1282,8 @@ guarded** — it is the stated escape hatch and its confirm names what it costs.
 - **`inOrder()` PER ROOM, like `gallery.js`** — three callers each read the file
   whole and write it back, so a name ruling overlapping a publish put the old
   value back and silently un-published the table.
-- **A FOLD MUST RESTORE THE ORDER IT DEPENDS ON.** `leagueTable()` says "newest
-  first" three times and leans on it for the season start, for which spelling of
-  a name wins, and for `evenings`. Two sorted runs concatenated are not one
-  sorted run.
+- **A FOLD MUST RESTORE THE ORDER IT DEPENDS ON** — two sorted runs
+  concatenated are not one sorted run.
 - **AND THE REPORT MASKS THE WINNER, not just the table** — it printed the
   podium raw three lines above a masked season table, in one document. The filter
   is `publicName()` at the ROUTE, so it keeps one definition and the PDF stays a
@@ -1324,12 +1311,10 @@ league band both compared venue STRINGS, and one did not even trim.
 
 ### THE SUPPORT LOG IS MATCHED EXACTLY, NEVER BY PREFIX
 
-`SUPPORT_QUIET` in `server.js`. It was wrong in both directions: `/api/me` on
-the quiet list covered every `/api/me/*` WRITE, so changing somebody's colour
-scheme — what their projector and sixty phones wear — left no line; and
-`/api/live` is not a route in this app, so every SSE reconnect wrote one and
-evicted real entries from a 500-line log. **A route belongs on that list when a
-LINE would be noise, never when the ACT is dull.**
+`SUPPORT_QUIET` in `server.js`. A prefix match covered every `/api/me/*`
+WRITE, and a route that did not exist let every SSE reconnect evict real
+entries. **A route belongs on that list when a LINE would be noise, never when
+the ACT is dull.**
 
 **AND `safe()` STRIPS `calendarKey` AND `reset`.** The calendar key IS a
 credential — one GET with no cookie returns somebody's whole diary — and it rode
@@ -1341,10 +1326,8 @@ over.
 The trap this file already records for `accounts.create()`, `shows.js` and
 `doLaunch()`, found twice more:
 
-- **`Accounts.restore()` DROPPED `tiers` AND THEN SAVED THE LOSS** — and it runs
-  whenever the disk is empty, which on Render's free tier is every deploy. The
-  note above `tiers` says storing them in that file exists to prevent exactly
-  that. Nothing 403s, so nobody notices.
+- **`Accounts.restore()` DROPPED `tiers` AND THEN SAVED THE LOSS** — and it
+  runs on every deploy. Nothing 403s, so nobody notices.
 - **`shows.js` DROPPED `questionSeconds`**, so a night saved at thirty seconds
   came back at the pack's own pace.
 - **AND GRANDFATHERING ASKED THE RAW ACCOUNT.** A group seat holds its PARENT'S
@@ -2062,6 +2045,33 @@ month when the AI is cheap and the server is not.
 
 Full reasoning: **[`docs/business.md`](docs/business.md)**.
 
+### NOTHING ON THE PROTECTED SURFACE WAITS ON GITHUB — `github-down.mjs`
+
+Hung GitHub behind the real server and drove a night. Four things waited:
+
+- **`fetch()` HAS NO TIMEOUT, AND `restoreFromBackup()` RUNS BEFORE
+  `listen()`** — a deploy during a bad hour at GitHub was an app that never
+  came up. `GITHUB_TIMEOUT_MS` (20s, writes) and `GITHUB_READ_TIMEOUT_MS` (8s)
+  in `github.js`; **every call carries one.**
+- **THE BOOT RESTORES RUN TOGETHER, AND THE ACCOUNTS ARE ASKED AGAIN** —
+  nine reads in a row was nine deadlines; a failed accounts read left nobody
+  able to sign in until the next restart. `tryGetFile` plus a retry a minute
+  later, only ever into an EMPTY store.
+- **A REQUEST WAITS FOR ITS BACKUP `BACKUP_WAIT_MS` (3s) AND ANSWERS
+  `ok: false`** — sign-in, the invoice writes and publishing a night all
+  awaited a write. `within()` in `server.js`; the write still finishes.
+- **THE LIBRARY'S FOUR RESTORES AND THE ACCESS CHECK GO OUT AT ONCE, AND A
+  FAILED RESTORE BACKS OFF A MINUTE** (`restoreOnce`) — never latched as
+  empty, never retried per request either.
+
+### THE READY LINE IS A LIGHT, NEVER A GATE — `console-ready.js`
+
+*"Ready for tonight"* on the launch bar: the server answering, a projector
+open on THIS room (`/api/host/ready`, on `SUPPORT_QUIET`, counts per room),
+the venue's prizes. **It repeats `noPrizesReason()`'s answer and never its
+decision**; a poll that fails says so and changes nothing. One interval, a
+leaf like `console-warnings.js`.
+
 ### A PHOTOGRAPH IS READ FROM MEMORY, THEN DISK, THEN GITHUB
 
 `photoBytes()` in `server.js`, the disk half of `src/photo-cache.js`. The
@@ -2069,17 +2079,13 @@ memory cache is empty after every deploy — and every push is a deploy — so t
 first fifty people to open a gallery after one each spent a GitHub call against
 5,000 an hour SHARED with the packs, the accounts book and every backup.
 
-- **A PAID INSTANCE DOES NOT GIVE YOU A DISK.** Render's filesystem is
-  ephemeral on EVERY tier; only an attached disk changes it — the $7 Starter
-  bought no SLEEP, not a surviving `data/`. **`DATA_DIR` is the whole wiring**,
-  and **a disk removes zero-downtime deploys** (single instance only), which is
-  worth it: today's overlap hands over an EMPTY `data/`.
+- **A PAID INSTANCE DOES NOT GIVE YOU A DISK.** Only an attached disk
+  survives a deploy; **`DATA_DIR` is the whole wiring**. Declined for now.
 - **IT IS A CACHE OF WHAT GITHUB HAS, NEVER A SECOND STORE** — losing the disk
   costs speed and nothing else.
-- **THE KEY MAPPING MUST BE INJECTIVE, AND THE FIRST ONE WAS NOT.** `/` → `~`
-  put `a/b/c.jpg` and `a/b~c.jpg` on ONE file — **one photograph served in place
-  of another**. `encodeURIComponent`, hashed past 200 chars. **Do not lean on
-  `safePhotoName()`** — a guarantee held elsewhere is how it comes back.
+- **THE KEY MAPPING MUST BE INJECTIVE** — `/` → `~` served one photograph in
+  place of another. `encodeURIComponent`, hashed past 200 chars. **Do not lean
+  on `safePhotoName()`.**
 - **A `..` MAY NOT WALK OUT.** The test writes a sentinel OUTSIDE the
   folder.
 - **NOTHING DECIDING WHO MAY SEE A PHOTO IS CACHED WITH IT**, as before.
@@ -2226,9 +2232,11 @@ the prizes."*
   game.**
 - **A ROUND'S PRIZE IS THE NEXT ON THE TABLE — `prizesGiven`, a `prizeIndex`
   on every win.** Keyed on the STAGE, round two paid the pint again.
-- **A SCORE FIXED AT THE FINAL MOVES THE DRINKS — `adjustScore()`, and it
-  must `forgetBoard()` FIRST**: the board is cached until `changed()`, which
-  runs after, so the first build paid nobody. `prizes-fuzz.mjs`.
+- **A SCORE FIXED AT THE FINAL MOVES THE DRINKS — `adjustScore()`.** The
+  board is cached until `changed()`, which runs AFTER, so the first build paid
+  off a stale board. **EVERY SCORE WRITE GOES THROUGH `bumpScore()` /
+  `setScore()`, which drop the cache** — `test/score-writes.test.js` reads the
+  engine as text and refuses a third writer.
 - **A CODE STAYS ON THE PHONE UNTIL THE BAR SCANS IT — `view.vouchers` on the
   QUIZ engine too.** **Every live code, at every phase with room, NEVER over a
   live QUESTION.** **A REDEEMED one now DISAPPEARS from the phone** — see *My
@@ -2354,13 +2362,10 @@ with `lobby-sound.js`), the `Sounds` panel in `host.js`, `POST
 - **THE LAPTOP WITH THE HDMI IS THE ONE WIRED TO THE PA.** **The panel SAYS
   where the sound comes out.**
 - **AND A DROPPED-IN `.mp3` BEATS ANY OF IT — `public/assets/stings/<id>.mp3`.**
-  **The synthesised one is the FALLBACK and is never deleted**: a missing file
-  or a venue's wifi is still a press the host set up, and **silence is the one
-  outcome a soundboard may not have.** **Fetched when the page is ARMED**, so a
-  sting is never late; **through the same `VOL`**; **`.mp3` alone** (Safari),
-  and **`MIME` in `server.js` must name it** or it is served as a download.
-  **THE REPO IS PUBLIC AND THE APP IS SOLD** — a licence must cover commercial
-  redistribution.
+  **The synthesised one is the FALLBACK and is never deleted** — **silence is
+  the one outcome a soundboard may not have.** Fetched when ARMED, same `VOL`,
+  **`.mp3` alone**, **`MIME` must name it**. **THE REPO IS PUBLIC AND THE APP
+  IS SOLD** — a licence must cover commercial redistribution.
 - **SYNTHESISED IS THE FLOOR, NOT THE CEILING.** **Anything with ARTICULATION
   needs a recording.**
 - **"YOUR MUM" IS THE BROWSER'S OWN `speechSynthesis`.** **A missing voice is a
@@ -2380,11 +2385,8 @@ with `lobby-sound.js`), the `Sounds` panel in `host.js`, `POST
   the garnish.** **The open flag is a module binding**, or a view rebuilt on
   every answer shuts itself mid-press. **The guard OPENS it and presses a real
   button** — the API path proves the noise and not the thumb.
-- **A `GainNode` DEFAULTS TO 1.0 — NEVER START A NODE BEFORE ITS ENVELOPE.** A
-  ding set to 0.04 peaked at 1.08 and clipped. **`soundboard.mjs` measures a
-  peak CEILING**, so nothing else finds it.
-- **SILENCE AND A WORKING SOUND LOOK IDENTICAL FROM THE DOM**, so the guard
-  samples the SIGNAL, letting each sting die first or it measures the sum.
+- **A `GainNode` DEFAULTS TO 1.0 — NEVER START A NODE BEFORE ITS ENVELOPE.**
+  `soundboard.mjs` measures a peak CEILING and samples the SIGNAL.
 
 Full reasoning: **[`docs/sound.md`](docs/sound.md)**.
 
@@ -2917,11 +2919,9 @@ costs a Monday rather than an evening.
 
 The second gets skipped and is the one that would stop a night.
 
-**AND ON 15 AUGUST 2026 IT WAS SKIPPED, AND LAUNCH WENT TO THE LIVE APP
-BROKEN FOR EVERY GAME.** A function called in `server.js` and never imported —
-a ReferenceError when the line RUNS, `node --check` happy, **1,150 tests
-passed** because none executed the file. `test/launch-route.test.js` is that
-advice with an assertion — **keep it shallow**. **A TEST THAT NEVER RUNS THE
+**AND ON 15 AUGUST 2026 IT WAS SKIPPED, AND LAUNCH WENT LIVE BROKEN** — a
+function never imported, 1,150 tests green because none executed the file.
+`test/launch-route.test.js`, **kept shallow**. **A TEST THAT NEVER RUNS THE
 ARTEFACT PROVES NOTHING ABOUT IT.**
 
 ### A PUSH IS A DEPLOY, AND A DEPLOY ON A GIG NIGHT IS AN OUTAGE
@@ -2939,13 +2939,16 @@ room is sitting down.
 **What does NOT change is why a deploy is the risk.** Say it in one line when a
 push could land badly and push anyway unless he says hold.
 
-**THURSDAY IS A GIG DAY AND IS FROZEN — no push after midday UK, none.** Set
-the morning after nine pushes on a Thursday cost a gig. And
-**every push first runs `gig-path.mjs`, `after-a-deploy.mjs` and
-`pub-unchanged.mjs`** — the walkthrough, the state a deploy leaves, the bytes.
-**He wants to run every night**, so the rule is a stopgap: the structural fix
-is Auto-Deploy OFF on Render (a push stops being a deploy) and a disk (a
-deploy stops being an outage). Delete this paragraph when both are done.
+**A PUSH GOES OUT ON A MONDAY, AFTER `node scripts/gig-build.mjs` PRINTS
+SAFE TO DEPLOY — and on no other day.** The release train, set 18 September
+2026 after nine pushes on a Thursday cost a gig: the live app is a version
+tested as a WHOLE, never a stream of pushes each tested on its own. Work is
+committed locally through the week and pushed once. The one command runs the
+suite, `pub-unchanged` against what is LIVE, and every protected-surface guard
+by NAME. **He wants to run every night**, so a fix found on a Tuesday waits
+unless he says push. Auto-Deploy OFF and a disk were offered and declined —
+the train is the rule instead, and every push is still a deploy that wipes
+`data/`.
 
 **AND THE ROOM A DEPLOY LEAVES BEHIND BLOCKED EVERY LAUNCH — the gig on 17
 September 2026, lost to KaraFun.** After a restart the room comes back on
@@ -3780,10 +3783,8 @@ test that the route works proves nothing about whether anybody can reach it.
 - **Taking it down is as prominent as putting it up**, outlined red — the
   honest answer to somebody asking is a quizmaster who can do it stood
   there.
-- **THE OWNER PREVIEW NEEDS THE KEY AND WAS NOT SENDING IT** on a `?key=`
-  link, so it failed on the identity most likely to be checking. Read **from
-  the URL, never from localStorage**, and put on the IMAGES too, because the
-  photo route re-checks for itself.
+- **THE OWNER PREVIEW READS THE KEY FROM THE URL, never localStorage**, and
+  puts it on the IMAGES too — the photo route re-checks for itself.
 
 Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
@@ -4186,11 +4187,16 @@ node scripts/no-prizes-no-launch.mjs    # can a night launch with nobody to pay?
 node scripts/after-a-deploy.mjs         # after a restart, can the host still launch?
 node scripts/every-game.mjs             # every game and round type, end to end
 node scripts/prizes-fuzz.mjs            # every prize count, word and tie
+node scripts/github-down.mjs            # GitHub gone quiet — does a night still run?
+node scripts/gig-build.mjs              # THE MONDAY BUILD: all of the above, one verdict
 ```
 
 **The rules these commands run on, and each was learned expensively — the full
 account is in [`docs/checks.md`](docs/checks.md):**
 
+- **AN UNHANDLED REJECTION LANDS IN THE `uncaughtException` HANDLER** and
+  the process carries on — Node's `throw` default, pinned by
+  `test/rejection-survives.test.js`. **Never set `--unhandled-rejections`.**
 - **`node --check` every browser file you edit.** Nothing here executed
   `public/` for two years; a stray backtick in an HTML comment made
   `console.js` a syntax error and `/console` did not load at all, with the

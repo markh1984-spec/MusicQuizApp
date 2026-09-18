@@ -73,14 +73,19 @@ function catalogueCopy(dir, name) {
   return to;
 }
 
-export async function startApp({ key = 'live-app-key', seed, env = {} } = {}) {
+/**
+ * `nodeArgs` go in front of `server.js` — the way a guard puts a stub behind
+ * the real server (`--import test/helpers/….mjs`) so its real calls hit a
+ * fixture. The restart keeps them, or the second boot is a different app.
+ */
+export async function startApp({ key = 'live-app-key', seed, env = {}, nodeArgs = [] } = {}) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'live-app-'));
   const seeded = seed ? seed(data) : undefined;
   let child = null;
   let base = '';
   for (let attempt = 0; attempt < 3 && !base; attempt += 1) {
     const port = await freePort();
-    child = spawn(process.execPath, ['server.js'], {
+    child = spawn(process.execPath, [...nodeArgs, 'server.js'], {
       cwd: ROOT,
       env: {
         ...process.env,
@@ -148,7 +153,7 @@ export async function startApp({ key = 'live-app-key', seed, env = {} } = {}) {
   const restart = async ({ hard = true } = {}) => {
     child?.kill(hard ? 'SIGKILL' : 'SIGTERM');
     await wait(400);
-    child = spawn(process.execPath, ['server.js'], {
+    child = spawn(process.execPath, [...nodeArgs, 'server.js'], {
       cwd: ROOT,
       env: {
         ...process.env,

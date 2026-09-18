@@ -163,10 +163,39 @@ export function photoRepoProblem() {
   return null;
 }
 
+/**
+ * NO CALL TO GITHUB MAY HANG THE APP — every request carries a deadline.
+ *
+ * `fetch()` has no timeout of its own, so a GitHub that accepts the
+ * connection and never answers held the caller for ever: at boot that was
+ * `restoreFromBackup()`, which runs BEFORE `server.listen()`, so a deploy
+ * during a bad hour at GitHub was an app that never came up — the console
+ * unreachable, every phone on a spinner, nothing logged. Mid-night it was a
+ * photo upload that never returned and a join-code backup queue that never
+ * drained. `scripts/github-down.mjs` hangs GitHub behind the real server and
+ * drives a night through it; this constant is what makes that guard pass.
+ *
+ * Twenty seconds: a 3MB photo on pub wifi is the slowest honest request this
+ * app makes, and the API's own p99 is well under it. A `TimeoutError` comes
+ * out of `fetch()` like any other failure, so every existing `try/catch`
+ * already turns it into `{ ok: false }` rather than a crash.
+ */
+export const GITHUB_TIMEOUT_MS = Number(process.env.GITHUB_TIMEOUT_MS) || 20_000;
+/**
+ * A READ GETS A SHORTER ONE. Everything this app reads from GitHub is a small
+ * JSON file or a directory listing, and a console opening after a deploy
+ * waits on four of them before it can draw — so a read still going after
+ * eight seconds is a GitHub that is not going to answer, and the console
+ * should draw without it rather than sit on a spinner for twenty.
+ */
+export const GITHUB_READ_TIMEOUT_MS = Number(process.env.GITHUB_READ_TIMEOUT_MS) || 8_000;
+
 async function api(path, options = {}, which = 'app') {
   const { token } = settings(which);
+  const method = (options.method || 'GET').toUpperCase();
   const res = await fetch(API + path, {
     ...options,
+    signal: AbortSignal.timeout(method === 'GET' ? GITHUB_READ_TIMEOUT_MS : GITHUB_TIMEOUT_MS),
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github+json',
