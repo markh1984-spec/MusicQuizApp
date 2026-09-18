@@ -96,7 +96,7 @@ test('THE PUBLISH GATE FAILS CLOSED WITH NO REPOSITORY CONFIGURED', async () => 
   assert.equal(await isVenuePublished('room', 'the crown'), false);
   const tried = await setVenuePublished('room', 'the crown', true);
   assert.equal(tried.ok, false);
-  assert.match(tried.error, /repository/, 'it names the cause rather than saying "could not save"');
+  assert.match(tried.error, /private store is not set up/, 'it names the cause rather than saying "could not save"');
 });
 
 test('and a bad key is refused before anything else is even attempted', async () => {
@@ -234,5 +234,5 @@ test('with no repository it says WHICH thing is missing', async () => {
   const { setLeagueRunning } = await import('../src/league-publish.js');
   const out = await setLeagueRunning('HOUSE', 'id:v1', true);
   assert.equal(out.ok, false);
-  assert.match(out.error, /private repository/i);
+  assert.match(out.error, /private store is not set up/i);
 });

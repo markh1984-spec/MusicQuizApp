@@ -1072,7 +1072,20 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * flight-recorder, lapsed-subscription and this rule's own prose; nothing that
  * FORBIDS anything went.
  */
-const BUDGET = 260_600;
+/*
+ * RAISED TO 263,500 ON 18 SEPTEMBER 2026, for the object store — and this one
+ * is a raise rather than a trim, deliberately. It is the STORAGE LAYER for
+ * every photograph in the app, and almost every line of it is a prohibition a
+ * session would undo while tidying: reads fall back but writes do not, a
+ * fallback is on a MISS and never on a FAILURE, listings are UNIONED, the bin
+ * reaches BOTH stores, `{ok:false}` is not empty, and the migration exists so
+ * the old repository can be DELETED rather than kept alongside. Half of those
+ * look like redundant belt-and-braces from the diff alone, and removing any
+ * one of them puts photographs of the public back where a delete is not a
+ * delete. Nothing was trimmed to pay for it because nothing here was fat
+ * enough to be worth the risk of reading a rule out by accident.
+ */
+const BUDGET = 263_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

@@ -277,7 +277,7 @@ export async function isPublished(roomId, night) {
 export async function setPublished(roomId, night, on) {
   if (!isNightFolder(night)) return { ok: false, error: 'That is not a night.' };
   if (!photosRepoConfigured()) {
-    return { ok: false, error: 'The private photo repository is not set up, so there is nowhere to record this.' };
+    return { ok: false, error: 'The photo store is not set up, so there is nowhere to record this.' };
   }
   // The READ is inside the queue with the write, or the ordering buys nothing:
   // it is reading a version somebody else is about to replace that loses this.
@@ -324,7 +324,7 @@ export async function setPhotoDecision(roomId, night, name, decision) {
   if (!photoKeyOk(key)) return { ok: false, error: 'No photo there.' };
   if (!['on', 'off', ''].includes(decision)) return { ok: false, error: 'That is not a decision.' };
   if (!photosRepoConfigured()) {
-    return { ok: false, error: 'The private photo repository is not set up, so there is nowhere to record this.' };
+    return { ok: false, error: 'The photo store is not set up, so there is nowhere to record this.' };
   }
   // Behind the same queue as publishing, and it has to be the SAME one: these
   // two edit one file, so ordering them separately would order nothing.
@@ -375,7 +375,7 @@ async function decideNow(roomId, key, decision) {
 export async function setPhotoPin(roomId, night, name, on) {
   if (!photoKeyOk(photoKey(night, name))) return { ok: false, error: 'No photo there.' };
   if (!photosRepoConfigured()) {
-    return { ok: false, error: 'The private photo repository is not set up, so there is nowhere to record this.' };
+    return { ok: false, error: 'The photo store is not set up, so there is nowhere to record this.' };
   }
   // The same queue as the nights and the rulings — one file, one writer.
   return inOrder(roomId, () => pinNow(roomId, night, name, on));

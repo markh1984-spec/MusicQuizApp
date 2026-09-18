@@ -24,6 +24,44 @@
  * the app is deployed from.
  */
 
+import * as store from './r2.js';
+
+/*
+ * ---- WHERE THE PHOTOGRAPHS ACTUALLY LIVE -------------------------------
+ *
+ * **WHEN AN OBJECT STORE IS CONFIGURED IT TAKES OVER `which === 'photos'`,
+ * AND NOTHING ELSE CHANGES.** Twenty call sites pass that word; none of them
+ * had to learn a second store. Read `src/r2.js` for why the move was made at
+ * all — the short version is that a delete in a git repository is not a
+ * delete, and this app stores pictures of the public.
+ *
+ * **READS FALL BACK TO GITHUB; WRITES DO NOT.** That asymmetry is the whole
+ * migration story and it is deliberate:
+ *
+ *   - a new photograph goes to the object store and only there, so the
+ *     repository stops growing the moment the variables are set;
+ *   - a photograph asked for is looked for in the object store FIRST and in
+ *     the repository AFTER, so every night already filed goes on working
+ *     without a migration having to run first, or at all, or in the right
+ *     order;
+ *   - and a LISTING is the UNION of both, so Past gigs shows last year's
+ *     nights beside tonight's instead of appearing to lose half of somebody's
+ *     history the day a variable was typed.
+ *
+ * This is the rule `CLAUDE.md` already records for the two archives: **they
+ * are UNIONED, never swapped** — both are his, and picking one moves his
+ * history.
+ *
+ * **A FALLBACK HAPPENS ON A MISS, NEVER ON A FAILURE.** `{ok:false}` means
+ * *"I could not look"* and is passed straight through. Treating it as a miss
+ * would send every read that timed out on to GitHub, which is the rate limit
+ * this store exists to get out from under — and worse, it would hide a broken
+ * store behind a slow one for as long as the old repo still answered.
+ */
+const inStore = (which) => (which === 'photos' || which === 'private') && store.configured();
+/** Is the OLD repository still there to fall back to? Usually, during a move. */
+const alsoInRepo = () => Boolean(process.env.PHOTO_REPO && (process.env.PHOTO_TOKEN || process.env.GITHUB_TOKEN));
+
 const API = 'https://api.github.com';
 
 export function githubConfigured() {
@@ -126,10 +164,16 @@ export function privateRepoConfigured() {
 }
 
 export function photosRepoConfigured() {
-  return Boolean(process.env.PHOTO_REPO && (process.env.PHOTO_TOKEN || process.env.GITHUB_TOKEN));
+  // "Is there somewhere to put a photograph" — which an object store answers
+  // just as well as a repository. Every caller means the question, not GitHub.
+  return store.configured() || alsoInRepo();
 }
 
 export function photosRepoName() {
+  // WHERE THE PHOTOGRAPHS ACTUALLY ARE, which is the question the console is
+  // asking. Printing the repository while the store holds them would be a
+  // panel that is confidently wrong about the one thing it is for.
+  if (store.configured()) return `${store.bucketName()} (object store)`;
   return process.env.PHOTO_REPO || '';
 }
 
@@ -142,6 +186,10 @@ export function photosRepoName() {
  * "the app can see it" are genuinely different things.
  */
 export function missingPhotoConfig() {
+  // Either store is a complete answer, so a half-set object store is named
+  // rather than being reported as a missing repository — otherwise the one
+  // variable actually wanted is the one thing the message does not say.
+  if (store.configured() || (!alsoInRepo() && store.missingConfig().length < 4)) return store.missingConfig();
   const missing = [];
   if (!process.env.PHOTO_REPO) missing.push('PHOTO_REPO');
   if (!process.env.PHOTO_TOKEN && !process.env.GITHUB_TOKEN) missing.push('PHOTO_TOKEN or GITHUB_TOKEN');
@@ -268,6 +316,10 @@ async function shaOf(filePath, which = 'app', { fresh = false } = {}) {
  * @returns {{ok: boolean, url?: string, error?: string}}
  */
 export async function putFile(filePath, contents, message, which = 'app') {
+  // The object store has no commits, so the message has nowhere to go — and
+  // nothing is lost: a commit message is a thing you read in a history, which
+  // is exactly what this store deliberately does not keep.
+  if (inStore(which)) return store.put(filePath, contents);
   if (!readyFor(which)) {
     const named = which === 'packs' ? 'The packs repository'
       : (which === 'photos' || which === 'private') ? 'The private repository'
@@ -370,6 +422,10 @@ export async function putFile(filePath, contents, message, which = 'app') {
 export async function putFiles(files, message, which = 'app') {
   const list = (files || []).filter((f) => f && f.path);
   if (!list.length) return { ok: true, count: 0 };
+  // One commit out of many files is what this function buys on GitHub. A store
+  // with no commits has nothing to coalesce, so the parallel put is the whole
+  // of it — see `putMany()`.
+  if (inStore(which)) return store.putMany(list);
   if (!readyFor(which)) {
     const named = which === 'packs' ? 'The packs repository'
       : (which === 'photos' || which === 'private') ? 'The private repository'
@@ -505,6 +561,13 @@ async function rawGet(filePath, which) {
 
 export async function tryGetFile(filePath, which = 'app') {
   if (!readyFor(which)) return { ok: true, body: null };
+  if (inStore(which)) {
+    const read = await store.tryGet(filePath);
+    // A MISS falls through to the old repository; a FAILURE does not. See the
+    // note at the top of this file — the two are not the same answer, and
+    // collapsing them hides a broken store behind a slow one.
+    if (!read.ok || read.body || !alsoInRepo()) return read;
+  }
   try {
     const { owner, name, branch } = settings(which);
     const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(filePath)}?ref=${encodeURIComponent(branch)}`, {}, which);
@@ -561,6 +624,18 @@ export async function listDir(dirPath, which = 'app') {
  */
 export async function tryListDir(dirPath, which = 'app') {
   if (!readyFor(which)) return { ok: true, files: [] };
+  if (inStore(which)) {
+    const read = await store.tryListDir(dirPath);
+    if (!read.ok || !alsoInRepo()) return read;
+    const fromRepo = await repoListDir(dirPath, which);
+    // UNIONED, never swapped: a night half-moved must not look half-deleted.
+    return fromRepo.ok ? { ok: true, files: mergedByName(read.files, fromRepo.files) } : read;
+  }
+  return repoListDir(dirPath, which);
+}
+
+/** What the REPOSITORY has in a folder. The old half of `tryListDir()`. */
+async function repoListDir(dirPath, which) {
   try {
     const { owner, name, branch } = settings(which);
     const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(dirPath)}?ref=${encodeURIComponent(branch)}`, {}, which);
@@ -591,6 +666,28 @@ export async function tryListDir(dirPath, which = 'app') {
  */
 export async function listDirs(dirPath, which = 'app') {
   if (!readyFor(which)) return [];
+  if (inStore(which)) {
+    const fromStore = await store.listDirs(dirPath);
+    if (!alsoInRepo()) return fromStore;
+    return mergedByName(fromStore, await repoListDirs(dirPath, which));
+  }
+  return repoListDirs(dirPath, which);
+}
+
+/**
+ * Two listings as one, the first winning a clash.
+ *
+ * By NAME rather than by path, because the same night filed in both places has
+ * the same name and a different home — and a night listed twice is a night
+ * that reads as two nights on Past gigs, in the league and in the headcounts.
+ */
+function mergedByName(first, second) {
+  const seen = new Set((first || []).map((f) => f.name));
+  return [...(first || []), ...(second || []).filter((f) => !seen.has(f.name))];
+}
+
+/** What the REPOSITORY has for folders. The old half of `listDirs()`. */
+async function repoListDirs(dirPath, which) {
   try {
     const { owner, name, branch } = settings(which);
     const res = await api(`/repos/${owner}/${name}/contents/${encodeURI(dirPath)}?ref=${encodeURIComponent(branch)}`, {}, which);
@@ -607,6 +704,15 @@ export async function listDirs(dirPath, which = 'app') {
 
 export async function deleteFile(filePath, message, which = 'app') {
   if (!readyFor(which)) return { ok: false, error: 'not set up' };
+  if (inStore(which)) {
+    const gone = await store.remove(filePath);
+    // BOTH, while both exist. A photograph filed before the move lives in the
+    // repository, and a bin that only emptied one of them would put a deleted
+    // picture back on the gallery the moment the store missed and the read
+    // fell through — which is the fallback two functions up, working exactly
+    // as designed, against the one press that must be final.
+    if (!gone.ok || !alsoInRepo()) return gone;
+  }
   /*
    * A DELETED FILE HAS NO SHA, so whatever `putFile` remembers about this path
    * is wrong from here on — whether the delete works or not. Forgotten UP
@@ -632,6 +738,7 @@ export async function deleteFile(filePath, message, which = 'app') {
 /** A quick check that the token works and can write, for the console to show. */
 export async function checkAccess(which = 'app') {
   if (!readyFor(which)) return { ok: false, error: 'not set up' };
+  if (inStore(which)) return store.checkAccess();
   try {
     const { owner, name } = settings(which);
     const res = await api(`/repos/${owner}/${name}`, {}, which);

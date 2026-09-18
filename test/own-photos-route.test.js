@@ -82,7 +82,7 @@ test('THE ROUTE EXISTS FOR POST — never a 404, which is what a missing one giv
     // has to name that rather than blaming the photo.
     assert.equal(res.status, 400);
     const body = await res.json();
-    assert.match(body.error, /private photo repository/i);
+    assert.match(body.error, /photo store is not set up/i);
   });
 });
 

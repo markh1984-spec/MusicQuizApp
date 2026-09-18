@@ -82,7 +82,7 @@ export async function writePhotos(req, res, url, route) {
     if (!photosRepoConfigured()) {
       // Name the missing thing rather than saying "could not save that", which
       // would send somebody hunting through the app for a fault in an env var.
-      return sendJson(res, 400, { error: 'The private photo repository is not set up, so there is nowhere to keep these.' }), true;
+      return sendJson(res, 400, { error: 'The photo store is not set up, so there is nowhere to keep these.' }), true;
     }
 
     let bytes;
@@ -217,7 +217,7 @@ export async function writePhotos(req, res, url, route) {
       return sendJson(res, 404, { error: 'No photo there.' }), true;
     }
     if (!photosRepoConfigured()) {
-      return sendJson(res, 400, { error: 'The private photo repository is not set up, so there is nothing to change.' }), true;
+      return sendJson(res, 400, { error: 'The photo store is not set up, so there is nothing to change.' }), true;
     }
     let bytes;
     try {
@@ -254,8 +254,11 @@ export async function writePhotos(req, res, url, route) {
     }
     if (!photosRepoConfigured()) {
       // Say which thing is missing. "Could not delete that" would send
-      // somebody hunting through the app for a fault in an env var.
-      return sendJson(res, 400, { error: 'The private photo repository is not set up, so there is nothing to delete from.' }), true;
+      // somebody hunting through the app for a fault in an env var. It names
+      // the STORE rather than the repository: there are two of those now, and
+      // a message naming the one that is not in use is a fault report pointing
+      // at the wrong variable.
+      return sendJson(res, 400, { error: 'The photo store is not set up, so there is nothing to delete from.' }), true;
     }
     const gone = `${photoFolder(galleryRoomFor(req, url))}/${night}/${name}`;
     const done = await deleteFile(gone, `Remove a photo from ${night}`, 'photos');

@@ -60,7 +60,7 @@ test('and says so honestly when there is nowhere to record it', async () => {
   // wrong about, but still wrong.
   const res = await setPublished('house', '2026-08-14', true);
   assert.equal(res.ok, false);
-  assert.match(res.error, /repository/i);
+  assert.match(res.error, /photo store is not set up/i);
 });
 
 test('a date reads as a person would say it', () => {
@@ -197,7 +197,7 @@ test('AND THE PUBLISH ROUTE ANSWERS A POST AT ALL', async () => {
     });
     assert.notEqual(res.status, 404, 'the publish route is not reachable by POST');
     const out = await res.json();
-    assert.match(out.error || '', /repository/i, `expected an honest refusal, got ${JSON.stringify(out)}`);
+    assert.match(out.error || "", /photo store is not set up/i, `expected an honest refusal, got ${JSON.stringify(out)}`);
   });
 });
 

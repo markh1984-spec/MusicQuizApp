@@ -217,7 +217,7 @@ export async function isLeagueRunning(roomId, key) {
 async function setLeagueRunningNow(roomId, key, on) {
   if (!isVenueKey(key)) return { ok: false, error: 'That is not a venue.' };
   if (!photosRepoConfigured()) {
-    return { ok: false, error: 'The private repository is not set up, so there is nowhere to record this.' };
+    return { ok: false, error: 'The private store is not set up, so there is nowhere to record this.' };
   }
   const held = await readDecisions(roomId);
   const running = on
@@ -261,7 +261,7 @@ async function setNameDecisionNow(roomId, name, decision) {
     return { ok: false, error: 'That is not a decision.' };
   }
   if (!photosRepoConfigured()) {
-    return { ok: false, error: 'The private repository is not set up, so there is nowhere to record this.' };
+    return { ok: false, error: 'The private store is not set up, so there is nowhere to record this.' };
   }
   const have = await readDecisions(roomId);
   const names = { ...have.names };
@@ -308,7 +308,7 @@ export async function isVenuePublished(roomId, key) {
 async function setVenuePublishedNow(roomId, key, on) {
   if (!isVenueKey(key)) return { ok: false, error: 'That is not a venue.' };
   if (!photosRepoConfigured()) {
-    return { ok: false, error: 'The private repository is not set up, so there is nowhere to record this.' };
+    return { ok: false, error: 'The private store is not set up, so there is nowhere to record this.' };
   }
   const decided = await readDecisions(roomId);
   const have = decided.venues;

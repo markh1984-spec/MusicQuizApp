@@ -2117,7 +2117,47 @@ first fifty people to open a gallery after one each spent a GitHub call against
   place of another. `encodeURIComponent`, hashed past 200 chars. **Do not lean
   on `safePhotoName()`.**
 - **A `..` MAY NOT WALK OUT** — the test writes a sentinel OUTSIDE the folder.
-- **NOTHING DECIDING WHO MAY SEE A PHOTO IS CACHED WITH IT.** Object storage would fix the git-history problem.
+- **NOTHING DECIDING WHO MAY SEE A PHOTO IS CACHED WITH IT.** The store below is the source of truth; this stays a cache.
+
+### THE PHOTOGRAPHS LIVE IN AN OBJECT STORE NOW — and a delete is finally a delete
+
+`src/r2.js`, the `which === 'photos'` delegation at the top of `src/github.js`,
+`scripts/photos-to-r2.mjs`, `node scripts/photos-in-a-bucket.mjs`. **A deleted
+photo leaves the repo but NOT git history** is a rule in this file and it is the
+wrong promise for pictures of the public: the bin cleared every screen and left
+the bytes for ever, sixty copies of one joke could never be reclaimed, and the
+repository could only grow.
+
+- **IT IS S3's API, NOT A SUPPLIER.** Ordinary REST plus SigV4, so it runs on
+  R2, B2, MinIO or Amazon by changing one endpoint. **No file names a
+  supplier**, and **no dependency** — SigV4 is SHA-256 and HMAC-SHA256, which
+  this app already computes by hand for the Stripe webhook.
+- **INERT WITHOUT THE FOUR VARIABLES, AND THE SWAP IS AT ONE CHOKE POINT** —
+  `github.js` delegates its photo calls, so **not one of the twenty call sites
+  changed** and the return shapes are identical. **`{ok:false}` is not empty**:
+  a second store collapsing them would put a blank gallery in front of a room
+  and cache it.
+- **READS FALL BACK TO GITHUB; WRITES DO NOT, AND LISTINGS ARE UNIONED** —
+  *the archives are UNIONED, never swapped*, applied to a half-done move. The
+  migration therefore never has to run, and a night filed in both places is ONE
+  night. **A fallback happens on a MISS, never on a FAILURE**, or a failing
+  store silently pushes its whole read load back onto the 5,000-an-hour limit
+  it exists to escape.
+- **THE BIN REACHES BOTH WHILE BOTH EXIST**, or a deleted photograph comes
+  straight back the next time the store misses and the read falls through as
+  designed.
+- **THE SCRIPT IS FOR DELETING THE REPOSITORY AFTERWARDS, AND THAT IS THE WHOLE
+  PRIZE** — copying the files across changes nothing until the old repo is
+  GONE, its history being the thing erased. It copies the working tree, reads
+  every byte back, and **leaves the repository untouched**; a human deletes it,
+  having looked at the count.
+- **RFC 3986, NOT `encodeURIComponent`** — they differ on `! ' ( ) *` and S3
+  signs ITS spelling of the path, so one character is a 403 that reads exactly
+  like a bad key.
+- **THE SIGNATURE IS NOT PROVEN BY THE SUITE** — no test here holds keys and
+  none ever should. **`checkAccess()` WRITES and removes** rather than reading,
+  because a key that can list but not put looks like a working one from a read,
+  and the migration runs it before it reads a single photograph.
 
 ### A RUDE PHOTO IS FLAGGED FOR REVIEW, NEVER DELETED — `src/moderation.js`
 
@@ -4206,6 +4246,8 @@ node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 node scripts/photo-to-socials.mjs       # can a pub save a photo, with your name on?
 node scripts/photo-to-start.mjs         # is the photo ask real, and the skip?
 node scripts/rude-photo.mjs              # is a rude photo flagged and marked?
+node scripts/photos-in-a-bucket.mjs     # the gallery off an object store — does the bin mean it?
+node scripts/photos-to-r2.mjs           # move the photographs off GitHub (--go to do it)
 node scripts/second-screen.mjs          # the second display: the code and the photos
 node scripts/two-screens.mjs            # two outputs, a real account, quiz -> bingo
 node scripts/second-laptop.mjs          # the wall on a spare laptop

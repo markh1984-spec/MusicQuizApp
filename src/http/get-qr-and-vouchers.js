@@ -41,6 +41,13 @@ export async function getQrAndVouchers(req, res, url, route) {
         PHOTO_BRANCH: process.env.PHOTO_BRANCH || '(default: main)',
         PHOTO_TOKEN: Boolean(process.env.PHOTO_TOKEN),
         GITHUB_TOKEN: Boolean(process.env.GITHUB_TOKEN),
+        // The object store, when there is one. A repository still set up
+        // alongside it is the fallback a half-finished move leans on, so both
+        // are shown rather than one replacing the other on screen.
+        R2_ENDPOINT: Boolean(process.env.R2_ENDPOINT),
+        R2_BUCKET: process.env.R2_BUCKET || '',
+        R2_ACCESS_KEY_ID: Boolean(process.env.R2_ACCESS_KEY_ID),
+        R2_SECRET_ACCESS_KEY: Boolean(process.env.R2_SECRET_ACCESS_KEY),
       },
       nights: photos.nights(),
     }), true;
