@@ -171,3 +171,104 @@ test('two nights of the same length do not get the same card', () => {
   const shown = names(18);
   assert.notDeepEqual(coverPhotos(shown, '2026-08-20', []), coverPhotos(shown, '2026-08-13', []));
 });
+
+/*
+ * ---- A STAR MEANS PUBLIC -----------------------------------------------
+ *
+ * Reported off a live console: *"I just saw a photo that had a star on it but
+ * with a red dot, which doesn't make any sense."* It did not. The test above
+ * proves a hidden photograph never reaches the card — which was correct, and
+ * was the whole problem: the app resolved a contradiction it was happy to
+ * store, in silence, and the star sat there lit and doing nothing.
+ *
+ * So the two controls are now one decision with an order to it, enforced in
+ * the two writers that share the file. `coverPhotos()` still filters, and that
+ * is deliberate belt and braces: `published.json` lives in a repo a human can
+ * hand-edit, so the READ must go on refusing what the WRITERS can no longer
+ * produce.
+ */
+
+test('STARRING ONE PUBLISHES IT — an upload the room sent, off by default', async () => {
+  const repo = stubRepo();
+  try {
+    const name = 'b-picked.jpg';
+    assert.equal(showsOnGallery(name, undefined), false, 'the default moved');
+    const done = await setPhotoPin(ROOM, NIGHT, name, true);
+    assert.equal(done.ok, true);
+    assert.equal(done.onGallery, true, 'the star left the photo hidden');
+    assert.deepEqual(await photoDecisions(ROOM), { [`${NIGHT}/${name}`]: 'on' });
+  } finally { repo.restore(); }
+});
+
+test('…and on a house photo it CLEARS the hiding rather than stacking an "on" over it', async () => {
+  /*
+   * A ruling that only restates the default is cleared, not stored — the rule
+   * `showsOnGallery()` exists to keep. Writing `'on'` here would pin this
+   * photograph to today's default for ever, and a later change to how the
+   * default is decided could never reach it again.
+   */
+  const repo = stubRepo();
+  try {
+    await setPhotoDecision(ROOM, NIGHT, 'a.jpg', 'off');
+    assert.deepEqual(await photoDecisions(ROOM), { [`${NIGHT}/a.jpg`]: 'off' });
+    const done = await setPhotoPin(ROOM, NIGHT, 'a.jpg', true);
+    assert.equal(done.onGallery, true);
+    assert.deepEqual(await photoDecisions(ROOM), {}, 'a ruling that says nothing was stored');
+  } finally { repo.restore(); }
+});
+
+test('HIDING A STARRED PHOTOGRAPH TAKES ITS STAR OFF — the other direction', async () => {
+  const repo = stubRepo();
+  try {
+    await setPhotoPin(ROOM, NIGHT, 'a.jpg', true);
+    await setPhotoPin(ROOM, NIGHT, 'c.jpg', true);
+    const done = await setPhotoDecision(ROOM, NIGHT, 'a.jpg', 'off');
+    assert.equal(done.ok, true);
+    assert.equal(done.pinned, false, 'the reply still claimed it was starred');
+    assert.deepEqual((await photoPins(ROOM))[NIGHT], ['c.jpg'],
+      'a hidden photograph kept a star that now means nothing');
+  } finally { repo.restore(); }
+});
+
+test('but UN-starring one does not hide it', async () => {
+  // One direction only. A star is a preference about which public photographs
+  // lead; taking it off says nothing about whether the photo is public, and a
+  // control that quietly hid a picture would be far worse than one that did not.
+  const repo = stubRepo();
+  try {
+    await setPhotoPin(ROOM, NIGHT, 'b-picked.jpg', true);
+    await setPhotoPin(ROOM, NIGHT, 'b-picked.jpg', false);
+    assert.deepEqual(await photoPins(ROOM), {});
+    assert.deepEqual(await photoDecisions(ROOM), { [`${NIGHT}/b-picked.jpg`]: 'on' },
+      'taking the star off hid the photograph as well');
+  } finally { repo.restore(); }
+});
+
+test('A REFUSED FOURTH STAR PUBLISHES NOTHING', async () => {
+  /*
+   * The cap is refused rather than trimmed, and the refusal has to take the
+   * publish with it — otherwise a press that visibly did nothing would still
+   * have put a photograph the room sent onto a public page.
+   */
+  const repo = stubRepo();
+  try {
+    for (const n of ['p1.jpg', 'p2.jpg', 'p3.jpg']) await setPhotoPin(ROOM, NIGHT, n, true);
+    const over = await setPhotoPin(ROOM, NIGHT, 'p4-picked.jpg', true);
+    assert.equal(over.ok, false);
+    assert.deepEqual(await photoDecisions(ROOM), {}, 'a refused star published a photograph');
+    assert.equal(showsOnGallery('p4-picked.jpg', (await photoDecisions(ROOM))[`${NIGHT}/p4-picked.jpg`]), false);
+  } finally { repo.restore(); }
+});
+
+test('starring one already starred and public writes nothing at all', async () => {
+  // A second tap on a control that is already where it should be must not make
+  // a commit — the rule every writer of this file follows.
+  const repo = stubRepo();
+  try {
+    await setPhotoPin(ROOM, NIGHT, 'a.jpg', true);
+    const before = repo.files.size && JSON.stringify([...repo.files]);
+    const again = await setPhotoPin(ROOM, NIGHT, 'a.jpg', true);
+    assert.equal(again.ok, true);
+    assert.equal(JSON.stringify([...repo.files]), before, 'a no-op press wrote the file');
+  } finally { repo.restore(); }
+});

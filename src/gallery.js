@@ -32,6 +32,31 @@
 
 import { getFile, putFile, photosRepoConfigured } from './github.js';
 import { photoFolder, isNightFolder } from './past-gigs.js';
+import { showsByDefault, showsOnGallery } from './photos.js';
+
+/*
+ * ---- A STAR MEANS PUBLIC ------------------------------------------------
+ *
+ * Reported off a live console: *"I just saw a photo that had a star on it but
+ * with a red dot, which doesn't make any sense."* It did not. A star says
+ * *this is one of the three the night leads with*; a red lamp says *this never
+ * goes public*. Both were stored, both were drawn, and the app resolved the
+ * contradiction in silence — `coverPhotos()` only ever draws from the photos
+ * the night's page would show, so a starred-but-red photograph simply did
+ * nothing. A control that is present, lit, and ignored is exactly what
+ * *present and inert* exists to refuse.
+ *
+ * **SO THE TWO ARE ONE DECISION WITH A ORDER TO IT: starring PUBLISHES, and
+ * hiding UNSTARS.** Not a warning, not a disabled star — either would make
+ * somebody work out a rule the app could simply keep.
+ *
+ * **AND IT IS ENFORCED HERE, NOT IN THE BROWSER.** These are the only two
+ * writers of `published.json` and they already share one queue per room, so
+ * this is the one place the two halves can be changed together and the one
+ * place a second tab cannot get between them. The console flips both controls
+ * optimistically and then reads what actually happened back off the reply —
+ * it does not own the rule, it only keeps up with it.
+ */
 
 /**
  * HOW MANY PHOTOGRAPHS A NIGHT'S CARD CAN BE PINNED TO — three.
@@ -328,25 +353,45 @@ export async function setPhotoDecision(roomId, night, name, decision) {
   }
   // Behind the same queue as publishing, and it has to be the SAME one: these
   // two edit one file, so ordering them separately would order nothing.
-  return inOrder(roomId, () => decideNow(roomId, key, decision));
+  return inOrder(roomId, () => decideNow(roomId, night, name, decision));
 }
 
-async function decideNow(roomId, key, decision) {
+async function decideNow(roomId, night, name, decision) {
+  const key = photoKey(night, name);
   const held = await readAll(roomId);
   const photos = { ...held.photos };
   if (decision) photos[key] = decision; else delete photos[key];
-  if (JSON.stringify(photos) === JSON.stringify(held.photos)) return { ok: true, photos: held.photos };
+
+  /*
+   * HIDING A PHOTOGRAPH TAKES ITS STAR OFF — the second half of *a star means
+   * public*, and the half that is easy to forget because the pin is in another
+   * part of the same file. Without it the contradiction comes straight back
+   * from the other direction: a starred photo switched red keeps a star that
+   * now means nothing, which is the exact thing that was reported.
+   */
+  const pins = { ...held.pins };
+  let pinned = (pins[night] || []).includes(name);
+  if (pinned && !showsOnGallery(name, decision)) {
+    const want = (pins[night] || []).filter((n) => n !== name);
+    if (want.length) pins[night] = want; else delete pins[night];
+    pinned = false;
+  }
+
+  if (JSON.stringify(photos) === JSON.stringify(held.photos)
+    && JSON.stringify(pins) === JSON.stringify(held.pins)) {
+    return { ok: true, photos: held.photos, pinned };
+  }
 
   const res = await putFile(
     listPath(roomId),
-    // The nights and the card pins ride along untouched — see the note on the
-    // publish writer above.
-    JSON.stringify({ nights: held.nights, photos, pins: held.pins }, null, 2),
+    // The nights ride along untouched — see the note on the publish writer
+    // above. The pins do NOT always: see the unstar just above.
+    JSON.stringify({ nights: held.nights, photos, pins }, null, 2),
     decision ? `${decision === 'on' ? 'Show' : 'Hide'} ${key} on the gallery` : `Clear the ruling on ${key}`,
     'photos',
   );
   if (res && res.ok === false) return { ok: false, error: res.error || 'Could not save that.' };
-  return { ok: true, photos };
+  return { ok: true, photos, pinned };
 }
 
 /**
@@ -382,28 +427,51 @@ export async function setPhotoPin(roomId, night, name, on) {
 }
 
 async function pinNow(roomId, night, name, on) {
+  const key = photoKey(night, name);
   const held = await readAll(roomId);
   const had = held.pins[night] || [];
-  if (on && had.includes(name)) return { ok: true, pins: had };
-  if (on && had.length >= MAX_PINS) {
+  const shows = (said) => showsOnGallery(name, said);
+
+  if (on && had.length >= MAX_PINS && !had.includes(name)) {
     return { ok: false, error: `Three is the most a card can show. Take one off first.` };
   }
-  const want = on ? [...had, name] : had.filter((n) => n !== name);
-  if (want.length === had.length && want.every((n, i) => n === had[i])) {
-    return { ok: true, pins: had };
+
+  /*
+   * STARRING PUBLISHES IT — the first half of *a star means public*.
+   *
+   * **A RULING THAT ONLY RESTATES THE DEFAULT IS CLEARED, NOT STORED**, which
+   * is why this asks `showsByDefault()` rather than writing `'on'` every time:
+   * a house photograph already shows, so what it needs is any old `'off'`
+   * ruling REMOVED, not a new one stacked on top. Storing `'on'` there would
+   * pin this photograph to today's default for ever, which is the trap
+   * `showsOnGallery()` was written to keep out of this file.
+   */
+  const photos = { ...held.photos };
+  if (on && !shows(photos[key])) {
+    if (showsByDefault(name)) delete photos[key]; else photos[key] = 'on';
   }
+
+  const want = on
+    ? (had.includes(name) ? had : [...had, name])
+    : had.filter((n) => n !== name);
   const pins = { ...held.pins };
   // An empty list is REMOVED rather than stored as `[]` — the same rule as a
   // ruling that only restates the guess: nothing to say, nothing kept.
   if (want.length) pins[night] = want; else delete pins[night];
+
+  const onGallery = shows(photos[key]);
+  if (JSON.stringify(pins) === JSON.stringify(held.pins)
+    && JSON.stringify(photos) === JSON.stringify(held.photos)) {
+    return { ok: true, pins: had, onGallery };
+  }
   const res = await putFile(
     listPath(roomId),
-    JSON.stringify({ nights: held.nights, photos: held.photos, pins }, null, 2),
-    `${on ? 'Pin' : 'Unpin'} ${photoKey(night, name)} on the gallery card`,
+    JSON.stringify({ nights: held.nights, photos, pins }, null, 2),
+    `${on ? 'Pin' : 'Unpin'} ${key} on the gallery card`,
     'photos',
   );
   if (res && res.ok === false) return { ok: false, error: res.error || 'Could not save that.' };
-  return { ok: true, pins: want };
+  return { ok: true, pins: want, onGallery };
 }
 
 /** Which photographs a human pinned, per night. */

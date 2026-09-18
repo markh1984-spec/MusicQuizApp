@@ -163,7 +163,13 @@ export async function writePhotos(req, res, url, route) {
     // sending them to two rooms is two half-truths rather than one answer.
     const done = await setPhotoDecision(galleryRoomFor(req, url), night, name, decision);
     if (!done.ok) return sendJson(res, 400, { error: done.error || 'Could not save that.' }), true;
-    return sendJson(res, 200, { ok: true, night, name, onGallery: on }), true;
+    /*
+     * `pinned` COMES BACK BECAUSE HIDING A PHOTOGRAPH TAKES ITS STAR OFF — see
+     * *a star means public* in `gallery.js`. The console flips both controls
+     * the moment it is pressed and then settles them against this reply, so
+     * the rule lives in one place and the browser only keeps up with it.
+     */
+    return sendJson(res, 200, { ok: true, night, name, onGallery: on, pinned: done.pinned }), true;
   }
 
   /*
@@ -189,7 +195,9 @@ export async function writePhotos(req, res, url, route) {
     const on = Boolean(body && body.on);
     const done = await setPhotoPin(galleryRoomFor(req, url), night, name, on);
     if (!done.ok) return sendJson(res, 400, { error: done.error || 'Could not save that.' }), true;
-    return sendJson(res, 200, { ok: true, night, name, pinned: on, pins: done.pins }), true;
+    // And the other way round: starring one PUBLISHES it, so the lamp's own
+    // state rides back rather than the console assuming what happened.
+    return sendJson(res, 200, { ok: true, night, name, pinned: on, pins: done.pins, onGallery: done.onGallery }), true;
   }
 
   /*

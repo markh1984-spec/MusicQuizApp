@@ -1624,3 +1624,96 @@ that 403 while every variable is correct: **RFC 3986, not `encodeURIComponent`.*
 They disagree on exactly five characters — `! ' ( ) *` — and S3 computes its
 signature over ITS spelling of the path. `safePhotoName()` would not let one
 through today; the signature must not depend on that staying true.
+
+---
+
+## A STAR MEANS PUBLIC — 18 September 2026
+
+Reported off a live console, and it is the clearest kind of bug report there
+is: *"I just saw a photo that had a star on it but with a red dot, which
+doesn't make any sense."*
+
+It did not. Two controls sat on one tile saying opposite things:
+
+- the **star** means *this is one of the three photographs the night's card
+  leads with*, and the socials export uses the same three;
+- the **red lamp** means *this photograph never goes on the public gallery*.
+
+Both were stored, both were drawn, and nothing anywhere refused the pair. The
+app resolved it in silence: `coverPhotos()` only ever draws from the list a
+night's page would actually show, so a starred-but-hidden photograph was
+filtered out and the star did nothing at all.
+
+**That filter was right and it was the whole problem.** It is defence in depth
+against a hand-edited `published.json`, not a design. What it produced on
+screen was a control present, lit, and ignored — which is precisely what
+*present and inert* exists to refuse, and which the app has no way to explain
+to somebody looking at it.
+
+### One decision with an order to it
+
+Three fixes were possible and only one of them leaves nothing to work out:
+
+1. **Warn.** A line saying "this one is hidden, so the star does nothing". That
+   is a control that needs explaining, which rule 1 says is a control that is
+   wrong.
+2. **Disable the star on a hidden photograph.** Better, and still makes
+   somebody discover a rule by finding a dead button — and the obvious next
+   move (switch it green, then star it) is two presses for one intent.
+3. **Make the pair impossible.** Starring publishes; hiding unstars.
+
+Three is what was built, and the asymmetry is deliberate:
+
+> **Starring one PUBLISHES it. Hiding one UNSTARS it. Un-starring one does
+> NOT hide it.**
+
+The last clause matters. A star is a preference about which of the public
+photographs to lead with; taking it off says nothing about whether the
+photograph should be public, and a control that quietly pulled a picture off a
+page would be far worse than the contradiction it replaced.
+
+### It is enforced in the writers, not in the browser
+
+`setPhotoPin()` and `setPhotoDecision()` are the only two writers of
+`published.json` and they already share one queue per room — so that is the one
+place both halves can move together and the one place a second open tab cannot
+get between them. Putting the rule in `console-gigs.js` would have been a
+second copy of it, and the two would disagree the first time somebody had the
+console open twice.
+
+**The browser only keeps up.** Both controls already flip optimistically and
+settle against the reply — the lamp has done since *"the 1-2 second load on
+clicking green/red is annoying"* — so each press now moves its sibling on
+screen straight away and then takes the server's answer for both. The two
+routes report the paired state back (`pinned` on the ruling route, `onGallery`
+on the pin route) rather than letting the console assume what a write did.
+
+### Two smaller things that are easy to get wrong
+
+**Starring a photograph that is public by default writes no ruling.** The rule
+this file already carries — *a ruling that only restates the DEFAULT is
+CLEARED, not stored* — applies here in a form that looks like a shortcut and is
+not: starring a house photograph whose lamp had been switched red must DELETE
+that `'off'`, never stack an `'on'` over it. Storing `'on'` would pin the
+photograph to today's default for ever, and a later change to how the default
+is decided could never reach it again. So the pin writer asks
+`showsByDefault()`, exactly as the ruling route does.
+
+**A refused fourth star publishes nothing.** The cap is refused rather than
+trimmed, and the refusal has to take the publish with it — otherwise a press
+that visibly did nothing would still have put a photograph the room sent onto a
+public page. The check runs before anything is written, and the browser puts
+both controls back when the 400 arrives.
+
+### What proves it
+
+`test/gallery-pins.test.js` pins the rule in the writers, including the
+direction that does *not* hold and the refused-fourth-star case.
+`node scripts/star-means-public.mjs` presses both controls in a real browser,
+reads the classes off the screen, checks the server agrees, and reloads the
+page — because *a test that the payload is right proves nothing about whether
+anybody drew it*, and the half that was reported was the half on screen.
+
+`coverPhotos()` still filters, and that stays: `published.json` lives in a repo
+a human can edit, so the READ must go on refusing what the writers can no
+longer produce.

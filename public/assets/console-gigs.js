@@ -986,12 +986,31 @@ export async function nightPhotos(body, night, opts = {}) {
     let saved = live;
     let timer = null;
 
+    /*
+     * A STAR MEANS PUBLIC — and these two are how the lamp keeps the star
+     * honest on screen. **The RULE is the server's** (`gallery.js`): starring
+     * publishes, hiding unstars, both inside one write of one file. These
+     * hooks only move the other control while that write is in the air, and
+     * everything settles against what the reply says actually happened — a
+     * second copy of the rule in here is how the two come to disagree the
+     * first time somebody has two tabs open.
+     *
+     * Forward-declared because the star is built a few lines below this, and
+     * a click can only ever fire once both halves exist.
+     */
+    let showStarAs = () => {};
+    let starIsOn = () => false;
+
     pill.addEventListener('click', (ev) => {
       // Belt to the figure's own braces above: a lamp is a control ON a
       // picture, and pressing it must never also mean "open this".
       ev.stopPropagation();
       live = !live;
       paintPill();
+      // Taking it off the gallery takes its star off too — the star would
+      // otherwise sit there meaning nothing, which is what was reported.
+      const starWas = starIsOn();
+      if (!live) showStarAs(false);
       /*
        * SETTLE FIRST, THEN SEND. Somebody deciding about a photograph often
        * presses twice — and two taps that end where they started need no write
@@ -1013,6 +1032,8 @@ export async function nightPhotos(body, night, opts = {}) {
             const out = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(out.error || 'Could not change that.');
             saved = want;
+            // What the WRITE did, not what this browser guessed it would do.
+            if (typeof out.pinned === 'boolean') showStarAs(out.pinned);
             trouble('');
           } catch (err) {
             /*
@@ -1025,6 +1046,7 @@ export async function nightPhotos(body, night, opts = {}) {
              */
             live = saved;
             paintPill();
+            showStarAs(starWas);
             trouble(err.message);
           }
         });
@@ -1056,18 +1078,25 @@ export async function nightPhotos(body, night, opts = {}) {
        */
       const why = pinned
         ? 'Showcase — one of the three this night leads with. Click to take it off.'
-        : `Showcase — the gallery leads with the three you star, and so does the socials export. Up to ${night.maxPins || 3}.`;
+        : `Showcase — the gallery leads with the three you star, and so does the socials export. Up to ${night.maxPins || 3}. Starring one also puts it on the public gallery.`;
       pin.title = why;
       pin.setAttribute('aria-label', why);
       pin.setAttribute('aria-pressed', String(pinned));
     };
     paintPin();
+    // The lamp's half of *a star means public* — see the note beside it.
+    showStarAs = (on) => { pinned = on; pinSaved = on; paintPin(); };
+    starIsOn = () => pinned;
 
     pin.addEventListener('click', (ev) => {
       // A control ON a picture must never also mean "open this".
       ev.stopPropagation();
       pinned = !pinned;
       paintPin();
+      // Starring one publishes it: a showcase photo the page would never show
+      // is the contradiction this pairing exists to end.
+      const lampWas = live;
+      if (pinned && !live) { live = true; paintPill(); }
       clearTimeout(pinTimer);
       pinTimer = setTimeout(() => {
         if (pinned === pinSaved) return;
@@ -1082,6 +1111,11 @@ export async function nightPhotos(body, night, opts = {}) {
             const out = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(out.error || 'Could not change that.');
             pinSaved = want;
+            if (typeof out.onGallery === 'boolean' && out.onGallery !== live) {
+              live = out.onGallery;
+              paintPill();
+            }
+            saved = live;
             trouble('');
             // The showcase strip redraws off this — the three are decided on
             // the server, so it asks rather than guesses.
@@ -1089,6 +1123,9 @@ export async function nightPhotos(body, night, opts = {}) {
           } catch (err) {
             pinned = pinSaved;
             paintPin();
+            // The refusal took the publish with it — a capped fourth star must
+            // not leave a photograph public that nobody chose to publish.
+            if (live !== lampWas) { live = lampWas; paintPill(); }
             trouble(err.message);
           }
         });

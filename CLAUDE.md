@@ -2134,30 +2134,25 @@ repository could only grow.
   this app already computes by hand for the Stripe webhook.
 - **INERT WITHOUT THE FOUR VARIABLES, AND THE SWAP IS AT ONE CHOKE POINT** —
   `github.js` delegates its photo calls, so **not one of the twenty call sites
-  changed** and the return shapes are identical. **`{ok:false}` is not empty**:
-  a second store collapsing them would put a blank gallery in front of a room
-  and cache it.
+  changed** and the return shapes are identical. **`{ok:false}` is not empty**,
+  or a blank gallery goes in front of a room and caches itself.
 - **READS FALL BACK TO GITHUB; WRITES DO NOT, AND LISTINGS ARE UNIONED** —
   *the archives are UNIONED, never swapped*, applied to a half-done move. The
   migration therefore never has to run, and a night filed in both places is ONE
   night. **A fallback happens on a MISS, never on a FAILURE**, or a failing
-  store silently pushes its whole read load back onto the 5,000-an-hour limit
-  it exists to escape.
+  store pushes its whole read load back onto the limit it exists to escape.
 - **THE BIN REACHES BOTH WHILE BOTH EXIST**, or a deleted photograph comes
-  straight back the next time the store misses and the read falls through as
-  designed.
+  back the next time the store misses and the read falls through.
 - **THE SCRIPT IS FOR DELETING THE REPOSITORY AFTERWARDS, AND THAT IS THE WHOLE
   PRIZE** — copying the files across changes nothing until the old repo is
   GONE, its history being the thing erased. It copies the working tree, reads
-  every byte back, and **leaves the repository untouched**; a human deletes it,
-  having looked at the count.
+  every byte back, and **leaves the repository untouched**; a human deletes it.
 - **RFC 3986, NOT `encodeURIComponent`** — they differ on `! ' ( ) *` and S3
   signs ITS spelling of the path, so one character is a 403 that reads exactly
   like a bad key.
 - **THE SIGNATURE IS NOT PROVEN BY THE SUITE** — no test here holds keys and
-  none ever should. **`checkAccess()` WRITES and removes** rather than reading,
-  because a key that can list but not put looks like a working one from a read,
-  and the migration runs it before it reads a single photograph.
+  none ever should. **`checkAccess()` WRITES and removes**: a key that can list
+  but not put reads as a working one. The migration runs it first.
 
 ### A RUDE PHOTO IS FLAGGED FOR REVIEW, NEVER DELETED — `src/moderation.js`
 
@@ -2754,10 +2749,14 @@ costs.
 - **A LAMP PER PHOTO IS A SWITCH, WITH NO WORDS** — `title`/`aria-label` are
   load-bearing, an 18px dot gets a 44px hit area, and **a ruling that only
   restates the DEFAULT is CLEARED, not stored.**
+- **A STAR MEANS PUBLIC — starring PUBLISHES, hiding UNSTARS**, in the two
+  writers sharing `published.json`: a starred photo the page would never show
+  was present, lit and ignored. **One direction only** — un-starring never
+  hides. **The BROWSER only keeps up**, settling on the reply.
+  `star-means-public.mjs` presses both.
 - **THE PUBLISH LAMP ASKS FIRST, NAMES THE NIGHT AND THE CONSEQUENCE, AND
   SAYING NO CHANGES NOTHING.** **THE COUNT SAYS HOW MANY WILL SHOW, NOT HOW
-  MANY THERE ARE** — a number right about the wrong question is a working app
-  looking broken.
+  MANY THERE ARE.**
 - **`/gallery` SHOWS DRAFTS TO WHOEVER IS SIGNED IN, AND SAYS SO LOUDLY**;
   **`?as=visitor` stands the preview down ON THE SERVER** and **only ever
   SUBTRACTS**, which is why it needs no gate.
@@ -4246,6 +4245,7 @@ node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 node scripts/photo-to-socials.mjs       # can a pub save a photo, with your name on?
 node scripts/photo-to-start.mjs         # is the photo ask real, and the skip?
 node scripts/rude-photo.mjs              # is a rude photo flagged and marked?
+node scripts/star-means-public.mjs      # does starring a photo publish it, and hiding unstar it?
 node scripts/photos-in-a-bucket.mjs     # the gallery off an object store — does the bin mean it?
 node scripts/photos-to-r2.mjs           # move the photographs off GitHub (--go to do it)
 node scripts/second-screen.mjs          # the second display: the code and the photos

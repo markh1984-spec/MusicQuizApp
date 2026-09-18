@@ -89,6 +89,7 @@ export const GUARDS = [
   { name: 'venue-frame',           core: true, why: 'does the venue frame replace the app mark, not sit under it?' },
   { name: 'gallery-frame',         core: false, why: 'is the venue frame on the public gallery, on screen and in the save?' },
   { name: 'photos-in-a-bucket',    core: false, why: 'the gallery off an object store — and does the bin mean it?' },
+  { name: 'star-means-public',     core: false, why: 'does starring a photo publish it, and hiding unstar it?' },
   { name: 'second-screen',         core: false, why: 'the second display: the code and the photos' },
   { name: 'second-laptop',         core: false, why: 'the wall on a spare laptop' },
   { name: 'funniest-photo',        core: false, why: "does the room's vote reach a drink?" },
