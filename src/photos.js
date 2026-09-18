@@ -60,42 +60,43 @@ export function isCameraFile(name) {
 }
 
 /**
- * WITH NO HUMAN RULING, DOES A PHOTOGRAPH GO ON THE GALLERY? YES.
+ * WITH NO HUMAN RULING, DOES A PHOTOGRAPH GO ON THE GALLERY? ONLY IF A CAMERA
+ * LOOKS TO HAVE TAKEN IT.
  *
- * **THIS REVERSES THE CAMERA GATE, ON 2 SEPTEMBER 2026, AND IT WAS REVERSED
- * BY MEASUREMENT.** The rule used to be `isCameraFile(name)` — a photograph
- * reached the public page only if `looksCameraTaken()` had found EXIF with a
- * camera Make tag in the raw upload. The intent was good: keep a meme
- * somebody picked off their camera roll off the page a venue is shown.
+ * *"I generally will only want photos taken with a camera on the night to
+ * appear on the gallery."* The default is camera-taken; a picked photo waits
+ * for the host to switch it ON.
  *
- * **IT FAILED ON EVERY PHOTOGRAPH OF A REAL NIGHT.** Reported as a night that
- * said published on the console and showed nothing on a phone — and the tell
- * was that it was ALL of them. A room that uploaded some memes gives a MIX; a
- * whole night at zero is a check that cannot succeed on the handsets in the
- * room. Modern phones shoot HEIC, and a share sheet strips EXIF on the way
- * in, so there was frequently nothing left to read. It was not filtering
- * memes, it was filtering everything — and then the index DROPS a published
- * night with nothing showing, so the gallery was empty and nothing anywhere
- * said why.
+ * **THIS WAS THE RULE, WAS REVERSED ON 2 SEPTEMBER 2026, AND IS BACK — AND THE
+ * REVERSAL'S REASON HAS TO BE HELD IN VIEW OR IT SIMPLY RECURS.** The gate
+ * `isCameraFile(name)` once *failed on every photograph of a real night*: a
+ * night said published and showed nothing, because modern phones shoot HEIC
+ * and a share sheet strips the EXIF `looksCameraTaken()` reads, so a genuine
+ * camera shot off a PLAYER'S phone arrives looking picked. That failure is
+ * real and unchanged, and it is why this is a DEFAULT and not a wall:
  *
- * *"Those first two galleries didn't have that camera gate so they should
- * appear automatically unless I specifically switch specific photos off."*
+ * - **The host's own promotional photographs are reliable now, where in
+ *   September they were not.** The bar camera (`/snap`) and the prop camera
+ *   sheet CAPTURE live and mark `camera: true` by the code path, never by
+ *   EXIF — so the photographs a quizmaster takes to show a venue always pass.
+ *   A whole-night-blank now needs a night on which the host took none of
+ *   their own, which is a different and rarer thing than the September bug.
+ * - **The lamp is the backstop, and it is the half that makes this safe.** A
+ *   real player photograph whose EXIF a share sheet stripped starts OFF and is
+ *   one press to put ON — `showsOnGallery(name, 'on')`. The cost the host
+ *   accepted knowingly is that curation moves from *hide the odd meme* to
+ *   *switch on the odd good upload*.
  *
- * **THE GATE THAT REPLACES IT IS THE ONE THAT WAS ALREADY THERE: a human
- * looks at the whole night before publishing it.** The publish control is
- * drawn UNDER the photographs for exactly that reason. The camera sniff was a
- * second, silent gate standing behind a review that already happens — and
- * "reliability beats cleverness" decides that pair.
+ * `isCameraFile()` is the guess; it is wrong both ways (a share sheet strips a
+ * real one, a screenshot keeps a fake one), which is exactly why the human
+ * ruling overrules it in both directions.
  *
- * `isCameraFile()` is NOT deleted: the marker still rides in the filename and
- * still tells the console's lamp why a picture might be worth a second look.
- * It is a NOTE now, not a gate.
- *
- * **IT TAKES THE NAME even though it does not read it**, so that going back to
- * a per-photograph guess is one function body rather than a hunt for callers.
+ * **IT TAKES THE NAME**, which is the whole mechanism: the marker rides in the
+ * filename (`add()` writes it once, at upload), so the default is a pure read
+ * of a name every reader already holds.
  */
-export function showsByDefault(_name) {
-  return true;
+export function showsByDefault(name) {
+  return isCameraFile(name);
 }
 
 /**

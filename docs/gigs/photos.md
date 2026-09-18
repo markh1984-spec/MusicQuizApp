@@ -1389,11 +1389,19 @@ model, the one-decision rule, the count question — and this page holds the lot
 **Read it before touching the lamps, the publish control, the gallery page or the
 photo cache.**
 
-- **THE CAMERA GATE IS GONE — every photograph is on the gallery unless a human
-  switches it off** (`showsByDefault()`); the EXIF check failed on EVERY photo
-  of a real night. `isCameraFile()` survives as a NOTE on the lamp, **never a
-  gate**. **THE DEFAULT IS WRITTEN OUT ONCE** — a second copy in
-  `/api/gallery-photo/` made a RED lamp put the photo straight back on.
+- **THE CAMERA GATE IS BACK — a photograph goes on the gallery only if a camera
+  looks to have taken it, unless a human switches it on** (`showsByDefault()`
+  returns `isCameraFile(name)`). It was reversed to show-all on 2 September 2026
+  when the EXIF guess held back EVERY photo of a real night, and restored once
+  the bar camera (`/snap`) and the prop sheet gave a RELIABLE camera signal —
+  the host's own promotional shots mark `camera: true` by CODE PATH, not EXIF,
+  so they always pass; the September failure now needs a night on which the host
+  took none of their own. **The lamp is the backstop and the half that makes it
+  safe**: a real player photo whose EXIF a share sheet stripped starts OFF and
+  is one press to put ON. **THE DEFAULT IS WRITTEN OUT ONCE** — a second copy in
+  `/api/gallery-photo/` (`on === showsByDefault(name)`) is what let the flip be a
+  single function body; a copy that hard-codes `isCameraFile(name)` there would
+  make a RED lamp clear itself. `test/gallery-camera-only.test.js` guards it.
 - **A LAMP PER PHOTO SAYS WHETHER IT IS ON THE GALLERY, AND IT IS A SWITCH.**
   **NO WORDS**, so `title` and `aria-label` are load-bearing and the 18px dot
   gets a 44px hit area. **FILLED, which is not a break of

@@ -2703,10 +2703,10 @@ costs.
 - **A deleted photo leaves the repo but NOT git history — never imply
   otherwise.**
 - AND THE PREVIEW DID NOT WORK ON THE HOST KEY
-- **THE CAMERA GATE IS GONE — every photo is on the gallery unless a human
-  switches it off** (`showsByDefault()`); **`showsOnGallery()` is the ONE
-  decision all FOUR readers ask**, `isCameraFile()` is a NOTE and **never a
-  gate**, and **the default is written out ONCE.**
+- **THE CAMERA GATE IS BACK — a photo shows on the gallery only if it looks
+  camera-taken (`showsByDefault()` = `isCameraFile(name)`), unless a human turns
+  it on**; the EXIF guess once hid EVERY real photo, so the bar/prop camera and
+  the lamp are the backstop. **`showsOnGallery()` is the ONE decision, ONCE.**
 - **SENDING IT IS THE CONSENT. THERE IS NO PER-PHOTO OPT-OUT AND ONE WAS BUILT
   AND REMOVED** — a flag the quizmaster must respect is a rule he must REMEMBER,
   on a Monday, about a photograph he did not take. **Do not rebuild a

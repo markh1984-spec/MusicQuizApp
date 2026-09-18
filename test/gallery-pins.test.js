@@ -121,10 +121,11 @@ test('A PIN CANNOT PUT A HIDDEN PHOTOGRAPH ON THE CARD', () => {
    * wrong would advertise a night with a picture its own page refuses.
    */
   /*
-   * BOTH HIDDEN ONES ARE NOW HIDDEN BY A RULING, because the camera marker
-   * stopped being a gate on 2 September 2026 (`showsByDefault()`). The point
-   * of the test is unchanged and is the reason it was written: a pin on a
-   * photograph the lamp switched off must not reach the card.
+   * `a.jpg` is a camera photo the host switched OFF by hand; `b-picked.jpg` is
+   * an upload, off by default under the camera gate (`showsByDefault()`,
+   * restored). Either way both are off the page, and the point of the test is
+   * unchanged: a pin on a photograph the lamp will not show must not reach the
+   * card.
    */
   const all = ['a.jpg', 'b-picked.jpg', 'c.jpg', 'd.jpg'];
   const said = { [`${NIGHT}/a.jpg`]: 'off', [`${NIGHT}/b-picked.jpg`]: 'off' };
@@ -134,8 +135,8 @@ test('A PIN CANNOT PUT A HIDDEN PHOTOGRAPH ON THE CARD', () => {
   assert.equal(cover.includes('a.jpg'), false, 'a hidden photo reached the card');
   assert.equal(cover.includes('b-picked.jpg'), false, 'a hidden photo reached the card');
   assert.equal(showsOnGallery('a.jpg', 'off'), false);
-  // And a picked one with NO ruling is on the card like any other.
-  assert.equal(showsOnGallery('b-picked.jpg', undefined), true);
+  // And a picked one with NO ruling is off by default now — the camera gate.
+  assert.equal(showsOnGallery('b-picked.jpg', undefined), false);
 });
 
 test('the card is the same on every device and every reload', () => {

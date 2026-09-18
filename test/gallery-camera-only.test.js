@@ -91,22 +91,22 @@ test('a marked photo is still in the room list, because the screen still shows i
  * it misses a real photograph whose EXIF a share sheet stripped, and it passes
  * a screenshot somebody took with their own camera app.
  */
-test('WITH NO RULING, EVERY PHOTOGRAPH IS ON — the camera guess is not the gate', () => {
+test('WITH NO RULING, A CAMERA PHOTO IS ON AND A PICKED ONE IS OFF', () => {
   /*
-   * REVERSED ON 2 SEPTEMBER 2026, and this test is the reversal rather than a
-   * weakening of the old one. The guess held back EVERY photograph of a real
-   * night — reported as a gallery that said published and showed nothing — so
-   * what it filtered was not memes, it was everything.
-   *
-   * The gate is now the human review the publish button already forces.
+   * THE CAMERA DEFAULT IS BACK — reversed to show-all on 2 September 2026 when
+   * the EXIF guess held back EVERY photograph of a real night, and restored
+   * once the bar camera and the prop sheet gave the host a RELIABLE camera
+   * signal for their own promotional photographs. See `showsByDefault()`'s own
+   * note: this is a default with a lamp behind it, never the wall the guess
+   * once was.
    */
   assert.equal(showsOnGallery('p1abc.jpg', undefined), true);
-  assert.equal(showsOnGallery('p1abc-picked.jpg', undefined), true,
-    'the camera marker is still acting as a gate');
-  // The overrides, and switching OFF is now the one that carries the feature.
-  assert.equal(showsOnGallery('p1abc-picked.jpg', 'off'), false);
-  assert.equal(showsOnGallery('p1abc.jpg', 'off'), false);
+  assert.equal(showsOnGallery('p1abc-picked.jpg', undefined), false,
+    'a picked photo must start OFF the public gallery');
+  // The human overrules the guess in both directions — that is what keeps a
+  // real photo whose EXIF a share sheet stripped one press from the page.
   assert.equal(showsOnGallery('p1abc-picked.jpg', 'on'), true);
+  assert.equal(showsOnGallery('p1abc.jpg', 'off'), false);
 });
 
 test('an unknown ruling falls back to the default rather than becoming a third state', () => {
@@ -114,7 +114,7 @@ test('an unknown ruling falls back to the default rather than becoming a third s
   // invent a behaviour — `photoDecisions()` drops anything that is not on/off,
   // and this is the belt to that braces.
   for (const junk of ['yes', 'true', '1', '', null]) {
-    assert.equal(showsOnGallery('p1abc-picked.jpg', junk), true);
+    assert.equal(showsOnGallery('p1abc-picked.jpg', junk), false);
     assert.equal(showsOnGallery('p1abc.jpg', junk), true);
   }
 });
@@ -245,15 +245,16 @@ test('the list and the page count the same photographs', () => {
   const night = '2026-08-13';
   const names = ['a.jpg', 'b-picked.jpg', 'c.jpg'];
   const said = {};
-  // Nothing ruled on: every one of them shows, the picked one included.
-  assert.deepEqual(galleryPhotosOf(names, night, said, key), names);
+  // Nothing ruled on: the camera photos show, the picked one waits for a lamp.
+  assert.deepEqual(galleryPhotosOf(names, night, said, key), ['a.jpg', 'c.jpg']);
 });
 
 test('switching one off takes it out of the count as well as off the page', () => {
   const night = '2026-08-13';
   const names = ['a.jpg', 'b-picked.jpg', 'c.jpg'];
   const said = { [key(night, 'a.jpg')]: 'off' };
-  assert.deepEqual(galleryPhotosOf(names, night, said, key), ['b-picked.jpg', 'c.jpg']);
+  // 'a.jpg' ruled off, 'b-picked.jpg' off by default, 'c.jpg' the one camera photo left.
+  assert.deepEqual(galleryPhotosOf(names, night, said, key), ['c.jpg']);
 });
 
 test('switching a picked one ON puts it in the count as well as on the page', () => {
