@@ -280,3 +280,35 @@ test('a second bingo round still pays its own line winner', () => {
   game.setRewards(['A free drink', 'A bottle of wine']);
   assert.equal(Object.values(game.state.vouchers).length, 2);
 });
+
+test('a score fixed AT the final moves the drinks with it — and reads the board AFTER the nudge', () => {
+  const engine = new Engine({ quiz: QUIZ, now: () => Date.parse('2026-09-18T22:30:00.000Z'), random: () => 0.5 });
+  engine.state.rewards = ['A pint', 'A half', 'Crisps'];
+  const dave = engine.join({ name: 'Dave' });
+  const sue = engine.join({ name: 'Sue' });
+  engine.state.players[dave.id].score = 100;
+  engine.state.players[sue.id].score = 60;
+  engine.start();
+  while (engine.state.phase !== 'final') engine.next();
+
+  const codes = () => Object.values(engine.state.vouchers)
+    .filter((v) => !v.draw).map((v) => [v.name, v.place, v.reward]).sort();
+  assert.deepEqual(codes(), [['Dave', 1, 'A pint'], ['Sue', 2, 'A half']]);
+
+  // The host puts a mis-scored question right in front of the room: a tie.
+  assert.equal(engine.adjustScore(sue.id, 40), true);
+  assert.deepEqual(engine.leaderboard().map((r) => [r.name, r.position]).sort(),
+    [['Dave', 1], ['Sue', 1]], 'the board itself must show the tie');
+  assert.deepEqual(codes(), [['Dave', 1, 'A pint'], ['Sue', 1, 'A pint']],
+    'a tie for first pays BOTH the first prize — the second-place code is withdrawn, not left on her phone');
+
+  // And back the other way: Sue drops to second again, her first-place code goes.
+  engine.adjustScore(sue.id, -10);
+  assert.deepEqual(codes(), [['Dave', 1, 'A pint'], ['Sue', 2, 'A half']]);
+
+  // A code the bar has already scanned is never taken back.
+  const spent = Object.values(engine.state.vouchers).find((v) => v.name === 'Sue');
+  spent.redeemedAt = engine.now();
+  engine.adjustScore(sue.id, 10);
+  assert.ok(engine.state.vouchers[spent.code], 'a redeemed voucher stays where it was spent');
+});

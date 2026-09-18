@@ -833,6 +833,27 @@ export class Engine {
     const n = Math.round(Number(delta));
     if (!Number.isFinite(n)) return false;
     p.score += n;
+    /*
+     * A SCORE FIXED AT THE FINAL MOVES THE DRINKS WITH IT. The vouchers are
+     * issued the moment the final is reached, and this is the one control a
+     * host uses IN FRONT OF THE ROOM to put a board right — after which the
+     * wall named the new leader in gold while the first-place code stayed on
+     * the old leader's phone. Found by tying two scores with this control and
+     * reading the vouchers back: [Dave 1st, Sue 2nd], unchanged. The same
+     * pair of calls `setRewards()` makes for the same reason: withdraw what
+     * is no longer owed, pay what now is, and a redeemed code stays where it
+     * was spent. Back-then-Next did this already, by passing the final again.
+     *
+     * THE BOARD IS CACHED, AND THE CACHE IS CLEARED BY `changed()` — which
+     * runs AFTER this. Left alone, both calls read the board from before the
+     * nudge and paid nobody: the first build of this did exactly that, every
+     * test passing. Forget it FIRST.
+     */
+    if (this.state.phase === PHASES.FINAL) {
+      this.forgetBoard();
+      this.issueVouchers();
+      this.drawLuckyDip();
+    }
     this.changed();
     return true;
   }

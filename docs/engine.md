@@ -536,9 +536,11 @@ The last QUESTION is the only definition that means the same thing on a
 one-round night and a five-round one, and it is sayable on a microphone:
 **you had to still be in it at the last question.**
 
-**The same prize as third place**, at the host's own instruction — so a venue
-putting up three prizes runs a draw and one putting up fewer does not, with
-nothing extra to set up and nothing extra for the pub to agree to.
+**The LAST prize on the table**, which with three up is the third — the
+host's own instruction, so a venue putting up three prizes runs a draw and one
+putting up fewer does not, with nothing extra to set up and nothing extra for
+the pub to agree to. The code took the last one from the day it was written and
+this page said "third" for a month; `prizes-fuzz.mjs` section F pins which.
 
 Six things that are load-bearing, all tested:
 

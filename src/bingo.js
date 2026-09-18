@@ -741,7 +741,20 @@ export class BingoGame {
     if (!Array.isArray(this.state.prizeWinners)) this.state.prizeWinners = [];
     const stageIndex = this.state.stageIndex || 0;
     if (!this.state.prizeWinners.some((w) => w.stageIndex === stageIndex)) {
-      this.state.prizeWinners.push({ stageIndex, playerId, name: p.name, stage: this.stage, at });
+      /*
+       * THE PRIZE IS THE NEXT ONE ON THE TABLE, NOT THE ONE IN THIS STAGE'S
+       * SLOT. `rewards[stageIndex]` was right for one round — the line is the
+       * first prize, the house the second — and wrong the moment a game had a
+       * second round: `newRound()` starts the stages again, so round two's
+       * line paid "A pint" again while "A half" sat untouched on the venue's
+       * list. Card bingo is every round a prize, so every round was a pint.
+       * `prizesGiven` counts across rounds and only a fresh GAME resets it,
+       * like `wonThisGame`. Within one round it equals the stage index, so a
+       * night that never presses New round pays exactly what it did.
+       */
+      const prizeIndex = Number(this.state.prizesGiven) || 0;
+      this.state.prizesGiven = prizeIndex + 1;
+      this.state.prizeWinners.push({ stageIndex, prizeIndex, playerId, name: p.name, stage: this.stage, at });
       /*
        * AND AGAINST THE WHOLE GAME, which is the list `newRound()` keeps.
        * `prizeWinners` answers "has THIS prize gone"; this answers "has this
@@ -749,7 +762,7 @@ export class BingoGame {
        */
       if (!Array.isArray(this.state.wonThisGame)) this.state.wonThisGame = [];
       if (!this.state.wonThisGame.includes(playerId)) this.state.wonThisGame.push(playerId);
-      this.issueVoucher(stageIndex, playerId, p.name);
+      this.issueVoucher(prizeIndex, playerId, p.name, stageIndex);
     }
     this.state.phase = BINGO_PHASES.WON;
     this.state.lastWin = {
@@ -849,10 +862,13 @@ export class BingoGame {
     const rewards = this.rewardList();
     const held = Object.values(this.state.vouchers || {});
     for (const w of this.state.prizeWinners || []) {
+      // A record from before prizes counted across rounds has no prizeIndex
+      // and reads as it always did.
+      const slot = Number.isInteger(w.prizeIndex) ? w.prizeIndex : w.stageIndex;
       const mine = held.find((v) => v.winnerId === w.playerId
-        && v.place === w.stageIndex + 1
+        && v.place === slot + 1
         && (!w.at || v.issuedAt >= w.at));
-      if (!mine) { this.issueVoucher(w.stageIndex, w.playerId, w.name); continue; }
+      if (!mine) { this.issueVoucher(slot, w.playerId, w.name, w.stageIndex); continue; }
       /*
        * AND A PRIZE CORRECTED AFTER IT WAS WON REACHES THE CODE ALREADY IN
        * SOMEBODY'S HAND.
@@ -873,7 +889,7 @@ export class BingoGame {
        * it said afterwards is editing history rather than correcting a
        * promise.
        */
-      const now = rewards[w.stageIndex];
+      const now = rewards[slot];
       if (now && !mine.redeemedAt && mine.reward !== now) mine.reward = now;
     }
   }
@@ -890,8 +906,8 @@ export class BingoGame {
    * nobody is paying for is a real thing (a free extra line before the house)
    * and must not mint a voucher for nothing.
    */
-  issueVoucher(stageIndex, playerId, name) {
-    const reward = this.rewardList()[stageIndex];
+  issueVoucher(prizeIndex, playerId, name, stageIndex = prizeIndex) {
+    const reward = this.rewardList()[prizeIndex];
     if (!reward) return;
     if (!this.state.vouchers) this.state.vouchers = {};
     let code = newVoucherCode();
@@ -903,7 +919,7 @@ export class BingoGame {
       // Reused as the same "1st / 2nd / 3rd" badge the quiz's voucher panel
       // already draws — the FIRST prize won is the one a room sees first,
       // exactly as it is for a quiz's finishing positions.
-      place: stageIndex + 1,
+      place: prizeIndex + 1,
       stage: this.state.stages[stageIndex],
       reward,
       venue: this.state.venue || '',

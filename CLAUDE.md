@@ -2193,9 +2193,8 @@ the prizes."*
 - **THE CLAIM IS STILL RIGHT AND IS RECORDED AS RIGHT** — THREE outcomes on
   the control view, not two. **AND NO SENTENCE ON A PHONE MAY SAY "you have
   already won"**: **the wording is about the PRIZE, never the person.**
-- **THE CARDS CANNOT DO THIS ON THEIR OWN, asked for twice** — a card is dealt
-  at JOIN and who wins is decided by the ORDER the host plays the tracks in.
-  **Read `docs/bingo.md` first.**
+- **THE CARDS CANNOT DO THIS ON THEIR OWN, asked for twice** — who wins is
+  decided by the ORDER the tracks are played. **Read `docs/bingo.md` first.**
 - **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert. **NO
   SETTING** — one line to invert if anybody ever asks.
 - **A STAGE CAN ONLY BE TAKEN ONCE — `stageTaken()`, checked BEFORE anything
@@ -2212,7 +2211,7 @@ the prizes."*
 - **`Continue to the quiz` IS DRAWN ONCE**, and **bingo's `Finish` STAYS AND
   SAYS WHAT IT COSTS** — a deliberate escape hatch, unlike the quiz's *Stop*.
 - **AND THE ROUND CAN STALL, SO THE CONTROL VIEW SAYS SO — `view.stalled`.**
-  **NOT lifted**: the host has *Play on*, *New round*, *Finish*.
+  **NOT lifted.**
 - **WHEN THE LAST PRIZE GOES THE WHOLE ROOM IS TOLD — `allPrizesGone`.**
   **IT IS NOT THE `WON` PHASE**: it is `onLastStage && stageTaken()`, neither
   half alone. **DRAWN ON EVERY PHONE, not only the winners'.**
@@ -2225,14 +2224,18 @@ the prizes."*
   like tidying. **REVERSES two pinned tests.** **The round that cannot pay out
   is NOT automated away** (`view.noneLeft`). **A fresh bingo PART is a fresh
   game.**
+- **A ROUND'S PRIZE IS THE NEXT ON THE TABLE — `prizesGiven`, a `prizeIndex`
+  on every win.** Keyed on the STAGE, round two paid the pint again.
+- **A SCORE FIXED AT THE FINAL MOVES THE DRINKS — `adjustScore()`, and it
+  must `forgetBoard()` FIRST**: the board is cached until `changed()`, which
+  runs after, so the first build paid nobody. `prizes-fuzz.mjs`.
 - **A CODE STAYS ON THE PHONE UNTIL THE BAR SCANS IT — `view.vouchers` on the
   QUIZ engine too.** **Every live code, at every phase with room, NEVER over a
   live QUESTION.** **A REDEEMED one now DISAPPEARS from the phone** — see *My
   prizes*; the two engines may not disagree. **`view.voucher` UNCHANGED.**
 - **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS — it reads `quizzes/`
-  only, sets no venue and mints no voucher.** IDENTICAL on a bingo change is
-  the guard answering confidently about something it is not looking at.
-  `bingo-prizes.mjs` drives three phones over real HTTP instead.
+  only, sets no venue and mints no voucher.** `bingo-prizes.mjs` drives three
+  phones over real HTTP instead.
 
 Full reasoning, with the measurements: **[`docs/bingo.md`](docs/bingo.md)**.
 
@@ -2912,18 +2915,14 @@ costs a Monday rather than an evening.
   engine is rarely the hazard; **the console's launch form is**, and no unit test
   presses a button.
 
-The second gets skipped and is the one that would stop a night: `node --check`
-passing means the file parses, not that Launch still launches.
+The second gets skipped and is the one that would stop a night.
 
 **AND ON 15 AUGUST 2026 IT WAS SKIPPED, AND LAUNCH WENT TO THE LIVE APP
-BROKEN FOR EVERY GAME.** A function was called in `server.js` and never
-imported — a ReferenceError when the line RUNS, so `node --check` was happy and
-**1,150 tests passed**: every one either calls `session.launch()` or reads
-`server.js` as TEXT, so **nothing had ever executed the file.** Found by a
-browser agent clicking the button. `test/launch-route.test.js` is that advice
-with an assertion on it — **keep it shallow**, a slow suite being one people stop
-running before a gig. **A TEST THAT NEVER RUNS THE ARTEFACT PROVES NOTHING ABOUT
-IT.**
+BROKEN FOR EVERY GAME.** A function called in `server.js` and never imported —
+a ReferenceError when the line RUNS, `node --check` happy, **1,150 tests
+passed** because none executed the file. `test/launch-route.test.js` is that
+advice with an assertion — **keep it shallow**. **A TEST THAT NEVER RUNS THE
+ARTEFACT PROVES NOTHING ABOUT IT.**
 
 ### A PUSH IS A DEPLOY, AND A DEPLOY ON A GIG NIGHT IS AN OUTAGE
 
@@ -3232,7 +3231,7 @@ podium in `screen.js`. A table that works out by round three that it cannot win
 has nothing left to stay for, and a room that thins out at nine is worth less to
 the pub. **Eligibility is answering the LAST QUESTION THE NIGHT ENDED ON** —
 not "the final round", which on a one-round night collapses to "answered
-anything at all". **The same prize as third place.** All tested:
+anything at all". **The LAST prize on the table** — the third, with three up. All tested:
 
 - **Nobody wins twice** — anybody already holding a voucher is out of the hat.
 - **Two in the hat minimum.** One eligible person is a gift, not a draw.
@@ -4186,6 +4185,7 @@ node scripts/props-on-a-photo.mjs       # do the googly eyes go on, on BOTH came
 node scripts/no-prizes-no-launch.mjs    # can a night launch with nobody to pay?
 node scripts/after-a-deploy.mjs         # after a restart, can the host still launch?
 node scripts/every-game.mjs             # every game and round type, end to end
+node scripts/prizes-fuzz.mjs            # every prize count, word and tie
 ```
 
 **The rules these commands run on, and each was learned expensively — the full

@@ -331,6 +331,29 @@ which is what *"per music bingo"* says.
 before `wonThisGame` existed: the safe direction is to remember a win rather
 than forget one.
 
+### A round's prize is the NEXT on the table — `prizesGiven`
+
+Found by `scripts/prizes-fuzz.mjs`, 18 September 2026, playing two rounds of
+3x3 with one prize a round against a venue holding *A pint, A half, Crisps*.
+**Round two's line paid the pint again.** A win was keyed on its STAGE index,
+`newRound()` restarts the stages at the line, and `issueVoucher()` read
+`rewards[stageIndex]` — so on a one-prize-a-round card, every round paid slot
+zero, however many drinks the venue had put up.
+
+`state.prizesGiven` counts across the GAME and only a fresh game resets it —
+the same scope as `wonThisGame`, and for the same reason. Every entry in
+`prizeWinners` now carries a `prizeIndex` beside its `stageIndex`: the stage
+says which SHAPE was completed, the prize index says which DRINK it earned, and
+`payWinnersOwed()` catches a late-typed prize up on the prize index, falling
+back to the stage index for a state written before this existed. A 5x5 with
+five prizes in one round behaves exactly as it did — the two indexes agree
+until a second round starts.
+
+The quiz engine had the same shape of fault the same afternoon: `adjustScore()`
+at the final now re-issues, and had to `forgetBoard()` first because the board
+is cached until `changed()` — which runs after. Both are in `prizes-fuzz.mjs`
+and in `test/prizes-live-edit.test.js`.
+
 ### A code stays until the bar scans it
 
 Three things were wrong on a quiz-and-bingo night, none visible from the
