@@ -8,6 +8,7 @@
  */
 
 import { esc, node, brandLink, paintNav, paintIdentity, menuRights, postJson } from './client.js';
+import { flightPanel } from './console-flight.js';
 import { TIERS, tierFor, findTier, KINDS, KIND_LABEL, kindOf,
   FEATURE_TIER, FEATURE_META, tierOf, setTierOverrides, NOT_BUILT } from './plans.js';
 import { photosSection, propUsePanel } from './photos-tab.js';
@@ -979,7 +980,51 @@ function tonightTab() {
           : `<span class="tiny">${esc(room.phase === 'lobby' ? 'waiting in the lobby' : 'idle')}</span>`}</div>
       </div>`));
   }
+  parts.push(flightSection());
   return parts;
+}
+
+/*
+ * WHAT THE APP SAW, PER ACCOUNT — the flight recorder, read from here.
+ *
+ * *"Any kind of fix that you build for my personal quizmaster account needs
+ * to be reachable from the owner console for other quizmasters as well."* So
+ * the same panel the Help tab draws, under a picker: the whole server, the
+ * house room, or any quizmaster whose room has been opened since the boot.
+ * Read-only, and the panel says whose record it is.
+ */
+let flightPick = 'all';
+function flightSection() {
+  const rooms = (overview.rooms || []).filter((r) => r.id && r.id !== 'house');
+  const el = node(`
+    <div class="game-section">
+      <div class="game-head"><div>
+        <h2>What the app saw</h2>
+        <div class="tiny">The server's own record, per room — the boot, the self-test, every refusal with its reason, and what each screen reported.</div>
+      </div></div>
+      <label class="tiny">Whose record
+        <select class="flight-pick">
+          <option value="all">Everything on the server</option>
+          <option value="house">The house room — yours</option>
+          ${rooms.map((r) => `<option value="${esc(r.id)}">${esc(r.who || r.label || r.id)}${r.live ? ' — running' : ''}</option>`).join('')}
+        </select>
+      </label>
+      <div class="flight-slot"></div>
+    </div>`);
+  const pick = el.querySelector('.flight-pick');
+  const slot = el.querySelector('.flight-slot');
+  const draw = () => {
+    const room = rooms.find((r) => r.id === flightPick);
+    slot.replaceChildren(flightPanel({
+      account: flightPick,
+      who: flightPick === 'house' ? 'the house' : room ? (room.who || room.label || room.id) : '',
+    }));
+  };
+  if (![...pick.options].some((o) => o.value === flightPick)) flightPick = 'all';
+  pick.value = flightPick;
+  pick.addEventListener('change', () => { flightPick = pick.value; draw(); });
+  draw();
+  return el;
 }
 
 // ================================================================== catalogue

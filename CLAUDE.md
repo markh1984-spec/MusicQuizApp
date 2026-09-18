@@ -548,7 +548,7 @@ opening a second file.
 - **ONE MENU, built in one place, on every page a quizmaster drives**
 - **A push goes out on a Monday, after `gig-build.mjs` prints SAFE TO DEPLOY, and on no other day**
 - **The draw takes the LAST prize on the table**
-- **Auto-Deploy off and a Render disk — declined, 18 September 2026**
+- **A Render disk — wanted (reverses the 18 Sept decline): a deploy no longer wipes the running night, but the GitHub backup stays the source of truth. Auto-Deploy stays off via the release train.**
 
 ## The GUI rules — what a control looks like is decided by what it DOES
 
@@ -1319,8 +1319,8 @@ SSE reconnect evict real entries. **A route belongs on that list when a LINE
 would be noise, never when the ACT is dull.**
 
 **AND `safe()` STRIPS `calendarKey` AND `reset`.** The calendar key IS a
-credential and it rode out on every `/api/me`; `/api/calendar/link` is the
-route that exists to hand it over.
+credential and rode out on every `/api/me`; `/api/calendar/link` hands it
+over.
 
 ### TWO MORE WHITELISTS THAT DROPPED WHAT THEY DID NOT NAME
 
@@ -2047,11 +2047,11 @@ Full reasoning: **[`docs/business.md`](docs/business.md)**.
 Hung GitHub behind the real server and drove a night. Four things waited:
 
 - **`fetch()` HAS NO TIMEOUT, AND `restoreFromBackup()` RUNS BEFORE
-  `listen()`** — a deploy during a bad hour at GitHub was an app that never
-  came up. `GITHUB_TIMEOUT_MS` (20s) and `GITHUB_READ_TIMEOUT_MS` (8s); **every
-  call carries one.**
-- **THE BOOT RESTORES RUN TOGETHER, AND THE ACCOUNTS ARE ASKED AGAIN** a
-  minute later, only ever into an EMPTY store.
+  `listen()`** — a deploy during a bad GitHub hour was an app that never came
+  up. `GITHUB_TIMEOUT_MS` (20s), `GITHUB_READ_TIMEOUT_MS` (8s); **every call
+  carries one.**
+- **THE BOOT RESTORES RUN TOGETHER, THE ACCOUNTS ASKED AGAIN** a minute
+  later, only ever into an EMPTY store.
 - **A REQUEST WAITS FOR ITS BACKUP `BACKUP_WAIT_MS` (3s) AND ANSWERS
   `ok: false`** — `within()`; the write still finishes.
 - **A FAILED LIBRARY RESTORE BACKS OFF A MINUTE** (`restoreOnce`) — never
@@ -2070,10 +2070,10 @@ screen's network in turn and checks it against a twin that stayed online.**
 
 *"Ready for tonight"* on the launch bar: the server, a projector on THIS room
 (`/api/host/ready`, on `SUPPORT_QUIET`), the prizes. **It repeats
-`noPrizesReason()`'s answer and never its decision**; a failed poll changes
-nothing. **Its first tick ran before the node was attached and cancelled
-itself** — every test green, the light never lit. `ready-light.mjs` waits for
-the GREEN, then for it to go off again.
+`noPrizesReason()` and never its decision**; a failed poll changes nothing.
+**Its first tick ran before the node was attached and cancelled itself** —
+every test green, the light never lit. `ready-light.mjs` waits for GREEN, then
+for it to go off.
 
 ### A BROKEN NIGHT WRITES ITSELF DOWN — `src/flight.js`, and the server self-tests at boot
 
@@ -2081,21 +2081,27 @@ the GREEN, then for it to go off again.
 it straight away"* — after a launch that would not go took an hour to diagnose.
 
 - **ONE RECORDER, FED FROM FIVE PLACES NOBODY HAS TO REMEMBER**: `console.warn`
-  and `console.error` are WRAPPED, `sendJson()` notes every answer of 400 or
-  more **with its reason and the room off `res.flightRoom`**, the host route
-  notes launches and refused presses, `pushState()` notes a phase change per
-  room, and every browser reports a throw or a POST that did not send through
-  `POST /api/flight` (`reportToFlight()` in `client.js`). **A route that
-  resolves a room sets `res.flightRoom`**, or its refusals file under nobody.
+  and `console.error` are WRAPPED, `sendJson()` notes every 400-and-up **with
+  its reason and the room off `res.flightRoom`**, the host route notes launches
+  and refused presses, `pushState()` notes a phase change per room, and every
+  browser reports a throw or a dropped POST through `POST /api/flight`
+  (`reportToFlight()` in `client.js`). **A route that resolves a room sets
+  `res.flightRoom`**, or its refusals file under nobody.
 - **A ROOM READS ITS OWN LINES PLUS THE SERVER-WIDE FAILURES, NEVER ANOTHER
-  ROOM'S** — `recent()`; the owner may ask `all`. A ring of 2,000, mirrored to
-  `data/flight.jsonl` and read back at boot — **a courtesy, never a store**.
+  ROOM'S** — `recent()`. A ring of 2,000, mirrored to `data/flight.jsonl` and
+  read back at boot — **a courtesy, never a store**.
 - **THE SERVER PLAYS A NIGHT AGAINST ITSELF A SECOND AFTER LISTEN** —
-  `src/self-test.js`, a throwaway `Session` on a temp disk, rule 1 asked
-  mid-question, a reload, then its own pages over HTTP. **Never a real room,
-  never a throw** — the verdict is `selfTest` on `/health` and in the recorder.
+  `src/self-test.js`, a throwaway `Session` on a temp disk: launch, a
+  question, rule 1, a reload, its own pages over HTTP. **Never a real room,
+  never a throw** — `selfTest` on `/health` and in the recorder.
 - **IT IS READ ON THE HELP TAB WITH A COPY BUTTON** — `console-flight.js`, a
-  leaf. **The pasted text IS the bug report.** `flight-recorder.mjs` drives it.
+  leaf. **The pasted text IS the bug report.**
+- **AND THE OWNER READS ANY ACCOUNT'S RECORD — `/api/flight?account=…`, the
+  picker on the owner's Tonight tab.** *A fix for the owner's own quizmaster
+  account is reachable from the owner console for every other one* — the
+  standing rule. Not the support door bypassed: it is the SERVER's log, which
+  the owner has in full on Render, filtered to one room. **A quizmaster naming
+  another account is IGNORED.** `flight-recorder.mjs` drives both sides.
 
 ### A PHOTOGRAPH IS READ FROM MEMORY, THEN DISK, THEN GITHUB
 
@@ -2104,24 +2110,22 @@ memory cache is empty after every deploy — and every push is a deploy — so t
 first fifty people to open a gallery after one each spent a GitHub call against
 5,000 an hour SHARED with the packs, the accounts book and every backup.
 
-- **A PAID INSTANCE DOES NOT GIVE YOU A DISK.** Only an attached disk
-  survives a deploy; **`DATA_DIR` is the whole wiring**. Declined for now.
-- **IT IS A CACHE OF WHAT GITHUB HAS, NEVER A SECOND STORE** — losing the disk
-  costs speed and nothing else.
+- **A DISK IS BEING ATTACHED — `DATA_DIR` is the whole wiring, no code
+  change.** It survives a deploy. **STILL a cache of what GitHub has, never a
+  second store** — the backup is the source of truth; a disk can be lost too.
 - **THE KEY MAPPING MUST BE INJECTIVE** — `/` → `~` served one photograph in
   place of another. `encodeURIComponent`, hashed past 200 chars. **Do not lean
   on `safePhotoName()`.**
 - **A `..` MAY NOT WALK OUT** — the test writes a sentinel OUTSIDE the folder.
-- **NOTHING DECIDING WHO MAY SEE A PHOTO IS CACHED WITH IT.**
-- **Object storage would fix the git-history problem.**
+- **NOTHING DECIDING WHO MAY SEE A PHOTO IS CACHED WITH IT.** Object storage would fix the git-history problem.
 
 ### THE CONTENTS API SENDS ZERO BYTES FOR A FILE OVER 1MB, AND CALLS IT 200
 
-`tryGetFile()` / `rawGet()` in `src/github.js`. Above the inline limit GitHub
-answers 200 with `content: ''`, which read as an **empty buffer with `ok:
-true`**. **`size` tells them apart** and the raw media type is asked AGAIN; a
-failure there is `ok: false`. **`MAX_BYTES` is 3MB and a crowded pub is the
-densest thing you can hand a JPEG encoder.**
+`tryGetFile()` / `rawGet()`. Above the inline limit GitHub answers 200 with
+`content: ''`, which read as an **empty buffer with `ok: true`**. **`size`
+tells them apart** and the raw media type is asked AGAIN; a failure there is
+`ok: false`. **`MAX_BYTES` is 3MB and a crowded pub is the densest thing you
+can hand a JPEG encoder.**
 
 Full reasoning: **[`docs/gigs/photos.md`](docs/gigs/photos.md)**.
 

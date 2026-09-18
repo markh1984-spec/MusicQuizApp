@@ -223,12 +223,29 @@ export async function getMe(req, res, url, route) {
   if (route === '/api/flight' && req.method === 'GET') {
     const account = whoIs(req, url);
     if (!account) return sendJson(res, 401, { error: 'Sign in first', signIn: '/login' }), true;
-    const room = roomForHost(req, url);
     const owner = account.bootstrap || account.role === 'owner';
-    const entries = flight.recent({ room: room.id, all: owner && url.searchParams.get('all') === '1', limit: 300 });
+    /*
+     * THE OWNER MAY READ ANY ACCOUNT'S RECORD, and that is not the support
+     * door being bypassed: this is the SERVER's log of what the app did, which
+     * the owner already has in full on Render, filtered to one room. It holds
+     * no pack, no question, no player — a launch title and the reasons for
+     * refusals. *"If a quizmaster has a problem launching, I need to know
+     * what the exact problem was with that account."* The quizmaster's own
+     * panel says the owner can read it, so nothing here is quiet.
+     */
+    let roomId = roomForHost(req, url).id;
+    let who = '';
+    const asked = url.searchParams.get('account');
+    if (owner && asked) {
+      const target = asked === 'house' ? null : accounts.find(asked);
+      if (asked !== 'house' && !target) return sendJson(res, 404, { error: 'No such account' }), true;
+      roomId = roomIdFor(target);
+      who = target ? (target.name || target.email || '') : '';
+    }
+    const entries = flight.recent({ room: roomId, all: owner && url.searchParams.get('all') === '1', limit: 300 });
     const st = selfTestResult();
     return sendJson(res, 200, {
-      room: room.id, entries, text: Flight.text(entries),
+      room: roomId, who, entries, text: Flight.text(entries),
       selfTest: st ? { ok: st.ok, at: st.at, ms: st.ms, steps: st.steps, failed: st.failed } : null,
     }), true;
   }

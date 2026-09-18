@@ -46,6 +46,7 @@ const { base: BASE, stop } = await startApp({
     const book = new Accounts(path.join(dir, 'accounts.json'));
     book.create({ email: EMAIL, password: PASSWORD, name: 'Quizzy', role: 'quizmaster', tier: 'gold', status: 'active' });
     book.create({ email: OTHER, password: PASSWORD, name: 'Somebody Else', role: 'quizmaster', tier: 'gold', status: 'active' });
+    book.create({ email: 'owner@example.com', password: PASSWORD, name: 'The Owner', role: 'owner', status: 'active' });
     book.save();
   },
 });
@@ -103,6 +104,16 @@ try {
   const theirs = await record(other.H);
   check('another quizmaster sees none of this room', !(theirs.text || '').includes('Launched quiz') && !(theirs.text || '').includes('guard synthetic'), theirs.text);
   check('but still sees the boot and the self-test', (theirs.text || '').includes(' boot ') && (theirs.text || '').includes('selftest'), theirs.text);
+
+  // The owner reaches a named quizmaster's record — the whole point of the ask.
+  const owner = await signIn('owner@example.com');
+  const ownerReadsQm = await (await fetch(`${BASE}/api/flight?account=${encodeURIComponent(mine.room)}`, { headers: owner.H })).json();
+  check("the owner reads a named quizmaster's record", (ownerReadsQm.text || '').includes('Launched quiz') && ownerReadsQm.room === mine.room, JSON.stringify(ownerReadsQm).slice(0, 200));
+  check('and it names whose it is', Boolean(ownerReadsQm.who), ownerReadsQm.who);
+  const ownerAll = await (await fetch(`${BASE}/api/flight?all=1`, { headers: owner.H })).json();
+  check('the owner can read the whole server', (ownerAll.text || '').includes('guard synthetic phone fault'), ownerAll.text);
+  const qmCannotReach = await (await fetch(`${BASE}/api/flight?account=${encodeURIComponent('other')}`, { headers: (await signIn(OTHER)).H })).json();
+  check('a quizmaster naming another account is ignored, not obeyed', !(qmCannotReach.text || '').includes('Launched quiz'), qmCannotReach.text);
 
   // The console in a real browser: its own throw is reported, and the Help tab draws and copies the record.
   browser = await chromium.launch();

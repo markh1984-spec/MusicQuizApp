@@ -1053,7 +1053,17 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * the Workshop card beside the logo — which is the same record maintained in
  * two places. That has to be read before the work, not after it.
  */
-const BUDGET = 258_600;
+/*
+ * RAISED TO 259,000 ON 18 SEPTEMBER 2026, for two things a session would undo
+ * by accident. The flight recorder's OWNER half — a fix built for the owner's
+ * own quizmaster account is reachable from the owner console for every other
+ * one, which is a standing rule the host set, not a nicety — and the reversal
+ * of the disk decline (a disk is now wanted, so a deploy no longer wipes the
+ * running night). ~250 of the ~600 were paid first by trimming second
+ * sentences across the flight, github-down, ready-line and support-log
+ * sections; nothing that FORBIDS anything went.
+ */
+const BUDGET = 259_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
