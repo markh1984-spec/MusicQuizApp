@@ -624,6 +624,27 @@ export async function ensureInvoicesRestored(room) {
 }
 
 /**
+ * THE VENUE'S FRAME FOR A PUBLISHED NIGHT, resolved server-side for the public
+ * gallery, which cannot reach the owner-gated invoice route. The join is from
+ * the night's archived venue — id first, then a lowercase name match
+ * (`sameVenue()`) — so a visitor names a NIGHT, never a venue id. Returns the
+ * overlay data URL, or '' when the night has no venue or the venue no overlay.
+ * Full reasoning in `docs/gigs/gallery-page.md`.
+ */
+export async function venueOverlayFor(roomId, night) {
+  const room = rooms.get(roomId);
+  await ensureArchiveRestored(room);
+  const rec = mergeGigs(listArchive(room.paths.archive), []).find((g) => g.night === night);
+  if (!rec) return '';
+  await ensureInvoicesRestored(room);
+  const customers = (room.invoices && room.invoices.customers) || [];
+  const named = String(rec.venue || '').trim().toLowerCase();
+  const found = (rec.venueId && customers.find((c) => c.id === rec.venueId))
+    || (named ? customers.find((c) => String(c.name || '').trim().toLowerCase() === named) : null);
+  return (found && found.overlay) || '';
+}
+
+/**
  * Back up the reports.
  *
  * The private repo like everything else in data/, and for the ordinary reason:

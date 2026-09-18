@@ -87,6 +87,7 @@ export const GUARDS = [
   { name: 'photo-to-start',        core: false, why: 'is the photo ask real, and the skip?' },
   { name: 'rude-photo',            core: true, why: 'is a rude photo flagged, sorted to the front and marked?' },
   { name: 'venue-frame',           core: true, why: 'does the venue frame replace the app mark, not sit under it?' },
+  { name: 'gallery-frame',         core: false, why: 'is the venue frame on the public gallery, on screen and in the save?' },
   { name: 'second-screen',         core: false, why: 'the second display: the code and the photos' },
   { name: 'second-laptop',         core: false, why: 'the wall on a spare laptop' },
   { name: 'funniest-photo',        core: false, why: "does the room's vote reach a drink?" },

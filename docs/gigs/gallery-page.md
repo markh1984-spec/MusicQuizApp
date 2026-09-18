@@ -1199,3 +1199,65 @@ photograph. Both halves were verified by putting the fault back.
 **The source JPEG is made by the browser**, not checked in: the fixtures the
 unit tests use are 64 bytes of nothing, which no decoder will open, and a real
 image is one `toDataURL` away with no dependency.
+
+
+## THE VENUE'S FRAME IS ON THE PUBLIC GALLERY — 18 September 2026
+
+Asked for directly: *"is it possible to have the overlay automatically apply to
+all photos on the /gallery pathway so when people share the public gallery it's
+already there?"* It already was on the console's Instagram export
+(`console-photo-export.js`); this puts the same frame on the page a stranger
+opens, on screen and baked into a save. `scripts/gallery-frame.mjs` drives it.
+
+**THE OBSTACLE WAS THE ROUTE, NOT THE DRAWING.** The overlay lives on the
+venue's invoice-customer record and is served by
+`/api/invoices/customers/<id>/overlay`, hard-gated to the invoice book's own
+signer (`FEATURES.INVOICES`, `roomForHost`). A visitor on `/gallery` has no
+cookie and must not reach it. So the compositing was never the problem — the
+browser already draws the frame in `photo-save.js` — it was that the public
+page had no way to *get* the frame bytes.
+
+**THE PUBLIC PATH IS A NEW ROUTE, AND IT NEVER LETS A VISITOR NAME A VENUE.**
+`GET /gallery-frame/<night>` in `get-gallery.js`:
+
+- is gated on the SAME publish check as `/gallery-photo/` — `galleryPreview()
+  || isPublished(galleryRoomId(), night)` — so a frame is only ever served for
+  a night the quizmaster chose to make public;
+- resolves the venue ITSELF from the night's archive (`venueOverlayFor()`), id
+  first then a lowercase name match — the `sameVenue()` fold — so a visitor
+  passes a NIGHT, never a venue id. It cannot be pointed at an arbitrary
+  venue's artwork the way the owner route's id could be;
+- serves the overlay bytes decoded from the stored data URL, never the data URL
+  in a payload (it is up to 512KB — the same reason the owner route keeps it
+  out of the venue-details payload). The listing carries only `frame`, a URL or
+  `''`.
+
+**THIS IS A NEW PUBLIC SURFACE READING FROM THE INVOICES OBJECT, WHICH HAD ZERO
+PUBLIC READERS**, so it was worth deciding rather than reaching for. What is
+exposed is one image a venue designed to be handed out — a frame with the pub's
+own logo and Pub Champions on it — for a night already published, and nothing
+else about the invoice book. The invoice-data rule (*never claim it cannot be
+read; do not store what is not needed*) is untouched: this reads one field that
+exists to be public.
+
+**NOTHING IS BAKED INTO THE STORED PHOTOGRAPH.** The frame is a sibling layer
+the page draws over each picture (`.gal-frame`, `object-fit: fill` so it matches
+the square overlay and the save's own composite) and passes to `savePhoto()` as
+the `overlay`, exactly as the console export does. So the originals in the
+private repo stay clean, and a venue that redesigns its artwork changes every
+gallery at once — the correction-reaches-every-copy rule, wearing a frame.
+
+- **THE FRAME SITS ON THE PHOTO, NOT THE BUTTON.** On the square grid tiles
+  `inset: 0` is exact. On the enlarged photo the picture is `object-fit:
+  contain` and letterboxed, so the frame goes on a `.gal-big-pic` wrapper that
+  SHRINKS to the photo — `display: flex` with `min-height: 0` on both wrapper
+  and image, which is what lets `max-height: 100%` actually size the picture
+  down to the window instead of overflowing it and leaving the frame short. The
+  guard measures the two rectangles and fails if they part by more than a pixel.
+- **A MISSING FRAME IS A 404, AND THAT IS THE FALLBACK, NOT AN ERROR.** A night
+  whose venue has no overlay serves no frame; the page draws no layer, and a
+  save with an empty `overlay` drops back through `stamped()` to the app's own
+  watermark — the plain mark the public page always had.
+- **IT RESTS ON A CAMERA PHOTO SHOWING**, which since the same day is the
+  gallery default again (`showsByDefault()` = `isCameraFile()`, see
+  `photos.md`). A framed gallery of picked photos would be an empty gallery.

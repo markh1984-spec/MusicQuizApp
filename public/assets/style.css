@@ -10230,6 +10230,7 @@ body.gallery { padding: 0; }
 /* A BUTTON NOW, because it is pressed — reset to the figure it replaced, so
    the wall looks exactly as it did and only the behaviour is new. */
 .gal-shot {
+  position: relative;
   margin: 0; padding: 0; border: 0; background: none; display: block;
   width: 100%; cursor: zoom-in;
 }
@@ -10240,6 +10241,18 @@ body.gallery { padding: 0; }
 }
 .gal-shot:hover img, .gal-shot:focus-visible img { transform: scale(1.02); }
 @media (prefers-reduced-motion: reduce) { .gal-shot img { transition: none; } }
+/* THE VENUE'S FRAME — a layer over the photo, never touched into the bytes.
+   `fill` on a square tile matches the square overlay exactly, and matches how
+   the SAVE composites it, so the page and a download agree. It scales with the
+   photo on hover so the pair move as one, and never takes a press. */
+.gal-frame { pointer-events: none; }
+.gal-shot .gal-frame {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: fill; border-radius: var(--r-card);
+  transition: transform 140ms ease;
+}
+.gal-shot:hover .gal-frame, .gal-shot:focus-visible .gal-frame { transform: scale(1.02); }
+@media (prefers-reduced-motion: reduce) { .gal-shot .gal-frame { transition: none; } }
 
 /* ---- ONE PHOTOGRAPH, FILLING THE SCREEN.
 
@@ -10263,6 +10276,22 @@ body.gallery { padding: 0; }
            max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
 }
 .gal-big img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: var(--r-card); }
+/* THE PHOTO AND ITS FRAME, as one unit sized to the picture. The wrapper is
+   inline-block so it shrinks to the contained photo — not the whole button —
+   and the frame `inset: 0` then lands on the picture rather than the black
+   letterboxing around it. `object-fit: fill` matches the save's composite. */
+.gal-big-pic {
+  position: relative; display: flex; line-height: 0;
+  max-width: 100%; max-height: 100%; min-width: 0; min-height: 0;
+}
+/* `min-height: 0` on both is what lets `max-height: 100%` actually shrink the
+   photo to the window — without it the picture keeps its natural height and
+   overflows, and the frame (which tracks the wrapper) no longer lands on it. */
+.gal-big-pic > img { max-width: 100%; max-height: 100%; min-width: 0; min-height: 0; display: block; }
+.gal-big-pic .gal-frame {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: fill; border-radius: var(--r-card);
+}
 /* SAVE THIS PHOTO — an ORDINARY control, on the picture it acts on.
    Outlined rather than filled: the gallery has no gradient button on it and a
    filled one here would be the loudest thing on a page whose whole job is the

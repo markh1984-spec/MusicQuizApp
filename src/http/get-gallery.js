@@ -6,7 +6,7 @@ import { COVER_PHOTOS, FEATURES, HOUSE, accounts, bookingOf, comeBackText, cover
 import { sendJson } from './plumbing.js';
 import { galleryRoomFor, galleryRoomFrom, nightFiles, photoBytes, roomForHost, whoIs, whoseRoom } from './identity.js';
 import { allowed } from './gates.js';
-import { ensureArchiveRestored } from './helpers.js';
+import { ensureArchiveRestored, ensureInvoicesRestored, venueOverlayFor } from './helpers.js';
 
 export async function getGallery(req, res, url, route) {
   /*
@@ -242,8 +242,23 @@ export async function getGallery(req, res, url, route) {
      */
     const listRoom = rooms.get(galleryRoomId());
     await ensureArchiveRestored(listRoom);
-    const venueOfNight = new Map(mergeGigs(listArchive(listRoom.paths.archive), [])
-      .map((g) => [g.night, g.venue || '']));
+    const mergedNights = mergeGigs(listArchive(listRoom.paths.archive), []);
+    const venueOfNight = new Map(mergedNights.map((g) => [g.night, g.venue || '']));
+    const venueIdOfNight = new Map(mergedNights.map((g) => [g.night, g.venueId || '']));
+    // Which venues have a frame — one invoices restore for the page, then a
+    // set of the ids and lowercase names that carry an overlay (`sameVenue()`).
+    await ensureInvoicesRestored(listRoom);
+    const framedIds = new Set();
+    const framedNames = new Set();
+    for (const c of (listRoom.invoices && listRoom.invoices.customers) || []) {
+      if (c && c.overlay) { framedIds.add(c.id); framedNames.add(String(c.name || '').trim().toLowerCase()); }
+    }
+    const nightHasFrame = (night) => {
+      const id = venueIdOfNight.get(night);
+      if (id && framedIds.has(id)) return true;
+      const nm = String(venueOfNight.get(night) || '').trim().toLowerCase();
+      return Boolean(nm && framedNames.has(nm));
+    };
     const atVenue = wantVenue
       ? new Set([...venueOfNight]
         // `sameVenueSlug()` rather than `===`: one pub filed under two
@@ -299,6 +314,8 @@ export async function getGallery(req, res, url, route) {
           venue: venueOfNight.get(night) || '',
           count: shown.length,
           live: live.includes(night),
+          // The venue's frame, when it has one — drawn over the photo, not baked in.
+          frame: nightHasFrame(night) ? `/gallery-frame/${night}` : '',
           /*
            * THE FEW ON THE CARD, off the SAME filtered list the count is taken
            * from — so a photograph held back cannot appear on the card that
@@ -419,6 +436,8 @@ export async function getGallery(req, res, url, route) {
     const venueOf = new Map(mergeGigs(listArchive(gRoom.paths.archive), [])
       .map((n) => [n.night, n.venue || '']));
     const venue = venueOf.get(night) || '';
+    // The venue's frame for this night, if it has one — served by the route below.
+    const frame = (await venueOverlayFor(galleryRoomId(), night)) ? `/gallery-frame/${night}` : '';
     const visible = preview
       ? [...new Set([...(await publishedNights(galleryRoomId())),
         ...(await listDirs(photoFolder(galleryRoomId()), 'photos')).map((f) => f.name).filter(isNightFolder)])]
@@ -440,6 +459,7 @@ export async function getGallery(req, res, url, route) {
       night,
       when: readableNight(night),
       venue,
+      frame,
       newer: at > -1 ? step(at - 1) : null,
       older: at > -1 ? step(at + 1) : null,
       live: await isPublished(galleryRoomId(), night),
@@ -520,6 +540,31 @@ export async function getGallery(req, res, url, route) {
       // NOT in a search result. Being findable on Google is speculative
       // marketing value; a stranger's face turning up in a search is a
       // concrete cost, and it lands on the player rather than the business.
+      'X-Robots-Tag': 'noindex, noimageindex',
+    });
+    return res.end(bytes), true;
+  }
+
+  /*
+   * THE VENUE'S FRAME FOR A NIGHT — public, gated on the same publish check as
+   * the photographs, resolving the venue itself so a visitor never names a venue
+   * id. A 404 is "no frame": the page falls back to the app's watermark, as a
+   * save does. `docs/gigs/gallery-page.md`.
+   */
+  if (route.startsWith('/gallery-frame/')) {
+    const night = decodeURIComponent(route.slice('/gallery-frame/'.length));
+    if (!isNightFolder(night) || !(galleryPreview() || await isPublished(galleryRoomId(), night))) {
+      return sendJson(res, 404, { error: 'Nothing here.' }), true;
+    }
+    const overlay = await venueOverlayFor(galleryRoomId(), night);
+    const m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(overlay || '');
+    if (!m) return sendJson(res, 404, { error: 'No frame.' }), true;
+    const bytes = Buffer.from(m[2], 'base64');
+    res.writeHead(200, {
+      'Content-Type': m[1],
+      'Content-Length': bytes.length,
+      // A day, like the photographs beside it; a redesign reaches every gallery within it.
+      'Cache-Control': 'public, max-age=86400',
       'X-Robots-Tag': 'noindex, noimageindex',
     });
     return res.end(bytes), true;

@@ -532,6 +532,18 @@ async function showNight(night) {
    * no way back but the browser's own button, on a page a regular reaches from
    * a link with no history behind it.
    */
+  /*
+   * THE VENUE'S FRAME, over every photo — the layer that makes the public page
+   * already carry the branding when it is shared. `data.frame` is present only
+   * when the night's venue has an overlay; it is a transparent PNG stretched to
+   * the square tile (`object-fit: fill`), exactly as the SAVE composites it, so
+   * what a landlord sees on the page is what a download gives them. The photo
+   * itself is untouched — this is a sibling layer, never baked into the bytes.
+   */
+  const frameSrc = data.frame ? esc(keyed(data.frame)) : '';
+  const frameLayer = frameSrc
+    ? `<img class="gal-frame" src="${frameSrc}" alt="" aria-hidden="true" loading="lazy" decoding="async">`
+    : '';
   const grid = node(`
     <div class="gal-grid">
       ${data.photos.map((p, i) => `
@@ -547,6 +559,7 @@ async function showNight(night) {
                listing let you through, so on an unpublished night a preview
                without it would be a page of broken images. -->
           <img src="${esc(keyed(p.url))}" alt="A photo from the night" loading="lazy" decoding="async">
+          ${frameLayer}
         </button>`).join('')}
     </div>`);
   placeArrows(data);
@@ -658,9 +671,18 @@ function wireBigPicture(grid, photos, data = {}) {
     close();
     const p = photos[at];
     if (!p) return;
+    // The frame goes on a wrapper sized to the photo, not the whole button, so
+    // it lands on the picture rather than the letterboxing around it.
+    const frameSrc = data.frame ? esc(keyed(data.frame)) : '';
+    const framed = frameSrc
+      ? `<img class="gal-frame" src="${frameSrc}" alt="" aria-hidden="true">`
+      : '';
     open = node(`
       <button class="gal-big" type="button" aria-label="Close this photo">
-        <img src="${esc(keyed(p.url))}" alt="A photo from the night">
+        <span class="gal-big-pic">
+          <img src="${esc(keyed(p.url))}" alt="A photo from the night">
+          ${framed}
+        </span>
         <span class="gal-save" role="button" tabindex="0">Save this photo</span>
       </button>`);
     const saver = open.querySelector('.gal-save');
@@ -673,6 +695,10 @@ function wireBigPicture(grid, photos, data = {}) {
         await savePhoto(keyed(p.url), {
           words: brandName,
           filename: saveName(data.venue, data.when || data.night, at, ''),
+          // The venue's frame if the night has one — baked into the download
+          // exactly as it is shown, so a shared copy carries the branding. With
+          // no frame `savePhoto` falls back to the app's own watermark.
+          overlay: data.frame ? keyed(data.frame) : '',
         });
         saver.textContent = 'Saved';
       } catch {
