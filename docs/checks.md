@@ -245,3 +245,29 @@ waits for "Ready for tonight" in green, closes the projector and waits for it
 to go off again, then rebuilds the bar to prove a fresh line still polls.
 Sixth sighting of *a test that the payload is right proves nothing about
 whether anybody drew it*.
+
+## The Monday test — what the container cannot prove, done by hand
+
+The guards run Chromium in a container. These are the things only a human at
+a real venue-shaped table can check, and they are the checklist for the day
+before a gig week:
+
+1. **Real phones on real networks** — your own on mobile data, one other on
+   the wifi, iOS Safari and Android. Join, answer, airplane mode for ten
+   seconds mid-question, back. `wifi-blip.mjs` on a real handset.
+2. **The first minute** — open the console cold and time it. The free tier
+   spins down after fifteen idle minutes; an uptime monitor on `/health`
+   every five minutes removes the cold start and doubles as the alarm.
+3. **The prize path** — a real venue with prizes, a short quiz to the final,
+   scan the winner's code with a second phone, see the bar page say redeemed
+   and the code leave the winner's phone.
+4. **Two devices** — the control view on the phone and the laptop, Next on
+   both at once: one question moves, one screen says "Already done".
+5. **The ready line** — green once the projector is open and the venue has
+   prizes. Red or stuck on "checking the server" is a report, not a shrug.
+6. **My account** — no "not being backed up" line, which is the GitHub token
+   still working; every deploy restores the accounts through it.
+
+Render settings worth a glance the same day: `HOST_KEY` (or `?key=` bookmarks
+die per deploy), `TZ=Europe/London` (belt and braces — the server runs in UTC),
+and that the uptime monitor above exists.
