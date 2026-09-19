@@ -174,6 +174,46 @@ try {
   const pub = filed.find((g) => String(g.venue || '').includes('Station Tap'));
   check('…and it still knows which pub it was at', Boolean(pub),
     JSON.stringify(filed.slice(0, 2)).slice(0, 220));
+  /* ------------------------------------ AND A FAILED BACKUP SAYS SO OUT LOUD
+   *
+   * The half that actually cost six weeks. Every backup is fired and forgotten,
+   * so when `PHOTO_TOKEN` stopped being able to write, nothing anywhere said a
+   * word — the console looked right, the night filed, and the record went
+   * nowhere. So: a second app whose repository CANNOT be written, one venue
+   * saved, and the flight recorder has to be able to tell somebody.
+   */
+  const deaf = fs.mkdtempSync(path.join(os.tmpdir(), 'survive-deaf-'));
+  // A FILE where the stub wants a folder: every write throws, which is what a
+  // token that cannot write looks like from in here.
+  fs.writeFileSync(path.join(deaf, 'wall'), 'not a folder');
+  const broken = await startApp({
+    key: 'deaf-key',
+    nodeArgs: ['--import', STUB],
+    env: { GH_STUB_DIR: path.join(deaf, 'wall'), PHOTO_REPO: 'a/b', PHOTO_TOKEN: 'stub' },
+    seed: async (dir) => {
+      const { Accounts } = await import(new URL('../src/accounts.js', import.meta.url).href);
+      const book = new Accounts(path.join(dir, 'accounts.json'));
+      book.create({ email: 'qm@example.com', password: PW, name: 'Quizzy', role: 'quizmaster', tier: 'gold', status: 'active' });
+      book.save();
+    },
+  });
+  try {
+    const inAgain = await fetch(`${broken.base}/api/sign-in`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'qm@example.com', password: PW }) });
+    const c2 = (inAgain.headers.getSetCookie() || []).map((x) => x.split(';')[0]).join('; ');
+    const saved = await fetch(`${broken.base}/api/invoices/customers`, { method: 'POST', headers: { 'content-type': 'application/json', cookie: c2 }, body: JSON.stringify({ name: 'The Unwritable Arms' }) });
+    const said = await saved.json().catch(() => ({}));
+    check('a venue still saves when the backup cannot be written', saved.status === 200, `${saved.status}`);
+    check('…and the reply says it was not backed up', said.backedUp === false, JSON.stringify(said).slice(0, 120));
+    await wait(600);
+    const rec = await fetch(`${broken.base}/api/flight`, { headers: { cookie: c2 } });
+    const flight = await rec.json().catch(() => ({}));
+    const text = String((flight && flight.text) || JSON.stringify(flight));
+    check('AND THE FLIGHT RECORDER SAYS SO — the six-week silence is over',
+      /was NOT backed up/.test(text), text.slice(-260));
+  } finally {
+    broken.stop();
+    fs.rmSync(deaf, { recursive: true, force: true });
+  }
 } catch (err) {
   failures += 1;
   console.log('  FAIL threw:', err.stack || err.message);

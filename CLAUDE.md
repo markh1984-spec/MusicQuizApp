@@ -2066,6 +2066,17 @@ Hung GitHub behind the real server and drove a night. Four things waited:
   `ok: false`** — `within()`; the write still finishes.
 - **A FAILED LIBRARY RESTORE BACKS OFF A MINUTE** (`restoreOnce`) — never
   latched as empty, never retried per request.
+- **AND A BACKUP THAT FAILED SAYS SO — `saidSo()` in `http/helpers.js`.** Six
+  weeks of nights, venues, prizes, overlays and join codes went nowhere:
+  `PHOTO_TOKEN` stopped being able to write, every backup is fired and
+  forgotten, and `onArchive`'s `.catch(() => {})` ate the rest. **`data/` is
+  wiped on every deploy and there is no disk, so THE BACKUP IS THE DATA** — and
+  the only symptom was the gallery losing its frame — `venueOverlayFor()` needs
+  the night's ARCHIVE record to know which pub it was. **`backup` is a
+  `SHARED_KIND`**, or a warn with no room never reaches the Help tab.
+  **`a-night-survives-a-deploy.mjs` takes the disk away** and demands the venue,
+  its prizes, its overlay, the night and the night's pub all come back — and
+  that a backup which cannot be written is said out loud.
 
 ### TWO DEVICES, ONE QUIZ — a move carries the cursor it was pressed against
 

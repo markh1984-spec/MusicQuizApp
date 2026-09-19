@@ -52,8 +52,18 @@ const DATA_MAX = 600;
 // Above this the mirror file is rewritten from the ring rather than grown —
 // a long season of appends must not become a file the boot spends a second on.
 const FILE_MAX_BYTES = 2 * 1024 * 1024;
-// Global kinds every room's report carries, whatever their level.
-const SHARED_KINDS = new Set(['boot', 'selftest', 'uncaught']);
+/*
+ * Global kinds every room's report carries, whatever their level.
+ *
+ * **`backup` EARNED ITS PLACE ON 19 SEPTEMBER 2026.** Every backup is fired and
+ * forgotten, and when `PHOTO_TOKEN` stopped being able to write, six weeks of
+ * nights, venues and join codes went nowhere with nothing said — `data/` being
+ * wiped on every deploy, the backup IS the data. They warn now (`saidSo()` in
+ * `http/helpers.js`), and a warn with no room on it is dropped by `recent()`
+ * unless its kind is named here. A failure nobody can read is the silence this
+ * whole file exists to end.
+ */
+const SHARED_KINDS = new Set(['boot', 'selftest', 'uncaught', 'backup']);
 
 /** One line of anything, printable, and never longer than it needs to be. */
 export function clean(value, max) {

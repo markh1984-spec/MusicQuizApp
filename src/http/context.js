@@ -203,7 +203,18 @@ export const rooms = new Rooms({
   onPush: (room) => hooks.pushState(room),
   // A night has just been filed. Keep it, or the record of somebody's gigs
   // lasts exactly until the next deploy. Never awaited — see backUpArchive.
-  onArchive: (room) => { hooks.backUpArchive(room).catch(() => {}); },
+  onArchive: (room) => {
+    /*
+     * NEVER AWAITED — a night ends while the projector is showing a scoreboard
+     * and nobody is waiting on the server. But the `.catch()` here swallowed a
+     * THROW for six weeks while every backup was failing, so it says so now:
+     * `backUpArchive` warns for itself, and this covers the one case it cannot
+     * (never being wired at all, which would be a TypeError nobody would see).
+     */
+    Promise.resolve()
+      .then(() => hooks.backUpArchive(room))
+      .catch((err) => console.warn('[backup] a night was NOT backed up:', err.message));
+  },
   // A join code has been minted. Keep it, or a quizmaster's printed QR sends a
   // room to a game that does not exist after the next deploy.
   onCodes: (serialised) => hooks.backUpCodesSoon(serialised),

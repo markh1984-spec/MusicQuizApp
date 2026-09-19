@@ -172,12 +172,46 @@ export async function within(promise, ms = BACKUP_WAIT_MS) {
   }
 }
 
+/**
+ * ---- A BACKUP THAT FAILED HAS TO SAY SO, AND FOR SIX WEEKS NONE OF THEM DID.
+ *
+ * Found on 19 September 2026. The private repository held **two `Update
+ * accounts` commits from 9 August and nothing else** — not one `Update past
+ * nights`, not one `Update invoices`, not one `Update join codes` — across six
+ * weeks and five gigs, because `PHOTO_TOKEN` had stopped being able to write and
+ * every one of these swallows its own answer: `backUpArchive()` catches and
+ * returns `{ok:false}`, and `onArchive` in `context.js` calls it with
+ * `.catch(() => {})`. Nothing asked. Nothing looked. `data/` is wiped on every
+ * deploy and there is no disk, so **the backup IS the data** — and the record of
+ * five nights, every venue, every prize and every photo overlay lasted exactly
+ * until the next push.
+ *
+ * It surfaced as *"we seem to have lost the overlay"*, which is the smallest
+ * possible symptom of the whole archive being gone.
+ *
+ * So every backup goes through here on its way back. `console.warn` is WRAPPED
+ * by the flight recorder (`src/flight.js`), so a failure lands on the Help tab
+ * with its reason and can be pasted into a chat — the mechanism this app already
+ * has for *a broken night writes itself down*, pointed at the one class of
+ * failure that had no voice at all.
+ *
+ * **It never changes the answer and never throws.** These are called from the
+ * middle of a night; the whole point is that a bad GitHub hour cannot be felt by
+ * a room. What changes is only whether anybody can find out afterwards.
+ */
+function saidSo(what, result) {
+  if (!result || result.ok === false) {
+    console.warn(`[backup] ${what} was NOT backed up:`, (result && result.error) || 'unknown');
+  }
+  return result;
+}
+
 export async function backUpInvoices(room) {
-  if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
+  if (!privateRepoConfigured()) return saidSo('the invoice book', { ok: false, error: 'no private repo set up' });
   try {
-    return await within(putFile(invoiceBackupName(room), room.invoices.serialise(), 'Update invoices', 'private'));
+    return saidSo('the invoice book', await within(putFile(invoiceBackupName(room), room.invoices.serialise(), 'Update invoices', 'private')));
   } catch (err) {
-    return { ok: false, error: err.message };
+    return saidSo('the invoice book', { ok: false, error: err.message });
   }
 }
 
@@ -209,11 +243,11 @@ export function archiveBackupName(room) {
  * waiting on the server.
  */
 export async function backUpArchive(room) {
-  if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
+  if (!privateRepoConfigured()) return saidSo('a night', { ok: false, error: 'no private repo set up' });
   try {
-    return await within(putFile(archiveBackupName(room), serialiseArchive(room.paths.archive), 'Update past nights', 'private'));
+    return saidSo('a night', await within(putFile(archiveBackupName(room), serialiseArchive(room.paths.archive), 'Update past nights', 'private')));
   } catch (err) {
-    return { ok: false, error: err.message };
+    return saidSo('a night', { ok: false, error: err.message });
   }
 }
 
@@ -426,23 +460,25 @@ export function backUpCodesSoon(serialised) {
     if (codesPending === null) return;
     const body = codesPending;
     codesPending = null;
-    const result = await backUpCodes(body);
-    // Quiet where there is no private repo to write to — that is a dev box or
-    // a fresh deploy, not a lost code. Loud for everything else.
-    if (!privateRepoConfigured()) return;
-    if (!result || result.ok === false) {
-      console.warn('[rooms] join codes were NOT backed up:', (result && result.error) || 'unknown');
-    }
+    // `backUpCodes` says so for itself now, in `saidSo`'s one wording. Two
+    // warnings for one failure reads as two failures.
+    await backUpCodes(body);
   }, () => {});
   return codesWriting;
 }
 
 export async function backUpCodes(serialised) {
+  /*
+   * THE JOIN CODES WERE THE ONE THAT ALREADY SPOKE UP, and it is worth keeping
+   * why: a code book that does not land is a printed QR that stops resolving in
+   * front of a room. **Quiet where there is no private repo at all** — a dev box
+   * is not a lost code — which is why the refusal below is the silent one.
+   */
   if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
   try {
-    return await putFile('room-codes.json', serialised, 'Update join codes', 'private');
+    return saidSo('the join codes', await putFile('room-codes.json', serialised, 'Update join codes', 'private'));
   } catch (err) {
-    return { ok: false, error: err.message };
+    return saidSo('the join codes', { ok: false, error: err.message });
   }
 }
 
@@ -454,11 +490,11 @@ export async function backUpCodes(serialised) {
  * payment reference. The main repo is public and git history is forever.
  */
 export async function backUpAccounts() {
-  if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
+  if (!privateRepoConfigured()) return saidSo('the accounts book', { ok: false, error: 'no private repo set up' });
   try {
-    return await within(putFile('accounts.json', accounts.serialise(), 'Update accounts', 'private'));
+    return saidSo('the accounts book', await within(putFile('accounts.json', accounts.serialise(), 'Update accounts', 'private')));
   } catch (err) {
-    return { ok: false, error: err.message };
+    return saidSo('the accounts book', { ok: false, error: err.message });
   }
 }
 

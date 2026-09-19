@@ -1162,7 +1162,13 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * data — and nothing had ever asserted that a night, a venue or its frame comes
  * back. A guard nobody can find in the index is a guard nobody runs.
  */
-const BUDGET = 269_900;
+/*
+ * AND TO 270_600 for the loudest lesson of the lot: a backup that fails has to
+ * say so. Six weeks of gigs were stored nowhere while every screen looked
+ * right. The prohibition is short and the reason is the whole point — on a host
+ * that wipes its disk every deploy, a silent backup is not a backup.
+ */
+const BUDGET = 270_700;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
