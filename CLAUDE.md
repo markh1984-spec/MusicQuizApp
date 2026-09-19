@@ -4342,6 +4342,7 @@ node scripts/bar-staff-camera.mjs       # the camera code — same bucket, and n
 node scripts/props-on-a-photo.mjs       # do the googly eyes go on, on BOTH cameras?
 node scripts/no-prizes-no-launch.mjs    # can a night launch with nobody to pay?
 node scripts/after-a-deploy.mjs         # after a restart, can the host still launch?
+node scripts/a-night-survives-a-deploy.mjs  # the venue, the night and its frame, after a wipe
 node scripts/every-game.mjs             # every game and round type, end to end
 node scripts/prizes-fuzz.mjs            # every prize count, word and tie
 node scripts/github-down.mjs            # GitHub gone quiet — does a night still run?

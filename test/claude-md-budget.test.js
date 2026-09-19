@@ -1156,7 +1156,13 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * code. A sentence that tells a future session to do that is worth two hundred
  * bytes to correct, tonight, rather than after somebody follows it.
  */
-const BUDGET = 269_800;
+/*
+ * AND TO 269_900 for one line in the checks list: `a-night-survives-a-deploy`.
+ * `data/` is wiped on every deploy and there is no disk, so the backup IS the
+ * data — and nothing had ever asserted that a night, a venue or its frame comes
+ * back. A guard nobody can find in the index is a guard nobody runs.
+ */
+const BUDGET = 269_900;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
