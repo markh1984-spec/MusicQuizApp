@@ -1147,7 +1147,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * into, which is the cheapest byte here: a file nothing points at is work nobody
  * opens, which this repo has shipped three times.
  */
-const BUDGET = 269_550;
+/*
+ * AND TO 269,800 — one line, and it is the cheapest in the file. The object-store
+ * section said *the script is for deleting the repository afterwards, the whole
+ * prize*, written when that repository held nothing but photographs. It now
+ * holds the ACCOUNTS BOOK and the JOIN-CODE BOOK, because `'private'` came back
+ * out of the bucket: deleting it would destroy every login and every printed QR
+ * code. A sentence that tells a future session to do that is worth two hundred
+ * bytes to correct, tonight, rather than after somebody follows it.
+ */
+const BUDGET = 269_800;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

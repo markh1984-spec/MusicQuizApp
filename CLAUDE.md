@@ -2156,20 +2156,23 @@ bytes for ever, so the repository could only grow.
   **`leagues-published.json` is `'photos'`** — it lives in the photo folder
   beside `published.json`, and two neighbours in two stores is the read-and-write
   disagreement again. **`photos-in-a-bucket.mjs` asserts the bucket's root holds
-  nothing but `photos/`**, and `why-no-nights.mjs` prints the two books side by
-  side without printing a secret. The repair is
-  `private-out-of-the-bucket.mjs`, which **refuses to write over a richer file**
-  — newer by time is not better. All of it:
-  **[`docs/gigs/photos-in-a-bucket.md`](docs/gigs/photos-in-a-bucket.md)**.
+  nothing but `photos/`**; `why-no-nights.mjs` prints both books side by side
+  with no secret in the output, and `private-out-of-the-bucket.mjs` is the
+  repair, which **refuses to write over a richer file** — newer by time is not
+  better. **[`docs/gigs/photos-in-a-bucket.md`](docs/gigs/photos-in-a-bucket.md)**.
 - **READS FALL BACK TO GITHUB; WRITES DO NOT, AND LISTINGS ARE UNIONED** —
   *the archives are UNIONED, never swapped*, so the migration never has to run
   and a night filed in both places is ONE night. **A fallback happens on a MISS, never on a FAILURE**, or a failing
   store pushes its whole read load back onto the limit it exists to escape.
 - **THE BIN REACHES BOTH WHILE BOTH EXIST**, or a deleted photograph comes back
   when the store misses and the read falls through.
-- **THE SCRIPT IS FOR DELETING THE REPOSITORY AFTERWARDS — THE WHOLE PRIZE.**
-  Copying changes nothing until the old repo is GONE. It reads every byte back
-  and **leaves the repository untouched**; a human deletes it.
+- **THE SCRIPT IS FOR DELETING THE `photos/` FOLDER AFTERWARDS — NEVER THE
+  REPOSITORY.** Copying changes nothing until the old bytes are GONE, which is
+  the prize; it reads every byte back and **leaves the repository untouched**,
+  and a human deletes the folder. **THE REPOSITORY ITSELF STAYS**: it is the
+  `'private'` store, so deleting it destroys the accounts book and the
+  join-code book — every login and every printed QR code. This file said
+  *delete the repository* for a day.
 - **RFC 3986, NOT `encodeURIComponent`** — they differ on `! ' ( ) *` and S3
   signs ITS spelling of the path, so one character is a 403 reading as a bad
   key.
@@ -3941,8 +3944,7 @@ frame"*, then *"a share this photo button… it links back to the site."*
   and **the SAVE composites the same way** (`framedBox()`) — a square photo in
   a square frame is byte-identical to before. **AND A PHOTOGRAPH IS NOT SQUARE
   ANY MORE**: `myPhotos()` sends `square: false`, so the comment claiming
-  `drawFiltered()` squares everything had been false since the camera roll got
-  a way in.
+  `drawFiltered()` squares everything had been false for weeks.
 - **A SHARE IS A LINK, NEVER THE FILE** — the sheet takes files unreliably, and
   a JPEG in a group chat says nothing about whose night it was or that there are
   ninety more. **`shareLink()` builds the address from scratch, never
