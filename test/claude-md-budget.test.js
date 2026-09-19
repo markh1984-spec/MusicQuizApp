@@ -1183,14 +1183,14 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * rather than in a doc nobody opens before touching a photograph.
  */
 /*
- * AND TO 273_200 for the three groups on a night's grid. Most of it is the
+ * AND TO 273_500 for how a night's grid is sorted. Most of it is the
  * CORRECTION: the lamps are the door, not camera-versus-upload, and the two
  * looked alike on one night. A rule that stops somebody trusting the wrong
  * meaning of the one control that decides a public page is worth the bytes —
- * and it carries the reason the third group is blank on an older night, which
- * would otherwise read as a bug and get "fixed" by guessing.
+ * with the sentence that settles what the whole thing was for, which is that
+ * an upload on the screen and off the gallery is ALREADY what happens.
  */
-const BUDGET = 273_200;
+const BUDGET = 273_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

@@ -602,10 +602,49 @@ the pre-flag nights are a handful and stops being cheap if a season of them ever
 needs curating.
 
 
-## THREE GROUPS ON A NIGHT'S GRID, AND ONLY TWO WERE KNOWABLE
+## SORTING A NIGHT'S GRID — and the axis changed once, correctly
 
-*"QM/bar staff photos at the top, then camera taken photos, then uploads at the
-bottom."*
+Asked for first as *"QM/bar staff photos at the top, then camera taken photos,
+then uploads at the bottom"*, and settled two messages later as *"the green
+photos sorted to the top and red photos sorted underneath beneath the fold"* —
+once the thing behind the request came out: *"I want the uploads to be
+permissable on the screen on the night but not on the gallery to advertise the
+night."*
+
+### That last sentence needed no code at all
+
+It is what the app already does, and `photos.js` says so in as many words:
+*"It never keeps a photo off the projector or the wall — a punter's photo is
+still fun on the night, which is the whole point. It decides the public gallery
+afterwards and nothing else."* The red lamp means **not on the gallery**, never
+**not on the screen**. Every meme went up on the projector on the night and is
+held off the page a landlord sees, by default, with nobody pressing anything.
+
+**Worth knowing before building anything else here**: a request about sorting
+turned out to be a question about what the lamps mean. The answer was to say so,
+not to ship a switch.
+
+### The lamp is the axis; the source is the order within it
+
+The first cut grouped by who took it — yours, phone shots, uploads — which is
+the wrong question for this grid. The bay is capped at `--bay-h` and scrolls, so
+**whatever sits first is what the advertised page is made of**, and that is
+decided by the lamp. The source survives as the order *within* each half:
+among the ones that are off, a punter's photograph of the room is the next thing
+worth promoting and a meme never is.
+
+### Two things that are not obvious and are load-bearing
+
+- **It sorts on load and never again.** The lamp flips on the spot and saves in
+  the background, so re-sorting on the press would slide the photograph out from
+  under the finger that pressed it and shuffle the next one into its place. The
+  band each photograph is in is snapshotted before the loop rather than read
+  from `p.onGallery` inside it, which the lamp mutates — otherwise a press puts
+  a second heading in the middle of a group.
+- **Flagged sits above both bands.** A rude photograph is nearly always one the
+  room sent, so it is nearly always red — and putting red below the fold would
+  bury exactly what `src/moderation.js` exists to surface. It keeps the top of
+  the grid, and the heading does not exist at all unless something is flagged.
 
 ### The premise had to be corrected first
 
@@ -654,14 +693,14 @@ stays the door. `looksCameraTaken()` under-counts and cannot over-count, so the
 worst this can do is put a camera photograph in the uploads group: a tile in the
 wrong half of a grid, with its lamp, bin and star all still on it.
 
-### A night that cannot answer is drawn as TWO groups
+### A night that cannot answer still sorts fine
 
-`photoSource()` returns `'house'`, `'camera'` or `'upload'`, and the console
-asks whether **any** photograph on the night carries the camera marker before it
-draws three groups. An older night has none, so every one of the room's
-photographs would read as an upload — and half of them were not. Two honest
-groups ("Yours and the bar's", "From the room") beat three where one is a lie
-about files that cannot answer.
+`photoSource()` returns `'house'`, `'camera'` or `'upload'`. On a night filed
+before the marker existed every one of the room's photographs reads as
+`'upload'` — which would have been a lie as a *heading* and is harmless as a
+*tiebreak*, since those photographs are all in the same band anyway and simply
+keep the order the folder returned them in. Moving the source off the headings
+and into the sort is what made that stop mattering.
 
 ### What the change actually touched
 
@@ -677,10 +716,7 @@ about files that cannot answer.
 - **The reorder must not copy the photo objects.** The lamp writes `p.onGallery`
   back onto the payload so the count line follows the flick; a spread while
   grouping would have left a grid of green dots under a line still saying none.
-- **The flagged ones still come first, within their own group.** The rude-photo
-  check's value is that a review of ninety becomes a look at three, and the red
-  ring and the Review pill are what carry that; sorting across the groups would
-  undo the thing that was asked for.
+- **The flagged ones come first, above both bands** — see above.
 
 
 ## `fileAway()` FILED INTO A ROOM NOBODY READS — 19 September 2026

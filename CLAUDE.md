@@ -2806,18 +2806,21 @@ costs.
   AND REMOVED** — a flag the quizmaster must respect is a rule he must REMEMBER,
   on a Monday, about a photograph he did not take. **Do not rebuild a
   sender-side switch.** The gate is the publish control under the photos.
-- **A NIGHT'S GRID IS THREE GROUPS — YOURS AND THE BAR'S, PHONE SHOTS,
-  UPLOADS** (`photoSource()`, `CAMERA_SUFFIX`). **THE LAMPS ARE NOT THAT
-  QUESTION** — they are the DOOR (`showsByDefault()`), and the two only looked
-  alike because the room sent memes that night. **Camera-versus-upload was read
-  at upload and never written down**, so it rides in the NAME now like
-  `-picked`; **a night with no marker draws TWO groups**, or the app calls a
-  photograph an upload because it cannot remember. **A SORT, NEVER A GATE** —
-  the 2 September EXIF gate stays torn out. **The SERVER sends `source`**;
-  **`PHOTO_NAME` is one pattern, not three**, or a new marker silently drops
-  every lamp and flag; **the reorder may not COPY a photo object** or the count
-  line stops following the lamps; **flagged still comes first inside its
-  group.**
+- **A NIGHT'S GRID IS SORTED ON THE LAMP — on the gallery at the top, the rest
+  below the fold.** Built first as three groups by WHO TOOK IT and that was the
+  wrong axis: the bay scrolls, so whatever is first is what a landlord's page is
+  made of. **The source is the order WITHIN each half** (`photoSource()`,
+  `CAMERA_SUFFIX`) — a punter's photograph is the next thing you would promote
+  and a meme never is. **SORTED ON LOAD AND NEVER AGAIN**, or a press slides the
+  tile out from under the finger that made it. **FLAGGED SITS ABOVE BOTH** — a
+  rude photo is nearly always red, and the fold would bury what the check
+  exists to surface. **THE LAMPS ARE THE DOOR, NOT CAMERA-VERSUS-UPLOAD**
+  (`showsByDefault()`); **an UPLOAD ON THE SCREEN BUT OFF THE GALLERY IS ALREADY
+  THE DEFAULT.** Camera-versus-upload was read at upload and **never written
+  down**, so it rides in the NAME now — **a SORT, NEVER A GATE**, the 2
+  September EXIF gate stays torn out. **`PHOTO_NAME` is one pattern, not
+  three**, or a new marker silently drops every lamp and flag; **the reorder may
+  not COPY a photo object**, or the count line stops following the lamps.
 - **A LAMP PER PHOTO IS A SWITCH, WITH NO WORDS** — `title`/`aria-label` are
   load-bearing, an 18px dot gets a 44px hit area, and **a ruling that only
   restates the DEFAULT is CLEARED, not stored.**

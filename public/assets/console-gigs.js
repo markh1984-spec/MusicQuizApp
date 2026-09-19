@@ -828,66 +828,71 @@ export async function nightPhotos(body, night, opts = {}) {
   data.photos.sort((a, b) => flagRank(a.flagged) - flagRank(b.flagged));
 
   /*
-   * ---- THREE GROUPS: YOURS AND THE BAR'S, THEN CAMERA SHOTS, THEN UPLOADS ----
+   * ---- ON THE GALLERY AT THE TOP, EVERYTHING ELSE BELOW THE FOLD ----------
    *
-   * *"QM/bar staff photos at the top, then camera taken photos, then uploads at
-   * the bottom."* The order is the order you act in: your own are the ones that
-   * go on the gallery by default, a punter's camera shot is the one worth
-   * promoting, and an upload is usually a meme off the internet.
+   * *"The green photos sorted to the top and red photos sorted underneath
+   * beneath the fold."*
    *
-   * **`p.source` IS THE SERVER'S ANSWER** (`photoSource()` in `photos.js`),
-   * never the filename picked apart again here.
+   * **IT SORTS ON THE LAMP, WHICH IS THE QUESTION THIS PAGE IS FOR.** The first
+   * cut of this grouped by WHO TOOK IT — yours, phone shots, uploads — which is
+   * what was asked for a message earlier and is the wrong axis: the bay is
+   * capped at `--bay-h` and scrolls, so whatever is first is what a landlord's
+   * page is made of, and that is decided by the lamp rather than by the door.
+   * The source is kept as the order WITHIN each half, because among the ones
+   * that are off, a punter's photograph of the room is the next thing you would
+   * promote and a meme never is.
    *
-   * **AND A NIGHT THAT CANNOT ANSWER THE THIRD QUESTION IS DRAWN AS TWO
-   * GROUPS.** Camera-versus-upload has only been written into the filename
-   * since 19 September 2026; before that it was read at upload and kept in the
-   * room's memory, which the next relaunch threw away. So on an older night
-   * every one of the room's photographs would fall into "uploads" — and half of
-   * them were taken on a phone. Two honest groups beat three where one is a
-   * guess, and this app has already published a whole night's worth of nothing
-   * by trusting an EXIF answer it did not have.
+   * **IT IS SORTED ON LOAD AND NEVER AGAIN.** Pressing a lamp flips it on the
+   * spot (the write goes to GitHub in the background), and re-sorting on that
+   * press would slide the photograph out from under the finger that just
+   * pressed it and shuffle the next one into its place. The order settles the
+   * next time the night is opened, which is the only moment nobody is aiming at
+   * a 14px dot.
+   *
+   * **AND FLAGGED COMES ABOVE BOTH.** A rude photograph is almost always one
+   * the room sent, so it is almost always red — and putting red below the fold
+   * would bury exactly what the check exists to surface. `src/moderation.js`
+   * earns its keep by making a review of ninety a look at three, so it keeps
+   * the top of the grid. Nothing is flagged unless the Vision key is set, so
+   * this heading simply does not exist on an ordinary night.
    */
-  const GROUPS = [
-    { key: 'house', label: 'Yours and the bar’s' },
-    { key: 'camera', label: 'Taken on a phone' },
-    { key: 'upload', label: 'Uploads' },
-  ];
-  const knowsCamera = data.photos.some((p) => p.source === 'camera');
-  const groupOf = (p) => {
-    if (p.source === 'house') return 'house';
-    return knowsCamera ? (p.source || 'upload') : 'room';
+  const rank = (p) => (p.flagged ? 0 : (p.onGallery ? 1 : 2));
+  const SOURCE_ORDER = { house: 0, camera: 1, upload: 2 };
+  const LABEL = {
+    0: 'Needs a look',
+    1: 'On the gallery',
+    2: 'Not on the gallery',
   };
-  const labelFor = (key) => (key === 'room'
-    ? 'From the room'
-    : (GROUPS.find((g) => g.key === key) || {}).label || '');
-  const order = knowsCamera ? GROUPS.map((g) => g.key) : ['house', 'room'];
-  const inOrder = order
-    .map((key) => ({ key, shots: data.photos.filter((p) => groupOf(p) === key) }))
-    .filter((g) => g.shots.length);
+  const sorted = data.photos
+    .map((p, at) => ({ p, at }))
+    .sort((a, b) => rank(a.p) - rank(b.p)
+      || flagRank(a.p.flagged) - flagRank(b.p.flagged)
+      || (SOURCE_ORDER[a.p.source] ?? 9) - (SOURCE_ORDER[b.p.source] ?? 9)
+      // Stable past that: whatever order the night's own folder came back in.
+      || a.at - b.at)
+    .map((x) => x.p);
+  const sizes = sorted.reduce((acc, p) => { acc[rank(p)] = (acc[rank(p)] || 0) + 1; return acc; }, {});
+  const headings = Object.keys(sizes).length > 1;
 
   const grid = node(`<div class="${wall ? 'community-wall' : 'night-strip'}"></div>`);
   /*
-   * ONE HEADING EACH, AND ONLY WHERE THERE IS MORE THAN ONE GROUP — a night
-   * that is all your own photographs gets a heading saying so and nothing to
-   * compare it with, which is a label doing no work. Silence where there is
-   * nothing to say.
+   * ONE HEADING EACH, AND ONLY WHERE THERE IS MORE THAN ONE — a night whose
+   * photographs are all on the gallery gets a heading saying so with nothing to
+   * compare it against, which is a label doing no work.
+   *
+   * **THE GROUP IS SNAPSHOTTED HERE, NOT RE-READ** — `rank()` asks
+   * `p.onGallery`, which the lamp writes to as it is flicked, so computing it
+   * inside the loop would put a second heading in the middle of a group the
+   * moment somebody pressed one.
    */
-  /*
-   * THE SAME OBJECTS, REORDERED — never copies. The lamp writes `p.onGallery`
-   * back onto the payload so the count line follows the flick, so a spread here
-   * would leave a grid of green dots under a line that still said none. That is
-   * this repo's commonest fault wearing a reorder.
-   */
-  const ordered = inOrder.flatMap((g) => g.shots);
-  const groupOfShot = new Map(inOrder.flatMap((g) => g.shots.map((shot) => [shot, g.key])));
-  let drawnGroup = '';
-  for (const p of ordered) {
-    const group = groupOfShot.get(p);
-    if (inOrder.length > 1 && group !== drawnGroup) {
-      drawnGroup = group;
-      const count = (inOrder.find((g) => g.key === group) || { shots: [] }).shots.length;
+  const bandOf = new Map(sorted.map((p) => [p, rank(p)]));
+  let drawnBand = -1;
+  for (const p of sorted) {
+    const band = bandOf.get(p);
+    if (headings && band !== drawnBand) {
+      drawnBand = band;
       grid.appendChild(node(
-        `<h5 class="cphoto-group">${esc(labelFor(group))} <span>${count}</span></h5>`,
+        `<h5 class="cphoto-group">${esc(LABEL[band])} <span>${sizes[band]}</span></h5>`,
       ));
     }
     /*
