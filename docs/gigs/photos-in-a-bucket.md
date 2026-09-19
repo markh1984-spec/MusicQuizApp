@@ -216,3 +216,75 @@ order that loses a file for good.
 repository never held a copy — and a lost code book is printed QR codes that stop
 resolving in front of a room, which this file already records as the fault that
 sent a whole pub into the owner's own game.
+
+## AND THE GALLERY WAS EMPTY FOR A SECOND REASON — 19 September 2026
+
+With the bucket sorted, `/api/gallery` still answered `nights: []`. The
+diagnostic printed why in three lines:
+
+```
+bucket:     photos/ holds 2026-08-11, 2026-08-12, 3bLePiEIs6js
+repository: photos/ holds 2026-08-05, 2026-08-06
+the gallery reads: photos/0moNo5X5y6g9      <- empty in both
+photos/3bLePiEIs6js -> 2026-08-13, 08-20, 09-03, 09-10, 09-17   <- the five nights
+```
+
+**Every photograph was exactly where it had always been.** The app was asking
+for a room nobody had ever filed anything under.
+
+### What `3bLePiEIs6js` is, and what it is not
+
+Not a renamed account: the accounts book in the private repository has three
+versions in its whole history — 9 August 19:07 (the owner alone), 9 August 21:07
+(the owner and one quizmaster) and the rescue write on the 18th — and the
+quizmaster's id is `0moNo5X5y6g9` in both of the older two. Not a live room
+either: no `rooms/` folder on disk, no third account in the live book, and
+`DATA_DIR` unset, so `data/` is wiped on every deploy as it always was.
+
+So it is a room that the app was filing nights into for five weeks and which the
+accounts book never named. **What that means is not settled and must not be
+guessed at** — the repair below does not depend on knowing.
+
+### The rule and the code disagree about which room a photograph is filed in
+
+`CLAUDE.md` already carries *ONE ROOM FOR THE WHOLE PHOTO STORY —
+`galleryRoomFor()`, never `HOUSE`*, and every READER obeys it: the gallery
+index, a night's photographs, the bytes route, Past gigs' grid, the publish lamp,
+the pins. **`fileAway()` does not.** It writes to `photoFolder(room.id)` — the
+room the GAME is in — with a comment explaining that the house keeps the flat
+path because there are nights filed under it already.
+
+For an ordinary quizmaster the two are the same room and nothing is wrong. For
+the OWNER they are two rooms, exactly as `gigRoomsFor()` records for the archive:
+`roomForHost()` is HOUSE on the host key and under the owner hat, while
+`galleryRoomFor()` is his own quizmaster room. Which is why
+`photos/2026-08-11` and `photos/2026-08-12` — nights filed straight into the
+house folder — have never appeared on the gallery and still do not.
+
+**This needs a decision rather than a quick edit**, and it is written down here
+rather than fixed at midnight: making `fileAway()` follow `galleryRoomFor()`
+fixes every future night and leaves the house-folder ones where they are, so it
+wants doing together with a move of those, and a move is the thing that has to
+be got right once.
+
+### The repair: copy, never move
+
+`scripts/photos-into-the-right-room.mjs`, dry by default:
+
+```
+node scripts/photos-into-the-right-room.mjs 3bLePiEIs6js 0moNo5X5y6g9        # look
+node scripts/photos-into-the-right-room.mjs 3bLePiEIs6js 0moNo5X5y6g9 --go   # do it
+```
+
+- **It copies and never moves.** The source folder is left alone, so a mistake
+  costs disk rather than five nights of somebody's room. Deleting the old folder
+  is a separate, deliberate act taken once the gallery is seen to be right.
+- **It carries the files that sit BESIDE the nights** — `published.json` above
+  all, which is what makes a night visible to a stranger and which lives at the
+  root of the room's folder rather than inside a night. Move the pictures without
+  it and the gallery is still empty, which reads as the repair having failed.
+  `flags.json` and `leagues-published.json` ride along for the same reason.
+- **It refuses to write over anything.** Nothing here is clever enough to merge
+  two `published.json` files, and a guess would unpublish a night.
+- **It goes through `github.js`**, so a read is the store then the repository and
+  a write lands in whichever store is configured — the one choke point, unchanged.
