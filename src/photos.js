@@ -70,9 +70,59 @@ const ALLOWED = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.web
  */
 export const ROOM_SUFFIX = '-picked';
 
+/**
+ * AND A SECOND MARKER: WAS THIS TAKEN ON A CAMERA, OR PICKED OFF A CAMERA ROLL?
+ *
+ * *"QM/bar staff photos at the top, then camera taken photos, then uploads at
+ * the bottom."* Three groups, and the app only knew two — the door it came
+ * through. Camera-versus-upload was read at the moment of upload
+ * (`looksCameraTaken()`, the EXIF `Make` tag off the raw file before the sheet's
+ * canvas strips it), recorded on the live photo item, and **never written down**:
+ * the room's memory is wiped by the next relaunch, and the archive is a
+ * directory of filenames. So for every night already filed, that fact is gone
+ * and cannot be recovered — a grid of them can only be two groups.
+ *
+ * It rides in the filename for the same reason `ROOM_SUFFIX` does: there is no
+ * structured metadata beside a photograph, and a per-night manifest would race
+ * itself the moment two phones upload in one second, which a pub does
+ * constantly. The name is decided once and every later reader just looks at it.
+ *
+ * **IT IS A SORT, NEVER A GATE — and that is what makes an EXIF read safe here.**
+ * This codebase tore an EXIF-based gate out on 2 September 2026 because it was
+ * wrong INCONSISTENTLY and hid a whole night; the gallery default is the DOOR
+ * now and stays the door. `looksCameraTaken()` under-counts and cannot
+ * over-count, so the worst this can do is put a camera photograph in the
+ * uploads group — a tile in the wrong half of a grid, with the lamp, the bin
+ * and the star all still on it.
+ */
+export const CAMERA_SUFFIX = '-cam';
+
 /** Whether a filename this app issued came from the HOUSE camera, not the room. */
 export function isHousePhoto(name) {
   return !String(name || '').includes(ROOM_SUFFIX);
+}
+
+/** Did the file this app was handed come off a camera? Only knowable since 19 Sept 2026. */
+export function isCameraPhoto(name) {
+  return String(name || '').includes(CAMERA_SUFFIX);
+}
+
+/**
+ * WHICH OF THE THREE GROUPS A PHOTOGRAPH BELONGS TO — 'house', 'camera' or
+ * 'upload'.
+ *
+ * One function, decided on the SERVER and sent, rather than three readers each
+ * picking a filename apart in a browser — the rule `onGallery` already follows.
+ *
+ * **'upload' IS THE HONEST FALLBACK AND IT IS ALSO A LIE ABOUT OLD FILES**,
+ * which is why the console asks whether a night carries the marker at all
+ * before it draws three groups. A night filed before this existed has no `-cam`
+ * on anything, so every one of the room's photographs would read as an upload —
+ * and half of them were not. Two groups is what that night actually knows.
+ */
+export function photoSource(name) {
+  if (isHousePhoto(name)) return 'house';
+  return isCameraPhoto(name) ? 'camera' : 'upload';
 }
 
 /**
@@ -352,7 +402,7 @@ export class Photos {
      * and neither does the quizmaster adding one to a filed night. See
      * `ROOM_SUFFIX` for why a fact beats the guess this replaced.
      */
-    const name = id + (playerId ? ROOM_SUFFIX : '') + ext;
+    const name = id + (playerId ? ROOM_SUFFIX : '') + (camera ? CAMERA_SUFFIX : '') + ext;
 
     try {
       fs.mkdirSync(this.dir, { recursive: true });
@@ -364,10 +414,10 @@ export class Photos {
     const item = {
       id, file: name, at, playerId, teamName, filter, bytes: bytes.length, night: nightOf(at),
       // Best-effort, read client-side before the upload's own canvas redraw
-      // stripped the file's EXIF — see looksCameraTaken() in filters.js.
-      // RECORDED AND NO LONGER CONSULTED: the gallery gate is the SOURCE now
-      // (see ROOM_SUFFIX). Kept because it is a true fact about the file and
-      // costs a boolean, not because anything reads it.
+      // stripped the file's EXIF — see looksCameraTaken() in filters.js. It is
+      // not the gallery gate (that is the DOOR — see ROOM_SUFFIX); since
+      // 19 September 2026 it also rides in the NAME, which is what lets a filed
+      // night still be grouped months later. See CAMERA_SUFFIX.
       camera: Boolean(camera),
     };
     this.state.items.push(item);

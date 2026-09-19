@@ -827,8 +827,69 @@ export async function nightPhotos(body, night, opts = {}) {
   const flagRank = (f) => (f === 'adult' ? 0 : f === 'racy' ? 1 : 2);
   data.photos.sort((a, b) => flagRank(a.flagged) - flagRank(b.flagged));
 
+  /*
+   * ---- THREE GROUPS: YOURS AND THE BAR'S, THEN CAMERA SHOTS, THEN UPLOADS ----
+   *
+   * *"QM/bar staff photos at the top, then camera taken photos, then uploads at
+   * the bottom."* The order is the order you act in: your own are the ones that
+   * go on the gallery by default, a punter's camera shot is the one worth
+   * promoting, and an upload is usually a meme off the internet.
+   *
+   * **`p.source` IS THE SERVER'S ANSWER** (`photoSource()` in `photos.js`),
+   * never the filename picked apart again here.
+   *
+   * **AND A NIGHT THAT CANNOT ANSWER THE THIRD QUESTION IS DRAWN AS TWO
+   * GROUPS.** Camera-versus-upload has only been written into the filename
+   * since 19 September 2026; before that it was read at upload and kept in the
+   * room's memory, which the next relaunch threw away. So on an older night
+   * every one of the room's photographs would fall into "uploads" — and half of
+   * them were taken on a phone. Two honest groups beat three where one is a
+   * guess, and this app has already published a whole night's worth of nothing
+   * by trusting an EXIF answer it did not have.
+   */
+  const GROUPS = [
+    { key: 'house', label: 'Yours and the bar’s' },
+    { key: 'camera', label: 'Taken on a phone' },
+    { key: 'upload', label: 'Uploads' },
+  ];
+  const knowsCamera = data.photos.some((p) => p.source === 'camera');
+  const groupOf = (p) => {
+    if (p.source === 'house') return 'house';
+    return knowsCamera ? (p.source || 'upload') : 'room';
+  };
+  const labelFor = (key) => (key === 'room'
+    ? 'From the room'
+    : (GROUPS.find((g) => g.key === key) || {}).label || '');
+  const order = knowsCamera ? GROUPS.map((g) => g.key) : ['house', 'room'];
+  const inOrder = order
+    .map((key) => ({ key, shots: data.photos.filter((p) => groupOf(p) === key) }))
+    .filter((g) => g.shots.length);
+
   const grid = node(`<div class="${wall ? 'community-wall' : 'night-strip'}"></div>`);
-  for (const p of data.photos) {
+  /*
+   * ONE HEADING EACH, AND ONLY WHERE THERE IS MORE THAN ONE GROUP — a night
+   * that is all your own photographs gets a heading saying so and nothing to
+   * compare it with, which is a label doing no work. Silence where there is
+   * nothing to say.
+   */
+  /*
+   * THE SAME OBJECTS, REORDERED — never copies. The lamp writes `p.onGallery`
+   * back onto the payload so the count line follows the flick, so a spread here
+   * would leave a grid of green dots under a line that still said none. That is
+   * this repo's commonest fault wearing a reorder.
+   */
+  const ordered = inOrder.flatMap((g) => g.shots);
+  const groupOfShot = new Map(inOrder.flatMap((g) => g.shots.map((shot) => [shot, g.key])));
+  let drawnGroup = '';
+  for (const p of ordered) {
+    const group = groupOfShot.get(p);
+    if (inOrder.length > 1 && group !== drawnGroup) {
+      drawnGroup = group;
+      const count = (inOrder.find((g) => g.key === group) || { shots: [] }).shots.length;
+      grid.appendChild(node(
+        `<h5 class="cphoto-group">${esc(labelFor(group))} <span>${count}</span></h5>`,
+      ));
+    }
     /*
      * `filed`, always — and this was stamping "NOT FILED" on every one.
      *
@@ -947,10 +1008,11 @@ export async function nightPhotos(body, night, opts = {}) {
        * setting that is not there — so the lamp names which it is, off the
        * `ruled` the server already sends beside the name.
        *
-       * `-picked` is the SOURCE marker now (see `ROOM_SUFFIX` in photos.js),
-       * not the old EXIF guess, so this reads a fact rather than a hunch.
+       * `p.source` is the SERVER's answer (`photoSource()` in photos.js), not a
+       * second reading of the filename in here — the same rule `onGallery`
+       * follows, and the reason adding the camera marker touched one place.
        */
-      const fromRoom = String(p.name || '').includes('-picked');
+      const fromRoom = p.source !== 'house';
       const why = live
         ? (fromRoom
           ? 'On the public gallery — the room sent this one and you put it up. Click to take it off.'

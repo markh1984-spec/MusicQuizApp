@@ -602,6 +602,87 @@ the pre-flag nights are a handful and stops being cheap if a season of them ever
 needs curating.
 
 
+## THREE GROUPS ON A NIGHT'S GRID, AND ONLY TWO WERE KNOWABLE
+
+*"QM/bar staff photos at the top, then camera taken photos, then uploads at the
+bottom."*
+
+### The premise had to be corrected first
+
+The ask came with a belief attached — *"I'm pretty sure the red and greens are
+firing correctly wrt whether they were taken on phone or uploaded"* — and the
+lamps do not mean that. They are `showsOnGallery()`, whose default is
+`showsByDefault()`, which is **the door the upload came through**: green for the
+house camera (`/api/snap`, the quizmaster's phone or the bar's on the shared
+code), red for anything a punter's handset sent through `/api/photo`.
+
+On the night that prompted it the two happened to line up, because the
+quizmaster took the real photographs and the room sent memes. They come apart
+the first time a punter takes a genuine photograph — red — or the quizmaster
+adds a screenshot through *Add your own photos* — green. Two of the red tiles in
+that very screenshot were real photographs of people.
+
+That matters more than a wording quibble: the lamp is what decides the public
+page, and believing it means something else is how a photograph ends up
+published, or missed, on purpose.
+
+### Camera-versus-upload existed and was never written down
+
+`looksCameraTaken()` reads the EXIF `Make` tag off the raw file before the
+camera sheet's canvas redraw strips it, and `/api/photo` has carried the answer
+as `camera=1` for months. It landed on the live photo item in the room's memory
+— and the room's memory is thrown away by the next relaunch, while the archive
+is a directory of filenames. `photos.js` said so in as many words: *"RECORDED
+AND NO LONGER CONSULTED."*
+
+So for every night already filed, that fact is **gone and cannot be recovered**.
+There is nothing left in the bytes: the canvas redraw stripped the EXIF before
+the upload, and everything is resized to the same square.
+
+### The marker rides in the filename, like the other one
+
+`CAMERA_SUFFIX = '-cam'`, written by `add()` beside `ROOM_SUFFIX`, for the same
+reason that one is there: no structured metadata sits beside a photograph, and a
+per-night manifest would race itself the moment two phones upload inside one
+second, which a pub does constantly. The name is decided once and every later
+reader just looks at it.
+
+**It is a sort, never a gate, and that is what makes an EXIF read safe here.**
+This codebase tore an EXIF-based gate out on 2 September 2026 for being wrong
+*inconsistently* — it hid a whole night. The gallery default is the door and
+stays the door. `looksCameraTaken()` under-counts and cannot over-count, so the
+worst this can do is put a camera photograph in the uploads group: a tile in the
+wrong half of a grid, with its lamp, bin and star all still on it.
+
+### A night that cannot answer is drawn as TWO groups
+
+`photoSource()` returns `'house'`, `'camera'` or `'upload'`, and the console
+asks whether **any** photograph on the night carries the camera marker before it
+draws three groups. An older night has none, so every one of the room's
+photographs would read as an upload — and half of them were not. Two honest
+groups ("Yours and the bar's", "From the room") beat three where one is a lie
+about files that cannot answer.
+
+### What the change actually touched
+
+- **`photoSource()` is the one definition and the SERVER sends it** as `source`
+  on each photo, rather than the console picking the filename apart a second
+  time — the rule `onGallery` already follows. The console's own
+  `includes('-picked')` went with it.
+- **The name pattern had THREE COPIES and is now one** — `PHOTO_NAME` in
+  `past-gigs.js`, imported by `gallery.js` and `photo-flags.js`. Each held the
+  same literal to validate a stored key, so a name the console issued and those
+  two refused would have silently dropped every lamp and every flag on it. That
+  is exactly what adding a marker would have done.
+- **The reorder must not copy the photo objects.** The lamp writes `p.onGallery`
+  back onto the payload so the count line follows the flick; a spread while
+  grouping would have left a grid of green dots under a line still saying none.
+- **The flagged ones still come first, within their own group.** The rude-photo
+  check's value is that a review of ninety becomes a look at three, and the red
+  ring and the Review pill are what carry that; sorting across the groups would
+  undo the thing that was asked for.
+
+
 ## `fileAway()` FILED INTO A ROOM NOBODY READS — 19 September 2026
 
 The fifth sighting of *a read and a write that disagree about the room*, and the

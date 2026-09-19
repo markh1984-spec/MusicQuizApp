@@ -193,12 +193,21 @@ export function mergeGigs(archived = [], photoNights = []) {
  * photo is one of our own ids with a known extension; anything else is not
  * something this app filed.
  *
- * The one optional `-picked` marker (`ROOM_SUFFIX` in photos.js) is
+ * The two optional markers (`ROOM_SUFFIX` and `CAMERA_SUFFIX` in photos.js) are
  * part of that same scheme, not an exception to it — `add()` is still the
- * only thing that writes it, in the one place it is allowed to appear.
+ * only thing that writes them, in the one place they are allowed to appear.
+ *
+ * **AND THIS PATTERN HAD THREE COPIES, WHICH IS HOW A MARKER GETS ADDED AND A
+ * WHOLE NIGHT DISAPPEARS.** `gallery.js` and `photo-flags.js` each carried the
+ * same literal to validate a stored key; a name the console issued and those
+ * two refused would have silently dropped every lamp and every flag on it. It
+ * is `PHOTO_NAME` now and they import it — the rule this repo already has for
+ * `showsOnGallery()`, applied to the spelling underneath it.
  */
+export const PHOTO_NAME = /^[a-z0-9]+(-picked)?(-cam)?\.(jpg|png|webp)$/i;
+
 export function safePhotoName(name) {
-  return /^[a-z0-9]+(-picked)?\.(jpg|png|webp)$/i.test(String(name || '')) ? String(name) : '';
+  return PHOTO_NAME.test(String(name || '')) ? String(name) : '';
 }
 
 /**

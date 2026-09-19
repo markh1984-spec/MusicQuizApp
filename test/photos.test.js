@@ -13,7 +13,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { Photos, sniffType, extensionFor, nightOf, MAX_BYTES, MAX_PHOTOS, isHousePhoto, ROOM_SUFFIX } from '../src/photos.js';
+import { Photos, sniffType, extensionFor, nightOf, MAX_BYTES, MAX_PHOTOS, isHousePhoto, ROOM_SUFFIX, photoSource } from '../src/photos.js';
+import { safePhotoName } from '../src/past-gigs.js';
 
 function tempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'mmm-photos-'));
@@ -349,5 +350,61 @@ test('the projector never asks — forScreen() carries every photo regardless', 
     assert.equal(photos.forScreen().length, 2);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+
+/*
+ * ---- WHICH OF THE THREE GROUPS A PHOTOGRAPH IS IN ------------------------
+ *
+ * *"QM/bar staff photos at the top, then camera taken photos, then uploads at
+ * the bottom."* Two of those the app has always known from the door the upload
+ * came through; the third was read at upload and kept only in the room's
+ * memory, which the next relaunch threw away. It rides in the filename now.
+ *
+ * The thing that matters most here is the LAST test: every name this app has
+ * ever issued has to keep surviving `safePhotoName()`, or a marker added today
+ * silently drops the lamps, the pins and the flags on five weeks of
+ * photographs.
+ */
+test('a photo is sorted by who took it, and the marker is in the name', () => {
+  const dir = tempDir();
+  try {
+    const photos = new Photos(dir, () => 1000);
+
+
+    const house = photos.add(jpeg(), { contentType: 'image/jpeg' });
+    const shot = photos.add(jpeg(), { contentType: 'image/jpeg', playerId: 'p1', camera: true });
+    const meme = photos.add(jpeg(), { contentType: 'image/jpeg', playerId: 'p2', camera: false });
+
+    assert.equal(photoSource(house.photo.file), 'house', 'the house camera is not the house');
+    assert.equal(photoSource(shot.photo.file), 'camera', "a punter's camera shot reads as an upload");
+    assert.equal(photoSource(meme.photo.file), 'upload');
+
+    // The room marker is untouched by the new one, which is what keeps the
+    // gallery default — the DOOR, never the EXIF — exactly as it was.
+    assert.equal(isHousePhoto(house.photo.file), true);
+    assert.equal(isHousePhoto(shot.photo.file), false, 'a camera shot stopped counting as the room');
+    assert.ok(shot.photo.file.includes(ROOM_SUFFIX));
+
+    for (const name of [house.photo.file, shot.photo.file, meme.photo.file]) {
+      assert.equal(safePhotoName(name), name, `${name} would be refused by every reader`);
+    }
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('AND EVERY NAME THIS APP HAS EVER ISSUED STILL PASSES', () => {
+  // The three shapes on disk: before the room marker, with it, and with both.
+  for (const name of ['p1abc.jpg', 'p1abc-picked.jpg', 'p1abc-picked-cam.jpg', 'p1abc-cam.png', 'p1abc.webp']) {
+    assert.equal(safePhotoName(name), name, `${name} was refused`);
+  }
+  // And a night filed before the camera marker existed cannot answer the third
+  // question at all — every room photo reads as an upload, which is why the
+  // console draws two groups rather than three when nothing carries it.
+  assert.equal(photoSource('p1abc-picked.jpg'), 'upload');
+  for (const bad of ['../secret.jpg', 'p1abc-cam-picked.jpg', 'p1abc.gif', 'p1abc-other.jpg']) {
+    assert.equal(safePhotoName(bad), '', `${bad} was accepted`);
   }
 });

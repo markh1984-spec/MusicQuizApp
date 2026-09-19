@@ -2,7 +2,7 @@
  * GET ROUTES — past-gigs. Moved whole out of `handleGet()` in server.js;
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
-import { COVER_PHOTOS, FEATURES, MAX_PINS, coverPhotos, isNightFolder, isPublished, leagueAfter, listAdvertPacks, listArchive, listDirs, mergeGigs, nameDecisions, nightHeadcount, nightReportFilename, nightReportPdf, photoDecisions, photoFolder, photoKey, photoPins, photosRepoConfigured, postedNights, publicName, publicTable, publishedNights, safePhotoName, sameVenue, showsOnGallery, teamKey, totals, photoFlags, flagKey } from './context.js';
+import { COVER_PHOTOS, FEATURES, MAX_PINS, coverPhotos, isNightFolder, isPublished, leagueAfter, listAdvertPacks, listArchive, listDirs, mergeGigs, nameDecisions, nightHeadcount, nightReportFilename, nightReportPdf, photoDecisions, photoFolder, photoKey, photoPins, photoSource, photosRepoConfigured, postedNights, publicName, publicTable, publishedNights, safePhotoName, sameVenue, showsOnGallery, teamKey, totals, photoFlags, flagKey } from './context.js';
 import { send, sendJson } from './plumbing.js';
 import { galleryRoomFor, gigRoomsFor, nightFiles } from './identity.js';
 import { allowed } from './gates.js';
@@ -304,6 +304,15 @@ export async function getPastGigs(req, res, url, route) {
            * at. Empty unless the Vision key is set and the check fired.
            */
           flagged: flags[flagKey(night, name)] || '',
+          /*
+           * WHICH OF THE THREE GROUPS IT SITS IN — 'house', 'camera', 'upload'.
+           *
+           * Decided HERE and sent, never picked out of the filename in the
+           * browser: the console already held one copy of that parsing and a
+           * second reader is a second thing to drift the next time a marker is
+           * added. `photoSource()` is the one definition — see `photos.js`.
+           */
+          source: photoSource(name),
         })),
     }), true;
   }

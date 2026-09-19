@@ -1182,7 +1182,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * the OTHER side of the same file, so it belongs beside the four already named
  * rather than in a doc nobody opens before touching a photograph.
  */
-const BUDGET = 272_300;
+/*
+ * AND TO 273_200 for the three groups on a night's grid. Most of it is the
+ * CORRECTION: the lamps are the door, not camera-versus-upload, and the two
+ * looked alike on one night. A rule that stops somebody trusting the wrong
+ * meaning of the one control that decides a public page is worth the bytes —
+ * and it carries the reason the third group is blank on an older night, which
+ * would otherwise read as a bug and get "fixed" by guessing.
+ */
+const BUDGET = 273_200;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

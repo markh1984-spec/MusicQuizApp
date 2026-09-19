@@ -11207,6 +11207,35 @@ body.landing {
   align-content: start;
 }
 .community-wall-none { grid-column: 1 / -1; }
+/* ---- THE THREE GROUPS: yours and the bar's, phone shots, uploads.
+ *
+ * A heading rather than a colour or a divider: the question "who took this" has
+ * three answers, and green/red on these tiles already means "on the public page
+ * or not". Two channels, two questions — saying the second one in the first
+ * one's colours is the label collision this app has a rule against.
+ *
+ * FULL WIDTH IN THE GRID, so a group always starts on its own line; in the
+ * sideways strip it is a narrow column the row scrolls past, because that strip
+ * has a fixed height by decision and may not become a stack. */
+.cphoto-group {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 8px;
+  margin: 0; padding: 2px 0 0;
+  font-size: var(--fs-note); font-weight: 700; color: var(--ink-dim);
+  letter-spacing: 0.01em;
+}
+.cphoto-group:not(:first-child) { margin-top: 6px; }
+.cphoto-group span {
+  font-weight: 600; color: var(--ink-dim); opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+.night-strip .cphoto-group {
+  flex: 0 0 58px; align-self: stretch; align-items: flex-start;
+  margin: 0; padding-left: 6px; border-left: 2px solid var(--panel-line);
+  display: block; line-height: 1.25; overflow-wrap: anywhere;
+}
+.night-strip .cphoto-group:first-child { border-left: 0; padding-left: 0; }
+.night-strip .cphoto-group span { display: block; }
 /* A FIXED CELL HEIGHT, so three rows are a known height inside a fixed bay and
    a night with thirty pictures scrolls rather than growing the box. 96px is
    what three rows plus the heading come to inside `--bay-h`.

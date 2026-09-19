@@ -23,7 +23,7 @@
  */
 
 import { getFile, putFile, photosRepoConfigured } from './github.js';
-import { photoFolder, isNightFolder } from './past-gigs.js';
+import { photoFolder, isNightFolder, PHOTO_NAME } from './past-gigs.js';
 
 const LEVELS = new Set(['adult', 'racy']);
 
@@ -35,7 +35,7 @@ function flagsPath(roomId) {
 /** `2026-08-27/p1abc.jpg` — a night we recognise and a name we issued. */
 function keyOk(key) {
   const [night, name, ...rest] = String(key || '').split('/');
-  return !rest.length && isNightFolder(night) && /^[a-z0-9]+(-picked)?\.(jpg|png|webp)$/i.test(name || '');
+  return !rest.length && isNightFolder(night) && PHOTO_NAME.test(name || '');
 }
 
 /** The key one photo's flag is stored under. */

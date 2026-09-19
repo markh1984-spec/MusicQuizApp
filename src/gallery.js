@@ -31,7 +31,7 @@
  */
 
 import { getFile, putFile, photosRepoConfigured } from './github.js';
-import { photoFolder, isNightFolder } from './past-gigs.js';
+import { photoFolder, isNightFolder, PHOTO_NAME } from './past-gigs.js';
 import { showsByDefault, showsOnGallery } from './photos.js';
 
 /*
@@ -253,7 +253,7 @@ function inOrder(roomId, job) {
 /** `2026-08-27/p1abc.jpg` — a night we recognise and a name we issued. */
 function photoKeyOk(key) {
   const [night, name, ...rest] = String(key || '').split('/');
-  return !rest.length && isNightFolder(night) && /^[a-z0-9]+(-picked)?\.(jpg|png|webp)$/i.test(name || '');
+  return !rest.length && isNightFolder(night) && PHOTO_NAME.test(name || '');
 }
 
 /** The key one photo's ruling is stored under. */
