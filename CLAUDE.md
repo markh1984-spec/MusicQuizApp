@@ -1307,12 +1307,12 @@ guarded** — it is the stated escape hatch and its confirm names what it costs.
   `fileAway()` is handed a ROOM rather than a request and used `room.id` raw, so
   a night hosted on the owner hat or the host key filed its photographs — and
   their rude-photo flags — under the flat `photos/` path **no reader looks in**.
-  Nothing threw, the phone got `{ok:true}`, the night simply never reached Past
-  gigs or the gallery. **ONE function, so a request is the only difference
-  between the two**, and the guard files a photograph through a REAL join rather
-  than reading the line. **`photos-out-of-the-old-room.mjs` is the tidy-up and
-  it REFUSES until every file is provably elsewhere** — no `--force`, because a
-  delete reaches git history on the repository and nothing at all on the store.
+  Nothing threw and the phone got `{ok:true}`; the night never reached Past gigs
+  or the gallery. **ONE function**, and the guard files a photograph through a
+  REAL join rather than reading the line. **`photos-out-of-the-old-room.mjs` is the tidy-up and
+  it REFUSES until every file is provably elsewhere** — no `--force`, and **the
+  refusal is on the SAFETY COPY, never the source**: the flat folder is what most
+  needs clearing, and trusting it deletes a live room.
 - **AND FOUR THINGS PUT A ROW IN "No venue on these", ALL SILENT —
   `whyNoVenue()`.** That miss, a night that never reached its final scores, no
   venue picked, and two venues on one date. **"No results saved" is Post gig's

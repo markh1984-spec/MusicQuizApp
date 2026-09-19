@@ -673,9 +673,16 @@ until every file is provably in the destination**, by name, night by night, plus
 the sidecars that decide what is public — one missing and nothing goes and the
 missing one is named. There is no `--force`: a delete reaches git history on the
 repository and nothing whatsoever on the object store, so it is the one press in
-this story that cannot be taken back. The flat folder is refused as a SOURCE for
-the same reason — it is what every read falls back to, and a script that could
-empty it is a script somebody will run with the arguments the wrong way round.
+this story that cannot be taken back.
+
+**And the argument order is the hazard, which the first version guarded at the
+wrong end.** It refused the flat `photos/` folder as a SOURCE — which reads
+sensibly and blocks the one cleanup that folder actually needs. The
+catastrophic direction is the reverse: once the house nights have been copied
+into a real room, naming that room as the source and `house` as the safety copy
+deletes them all, *precisely because* the flat folder holds copies. So the
+refusal is on what is TRUSTED, not on what is cleared. It was found by running
+the copy for real and discovering the tidy-up could not follow it.
 
 Both are executed by `test/photo-repair-scripts.test.js` against the repository
 stub. **They were written during an incident, against a live bucket, and had

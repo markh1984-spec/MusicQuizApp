@@ -43,8 +43,22 @@ if (!from || !safeIn) {
   console.log('\nusage: node scripts/photos-out-of-the-old-room.mjs <fromRoom> <safeInRoom> [--go]\n');
   process.exit(1);
 }
-if (from === 'house' || from === safeIn) {
-  console.log('\nRefused. The house folder is what every read falls back to, and a room cannot be its own safety copy.\n');
+/*
+ * THE REFUSAL IS ON THE SAFETY COPY, NOT ON THE SOURCE — and it took a real run
+ * to get that the right way round.
+ *
+ * This deletes what is in `from` and provably also in `safeIn`, so the argument
+ * order is the whole hazard. Written first as "the flat `photos/` folder may
+ * never be a SOURCE", which reads sensibly and blocks the one cleanup the flat
+ * folder actually needs. The catastrophic direction is the other one: with the
+ * house nights now copied into a real room, `<that room> house` would delete
+ * fifty-seven live photographs BECAUSE the flat folder holds copies of them.
+ *
+ * So `house` is refused as the thing being trusted, and allowed as the thing
+ * being cleared. A room still cannot be its own safety copy.
+ */
+if (safeIn === 'house' || from === safeIn) {
+  console.log('\nRefused. The flat house folder cannot be the safety copy, and a room cannot be its own.\n');
   process.exit(1);
 }
 if (!photosRepoConfigured()) {

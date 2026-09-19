@@ -109,13 +109,46 @@ test('AND THE DELETE REFUSES UNTIL EVERY FILE IS PROVABLY SOMEWHERE ELSE', () =>
   }
 });
 
-test('and the house folder can never be the source of a delete', () => {
+/*
+ * THE ARGUMENT ORDER IS THE HAZARD, AND THE FIRST VERSION GUARDED THE WRONG END.
+ *
+ * It refused the flat `photos/` folder as a SOURCE, which reads sensibly and
+ * blocks the one cleanup that folder actually needs — the nights `fileAway()`
+ * filed there. The catastrophic direction is the reverse: once those nights have
+ * been copied into a real room, naming that room as the source and `house` as
+ * the safety copy deletes fifty-seven LIVE photographs, precisely because the
+ * flat folder holds copies of them. So the refusal is on what is TRUSTED.
+ */
+test('the flat house folder can never be the safety copy', () => {
   const repo = aHouseFolder();
   try {
-    const no = run(repo, 'photos-out-of-the-old-room.mjs', ['house', 'qm-mark', '--go']);
-    assert.notEqual(no.status, 0, 'the flat folder every read falls back to was deletable');
+    // The live room, holding what was copied out of the flat folder.
+    mkdirSync(join(repo, 'photos', 'qm-mark', '2026-08-11'), { recursive: true });
+    writeFileSync(join(repo, 'photos', 'qm-mark', '2026-08-11', 'a.jpg'), Buffer.alloc(32, 1));
+
+    const no = run(repo, 'photos-out-of-the-old-room.mjs', ['qm-mark', 'house', '--go']);
+    assert.notEqual(no.status, 0, 'a live room was deletable against the flat folder');
     assert.match(no.stdout, /Refused/);
-    assert.deepEqual(filesIn(join(repo, 'photos', '2026-08-11')), ['a.jpg', 'b.jpg']);
+    assert.deepEqual(filesIn(join(repo, 'photos', 'qm-mark', '2026-08-11')), ['a.jpg']);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test('AND THE FLAT FOLDER ITSELF CAN BE CLEARED, once its nights are safely elsewhere', () => {
+  const repo = aHouseFolder();
+  try {
+    for (const night of ['2026-08-11', '2026-08-12']) {
+      mkdirSync(join(repo, 'photos', 'qm-mark', night), { recursive: true });
+      for (const f of ['a.jpg', 'b.jpg']) writeFileSync(join(repo, 'photos', 'qm-mark', night, f), Buffer.alloc(32, 1));
+    }
+    writeFileSync(join(repo, 'photos', 'qm-mark', 'published.json'), JSON.stringify({ nights: [] }));
+
+    const done = run(repo, 'photos-out-of-the-old-room.mjs', ['house', 'qm-mark', '--go']);
+    assert.equal(done.status, 0, done.stdout + done.stderr);
+    assert.equal(filesIn(join(repo, 'photos', '2026-08-11')).length, 0);
+    assert.equal(filesIn(join(repo, 'photos', '2026-08-12')).length, 0);
+    assert.deepEqual(filesIn(join(repo, 'photos', 'qm-mark', '2026-08-11')), ['a.jpg', 'b.jpg']);
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }

@@ -319,8 +319,9 @@ Every file under the source has to exist under the destination — by name, nigh
 by night, plus the sidecars — or nothing is deleted and the missing one is
 named. **There is no `--force`**, deliberately: on the repository a delete leaves
 git history behind, on the object store it leaves nothing at all, so this is the
-one press in the photo story that cannot be taken back. The flat `photos/` folder
-is refused as a source for the same reason. Both scripts are run for real by
+one press in the photo story that cannot be taken back. `house` names the flat
+folder and is refused as the SAFETY COPY rather than as the source — trusting it
+is what would delete a live room. Both scripts are run for real by
 `test/photo-repair-scripts.test.js`.
 - **It goes through `github.js`**, so a read is the store then the repository and
   a write lands in whichever store is configured — the one choke point, unchanged.
