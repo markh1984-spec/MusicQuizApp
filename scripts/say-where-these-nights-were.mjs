@@ -42,7 +42,7 @@ import path from 'node:path';
 import { config } from '../src/config.js';
 import { listArchive, serialiseArchive } from '../src/library.js';
 import { nightOfGig, isNightFolder, setNightVenue, noteNightVenue } from '../src/past-gigs.js';
-import { putFile, privateRepoConfigured, photosRepoName } from '../src/github.js';
+import { putFile, privateRepoConfigured } from '../src/github.js';
 import { HOUSE } from '../src/rooms.js';
 
 const args = process.argv.slice(2);
@@ -100,7 +100,14 @@ if (!privateRepoConfigured()) {
   process.exit(1);
 }
 const put = await putFile(backupName, serialiseArchive(dir), 'Say where these nights were', 'private');
+/*
+ * NAMED FROM `PHOTO_REPO`, NEVER `photosRepoName()`. That function answers
+ * *where the PHOTOGRAPHS are*, which is the bucket — so this line said the
+ * archive had gone into the object store when `'private'` goes to the
+ * repository and only the repository. A message naming the wrong store is the
+ * same fault as a backup that says nothing, wearing a confident face.
+ */
 console.log(put.ok
-  ? `\n${written} night(s) written, and ${backupName} is in ${photosRepoName()}.\n`
+  ? `\n${written} night(s) written, and ${backupName} is in ${process.env.PHOTO_REPO || 'the private repository'}.\n`
   : `\n${written} night(s) written — BUT THE BACKUP FAILED: ${put.error}\nThey are on this box only, which a deploy wipes.\n`);
 process.exit(put.ok ? 0 : 1);
