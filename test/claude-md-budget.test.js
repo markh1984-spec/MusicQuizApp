@@ -1175,7 +1175,14 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * distinction is a prohibition and belongs here — with the two traps that make
  * it stick: a guard must slow the stub, and `putFile()` never rejects.
  */
-const BUDGET = 271_400;
+/*
+ * AND TO 272_300 for the fifth sighting of a read and a write disagreeing about
+ * the room — `fileAway()`, the one photo writer that never went through
+ * `galleryRoomFor()`. It is the same fault that had just lost five nights, on
+ * the OTHER side of the same file, so it belongs beside the four already named
+ * rather than in a doc nobody opens before touching a photograph.
+ */
+const BUDGET = 272_300;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

@@ -23,10 +23,11 @@ decision from the host first.
 2026: a venue card now takes a **Photo overlay** — Venues tab, open a venue,
 under *Their logo*.
 
-- **The Station Tap overlay** → Venues ▸ The Station Tap ▸ Photo overlay. A
-  **square PNG with a see-through background**; an opaque one is refused,
-  because it would cover every photograph rather than decorate it. The card
-  previews it over a chequer and says how see-through it is.
+- **The Station Tap overlay is DONE** — uploaded 19 September 2026, and it is
+  on the page, on every tile and in the save. Another venue's goes in the same
+  place: Venues ▸ the pub ▸ Photo overlay, a **square PNG with a see-through
+  background**; an opaque one is refused, because it would cover every
+  photograph rather than decorate it.
 - **The Station Tap logo** → the same card, *Their logo*, if it is not there
   already. That one is the winner's voucher and is a different job.
 - **Pub Champions** goes INSIDE the overlay artwork rather than anywhere in the
@@ -34,10 +35,14 @@ under *Their logo*.
   made in an image generator, beats the app compositing two logos it has to lay
   out itself.
 
-**Still to build, and it waits on nothing but time:** compositing the overlay
-onto published photographs, in the browser, at publish time — never onto the
-stored original, because photos go on the projector all night and *a venue's
-logo goes on the winner's voucher and nowhere else*.
+**THE COMPOSITING THAT USED TO BE PLANNED HERE IS BUILT, AND AT VIEW TIME
+RATHER THAN AT PUBLISH TIME — which is the better half of the idea.** The frame
+is a sibling layer over the photograph on the public page, on every tile and on
+the enlarged one, and the SAVE composites the same box so a download matches the
+page (`framedBox()` in `photo-save.js`, `.gal-big-pic.is-framed`). Nothing is
+baked into the stored bytes, so **correcting a venue's overlay corrects every
+photograph that already exists** — rule 11, for free, where a copy written at
+publish time would have had to be regenerated. Do not rebuild it as a bake.
 
 ### 0a. NAME THE DJ APP — one word, thirty seconds
 
@@ -163,7 +168,7 @@ instead of the screen. **One fix, one check that fails first, one push.**
 ### 3. PLAY FOUR LOBBY GAMES ON A REAL PHONE — the only thing left on them
 
 **Nothing else here is blocked on the host; this is.** Rally, Tailback, Quick
-Draw and **Pile Up** have never been touched by a human thumb — every check on
+Draw and **Last Orders** have never been touched by a human thumb — every check on
 them so far has been a headless browser, and this repo's own history says that
 proves the code runs, not that the game is playable. **Maze Mouth is done**
 (4 September 2026) and its corners and its new death are worth a second look at
@@ -175,8 +180,8 @@ turn, Launch, and join on the phone — the join QR is on the projector, or
 all five; the game is chosen at launch, not in the URL.
 
 **What only a phone can answer:** whether the controls read under a thumb,
-whether it is playable one-handed, whether Pile Up's crate is too fast by the
-tenth row, and whether Quick Draw's windows are generous enough on a real
+whether it is playable one-handed, whether Last Orders' formation is too fast by
+the tenth wave, and whether Quick Draw's windows are generous enough on a real
 touchscreen — **a reaction game puts input latency in the score, and that is
 the one limit no test here can see.**
 
@@ -637,14 +642,14 @@ outside the lobby, the teardown and the picker are all shared.
 
 ### Still open
 
-- **A FIFTH GAME**, if the ladder wants more to sell. The two still worth
-  having, in the order they were argued on 15 August 2026: **Pile Up** — drop
-  sliding blocks, overhang trimmed, tower narrows; one tap, no chasing, and the
-  most genuinely different feel left, since another variation on chasing
-  something is worth much less than a different thing to do. And a **letter
-  game** — the same rack for the whole room, longest words in ninety seconds,
-  which is the best leaderboard available here and the only idea that looks
-  like it belongs in a QUIZ app rather than an arcade.
+- **THE FIFTH GAME IS BUILT AND IT IS LAST ORDERS.** Pile Up was the plan here
+  and is **deleted, for a legal reason rather than a taste one** — *Tetris
+  Holding v. Xio* held the well and the piece behaviour protectable and this app
+  is SOLD. **Do not rebuild it**; the rule is in CLAUDE.md.
+- **A SIXTH would be the letter game** — the same rack for the whole room,
+  longest words in ninety seconds, which is the best leaderboard available here
+  and the only idea that looks like it belongs in a QUIZ app rather than an
+  arcade.
 - **The letter game needs a dictionary, and that is its real cost.** A decent
   UK word list is 200KB–1MB downloading at the exact moment sixty people are
   joining, which is the one path that must not stutter; a curated 5,000-word

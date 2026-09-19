@@ -4,7 +4,7 @@
 import { BREACHED_SAID, DEFAULT_SCHEME, GALLERY_NONE, HOUSE, PACK_PENCE, TIERS, TIER_PACKS, accounts, brandFor, cachedNight, cachedPhoto, canPlayPack, config, diskPhoto, emailConfigured, entitlements, findScheme, galleryPath, getFile, http, isOwnPack, keepNight, keepPhoto, keepPhotoOnDisk, lobbyGamesFor, looksBreached, nightOf, packFilter, packsFor, path, paths, readPack, rooms, safe, sendEmail, tidyCode, tierFor, tryListDir } from './context.js';
 import { isHostKey, sendJson } from './plumbing.js';
 import { BOOTSTRAP } from './gates.js';
-import { backUpAccounts, publicRoomId } from './helpers.js';
+import { backUpAccounts, galleryRoomOf, publicRoomId } from './helpers.js';
 
 export const SESSION_COOKIE = 'mmm_session';
 
@@ -576,8 +576,8 @@ export function photoLinkFor(req, url, venue) {
 }
 
 export function galleryRoomFor(req, url) {
-  const id = roomForHost(req, url).id;
-  return id === HOUSE ? publicRoomId() : id;
+  // One definition, shared with `fileAway()`, which had its own and disagreed.
+  return galleryRoomOf(roomForHost(req, url).id);
 }
 
 /**

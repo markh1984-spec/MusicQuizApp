@@ -602,6 +602,86 @@ the pre-flag nights are a handful and stops being cheap if a season of them ever
 needs curating.
 
 
+## `fileAway()` FILED INTO A ROOM NOBODY READS — 19 September 2026
+
+The fifth sighting of *a read and a write that disagree about the room*, and the
+one that had been live longest. It was found on the other side of the file that
+had just lost five nights to the same shape, so it is written up here rather
+than only in the rule.
+
+### The split
+
+Every route that touches a photograph resolves its room through
+`galleryRoomFor(req, url)`, which exists precisely because two identities — the
+owner hat and the host key — drive the HOUSE room, while the public pages read
+the owner's own quizmaster room. Send those two to `publicRoomId()` and the
+console and the page agree.
+
+`fileAway()` cannot call it. It is handed a `room` and a `photo`, not a request,
+because it runs in the background after the phone has already had its answer. So
+it used `room.id` — and for a night hosted on the owner hat or the host key that
+is `house`, whose folder is the flat `photos/`. No reader has looked in there
+since galleries became per-room.
+
+**Nothing threw.** The projector showed the photograph, the phone got
+`{ok: true}`, the upload counted, the rude-photo flag was written (into the same
+wrong room, so it could never sort anything to the front either). The night
+simply was not on Past gigs and was not on the gallery. That is the whole
+symptom: an absence, on a feature whose job is to prove somebody's work
+happened.
+
+It also explains two nights that had been sitting in the bucket's flat folder
+unexplained — `2026-08-11` and `2026-08-12`, plus `2026-08-05` and `2026-08-06`
+in the repository's. Those are exactly the nights hosted from the house room.
+
+### The fix is one function, not a second opinion
+
+`galleryRoomOf(roomId)` in `src/http/helpers.js`, beside `publicRoomId()`, and
+`galleryRoomFor(req, url)` is now that function with a request in front of it.
+There is no version of the answer that only one of them knows.
+
+It lives in `helpers.js` rather than with `photoFolder()` in `past-gigs.js`
+because it needs the accounts book, which `past-gigs.js` does not import and
+should not start to. `identity.js` already imports from `helpers.js`, so there
+is no cycle; the other way round there would be.
+
+### The guard files a photograph, it does not read the line
+
+`test/gallery-publish-loop.test.js` launches a night on the HOUSE room, joins a
+phone through the real join code, posts a JPEG, and asserts the bytes arrive in
+`photos/<the owner's quizmaster id>/` **and that the flat folder stays empty**.
+Verified by putting `room.id` back: it fails on the first assertion.
+
+It uses the host key on purpose, which is the opposite of the choice the tests
+above it make and for the same reason. There, the key hides a room mismatch on
+the publish path, so they sign in. Here the key *is* the case — it and the owner
+hat are the only two identities that reach the HOUSE room at all, so a test that
+signs in as an ordinary quizmaster can never see this.
+
+### The nights already in the wrong folder
+
+Moved, never merged, and the two scripts are two halves of one job:
+
+```
+node scripts/photos-into-the-right-room.mjs house <the owner's qm id> --go
+node scripts/photos-out-of-the-old-room.mjs <old room> <the owner's qm id> --go
+```
+
+`house` names the flat folder through `photoFolder()` rather than a path typed
+into the script, so the repair can reach it at all. And the delete **refuses
+until every file is provably in the destination**, by name, night by night, plus
+the sidecars that decide what is public — one missing and nothing goes and the
+missing one is named. There is no `--force`: a delete reaches git history on the
+repository and nothing whatsoever on the object store, so it is the one press in
+this story that cannot be taken back. The flat folder is refused as a SOURCE for
+the same reason — it is what every read falls back to, and a script that could
+empty it is a script somebody will run with the arguments the wrong way round.
+
+Both are executed by `test/photo-repair-scripts.test.js` against the repository
+stub. **They were written during an incident, against a live bucket, and had
+never been run** — which this repo's oldest lesson says is worth nothing.
+
+
 ## "IT SAYS NOT PUBLISHED, BUT IT IS" — a lost update on `published.json`
 
 Reported off a live gallery on 31 August 2026, with a screenshot: the night's

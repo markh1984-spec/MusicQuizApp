@@ -245,6 +245,23 @@ So it is a room that the app was filing nights into for five weeks and which the
 accounts book never named. **What that means is not settled and must not be
 guessed at** — the repair below does not depend on knowing.
 
+**One thing about it IS settled, and it narrows the question usefully.** It is
+twelve characters of the base64url alphabet, which is exactly what `newId()` in
+`accounts.js` mints — `crypto.randomBytes(9).toString('base64url')`. So it was
+an ACCOUNT id, not a corrupted path, not a stray prefix and not a room the code
+could ever have invented for itself. Whatever happened, something once signed in
+as an account with that id and hosted five nights; the book has since stopped
+naming it.
+
+**And the mechanism that let any room id at all reach a folder the readers do not
+open was found the same day, on the other side of the same file** —
+`fileAway()` filed under `room.id` raw while every reader asks
+`galleryRoomFor()`. That is also what the two unexplained nights in the bucket's
+FLAT folder are (`2026-08-11`, `2026-08-12`), and the two in the repository's
+(`2026-08-05`, `2026-08-06`): nights hosted from the HOUSE room, filed where
+nothing looks. Fixed by `galleryRoomOf()` — see
+[`photos.md`](photos.md).
+
 ### The rule and the code disagree about which room a photograph is filed in
 
 `CLAUDE.md` already carries *ONE ROOM FOR THE WHOLE PHOTO STORY —
@@ -286,5 +303,24 @@ node scripts/photos-into-the-right-room.mjs 3bLePiEIs6js 0moNo5X5y6g9 --go   # d
   `flags.json` and `leagues-published.json` ride along for the same reason.
 - **It refuses to write over anything.** Nothing here is clever enough to merge
   two `published.json` files, and a guess would unpublish a night.
+
+**AND THE TIDY-UP IS ITS OWN SCRIPT, WHICH REFUSES UNTIL THE COPY IS PROVEN** —
+`scripts/photos-out-of-the-old-room.mjs`. A copy that never moves leaves a
+duplicate behind, and a duplicate is not harmless: the next person to read the
+bucket finds two folders holding the same five nights and no way to tell which
+one the app reads. It is also the shape that started all of this.
+
+```
+node scripts/photos-out-of-the-old-room.mjs 3bLePiEIs6js 0moNo5X5y6g9        # look
+node scripts/photos-out-of-the-old-room.mjs 3bLePiEIs6js 0moNo5X5y6g9 --go   # do it
+```
+
+Every file under the source has to exist under the destination — by name, night
+by night, plus the sidecars — or nothing is deleted and the missing one is
+named. **There is no `--force`**, deliberately: on the repository a delete leaves
+git history behind, on the object store it leaves nothing at all, so this is the
+one press in the photo story that cannot be taken back. The flat `photos/` folder
+is refused as a source for the same reason. Both scripts are run for real by
+`test/photo-repair-scripts.test.js`.
 - **It goes through `github.js`**, so a read is the store then the repository and
   a write lands in whichever store is configured — the one choke point, unchanged.

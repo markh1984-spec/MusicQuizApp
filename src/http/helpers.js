@@ -1096,6 +1096,18 @@ export function publicRoomId() {
   return mine ? mine.id : HOUSE;
 }
 
+/**
+ * WHICH ROOM A ROOM'S PHOTO STORY IS FILED IN — the one answer, for a WRITE as
+ * well as a read. `galleryRoomFor(req, url)` is this with a request in front.
+ *
+ * **A read and a write that disagree about the room is invisible**, and
+ * `fileAway()` was the writer that had its own opinion — see
+ * `docs/gigs/photos.md`.
+ */
+export function galleryRoomOf(roomId) {
+  return String(roomId || HOUSE) === HOUSE ? publicRoomId() : String(roomId);
+}
+
 export function seesTheirLeague(req, url) {
   const account = whoIs(req, url);
   if (!account) return false;
@@ -1207,14 +1219,14 @@ export async function fileAway(room, photo) {
   const { photos } = room;
   const read = photos.read(photo.id);
   if (!read) return { ok: false };
-  const folder = `${photoFolder(room.id)}/${photo.night}`;
+  // THE ROOM THE READERS WILL LOOK IN, never `room.id` — see `galleryRoomOf()`.
+  // Foldered per room, so one quizmaster's night is never mixed in with
+  // another's.
+  const filedIn = galleryRoomOf(room.id);
+  const folder = `${photoFolder(filedIn)}/${photo.night}`;
   // One of the three places a night's folder changes — see `photo-cache.js`.
   dropNight(folder);
   const result = await putFile(
-    // Foldered per room, so one quizmaster's night is never mixed in with
-    // another's. The house keeps the flat path it has always used — Mark has
-    // nights filed under it already and moving them would make his own history
-    // vanish from the page this record exists to be.
     `${folder}/${photo.file}`,
     read.bytes,
     `${photo.night}${photo.teamName ? ` — ${photo.teamName}` : ''}`,
@@ -1231,7 +1243,7 @@ export async function fileAway(room, photo) {
      */
     if (moderationConfigured()) {
       scorePhoto(read.bytes, { onSpend: spendRecorder(spend) })
-        .then((r) => (r.level ? setPhotoFlag(room.id, photo.night, photo.file, r.level) : null))
+        .then((r) => (r.level ? setPhotoFlag(filedIn, photo.night, photo.file, r.level) : null))
         .catch(() => { /* a flag that will not settle costs the flag, never the photo */ });
     }
   } else {

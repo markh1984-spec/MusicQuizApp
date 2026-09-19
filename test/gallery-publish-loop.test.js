@@ -27,7 +27,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -291,5 +291,65 @@ test('AND A PHOTOGRAPH DELETED IS GONE FROM IT IMMEDIATELY', async () => {
     assert.equal(after.photos.length, first.photos.length - 1);
     assert.ok(!after.photos.some((p) => p.name === name),
       'a deleted photograph is still being offered from a cached listing');
+  });
+});
+
+/*
+ * ---- AND THE PHONE'S OWN PHOTOGRAPH LANDS IN THE ROOM THE PAGE READS -----
+ *
+ * **`fileAway()` WAS THE ONE WRITER THAT HAD ITS OWN OPINION ABOUT THE ROOM.**
+ * Every route touching a photograph, a lamp, a pin or a published flag resolves
+ * through `galleryRoomFor()`, which sends the two identities driving the HOUSE
+ * room — the owner and the host key — to the owner's own quizmaster room. But
+ * `fileAway()` is handed a room rather than a request, and used `room.id` raw:
+ * so a night hosted on the owner hat filed its photographs under the flat
+ * `photos/` path while every reader looked under `photos/qm-mark/`.
+ *
+ * Nothing threw. The projector was perfect, the phone got `{ok:true}`, the
+ * night simply never appeared on Past gigs or on the gallery — which is the
+ * fault that lost five nights in September 2026, wearing its other face. So it
+ * is checked on the upload a PHONE makes, through the real join.
+ */
+test('a photo sent on the owner hat is filed where the gallery looks for it', async () => {
+  await withApp(async (app) => {
+    await signedIn(app);
+
+    /*
+     * THE HOST KEY, DELIBERATELY, AND IT IS THE OTHER HALF OF THIS FILE'S OWN
+     * NOTE. The tests above sign in because the key hides a room mismatch on
+     * the PUBLISH path; here the key IS the case — it and the owner hat are the
+     * two identities that drive the HOUSE room, and the HOUSE room is the only
+     * place `fileAway()` could disagree with its readers.
+     */
+    const key = 'not-used-here';
+    const lib = await (await fetch(`${app.base}/api/library?key=${key}`)).json();
+    const packId = (lib.quizzes || [])[0]?.id;
+    assert.ok(packId, `no pack to launch: ${Object.keys(lib).join(', ')}`);
+    const launched = await post(app.base, `/api/host/launch?key=${key}`, { game: 'quiz', packId });
+    assert.equal(launched.status, 200, `the night would not launch: ${await launched.text()}`);
+    const running = (await (await fetch(`${app.base}/api/library?key=${key}`)).json()).running || {};
+    const g = running.joinCode ? `?g=${running.joinCode}` : '';
+
+    const who = await (await post(app.base, `/api/join${g}`, { name: 'Table One' })).json();
+    assert.ok(who.id, `the phone could not join: ${JSON.stringify(who)}`);
+
+    // The smallest thing `sniffType()` takes as a JPEG.
+    const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(200, 1)]);
+    const sent = await fetch(`${app.base}/api/photo?playerId=${encodeURIComponent(who.id)}${running.joinCode ? `&g=${running.joinCode}` : ''}`, {
+      method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: jpeg,
+    });
+    assert.equal(sent.status, 200, 'the photograph was refused');
+
+    // Filed in the background, so wait for the repository to have it.
+    const mine = join(app.repo, 'photos', 'qm-mark');
+    for (let i = 0; i < 40 && !existsSync(mine); i += 1) await wait(100);
+    assert.ok(existsSync(mine),
+      "the photograph was never filed in the gallery's room — `fileAway()` used room.id raw");
+
+    // And NOT in the flat house folder, which no reader ever looks in: a night
+    // filed there is a night that vanished.
+    const stray = readdirSync(join(app.repo, 'photos')).filter((n) => /^\d{4}-\d{2}-\d{2}$/.test(n));
+    assert.deepEqual(stray, [],
+      `filed under the flat house path as well: ${stray.join(', ')}`);
   });
 });

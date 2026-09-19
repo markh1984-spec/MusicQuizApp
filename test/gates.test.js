@@ -267,15 +267,26 @@ test('the owner photo routes are owner-only by path, so they skip the broad quiz
  *
  * Without the room in that path two quizmasters' nights land in one folder —
  * and on the one feature whose whole point is "this is my work", showing
- * somebody else's pictures is about as wrong as it gets. The house keeps the
- * flat path it has always used, so nothing Mark already has moves.
+ * somebody else's pictures is about as wrong as it gets.
+ *
+ * **AND IT IS THE ROOM THE READERS LOOK IN, NOT `room.id`.** This test pinned
+ * `photoFolder(room.id)` for a year and that was the bug: the owner hat and the
+ * host key drive the HOUSE room, whose folder is the flat `photos/` that nothing
+ * has read since galleries became per-room, so those nights filed into thin
+ * air. `galleryRoomOf()` is the one answer both sides use — see
+ * `docs/gigs/photos.md`. The real check is in
+ * `test/gallery-publish-loop.test.js`, which posts a JPEG through a live join;
+ * this one is here so the shape cannot quietly go back.
  */
-test('a photo is filed under its own room', () => {
+test('a photo is filed under the room the gallery reads, never room.id', () => {
   const server = serverCode();
   const at = server.indexOf('async function fileAway(');
   assert.ok(at > 0, 'fileAway has moved');
-  assert.match(server.slice(at, at + 900), /photoFolder\(room\.id\)/,
-    'photos are being filed without the room in the path — two quizmasters would share a folder');
+  const body = server.slice(at, at + 900);
+  assert.match(body, /galleryRoomOf\(room\.id\)/,
+    'fileAway is not resolving the gallery room — a house night files where no reader looks');
+  assert.doesNotMatch(body, /photoFolder\(room\.id\)/,
+    'photos are being filed under room.id again');
 });
 
 /*

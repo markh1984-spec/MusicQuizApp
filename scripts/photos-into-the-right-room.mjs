@@ -37,7 +37,7 @@
  */
 
 import { listDirs, tryListDir, tryGetFile, putFile, photosRepoConfigured, photosRepoName } from '../src/github.js';
-import { isNightFolder } from '../src/past-gigs.js';
+import { isNightFolder, photoFolder } from '../src/past-gigs.js';
 
 const [from, to] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const GO = process.argv.includes('--go');
@@ -52,7 +52,16 @@ if (!photosRepoConfigured()) {
   process.exit(1);
 }
 
-const folderOf = (room) => `photos/${room}`;
+/*
+ * `photoFolder()` RATHER THAN A PATH TYPED HERE, so `house` names the flat
+ * `photos/` folder the house room has always used. That is not a convenience:
+ * `fileAway()` filed under `room.id` raw until 19 September 2026, so every
+ * photograph sent on a night hosted from the owner hat or the host key landed
+ * in the flat folder, which no reader looks in. Those nights are moved with
+ *
+ *     node scripts/photos-into-the-right-room.mjs house <the owner's qm id> --go
+ */
+const folderOf = (room) => photoFolder(room);
 console.log(`\n${folderOf(from)}  ->  ${folderOf(to)}      (${photosRepoName()})\n`);
 
 const nights = (await listDirs(folderOf(from), 'photos')).map((f) => f.name).filter(isNightFolder).sort();
