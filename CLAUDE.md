@@ -2077,6 +2077,16 @@ Hung GitHub behind the real server and drove a night. Four things waited:
   **`a-night-survives-a-deploy.mjs` takes the disk away** and demands the venue,
   its prizes, its overlay, the night and the night's pub all come back — and
   that a backup which cannot be written is said out loud.
+- **AND STILL WRITING IS NOT A FAILURE — `within()` marks it `late` and
+  `saidSo()` stays silent on it.** The request stops waiting after three
+  seconds; the write is still running and still lands. Warning there says a
+  night was not backed up about a night that was, on any slow GitHub morning —
+  **a warning that fires when nothing is wrong is how the one sentence he is
+  meant to act on becomes the one he skims.** **The guard has to SLOW the stub**
+  (`GH_STUB_DELAY_MS`) or the timeout branch never runs and it passes with the
+  fault in. **AND `putFile()` RESOLVES `{ok:false}` AND NEVER REJECTS**, so a
+  bare `.catch()` on it cannot fire for a failed write — that is the shape that
+  lost six weeks, and five more backups still had it.
 
 ### TWO DEVICES, ONE QUIZ — a move carries the cursor it was pressed against
 

@@ -71,6 +71,15 @@ export const GUARDS = [
   { name: 'wifi-blip',             core: true,  why: 'the wifi drops on each screen in turn — does it come back right?' },
   { name: 'long-night',            core: true,  why: 'sixty phones, forty questions — memory, streams and push latency' },
   { name: 'flight-recorder',       core: true,  why: 'does a broken night write itself down, and can the host copy it?' },
+  /*
+   * CORE, THOUGH IT TOUCHES NO ROOM. `data/` is wiped on every deploy and there
+   * is no disk, so the backup IS the data — and the night this guard was written
+   * for is the one where six weeks of gigs, venues, prizes and overlays turned
+   * out to be stored nowhere while every screen looked right. A build that says
+   * SAFE TO DEPLOY without it is answering a narrower question than the host is
+   * asking. It takes about twenty seconds.
+   */
+  { name: 'a-night-survives-a-deploy', core: true, why: 'the venue, the night and its frame — after the disk is taken away' },
   // ---- the rest of the app: run with --full
   { name: 'community-bay',         core: false, why: 'does the Community bay still fit the frame?' },
   { name: 'pages-scroll',          core: false, why: 'can a person actually scroll each page?' },
@@ -87,7 +96,7 @@ export const GUARDS = [
   { name: 'photo-to-start',        core: false, why: 'is the photo ask real, and the skip?' },
   { name: 'rude-photo',            core: true, why: 'is a rude photo flagged, sorted to the front and marked?' },
   { name: 'venue-frame',           core: true, why: 'does the venue frame replace the app mark, not sit under it?' },
-  { name: 'gallery-frame',         core: false, why: 'is the venue frame on the public gallery, on screen and in the save?' },
+  { name: 'gallery-frame',         core: true,  why: 'is the venue frame on the public gallery, on screen and in the save?' },
   { name: 'photos-in-a-bucket',    core: false, why: 'the gallery off an object store — and does the bin mean it?' },
   { name: 'star-means-public',     core: false, why: 'does starring publish it, and does the socials post kit work?' },
   { name: 'second-screen',         core: false, why: 'the second display: the code and the photos' },

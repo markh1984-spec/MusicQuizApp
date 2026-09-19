@@ -23,10 +23,23 @@ import path from 'node:path';
 const ROOT = process.env.GH_STUB_DIR;
 const real = globalThis.fetch;
 const full = (p) => path.join(ROOT, p);
+/*
+ * A SLOW GITHUB, WHEN A CHECK ASKS FOR ONE — `GH_STUB_DELAY_MS`.
+ *
+ * A local write finishes in well under a millisecond, so a guard about the
+ * BACKUP BUDGET cannot be written against this stub as it stands: the race is
+ * always won by the write and the timeout branch never runs. That is not a
+ * detail — `a-night-survives-a-deploy.mjs` asserted that a late backup does not
+ * cry wolf, and passed with the fault deliberately put back, because nothing
+ * was ever late. A guard that cannot see the fault is worse than no guard.
+ */
+const DELAY = Number(process.env.GH_STUB_DELAY_MS) || 0;
+const hold = () => (DELAY ? new Promise((r) => setTimeout(r, DELAY)) : null);
 
 globalThis.fetch = async (input, init = {}) => {
   const url = typeof input === 'string' ? input : input.url;
   if (!url.startsWith('https://api.github.com/')) return real(input, init);
+  if (DELAY) await hold();
   const m = url.match(/\/repos\/[^/]+\/[^/]+\/contents\/([^?]*)/);
   if (!m) return new Response('{}', { status: 404 });
   const p = decodeURI(m[1]);

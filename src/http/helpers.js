@@ -163,7 +163,16 @@ export function invoiceBackupName(room) {
 export const BACKUP_WAIT_MS = Number(process.env.BACKUP_WAIT_MS) || 3_000;
 export async function within(promise, ms = BACKUP_WAIT_MS) {
   let timer;
-  const late = new Promise((resolve) => { timer = setTimeout(() => resolve({ ok: false, error: `still writing after ${ms}ms` }), ms); });
+  /*
+   * **`late` IS NOT A FAILURE, AND IT IS MARKED SO IT CANNOT BE READ AS ONE.**
+   * The write is still running and will still land — that is this function's
+   * whole design — so a warning here would say a night was not backed up about
+   * a night that was, on any GitHub morning slower than the budget.
+   * `github-down.mjs` has measured a sign-in at one full timeout and a venue
+   * save at two, so it is a normal bad morning rather than a rare one. Callers
+   * that only ask `ok` are unchanged; `saidSo()` reads `late` and stays quiet.
+   */
+  const late = new Promise((resolve) => { timer = setTimeout(() => resolve({ ok: false, late: true, error: `still writing after ${ms}ms` }), ms); });
   if (timer.unref) timer.unref();
   try {
     return await Promise.race([promise, late]);
@@ -195,11 +204,14 @@ export async function within(promise, ms = BACKUP_WAIT_MS) {
  * has for *a broken night writes itself down*, pointed at the one class of
  * failure that had no voice at all.
  *
- * **It never changes the answer and never throws.** These are called from the
- * middle of a night; the whole point is that a bad GitHub hour cannot be felt by
- * a room. What changes is only whether anybody can find out afterwards.
+ * **It never changes the answer and never throws** — these run mid-night, and a
+ * bad GitHub hour may not be felt by a room. Only whether anybody can find out.
  */
 function saidSo(what, result) {
+  // STILL WRITING IS NOT A FAILURE — see `within()`. Warning on it would fire on
+  // nights that were backed up perfectly, which is how a line nobody trusts is
+  // made: the host is taught to skim the one sentence he is meant to act on.
+  if (result && result.late) return result;
   if (!result || result.ok === false) {
     console.warn(`[backup] ${what} was NOT backed up:`, (result && result.error) || 'unknown');
   }
@@ -476,9 +488,9 @@ export async function backUpCodes(serialised) {
    */
   if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
   try {
-    return saidSo('the join codes', await putFile('room-codes.json', serialised, 'Update join codes', 'private'));
+    return saidSo('the join code book', await putFile('room-codes.json', serialised, 'Update join codes', 'private'));
   } catch (err) {
-    return saidSo('the join codes', { ok: false, error: err.message });
+    return saidSo('the join code book', { ok: false, error: err.message });
   }
 }
 
@@ -692,8 +704,15 @@ export async function venueOverlayFor(roomId, night) {
  */
 export function backUpReports() {
   if (!privateRepoConfigured()) return;
+  /*
+    * THROUGH `saidSo`, NOT A BARE `.catch()`. `putFile()` catches everything and
+    * RESOLVES `{ok:false}`, so a `.catch()` can never fire for a failed write —
+    * the exact shape that lost six weeks of backups. The catch stays for a throw
+    * that is not a write (a serialise that blows up).
+    */
   putFile('reports.json', reports.serialise(), 'Update question reports', 'private')
-    .catch((err) => console.warn('[reports] could not back up:', err.message));
+    .then((r) => saidSo('the question reports', r))
+    .catch((err) => saidSo('the question reports', { ok: false, error: err.message }));
 }
 
 /**
@@ -712,7 +731,8 @@ export function backUpReports() {
 export function backUpSpend() {
   if (!privateRepoConfigured()) return;
   putFile('spend.json', spend.serialise(), 'Update what the AI has cost', 'private')
-    .catch((err) => console.warn('[spend] could not back up:', err.message));
+    .then((r) => saidSo('the ledger', r))
+    .catch((err) => saidSo('the ledger', { ok: false, error: err.message }));
 }
 
 /**
@@ -754,13 +774,15 @@ export function backUpAsks(room) {
   if (!privateRepoConfigured()) return;
   const name = room.id === HOUSE ? 'room-asks.json' : `rooms/${room.id}/room-asks.json`;
   putFile(name, room.asks.serialise(), 'Update what the room asked for', 'private')
-    .catch((err) => console.warn('[asks] could not back up:', err.message));
+    .then((r) => saidSo('what the room asked for', r))
+    .catch((err) => saidSo('what the room asked for', { ok: false, error: err.message }));
 }
 
 export function backUpSuggestions() {
   if (!privateRepoConfigured()) return;
   putFile('suggestions.json', suggestions.serialise(), 'Update the suggestion box', 'private')
-    .catch((err) => console.warn('[suggestions] could not back up:', err.message));
+    .then((r) => saidSo('the suggestion box', r))
+    .catch((err) => saidSo('the suggestion box', { ok: false, error: err.message }));
 }
 
 /**
@@ -782,7 +804,8 @@ export function backUpLibraryStats() {
     return; // nothing has been launched yet
   }
   putFile('library-stats.json', contents, 'Update play counts', 'private')
-    .catch((err) => console.warn('[library] could not back up play counts:', err.message));
+    .then((r) => saidSo('the play counts', r))
+    .catch((err) => saidSo('the play counts', { ok: false, error: err.message }));
 }
 
 /** What the owner console lists. Never a hash, and never a session token. */

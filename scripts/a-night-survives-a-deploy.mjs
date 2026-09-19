@@ -214,6 +214,53 @@ try {
     broken.stop();
     fs.rmSync(deaf, { recursive: true, force: true });
   }
+
+  /* --------------------------- AND A SLOW ONE DOES NOT CRY WOLF
+   *
+   * The other half, and the one that decides whether the line above is worth
+   * anything. `within()` stops a REQUEST waiting after three seconds and says
+   * `ok:false` — but the write is still running and still lands, which is its
+   * whole design. Warning on that would put *"the invoice book was NOT backed
+   * up"* on the Help tab on any slow GitHub morning, about books that were
+   * backed up perfectly, and `github-down.mjs` has measured a venue save at two
+   * full timeouts. **A warning that fires when nothing is wrong is how the one
+   * sentence he is meant to act on becomes the one he skims.**
+   *
+   * **THE STUB HAS TO BE SLOWED FOR THIS TO MEAN ANYTHING.** A local write
+   * finishes in under a millisecond, so with an ordinary stub the timeout branch
+   * never runs and this passes with the fault put back — which it did, once.
+   * `GH_STUB_DELAY_MS=60` against `BACKUP_WAIT_MS=20` makes every backup late
+   * and every backup land.
+   */
+  const slowRepo = fs.mkdtempSync(path.join(os.tmpdir(), 'survive-slow-'));
+  const slow = await startApp({
+    key: 'slow-key',
+    nodeArgs: ['--import', STUB],
+    env: { GH_STUB_DIR: slowRepo, PHOTO_REPO: 'a/b', PHOTO_TOKEN: 'stub', BACKUP_WAIT_MS: '20', GH_STUB_DELAY_MS: '60' },
+    seed: async (dir) => {
+      const { Accounts } = await import(new URL('../src/accounts.js', import.meta.url).href);
+      const book = new Accounts(path.join(dir, 'accounts.json'));
+      book.create({ email: 'qm@example.com', password: PW, name: 'Quizzy', role: 'quizmaster', tier: 'gold', status: 'active' });
+      book.save();
+    },
+  });
+  try {
+    const inSlow = await fetch(`${slow.base}/api/sign-in`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'qm@example.com', password: PW }) });
+    const c3 = (inSlow.headers.getSetCookie() || []).map((x) => x.split(';')[0]).join('; ');
+    await fetch(`${slow.base}/api/invoices/customers`, { method: 'POST', headers: { 'content-type': 'application/json', cookie: c3 }, body: JSON.stringify({ name: 'The Slow Arms' }) });
+    await wait(900);
+    const me = await (await fetch(`${slow.base}/api/me`, { headers: { cookie: c3 } })).json();
+    const slowRoom = me && me.account && me.account.id;
+    check('a slow backup still lands', fs.existsSync(path.join(slowRepo, `invoicing-${slowRoom}.json`)),
+      `everything written: ${fs.readdirSync(slowRepo).join(', ')}`);
+    const rec2 = await (await fetch(`${slow.base}/api/flight`, { headers: { cookie: c3 } })).json();
+    const said2 = String((rec2 && rec2.text) || '');
+    check('…and NOTHING says it was not backed up — a late write is not a failure',
+      !/was NOT backed up/.test(said2), said2.split('\n').filter((l) => /backup/.test(l)).join(' | ').slice(0, 220));
+  } finally {
+    slow.stop();
+    fs.rmSync(slowRepo, { recursive: true, force: true });
+  }
 } catch (err) {
   failures += 1;
   console.log('  FAIL threw:', err.stack || err.message);

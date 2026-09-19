@@ -10349,7 +10349,7 @@ body.gallery { padding: 0; }
    with its logos laid out in it, so stretching it onto a portrait photograph
    distorts the one thing on the page that belongs to somebody else. Fitting the
    photograph instead costs a mount down each side, which is what a frame looks
-   like, and `frameOver()` in `photo-save.js` composites a download the same way
+   like, and `framedBox()` in `photo-save.js` composites a download the same way
    — the page and the file a landlord saves may not disagree.
 
    `--gal-frame` is set from the frame image's own pixels when it loads, so a
@@ -10398,6 +10398,15 @@ body.gallery { padding: 0; }
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
 }
 .gal-save:hover, .gal-share:hover { background: rgba(8, 8, 14, 0.82); border-color: rgba(255, 255, 255, 0.6); }
+/* THE LINK, WHEN THE CLIPBOARD REFUSED. Only ever drawn by that fallback, and
+   as wide as the row allows so the whole address is selectable rather than a
+   sentence telling somebody to copy a URL that can carry a console key. */
+.gal-link {
+  flex: 1 1 100%; min-width: 0; min-height: 44px; padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.38); border-radius: var(--r-field);
+  background: rgba(8, 8, 14, 0.82); color: #fff;
+  font: 500 14px/1 var(--ui, system-ui), sans-serif; text-align: center;
+}
 /* THE PAGE BEHIND IT DOES NOT SCROLL — a flick meant for the photograph would
    otherwise move the wall somebody is about to come back to, which is the
    scroll the overlay exists to preserve. */

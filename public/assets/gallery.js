@@ -799,10 +799,35 @@ function wireBigPicture(grid, photos, data = {}) {
         await navigator.clipboard.writeText(url);
         settle('Link copied');
       } catch {
-        // SAID OUT LOUD, and it names the way round: the address bar is already
-        // this exact link, because opening a photograph writes it there.
-        settle('Copy the link from the address bar');
+        /*
+         * A REFUSED CLIPBOARD SHOWS THE LINK ITSELF — the post kit's own answer,
+         * and here it is load-bearing rather than tidy. This said *"copy the
+         * link from the address bar"*, which on a `?key=` preview is the
+         * quizmaster's own console key: the exact thing `shareLink()` was
+         * written to keep out of a group chat, handed over by the fallback.
+         * So the FIELD carries `shareLink()`'s address, selected and ready.
+         */
+        showTheLink(url);
       }
+    };
+
+    /**
+     * The share address, in something you can copy from, when nothing else worked.
+     *
+     * Drawn once and reused — a second press must not stack a second field — and
+     * it stops the press from reaching the overlay's own close, like every other
+     * control on this picture.
+     */
+    const showTheLink = (url) => {
+      let box = open.querySelector('.gal-link');
+      if (!box) {
+        box = node('<input class="gal-link" type="text" readonly aria-label="The link to this photo">');
+        box.addEventListener('click', (ev) => ev.stopPropagation());
+        sharer.parentElement.appendChild(box);
+      }
+      box.value = url;
+      box.focus();
+      box.select();
     };
     sharer.addEventListener('click', shareIt);
     sharer.addEventListener('keydown', (ev) => {

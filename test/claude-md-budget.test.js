@@ -1168,7 +1168,14 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * right. The prohibition is short and the reason is the whole point — on a host
  * that wipes its disk every deploy, a silent backup is not a backup.
  */
-const BUDGET = 270_700;
+/*
+ * AND TO 271_400, the same night, for what the sweep found in the fix itself:
+ * three of the four backups warned on a write that was merely LATE. A warning
+ * that fires when nothing is wrong destroys the one that matters, so the
+ * distinction is a prohibition and belongs here — with the two traps that make
+ * it stick: a guard must slow the stub, and `putFile()` never rejects.
+ */
+const BUDGET = 271_400;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
