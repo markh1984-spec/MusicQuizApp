@@ -1945,6 +1945,16 @@ sections?"* `bayRail()` / `bayColumns()` / `bayHead()`, drawn by Post gig
   meant pressing its heading put it straight back. **A control that does nothing
   when pressed is worse than the problem it was avoiding**, so `holdsPicked` is
   a DEFAULT. **The folds live in a module Map keyed by rail AND group.**
+- **THE PICKED ROW IS APPENDED PAST THE CAP, NEVER SUBSTITUTED, AND THE
+  HEADING COUNTS WHAT IS UNDER IT.** Reported as *"there's 4 galleries but
+  it's showing 6"* and *"missing the 13th, 20th and 27th August"* — two faults
+  in one rail. It overwrote the LAST row inside the cap, so opening an older
+  night silently DELETED a newer one (his 27th); and the heading printed the
+  TOTAL beside a capped list, so the two the cap held back read as lost. **A
+  number beside a list is read as the length of that list** — `4 of 8` open,
+  the plain total shut. **`shown` is built BEFORE the heading**, or the count
+  is a second guess at the list and the two drift. **Four stays**, and it is
+  the host's own number.
 - **NO `title` ANYWHERE IN THE RAIL — the names WRAP instead.** A native
   tooltip is an unstyled box landing over the rows beneath it.
 - **`.bay-rail > * { flex: 0 0 auto }` IS LOAD-BEARING.** A flex column shrinks

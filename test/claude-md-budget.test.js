@@ -1223,7 +1223,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * would widen it again — what is new is the measurement that says where it
  * stops paying, and that the guard had no framed size inside the band at all.
  */
-const BUDGET = 276_800;
+/*
+ * AND TO 277_600 for the rail's two faults, which arrived in one screenshot
+ * and are worth keeping together: a heading that printed a total beside a
+ * capped list, and a picked row that ATE a newer one to make room for itself.
+ * The second is the expensive one to leave unwritten — it looks like a tidy
+ * one-liner ("reuse the last slot") and its symptom is a night that is simply
+ * not there, with nothing saying so.
+ */
+const BUDGET = 277_600;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

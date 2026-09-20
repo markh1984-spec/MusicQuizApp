@@ -263,17 +263,51 @@ export function bayRail({
      * tooltip together: a pub is worth two lines, and it is the one thing on
      * the row somebody is reading.
      */
+    /*
+     * WHICH ROWS ARE DRAWN IS WORKED OUT BEFORE THE HEADING, because the
+     * heading's number is a fact ABOUT that list. Deriving it a second way is
+     * how the two come to disagree, which is the whole fault being fixed here.
+     */
+    const shown = group.rows.slice(0, GROUP_CAP);
+    /*
+     * AND THE ONE YOU ARE LOOKING AT IS ALWAYS DRAWN, even past the cap.
+     * Otherwise opening an older night from the list below lights a row the
+     * rail has decided not to show, which is the fold problem again one level
+     * down.
+     *
+     * **IT IS APPENDED, NEVER SUBSTITUTED.** It used to overwrite the LAST
+     * row inside the cap, so opening a night from further back silently
+     * deleted a more recent one — reported as *"missing the 13th, 20th and
+     * 27th August"* against a rail reading 17 Sept, 10 Sept, 3 Sept, 6 Aug.
+     * Three of those were the newest three and the fourth was the night being
+     * looked at; the row the substitution ate left no trace at all. One row
+     * over the cap is a row; a gap with nothing saying so is the app lying
+     * about what it holds.
+     */
+    if (isOpen && holdsPicked && !shown.some((r) => r.key === picked)) {
+      shown.push(group.rows.find((r) => r.key === picked));
+    }
+    const countWords = isOpen && shown.length < group.rows.length
+      ? `${shown.length} of ${group.rows.length}`
+      : String(group.rows.length);
     const head = node(`
       <button class="bay-rail-group ${isOpen ? 'on' : ''} ${!isOpen && holdsPicked ? 'holds-picked' : ''}"
               type="button" aria-expanded="${isOpen}">
         <span class="bay-rail-caret" aria-hidden="true"></span>
         <span class="bay-rail-what">${esc(group.name)}</span>
-        <span class="tiny bay-rail-count">${group.rows.length}</span>
+        <span class="tiny bay-rail-count">${esc(countWords)}</span>
       </button>`);
     /*
      * THE COUNT STAYS ON THE HEADING WHETHER IT IS OPEN OR SHUT. Shut, it is
-     * the only thing saying there is anything in there; open, it is what says
-     * how many are NOT being shown once the cap bites.
+     * the only thing saying there is anything in there.
+     *
+     * **AND OPEN, IT SAYS HOW MANY OF THEM YOU CAN SEE.** It was the total
+     * alone, and the note here claimed that was "what says how many are NOT
+     * being shown once the cap bites" — which a bare `6` over four rows does
+     * not say. Reported exactly that way: *"there's 4 galleries but it's
+     * showing 6"*. A number beside a list is read as the length of that list,
+     * so once the two differ it has to print both. **Shut it stays the plain
+     * total**: there is no list under it to disagree with.
      */
     // Redrawn by whoever owns the bay — the rail is handed the way back rather
     // than reaching for one, so it stays a leaf that imports nothing but the
@@ -307,16 +341,6 @@ export function bayRail({
     rail.appendChild(head);
     if (!isOpen) continue;
 
-    const shown = group.rows.slice(0, GROUP_CAP);
-    /*
-     * AND THE ONE YOU ARE LOOKING AT IS ALWAYS DRAWN, even past the cap.
-     * Otherwise opening an older night from the list below lights a row the
-     * rail has decided not to show, which is the fold problem again one level
-     * down.
-     */
-    if (holdsPicked && !shown.some((r) => r.key === picked)) {
-      shown[shown.length - 1] = group.rows.find((r) => r.key === picked);
-    }
     for (const item of shown) rail.appendChild(row(item));
     if (group.rows.length > shown.length && more) {
       rail.appendChild(node(`<div class="tiny bay-rail-more">${esc(more)}</div>`));

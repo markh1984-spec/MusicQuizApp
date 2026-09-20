@@ -499,6 +499,41 @@ try {
         const wantsRail = door !== 'workshop';
         check(`${label}: ${door} ${wantsRail ? 'has a rail' : 'has NO rail — its shelf is the picker'}`,
           wantsRail ? m.rail > 0 : m.rail === 0, `${m.rail} rows`);
+
+        /* ---- AND THE NUMBER ON A HEADING IS A FACT ABOUT THE LIST UNDER IT.
+         *
+         * *"There's 4 galleries but it's showing 6"* — eight nights per pub
+         * here, four drawn, and the heading printed the TOTAL beside them. A
+         * number next to a list is read as the length of that list.
+         *
+         * AND THE PICKED ROW USED TO EAT ONE. Past the cap it OVERWROTE the
+         * last row inside it, so opening an older night silently deleted a
+         * newer one: *"missing the 13th, 20th and 27th August"*. It is
+         * appended now, so the rail is the newest four PLUS whatever you are
+         * looking at, and the count says five of eight.
+         */
+        if (wantsRail) {
+          const g = await page.evaluate(() => {
+            const head = document.querySelector('.doorhead .bay-rail-group.on')
+              || document.querySelector('.doorhead .bay-rail-group');
+            if (!head) return null;
+            const count = (head.querySelector('.bay-rail-count') || {}).textContent || '';
+            // The rows that belong to THIS heading — everything until the next.
+            const rows = [];
+            for (let n = head.nextElementSibling; n; n = n.nextElementSibling) {
+              if (n.classList.contains('bay-rail-group')) break;
+              if (n.classList.contains('bay-pick-row') || n.classList.contains('bay-pick')) rows.push(1);
+            }
+            return { count: count.trim(), rows: rows.length, open: head.classList.contains('on') };
+          });
+          if (g && g.open) {
+            const [saidShown, saidAll] = (/^(\d+) of (\d+)$/.exec(g.count) || [null, g.count, g.count]).slice(1);
+            check(`${label}: ${door}'s heading counts what is under it`,
+              Number(saidShown) === g.rows, `heading says "${g.count}" over ${g.rows} rows`);
+            check(`${label}: ...and still says how many there are in all`,
+              Number(saidAll) >= g.rows, `"${g.count}"`);
+          }
+        }
         /*
          * A GROUP FOLDS AND UNFOLDS. Nothing in this repo presses a control,
          * and a dead one draws perfectly — the handler's own catch eats the
