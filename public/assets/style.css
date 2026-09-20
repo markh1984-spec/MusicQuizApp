@@ -3325,6 +3325,12 @@ body.screen { cursor: none; overflow: hidden; }
 @media (min-width: 900px) { :root { --bay-h: 494px; } }
 @media (min-width: 1150px) { :root { --bay-h: 377px; } }
 
+/* THE STRIP A SCROLLBAR IS PAINTED IN — kept clear of anything clickable.
+   14px, because a macOS overlay bar is about 15px across the moment the
+   pointer is near it and takes no width from the box at all. One number, so
+   the rail, the bay and the league table cannot drift apart about it. */
+:root { --scroll-gutter: 14px; }
+
 /* AND IT NEEDS A MINIMUM HEIGHT TOO, WHICH IS THE SAME ARGUMENT AS THE WIDTH.
  *
  * The rule below already says the frame is off under 900px because "the tab
@@ -11564,9 +11570,6 @@ body.landing {
   .baycols { grid-template-columns: 190px minmax(0, 1fr); }
   /* Each column scrolls on its own inside the fixed bay: a quizmaster with ten
      venues can reach the tenth without the table moving, and a long table can
-     be read without losing the rail. */
-  /* Each column scrolls on its own inside the fixed bay: a quizmaster with ten
-     venues can reach the tenth without the table moving, and a long table can
      be read without losing the rail. The heading does not scroll with it. */
   .bay-rail { overflow-y: auto; min-height: 0; }
   .bay-side { overflow: hidden; }
@@ -11577,6 +11580,31 @@ body.landing {
      reach it: "Where this was" drew half a line and stopped. */
   .bay-side > .bench-detail { overflow-y: auto; min-height: 0; }
   .bay-body { overflow-y: auto; }
+
+  /* ---- AND A SCROLLING BOX PAINTS ITS OWN BAR OVER ITS LAST COLUMN.
+   *
+   * Reported off a screenshot: *"I can't select the two right sided controls
+   * because the scroller gets in the way."* Measured on the Community bay, the
+   * last tile of every row put its lamp 6px and its bin 7px from the inside
+   * edge of `.bay-body` — and an OVERLAY scrollbar (every Mac, every iPhone)
+   * is painted in that strip rather than taking width from it, so it lands on
+   * both of them. The rail's own P lamp is the same shape of fault, at the
+   * right-hand end of a row inside a rail that scrolls.
+   *
+   * **AN OVERLAY SCROLLBAR IS INVISIBLE TO `elementFromPoint`** — it is not an
+   * element, so it does not answer a hit test. Every "put a finger on it"
+   * guard in this repo said the control was pressable while a finger slid the
+   * box instead. It is a GEOMETRY question: how far is the control's right
+   * edge from the inside edge of the box that scrolls, against the widest the
+   * bar ever gets (about 15px on macOS, hovered).
+   *
+   * `scrollbar-gutter: stable` is the obvious answer and does nothing here: it
+   * reserves space for a CLASSIC bar, and the whole problem is the overlay one
+   * that reserves none. So it is a plain gutter, and it is on the SCROLLER
+   * rather than on the photo grid — the rail, the table and the bench detail
+   * have the same edge and would each need their own copy of it. */
+  .bay-rail, .bay-body,
+  .bay-side > .lg-table, .bay-side > .bench-detail { padding-right: var(--scroll-gutter); }
 }
 /* A PHONE GETS THREE ACROSS. Six 52px thumbnails is a contact sheet nobody can
    see; the row count is what the bay cared about, and on a phone the bay

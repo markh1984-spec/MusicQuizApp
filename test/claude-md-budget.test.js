@@ -1199,7 +1199,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * state back onto the payload, and a guard that identifies a tile by where it
  * sits rather than by which photograph it is.
  */
-const BUDGET = 274_000;
+/*
+ * AND TO 274_800 for the overlay scrollbar, which is the one gap every "put a
+ * finger on it" guard in this repo is blind to: a scrollbar is not an element,
+ * so it answers no hit test, and the last column of a scrolling box was
+ * unpressable on every Mac and every iPhone while four guards called it fine.
+ * The bytes buy the sentence that names the RIGHT question — geometry, not
+ * `elementFromPoint()` — and the two dead ends, `scrollbar-gutter: stable` and
+ * putting the gutter on the grid instead of on the box that scrolls.
+ */
+const BUDGET = 274_800;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

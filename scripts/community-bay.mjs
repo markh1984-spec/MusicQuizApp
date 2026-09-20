@@ -609,6 +609,42 @@ try {
       await page.waitForTimeout(900);
     }
 
+    /* ---- AND NOTHING SITS UNDER THE SCROLLBAR.
+       *
+       * *"I can't select the two right sided controls because the scroller
+       * gets in the way."* The last tile of every row had its lamp 6px and its
+       * bin 7px from the inside edge of `.bay-body`, and an OVERLAY scrollbar
+       * — every Mac, every iPhone — is painted in that strip instead of taking
+       * width from the box.
+       *
+       * IT CANNOT BE ASKED AS A HIT TEST. A scrollbar is not an element, so
+       * `elementFromPoint()` answers with the control and every "put a finger
+       * on it" guard in this repo said it was pressable. It is a measurement:
+       * the control's right edge against the inside edge of the box that
+       * scrolls, and `--scroll-gutter` is what holds them apart. */
+    const tightest = await page.evaluate(() => {
+      const scrollerOf = (el) => {
+        for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+          if (/auto|scroll/.test(getComputedStyle(n).overflowY)
+            && n.scrollHeight > n.clientHeight + 4) return n;
+        }
+        return null;
+      };
+      let worst = null;
+      for (const c of document.querySelectorAll('.doorhead .cphoto-pub, .doorhead .cphoto-bin')) {
+        const r = c.getBoundingClientRect();
+        const box = r.width && scrollerOf(c);
+        if (!box) continue;
+        const gap = Math.round(box.getBoundingClientRect().left + box.clientWidth - r.right);
+        if (!worst || gap < worst.gap) worst = { gap, what: c.className };
+      }
+      return worst;
+    });
+    if (tightest) {
+      check(`${label}: no photo control sits under the scrollbar`,
+        tightest.gap >= 16, `${tightest.what} is ${tightest.gap}px from the edge`);
+    }
+
     /* ---- AND THE HEAD OF THE BAY CARRIES THE NIGHT'S PUBLIC ADDRESS.
        A link that says "see it live" over a night nobody else can see would be
        the app lying about its own state, so the WORDS are checked as well as

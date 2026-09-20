@@ -4426,6 +4426,16 @@ account is in [`docs/checks.md`](docs/checks.md):**
   what a FINGER could** — `auto`/`scroll`, never `hidden`, never `body`. **It
   launches a quiz and puts a banner up**: an idle bar is narrower than the one
   that broke.
+- **BUT AN OVERLAY SCROLLBAR IS INVISIBLE TO IT — `--scroll-gutter`.** A bar is
+  not an element, so it answers no hit test: every finger guard in this repo
+  called the last column pressable while a Mac and an iPhone paint a bar over
+  it. Reported — *"I can't select the two right sided controls"* — and measured
+  at **6px** from `.bay-body`'s inside edge. **It is GEOMETRY, never
+  `elementFromPoint()`**: a control's right edge against the inside edge of the
+  box that SCROLLS. **`scrollbar-gutter: stable` does nothing** — it reserves
+  space for the classic bar, and the overlay one is the whole problem. **The
+  gutter is on the SCROLLER, not the grid**, or the rail, the table and the
+  bench each need their own copy.
 - **`pub-unchanged.mjs` is the one to run before a gig week**, and **compare
   against the branch you are merging into, not `HEAD`** — on a clean checkout
   `HEAD` IS the working tree, so it can only print IDENTICAL. Quoted as a pass

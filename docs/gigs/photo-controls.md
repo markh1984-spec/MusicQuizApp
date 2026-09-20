@@ -427,3 +427,58 @@ a human can edit, so the READ must go on refusing what the writers can no
 longer produce.
 
 ---
+
+## NOTHING CLICKABLE SITS UNDER THE SCROLLBAR
+
+Reported off a screenshot of a night open in the Community bay: *"slight issue
+here I can't select the two right sided controls because the scroller gets in
+the way."* The two on the right of a tile are the lamp (top) and the bin
+(bottom), and on the **last tile of every row** neither could be pressed.
+
+Measured, with the bay holding thirty-six photographs so it genuinely scrolled:
+the lamp's right edge was **6px** from the inside edge of `.bay-body`, and the
+bin's **7px**. A macOS or iOS **overlay** scrollbar is about 9px across at rest
+and about 15px the moment the pointer is near it, and it takes **no width from
+the box** — it is painted over the content. So the strip the bar lives in is
+exactly the strip those two controls were in.
+
+### It could not have been found by putting a finger on it
+
+Every guard in this repo that asks *can this be pressed* uses
+`elementFromPoint()` at the control's middle, and **a scrollbar is not an
+element**. It answers no hit test at all. `console-frame.mjs`,
+`console-controls.mjs`, `dead-controls.mjs` and `community-bay.mjs` all said
+the lamp was pressable, and a finger slid the box instead of flipping it.
+
+So the question had to change shape: **how far is the control's right edge from
+the inside edge of the box that SCROLLS**, against the widest that box's bar
+ever gets. That is `clientWidth` on the scroller, not `offsetWidth` — the
+difference between the two is the gutter a *classic* bar takes, and an overlay
+bar's is zero, which is the whole fault in one number.
+
+The nearest scrolling box is found the way `console-frame.mjs` finds one: walk
+up through `auto`/`scroll` ancestors, never `hidden`, never `body`.
+
+### `scrollbar-gutter: stable` is the obvious answer and does nothing
+
+It reserves space for a classic scrollbar. Where the bar is an overlay it
+reserves nothing, by specification — which is every Mac and every iPhone, and
+therefore every device this was reported from. It is a plain `padding-right`,
+from one token so the places using it cannot drift: **`--scroll-gutter`, 14px**.
+
+### The gutter is on the SCROLLER, never on the grid
+
+Putting it on `.community-wall` would have fixed the photographs and left the
+same edge on the rail's own **P** lamp, which is the last thing in a row inside
+`.bay-rail` — another scroller — and on anything the league table ever grows on
+its right-hand end. One rule on the four boxes that scroll inside a bay covers
+all of them, and a fifth scroller added later inherits it by being named there
+rather than by somebody remembering.
+
+**Below 900px there is no gutter and none is needed** — the bay does not scroll
+there, the page does, and the page already has `.wrap`'s 16px side gutter
+between the last tile and the window's own bar.
+
+`community-bay.mjs` asserts it at all four widths, and the assertion was
+verified by taking the padding out again: four failures, one per width, naming
+the 6px.
