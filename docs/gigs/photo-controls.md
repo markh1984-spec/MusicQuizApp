@@ -482,3 +482,92 @@ between the last tile and the window's own bar.
 `community-bay.mjs` asserts it at all four widths, and the assertion was
 verified by taking the padding out again: four failures, one per width, naming
 the 6px.
+
+## EMPTYING THE BOTTOM OF THE PILE — `.photo-sweep`
+
+*"Can I have a button that deletes all the non-gallery photos?"*
+
+The bands turned the grid into an inbox: the greens and the starred sit at the
+top, and you work down the reds promoting whatever is worth keeping. What was
+missing was the last step. Ninety photographs from a busy Thursday is ninety
+confirms otherwise, one at a time, on a Monday — which is exactly the admin
+this app exists to take off a Monday, and the reason a bulk control here is
+worth the pixels where most bulk controls are not.
+
+### It acts on the red lamps and nothing else
+
+Not the source, not the flag, not a date. `p.onGallery` is the one question
+this page is about, and by the time somebody presses this they have just spent
+five minutes answering it photograph by photograph. A flagged photo left red
+goes with the rest — it is red *because* nobody kept it, and the flag is a
+prompt to look rather than a verdict either way.
+
+The count is on the button (*"Bin the 27 not on the gallery"*) and it repaints
+wherever the bands do, off the same list: one lamp press changes the grid and
+the button together. The confirm names the number **and what survives** —
+*"The 9 green ones are untouched"* — because the fear this control has to
+answer is not "will it delete" but "will it delete the ones I just saved".
+
+### Present and inert, and first in the controls on both doors
+
+A destructive control that comes and goes as you press lamps is one you cannot
+learn the position of, and this one's whole context is a grid that re-arranges
+under you. So it is always drawn, disabled and saying why when there is nothing
+off the gallery.
+
+It is inserted FIRST in the controls container rather than appended, and that
+is a real fix rather than a preference: on Community the container already
+holds the venue picker and the post kit by the time this runs, because
+`onData` fires the moment the payload lands; on Post gig it is empty, because
+there the showcase is built after `nightPhotos()` resolves. Appended, one
+control sat in two different places on two doors.
+
+Outlined red with the drawn bin, like everything else here that deletes —
+never filled, which would make it as loud as a Launch button.
+
+### One at a time, and it stops rather than ploughing on
+
+Every delete is a write against the private store, and firing ninety at once is
+the read-modify-write race `galleryQueue()` exists for one door along. The
+button counts up as it goes, so a slow store reads as work rather than a dead
+press. A failure stops the sweep, re-lays the grid out first so the button and
+the photographs agree about what is left, and then says how many went before it
+stopped.
+
+Each photograph leaves `data.photos` as well as the DOM — the bands, the count
+line and the button all read that list, exactly as the single bin does.
+
+`scripts/photo-sweep.mjs` presses the real button in a real browser and then
+reads the stub repository's own folder. That second half is the point: a grid
+that drops three tiles without the bytes leaving is the control-reports-success
+fault this repo keeps catching, and the next reload would bring them all back.
+
+## THE FRAMED SHOWCASE STRIP IS DELETED
+
+It drew the three the night leads with, framed with the venue's overlay and the
+quizmaster's mark, under the photographs — asked for so the frame could be
+judged without saving three files to look at them. Then the grid above grew a
+**Showcase** band of its own, and: *"There's a showcase bit at the top which
+makes the showcase bit at the bottom defunct, and they disagree anyway."*
+
+Both halves of that are right. Two displays of one thing is the collision this
+app renames controls over — and they genuinely parted, for a reason neither
+could see from its own side:
+
+- the **band** draws what is **starred**, live, including a star pressed a
+  second ago and not yet saved;
+- the **strip** drew `cover`, and `coverPhotos()` puts the pins first and then
+  **fans out** to three whatever you starred.
+
+So one star showed one tile up in the bay and three framed pictures down here,
+two of which nobody had chosen.
+
+**What stays is the post kit** — the caption, the one press that saves the
+three framed, and the mark saying it has gone out. Those are not a display of
+the showcase; they are the workflow, and the save still composites the venue's
+frame and says which pub had one.
+
+**The cost, accepted: the frame is no longer previewed anywhere.** If that is
+missed, the strip belongs *beside the band* rather than below it, reading the
+same starred list — putting it back under the post kit returns the
+disagreement.

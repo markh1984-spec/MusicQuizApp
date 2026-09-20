@@ -105,6 +105,7 @@ export const GUARDS = [
   { name: 'bar-staff-camera',      core: false, why: 'the camera code — same bucket, and nothing else' },
   { name: 'props-on-a-photo',      core: false, why: 'do the googly eyes go on, on BOTH cameras?' },
   { name: 'turn-a-photo',          core: false, why: 'a rotated photo stays rotated' },
+  { name: 'photo-sweep',           core: false, why: 'does binning the reds leave the greens alone?' },
   { name: 'post-gig-venue',        core: false, why: 'a filed night can be told where it was' },
   { name: 'pack-repeats',          core: false, why: 'does one night ask the same thing twice?' },
   { name: 'dead-controls',         core: false, why: 'anything inert? (slow)', args: ['--door', 'console'] },

@@ -31,7 +31,7 @@ import { node, esc } from './client.js';
 import { library, me } from './console-state.js';
 import { captionFor } from './insta-caption.js';
 import { upcoming } from './diary.js';
-import { framedBlob, savePhoto, saveName } from './photo-save.js';
+import { savePhoto, saveName } from './photo-save.js';
 import { invoiceApi } from './console-invoices.js';
 
 /**
@@ -132,92 +132,22 @@ export function framedSaveInto(into, url, night, records) {
 
 
 /**
- * SAVE THE NIGHT'S SHOWCASE — the three the public index already fans out.
+ * THE WHOLE POST KIT — the caption, one press that saves the three framed, and
+ * a mark saying it has gone out.
  *
- * *"Per night I want to be able to choose three showcase photos that get the
- * overlay that I can then post to socials"*, and then the half that decides
- * the shape: *"it should be the same three showcase photos that are used for
- * this purpose."*
+ * **IT DRAWS NO PREVIEW OF THE THREE, and that is a deliberate removal.** It
+ * had one — the showcase strip, drawn framed, so the overlay could be judged
+ * before posting — and the grid above then grew a *Showcase* band of its own.
+ * *"There's a showcase bit at the top which makes the showcase bit at the
+ * bottom defunct, and they disagree anyway."* Both halves are right: two
+ * displays of one thing is the collision this app renames controls over, and
+ * they genuinely parted — the band draws what is STARRED, the strip drew
+ * `cover`, which `coverPhotos()` fans out to three whatever you starred. So
+ * one star showed one tile up there and three framed pictures down here.
  *
- * **SO IT DOES NOT PICK ANYTHING.** The choosing already exists — the pin on
- * each photograph, capped at `MAX_PINS`, which is what `coverPhotos()` reads
- * to build the night's card on the gallery. A second "showcase" list here
- * would be a second answer to one question, and the two would part on the
- * first night somebody re-pinned. The server SENDS `cover`; this walks it.
- *
- * **ONE AT A TIME, AWAITED.** Three simultaneous canvases is three copies of a
- * 1080-square photograph plus the frame in memory on a laptop that is also
- * running a quiz, and a browser given three downloads in one tick drops two of
- * them. Slower and all three arrive.
- *
- * **IT COUNTS WHAT ACTUALLY LEFT**, never what it tried: `savePhoto()` answers
- * false when a share sheet was dismissed, and "Saved 3" over two files is this
- * repo's commonest fault wearing a number.
- */
-/**
- * THE SHOWCASE, AS IT WILL POST — the three the night leads with, drawn with
- * the venue's frame and the mark, from the SAME drawing the export saves.
- *
- * Asked for after the star: *"can I also have a view where I can see the
- * three showcase photos with the overlay"*. A framed picture cannot be judged
- * from a thumbnail with a corner lamp on it, and the alternative was saving
- * three files to look at them. It redraws when a star changes
- * (`photo-pins-changed`, fired by the tile) — a preview that shows last
- * minute's three is worse than none.
- */
-export function showcasePreviewInto(into, night, records, keyedUrl) {
-  const strip = node(`<div class="showcase-strip">
-    <div class="tiny showcase-said">The showcase, framed — what the gallery leads with and the export saves.</div>
-    <div class="showcase-row"></div>
-  </div>`);
-  const row = strip.querySelector('.showcase-row');
-  const said = strip.querySelector('.showcase-said');
-  const words = String((me && (me.brand || me.name)) || '');
-  let run = 0;
-
-  const draw = async (cover) => {
-    const mine = ++run;
-    const names = (Array.isArray(cover) ? cover : []).filter(Boolean);
-    if (!names.length) {
-      row.replaceChildren();
-      said.textContent = 'Star up to three photos and they show here, framed.';
-      return;
-    }
-    let overlay = '';
-    try { overlay = await venueFrame((night && night.venue) || '', records); } catch { /* unframed */ }
-    if (mine !== run) return;
-    said.textContent = overlay
-      ? 'The showcase, framed — what the gallery leads with and the export saves.'
-      : 'The showcase — no frame on this pub yet, so these post plain.';
-    const pics = await Promise.all(names.map(async (name) => {
-      try {
-        const blob = await framedBlob(keyedUrl(`/past-photo/${encodeURIComponent(night.night)}/${encodeURIComponent(name)}`), { words, overlay });
-        return blob ? URL.createObjectURL(blob) : '';
-      } catch { return ''; }
-    }));
-    if (mine !== run) return;
-    row.replaceChildren(...pics.filter(Boolean).map((src) => node(`<img class="showcase-pic" src="${src}" alt="">`)));
-  };
-
-  draw(night && night.cover);
-  document.addEventListener('photo-pins-changed', async (ev) => {
-    if (!strip.isConnected) return;
-    if (ev.detail && ev.detail.night && ev.detail.night !== night.night) return;
-    // The cover is decided on the SERVER (pins first, then a spread), so ask
-    // it rather than guess which three a new star displaced.
-    try {
-      const res = await fetch(keyedUrl(`/api/past-gigs/${encodeURIComponent(night.night)}`));
-      const data = res.ok ? await res.json() : null;
-      if (data) draw(data.cover);
-    } catch { /* the strip keeps what it had */ }
-  });
-  into.appendChild(strip);
-  return strip;
-}
-
-/**
- * THE WHOLE POST KIT — the framed three, the caption, one press, and a mark
- * saying it has gone out.
+ * **THE COST, ACCEPTED: the venue's frame is no longer previewed.** The save
+ * still composites it, and the button says which pub had one. Put the strip
+ * back only beside the band rather than below it, or this returns.
  *
  * *"I want to use the showcase photos as the photos I post to Instagram, I
  * want a quick workflow for this purpose."*
@@ -246,7 +176,6 @@ export function showcasePreviewInto(into, night, records, keyedUrl) {
  *                         copies of one URL is a link that 404s in one place.
  */
 export function showcaseInto(into, night, records, keyedUrl, address = '') {
-  showcasePreviewInto(into, night, records, keyedUrl);
   const kit = postKitInto(into, night, address);
   const save = showcaseSaveInto(into, night, records, keyedUrl, kit);
   postedInto(into, night, keyedUrl);
@@ -345,6 +274,29 @@ export function postedInto(into, night, keyedUrl) {
   return row;
 }
 
+/**
+ * SAVE THE NIGHT'S SHOWCASE — the three the public index already fans out.
+ *
+ * *"Per night I want to be able to choose three showcase photos that get the
+ * overlay that I can then post to socials"*, and then the half that decides
+ * the shape: *"it should be the same three showcase photos that are used for
+ * this purpose."*
+ *
+ * **SO IT DOES NOT PICK ANYTHING.** The choosing already exists — the pin on
+ * each photograph, capped at `MAX_PINS`, which is what `coverPhotos()` reads
+ * to build the night's card on the gallery. A second "showcase" list here
+ * would be a second answer to one question, and the two would part on the
+ * first night somebody re-pinned. The server SENDS `cover`; this walks it.
+ *
+ * **ONE AT A TIME, AWAITED.** Three simultaneous canvases is three copies of a
+ * 1080-square photograph plus the frame in memory on a laptop that is also
+ * running a quiz, and a browser given three downloads in one tick drops two of
+ * them. Slower and all three arrive.
+ *
+ * **IT COUNTS WHAT ACTUALLY LEFT**, never what it tried: `savePhoto()` answers
+ * false when a share sheet was dismissed, and "Saved 3" over two files is this
+ * repo's commonest fault wearing a number.
+ */
 export function showcaseSaveInto(into, night, records, keyedUrl, kit = null) {
   const cover = (night && Array.isArray(night.cover) ? night.cover : []).filter(Boolean);
   if (!cover.length) return null;

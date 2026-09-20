@@ -5051,12 +5051,16 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 @media (prefers-reduced-motion: reduce) { .cphoto-rot:hover { transform: none; } }
 .community-wall .cphoto-rot { width: 18px; height: 18px; bottom: 5px; left: 5px; }
 .community-wall .cphoto-rot svg { width: 11px; height: 11px; }
-/* THE SHOWCASE, FRAMED — three whole pictures in a row, never cropped: the
-   frame is the point, and a square crop hides its edges. */
+/* WHAT SITS UNDER A NIGHT'S PHOTOGRAPHS. The framed showcase strip that used
+   to lead this block is gone — the grid's own *Showcase* band says it, and two
+   displays of one thing disagreed. */
 .bench-under { display: grid; gap: 10px; margin-top: 10px; }
-.showcase-strip { margin: 10px 0 6px; }
-.showcase-row { display: flex; gap: 8px; margin-top: 6px; align-items: flex-start; }
-.showcase-pic { flex: 1 1 0; min-width: 0; max-height: 170px; object-fit: contain; border-radius: var(--r-field); background: rgba(0, 0, 0, 0.35); }
+
+/* BIN EVERYTHING STILL RED — destructive, so outlined rather than filled, and
+   it sits on its own line: it is the one control here that cannot be undone,
+   and it must not read as part of the row that publishes. */
+.photo-sweep { justify-self: start; display: inline-flex; align-items: center; gap: 6px; }
+.photo-sweep:disabled { opacity: 0.55; cursor: default; }
 
 /* THE SOCIALS POST KIT — the caption above the one button that readies it.
    A textarea is a "choose" control, so it takes the field treatment every

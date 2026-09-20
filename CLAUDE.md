@@ -2817,8 +2817,7 @@ costs.
   in-flight writes. **A PAINTER MUST WRITE ITS STATE BACK ONTO THE PAYLOAD**
   (`p.pinned` as well as `p.onGallery`), or the corner repaints and the grid
   does not move. **AND A GUARD MAY NOT IDENTIFY A TILE BY POSITION** —
-  `data-name`; the bay guard pressed the first lamp, read the first lamp, and
-  reported `true -> true` against a working control. **FLAGGED SITS ON TOP** — a rude photo is nearly always red, and the fold would bury what the
+  `data-name`. **FLAGGED SITS ON TOP** — a rude photo is nearly always red, and the fold would bury what the
   check exists to surface. **THE LAMPS ARE THE DOOR, NOT CAMERA-VERSUS-UPLOAD**
   (`showsByDefault()`); **an UPLOAD ON THE SCREEN BUT OFF THE GALLERY IS ALREADY
   THE DEFAULT.** Camera-versus-upload was read at upload and **never written
@@ -2826,6 +2825,17 @@ costs.
   September EXIF gate stays torn out. **`PHOTO_NAME` is one pattern, not
   three**, or a new marker silently drops every lamp and flag; **the reorder may
   not COPY a photo object**, or the count line stops following the lamps.
+  **AND THE BOTTOM OF THE PILE EMPTIES IN ONE PRESS — `.photo-sweep`.** It bins
+  the RED ones and only those, counted on the button and in a confirm that
+  names what SURVIVES; **present and inert with the reason on it**; **one at a
+  time, stopping on a failure**; **FIRST in the controls on BOTH doors** —
+  appended, it sat last on one and first on the other. `photo-sweep.mjs`
+  presses it and reads the REPO.
+- **AND THE FRAMED SHOWCASE STRIP UNDER THE GRID IS DELETED.** Two displays of
+  one thing, and they disagreed: the band draws what is STARRED, the strip drew
+  `cover`, which `coverPhotos()` fans out to three. **The caption, the save and
+  the posted mark stay** — they are the post kit, not a second display. **The
+  cost, accepted: the venue's frame is no longer previewed.**
 - **A LAMP PER PHOTO IS A SWITCH, WITH NO WORDS** — `title`/`aria-label` are
   load-bearing, an 18px dot gets a 44px hit area, and **a ruling that only
   restates the DEFAULT is CLEARED, not stored.**
@@ -4385,6 +4395,7 @@ node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 node scripts/photo-to-socials.mjs       # can a pub save a photo, with your name on?
 node scripts/photo-to-start.mjs         # is the photo ask real, and the skip?
 node scripts/rude-photo.mjs              # is a rude photo flagged and marked?
+node scripts/photo-sweep.mjs            # binning the reds — do the greens survive?
 node scripts/star-means-public.mjs      # starring publishes it — and does the socials post kit work?
 node scripts/photos-in-a-bucket.mjs     # the gallery off an object store — does the bin mean it?
 node scripts/photos-to-r2.mjs           # move the photographs off GitHub (--go to do it)

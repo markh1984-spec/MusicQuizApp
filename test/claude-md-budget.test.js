@@ -1208,7 +1208,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * `elementFromPoint()` — and the two dead ends, `scrollbar-gutter: stable` and
  * putting the gutter on the grid instead of on the box that scrolls.
  */
-const BUDGET = 274_800;
+/*
+ * AND TO 275_500 for the sweep button and the showcase strip's deletion. The
+ * bytes are one ADD and one REMOVE, and the remove is the expensive half to
+ * leave unwritten: a future session looking at the post kit finds a framed
+ * preview missing and puts it back, which is the duplicate that disagreed.
+ * Paid for in part by trimming the tile-by-position anecdote to its
+ * prohibition — the story is in `docs/gigs/photo-controls.md`.
+ */
+const BUDGET = 275_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

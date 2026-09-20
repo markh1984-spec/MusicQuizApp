@@ -897,7 +897,11 @@ export async function nightPhotos(body, night, opts = {}) {
       const tile = tiles.get(p);
       if (tile) grid.appendChild(tile);
     }
+    // The sweep button's words are a COUNT off this same list, so it repaints
+    // wherever the bands do — one lamp press changes both.
+    if (paintSweep) paintSweep();
   }
+  let paintSweep = null;
   /*
    * NOT WHILE THE GRID IS STILL BEING BUILT. `paintPill()` and `paintPin()`
    * both run once as each tile is made, and a re-lay-out from inside that loop
@@ -1214,9 +1218,6 @@ export async function nightPhotos(body, night, opts = {}) {
             }
             saved = live;
             trouble('');
-            // The showcase strip redraws off this — the three are decided on
-            // the server, so it asks rather than guesses.
-            document.dispatchEvent(new CustomEvent('photo-pins-changed', { detail: { night: night.night } }));
           } catch (err) {
             pinned = pinSaved;
             paintPin();
@@ -1263,7 +1264,6 @@ export async function nightPhotos(body, night, opts = {}) {
         if (!res.ok) throw new Error(out.error || 'Could not turn that.');
         img.src = keyed(url) + '&v=' + Date.now();
         trouble('');
-        document.dispatchEvent(new CustomEvent('photo-pins-changed', { detail: { night: night.night } }));
       } catch (err) {
         trouble(err.message);
       } finally {
@@ -1335,6 +1335,96 @@ export async function nightPhotos(body, night, opts = {}) {
   settled = true;
   layout();
   body.appendChild(grid);
+
+  /*
+   * ---- BIN EVERYTHING THAT IS NOT ON THE GALLERY ------------------------
+   *
+   * *"Can I have a button that deletes all the non-gallery photos?"* The bands
+   * above turned the grid into an inbox — you work down the reds promoting
+   * what is worth keeping — and this is what empties the bottom of it. Ninety
+   * photographs on a Monday is ninety confirms otherwise, which is the admin
+   * this app exists to take off a Monday.
+   *
+   * **IT ACTS ON THE RED LAMPS AND NOTHING ELSE.** Not the source, not the
+   * flag: `p.onGallery` is the one decision this page is about, and the lamps
+   * are already the thing somebody has just spent five minutes on. A flagged
+   * photograph left red goes with the rest — it is red BECAUSE nobody kept it.
+   *
+   * **PRESENT AND INERT, with the reason on the button.** A destructive
+   * control that comes and goes as you press lamps is one you cannot learn the
+   * position of, and this one's whole context is a grid that re-arranges under
+   * you. So it is always there, disabled and saying why when there is nothing
+   * off the gallery.
+   *
+   * **OUTLINED RED, NEVER FILLED**, and it draws the bin like everything else
+   * here that deletes. The confirm NAMES THE NUMBER and says there is no undo
+   * — the same wording rule as the single bin, which is the only thing between
+   * a mis-tap and somebody's photographs being gone.
+   *
+   * **ONE AT A TIME, and a failure stops the sweep rather than ploughing on.**
+   * Every delete is a write against the private store; firing ninety at once
+   * is the read-modify-write race `galleryQueue()` exists for, one door along.
+   * The button counts up as it goes, so a slow store looks like work rather
+   * than a dead press.
+   */
+  const sweepInto = controlsInto || body;
+  const offGallery = () => data.photos.filter((p) => !p.onGallery);
+  const sweepBtn = node('<button class="minor danger photo-sweep" type="button"></button>');
+  paintSweep = () => {
+    if (sweepBtn.dataset.busy) return;
+    const n = offGallery().length;
+    sweepBtn.disabled = !n;
+    sweepBtn.innerHTML = n
+      ? `${binIcon(14)} Bin the ${n} not on the gallery`
+      : `${binIcon(14)} Nothing off the gallery to bin`;
+  };
+  paintSweep();
+  sweepBtn.addEventListener('click', async () => {
+    const doomed = offGallery();
+    if (!doomed.length || sweepBtn.disabled) return;
+    if (!confirm(`Delete ${doomed.length} photo${doomed.length === 1 ? '' : 's'} that ${doomed.length === 1 ? 'is' : 'are'} not on the gallery?\n\nThey are taken out of this night for good. The ${showing()} green ones are untouched.`)) return;
+    sweepBtn.dataset.busy = '1';
+    sweepBtn.disabled = true;
+    let gone = 0;
+    for (const p of doomed) {
+      sweepBtn.textContent = `Deleting ${gone + 1} of ${doomed.length}…`;
+      try {
+        const res = await fetch(keyed(`/api/past-photo/${encodeURIComponent(night.night)}/${encodeURIComponent(p.name)}`), {
+          method: 'DELETE',
+          headers: { 'X-Host-Key': hostKey },
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(out.error || 'Could not delete that one.');
+      } catch (err) {
+        delete sweepBtn.dataset.busy;
+        // Out of the list first, so the button and the grid agree about what
+        // is left before anybody reads the complaint.
+        layout();
+        loading.textContent = counted();
+        trouble(`${gone ? `Deleted ${gone}, then stopped: ` : ''}${err.message}`);
+        return;
+      }
+      // OUT OF THE LIST, not only out of the DOM — the bands and the count
+      // line both read `data.photos`, exactly as the single bin does.
+      const tile = tiles.get(p);
+      tiles.delete(p);
+      const at = data.photos.indexOf(p);
+      if (at >= 0) data.photos.splice(at, 1);
+      if (tile) tile.remove();
+      gone += 1;
+    }
+    delete sweepBtn.dataset.busy;
+    layout();
+    loading.textContent = counted();
+  });
+  /*
+   * FIRST IN THE CONTROLS, ON BOTH DOORS — *a control sits with what it acts
+   * on*, and on each door the photographs are immediately above this box.
+   * Appended, it landed last on Community and first on Post gig, because
+   * `onData` fires before the grid is built on one and after it on the other:
+   * one control in two places is the drift this app renames things over.
+   */
+  sweepInto.insertBefore(sweepBtn, sweepInto.firstChild);
   /*
    * ON PAST GIGS THIS PANEL PUBLISHES; ON COMMUNITY IT DRAWS NOTHING AT ALL.
    *

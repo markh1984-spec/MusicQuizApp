@@ -90,8 +90,16 @@ try {
   check('  ...without opening the picture', after.opened === 0);
   const fresh = await (await fetch(`${base}/past-photo/${NIGHT}/p1.jpg`, { headers: { Cookie: (await page.context().cookies()).map((c) => `${c.name}=${c.value}`).join('; ') } })).arrayBuffer();
   check('  ...and a fresh read serves the turned bytes', fresh.byteLength !== readFileSync(join(dir, 'p1.jpg')).length ? false : true, `${fresh.byteLength} bytes`);
-  const strip = await page.evaluate(() => ({ strip: !!document.querySelector('.showcase-strip'), pics: document.querySelectorAll('.showcase-pic').length }));
-  check('the showcase strip is drawn under the night', strip.strip, JSON.stringify(strip));
+  /*
+   * THE SHOWCASE IS THE GRID'S OWN BAND NOW, not a second framed strip below.
+   * Two displays of one thing disagreed — the band draws what is STARRED and
+   * the strip drew `cover`, which fans out to three whatever you starred.
+   */
+  const show = await page.evaluate(() => ({
+    bands: [...document.querySelectorAll('.doorhead .cphoto-group')].map((h) => h.textContent.trim()),
+    strip: document.querySelectorAll('.showcase-strip').length,
+  }));
+  check('the showcase is a band in the grid, and there is no second strip', show.strip === 0, JSON.stringify(show));
 
   // AND ON POST GIG: the grid, the showcase, the picker, the gallery — all
   // reachable inside the capped bay, which clipped everything past the
@@ -117,13 +125,13 @@ try {
     };
     return {
       grid: side ? Boolean(side.querySelector('.community-wall')) : false,
-      strip: seen('.showcase-strip'), save: seen('.showcase-save'), picker: seen('.night-venue select'), gallery: seen('.gig-gal-on, .gig-gal-off, .gig-gallery'),
-      order: side ? [...side.querySelectorAll('.community-wall, .showcase-strip, .showcase-save, .night-venue, .gig-gal-on, .gig-gal-off')].map((n) => ['community-wall', 'showcase-strip', 'showcase-save', 'night-venue'].find((c) => n.classList.contains(c)) || 'gallery') : [],
+      sweep: seen('.photo-sweep'), save: seen('.showcase-save'), picker: seen('.night-venue select'), gallery: seen('.gig-gal-on, .gig-gal-off, .gig-gallery'),
+      order: side ? [...side.querySelectorAll('.community-wall, .photo-sweep, .showcase-save, .night-venue, .gig-gal-on, .gig-gal-off')].map((n) => ['community-wall', 'photo-sweep', 'showcase-save', 'night-venue'].find((c) => n.classList.contains(c)) || 'gallery') : [],
     };
   });
   check('Post gig draws the photographs as the grid, not a sideways strip', pg.grid, JSON.stringify(pg));
-  check('  ...and the showcase strip, its save, the picker and the gallery control can all be reached', ['strip', 'save', 'picker'].every((k) => pg[k] === 'reachable'), JSON.stringify(pg));
-  check('  ...in that order, gallery last', pg.order.join(',').startsWith('community-wall,showcase-strip,showcase-save,night-venue'), pg.order.join(','));
+  check('  ...and the sweep, the showcase save, the picker and the gallery control can all be reached', ['sweep', 'save', 'picker'].every((k) => pg[k] === 'reachable'), JSON.stringify(pg));
+  check('  ...in that order, gallery last', pg.order.join(',').startsWith('community-wall,photo-sweep,showcase-save,night-venue'), pg.order.join(','));
   await page.screenshot({ path: '/tmp/postgig-after.png', clip: { x: 0, y: 80, width: 1400, height: 720 } }).catch(() => {});
   check('nothing threw', errs.length === 0, errs.join(' | '));
 } finally {
