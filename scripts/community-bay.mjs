@@ -555,8 +555,16 @@ try {
         const open2 = await page.evaluate(() => document.querySelectorAll('.doorhead .bay-pick').length);
         check(`${label}: ${door}'s first group folds`, shut < beforeRows, `${beforeRows} -> ${shut}`);
         check(`${label}: and unfolds again`, open2 === beforeRows, `${shut} -> ${open2}`);
-        // FOUR AT A TIME, with the rest named as being below — asked for.
-        check(`${label}: ${door} shows at most 4 per group`, open2 <= 4 * 3, `${open2}`);
+        /*
+         * EVERY NIGHT IN THE GROUP, NOT FOUR OF THEM. This asserted a cap of
+         * four per group, which was the host's own number and then reported
+         * three times as nights going missing — the last time against a
+         * heading that had been taught to admit it (*"still says 4 of 6"*).
+         * The rail scrolls, so the assertion is now that nothing is held
+         * back: eight seeded nights per pub, eight rows when it is open.
+         */
+        const held = await page.evaluate(() => [...document.querySelectorAll('.doorhead .bay-rail-more')].length);
+        check(`${label}: ${door} holds no night back`, held === 0, `${held} "and more" lines`);
         check(`${label}: ${door}'s group headings are not squashed`, m.squashed === 0, `${m.squashed} under 12px`);
       }
     }

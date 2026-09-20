@@ -1938,23 +1938,27 @@ sections?"* `bayRail()` / `bayColumns()` / `bayHead()`, drawn by Post gig
   per item**, and **the tab body's panel GOES**. **The night's address is in
   the bay HEAD, from one `galleryAddress()`.**
 - **COMPARTMENTALISED BY PUB, AND THE PUB FOLDS. Group by the pub FIRST, then
-  order within it**, or "The Crown" prints twice with another pub between. **Four
-  to a group.**
+  order within it**, or "The Crown" prints twice with another pub between.
+  **Every night in the group is drawn** — see the reversal below.
 - **WHAT IS REMEMBERED WINS, ALWAYS — the first build had it the other way and
   the control was DEAD**: forcing a group open whenever it held the picked row
   meant pressing its heading put it straight back. **A control that does nothing
   when pressed is worse than the problem it was avoiding**, so `holdsPicked` is
   a DEFAULT. **The folds live in a module Map keyed by rail AND group.**
-- **THE PICKED ROW IS APPENDED PAST THE CAP, NEVER SUBSTITUTED, AND THE
-  HEADING COUNTS WHAT IS UNDER IT.** Reported as *"there's 4 galleries but
-  it's showing 6"* and *"missing the 13th, 20th and 27th August"* — two faults
-  in one rail. It overwrote the LAST row inside the cap, so opening an older
-  night silently DELETED a newer one (his 27th); and the heading printed the
-  TOTAL beside a capped list, so the two the cap held back read as lost. **A
-  number beside a list is read as the length of that list** — `4 of 8` open,
-  the plain total shut. **`shown` is built BEFORE the heading**, or the count
-  is a second guess at the list and the two drift. **Four stays**, and it is
-  the host's own number.
+- **THE FOUR-A-GROUP CAP IS GONE, WHICH REVERSES THE HOST'S OWN NUMBER — on
+  his own say-so, three times.** *"There's 4 galleries but it's showing 6"*,
+  then *"missing the 13th, 20th and 27th August"*, then — once the heading had
+  been taught to say `4 of 6` — *"still says 4 of 6"*. **MAKING THE COUNT
+  HONEST DID NOT MAKE THE CAP RIGHT**: a number admitting it hides two still
+  hides two, and *"Older nights are in Past gigs below"* sends somebody
+  elsewhere for a night that was on screen a moment ago. `PACK_SHELF`'s
+  decision again. **THE RAIL SCROLLS**, which is the test this app applies to
+  every cap. **Two hundred nights at one pub wants a FOLD or a search, never a
+  number that drops the end off the list.**
+- **AND WHILE THE CAP EXISTED THE PICKED ROW ATE ONE.** It overwrote the LAST
+  row inside the cap rather than being appended, so opening an older night
+  silently DELETED a newer one — his 27th. **The heading is built from the
+  list it sits over**, never a second guess at its length.
 - **NO `title` ANYWHERE IN THE RAIL — the names WRAP instead.** A native
   tooltip is an unstyled box landing over the rows beneath it.
 - **`.bay-rail > * { flex: 0 0 auto }` IS LOAD-BEARING.** A flex column shrinks

@@ -1231,7 +1231,14 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * one-liner ("reuse the last slot") and its symptom is a night that is simply
  * not there, with nothing saying so.
  */
-const BUDGET = 277_600;
+/*
+ * AND TO 277_900. The rail's cap is REVERSED rather than tuned, so the note
+ * bought last time had to be rewritten rather than added to — a reversal that
+ * sits beside the rule it overturns is two rules, and a future session picks
+ * one. The bytes go on the sentence that generalises: making a count honest
+ * about what it hides does not make the hiding right.
+ */
+const BUDGET = 277_900;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

@@ -669,6 +669,10 @@ export async function fillNightDetail(body, night) {
   const under = node('<div class="bench-under"></div>');
   await nightPhotos(body, night, { wall: true, controlsInto: under, onData: (d) => { data = d; } });
   body.appendChild(under);
+  /* PUBLISHING COMES RIGHT UNDER THE PHOTOGRAPHS — measured: last, it was
+     656px down a 289px box. Reachable and findable are two questions.
+     The safeguard is unchanged — `docs/gigs/photo-controls.md`. */
+  if (data) under.appendChild(galleryToggle(night.night, data.published, night.venue));
   if (data) {
     // The address is built HERE and handed over — `galleryAddress()` lives in
     // this file and the export module imports the other way, so a second copy
@@ -684,7 +688,6 @@ export async function fillNightDetail(body, night) {
    * photographs at all — `nightPhotos()` returns early on one.
    */
   under.appendChild(venuePicker(night));
-  if (data) under.appendChild(galleryToggle(night.night, data.published, night.venue));
 }
 
 /**
@@ -776,10 +779,8 @@ export async function nightPhotos(body, night, opts = {}) {
     wall = false, controlsInto = null, onOpen = null, onData = null,
   } = opts;
   if (!night.hasPhotos) return;
-  /* A CALLER THAT BRINGS NO OPENER GETS THE ORDINARY ONE. Post gig brought
-     none, so on the door whose subject is EVIDENCE a photograph could not be
-     looked at. Community brings its own only to remember what was open across
-     a state push — bookkeeping round the same builder, not a second opener. */
+  /* A CALLER THAT BRINGS NO OPENER GETS THE ORDINARY ONE — Post gig brought
+     none, so on the EVIDENCE door a photograph could not be looked at. */
   const openOne = onOpen || ((shot) => openBigPhoto(body, shot, night));
 
   const loading = node('<div class="tiny">Loading photos…</div>');
@@ -1367,12 +1368,10 @@ export async function nightPhotos(body, night, opts = {}) {
    * ---- BIN EVERYTHING THAT IS NOT ON THE GALLERY ------------------------
    *
    * *"Can I have a button that deletes all the non-gallery photos?"* The bands
-   * made the grid an inbox; this empties the bottom of it.
-   * **THE RED LAMPS AND NOTHING ELSE** — not the source, not the flag: a
-   * flagged photo left red is red BECAUSE nobody kept it. **Present and inert
-   * with the reason on it**, **outlined red**, the confirm naming the number
-   * AND what survives, **one at a time and stopping on a failure** — these are
-   * writes against the private store.
+   * made the grid an inbox; this empties the bottom of it. **THE RED LAMPS AND
+   * NOTHING ELSE** — a flagged photo left red is red BECAUSE nobody kept it.
+   * Present and inert with the reason on it, outlined red, the confirm naming
+   * the number AND what survives, one at a time and stopping on a failure.
    *
    * Full reasoning: `docs/gigs/photo-controls.md`.
    */

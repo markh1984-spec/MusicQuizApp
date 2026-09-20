@@ -126,13 +126,45 @@ try {
     return {
       grid: side ? Boolean(side.querySelector('.community-wall')) : false,
       sweep: seen('.photo-sweep'), save: seen('.showcase-save'), picker: seen('.night-venue select'), gallery: seen('.gig-gal-on, .gig-gal-off, .gig-gallery'),
+      /* HOW FAR DOWN THE PUBLISH CONTROL IS — reachable and findable are two
+         questions, and *"looks like I lose the ability to publish"* is the
+         second one being answered no. */
+      galleryDown: (() => {
+        const g = side && side.querySelector('.gig-gal-on, .gig-gal-off, .gig-gallery');
+        if (!g || !side) return -1;
+        return Math.round((g.getBoundingClientRect().top - side.getBoundingClientRect().top) + side.scrollTop);
+      })(),
+      boxHigh: side ? Math.round(side.clientHeight) : 0,
       order: side ? [...side.querySelectorAll('.community-wall, .photo-sweep, .showcase-save, .night-venue, .gig-gal-on, .gig-gal-off')].map((n) => ['community-wall', 'photo-sweep', 'showcase-save', 'night-venue'].find((c) => n.classList.contains(c)) || 'gallery') : [],
     };
   });
   check('Post gig draws the photographs as the grid, not a sideways strip', pg.grid, JSON.stringify(pg));
-  check('  ...and the sweep, the showcase save, the picker and the gallery control can all be reached', ['sweep', 'save', 'picker'].every((k) => pg[k] === 'reachable'), JSON.stringify(pg));
-  check('  ...in that order, gallery last', pg.order.join(',').startsWith('community-wall,photo-sweep,showcase-save,night-venue'), pg.order.join(','));
-  await page.screenshot({ path: '/tmp/postgig-after.png', clip: { x: 0, y: 80, width: 1400, height: 720 } }).catch(() => {});
+  /*
+   * THE GALLERY CONTROL IS IN THE ASSERTION NOW, NOT ONLY IN THE SENTENCE.
+   * This line named it and then checked `['sweep','save','picker']` — the
+   * comment-that-claims-the-opposite fault, inside a guard. Reported as *"looks
+   * like I lose the ability to publish or unpublish the night itself?"*, which
+   * is exactly the question this was pretending to answer.
+   */
+  check('  ...and the sweep, the showcase save, the picker and the gallery control can all be reached',
+    ['sweep', 'save', 'picker', 'gallery'].every((k) => pg[k] === 'reachable'), JSON.stringify(pg));
+  check('  ...in that order, publishing right under the photographs',
+    pg.order.join(',').startsWith('community-wall,photo-sweep,gallery,showcase-save,night-venue'), pg.order.join(','));
+  /*
+   * AND IT IS FINDABLE, NOT MERELY REACHABLE. `seen()` scrolls before it asks,
+   * so it called a control 656px down a 289px box fine — which is exactly the
+   * screen that got reported as having lost its publish button. One box-height
+   * of scrolling is the line: past that it is somewhere you go looking.
+   */
+  check('  ...and publishing is within a screen of the photographs',
+    pg.galleryDown >= 0 && pg.galleryDown <= pg.boxHigh,
+    `${pg.galleryDown}px down a ${pg.boxHigh}px box`);
+  console.log('publish control sits', pg.galleryDown, 'px down a', pg.boxHigh, 'px box');
+  const shots = process.env.SHOT_DIR || '/tmp';
+  await page.locator('.doorhead .panel.bench').first().screenshot({ path: `${shots}/postgig-top.png` }).catch(() => {});
+  await page.evaluate(() => { const s2 = document.querySelector('.bench-detail'); if (s2) s2.scrollTop = s2.scrollHeight; });
+  await page.waitForTimeout(400);
+  await page.locator('.doorhead .panel.bench').first().screenshot({ path: `${shots}/postgig-bottom.png` }).catch(() => {});
   check('nothing threw', errs.length === 0, errs.join(' | '));
 } finally {
   await browser?.close().catch(() => {});

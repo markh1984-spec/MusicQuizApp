@@ -41,17 +41,35 @@
 
 import { esc, node } from './client.js';
 
-/**
- * HOW MANY OF A GROUP'S ROWS THE RAIL SHOWS BEFORE IT STOPS.
+/*
+ * THERE IS NO CAP ON A GROUP ANY MORE, AND THAT REVERSES THE HOST'S OWN
+ * NUMBER — on his own say-so, three times.
  *
- * *"Perhaps the last 4 nights, with older nights accessible in the venues
- * section below?"* Four is the number asked for and it is a good one: the rail
- * is for **the night you are thinking about**, which is almost always one of
- * the last few, and the tab body below already has the whole archive with
- * search and headcounts on it. A rail that tries to be the archive stops being
- * a picker.
+ * It was four: *"Perhaps the last 4 nights, with older nights accessible in
+ * the venues section below?"* The reasoning written for it was that the rail
+ * is for the night you are thinking about, and the archive lives in the tab
+ * body below with search and headcounts on it.
+ *
+ * What happened is that a pub with six nights drew four, and the missing two
+ * read as LOST: *"there's 4 galleries but it's showing 6"*, then *"missing the
+ * 13th, 20th and 27th August"*, then — once the heading had been made to say
+ * `4 of 6` — *"still says 4 of 6"*.
+ *
+ * **MAKING THE COUNT HONEST DID NOT MAKE THE CAP RIGHT**, and that is the part
+ * worth keeping: a number that admits it is hiding two is still hiding two,
+ * and "Older nights are in Past gigs below" sends somebody to a second place
+ * for a night that was on the screen a moment earlier.
+ *
+ * It is the `PACK_SHELF` decision again, in his words then too: *"limiting to
+ * 6 seemed like a good idea at the time but it actually isn't now I think
+ * about it."* **The rail SCROLLS** — `overflow-y: auto` inside the fixed bay
+ * from 900px, and the page scrolls below that — so a long list costs nothing
+ * a finger cannot get past, which is the test this app applies to every cap.
+ *
+ * If somebody ever files two hundred nights at one pub this wants looking at
+ * again — as a FOLD or a search, never as a number that silently drops the
+ * end off the list.
  */
-const GROUP_CAP = 4;
 
 /**
  * WHICH GROUPS ARE OPEN, remembered across renders.
@@ -264,32 +282,13 @@ export function bayRail({
      * the row somebody is reading.
      */
     /*
-     * WHICH ROWS ARE DRAWN IS WORKED OUT BEFORE THE HEADING, because the
-     * heading's number is a fact ABOUT that list. Deriving it a second way is
-     * how the two come to disagree, which is the whole fault being fixed here.
+     * EVERY ROW, AND THE HEADING COUNTS THEM. The two were worked out
+     * separately once — the heading printed the TOTAL beside a capped list —
+     * and a number next to a list is read as the length of that list. There
+     * is nothing left to reconcile: one array, counted.
      */
-    const shown = group.rows.slice(0, GROUP_CAP);
-    /*
-     * AND THE ONE YOU ARE LOOKING AT IS ALWAYS DRAWN, even past the cap.
-     * Otherwise opening an older night from the list below lights a row the
-     * rail has decided not to show, which is the fold problem again one level
-     * down.
-     *
-     * **IT IS APPENDED, NEVER SUBSTITUTED.** It used to overwrite the LAST
-     * row inside the cap, so opening a night from further back silently
-     * deleted a more recent one — reported as *"missing the 13th, 20th and
-     * 27th August"* against a rail reading 17 Sept, 10 Sept, 3 Sept, 6 Aug.
-     * Three of those were the newest three and the fourth was the night being
-     * looked at; the row the substitution ate left no trace at all. One row
-     * over the cap is a row; a gap with nothing saying so is the app lying
-     * about what it holds.
-     */
-    if (isOpen && holdsPicked && !shown.some((r) => r.key === picked)) {
-      shown.push(group.rows.find((r) => r.key === picked));
-    }
-    const countWords = isOpen && shown.length < group.rows.length
-      ? `${shown.length} of ${group.rows.length}`
-      : String(group.rows.length);
+    const shown = group.rows;
+    const countWords = String(group.rows.length);
     const head = node(`
       <button class="bay-rail-group ${isOpen ? 'on' : ''} ${!isOpen && holdsPicked ? 'holds-picked' : ''}"
               type="button" aria-expanded="${isOpen}">
