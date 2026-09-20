@@ -1,7 +1,7 @@
 /**
  * BACKUPS, RESTORES AND THE HELPERS THAT SAT BETWEEN THE TWO ROUTE HANDLERS. Moved whole from server.js — the backup/restore machinery (restoreOnce and the four ensure*Restored move together, with their Sets), and the domain helpers for invoices, owner money, adverts and pack liveness that were interleaved with them. Cut per function into their own homes when there is a reason to.
  */
-import { FEATURES, HOUSE, PHASES, accounts, backupPath, can, checkAccess, config, countOwn, deleteFile, dropNight, flagKey, fs, fullLibrary, getFile, githubConfigured, hooks, moderationConfigured, scorePhoto, setPhotoFlag, spendRecorder, isCleanForPublic, isComposed, leaguesRunning, listAdvertPacks, listArchive, loadQuiz, mergeGigs, packsRepoConfigured, path, paths, photoFolder, photosRepoConfigured, privateRepoConfigured, propUse, putFile, putFiles, readPack, readStats, reports, restoreArchive, rooms, safeAdvertFile, serialiseArchive, spend, suggestions, teamKey, toPence, totals, tryGetFile, tryListDir, venueKeyOf } from './context.js';
+import { FEATURES, HOUSE, PHASES, accounts, backupPath, can, checkAccess, config, countOwn, deleteFile, dropNight, flagKey, fs, fullLibrary, getFile, githubConfigured, hooks, moderationConfigured, scorePhoto, setPhotoFlag, spendRecorder, isCleanForPublic, isComposed, leaguesRunning, listAdvertPacks, listArchive, loadQuiz, mergeGigs, packsRepoConfigured, path, paths, photoFolder, photosRepoConfigured, privateRepoConfigured, propUse, putFile, putFiles, readPack, readStats, statsReadable, reports, restoreArchive, rooms, safeAdvertFile, serialiseArchive, spend, suggestions, teamKey, toPence, totals, tryGetFile, tryListDir, venueKeyOf } from './context.js';
 import { whoIs } from './identity.js';
 import { pushState } from './views.js';
 
@@ -597,8 +597,10 @@ export async function restoreFromBackup() {
    * writing the backup over it would undo tonight's launches.
    */
   const restoreStats = async () => {
-    const statsFile = path.join(config.dataDir, 'library-stats.json');
-    if (fs.existsSync(statsFile)) return;
+    // READABLE, NOT MERELY PRESENT: the guard was `existsSync`, which a
+    // TRUNCATED file satisfies — so the one state this rescues was the one it
+    // refused to act on, every boot, in silence. Reasoning in `library.js`.
+    if (statsReadable(config.dataDir)) return;
     const saved = await getFile('library-stats.json', 'private');
     if (!saved) return;
     try {

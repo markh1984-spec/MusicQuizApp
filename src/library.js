@@ -157,6 +157,41 @@ function statsPath(dataDir) {
   return path.join(dataDir, 'library-stats.json');
 }
 
+/**
+ * WRITTEN WHOLE OR NOT AT ALL.
+ *
+ * **`library-stats.json` WAS THE ONE FILE HERE THAT COULD DESTROY ITSELF**,
+ * and the damage was permanent and silent. A bare `writeFileSync` truncates
+ * before it writes, so a crash, a full disk or a deploy landing mid-write
+ * leaves half a file — and then:
+ *
+ *  1. `readStats()` catches the parse error and returns `{}`, saying nothing;
+ *  2. the very next launch writes that `{}` back over the wreck, so the counts
+ *     are DESTROYED rather than merely unreadable;
+ *  3. the backup push then carries the empty one to the private repository;
+ *  4. and `restoreStats()` skips the good copy for ever, because its guard is
+ *     `existsSync` and a truncated file exists.
+ *
+ * What is lost is every play count and every `lastPlayedAt` — so the shelf's
+ * ranking and the whole *heard here* answer silently reset to never-played, at
+ * a venue that heard the pack last Thursday. It is the same temp-and-rename
+ * `saveBingoPack()` has always used, forty lines up; this file simply had two
+ * standards.
+ */
+function writeWhole(file, text) {
+  const tmp = `${file}.tmp`;
+  fs.writeFileSync(tmp, text, 'utf8');
+  fs.renameSync(tmp, file);
+}
+
+/**
+ * Is the counts file whole? MISSING AND TRUNCATED BOTH ANSWER NO, which is
+ * what the boot restore wants: a half-written file is not "already here".
+ */
+export function statsReadable(dataDir) {
+  try { JSON.parse(fs.readFileSync(statsPath(dataDir), 'utf8')); return true; } catch { return false; }
+}
+
 export function readStats(dataDir) {
   try {
     return JSON.parse(fs.readFileSync(statsPath(dataDir), 'utf8'));
@@ -201,7 +236,7 @@ export function recordLaunch(dataDir, kind, id, at = Date.now(), roomId = HOUSE_
   };
   try {
     fs.mkdirSync(dataDir, { recursive: true });
-    fs.writeFileSync(statsPath(dataDir), JSON.stringify(stats, null, 2), 'utf8');
+    writeWhole(statsPath(dataDir), JSON.stringify(stats, null, 2));
   } catch {
     /* best effort — never block a launch over a stats file */
   }

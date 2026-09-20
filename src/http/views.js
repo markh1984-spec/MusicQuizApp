@@ -140,7 +140,19 @@ export function viewFor(client) {
      * A room id IS an account id, so the answer is one lookup rather than
      * anything the browser has to be told.
      */
-    view.mayAdvert = can(accounts.find(room.id) || null, FEATURES.ADVERTS);
+    /*
+     * THROUGH `effective()`, NOT THE RAW ROW — the whitelist trap wearing a
+     * lookup. `find()` returns the account as stored, and a GROUP SEAT holds
+     * its tier through its parent: on its own row it has none. So a venue in
+     * a pub group whose head office pays for Silver got no Advert button at
+     * all, while every route behind that button would have allowed it — a
+     * paid feature invisible to exactly the people paying for it, and silent,
+     * because a missing control throws nothing.
+     *
+     * `effective()` is null-safe and returns the account untouched when there
+     * is no parent, so every ordinary account reads exactly as it did.
+     */
+    view.mayAdvert = can(accounts.effective(accounts.find(room.id)) || null, FEATURES.ADVERTS);
   }
   else {
     view.photosOpen = photosWanted(room);

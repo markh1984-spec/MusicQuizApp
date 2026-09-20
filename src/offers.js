@@ -82,7 +82,16 @@ export class Offers {
   save() {
     try {
       fs.mkdirSync(path.dirname(this.file), { recursive: true });
-      fs.writeFileSync(this.file, JSON.stringify(this.data, null, 2) + '\n', 'utf8');
+      /*
+       * TEMP AND RENAME, for the same reason `library.js` does it: a bare
+       * write truncates first, so a crash mid-write leaves half a file, the
+       * reader's `catch` quietly returns empty, and the next write makes the
+       * loss permanent. These were the only two data files in the app without
+       * it.
+       */
+      const tmp = `${this.file}.tmp`;
+      fs.writeFileSync(tmp, JSON.stringify(this.data, null, 2) + '\n', 'utf8');
+      fs.renameSync(tmp, this.file);
     } catch { /* a lost count is never worth an error on a gig night */ }
   }
 

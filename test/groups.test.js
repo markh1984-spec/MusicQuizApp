@@ -163,6 +163,52 @@ test('effective() substitutes a child\'s tier/status/comped for its parent\'s', 
   });
 });
 
+/*
+ * THE CONTROL VIEW'S ADVERT BUTTON, which is what the raw row cost.
+ *
+ * `view.mayAdvert` asked `can(accounts.find(room.id), ADVERTS)` — the account
+ * AS STORED. A seat holds nothing on its own row: its tier comes through its
+ * parent, which is the whole point of `effective()`. So a venue in a pub group
+ * whose head office pays for Silver got NO Advert button on the control view,
+ * while every route behind that button would have allowed it — a paid feature
+ * invisible to exactly the people paying for it.
+ *
+ * It is silent by construction: a control that is not drawn throws nothing,
+ * logs nothing, and looks like a feature that was never bought.
+ */
+test('A SEAT MAY ADVERTISE ON ITS PARENT\'S TIER — the raw row says it may not', () => {
+  withBook((book) => {
+    const parent = makeParent(book, { tier: 'silver', status: 'active', comped: false });
+    const seat = book.find(book.addChild(parent.id,
+      { email: 'venue@example.com', password: PASSWORD, name: 'The Crown' }).id);
+
+    assert.equal(can(seat, FEATURES.ADVERTS), false,
+      'the raw row holds nothing — this is the value the view used to read');
+    assert.equal(can(book.effective(seat), FEATURES.ADVERTS), true,
+      'and through its parent it may advertise');
+  });
+});
+
+/*
+ * AND THE PATTERN RATHER THAN THE SYMPTOM. One sighting is a fix; the shape
+ * is what finds the next one, which is the rule `slugs.test.js` already sets
+ * by forbidding a bare `venueSlug(x) === y` in the server.
+ */
+test('no route decides a FEATURE from a raw account row', () => {
+  const here = path.dirname(new URL(import.meta.url).pathname);
+  const dir = path.join(here, '..', 'src', 'http');
+  const offenders = [];
+  for (const file of fs.readdirSync(dir).filter((f) => f.endsWith('.js'))) {
+    const src = fs.readFileSync(path.join(dir, file), 'utf8');
+    for (const m of src.matchAll(/(?:can|featuresFor|whyNot)\(\s*accounts\.find\(/g)) {
+      offenders.push(`${file}: ${src.slice(m.index, m.index + 60).split('\n')[0]}`);
+    }
+  }
+  assert.deepEqual(offenders, [],
+    'a group seat holds its tier through effective(); asking the stored row '
+    + 'silently withholds what its parent pays for:\n  ' + offenders.join('\n  '));
+});
+
 test('effective() is a no-op for an ordinary account', () => {
   withBook((book) => {
     const solo = book.find(book.create({ email: 'solo@example.com', password: PASSWORD, name: 'Solo', tier: 'silver', status: 'active' }).id);
