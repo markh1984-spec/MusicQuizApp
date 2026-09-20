@@ -408,3 +408,65 @@ test('AND EVERY NAME THIS APP HAS EVER ISSUED STILL PASSES', () => {
     assert.equal(safePhotoName(bad), '', `${bad} was accepted`);
   }
 });
+
+/*
+ * ------------------------------------------------- one name, one photograph
+ *
+ * `/photos/<name>` CARRIES THE FILENAME AND NOTHING ELSE. A projector has no
+ * session to say whose picture it wants, so the route walks every room and
+ * serves the FIRST that matches — which is safe exactly as long as no two
+ * rooms can mint one name.
+ *
+ * The old id could not promise that, while the comment on the route said it
+ * already did. The timestamp is shared by anything in the same millisecond;
+ * `at % 997` is derived from that same timestamp, so it adds no entropy
+ * whatever; and `items.length` counts THIS room's own photographs, so it tells
+ * two rooms apart only when they happen to hold different numbers of pictures.
+ *
+ * Two pubs on a Thursday, both on their fourth photograph, one millisecond
+ * apart in the same millisecond: a member of the public's face from one room
+ * on another quizmaster's projector.
+ */
+
+test('TWO ROOMS CANNOT MINT ONE PHOTO NAME — same clock, same count', () => {
+  const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(200, 7)]);
+  const frozen = () => 1700000000000;   // the SAME millisecond for both rooms
+  const names = new Set();
+  const dirs = [];
+
+  try {
+    for (let room = 0; room < 25; room += 1) {
+      const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'photo-unique-'));
+      dirs.push(dir);
+      // A fresh room, so `items.length` is 0 in both — the counter is per room
+      // and cannot tell them apart.
+      const res = new Photos(dir, frozen).add(jpeg, 'image/jpeg', {});
+      assert.ok(res.ok, 'the photograph was refused, so this proves nothing');
+      names.add(res.photo.file);
+    }
+
+    assert.equal(names.size, 25,
+      'two rooms minted the same filename — /photos/<name> would serve one '
+      + "pub's photograph to another");
+  } finally {
+    for (const dir of dirs) fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('and the name still parses — every lamp, flag and pin is keyed on it', () => {
+  const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(200, 7)]);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'photo-shape-'));
+  try {
+    const res = new Photos(dir, () => 1700000000000).add(jpeg, 'image/jpeg', {});
+    /*
+     * `PHOTO_NAME` is `[a-z0-9]+` for the id, so extra base36 characters are
+     * backwards compatible and every name ever filed still matches. A change
+     * that broke this would silently drop the lamps and the flags — the fault
+     * `PHOTO_NAME` was made one pattern to prevent.
+     */
+    assert.equal(safePhotoName(res.photo.file), res.photo.file,
+      `${res.photo.file} no longer matches PHOTO_NAME`);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

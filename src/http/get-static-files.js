@@ -61,9 +61,16 @@ export async function getStaticFiles(req, res, url, route) {
    * and the whole point is that the room can see them.
    */
   if (route.startsWith('/photos/')) {
-    // Every room's wall, because the URL carries only the filename the app
-    // itself issued. The name is unique across rooms (it has the timestamp and
-    // a counter in it), and a projector has no session to tell us whose it is.
+    /*
+     * Every room's wall, because the URL carries only the filename the app
+     * itself issued and a projector has no session to tell us whose it is.
+     *
+     * THIS IS SAFE ONLY BECAUSE THE NAME IS UNIQUE ACROSS ROOMS, and it used
+     * to say so while the id could not deliver it — the counter in it is a
+     * count of one room's own photographs. It carries random characters now;
+     * see `Photos.add()` for why the timestamp and the counter were not
+     * enough.
+     */
     const wanted = decodeURIComponent(route.slice('/photos/'.length));
     let full = null;
     for (const room of rooms.all()) {

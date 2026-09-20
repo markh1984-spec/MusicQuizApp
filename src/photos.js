@@ -26,6 +26,7 @@
  * still there tomorrow.
  */
 
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -383,7 +384,30 @@ export class Photos {
     if (!sniffed || !ext) return { ok: false, reason: 'not_an_image' };
 
     const at = this.now();
-    const id = `p${at.toString(36)}${Math.floor(at % 997).toString(36)}${this.state.items.length}`;
+    /*
+     * UNIQUE ACROSS ROOMS, WHICH THE OLD ONE ONLY CLAIMED TO BE.
+     *
+     * `/photos/<name>` carries the filename and nothing else — a projector has
+     * no session to say whose photograph it wants — so it walks every room and
+     * serves the FIRST that matches. That is safe exactly as long as no two
+     * rooms can mint one name, and the old id could not promise it: the
+     * timestamp is shared by anything happening in the same millisecond,
+     * `at % 997` is derived from that same timestamp so it adds nothing at
+     * all, and `items.length` is a count of THIS room's photographs — it tells
+     * two rooms apart only when they happen to hold different numbers.
+     *
+     * Two pubs on a Thursday, both on their fourth photograph, one
+     * millisecond: a member of the public's face from one room on another
+     * quizmaster's projector. Narrow, but the comment claiming the name was
+     * already unique is what stopped anybody checking.
+     *
+     * Four random base36 characters is ~17 bits on top of the rest. The
+     * shape is unchanged — `PHOTO_NAME` matches `[a-z0-9]+`, so every name
+     * ever filed still parses, and the lamps, flags and pins keyed on those
+     * names are untouched.
+     */
+    const rand = crypto.randomBytes(3).toString('hex').slice(0, 4);
+    const id = `p${at.toString(36)}${Math.floor(at % 997).toString(36)}${this.state.items.length}${rand}`;
     /*
      * THE FLAG RIDES IN THE FILENAME, not a second file beside it.
      *
