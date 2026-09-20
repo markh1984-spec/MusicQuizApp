@@ -22,11 +22,10 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createRequire } from 'node:module';
 import { freePort } from '../test/helpers/live-server.mjs';
+import { playwright } from './helpers/playwright.mjs';
 
-const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const STUB = join(ROOT, 'test', 'helpers', 'photo-repo-stub.mjs');
 const PW = 'a-long-enough-one-for-here';

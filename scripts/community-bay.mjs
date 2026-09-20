@@ -40,12 +40,11 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 
 import { startApp } from './helpers/live-app.mjs';
+import { playwright } from './helpers/playwright.mjs';
 
-const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 
 // A port of its own per run, so two of these side by side cannot half-connect
 // to each other's server and report a failure that is about the harness.

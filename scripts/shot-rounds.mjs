@@ -7,10 +7,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { createRequire } from 'node:module';
+import { playwright } from './helpers/playwright.mjs';
 
-const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 
 const BASE = process.env.BASE || 'http://localhost:3000';
 const KEY = process.env.HOST_KEY || 'test-key';

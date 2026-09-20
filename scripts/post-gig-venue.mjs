@@ -5,10 +5,9 @@
  * photographs sat under "No venue on these" with nothing on that door to
  * move them. node scripts/post-gig-venue.mjs
  */
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 import { startApp } from './helpers/live-app.mjs';
+import { playwright } from './helpers/playwright.mjs';
 const KEY = 'pgv';
 const { base: B, stop } = await startApp({ key: KEY });
 const H = { 'content-type': 'application/json', 'X-Host-Key': KEY };

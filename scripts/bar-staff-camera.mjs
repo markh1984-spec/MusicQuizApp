@@ -25,12 +25,11 @@
 import path from 'node:path';
 import { mkdtempSync, rmSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { createRequire } from 'node:module';
 
 import { startApp } from './helpers/live-app.mjs';
+import { playwright } from './helpers/playwright.mjs';
 
-const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 
 const ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 const KEY = 'bar-staff';
@@ -68,7 +67,7 @@ const { base: BASE, stop } = await startApp({
     NODE_OPTIONS: `--import ${path.join(ROOT, 'test', 'helpers', 'photo-repo-stub.mjs')}`,
   },
   async seed(dir) {
-    const { Accounts } = await import('/home/user/MusicQuizApp/src/accounts.js');
+    const { Accounts } = await import('../src/accounts.js');
     const book = new Accounts(path.join(dir, 'accounts.json'));
     book.create({ email: 'owner@example.com', password: 'owner passphrase here', name: 'Owner', role: 'owner', status: 'active' });
     book.create({ ...QM, name: 'Mark', role: 'quizmaster', tier: 'gold', status: 'active' });

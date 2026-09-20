@@ -28,7 +28,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { galleryNumbers, cleanBooking, bookingLink, bookingOf, BOOKING_MAX } from '../src/gallery-about.js';
-import { freePort } from './helpers/live-server.mjs';
+import { freePort, stopped } from './helpers/live-server.mjs';
 
 /* ---------------------------------------------------------- the arithmetic */
 
@@ -192,9 +192,16 @@ async function withApp(run) {
     await up();
     await run({ base, data, repo, restart });
   } finally {
-    server.kill();
-    rmSync(data, { recursive: true, force: true });
-    rmSync(repo, { recursive: true, force: true });
+    /*
+     * GONE, THEN DELETED — `stopped()` is `test/helpers/live-server.mjs`'s.
+     * `kill()` sends a signal and waits for nothing, so deleting the data
+     * directory on the next line races a server still flushing `state.json`
+     * into it: ENOTEMPTY out of this `finally`, every assertion already
+     * passed, naming a feature that works.
+     */
+    await stopped(server);
+    rmSync(data, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    rmSync(repo, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 }
 

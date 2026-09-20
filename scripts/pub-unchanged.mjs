@@ -48,6 +48,10 @@
 
 import { execFileSync, spawn } from 'node:child_process';
 import { readFileSync, readdirSync, mkdtempSync, rmSync } from 'node:fs';
+
+// GONE, NOT MERELY SIGNALLED — one definition, the same one nine other
+// scripts in this folder already borrow `freePort` from.
+import { stopped } from '../test/helpers/live-server.mjs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -382,13 +386,23 @@ async function startApp(root, port) {
     try { await fetch(base); up = true; } catch { await wait(100); }
   }
   if (!up) {
-    child.kill('SIGKILL');
-    rmSync(data, { recursive: true, force: true });
+    await stopped(child, 'SIGKILL');
+    rmSync(data, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
     throw new Error(`the app in ${root} never started — it cannot serve a pub night at all`);
   }
   return {
     base,
-    stop() { child.kill('SIGKILL'); rmSync(data, { recursive: true, force: true }); },
+    /*
+     * ASYNC, BECAUSE THE DELETE HAS TO WAIT FOR THE PROCESS. `kill()` returns
+     * before the server has gone, and this one is still flushing `state.json`
+     * and the join-code book into `data` — ENOTEMPTY out of the caller's
+     * `finally`, which on THIS script prints DO NOT DEPLOY over a night that
+     * was byte-for-byte identical. Both call sites await it.
+     */
+    async stop() {
+      await stopped(child, 'SIGKILL');
+      rmSync(data, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+    },
     async get(path) { return (await fetch(`${base}${path}`)).json(); },
     async host(action, body = {}) {
       const res = await fetch(`${base}/api/host/${action}?key=${KEY}`, {
@@ -538,8 +552,8 @@ async function compareOnTheWire({ here, work, ref, oldFaceKey, newFaceKey }) {
       }
     }
   } finally {
-    older?.stop();
-    newer?.stop();
+    await older?.stop();
+    await newer?.stop();
   }
   return out;
 }

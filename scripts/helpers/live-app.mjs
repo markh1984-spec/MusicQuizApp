@@ -41,6 +41,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+// GONE, NOT MERELY SIGNALLED — one definition, in the leaf nine scripts in
+// this folder already borrow `freePort` from. See its own account of why.
+import { stopped } from '../../test/helpers/live-server.mjs';
+
 const ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -123,14 +127,33 @@ export async function startApp({ key = 'live-app-key', seed, env = {}, nodeArgs 
       if (child.exitCode !== null) break;
       try { await fetch(at); base = at; break; } catch { await wait(100); }
     }
-    if (!base) { child.kill('SIGKILL'); child = null; }
+    // THE RETRY PATH REUSES THIS SAME `data` DIRECTORY, so a half-started
+    // server still writing into it races the attempt that replaces it.
+    if (!base) { await stopped(child, 'SIGKILL'); child = null; }
   }
-  let stopped = false;
+  let down = false;
+
+  /**
+   * THE SYNCHRONOUS ONE, because `process.on('exit')` cannot await anything.
+   *
+   * It is the BACKSTOP — the path taken when a check throws its way out or the
+   * process is ending — so the delete is given `maxRetries` instead of the wait
+   * it cannot have: `rmSync` retries ENOTEMPTY itself, which is the one error
+   * a server still flushing produces. `stopAndWait()` below is the ordinary
+   * path and does wait.
+   */
   const stop = () => {
-    if (stopped) return;
-    stopped = true;
+    if (down) return;
+    down = true;
     child?.kill('SIGKILL');
-    fs.rmSync(data, { recursive: true, force: true });
+    fs.rmSync(data, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  };
+
+  /** The ordinary way out: gone, and only then deleted. */
+  const stopAndWait = async () => {
+    if (down) return;
+    await stopped(child, 'SIGKILL');
+    stop();
   };
   process.on('exit', stop);
   if (!base) {
@@ -151,8 +174,14 @@ export async function startApp({ key = 'live-app-key', seed, env = {}, nodeArgs 
    * nothing gets a chance to flush on the way out.
    */
   const restart = async ({ hard = true } = {}) => {
-    child?.kill(hard ? 'SIGKILL' : 'SIGTERM');
-    await wait(400);
+    /*
+     * GONE BEFORE THE REPLACEMENT BINDS THE SAME PORT. A sleep is a guess
+     * about how long a process takes to release a socket, and the answer is
+     * "longer, when the machine is busy" — which is exactly when a guard runs.
+     * The SIGNAL is still the caller's: `hard` means nothing gets a chance to
+     * flush, which is the whole point of the crash-recovery check.
+     */
+    await stopped(child, hard ? 'SIGKILL' : 'SIGTERM');
     child = spawn(process.execPath, [...nodeArgs, 'server.js'], {
       cwd: ROOT,
       env: {
@@ -172,7 +201,7 @@ export async function startApp({ key = 'live-app-key', seed, env = {}, nodeArgs 
     return false;
   };
 
-  return { base, key, data, port, seeded, stop, restart };
+  return { base, key, data, port, seeded, stop, stopAndWait, restart };
 }
 
 /**
@@ -188,6 +217,6 @@ export async function withApp(run, opts = {}) {
   try {
     return await run(app);
   } finally {
-    app.stop();
+    await app.stopAndWait();
   }
 }

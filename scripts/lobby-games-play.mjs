@@ -49,13 +49,12 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 
 import { withApp } from './helpers/live-app.mjs';
 import { ANY_LOBBY_GAME } from '../public/assets/lobby-games.js';
+import { playwright } from './helpers/playwright.mjs';
 
-const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 
 const SHOTS = process.argv.includes('--shots');
 const SHOT_DIR = path.join(os.tmpdir(), 'lobby-games');

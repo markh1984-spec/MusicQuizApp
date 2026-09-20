@@ -17,7 +17,7 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { freePort } from './helpers/live-server.mjs';
+import { freePort, stopped } from './helpers/live-server.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 
@@ -52,8 +52,15 @@ async function withServer(run) {
     assert.ok(up, 'the server never came up');
     await run(base, dir);
   } finally {
-    child.kill('SIGKILL');
-    rmSync(dir, { recursive: true, force: true });
+    /*
+     * GONE, THEN DELETED — `stopped()` is `test/helpers/live-server.mjs`'s.
+     * `kill()` sends a signal and waits for nothing, so deleting the data
+     * directory on the next line races a server still flushing `state.json`
+     * into it: ENOTEMPTY out of this `finally`, every assertion already
+     * passed, naming a feature that works.
+     */
+    await stopped(child, 'SIGKILL');
+    rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 }
 

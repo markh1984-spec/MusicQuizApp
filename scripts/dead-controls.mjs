@@ -51,12 +51,11 @@
  */
 
 import fs from 'node:fs';
-import { createRequire } from 'node:module';
 
 import { startApp } from './helpers/live-app.mjs';
+import { playwright } from './helpers/playwright.mjs';
 
-const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 

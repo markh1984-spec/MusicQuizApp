@@ -20,10 +20,10 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync, readFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createRequire } from 'node:module';
 import { freePort } from '../test/helpers/live-server.mjs';
+import { playwright } from './helpers/playwright.mjs';
 
-const { chromium } = createRequire(import.meta.url)('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 const ROOT = new URL('..', import.meta.url).pathname;
 const STUB = join(ROOT, 'test', 'helpers', 'photo-repo-stub.mjs');
 const NIGHT = '2026-08-20';

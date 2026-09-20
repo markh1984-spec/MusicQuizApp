@@ -1238,7 +1238,33 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * one. The bytes go on the sentence that generalises: making a count honest
  * about what it hides does not make the hiding right.
  */
-const BUDGET = 277_900;
+/*
+ * AND TO 278_800 ON 20 SEPTEMBER 2026, for two faults that were each SILENT
+ * and each had a guard or a test standing over them saying otherwise.
+ *
+ * Paid for first, in the same pass and in the way this file keeps asking for:
+ * the bullet above the flake's own now says TWENTY spawners do not go through
+ * the helpers, where it used to assert that every one of them did. That was
+ * not a style nit — a session reading it would go looking for the fault
+ * inside `live-server.mjs`, which is the one place it had already been fixed.
+ *
+ * The remaining bytes are genuine growth, and this comment is the diff saying
+ * so. Both earn always-loaded space on what they FORBID:
+ *
+ *  - **a private `withApp()` may not re-roll the wait for a process to die.**
+ *    It was fixed in one helper in June; seventeen hand-copies kept it, and on
+ *    20 September three of four full runs failed, a different test each time.
+ *    A session that does not know this writes the eighteenth copy — the fix
+ *    looks like six obvious lines, which is exactly why it keeps being
+ *    rewritten instead of imported.
+ *  - **an invoice line spells its price two ways and the old one is gone.**
+ *    This one cannot go in `docs/` because the always-loaded file is what
+ *    stops a session trusting the fixtures: every Stripe fixture in the suite
+ *    used a spelling Stripe no longer sends, so the tests were green about the
+ *    wrong API version, and the live failure is silent by design — an unknown
+ *    price correctly leaves the tier alone.
+ */
+const BUDGET = 278_800;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

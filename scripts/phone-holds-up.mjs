@@ -26,12 +26,11 @@
  * Its own port, its own DATA_DIR, both cleaned up on the way out.
  */
 
-import { createRequire } from 'node:module';
 
-const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 
 import { startApp } from './helpers/live-app.mjs';
+import { playwright } from './helpers/playwright.mjs';
 
 const KEY = 'phonecheck';
 const PHONE = { width: 390, height: 844 };

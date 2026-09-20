@@ -46,30 +46,24 @@
  */
 
 import { spawn } from 'node:child_process';
-import { once } from 'node:events';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { freePort } from './live-server.mjs';
+import { freePort, stopped } from './live-server.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const STUB = join(ROOT, 'test', 'helpers', 'photo-repo-stub.mjs');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/**
- * Gone, not merely signalled.
- *
- * The timeout is a backstop rather than a normal path: a server that will not
- * die in two seconds is a bug worth seeing, and hanging the whole suite on it
- * would hide that behind a runner timeout with no stack.
+/*
+ * `stopped()` IS `live-server.mjs`'S NOW, not a second copy here. The account
+ * of the fault stays above because this is where it was first diagnosed — but
+ * the two helpers either side of this one kept the fault for three months
+ * while this file's private fix sat next to them, which is the whole argument
+ * for one definition. `freePort()` already came from there.
  */
-async function stopped(child) {
-  if (!child || child.exitCode !== null || child.signalCode !== null) return;
-  child.kill();
-  await Promise.race([once(child, 'exit'), wait(2000)]);
-}
 
 /**
  * Start the app against a stubbed photo repository, run something, take it

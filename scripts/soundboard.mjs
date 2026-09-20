@@ -26,11 +26,10 @@
  * has to exist and have to work.
  */
 
-import { createRequire } from 'node:module';
 import { startApp } from './helpers/live-app.mjs';
+import { playwright } from './helpers/playwright.mjs';
 
-const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 
 const KEY = 'soundboard';
 const { base: BASE, stop } = await startApp({ key: KEY });

@@ -17,18 +17,15 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { createRequire } from 'node:module';
+import { playwright } from './helpers/playwright.mjs';
 
-const require = createRequire(import.meta.url);
 
-function loadPlaywright() {
-  const candidates = ['playwright', '/opt/node22/lib/node_modules/playwright'];
-  for (const c of candidates) {
-    try { return require(c); } catch { /* try the next */ }
-  }
-  console.error('Playwright is not installed. Run:  npm i -g playwright');
-  process.exit(1);
-}
+/*
+ * THIS FILE'S OWN TWO-CANDIDATE LOOKUP WAS THE PROTOTYPE OF THE SHARED ONE,
+ * and being the only script that had one is why it was the only script that
+ * still ran when the other fifty could not find Playwright at all.
+ */
+const loadPlaywright = playwright;
 
 const args = process.argv.slice(2);
 const argOf = (name, fallback) => {

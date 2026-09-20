@@ -32,16 +32,21 @@
  */
 
 import path from 'node:path';
-import { createRequire } from 'node:module';
-import { startApp } from '/home/user/MusicQuizApp/scripts/helpers/live-app.mjs';
-const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+/*
+ * RELATIVE, BECAUSE AN ABSOLUTE PATH IS ONE MACHINE'S. This read
+ * `/home/user/MusicQuizApp/...` — a container that no longer exists — so the
+ * check died with `ERR_MODULE_NOT_FOUND` before it reached a line of its own
+ * code, and `gig-build` printed DO NOT DEPLOY about the app.
+ */
+import { startApp } from './helpers/live-app.mjs';
+import { playwright } from './helpers/playwright.mjs';
+const { chromium } = playwright();
 
 const QM = { email: 'qm@example.com', password: 'quizmaster passphrase' };
 const { base: BASE, stop } = await startApp({
   key: 'noprizes',
   async seed(dir) {
-    const { Accounts } = await import('/home/user/MusicQuizApp/src/accounts.js');
+    const { Accounts } = await import('../src/accounts.js');
     const b = new Accounts(path.join(dir, 'accounts.json'));
     b.create({ email: 'owner@example.com', password: 'owner passphrase here', name: 'Owner', role: 'owner', status: 'active' });
     b.create({ ...QM, name: 'Mark', role: 'quizmaster', tier: 'gold', status: 'active' });

@@ -18,12 +18,11 @@
  */
 
 import path from 'node:path';
-import { createRequire } from 'node:module';
 import { startApp } from './helpers/live-app.mjs';
 import { hostCursor } from '../public/assets/host-cursor.js';
+import { playwright } from './helpers/playwright.mjs';
 
-const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 const KEY = 'twodevices';
 let fails = 0;
 const check = (name, ok, note = '') => { if (!ok) fails += 1; console.log(`${ok ? '  ok  ' : '  FAIL'} ${name}${!ok && note ? `\n        ${note}` : ''}`); };

@@ -28,12 +28,59 @@
  */
 
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import net from 'node:net';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 const ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
+
+/**
+ * GONE, NOT MERELY SIGNALLED — and the third helper to need it.
+ *
+ * **`kill()` SENDS A SIGNAL AND WAITS FOR NOTHING.** Delete the data directory
+ * on the next line and `rmSync` is walking a tree the server is still writing
+ * into — `state.json`, the join-code book, the photo disk cache — so a file
+ * appearing behind the walk is:
+ *
+ *     ENOTEMPTY: directory not empty, rmdir '/tmp/live-server-FKumxv'
+ *
+ * thrown out of the `finally`, **after every assertion in the test has already
+ * passed**. That is the worst shape a flake can have: it names a feature that
+ * is working, so the reflex is to go and read that feature's code, and the
+ * answer is never there. It cost a session the diagnosis once
+ * (`last-night.test.js`, reported as unattributable) and `stub-app.mjs` carries
+ * the full account of the first sighting.
+ *
+ * It is load-dependent rather than random, which is why it looks haunted: the
+ * file alone passes six times out of six, and the full suite at CPU
+ * concurrency loses the race about one run in nine.
+ *
+ * **So it lives HERE, where `freePort()` already does.** This module is the
+ * leaf both other spawners borrow from, and *three implementations of "stop the
+ * app" is three chances for one of them to be subtly wrong, and the day one is
+ * fixed is the day the other two are not* — which is precisely what happened:
+ * `stub-app.mjs` fixed it in June and the two helpers either side of it kept
+ * the fault.
+ *
+ * The timeout is a backstop rather than a normal path: a server that will not
+ * die in two seconds is a bug worth seeing, and hanging the whole suite on it
+ * would hide that behind a runner timeout with no stack.
+ *
+ * @param {import('node:child_process').ChildProcess|null} child
+ * @param {string} signal  the CALLER'S — a check that SIGKILLs to prove crash
+ *                         recovery must not be quietly downgraded to a
+ *                         graceful stop by the helper that waits for it.
+ */
+export async function stopped(child, signal = 'SIGTERM') {
+  if (!child || child.exitCode !== null || child.signalCode !== null) return;
+  child.kill(signal);
+  await Promise.race([
+    once(child, 'exit'),
+    new Promise((r) => setTimeout(r, 2000)),
+  ]);
+}
 
 /** A port the OS says is free right now, on the loopback the server binds. */
 export function freePort() {
@@ -111,7 +158,10 @@ export async function withServer(run, { seed, hostKey = 'live-test-key', env = {
         if (child.exitCode !== null) break;
         try { await fetch(at); base = at; break; } catch { await new Promise((r) => setTimeout(r, 100)); }
       }
-      if (!base) { child.kill('SIGKILL'); child = null; }
+      // AND THE RETRY PATH TOO — the next attempt reuses this same `dir`, so a
+      // half-started server still writing into it races the attempt that
+      // replaces it, not only the delete at the end.
+      if (!base) { await stopped(child, 'SIGKILL'); child = null; }
     }
     if (!base) throw new Error('the app never came up on any free port');
     // `dir` third: several checks need to read what the server WROTE, and
@@ -119,7 +169,9 @@ export async function withServer(run, { seed, hostKey = 'live-test-key', env = {
     // Existing callers take two arguments and are untouched.
     await run(base, seeded, dir);
   } finally {
-    child?.kill('SIGKILL');
-    fs.rmSync(dir, { recursive: true, force: true });
+    await stopped(child, 'SIGKILL');
+    // `maxRetries` is belt and braces on top of the wait above: the process is
+    // gone by here, but a filesystem can still be finishing with it.
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 }

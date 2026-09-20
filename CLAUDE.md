@@ -4256,6 +4256,13 @@ descriptor, the branding, the receipts and the payouts are all per account.
   takes. A live trial gets the button too: that is the CONVERSION moment.
   **Somebody who has PAID BEFORE goes to the PORTAL, never a second Checkout**,
   which would bill a `past_due` account twice. `buy-your-own-rung.mjs`.
+- **AN INVOICE LINE SPELLS ITS PRICE TWO WAYS AND THE OLD ONE IS GONE.** A line
+  carried a `price` OBJECT; current API versions have no `price` on it at all —
+  `pricing.price_details.price`, the id as a STRING. **Read both**: which
+  arrives is the ENDPOINT'S pinned version. **It fails SILENTLY and correctly**
+  — an unknown price rightly leaves the tier alone, so a tier CHANGE on
+  `invoice.paid` is dropped with nothing logged. **Every fixture used the old
+  spelling**, so the suite was green about a version Stripe no longer sends.
 - **A PRETTY-PRINTED FIXTURE IS WHAT MAKES THE RAW-BYTES TEST REAL** — a body
   from `JSON.stringify(x)` survives parse-and-restringify unchanged, so the
   first version passed with the fault put back.
@@ -4508,18 +4515,22 @@ account is in [`docs/checks.md`](docs/checks.md):**
   DOCUMENTED.** Deleting the `/api/past-gigs` gate and leaving a comment saying
   `FEATURES.PAST_GIGS` kept `gates.test.js` 22/22. Every such search goes through
   `withoutComments()`, and the claims that matter are FIRED too.
-- **`kill()` SENDS A SIGNAL AND WAITS FOR NOTHING — `test/helpers/stub-app.mjs`.**
-  Two files killed the app and deleted its `DATA_DIR` on the NEXT LINE, still
-  flushing: **ENOTEMPTY out of the `finally`, every assertion having passed**,
-  naming a feature that worked. **Only bit under `gig-build`**, printing DO NOT
-  DEPLOY over a green suite. **Wait for `exit`, then delete**; the restart waits
-  too. **ONE helper — two copies shared both faults, the other a GUESSED PORT.**
-- **EVERY GUARD AND TEST THAT SPAWNS THE APP GOES THROUGH THE HELPERS —
-  `scripts/helpers/live-app.mjs`, `test/helpers/live-server.mjs`.** A guessed
-  port fails to bind SILENTLY, so every measurement is then about somebody
-  else's process; a fixed one made the suite flaky. `unref()` is why four guards
-  could exit at all. **`live-server.mjs` seeds the accounts book BEFORE the
-  spawn** — `Accounts` reads it once.
+- **`kill()` SENDS A SIGNAL AND WAITS FOR NOTHING — `stopped()` in
+  `test/helpers/live-server.mjs`, and EVERY spawner calls it.** Kill the app and
+  delete its `DATA_DIR` on the NEXT LINE and it is still flushing: **ENOTEMPTY
+  out of the `finally`, every assertion having passed**, naming a feature that
+  works. **Wait for `exit`, then delete**; the restart waits too, a sleep being
+  a guess about a busy machine. **Fixed in ONE helper in June and SEVENTEEN
+  hand-copies kept it** — three of four full runs failed on 20 September, a
+  different test each time. **A private `withApp()` may not re-roll the wait**:
+  `rmSync` also takes `maxRetries`, which is the belt and braces, never the fix.
+- **EVERY GUARD AND TEST THAT SPAWNS THE APP SHOULD GO THROUGH THE HELPERS —
+  `scripts/helpers/live-app.mjs`, `test/helpers/live-server.mjs`. TWENTY DO
+  NOT**, and that is a job rather than a claim: each borrows `freePort` and
+  then re-rolls the spawn. A guessed port fails to bind SILENTLY, so every
+  measurement is then about somebody else's process; a fixed one made the suite
+  flaky. `unref()` is why four guards could exit at all. **`live-server.mjs`
+  seeds the accounts book BEFORE the spawn** — `Accounts` reads it once.
 - **A CONTROL THAT REPORTS SUCCESS IT DID NOT HAVE is this repo's commonest
   fault, and `console-controls.mjs` presses one.** Five at once, all green under
   every other guard — including a rename that DELETED the night. **It makes its

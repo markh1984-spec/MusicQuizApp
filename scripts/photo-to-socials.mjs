@@ -41,17 +41,15 @@
  */
 
 import { spawn } from 'node:child_process';
-import { once } from 'node:events';
 import { mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createRequire } from 'node:module';
 
-import { freePort } from '../test/helpers/live-server.mjs';
+import { freePort, stopped } from '../test/helpers/live-server.mjs';
+import { playwright } from './helpers/playwright.mjs';
 
-const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const STUB = join(ROOT, 'test', 'helpers', 'photo-repo-stub.mjs');
@@ -369,10 +367,7 @@ try {
    * flushing state: ENOTEMPTY out of this very block, with every assertion
    * above it passed. The same fault cost a day in the suite.
    */
-  if (server.exitCode === null && server.signalCode === null) {
-    server.kill();
-    await Promise.race([once(server, 'exit'), wait(2000)]);
-  }
+  await stopped(server);
   rmSync(data, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   rmSync(repo, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
 }

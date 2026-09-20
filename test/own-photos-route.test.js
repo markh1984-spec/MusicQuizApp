@@ -28,12 +28,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { once } from 'node:events';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { freePort } from './helpers/live-server.mjs';
+import { freePort, stopped } from './helpers/live-server.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const KEY = 'own-photos-test-key';
@@ -72,11 +71,10 @@ async function withServer(run) {
      * so deleting the data directory on the next line raced a server still
      * flushing `state.json` into it — ENOTEMPTY out of this `finally`, with all
      * four assertions already passed, naming a route that works. See
-     * `test/helpers/stub-app.mjs` for the full account; this file is the third
-     * copy of the same two faults.
+     * `test/helpers/live-server.mjs` for the full account; this file was the
+     * third hand-copy of the same wait, and there were seventeen.
      */
-    child.kill('SIGKILL');
-    await Promise.race([once(child, 'exit'), new Promise((r) => setTimeout(r, 2000))]);
+    await stopped(child, 'SIGKILL');
     rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 }

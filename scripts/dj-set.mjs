@@ -29,11 +29,10 @@
 
 import path from 'node:path';
 import http from 'node:http';
-import { createRequire } from 'node:module';
 import { withApp } from './helpers/live-app.mjs';
+import { playwright } from './helpers/playwright.mjs';
 
-const require = createRequire(import.meta.url);
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 
 const KEY = 'dj-shot-key';
 const SHOTS = process.env.SHOT_DIR || '/tmp';

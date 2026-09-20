@@ -12,10 +12,10 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createRequire } from 'node:module';
-import { freePort } from '../test/helpers/live-server.mjs';
+import { freePort, stopped } from '../test/helpers/live-server.mjs';
+import { playwright } from './helpers/playwright.mjs';
 
-const { chromium } = createRequire(import.meta.url)('/opt/node22/lib/node_modules/playwright');
+const { chromium } = playwright();
 const ROOT = new URL('..', import.meta.url).pathname;
 const STUB = join(ROOT, 'test', 'helpers', 'photo-repo-stub.mjs');
 const NIGHT = '2026-08-20';
@@ -168,9 +168,16 @@ try {
   check('nothing threw', errs.length === 0, errs.join(' | '));
 } finally {
   await browser?.close().catch(() => {});
-  server.kill();
-  rmSync(data, { recursive: true, force: true });
-  rmSync(repo, { recursive: true, force: true });
+  /*
+   * GONE, THEN DELETED — `stopped()` is `test/helpers/live-server.mjs`'s.
+   * `kill()` sends a signal and waits for nothing, so deleting the data
+   * directory on the next line races a server still flushing `state.json`
+   * into it: ENOTEMPTY out of this `finally`, every assertion already
+   * passed, naming a feature that works.
+   */
+  await stopped(server);
+  rmSync(data, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  rmSync(repo, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
 }
 console.log(fails ? `\n${fails} FAILED` : '\nA filed photograph can be turned from its tile.');
 process.exit(fails ? 1 : 0);
