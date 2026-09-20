@@ -1216,7 +1216,14 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * Paid for in part by trimming the tile-by-position anecdote to its
  * prohibition — the story is in `docs/gigs/photo-controls.md`.
  */
-const BUDGET = 275_500;
+/*
+ * AND TO 276_800 for the wordmark's scope and the enlarge. The first is the
+ * expensive one to leave unwritten: the diet is a REAL trade and the note
+ * above it argued for it convincingly, so a future session reading only that
+ * would widen it again — what is new is the measurement that says where it
+ * stops paying, and that the guard had no framed size inside the band at all.
+ */
+const BUDGET = 276_800;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

@@ -146,6 +146,22 @@ const SIZES = [
    * Nothing saw it because 390 was the narrowest size here.
    */
   ['tiny', 320, 720],
+  /*
+   * TWO FRAMED SIZES INSIDE THE OLD WORDMARK DIET, and they are here because
+   * the one-row rule was only ever ASSERTED at 1500x900.
+   *
+   * `framed` is `(1150 x 850)` or `(900 x 965)`, and of the seven sizes above
+   * exactly one satisfies it — so the band the diet actually governed, 431 to
+   * 1180, had no size demanding a single row in it at all. The diet could take
+   * the product name off the owner's wordmark for nothing and this said all
+   * clear, which is how it survived two reports of the name "disappearing".
+   *
+   * 1160 is just inside the frame's own 1150; 1000x1000 is the narrowest the
+   * frame exists at and the tightest the bar ever is while still being asked
+   * for one row. Both are thresholds, like every other size here.
+   */
+  ['snug', 1160, 900],
+  ['squeeze', 1000, 1000],
 ];
 
 /*

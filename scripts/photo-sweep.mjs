@@ -140,6 +140,48 @@ try {
   check('  ...and the button goes inert, saying why', after.off === true && /Nothing off the gallery/.test(after.words || ''), JSON.stringify(after));
 
   /*
+   * ---- AND A PHOTOGRAPH CAN BE LOOKED AT, ON BOTH DOORS.
+   *
+   * *"Can I have a click enlarge the photo and another click un-enlarge it?
+   * I'm generally going through these photos trying to decide if I want them
+   * on the gallery or showcase and sometimes they're not big enough."* Post
+   * gig brought no opener at all, so on the door whose subject is EVIDENCE the
+   * pictures could not be enlarged — and neither `npm test` nor any other
+   * guard asks whether a tile opens.
+   */
+  for (const [door, where] of [['community', 'community'], ['post gig', 'post']]) {
+    await page.goto(`${base}/console?door=${where}`, { waitUntil: 'load' });
+    await page.waitForTimeout(2000);
+    if (where === 'community') {
+      await page.evaluate(() => document.querySelector('button.tab[data-tab="photos"]')?.click());
+      await page.waitForTimeout(1500);
+    }
+    // A PRESS ON AN OPEN HEADING FOLDS IT — what is remembered wins — so the
+    // group is only opened when its night is not already showing.
+    const row = page.locator('.bay-rail .bay-pick').filter({ hasNotText: 'The wall' }).first();
+    if (!(await row.count())) {
+      await page.locator('.bay-rail .bay-rail-group').first().click().catch(() => {});
+      await page.waitForTimeout(700);
+    }
+    if (!(await row.count())) { check(`${door}: the night is in the rail`, false); continue; }
+    await row.click();
+    await page.waitForTimeout(2500);
+    const tile = page.locator('.doorhead .cphoto').first();
+    if (!(await tile.count())) { check(`${door}: the night's photographs are in the bay`, false); continue; }
+    await tile.click();
+    await page.waitForTimeout(700);
+    const open = await page.locator('.community-big').count();
+    check(`${door}: clicking a photograph enlarges it`, open === 1, `${open} overlays`);
+    if (open) await shoot(`enlarged-${where}.png`, '.bay-side');
+    // AND THE SAME PRESS AGAIN PUTS IT BACK — half of what was asked for, and
+    // the half an overlay with no way out would fail.
+    await page.locator('.community-big').click();
+    await page.waitForTimeout(500);
+    const shut = await page.locator('.community-big').count();
+    check(`  ...and clicking it again puts it back`, shut === 0, `${shut} overlays`);
+  }
+
+  /*
    * AND THE REPOSITORY IS WHAT SETTLES IT. A grid that dropped three tiles
    * without the bytes leaving is exactly the control-reports-success fault
    * this guard exists for, and the next reload would bring them all back.

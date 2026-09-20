@@ -571,3 +571,52 @@ frame and says which pub had one.
 missed, the strip belongs *beside the band* rather than below it, reading the
 same starred list — putting it back under the post kit returns the
 disagreement.
+
+## A TILE ENLARGES ON A PRESS — `openBigPhoto()`
+
+*"Can I have a click enlarge the photo and another click un-enlarge it? I'm
+generally going through these photos trying to decide if I want them on the
+gallery or showcase and sometimes they're not big enough to decide."*
+
+That is the whole case, and it is the bands' own case: the grid is a decision
+queue, and a 96px thumbnail of a dark pub will not settle a lamp or a star. The
+lamps and the stars are the work; being able to see what you are ruling on is
+the precondition for doing it.
+
+### Post gig had no opener at all
+
+`nightPhotos()` took an `onOpen` and Community passed one. Post gig called it
+as `{ wall: true, controlsInto: under, onData }` and passed none — so
+`if (onOpen)` was false, the tile never got `is-openable`, and on the door
+whose entire subject is *evidence* the photographs could only be squinted at.
+Nothing threw, every test passed, and no guard in the repo asked whether a tile
+opens.
+
+So the opener is now the grid's own default and a caller only supplies one to
+do something extra: `const openOne = onOpen || ((shot) => openBigPhoto(...))`.
+Community still supplies one, and it is four lines of bookkeeping round the
+same builder — it remembers which picture was open so a state push that rebuilds
+the bay brings it back rather than closing it mid-look.
+
+### It hangs on `.bay-side`, never on the grid inside it
+
+`position: absolute; inset: 0` anchors to the padding box of the nearest
+POSITIONED ancestor — and for a SCROLLED container that box starts at the top
+of the CONTENT, not at the top of what you can see. Hung on the grid, the
+picture drew exactly one scroll offset too high with thumbnails showing round
+it; that was reported once, measured at 90px high and 30px short, and the note
+on `.community-big` in the stylesheet still carries it. `.bay-side` does not
+scroll — it is `overflow: hidden` with the grid scrolling inside it — which is
+what makes it the honest anchor, and it already carries `position: relative`.
+
+### An overlay, not a replacement
+
+Nothing underneath is destroyed, so closing the picture puts you back exactly
+where you were in a bay that may be ninety photographs long. `contain` rather
+than `cover`, because this is the moment somebody is actually looking at it: a
+crop is right on a wall of thumbnails and wrong here. The whole picture is the
+button back, so the press that opened it is the press that closes it.
+
+`photo-sweep.mjs` opens a tile and presses it again, on **both** doors — and
+the Post gig half was verified by putting the fault back, which failed it while
+Community stayed green.

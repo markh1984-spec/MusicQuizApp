@@ -51,11 +51,11 @@ import { esc, node } from './client.js';
 // declaration rather than something read while the shell is half-built.
 import { goTo, keyed, renderKeepingPlace } from './console.js';
 import { library, me } from './console-state.js';
-import { asksPanel, galleryAddress, groupByVenue, nightPhotos } from './console-gigs.js';
+import { asksPanel, galleryAddress, groupByVenue, nightPhotos, openBigPhoto } from './console-gigs.js';
 import { bayColumns, bayHead, bayRail } from './console-bay.js';
 import { NO_VENUE, nightDroppedOnPub, venuePicker, whyNoVenue } from './console-night-venue.js';
 import { venueSlug } from './slugs.js';
-import { framedSaveInto, showcaseInto } from './console-photo-export.js';
+import { showcaseInto } from './console-photo-export.js';
 import { myPhotos } from './console-my-photos.js';
 
 /** Every venue with a league running, best-supported first. */
@@ -529,13 +529,7 @@ function photoWall() {
    */
   const openIt = (shot) => {
     openShot = shot;
-    const over = node(`
-      <button class="community-big" type="button" aria-label="Back to the photographs">
-        <img src="${esc(shot.url)}" alt="">
-      </button>`);
-    framedSaveInto(over, keyed(shot.url), openNight || shot, library.venueRecords || []);
-    over.addEventListener('click', () => { openShot = null; over.remove(); });
-    (body.closest('.bay-side') || body).appendChild(over);
+    openBigPhoto(body, shot, openNight || shot, () => { openShot = null; });
   };
 
   if (openNight) {

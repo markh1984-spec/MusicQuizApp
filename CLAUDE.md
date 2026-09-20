@@ -703,6 +703,17 @@ and deliberately NOT the full gradient, which means "press this" and would be
 the loudest thing in the app sitting on the one control there is no point
 pressing. A `rgba` fallback is declared before the `color-mix`.
 
+**AND THE WORDMARK'S DIET WAS THE RIGHT TRADE AT THE WRONG SCOPE.** It took
+`.brand-app` from 431px to 1180 — so the owner's bar read *"Mark's"* with
+nothing under it on every laptop, reported twice. **MEASURED on his own bar
+with a night running and two phones in it, restoring the whole stack costs
+1px** at 1050, 1100, 1160 and 1179, and never a second row; **1000px is where
+it genuinely costs one**, so the hide moved into the `max-width: 1050px` block
+beside the live line, which is the other thing that gives way there. **The
+guard was the thing at fault**: of `console-frame.mjs`'s seven sizes exactly
+ONE satisfied `framed`, so the whole band this rule governed had nothing
+asserting a single row in it — it has a framed 1160 and a framed 1000 now.
+
 **The hat switch already followed the scheme** and was left alone. The B/S/G
 rungs keep the metals, because there the colour IS the meaning — and they are
 only ever drawn for the owner (`/api/me` sends `tiers: []` to a quizmaster).
@@ -2836,6 +2847,13 @@ costs.
   `cover`, which `coverPhotos()` fans out to three. **The caption, the save and
   the posted mark stay** — they are the post kit, not a second display. **The
   cost, accepted: the venue's frame is no longer previewed.**
+- **AND A TILE ENLARGES ON A PRESS, ON BOTH DOORS — `openBigPhoto()`.**
+  *"Sometimes they're not big enough to decide."* **Post gig brought no opener
+  at all**, so on the door whose subject is EVIDENCE a photograph could not be
+  looked at. **ONE BUILDER**: Community wraps it only to remember what was open
+  across a state push. **It hangs on `.bay-side`, never on the scrolling grid**
+  (`inset: 0` anchors to the padding box, which in a scrolled box starts at the
+  top of the CONTENT), and **the same press puts it back**.
 - **A LAMP PER PHOTO IS A SWITCH, WITH NO WORDS** — `title`/`aria-label` are
   load-bearing, an 18px dot gets a 44px hit area, and **a ruling that only
   restates the DEFAULT is CLEARED, not stored.**
@@ -4395,7 +4413,7 @@ node scripts/phone-holds-up.mjs         # what a phone does when a request fails
 node scripts/photo-to-socials.mjs       # can a pub save a photo, with your name on?
 node scripts/photo-to-start.mjs         # is the photo ask real, and the skip?
 node scripts/rude-photo.mjs              # is a rude photo flagged and marked?
-node scripts/photo-sweep.mjs            # binning the reds — do the greens survive?
+node scripts/photo-sweep.mjs            # bin the reds, and can a photo be enlarged?
 node scripts/star-means-public.mjs      # starring publishes it — and does the socials post kit work?
 node scripts/photos-in-a-bucket.mjs     # the gallery off an object store — does the bin mean it?
 node scripts/photos-to-r2.mjs           # move the photographs off GitHub (--go to do it)

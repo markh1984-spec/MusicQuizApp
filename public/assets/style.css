@@ -8572,65 +8572,16 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * the thing you are protecting.** Reported as *"the menu at the top is fucked
  * AGAIN"*, and it is the same fault as the first time wearing a threshold: the
  * bar cannot shrink and nothing was telling it to. */
-/* AND WHAT THE DIET TAKES IS THE PRODUCT NAME, NEVER THE POSSESSIVE.
- *
- * The first version hid `.brand-name`, which is the whole stacked wordmark —
- * so the one account that lost its own name off its own console was the
- * OWNER's, because `:has(.hat-switch)` is his bar alone. The possessive exists
- * to put a quizmaster's name on their app; deleting it from the one bar this
- * rule reaches is the feature running backwards, and it was reported as the
- * name having "disappeared".
- *
- * SO THE MARK CARRIES THE PRODUCT AND THE WORD CARRIES WHOSE. The drawn
- * question-in-a-microphone already says which app this is, and it is 40px
- * where the stack is 81 — measured at 1000px, which is where the bar is
- * tightest, `#runningNow` having already stood down.
- *
- * RESTORING THE WHOLE STACK WAS RENDERED AND IS DEAD. At 1000px it does not
- * push a door off the bar — it drops `#hatSlot`, the switch and the tier
- * rungs, onto a second row 54px down, taking Sign out with it. That is the
- * two-row header this diet exists to prevent, and the account controls are the
- * other half of what it is protecting.
- *
- * A wordmark with no possessive in it still goes, and loses nothing: it says
- * only what the mark beside it already said. */
+/* WHAT THE DIET TAKES IS PADDING AND GAPS — the menu's, the hat's and the
+ * bar's own. The wordmark used to be taken here too, from 431px all the way to
+ * 1180; that trade is real but only at the very bottom of the range, so it
+ * lives in the `max-width: 1050px` block further down beside the live line,
+ * which is the other thing that gives way there. */
 @media (min-width: 431px) {
   .console .topbar:has(.hat-switch) { gap: 10px; padding-left: 14px; padding-right: 14px; }
-  .console .topbar:has(.hat-switch) .brand-name:not(.stacked) { display: none; }
-  /* Below the cap the bar tracks the window, so the product name gives way and
-     the possessive stays. See the block under this one for where it comes back. */
-  .console .topbar:has(.hat-switch) .brand-name.stacked .brand-app { display: none; }
-  /* The nesting margin sits the possessive INTO the product name; with nothing
-     underneath to nest into it only clips the tail of a descender. */
-  .console .topbar:has(.hat-switch) .brand-name.stacked .brand-who { margin-bottom: 0; }
   .console .topbar:has(.hat-switch) .topnav { gap: 5px; }
   .console .topbar:has(.hat-switch) .topnav a { padding: 8px 10px; }
   .console .topbar:has(.hat-switch) .hat-switch .hat-half { padding: 10px 10px; }
-}
-/* AND THE WHOLE WORDMARK IS BACK WHERE THE BAR IS AT ITS FULL WIDTH.
- *
- * *"The whole point is to have [QM's] Quizporium"* — the possessive alone is
- * half a brand, so "Mark's" over "Quizporium" is what this shows wherever it
- * fits, and the diet only takes the product name where the bar runs out.
- *
- * **1180px IS THE CONTAINER'S NUMBER, NOT THE WINDOW'S, WHICH IS WHY A MEDIA
- * QUERY IS THE RIGHT TOOL HERE.** `.console .wrap` caps at 1180px, so at that
- * width and above the bar is a CONSTANT ~1148px — a 1900px laptop gets exactly
- * the same bar as a 1200px one, and the full stack was measured on one row
- * there with every door still hit-testable. Below it the window and the bar
- * move together, which is the one region where asking the window is asking
- * about the bar. That is the same fact the note above uses to say a max-width
- * query was wrong: wrong for switching the diet OFF above the cap, right for
- * switching this ON at it.
- *
- * ONLY THESE TWO DECLARATIONS. The `.topnav` and `.hat-half` rules above are
- * the diet proper and stay in the 431px block — a scripted edit moved them in
- * here, which left the menu's own padding on a diet only above 1180px, exactly
- * backwards. The brace count still balanced and `style-structure` still passed;
- * measuring the bar is what found it. */
-@media (min-width: 1180px) {
-  .console .topbar:has(.hat-switch) .brand-name.stacked .brand-app { display: block; }
-  .console .topbar:has(.hat-switch) .brand-name.stacked .brand-who { margin-bottom: -0.04em; }
 }
 /* AND UNDER ~1050px THE LIVE LINE STANDS DOWN, because the diet alone is not
    enough: the mark, five doors, the hat, four rungs and Sign out come to more
@@ -8642,6 +8593,28 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    door costs the page. */
 @media (max-width: 1050px) {
   .console .topbar:has(.hat-switch) #runningNow { display: none; }
+  /* AND ONLY HERE DOES THE PRODUCT NAME GO WITH IT.
+   *
+   * *"Can we fix this now please"*, against a wordmark reading "Mark's" with
+   * nothing under it. The diet used to take `.brand-app` from 431px all the
+   * way to 1180 and hand it back above that — and MEASURED, on the owner's bar
+   * with a night running and two phones in it, restoring the whole stack costs
+   * **1px of bar** at 1050, 1100, 1160 and 1179 and never a second row. It was
+   * taking the product name off the one account this rule reaches, for
+   * nothing, across the entire band a laptop sits in.
+   *
+   * **1000px IS WHERE IT GENUINELY COSTS A ROW**, and that is the number the
+   * guard now holds: `console-frame.mjs` grew a framed 1160 and a framed 1000,
+   * because of its seven sizes exactly ONE satisfied `framed` — so the band
+   * this rule governs had nothing asserting a single row in it at all.
+   *
+   * The mark carries the product here and the word carries whose, which is the
+   * same trade as before; it is the SCOPE that was wrong, not the trade. */
+  .console .topbar:has(.hat-switch) .brand-name:not(.stacked) { display: none; }
+  .console .topbar:has(.hat-switch) .brand-name.stacked .brand-app { display: none; }
+  /* The nesting margin sits the possessive INTO the product name; with nothing
+     underneath to nest into it only clips the tail of a descender. */
+  .console .topbar:has(.hat-switch) .brand-name.stacked .brand-who { margin-bottom: 0; }
 }
 /* The two bits of prose in the bar are what give way — "Owner — you@…" and
    "Now: The Madonna Quiz (6 in)". They are the only things up there you can

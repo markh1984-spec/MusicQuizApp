@@ -8,7 +8,7 @@ import { hostKey, keyed } from './console.js';
 import { tonight } from './diary.js';
 import { venuePicker } from './console-night-venue.js';
 import { loadPhoto } from './photo-save.js';
-import { showcaseInto } from './console-photo-export.js';
+import { showcaseInto, framedSaveInto } from './console-photo-export.js';
 
 /*
  * WHICH VENUE CARD IS OPEN — module-level, same as `openVenue` in
@@ -725,6 +725,28 @@ function galleryQueue(job) {
   galleryChain = galleryChain.catch(() => {}).then(job);
 }
 
+/**
+ * ONE PHOTOGRAPH, BIG, OVER THE BAY — and the next press puts it back.
+ * *"Sometimes they're not big enough to decide."*
+ * **IT HANGS ON `.bay-side`, NEVER ON THE SCROLLING GRID INSIDE IT** —
+ * `inset: 0` anchors to the padding box, which in a scrolled container starts
+ * at the top of the CONTENT. **AN OVERLAY, NOT A REPLACEMENT**, which keeps
+ * the grid's scroll place. **ONE BUILDER FOR BOTH DOORS.**
+ */
+export function openBigPhoto(body, shot, night, onClose = null) {
+  const over = node(`
+    <button class="community-big" type="button" aria-label="Back to the photographs">
+      <img src="${esc(shot.url)}" alt="">
+    </button>`);
+  framedSaveInto(over, keyed(shot.url), night || shot, library.venueRecords || []);
+  over.addEventListener('click', () => {
+    over.remove();
+    if (onClose) onClose();
+  });
+  (body.closest('.bay-side') || body).appendChild(over);
+  return over;
+}
+
 export async function nightPhotos(body, night, opts = {}) {
   /*
    * THREE OPTIONS, ALL FOR THE COMMUNITY DOOR, and they exist so there is
@@ -754,6 +776,11 @@ export async function nightPhotos(body, night, opts = {}) {
     wall = false, controlsInto = null, onOpen = null, onData = null,
   } = opts;
   if (!night.hasPhotos) return;
+  /* A CALLER THAT BRINGS NO OPENER GETS THE ORDINARY ONE. Post gig brought
+     none, so on the door whose subject is EVIDENCE a photograph could not be
+     looked at. Community brings its own only to remember what was open across
+     a state push — bookkeeping round the same builder, not a second opener. */
+  const openOne = onOpen || ((shot) => openBigPhoto(body, shot, night));
 
   const loading = node('<div class="tiny">Loading photos…</div>');
   body.appendChild(loading);
@@ -1317,7 +1344,7 @@ export async function nightPhotos(body, night, opts = {}) {
      * — but never when the press started on the bin, which is a control on top
      * of it and must not also mean "open this".
      */
-    if (onOpen) {
+    if (openOne) {
       shot.classList.add('is-openable');
       shot.addEventListener('click', (ev) => {
         /*
@@ -1327,7 +1354,7 @@ export async function nightPhotos(body, night, opts = {}) {
          * gallery would also blow it up to fill the bay.
          */
         if (ev.target.closest('.cphoto-bin, .cphoto-pub')) return;
-        onOpen(p);
+        openOne(p);
       });
     }
     tiles.set(p, shot);
@@ -1340,32 +1367,14 @@ export async function nightPhotos(body, night, opts = {}) {
    * ---- BIN EVERYTHING THAT IS NOT ON THE GALLERY ------------------------
    *
    * *"Can I have a button that deletes all the non-gallery photos?"* The bands
-   * above turned the grid into an inbox — you work down the reds promoting
-   * what is worth keeping — and this is what empties the bottom of it. Ninety
-   * photographs on a Monday is ninety confirms otherwise, which is the admin
-   * this app exists to take off a Monday.
+   * made the grid an inbox; this empties the bottom of it.
+   * **THE RED LAMPS AND NOTHING ELSE** — not the source, not the flag: a
+   * flagged photo left red is red BECAUSE nobody kept it. **Present and inert
+   * with the reason on it**, **outlined red**, the confirm naming the number
+   * AND what survives, **one at a time and stopping on a failure** — these are
+   * writes against the private store.
    *
-   * **IT ACTS ON THE RED LAMPS AND NOTHING ELSE.** Not the source, not the
-   * flag: `p.onGallery` is the one decision this page is about, and the lamps
-   * are already the thing somebody has just spent five minutes on. A flagged
-   * photograph left red goes with the rest — it is red BECAUSE nobody kept it.
-   *
-   * **PRESENT AND INERT, with the reason on the button.** A destructive
-   * control that comes and goes as you press lamps is one you cannot learn the
-   * position of, and this one's whole context is a grid that re-arranges under
-   * you. So it is always there, disabled and saying why when there is nothing
-   * off the gallery.
-   *
-   * **OUTLINED RED, NEVER FILLED**, and it draws the bin like everything else
-   * here that deletes. The confirm NAMES THE NUMBER and says there is no undo
-   * — the same wording rule as the single bin, which is the only thing between
-   * a mis-tap and somebody's photographs being gone.
-   *
-   * **ONE AT A TIME, and a failure stops the sweep rather than ploughing on.**
-   * Every delete is a write against the private store; firing ninety at once
-   * is the read-modify-write race `galleryQueue()` exists for, one door along.
-   * The button counts up as it goes, so a slow store looks like work rather
-   * than a dead press.
+   * Full reasoning: `docs/gigs/photo-controls.md`.
    */
   const sweepInto = controlsInto || body;
   const offGallery = () => data.photos.filter((p) => !p.onGallery);
