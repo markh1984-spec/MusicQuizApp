@@ -161,6 +161,44 @@ test('a renewal finds the account in the SUBSCRIPTION metadata, not a session', 
   });
 });
 
+test('AN INVOICE LINE SPELLS ITS PRICE TWO WAYS, and the newer one is the one Stripe sends now', () => {
+  withPrices(() => {
+    /*
+     * The Invoice Line Item object USED TO carry a whole `price` object.
+     * Current API versions have no `price` on a line at all — it is
+     * `pricing.price_details.price`, and it is the id as a STRING rather than
+     * an object with an `.id`. Checked against Stripe's own reference.
+     *
+     * Which spelling arrives is the ENDPOINT'S pinned API version, so both
+     * have to be read. Every other fixture in this file uses the old one,
+     * which is exactly how the suite stayed green about a version Stripe no
+     * longer sends: the miss leaves the price blank, an unknown price
+     * correctly leaves the tier alone, and a tier CHANGE on `invoice.paid` is
+     * dropped in silence — somebody pays £30 and stays on Bronze.
+     */
+    const got = toBillingEvent({
+      type: 'invoice.paid',
+      created: at,
+      data: { object: {
+        id: 'in_2', subscription: 'sub_2', customer: 'cus_2',
+        subscription_details: { metadata: { accountId: 'acc_1' } },
+        lines: { data: [{
+          id: 'il_tmp_1',
+          object: 'line_item',
+          pricing: {
+            type: 'price_details',
+            price_details: { price: 'price_gold', product: 'prod_1' },
+            unit_amount_decimal: '3000',
+          },
+        }] },
+      } },
+    });
+    assert.equal(got.kind, 'renewed');
+    assert.equal(got.accountId, 'acc_1');
+    assert.equal(got.tier, 'gold', 'the new spelling of the price was not read');
+  });
+});
+
 test('a failed payment and a cancellation carry NO tier', () => {
   withPrices(() => {
     const failed = toBillingEvent({

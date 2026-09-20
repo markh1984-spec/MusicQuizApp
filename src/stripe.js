@@ -174,13 +174,35 @@ export function toBillingEvent(raw = {}) {
    * plan somebody made in the dashboard that this app has never heard of —
    * left blank, so `applyBilling()` keeps the tier where it is rather than
    * guessing one.
+   *
+   * **AN INVOICE LINE SPELLS ITS PRICE TWO WAYS, AND THE ONE THIS READ FIRST
+   * NO LONGER EXISTS.** The Invoice Line Item object used to carry a whole
+   * `price` object; current API versions have no `price` field on a line at
+   * all — it is `pricing.price_details.price`, and it is the id as a STRING
+   * rather than an object with an `.id` on it. Checked against Stripe's own
+   * reference rather than guessed: the September sweep flagged it and could
+   * not confirm it, the docs being unreachable from that session.
+   *
+   * Which version arrives is the ENDPOINT'S pinned API version, not ours, so
+   * both spellings are read and neither is preferred — an endpoint created
+   * today sends the new one, one created years ago still sends the old.
+   *
+   * **AND IT FAILS SILENTLY, which is why it is worth this many words.** The
+   * miss leaves `priceId` empty, `tierForPrice('')` finds nothing, and
+   * `applyBilling()` then does the RIGHT thing for an unknown price — leaves
+   * the tier alone. So a renewal is unharmed and a tier CHANGE delivered on
+   * `invoice.paid` is dropped with nothing logged: somebody pays £30 and stays
+   * on Bronze. Every fixture in the suite used the old spelling, so the tests
+   * were green about an API version Stripe no longer sends.
    */
+  const lineOne = (object.lines && object.lines.data && object.lines.data[0]) || null;
   const priceId = String(
     (object.plan && object.plan.id)
     || (object.items && object.items.data && object.items.data[0]
       && object.items.data[0].price && object.items.data[0].price.id)
-    || (object.lines && object.lines.data && object.lines.data[0]
-      && object.lines.data[0].price && object.lines.data[0].price.id)
+    || (lineOne && lineOne.price && lineOne.price.id)
+    || (lineOne && lineOne.pricing && lineOne.pricing.price_details
+      && lineOne.pricing.price_details.price)
     || '',
   );
   const tier = tierForPrice(priceId);
