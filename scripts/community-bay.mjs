@@ -565,6 +565,50 @@ try {
     const opened = await frame();
     check(`${label}: opening a night puts its photos in the bay`, opened.bayPhotos > 0, `${opened.bayPhotos}`);
 
+    /* ---- THE BANDS, AND A PRESS THAT MOVES A PHOTOGRAPH BETWEEN THEM.
+       *
+       * *"The green photos sorted to the top and red photos sorted underneath
+       * beneath the fold"*, then *"the three showcase photos order themselves
+       * to the top as well, and as I press green or showcase the order
+       * re-arranges on a click basis."*
+       *
+       * A REORDER THAT STOPS WORKING DRAWS PERFECTLY — every tile is still
+       * there, every lamp still flips, and only the order is wrong, which no
+       * count and no 500 will ever show. So this presses a lamp on a real tile
+       * and asks which heading it now sits under. */
+    const bandOfTile = (name) => page.evaluate((want) => {
+      let head = '';
+      for (const el of document.querySelectorAll('.doorhead .community-wall > *')) {
+        if (el.classList.contains('cphoto-group')) head = el.querySelector('span') ? el.firstChild.textContent.trim() : el.textContent.trim();
+        else if (el.dataset.name === want) return head;
+      }
+      return '(not drawn)';
+    }, name);
+
+    const bands = await page.locator('.doorhead .cphoto-group').count();
+    if (bands > 1) {
+      const last = page.locator('.doorhead .community-wall .cphoto').last();
+      const name = await last.getAttribute('data-name');
+      const before = await bandOfTile(name);
+      check(`${label}: the last photograph is in the bottom band`, /not on the gallery/i.test(before), before);
+
+      await last.locator('.cphoto-pub').click();
+      await page.waitForTimeout(500);
+      const after = await bandOfTile(name);
+      check(`${label}: greening one moves it out of that band`, after !== before && /on the gallery/i.test(after), `${before} -> ${after}`);
+
+      await page.locator(`.doorhead .community-wall .cphoto[data-name="${name}"] .cphoto-pin`).click();
+      await page.waitForTimeout(500);
+      const starred = await bandOfTile(name);
+      check(`${label}: and starring it puts it in the showcase`, /showcase/i.test(starred), `${after} -> ${starred}`);
+
+      // Put it back, so the rest of this run sees the night it expected.
+      await page.locator(`.doorhead .community-wall .cphoto[data-name="${name}"] .cphoto-pin`).click();
+      await page.waitForTimeout(400);
+      await page.locator(`.doorhead .community-wall .cphoto[data-name="${name}"] .cphoto-pub`).click();
+      await page.waitForTimeout(900);
+    }
+
     /* ---- AND THE HEAD OF THE BAY CARRIES THE NIGHT'S PUBLIC ADDRESS.
        A link that says "see it live" over a night nobody else can see would be
        the app lying about its own state, so the WORDS are checked as well as
@@ -934,7 +978,24 @@ try {
      * it opens on click — so without the guard, switching a photo off the
      * gallery would blow it up to fill the bay at the same time.
      */
-    const wasOn = await page.evaluate(() => document.querySelector('.doorhead .cphoto-pub').classList.contains('is-on'));
+    /*
+     * BY NAME, NEVER BY POSITION — and this check FAILED the day the grid
+     * learned to reorder itself. It pressed the first tile's lamp and then
+     * read the first tile's lamp again, which by then was a DIFFERENT
+     * photograph that had shuffled into the vacated slot. It reported
+     * `true -> true` against a working control.
+     *
+     * The same family as *measure `getClientRects()`, not
+     * `querySelectorAll().length`*: a guard that identifies a thing by where it
+     * sits is measuring the layout, not the thing. `data-name` is on every
+     * tile so a photograph can be followed across a re-lay-out.
+     */
+    const lampName = await page.evaluate(() => document.querySelector('.doorhead .cphoto').dataset.name);
+    const lampOn = () => page.evaluate((n) => {
+      const tile = document.querySelector(`.doorhead .cphoto[data-name="${n}"]`);
+      return Boolean(tile && tile.querySelector('.cphoto-pub').classList.contains('is-on'));
+    }, lampName);
+    const wasOn = await lampOn();
     /*
      * THE COUNT LINE HAS TO ADD THE LAMPS UP — reported as *"photos are
      * definitely published"* over a public gallery reading "No photos are up
@@ -952,20 +1013,22 @@ try {
     check(`${label}: the count says how many will actually show`,
       /on the gallery|none on the gallery/.test(countBefore), countBefore);
 
-    await page.evaluate(() => document.querySelector('.doorhead .cphoto-pub').click());
+    await page.evaluate((n) => document.querySelector(`.doorhead .cphoto[data-name="${n}"] .cphoto-pub`).click(), lampName);
     await page.waitForTimeout(400);
     const countAfter = await page.evaluate(() =>
       [...document.querySelectorAll('.tabbody .tiny, .doorhead .tiny')]
         .map((n) => n.textContent.trim()).find((t) => /\d+ photos?/.test(t)) || '');
     check(`${label}: and it follows the lamp rather than the page load`,
       Boolean(countAfter) && countAfter !== countBefore, `${countBefore} -> ${countAfter}`);
-    const after = await page.evaluate(() => ({
-      opened: document.querySelectorAll('.doorhead .community-big').length,
+    const after = {
+      opened: await page.evaluate(() => document.querySelectorAll('.doorhead .community-big').length),
       // AND IT ACTUALLY SWITCHED — read against what it WAS, not against a
-      // colour assumed from the fixture. A dead lamp draws perfectly: the
-      // handler's own catch eats a ReferenceError and the colour never moves.
-      on: document.querySelector('.doorhead .cphoto-pub').classList.contains('is-on'),
-    }));
+      // colour assumed from the fixture, and on the photograph that was
+      // PRESSED rather than whatever is first now. A dead lamp draws
+      // perfectly: the handler's own catch eats a ReferenceError and the
+      // colour never moves.
+      on: await lampOn(),
+    };
     check(`${label}: the lamp does not also open the picture`, after.opened === 0, `${after.opened}`);
     check(`${label}: and pressing it switches the colour`, after.on === !wasOn, `${wasOn} -> ${after.on}`);
 

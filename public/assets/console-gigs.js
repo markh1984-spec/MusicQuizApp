@@ -828,73 +828,85 @@ export async function nightPhotos(body, night, opts = {}) {
   data.photos.sort((a, b) => flagRank(a.flagged) - flagRank(b.flagged));
 
   /*
-   * ---- ON THE GALLERY AT THE TOP, EVERYTHING ELSE BELOW THE FOLD ----------
+   * ---- THE SHOWCASE, THEN THE GALLERY, THEN THE REST BELOW THE FOLD -------
    *
    * *"The green photos sorted to the top and red photos sorted underneath
-   * beneath the fold."*
+   * beneath the fold"*, then *"can we have it so the three showcase photos
+   * order themselves to the top as well, and as I press green or showcase the
+   * order re-arranges on a click basis."*
    *
-   * **IT SORTS ON THE LAMP, WHICH IS THE QUESTION THIS PAGE IS FOR.** The first
-   * cut of this grouped by WHO TOOK IT — yours, phone shots, uploads — which is
-   * what was asked for a message earlier and is the wrong axis: the bay is
-   * capped at `--bay-h` and scrolls, so whatever is first is what a landlord's
-   * page is made of, and that is decided by the lamp rather than by the door.
-   * The source is kept as the order WITHIN each half, because among the ones
-   * that are off, a punter's photograph of the room is the next thing you would
-   * promote and a meme never is.
+   * **IT SORTS ON THE LAMP AND THE STAR, WHICH ARE THE QUESTIONS THIS PAGE IS
+   * FOR.** The first cut grouped by WHO TOOK IT, which is the wrong axis: the
+   * bay is capped at `--bay-h` and scrolls, so whatever is first is what a
+   * landlord's page is made of. The source survives as the order WITHIN each
+   * band, because among the ones that are off, a punter's photograph of the
+   * room is the next thing worth promoting and a meme never is.
    *
-   * **IT IS SORTED ON LOAD AND NEVER AGAIN.** Pressing a lamp flips it on the
-   * spot (the write goes to GitHub in the background), and re-sorting on that
-   * press would slide the photograph out from under the finger that just
-   * pressed it and shuffle the next one into its place. The order settles the
-   * next time the night is opened, which is the only moment nobody is aiming at
-   * a 14px dot.
+   * **A STAR IMPLIES A LAMP, so the showcase band is a subset of the green
+   * one** — `gallery.js` publishes on a star and unstars on a hide, in one
+   * write. Three at most (`MAX_PINS`), so this band is never long.
    *
-   * **AND FLAGGED COMES ABOVE BOTH.** A rude photograph is almost always one
-   * the room sent, so it is almost always red — and putting red below the fold
-   * would bury exactly what the check exists to surface. `src/moderation.js`
-   * earns its keep by making a review of ninety a look at three, so it keeps
-   * the top of the grid. Nothing is flagged unless the Vision key is set, so
-   * this heading simply does not exist on an ordinary night.
+   * **AND IT RE-ARRANGES ON EVERY PRESS — which REVERSES yesterday's
+   * "sorted on load and never again", on the host's say-so, and he is right
+   * about why.** The objection was that a tile slides out from under the
+   * finger that pressed it. What actually happens is an inbox: you work down
+   * the reds, and each one you promote LEAVES the pile. The band you are
+   * reading shrinks as you go, so the thing in front of you is always what is
+   * still undecided — which is the job. The cost, accepted: the tile that
+   * shuffles into the vacated slot is a different photograph, so two fast taps
+   * on one spot can land on the wrong one.
+   *
+   * **THE FIGURES ARE MOVED, NEVER REBUILT.** Every tile carries four
+   * listeners and two optimistic in-flight writes; re-rendering would drop a
+   * lamp mid-request and lose whatever it was about to save. `appendChild` on
+   * a node already in the document MOVES it, and a detached node keeps its
+   * listeners, so a re-lay-out is pure reordering.
    */
-  const rank = (p) => (p.flagged ? 0 : (p.onGallery ? 1 : 2));
+  const BANDS = ['Needs a look', 'Showcase', 'On the gallery', 'Not on the gallery'];
+  const bandOf = (p) => (p.flagged ? 0 : p.pinned ? 1 : p.onGallery ? 2 : 3);
   const SOURCE_ORDER = { house: 0, camera: 1, upload: 2 };
-  const LABEL = {
-    0: 'Needs a look',
-    1: 'On the gallery',
-    2: 'Not on the gallery',
-  };
-  const sorted = data.photos
-    .map((p, at) => ({ p, at }))
-    .sort((a, b) => rank(a.p) - rank(b.p)
-      || flagRank(a.p.flagged) - flagRank(b.p.flagged)
-      || (SOURCE_ORDER[a.p.source] ?? 9) - (SOURCE_ORDER[b.p.source] ?? 9)
-      // Stable past that: whatever order the night's own folder came back in.
-      || a.at - b.at)
-    .map((x) => x.p);
-  const sizes = sorted.reduce((acc, p) => { acc[rank(p)] = (acc[rank(p)] || 0) + 1; return acc; }, {});
-  const headings = Object.keys(sizes).length > 1;
-
   const grid = node(`<div class="${wall ? 'community-wall' : 'night-strip'}"></div>`);
+  const tiles = new Map();
   /*
-   * ONE HEADING EACH, AND ONLY WHERE THERE IS MORE THAN ONE — a night whose
-   * photographs are all on the gallery gets a heading saying so with nothing to
-   * compare it against, which is a label doing no work.
-   *
-   * **THE GROUP IS SNAPSHOTTED HERE, NOT RE-READ** — `rank()` asks
-   * `p.onGallery`, which the lamp writes to as it is flicked, so computing it
-   * inside the loop would put a second heading in the middle of a group the
-   * moment somebody pressed one.
+   * THE ORDER THE FOLDER CAME BACK IN, held once — `sort` is stable, so this
+   * is what keeps two photographs with nothing to choose between them from
+   * swapping places every time somebody presses a lamp across the grid.
    */
-  const bandOf = new Map(sorted.map((p) => [p, rank(p)]));
-  let drawnBand = -1;
-  for (const p of sorted) {
-    const band = bandOf.get(p);
-    if (headings && band !== drawnBand) {
-      drawnBand = band;
-      grid.appendChild(node(
-        `<h5 class="cphoto-group">${esc(LABEL[band])} <span>${sizes[band]}</span></h5>`,
-      ));
+  const arrived = new Map(data.photos.map((p, at) => [p, at]));
+
+  function layout() {
+    const order = [...data.photos].sort((a, b) => bandOf(a) - bandOf(b)
+      || flagRank(a.flagged) - flagRank(b.flagged)
+      || (SOURCE_ORDER[a.source] ?? 9) - (SOURCE_ORDER[b.source] ?? 9)
+      || arrived.get(a) - arrived.get(b));
+    const sizes = order.reduce((acc, p) => { acc[bandOf(p)] = (acc[bandOf(p)] || 0) + 1; return acc; }, {});
+    /*
+     * ONE HEADING EACH, AND ONLY WHERE THERE IS MORE THAN ONE BAND — a night
+     * whose photographs are all on the gallery gets a heading saying so with
+     * nothing to compare it against, which is a label doing no work.
+     */
+    const headings = Object.keys(sizes).length > 1;
+    grid.replaceChildren();
+    let drawn = -1;
+    for (const p of order) {
+      const band = bandOf(p);
+      if (headings && band !== drawn) {
+        drawn = band;
+        grid.appendChild(node(`<h5 class="cphoto-group">${esc(BANDS[band])} <span>${sizes[band]}</span></h5>`));
+      }
+      const tile = tiles.get(p);
+      if (tile) grid.appendChild(tile);
     }
+  }
+  /*
+   * NOT WHILE THE GRID IS STILL BEING BUILT. `paintPill()` and `paintPin()`
+   * both run once as each tile is made, and a re-lay-out from inside that loop
+   * would order a grid half of whose tiles do not exist yet.
+   */
+  let settled = false;
+  const relayout = () => { if (settled) layout(); };
+
+  for (const p of data.photos) {
     /*
      * `filed`, always — and this was stamping "NOT FILED" on every one.
      *
@@ -966,7 +978,9 @@ export async function nightPhotos(body, night, opts = {}) {
     const flagPill = p.flagged
       ? `<span class="cphoto-flag" title="Flagged for a look — the check thought this one might be rude. Delete it or leave it.">Review</span>`
       : '';
-    const shot = node(`<figure class="cphoto filed${p.flagged ? ' flagged' : ''}">
+    // The name on the tile, so a guard can watch ONE photograph move between
+    // bands rather than counting tiles and hoping.
+    const shot = node(`<figure class="cphoto filed${p.flagged ? ' flagged' : ''}" data-name="${esc(p.name)}">
       <img src="${esc(p.url)}" alt="" loading="lazy" decoding="async">
       ${flagPill}
       <button class="cphoto-pin ${p.pinned ? 'is-on' : ''}" type="button">${starIcon(14)}</button>
@@ -1038,6 +1052,8 @@ export async function nightPhotos(body, night, opts = {}) {
       p.onGallery = live;
       loading.textContent = counted();
       loading.style.color = '';
+      // The band this photograph is in has just changed, so the grid follows.
+      relayout();
     };
     paintPill();
 
@@ -1155,6 +1171,14 @@ export async function nightPhotos(body, night, opts = {}) {
       pin.title = why;
       pin.setAttribute('aria-label', why);
       pin.setAttribute('aria-pressed', String(pinned));
+      /*
+       * WRITTEN BACK ONTO THE PAYLOAD, exactly as the lamp writes `onGallery`.
+       * `bandOf()` reads the photograph rather than this closure, so without
+       * this line a star would repaint its own corner and the grid would not
+       * move — the shape of "a control that reports success it did not have".
+       */
+      p.pinned = pinned;
+      relayout();
     };
     paintPin();
     // The lamp's half of *a star means public* — see the note beside it.
@@ -1266,9 +1290,18 @@ export async function nightPhotos(body, night, opts = {}) {
         if (!res.ok) throw new Error(out.error || 'Could not delete that.');
         // Gone from the page as well as the repository, or the next tap
         // deletes something that is not there any more.
+        /*
+         * OUT OF THE LIST, not only out of the DOM. The bands are counted off
+         * `data.photos`, so a tile removed on its own would leave a heading
+         * saying four over three pictures — and `counted()` reads the same
+         * list, which is where the line under the heading comes from.
+         */
+        tiles.delete(p);
+        const at = data.photos.indexOf(p);
+        if (at >= 0) data.photos.splice(at, 1);
         shot.remove();
-        const left = grid.querySelectorAll('.cphoto').length;
-        loading.textContent = `${left} photo${left === 1 ? '' : 's'}`;
+        layout();
+        loading.textContent = counted();
       } catch (err) {
         btn.disabled = false;
         alert(err.message);
@@ -1297,8 +1330,10 @@ export async function nightPhotos(body, night, opts = {}) {
         onOpen(p);
       });
     }
-    grid.appendChild(shot);
+    tiles.set(p, shot);
   }
+  settled = true;
+  layout();
   body.appendChild(grid);
   /*
    * ON PAST GIGS THIS PANEL PUBLISHES; ON COMMUNITY IT DRAWS NOTHING AT ALL.

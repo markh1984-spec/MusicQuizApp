@@ -1190,7 +1190,16 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * with the sentence that settles what the whole thing was for, which is that
  * an upload on the screen and off the gallery is ALREADY what happens.
  */
-const BUDGET = 273_500;
+/*
+ * AND TO 274_000 the next day, when the grid gained a fourth band and learned
+ * to reorder on a press — which REVERSES the "sorted on load and never again"
+ * bought the day before. A reversal has to replace the rule it overturns
+ * rather than sit beside it, or a future session reads both and picks one.
+ * The bytes go on the two traps it exposed: a painter that does not write its
+ * state back onto the payload, and a guard that identifies a tile by where it
+ * sits rather than by which photograph it is.
+ */
+const BUDGET = 274_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

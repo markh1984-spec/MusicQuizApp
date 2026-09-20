@@ -2806,15 +2806,20 @@ costs.
   AND REMOVED** — a flag the quizmaster must respect is a rule he must REMEMBER,
   on a Monday, about a photograph he did not take. **Do not rebuild a
   sender-side switch.** The gate is the publish control under the photos.
-- **A NIGHT'S GRID IS SORTED ON THE LAMP — on the gallery at the top, the rest
-  below the fold.** Built first as three groups by WHO TOOK IT and that was the
-  wrong axis: the bay scrolls, so whatever is first is what a landlord's page is
-  made of. **The source is the order WITHIN each half** (`photoSource()`,
-  `CAMERA_SUFFIX`) — a punter's photograph is the next thing you would promote
-  and a meme never is. **SORTED ON LOAD AND NEVER AGAIN**, or a press slides the
-  tile out from under the finger that made it. **FLAGGED SITS ABOVE BOTH** — a
-  rude photo is nearly always red, and the fold would bury what the check
-  exists to surface. **THE LAMPS ARE THE DOOR, NOT CAMERA-VERSUS-UPLOAD**
+- **A NIGHT'S GRID IS FOUR BANDS — a look, the showcase, the gallery, the
+  rest.** Built first as groups by WHO TOOK IT and that was the wrong axis: the
+  bay scrolls, so whatever is first is what a landlord's page is made of, and
+  that is the LAMP and the STAR. **The source is the order WITHIN a band**
+  (`photoSource()`, `CAMERA_SUFFIX`). **A STAR IMPLIES A LAMP**, so the showcase
+  is a subset of the green. **IT RE-ARRANGES ON EVERY PRESS — REVERSING
+  "sorted on load and never again"** the day after: it is an INBOX. **THE
+  FIGURES ARE MOVED, NEVER REBUILT** — a tile holds four listeners and two
+  in-flight writes. **A PAINTER MUST WRITE ITS STATE BACK ONTO THE PAYLOAD**
+  (`p.pinned` as well as `p.onGallery`), or the corner repaints and the grid
+  does not move. **AND A GUARD MAY NOT IDENTIFY A TILE BY POSITION** —
+  `data-name`; the bay guard pressed the first lamp, read the first lamp, and
+  reported `true -> true` against a working control. **FLAGGED SITS ON TOP** — a rude photo is nearly always red, and the fold would bury what the
+  check exists to surface. **THE LAMPS ARE THE DOOR, NOT CAMERA-VERSUS-UPLOAD**
   (`showsByDefault()`); **an UPLOAD ON THE SCREEN BUT OFF THE GALLERY IS ALREADY
   THE DEFAULT.** Camera-versus-upload was read at upload and **never written
   down**, so it rides in the NAME now — **a SORT, NEVER A GATE**, the 2
@@ -2876,8 +2881,10 @@ costs.
   screen — IS IN
   [`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**, and
   **where they are STORED and PUBLISHED is
-  [`docs/gigs/photos.md`](docs/gigs/photos.md)** — the lamps, the pins, the slug
-  fold, `inOrder()`, `tryGetFile()`, the read-back sha — **with the cover fan
+  [`docs/gigs/photos.md`](docs/gigs/photos.md)** — the bands, the slug fold,
+  `inOrder()`, `tryGetFile()`, the read-back sha, **with the LAMP, the STAR and
+  the publish control in
+  [`docs/gigs/photo-controls.md`](docs/gigs/photo-controls.md)** — **with the cover fan
   and the prev/next in
   [`docs/gigs/gallery-page.md`](docs/gigs/gallery-page.md)**. **Read them
   before touching any of them.**
