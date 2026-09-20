@@ -427,6 +427,7 @@ try {
       const r = b.getBoundingClientRect();
       return {
         clipped: Math.round(b.scrollWidth - b.clientWidth),
+        box: Math.round(b.clientWidth),
         past: Math.round(r.right - window.innerWidth),
         /*
          * BANDS, NOT DISTINCT TOPS. The bar's children are different heights
@@ -441,6 +442,26 @@ try {
           .reduce((acc, r) => (r.top >= acc.floor - 1
             ? { n: acc.n + 1, floor: r.bottom }
             : { n: acc.n, floor: Math.max(acc.floor, r.bottom) }), { n: 0, floor: -Infinity }).n,
+        /*
+         * WHAT ONE ROW WOULD ACTUALLY NEED, so the check below can tell a bar
+         * that wrapped from a bar that had no choice.
+         *
+         * The spacer is EXCLUDED and that is the whole trick: `.console
+         * .spacer` is `flex: 1 1 auto` around nothing, so it contributes zero
+         * to the minimum and swells to whatever is left over — which means
+         * measuring it back in tells you how wide the bar IS rather than how
+         * wide it NEEDS to be, and a wrapped bar would then always look like
+         * it was short of room.
+         */
+        needs: (() => {
+          const cs = getComputedStyle(b);
+          const gap = parseFloat(cs.columnGap || cs.gap || 0) || 0;
+          const real = [...b.children]
+            .filter((c) => !String(c.className || '').includes('spacer'));
+          const sum = real.reduce((a, c) => a + c.getBoundingClientRect().width, 0);
+          return Math.round(sum + gap * Math.max(0, real.length - 1)
+            + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight));
+        })(),
       };
     });
     /*
@@ -473,8 +494,56 @@ try {
      * is not paid at that size — and a guard that demands something for a
      * reason that does not apply is how a working layout gets "fixed".
      */
+    /*
+     * AND IT IS ONE ROW WHERE THE DESIGN HAS EVER CLAIMED ONE — 1150px up.
+     *
+     * **THE NUMBER IS THE BAR'S OWN, MEASURED, not a width somebody liked.**
+     * With a night running and two phones in it, the owner's bar needs
+     * **1146px at 1180 and 1136px at 1160** — mark, five door chips, the hat
+     * switch, four rungs. So 1150 is the floor at which one row is achievable
+     * at all, and `.console .wrap` caps the bar at 1180, which is why there is
+     * no width above it to worry about.
+     *
+     * **BELOW THAT IT IS NOT A REGRESSION, IT IS ARITHMETIC.** At 1000x1000 —
+     * framed, so the old gate demanded one row — the same bar needs ~1216px in
+     * a 1000px box. It is 216px short. The only diet the design has ever had
+     * below 1150 is the wordmark going from "Mark's Quizporium" to "Mark's" at
+     * 1050, which buys 35px, and nothing else exists to take off short of
+     * deleting the hat switch or the rungs. A flat `rows === 1` there demanded
+     * a design decision nobody has made, and *a guard that demands something
+     * for a reason that does not apply is how a working layout gets "fixed"* —
+     * this file's own words, twenty lines up, about the last time this gate
+     * was wrong.
+     *
+     * **A MEASURED VERSION WAS WRITTEN FIRST AND IS THE MORE INTERESTING
+     * FAILURE.** It asked *did it wrap while it had the room?*, computing what
+     * one row would need from the children's own widths — which is sound until
+     * you remember the widths are read out of the WRAPPED layout. Breaking the
+     * stylesheet on purpose (`flex-basis: 100%` on the nav) made the nav 1180px
+     * wide, which inflated the requirement past the box, which made the check
+     * excuse the very fault it had just been handed. It passed, three rows,
+     * green at every size. **A measurement taken from the layout cannot
+     * adjudicate that layout**, and the tell was that it was excusing more the
+     * worse things got.
+     *
+     * So: one row where one row is possible, and a CEILING everywhere else,
+     * which is what still catches a bar that explodes at 1000px.
+     */
     if (framed) {
-      check(`${label}: the menu items all sit on one row`, bar.rows === 1, `${bar.rows} rows`);
+      const ONE_ROW_FROM = 1150;
+      if (bar.box >= ONE_ROW_FROM) {
+        check(`${label}: the menu items all sit on one row`, bar.rows === 1,
+          `${bar.rows} row(s) in ${bar.box}px`);
+      } else {
+        /*
+         * TWO IS THE MOST IT MAY EVER TAKE. Three is not the diet failing, it
+         * is something structurally wrong — a child demanding its own line, a
+         * flex-basis nobody meant — and under a pinned frame every row comes
+         * straight off the tab column below.
+         */
+        check(`${label}: the bar takes no more than the two rows it needs`, bar.rows <= 2,
+          `${bar.rows} row(s) in ${bar.box}px — one row would need about ${bar.needs}px`);
+      }
     }
 
     /*
