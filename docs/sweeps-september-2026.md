@@ -1,7 +1,9 @@
 # The September 2026 sweeps — a worked list
 
 **This is a findings list, not a plan.** Nothing in it has been actioned unless
-it says so. It exists because the analysis behind it cost two days and lived
+it says so — **and the twelve that matter most now all say so.** They were
+re-verified against the code on 20 September 2026 and every one is fixed; see
+*What has already been actioned* below before acting on anything here. It exists because the analysis behind it cost two days and lived
 only in a chat window, and a session that starts without it re-derives it at
 full price or, worse, half-derives it.
 
@@ -36,7 +38,44 @@ Only two things, both at the host's explicit request, both verified:
   `ReferenceError` before the `try`, so the one control that creates a show did
   nothing at all for a day. `scripts/save-a-night.mjs` is the guard: 8 of 8
   green on the fix, 6 failures with the fault put back.
-- Nothing else. The rest of this file is untouched.
+- Nothing else, **as at 7 September**. That sentence stood at the top of this
+  file for a fortnight after it stopped being true, which is the fault this
+  repo already names: *a comment that claims the opposite is where the next bug
+  hides*, wearing a document.
+
+### RE-VERIFIED 20 SEPTEMBER 2026 — all twelve of "the twelve that matter most" are FIXED
+
+Checked one at a time against the working tree at `8e873c9`, by reading the
+code rather than by trusting a rule: **12 of 12 fixed, 0 still live.** Every one
+also has a matching rule in `CLAUDE.md`, and in no case did a rule claim a fix
+the code did not have. Where the evidence now sits:
+
+| | Finding | Now |
+|---|---|---|
+| 1 | composed night dies on restart | `boot()` recomposes from `saved.order`; `pickPack()` loops `available` before `launcher.empty` |
+| 2 | console frame clips | the trailing `overflow: hidden` is gone, with a comment where it was |
+| 3 | unknown join code → house room | `roomForPhone()` throws `badRequest`; the code backups serialise and report |
+| 4 | big photo over a live question | `stopBigPhotos()`, called from `draw()` |
+| 5 | all-zero final pays everybody | `if (!(row.score > 0)) continue;` in `issueVouchers()` |
+| 6 | round switched off still played | `runningShowSegments()` filters through `lbOff` |
+| 7 | card shape default never sent | the displayed default is written back before `paintPrizes()` |
+| 8 | New quiz lands on an existing pack | refused in the browser and 409 at the route |
+| 9 | second BINGO press takes the name | `stageTaken()` checked before anything is recorded |
+| 10 | bingo vouchers lost at a boundary | carried, marked `carried`, skipped by the idempotency set |
+| 11 | team nights: `boardIdFor()` | `phoneCount`, `youView()`, `hostPlayerRows()`, `whoIsThat()` |
+| 12 | one GitHub blip empties everything | `restoreOnce()` latches on success only and backs off |
+
+Two of the twelve were fixed only PARTLY as written, both deliberately and both
+recorded: a non-zero tie spanning the board is still paid in full (finding 5 —
+the cap is on POSITION), and `prizeWinners` is still not carried across a part
+boundary (finding 10 — carrying it makes `stageTaken()` true for a prize nobody
+played for).
+
+**The rest of this file has NOT been re-verified.** "Everything else, grouped"
+and the whole of Part C are still as written on 7 September, and by the same
+arithmetic a good share of them will have been fixed too. **Do not read an
+untriaged bullet as a live fault** — check the code first, the way these twelve
+were.
 
 ## What is verified BY HAND, over and above the two verifiers
 
