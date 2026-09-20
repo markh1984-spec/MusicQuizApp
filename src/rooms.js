@@ -180,23 +180,41 @@ export class Room {
     return this.live || Boolean(this.session.inProgress());
   }
 
-  summary() {
+  /**
+   * What this room is doing, for somebody who is NOT in it.
+   *
+   * **IT DEFAULTS TO THE SAFE SHAPE, and that is the whole point.** A summary
+   * travels to the owner's console — `/api/library`'s `otherRooms` and the
+   * subscribers overview — and it used to carry a subscriber's private pack
+   * TITLE, its ID and, through `engine.where()`, the title of the round they
+   * were on. No grant, no consent, no line in the support log, while
+   * `own-packs.js` promises in as many words that the owner cannot read what a
+   * quizmaster wrote. A pack id is the title slugged, so it is the same leak
+   * twice.
+   *
+   * What the owner legitimately needs is *is somebody mid-question before I
+   * deploy over them*, and that is the phase, the count and the numbers.
+   *
+   * `full: true` is for the ONE caller that has to ask "is this pack one of
+   * theirs", which needs an id to ask with — the overview, which then masks
+   * what it learned. Named rather than spread, so the next field added to a
+   * room does not ride out to the owner because nobody thought about it.
+   */
+  summary({ full = false } = {}) {
     const engine = this.session.engine;
-    return {
+    const base = {
       id: this.id,
       code: this.code,
       label: this.label,
       game: this.session.kind,
-      pack: this.session.pack?.title || '',
-      // The id as well as the title, because the owner's overview has to be
-      // able to ask "is this one of THEIRS" — and it can only ask that with an
-      // id. See own-packs.js.
-      packId: this.session.pack?.id || '',
       phase: engine?.state?.phase || '',
       players: Object.keys(engine?.state?.players || {}).length,
       live: this.live,
-      where: typeof engine?.where === 'function' ? engine.where() : '',
+      where: typeof engine?.where === 'function' ? engine.where({ naming: full }) : '',
     };
+    return full
+      ? { ...base, pack: this.session.pack?.title || '', packId: this.session.pack?.id || '' }
+      : base;
   }
 }
 
@@ -435,7 +453,7 @@ export class Rooms {
   }
 
   /** Every room that has a game worth knowing about, for the owner's overview. */
-  summaries() {
-    return this.all().map((r) => r.summary());
+  summaries(opts) {
+    return this.all().map((r) => r.summary(opts));
   }
 }

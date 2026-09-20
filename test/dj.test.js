@@ -25,7 +25,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { DjSet, DJ_PHASES, REQUESTS_EACH, MAX_REQUESTS } from '../src/dj.js';
-import { freePort, stopped } from './helpers/live-server.mjs';
+import { freePort, stopped, waitForApp } from './helpers/live-server.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 
@@ -266,10 +266,9 @@ async function withApp(run) {
   child.unref();
   const base = `http://127.0.0.1:${port}`;
   try {
-    let up = false;
-    for (let i = 0; i < 100 && !up; i += 1) {
-      try { await fetch(base); up = true; } catch { await wait(100); }
-    }
+    // One poll for every spawner — see `waitForApp()`. Ten seconds was not
+    // enough under gig-build, and it waited them out on a server already dead.
+    const up = await waitForApp(child, base);
     assert.ok(up, 'the server never came up');
     await run(base);
   } finally {

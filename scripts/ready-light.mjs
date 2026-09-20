@@ -20,6 +20,10 @@
 import path from 'node:path';
 import { startApp } from './helpers/live-app.mjs';
 import { playwright } from './helpers/playwright.mjs';
+/*
+ * THE APP'S OWN IDEA OF WHICH NIGHT IT IS, never the calendar's — see below.
+ */
+import { nightKey, weekdayOf } from '../public/assets/diary.js';
 
 const { chromium } = playwright();
 
@@ -47,7 +51,25 @@ try {
   const H = { 'content-type': 'application/json', cookie };
   const mk = await (await fetch(`${BASE}/api/invoices/customers`, { method: 'POST', headers: H, body: JSON.stringify({ name: 'The Crown' }) })).json();
   const venue = (mk.customers || []).find((c) => c.name === 'The Crown');
-  const today = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][new Date().getDay()];
+  /*
+   * THE DAY ROLLS AT 6am, AND THIS GUARD USED THE CALENDAR'S MIDNIGHT.
+   *
+   * `usualNight` is matched against `weekdayOf(nightKey(now))`, and `nightKey`
+   * takes six hours off before asking — a quiz that runs past twelve is still
+   * the same night, which is the rule the archive, the photos, the league and
+   * the headcounts all share. This line read `new Date().getDay()`.
+   *
+   * So between midnight and 6am the guard wrote `usualNight: 'mon'` while the
+   * app was still calling it Sunday, no venue claimed tonight, and four checks
+   * failed with *"no venue picked"* — the ready line telling the exact truth
+   * about a venue the guard had misfiled. It passed at 23:40 and failed at
+   * 00:15 on the same commit, which is the signature of this class of bug and
+   * the only reason it was ever caught: `gig-build` is a Monday-morning job.
+   *
+   * **A CHECK THAT ASKS THE CALENDAR WHAT DAY IT IS WILL DISAGREE WITH THIS
+   * APP FOR SIX HOURS OF EVERY DAY.** Ask the app.
+   */
+  const today = weekdayOf(nightKey());
   await fetch(`${BASE}/api/invoices/customers/${venue.id}/rewards`, { method: 'PUT', headers: H, body: JSON.stringify({ rewards: ['A pint', 'A half'], usualNight: today }) });
   const lib = await (await fetch(`${BASE}/api/library`, { headers: H })).json();
   const code = lib.running.joinCode;

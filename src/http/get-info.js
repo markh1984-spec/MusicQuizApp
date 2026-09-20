@@ -120,7 +120,13 @@ export async function getInfo(req, res, url, route) {
         if (fs.existsSync(rooms.pathsFor(account.id).state)) rooms.get(account.id, account.name || '');
       } catch { /* a room that will not boot is not worth taking this page down for */ }
     }
-    const live = rooms.summaries().map((room) => {
+    /*
+     * `full: true` HERE AND NOWHERE ELSE — the overview is the one caller that
+     * has to ask "is this pack one of THEIRS", and it can only ask with an id.
+     * It masks what it learned two lines down; `Room.summary()`'s default is
+     * the safe shape for everybody else.
+     */
+    const live = rooms.summaries({ full: true }).map((room) => {
       const who = whoseRoom({ id: room.id });
       const ownPack = room.id !== HOUSE
         && isOwnPack(room.game, room.packId || '', rooms.get(room.id).paths);
@@ -134,7 +140,15 @@ export async function getInfo(req, res, url, route) {
          * id is the title slugged, so leaving it would put "robs-secret-quiz"
          * on the owner's page under a line saying the owner cannot read it.
          */
-        ...(ownPack ? { pack: 'One of their own', packId: '', own: true } : {}),
+        /*
+         * AND THE STATUS LINE WITH THEM. `engine.where()` is built from the
+         * ROUND'S OWN TITLE, so masking the pack and leaving "Scores after
+         * Rob's Stag Do Special" underneath it masks nothing at all — the
+         * third field of the same leak, and the one nobody looked at.
+         */
+        ...(ownPack
+          ? { pack: 'One of their own', packId: '', own: true, where: rooms.get(room.id).summary().where }
+          : {}),
       };
     });
     return sendJson(res, 200, {

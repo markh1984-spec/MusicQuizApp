@@ -27,7 +27,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { publishedNights, isPublished, setPublished, readableNight } from '../src/gallery.js';
-import { freePort, stopped } from './helpers/live-server.mjs';
+import { freePort, stopped, waitForApp } from './helpers/live-server.mjs';
 import { serverSource } from './server-source.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -90,10 +90,9 @@ async function withServer(run) {
   });
   const base = `http://127.0.0.1:${port}`;
   try {
-    let up = false;
-    for (let i = 0; i < 100 && !up; i++) {
-      try { await fetch(`${base}/gallery`); up = true; } catch { await new Promise((r) => setTimeout(r, 100)); }
-    }
+    // One poll for every spawner — see `waitForApp()`. Ten seconds was not
+    // enough under gig-build, and it waited them out on a server already dead.
+    const up = await waitForApp(child, `${base}/gallery`);
     assert.ok(up, 'the server never came up');
     await run(base);
   } finally {
@@ -224,7 +223,19 @@ test('THE GALLERY AND THE GIGS TAB READ THE SAME ROOM', async () => {
    * than an assertion about either one.
    */
   const src = serverSource();
-  const gallery = src.slice(src.indexOf('const galleryRoomId'), src.indexOf('/gallery-photo/') + 4000);
+  /*
+   * ANCHORED ON THE ROUTE, NOT ON A MENTION OF IT. This window ended at the
+   * first `/gallery-photo/` anywhere in the concatenated server, so the day
+   * another module so much as NAMED that path — the support log listing the
+   * ways a photograph leaves the app — the window collapsed and this test
+   * failed about the gallery, which had not changed. Same fault as the markup
+   * guard that stopped at the first `querySelector`: a window drawn at "about
+   * here" moves whenever anybody writes the string a little earlier.
+   */
+  const gallery = src.slice(
+    src.indexOf('const galleryRoomId'),
+    src.indexOf("route.startsWith('/gallery-photo/')") + 4000,
+  );
   assert.ok(
     !/isPublished\(HOUSE|photoFolder\(HOUSE\)|publishedNights\(HOUSE\)/.test(gallery),
     'a gallery route is still hardcoded to the house room — it will not find the owner\'s own nights',

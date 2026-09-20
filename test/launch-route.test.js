@@ -35,7 +35,7 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { freePort, stopped } from './helpers/live-server.mjs';
+import { freePort, stopped, waitForApp } from './helpers/live-server.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const KEY = 'launch-route-test-key';
@@ -74,15 +74,9 @@ async function withServer(run) {
   try {
     // Up to ten seconds to come up, then give in — a hang here would be worse
     // than a failure, because a test that hangs is a test people skip.
-    let up = false;
-    for (let i = 0; i < 100 && !up; i++) {
-      try {
-        await fetch(`${base}/api/state?role=screen`);
-        up = true;
-      } catch {
-        await new Promise((r) => setTimeout(r, 100));
-      }
-    }
+    // One poll for every spawner — see `waitForApp()`. Ten seconds was not
+    // enough under gig-build, and it waited them out on a server already dead.
+    const up = await waitForApp(child, `${base}/api/state?role=screen`);
     assert.ok(up, 'the server never came up');
     await run(base);
   } finally {

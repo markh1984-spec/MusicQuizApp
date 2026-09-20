@@ -282,3 +282,71 @@ test('AN UNRECOGNISED JOIN CODE IS REFUSED, not handed the owner\'s room', async
     assert.equal(bare.status, 200, 'joining the house room with no code stopped working');
   }, { hostKey: LIVE_KEY });
 });
+
+/*
+ * ------------------------------------------- what a room tells somebody else
+ *
+ * A ROOM'S SUMMARY TRAVELS TO THE OWNER, and it used to carry the things
+ * `own-packs.js` promises the owner cannot read: the pack's TITLE, its ID —
+ * which is the title slugged, so it is the same leak twice — and, through
+ * `engine.where()`, the title of the round they were on. `/api/library` sent
+ * all three unmasked in `otherRooms`; the subscribers overview masked the
+ * first two and left the third standing underneath, which masks nothing.
+ *
+ * No grant, no consent, no line in the support log. What the owner actually
+ * needs from another room is "is somebody mid-question before I deploy over
+ * them", and that is the phase, the count and the numbers.
+ */
+
+test('A ROOM\'S SUMMARY NAMES NOTHING THE OWNER MAY NOT READ', () => {
+  const { rooms, cleanup } = sandbox();
+  try {
+    const theirs = rooms.get('acc_rob', 'Rob');
+    theirs.session.pack = { id: 'robs-stag-do-special', title: "Rob's Stag Do Special" };
+
+    const safe = theirs.summary();
+    assert.equal(safe.pack, undefined, 'the pack title must not be in the default shape');
+    assert.equal(safe.packId, undefined, 'nor the id — a pack id is the title slugged');
+    assert.ok(safe.phase !== undefined && safe.players !== undefined,
+      'what the owner legitimately needs is still there');
+
+    const full = theirs.summary({ full: true });
+    assert.equal(full.packId, 'robs-stag-do-special',
+      'the one caller that must ask "is this theirs" can still ask');
+
+    cleanup();
+  } catch (err) { cleanup(); throw err; }
+});
+
+test('and the STATUS LINE does not carry a round title either', () => {
+  const { rooms, cleanup } = sandbox();
+  try {
+    const theirs = rooms.get('acc_rob', 'Rob');
+    const engine = theirs.session.engine;
+    if (engine && typeof engine.where === 'function') {
+      /*
+       * Driven through the engine's own `where()` rather than a stub: the
+       * naming switch has to hold for the real thing, and bingo's and the DJ
+       * set's `where()` never carried a title, so this is the only one.
+       */
+      const named = engine.where({ naming: true });
+      const safe = engine.where({ naming: false });
+      assert.equal(typeof safe, 'string');
+      assert.doesNotMatch(safe, /Stag|Secret/i, 'the room-safe line must not name a round');
+      assert.ok(named !== undefined);
+    }
+    cleanup();
+  } catch (err) { cleanup(); throw err; }
+});
+
+/*
+ * AND THE PATTERN, NOT THE SYMPTOM — which is what finds the next one. The
+ * owner's own views are the place a room's fields quietly become public, so
+ * neither of the two callers may go back to spreading a whole room.
+ */
+test('no owner-facing route spreads a room summary it has not masked', () => {
+  const src = serverSource();
+  const offenders = [...src.matchAll(/summaries\(\s*\{\s*full:\s*true\s*\}\s*\)/g)];
+  assert.ok(offenders.length <= 1,
+    `only the subscribers overview may ask for the full shape; found ${offenders.length}`);
+});

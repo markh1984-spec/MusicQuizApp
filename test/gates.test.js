@@ -237,7 +237,13 @@ test('suggestions are not treated as a pack write', () => {
  */
 test('the past-gigs routes ask for PAST_GIGS, not for the invoicing add-on', () => {
   const server = serverCode();
-  for (const route of ["'/api/past-gigs'", "'/api/past-gigs/'", "'/past-photo/'"]) {
+  /*
+   * THE ROUTE, NOT A MENTION OF IT — `'/past-photo/'` matched the support
+   * log's list of the ways a photograph leaves the app before it reached the
+   * route itself, and this then reported the gate missing on a route whose
+   * gate had not moved.
+   */
+  for (const route of ["'/api/past-gigs'", "'/api/past-gigs/'", "route.startsWith('/past-photo/')"]) {
     const at = server.indexOf(route);
     assert.ok(at > 0, `${route} has moved or gone`);
     assert.match(server.slice(at, at + 400), /FEATURES\.PAST_GIGS/,

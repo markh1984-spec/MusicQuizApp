@@ -28,7 +28,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { galleryNumbers, cleanBooking, bookingLink, bookingOf, BOOKING_MAX } from '../src/gallery-about.js';
-import { freePort, stopped } from './helpers/live-server.mjs';
+import { freePort, stopped, waitForApp } from './helpers/live-server.mjs';
 
 /* ---------------------------------------------------------- the arithmetic */
 
@@ -181,13 +181,19 @@ async function withApp(run) {
     { cwd: ROOT, env, stdio: 'ignore' });
   let server = start();
   const base = `http://127.0.0.1:${port}`;
+  // One poll for every spawner — see `waitForApp()`. Twelve seconds was not
+  // enough under gig-build, and it waited them out on a server already dead.
   const up = async () => {
-    for (let i = 0; i < 60; i += 1) {
-      try { await fetch(base); return; } catch { await wait(200); }
-    }
-    throw new Error('the server never came up');
+    if (!await waitForApp(server, base)) throw new Error('the server never came up');
   };
-  const restart = async () => { server.kill(); await wait(300); server = start(); await up(); };
+  const restart = async () => {
+    // GONE BEFORE THE REPLACEMENT BINDS THE SAME PORT — a sleep is a guess
+    // about how long a process takes to release a socket, and the answer is
+    // "longer, when the machine is busy", which is exactly when this runs.
+    await stopped(server);
+    server = start();
+    await up();
+  };
   try {
     await up();
     await run({ base, data, repo, restart });

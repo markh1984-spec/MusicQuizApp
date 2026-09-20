@@ -479,10 +479,27 @@ export class Engine {
    * is between rounds or twelve seconds into a question, and that decides
    * whether you touch anything.
    */
-  where() {
+  /**
+   * Where the game has got to, in one line.
+   *
+   * **`naming: false` IS THE ROOM-SAFE FORM, and it exists because this line
+   * travels.** A room's summary goes to the OWNER'S console, and the round's
+   * own title is the quizmaster's writing — `own-packs.js` guarantees the
+   * owner cannot read their packs, and *"Scores after Rob's Stag Do Special"*
+   * on the owner's overview is that guarantee broken by a status line. The
+   * numbers say everything the owner actually needs (is somebody mid-question
+   * before I deploy over them); the WORDS are what must not travel.
+   *
+   * Bingo's and the DJ set's own `where()` never carry a title, so this is the
+   * only one that needed the switch.
+   */
+  where({ naming = true } = {}) {
     const s = this.state;
     const round = this.round();
-    const roundName = round ? (round.title || `Round ${s.roundIndex + 1}`) : `Round ${s.roundIndex + 1}`;
+    const numbered = `Round ${s.roundIndex + 1}`;
+    const roundName = naming
+      ? (round ? (round.title || numbered) : numbered)
+      : numbered;
     const n = this.questions().length;
     switch (s.phase) {
       case PHASES.LOBBY: return 'Waiting in the lobby';

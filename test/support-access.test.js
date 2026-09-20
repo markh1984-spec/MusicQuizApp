@@ -467,3 +467,55 @@ test('the door has to be open, and closing it ends the session on the next reque
       'the same cookie still reached inside after the door was shut');
   });
 });
+
+/*
+ * -------------------------------------------------- "did you look at my photos"
+ *
+ * THAT IS THE QUESTION THIS LOG EXISTS TO ANSWER, and for months it answered
+ * it wrongly. `supportGuard()` began `if (!route.startsWith('/api/')) return
+ * true` — and no photograph in this app is served from `/api/`. They come off
+ * `/past-photo/`, `/gallery-photo/` and `/photos/`, so a support session could
+ * download every picture of a member of the public a subscriber had ever
+ * taken and the log stayed empty.
+ *
+ * WHAT KEPT ANYBODY FROM NOTICING is the part worth pinning: `supportWords()`
+ * carried `if (route.startsWith('/api/photos')) return 'Looked at your
+ * photos'` — a sentence about a route this app does not have. The gap looked
+ * closed from the inside, which is this repo's oldest fault wearing a log
+ * entry: a comment, or a string, that claims the opposite.
+ */
+
+test('THE SUPPORT LOG CAN SEE THE PHOTOGRAPHS — they do not come off /api/', async () => {
+  const { supportGuard, PHOTO_ROUTES } = await import('../src/http/support-log.js');
+  assert.ok(typeof supportGuard === 'function');
+
+  // The paths the app really serves pictures from, read off the routes.
+  const src = fs.readFileSync(
+    path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'src', 'http', 'get-gallery.js'),
+    'utf8',
+  );
+  for (const p of ['/past-photo/', '/gallery-photo/']) {
+    assert.ok(src.includes(`route.startsWith('${p}')`), `${p} is not a route any more — has it moved?`);
+    assert.ok(PHOTO_ROUTES.includes(p), `${p} serves photographs and the support log cannot see it`);
+  }
+  assert.ok(PHOTO_ROUTES.includes('/photos/'), 'the plain photo route is not logged');
+
+  /*
+   * AND NOT ONE OF THEM MAY BEGIN `/api/`, which is the whole reason the
+   * original scope missed them. If a photo route ever moves under `/api/`
+   * this stops being interesting — and this line is what will say so.
+   */
+  for (const p of PHOTO_ROUTES) {
+    assert.ok(!p.startsWith('/api/'), `${p} is under /api/ now — the old guard would have caught it`);
+  }
+});
+
+test('and the log does not name a route that does not exist', () => {
+  const src = fs.readFileSync(
+    path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'src', 'http', 'support-log.js'),
+    'utf8',
+  );
+  assert.doesNotMatch(src, /startsWith\('\/api\/photos'\)/,
+    "`/api/photos` is not a route this app has — a log line naming it is what "
+    + 'made the gap look closed for months');
+});

@@ -82,6 +82,41 @@ export async function stopped(child, signal = 'SIGTERM') {
   ]);
 }
 
+/**
+ * IS IT UP YET — one poll, not twelve.
+ *
+ * **TWELVE TEST FILES EACH CARRIED THIS LOOP**, identical to the character,
+ * and every one of them had the same two faults:
+ *
+ * **IT GAVE UP AFTER TEN SECONDS.** Fine alone; not fine under `gig-build`,
+ * where `npm test` runs at CPU concurrency with browsers either side of it and
+ * a cold boot has to read the catalogue, copy two pack folders and open a
+ * store. It failed twice in one evening, in a different file each time — and
+ * the message it fails with names the APP, so the reflex is to go and look at
+ * a server that was simply still starting. That is the same shape as the
+ * hard-coded Playwright path: *a guard that fails for a reason that is not the
+ * app's teaches you to read past red.*
+ *
+ * **AND IT WAITED THE FULL TEN SECONDS ON A SERVER THAT HAD ALREADY DIED.**
+ * A boot that throws — a bad import, a port taken — exits in milliseconds, and
+ * the loop then sat there refusing connections to a process that was gone,
+ * before reporting the one thing it could not have been. `withServer()` above
+ * has checked `child.exitCode` since the day it was written; the copies never
+ * learned it.
+ *
+ * @param {import('node:child_process').ChildProcess} child  so a dead one is
+ *        noticed at once rather than waited out
+ * @param {string} url  something that answers when the app is listening
+ * @returns {Promise<boolean>}
+ */
+export async function waitForApp(child, url, { tries = 250, every = 100 } = {}) {
+  for (let i = 0; i < tries; i += 1) {
+    if (child && child.exitCode !== null) return false;
+    try { await fetch(url); return true; } catch { await new Promise((r) => setTimeout(r, every)); }
+  }
+  return false;
+}
+
 /** A port the OS says is free right now, on the loopback the server binds. */
 export function freePort() {
   return new Promise((resolve, reject) => {

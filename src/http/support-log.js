@@ -118,13 +118,36 @@ export function supportWords(method, route) {
   if (route === '/api/me/password') return 'Changed your password';
   if (route === '/api/calendar/link') return read ? 'Looked at your calendar link' : 'Made you a new calendar address';
   if (route.startsWith('/api/archive')) return 'Looked at your past nights';
-  if (route.startsWith('/api/photos')) return 'Looked at your photos';
+  /*
+   * THE PHOTOGRAPHS, AND THIS LINE IS WHY THE GAP LOOKED CLOSED FOR MONTHS.
+   * `/api/photos` is not a route this app has — the pictures are served from
+   * `/past-photo/`, `/gallery-photo/` and `/photos/`, none of which begin
+   * `/api/`, which is where the guard used to stop. So the log carried a
+   * sentence about a thing it could not see, and *"did you look at my
+   * photos"* — the question the log exists to answer — was answered wrongly.
+   */
+  if (PHOTO_ROUTES.some((p) => route.startsWith(p))) return 'Looked at your photos';
   if (route === '/api/library') return 'Looked at your pack library';
   return `${method} ${route}`;
 }
 
+/**
+ * The ways a photograph actually leaves this app.
+ *
+ * A support session could download every picture of a member of the public a
+ * subscriber had ever taken, and the log said nothing — see `supportWords()`
+ * above for why nobody noticed.
+ */
+export const PHOTO_ROUTES = ['/past-photo/', '/gallery-photo/', '/photos/'];
+
 export function supportGuard(req, res, url, route) {
-  if (!route.startsWith('/api/')) return true;
+  /*
+   * `/api/` PLUS THE PHOTOGRAPHS. The prefix test was the whole scope, and it
+   * is the right default — static files, the projector and the phones are not
+   * support actions — but a picture of somebody's customers leaving the app is
+   * exactly what this log is for.
+   */
+  if (!route.startsWith('/api/') && !PHOTO_ROUTES.some((p) => route.startsWith(p))) return true;
   const who = whoIs(req, url);
   // The flag set by whoIs on an ACTING identity, never the grant object a
   // subscriber carries on their own account — see the note there.
