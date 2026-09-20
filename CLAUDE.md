@@ -1227,8 +1227,8 @@ Full reasoning: **[`docs/dj.md`](docs/dj.md)**.
 - **TYPED IS FIRST-CLASS, NOT DEGRADED** — his DJ software reads off the
   TITLE. **Search is a POST because it carries the TOKEN** — every phone spends
   his ONE Spotify token — and **not configured is SAID OUT LOUD.**
-- **THE LINE THE DJ PASTES IS WORDED ON THE SERVER.** **`APP_NAME` in
-  `dj-door.js` is ONE constant, MARKED as a placeholder.**
+- **THE LINE THE DJ PASTES IS WORDED ON THE SERVER.** **IT IS CALLED JUKEBOX** — `APP_NAME`
+  in `dj-door.js`, one constant, no longer a placeholder.**
 - **IT IS NOT ON THE CONSOLE'S GAME PICKER, and `game-kinds.test.js` NAMES
   that exception** — there is no DJ pack to play.
 - **EVERY ENGINE MUST ANSWER THE SHARED CONTRACT —

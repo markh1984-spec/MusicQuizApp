@@ -27,9 +27,22 @@ import { esc, node, postJson, brandMark } from './client.js';
  * rule the legal pages already run on: *a placeholder must stay MARKED or
  * nobody greps it.*
  *
- * PLACEHOLDER — rename when the host chooses.
+ * NAMED ON 20 SEPTEMBER 2026 — the host chose it, and it is no longer a
+ * placeholder. The metaphor is the whole argument: a jukebox is the machine a
+ * ROOM picks the music on, which is exactly what this is, and it needs no
+ * explaining to a DJ, a landlord or anybody standing at the bar.
+ *
+ * It was weighed against Encore, Setlist and leaving it as *Requests*. The
+ * last is what it had been, and it is the one this rename is FOR: "Requests"
+ * on a door is indistinguishable from a button label, so the one word on the
+ * page that should say whose product this is said nothing at all.
+ *
+ * `Jukebox` is a generic word and that is deliberate — it is being used
+ * descriptively, for a thing that is literally a jukebox, which is also why it
+ * carries no legal weight of the kind that deleted Pile Up and renamed three
+ * lobby games.
  */
-const APP_NAME = 'Requests';
+const APP_NAME = 'Jukebox';
 
 const root = document.getElementById('djDoor');
 

@@ -44,18 +44,14 @@ baked into the stored bytes, so **correcting a venue's overlay corrects every
 photograph that already exists** — rule 11, for free, where a copy written at
 publish time would have had to be regenerated. Do not rebuild it as a bake.
 
-### 0a. NAME THE DJ APP — one word, thirty seconds
+### 0a. THE DJ APP'S OWN ADDRESS — two settings, and it is called Jukebox now
 
-**Only you can do this and everything else about it is built.** A DJ set runs
-end to end: the code on the screen, the photo wall, the unlock, the request
+**Named on 20 September 2026.** The rest of it was already built: a DJ set runs
+end to end — the code on the screen, the photo wall, the unlock, the request
 box with Spotify search and a typed fallback, and the queue on the desk with a
 copy button. `node scripts/dj-set.mjs` drives the lot in a real browser.
 
-The name is in **one** constant, marked as a placeholder — `APP_NAME` in
-`public/assets/dj-door.js`, currently **Requests**. Say a word and it is one
-edit, plus the `<title>` in `public/dj.html`.
-
-Two smaller things that also want you rather than me, neither blocking:
+Two things left, both yours, neither blocking:
 
 - **What it costs.** `/api/dj/*` asks only that somebody is signed in. Nothing
   gates it on a tier, deliberately — putting it behind `FEATURES.QUIZ` would
