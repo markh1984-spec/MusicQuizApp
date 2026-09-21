@@ -1049,25 +1049,25 @@ export async function nightPhotos(body, night, opts = {}) {
        * than over a list, which is where the last one was a nuisance.
        */
       /*
-       * OFF HAS TWO REASONS AGAIN, AND THEY ARE DIFFERENT THINGS TO WANT TO
-       * CHANGE — *"the punter photos are red by default and I go through and
-       * click green on the ones I want."*
-       *
-       * A photograph the ROOM sent is off because nobody has said otherwise;
-       * one the house camera took is off only because a human turned it off.
-       * Collapsing those into one sentence is what makes somebody hunt for a
-       * setting that is not there — so the lamp names which it is, off the
-       * `ruled` the server already sends beside the name.
-       *
-       * `p.source` is the SERVER's answer (`photoSource()` in photos.js), not a
-       * second reading of the filename in here — the same rule `onGallery`
-       * follows, and the reason adding the camera marker touched one place.
+       * OFF HAS TWO REASONS AND THEY ARE DIFFERENT THINGS TO WANT TO CHANGE:
+       * the room's photograph is off because nobody has said otherwise, the
+       * house camera's because a human turned it off. **`p.source` is the
+       * SERVER's answer (`photoSource()`), never a second reading of the
+       * filename here.** `docs/gigs/photo-controls.md`.
        */
       const fromRoom = p.source !== 'house';
+      // A GREEN LAMP MAY NOT SAY "on the public gallery" ON AN UNPUBLISHED
+      // NIGHT — the lamp's JOB is unchanged, only what it claims. See
+      // `docs/gigs/photo-controls.md`.
+
+      const up = Boolean(data.published);
+      // The aside goes at the END, or it splits the sentence it is explaining:
+      // "Ready for the gallery — the room sent this one, once you publish…".
+      const sent = fromRoom ? ' The room sent this one and you put it up.' : '';
       const why = live
-        ? (fromRoom
-          ? 'On the public gallery — the room sent this one and you put it up. Click to take it off.'
-          : 'On the public gallery for this night. Click to take it off.')
+        ? (up
+          ? `On the public gallery for this night.${sent} Click to take it off.`
+          : `Ready for the gallery, once you publish this night.${sent} Click to hold it back.`)
         : (p.ruled === 'off'
           ? 'You have taken this one off the public gallery. Click to put it back.'
           : 'The room sent this one, so it is waiting for you. Click to put it on the public gallery.');

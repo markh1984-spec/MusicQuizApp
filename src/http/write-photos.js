@@ -276,6 +276,26 @@ export async function writePhotos(req, res, url, route) {
     dropPhoto(gone);
     dropPhotoFromDisk(gone);
     dropNight(gone.slice(0, gone.lastIndexOf('/')));
+    /*
+     * AND THE PIN GOES WITH IT, or the card keeps a slot for a photograph that
+     * is not there.
+     *
+     * A pin is one of three a night's card may show, and `pinNow()` refuses a
+     * fourth with *"Three is the most a card can show. Take one off first."*
+     * A pinned photo that is binned left its pin behind — so the count read
+     * three with two on screen, the refusal named a limit the host could see
+     * was not reached, and there was no control anywhere that could clear it:
+     * the one that would have is drawn on the tile, and the tile is gone.
+     *
+     * Deliberately AFTER the delete and deliberately not fatal. The pin is
+     * bookkeeping about a file; if the file survived, the pin should too, and
+     * if clearing it fails the photograph is still gone — which is what the
+     * host asked for. `pinNow()` no-ops on a photo that was never pinned.
+     */
+    if (!done || done.ok !== false) {
+      await setPhotoPin(galleryRoomFor(req, url), night, name, false)
+        .catch(() => { /* the photograph is gone either way */ });
+    }
     if (done && done.ok === false) return sendJson(res, 502, { error: done.error || 'Could not delete that.' }), true;
     return sendJson(res, 200, { ok: true, night, name }), true;
   }

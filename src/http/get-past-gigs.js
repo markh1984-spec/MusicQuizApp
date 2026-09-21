@@ -159,7 +159,7 @@ export async function getPastGigs(req, res, url, route) {
      * every other read of `leagues-published.json`.
      */
     const ruled = await nameDecisions(galleryRoomFor(req, url));
-    if (entry.venue && seesTheirLeague(req, url) && await leagueRunsAt(galleryRoomFor(req, url), entry)) {
+    if (entry.venue && seesTheirLeague(req, url) && await leagueRunsAt(galleryRoomFor(req, url), entry, nights)) {
       // `sameVenue()`, not a string compare — see the note on it. A pub booked
       // off the book one week and typed freehand the next split the season on
       // the one document a landlord forwards to a brewery.

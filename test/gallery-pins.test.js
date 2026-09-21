@@ -339,3 +339,82 @@ test('a date that is not a night is refused before anything is written', async (
     assert.equal(repo.files.size, 0, 'a bad date wrote the file');
   } finally { repo.restore(); }
 });
+
+/*
+ * ------------------------------------------------------------ a ghost pin
+ *
+ * A PIN IS A SLOT ON THE CARD, AND BINNING THE PHOTOGRAPH LEFT ITS PIN.
+ *
+ * Three is the most a night's card shows, and a fourth is refused with *"Three
+ * is the most a card can show. Take one off first."* Delete a pinned photo and
+ * the pin stayed: the count read three with two on screen, the refusal named a
+ * limit the host could see was not reached, and there was NO control anywhere
+ * that could clear it — the one that would have is drawn on the tile, and the
+ * tile is the thing that has gone.
+ *
+ * This pins the store's half of the fix. The route half (`write-photos.js`'s
+ * DELETE) clears the pin after the file is gone.
+ */
+
+test('A PIN TAKEN OFF A BINNED PHOTOGRAPH FREES ITS SLOT', async () => {
+  const repo = stubRepo();
+  try {
+    for (const n of ['p1.jpg', 'p2.jpg', 'p3.jpg']) {
+      assert.equal((await setPhotoPin(ROOM, NIGHT, n, true)).ok, true);
+    }
+    // The fourth is refused while three are genuinely held.
+    assert.equal((await setPhotoPin(ROOM, NIGHT, 'p4.jpg', true)).ok, false);
+
+    // p2 is binned. This is what the DELETE route now does afterwards.
+    assert.equal((await setPhotoPin(ROOM, NIGHT, 'p2.jpg', false)).ok, true);
+
+    const after = (await photoPins(ROOM))[NIGHT] || [];
+    assert.ok(!after.includes('p2.jpg'), 'the binned photograph still holds a pin');
+    assert.equal(after.length, 2);
+
+    assert.equal((await setPhotoPin(ROOM, NIGHT, 'p4.jpg', true)).ok, true,
+      'the freed slot is still refused — the card keeps a place for a photo '
+      + 'that is not there, and nothing can clear it');
+  } finally { repo.restore(); }
+});
+
+test('and clearing a pin nothing holds is a no-op, not an error', async () => {
+  const repo = stubRepo();
+  try {
+    /*
+     * THE DELETE ROUTE CALLS THIS FOR EVERY PHOTOGRAPH IT BINS, pinned or not
+     * — it has no cheap way to know which, and asking first would be a second
+     * read of the same file on the one path that is already doing a write.
+     */
+    assert.equal((await setPhotoPin(ROOM, NIGHT, 'p9.jpg', false)).ok, true);
+
+    /*
+     * AND A NAME `PHOTO_NAME` REFUSES IS STILL REFUSED — `p9-never.jpg` has a
+     * hyphen in its base, which the pattern does not allow. Harmless on the
+     * delete path, where the name has already been through `safePhotoName()`,
+     * but worth pinning: it is the difference between "nothing to clear" and
+     * "that is not a photograph", and only one of them should be quiet.
+     */
+    assert.equal((await setPhotoPin(ROOM, NIGHT, 'p9-never.jpg', false)).ok, false);
+  } finally { repo.restore(); }
+});
+
+/*
+ * ------------------------------------- WHAT IS NOT PROVEN HERE, AND SHOULD BE
+ *
+ * `write-photos.js`'s delete route clears a photograph's pin as it bins it —
+ * a pinned photo used to leave its pin behind, so a night's card counted three
+ * with two on screen and `pinNow()` refused a fourth naming a limit the host
+ * could see was not reached, with no control left that could clear it.
+ *
+ * **THAT FIX HAS NO TEST, AND TWO ATTEMPTS AT ONE BOTH PASSED WITH IT TAKEN
+ * OUT.** The first drove `setPhotoPin()`/`photoPins()` directly, which is the
+ * library rather than the route the fix lives in. The second drove the route
+ * over HTTP and asserted on pin endpoints that answered nothing in the stubbed
+ * app, so both sides read as an empty list and the assertion could not fail.
+ *
+ * A test that cannot fail is worse than no test, because it is believed — so
+ * neither was kept. What is needed is a stubbed app where a pin genuinely
+ * reads back before the delete; until then this is the honest note, and the
+ * fix stands on being read rather than on being proven.
+ */

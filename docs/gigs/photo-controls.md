@@ -620,3 +620,46 @@ button back, so the press that opened it is the press that closes it.
 `photo-sweep.mjs` opens a tile and presses it again, on **both** doors — and
 the Post gig half was verified by putting the fault back, which failed it while
 Community stayed green.
+
+---
+
+## A lamp may not claim a page the night has not got
+
+Reported by the September sweep and confirmed against the code on 21 September
+2026: every lamp on a night's grid drew green and said **"On the public
+gallery for this night"**, four inches above the button offering to *publish
+that night*. Both halves were individually correct and together they said
+opposite things.
+
+**The lamp is one gate and the night's publish state is another above it.**
+`showsOnGallery()` decides whether a photograph would be on the page;
+`published.json`'s night list decides whether the page exists at all. A green
+lamp on an unpublished night means *this one would show* — which is a useful
+thing to know and not what the words said.
+
+It reads wrongly in both directions, which is what makes it worth the change
+rather than worth explaining:
+
+- pressing **Publish** underneath looks like tidying up something already
+  public, so the one control that carries the consent decision reads as a
+  formality;
+- and seeing green on a night he knows is down, the reflex is to start
+  flicking lamps off in a hurry — undoing the per-photo decisions that are the
+  expensive part, over a night that was never up.
+
+**The lamp's JOB is unchanged. Only what it CLAIMS moved.** `live` is still
+the photograph's own answer and the press still does exactly what it did; the
+night's gate goes into the sentence:
+
+> *"Ready for the gallery, once you publish this night. Click to hold it
+> back."*
+
+The room-sent variant keeps its own half (*"the room sent this one and you put
+it up"*), because *off has two reasons* and so does on — a photograph the room
+sent and a human passed is a different fact from one the house camera took,
+and that distinction is the whole reason `p.source` comes off the SERVER
+rather than being re-read from the filename in the browser.
+
+**`data.published` is already on the payload** — `nightPhotos()` fetches the
+pictures and the published flag together, which is the *one request per night,
+not two* rule — so this cost no round trip and no new field.

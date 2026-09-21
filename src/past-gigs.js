@@ -206,6 +206,41 @@ export function mergeGigs(archived = [], photoNights = []) {
  */
 export const PHOTO_NAME = /^[a-z0-9]+(-picked)?(-cam)?\.(jpg|png|webp)$/i;
 
+/**
+ * EVERY KEY THAT MEANS THIS PUB — the fold, as a set.
+ *
+ * **ONE PUB IS ONE LEAGUE, AND ANYTHING STORED PER VENUE IS KEYED ON THE
+ * FOLDED KEY.** `leaguesByVenue()` groups by NAME and then keeps the `id:` key
+ * whenever any night at that pub carries one, so a pub picked off the book
+ * once and typed freehand twice has its league, its published table and its
+ * name rulings all filed under `id:xyz` — while a freehand night's own
+ * `venueKeyOf()` is the bare name.
+ *
+ * Asking a per-venue store with one night's own key therefore answers no for
+ * every freehand night at a pub that has ever been picked off the book. It
+ * cost the landlord's report its season table on the two most recent nights,
+ * which are the ones actually forwarded to a brewery.
+ *
+ * This is the id-versus-typed-name split again, which is why `sameVenue()` is
+ * a function rather than a string compare — this is that rule asked in the
+ * other direction: not "are these two nights the same pub" but "which keys
+ * does this pub answer to".
+ *
+ * @param {object} entry   the night being asked about
+ * @param {Array}  nights  the archive to fold against; none means no fold,
+ *                         which is the honest answer rather than a wrong one
+ */
+export function venueKeysFor(entry, nights = []) {
+  const keys = new Set([venueKeyOf(entry), String(entry.venue || '').trim().toLowerCase()]);
+  for (const night of nights) {
+    if (!sameVenue(night, entry)) continue;
+    keys.add(venueKeyOf(night));
+    keys.add(String(night.venue || '').trim().toLowerCase());
+  }
+  keys.delete('');
+  return keys;
+}
+
 export function safePhotoName(name) {
   return PHOTO_NAME.test(String(name || '')) ? String(name) : '';
 }

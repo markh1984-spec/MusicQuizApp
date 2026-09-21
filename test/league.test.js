@@ -320,3 +320,62 @@ test('an id and a bare name at one pub are ONE league, and the id keeps the key'
   assert.equal(keys[0], 'id:v1');
   assert.equal(leagues['id:v1'].table.length, 2);
 });
+
+/*
+ * ------------------------------------------- which keys a pub answers to
+ *
+ * THE LEAGUE SWITCH IS STORED AGAINST THE FOLDED KEY, AND A FREEHAND NIGHT
+ * DOES NOT CARRY IT.
+ *
+ * `leaguesByVenue()` groups by NAME and then keeps the `id:` key whenever any
+ * night at that pub has one — so a pub picked off the book in August and typed
+ * freehand in September runs its league under `id:xyz`, and so do its
+ * published table and its name rulings.
+ *
+ * `leagueRunsAt()` asked with the night's OWN key, which for a freehand night
+ * is the bare name. It answered no, and the landlord's report silently dropped
+ * the season table — on the two most recent nights, which are the ones
+ * actually forwarded to a brewery, while the public page was correct.
+ */
+
+test('A FREEHAND NIGHT STILL BELONGS TO THE PUB THAT RUNS THE LEAGUE', async () => {
+  const { venueKeysFor } = await import('../src/past-gigs.js');
+
+  const booked = { venue: 'The Crown', venueId: 'xyz', at: 2 };
+  const freehand = { venue: 'The Crown', at: 1 };           // typed, no id
+  const nights = [booked, freehand];
+
+  // This is the key the league, the published table and the rulings are on.
+  const folded = 'id:xyz';
+
+  const forBooked = venueKeysFor(booked, nights);
+  assert.ok(forBooked.has(folded), 'a night with the id must match its own key');
+
+  const forFreehand = venueKeysFor(freehand, nights);
+  assert.ok(forFreehand.has(folded),
+    'the freehand night does not answer to the key its own pub runs the league '
+    + 'under — its report will silently lose the season table');
+  assert.ok(forFreehand.has('the crown'), 'and it still answers to the bare name');
+});
+
+test('and a DIFFERENT pub never borrows the key', async () => {
+  const { venueKeysFor } = await import('../src/past-gigs.js');
+  const nights = [{ venue: 'The Crown', venueId: 'xyz' }, { venue: 'The Wheatsheaf', venueId: 'abc' }];
+  const keys = venueKeysFor({ venue: 'The Wheatsheaf' }, nights);
+  assert.ok(keys.has('id:abc'), 'its own pub, folded');
+  assert.ok(!keys.has('id:xyz'), 'a different pub leaked in — one league would answer for two');
+});
+
+test('with no archive to fold against it answers as it always did', async () => {
+  const { venueKeysFor } = await import('../src/past-gigs.js');
+  const keys = venueKeysFor({ venue: 'The Crown' });
+  assert.deepEqual([...keys].sort(), ['the crown'],
+    'no nights means no fold — honest rather than wrong');
+});
+
+test('an EMPTY venue matches nothing at all', async () => {
+  const { venueKeysFor } = await import('../src/past-gigs.js');
+  // A night with no pub on it must not land in every pub's season — the rule
+  // `sameVenue()` already states.
+  assert.equal(venueKeysFor({ venue: '' }).size, 0);
+});

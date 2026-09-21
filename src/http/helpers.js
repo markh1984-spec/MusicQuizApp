@@ -1,7 +1,7 @@
 /**
  * BACKUPS, RESTORES AND THE HELPERS THAT SAT BETWEEN THE TWO ROUTE HANDLERS. Moved whole from server.js — the backup/restore machinery (restoreOnce and the four ensure*Restored move together, with their Sets), and the domain helpers for invoices, owner money, adverts and pack liveness that were interleaved with them. Cut per function into their own homes when there is a reason to.
  */
-import { FEATURES, HOUSE, PHASES, accounts, backupPath, can, checkAccess, config, countOwn, deleteFile, dropNight, flagKey, fs, fullLibrary, getFile, githubConfigured, hooks, moderationConfigured, scorePhoto, setPhotoFlag, spendRecorder, isCleanForPublic, isComposed, leaguesRunning, listAdvertPacks, listArchive, loadQuiz, mergeGigs, packsRepoConfigured, path, paths, photoFolder, photosRepoConfigured, privateRepoConfigured, propUse, putFile, putFiles, readPack, readStats, statsReadable, reports, restoreArchive, rooms, safeAdvertFile, serialiseArchive, spend, suggestions, teamKey, toPence, totals, tryGetFile, tryListDir, venueKeyOf } from './context.js';
+import { FEATURES, HOUSE, PHASES, accounts, backupPath, can, checkAccess, config, countOwn, deleteFile, dropNight, flagKey, fs, fullLibrary, getFile, githubConfigured, hooks, moderationConfigured, scorePhoto, setPhotoFlag, spendRecorder, isCleanForPublic, isComposed, leaguesRunning, listAdvertPacks, listArchive, loadQuiz, mergeGigs, packsRepoConfigured, path, paths, photoFolder, photosRepoConfigured, privateRepoConfigured, propUse, putFile, putFiles, readPack, readStats, statsReadable, reports, restoreArchive, rooms, safeAdvertFile, serialiseArchive, spend, suggestions, sameVenue, teamKey, toPence, totals, tryGetFile, tryListDir, venueKeyOf, venueKeysFor } from './context.js';
 import { whoIs } from './identity.js';
 import { pushState } from './views.js';
 
@@ -1075,12 +1075,12 @@ export function markHidden(leagues) {
  * roughly half the time. The rule this repo already has for that is to ask
  * under both; see `heard.js`.
  */
-export async function leagueRunsAt(roomId, entry) {
+export async function leagueRunsAt(roomId, entry, nights = []) {
   const on = await leaguesRunning(roomId);
   if (!on.length) return false;
-  const name = String(entry.venue || '').trim().toLowerCase();
-  const key = venueKeyOf(entry);
-  return on.some((k) => k === key || k === name);
+  // EVERY KEY THAT MEANS THIS PUB, not this night's own — see `venueKeysFor()`.
+  const keys = venueKeysFor(entry, nights);
+  return on.some((k) => keys.has(k));
 }
 
 /**
