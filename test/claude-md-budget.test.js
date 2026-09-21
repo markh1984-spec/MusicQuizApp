@@ -1264,7 +1264,25 @@ const ROOT = new URL('..', import.meta.url).pathname;
  *    wrong API version, and the live failure is silent by design — an unknown
  *    price correctly leaves the tier alone.
  */
-const BUDGET = 278_800;
+/*
+ * AND TO 279_000 ON 22 SEPTEMBER 2026, for one line: `rehearse-tonight.mjs`
+ * in the checks list.
+ *
+ * Paid for first, twice, before asking — the draw's headstone lost a clause
+ * now that the code it describes is gone, and a sentence in it was tightened.
+ * The remaining ~60 bytes are the guard's own line, and this comment is the
+ * diff saying so.
+ *
+ * It earns always-loaded space because of what it checks that nothing else
+ * does. Every other guard proves the APP and runs whatever pack it finds
+ * first; this one proves the NIGHT. Three of four packs with an image round
+ * had no pictures, most intro cues had no track behind them, and a
+ * general-knowledge question named the song the intro round played an hour
+ * later — none of which is a fault in the app, so none of which the suite
+ * has ever mentioned. A session that does not know this command exists will
+ * go on proving the machinery on the evening the packs are the problem.
+ */
+const BUDGET = 279_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

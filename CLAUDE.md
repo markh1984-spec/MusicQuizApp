@@ -3459,17 +3459,16 @@ Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 It paid a free drink to one team drawn at random from the bottom half of the
 board, taking the LAST prize on the venue's list, for retention: a table that
-knows by round three it cannot win will not stay. `drawLuckyDip()`,
-`state.luckyDip`, the band under the podium and `answeredTheLastQuestion()`
-are gone.
+knows by round three it cannot win will not stay. `drawLuckyDip()`, the band
+under the podium and `answeredTheLastQuestion()` are gone.
 
 **IT WENT BECAUSE THE HOST DID NOT KNOW IT EXISTED.** Asked outright, *"not
 sure what the draw even means"* — about a band his own projector had printed
 under every final for months. **There was no switch**: it fired by itself on
 any night with three or more prizes listed, so a venue funding three drinks
-quietly gave away a fourth and the person paying could not say why. That is
-*clarity beats everything* failing at the top of its own list, and a feature
-nobody can explain is worse than one nobody uses when it spends money weekly.
+quietly gave away a fourth and the person paying could not say why. *Clarity
+beats everything* failing at the top of its own list — and a feature nobody
+can explain is worse than one nobody uses when it spends money weekly.
 
 **DO NOT REBUILD IT.** Retention starts from a control he chose, never a
 behaviour he inherits. **A `draw: true` voucher is still tolerated**, so a
@@ -4454,6 +4453,7 @@ node scripts/two-devices.mjs            # two control views — does a press lan
 node scripts/wifi-blip.mjs              # the wifi drops on each screen — does it come back right?
 node scripts/long-night.mjs             # sixty phones, forty questions — memory and latency
 node scripts/flight-recorder.mjs        # does a broken night write itself down, and can the host copy it?
+node scripts/rehearse-tonight.mjs --quiz ID --bingo ID  # do TONIGHT'S packs play?
 node scripts/gig-build.mjs              # THE MONDAY BUILD: all of the above, one verdict
 ```
 
