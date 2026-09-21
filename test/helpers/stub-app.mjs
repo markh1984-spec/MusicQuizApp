@@ -51,7 +51,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { freePort, stopped } from './live-server.mjs';
+import { freePort, stopped, waitForApp } from './live-server.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const STUB = join(ROOT, 'test', 'helpers', 'photo-repo-stub.mjs');
@@ -95,11 +95,14 @@ export async function withStubbedApp(run, { prefix = 'stubapp' } = {}) {
 
   let server = start();
   const base = `http://127.0.0.1:${port}`;
+  /*
+   * ONE POLL FOR EVERY SPAWNER — `waitForApp()`. Twelve seconds was not enough
+   * under `gig-build`, where `npm test` runs at CPU concurrency with browsers
+   * either side of it, and this waited them out on a server that had already
+   * died. It notices a dead child at once and gives a live one longer.
+   */
   const up = async () => {
-    for (let i = 0; i < 60; i += 1) {
-      try { await fetch(base); return; } catch { await wait(200); }
-    }
-    throw new Error('the server never came up');
+    if (!await waitForApp(server, base)) throw new Error('the server never came up');
   };
   const restart = async () => {
     // GONE BEFORE THE REPLACEMENT BINDS. A sleep is a guess about how long a

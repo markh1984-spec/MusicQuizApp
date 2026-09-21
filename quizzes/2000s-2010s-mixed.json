@@ -1,0 +1,435 @@
+{
+  "id": "2000s-2010s-mixed",
+  "title": "The 2000s & 2010s Mixed Music Quiz",
+  "subtitle": "Twenty on the decades, ten to name from the intro",
+  "questionSeconds": 20,
+  "createdAt": "2026-09-22T00:00:00.000Z",
+  "notes": "Written 22 September 2026 for the Station Tap. No image round: a picture question cannot exist without its file and the only drawn artwork is the eleven 2000s portraits already used by the 2000-2010 pack. The intro cues carry no spotifyUri yet — run scripts/recue-all.mjs on a machine with Spotify credentials and commit, or play them off the DJ app.",
+  "rounds": [
+    {
+      "id": "r1",
+      "type": "text",
+      "title": "Round One — The 2000s and 2010s",
+      "questions": [
+        {
+          "id": "r1q1",
+          "prompt": "Which band released 'Original Pirate Material' in 2002?",
+          "options": [
+            "The Streets",
+            "Dizzee Rascal",
+            "Roots Manuva",
+            "The Libertines"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Mike Skinner's project — the album is credited to The Streets."
+        },
+        {
+          "id": "r1q2",
+          "prompt": "'Back to Black' was which artist's second album?",
+          "options": [
+            "Duffy",
+            "Adele",
+            "Amy Winehouse",
+            "Joss Stone"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Her first was Frank, in 2003."
+        },
+        {
+          "id": "r1q3",
+          "prompt": "Which artist released 'In the Lonely Hour' in 2014?",
+          "options": [
+            "Sam Smith",
+            "James Bay",
+            "Hozier",
+            "Tom Odell"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It won him four Grammys the following year."
+        },
+        {
+          "id": "r1q4",
+          "prompt": "Who featured on Rihanna's 2007 single 'Umbrella'?",
+          "options": [
+            "Kanye West",
+            "Drake",
+            "Jay-Z",
+            "Eminem"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It spent ten weeks at number one in the UK."
+        },
+        {
+          "id": "r1q5",
+          "prompt": "Which band's debut album was 'Whatever People Say I Am, That's What I'm Not'?",
+          "options": [
+            "The Libertines",
+            "Arctic Monkeys",
+            "The Kooks",
+            "Kaiser Chiefs"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It was the fastest-selling debut album in UK chart history at the time."
+        },
+        {
+          "id": "r1q6",
+          "prompt": "'Feel Good Inc.' appeared on which Gorillaz album?",
+          "options": [
+            "Gorillaz",
+            "Demon Days",
+            "Plastic Beach",
+            "Humanz"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Demon Days came out in 2005."
+        },
+        {
+          "id": "r1q7",
+          "prompt": "Which artist released 'Nothing but the Beat' in 2011?",
+          "options": [
+            "Calvin Harris",
+            "David Guetta",
+            "Swedish House Mafia",
+            "Tiesto"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It gave him 'Titanium' and 'Without You'."
+        },
+        {
+          "id": "r1q8",
+          "prompt": "Who won the 2004 series of The X Factor?",
+          "options": [
+            "Shayne Ward",
+            "Leona Lewis",
+            "Steve Brookstein",
+            "Alexandra Burke"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The show's opening series — he beat G4 in the final."
+        },
+        {
+          "id": "r1q9",
+          "prompt": "Which band released 'Viva la Vida or Death and All His Friends'?",
+          "options": [
+            "Keane",
+            "Snow Patrol",
+            "Coldplay",
+            "Travis"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The title track was their first US number one."
+        },
+        {
+          "id": "r1q10",
+          "prompt": "Which band released 'Brothers' in 2010?",
+          "options": [
+            "The Black Keys",
+            "Kings of Leon",
+            "The Raconteurs",
+            "Cage the Elephant"
+          ],
+          "correctIndex": 0,
+          "answerNote": "'Tighten Up' was the single everybody knows."
+        },
+        {
+          "id": "r1q11",
+          "prompt": "Which artist released 'Lemonade' in 2016?",
+          "options": [
+            "Rihanna",
+            "Beyoncé",
+            "Alicia Keys",
+            "Solange"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It arrived as a surprise visual album."
+        },
+        {
+          "id": "r1q12",
+          "prompt": "'Somebody That I Used To Know' was a 2011 hit for which artist?",
+          "options": [
+            "Passenger",
+            "Gotye",
+            "James Blunt",
+            "Milky Chance"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Kimbra sang the second verse."
+        },
+        {
+          "id": "r1q13",
+          "prompt": "Which band released 'Is This It' in 2001?",
+          "options": [
+            "Interpol",
+            "The Strokes",
+            "The Vines",
+            "Yeah Yeah Yeahs"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It is regularly named one of the decade's best debuts."
+        },
+        {
+          "id": "r1q14",
+          "prompt": "Which group had a 2011 hit with 'Moves Like Jagger'?",
+          "options": [
+            "OneRepublic",
+            "Maroon 5",
+            "Train",
+            "The Script"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Christina Aguilera featured on it."
+        },
+        {
+          "id": "r1q15",
+          "prompt": "'Uptown Funk' was credited to Mark Ronson featuring whom?",
+          "options": [
+            "Pharrell Williams",
+            "Bruno Mars",
+            "Cee Lo Green",
+            "Anderson .Paak"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It spent seven weeks at UK number one."
+        },
+        {
+          "id": "r1q16",
+          "prompt": "Which band released 'Employment' in 2005?",
+          "options": [
+            "Hard-Fi",
+            "Kaiser Chiefs",
+            "The Zutons",
+            "Maximo Park"
+          ],
+          "correctIndex": 1,
+          "answerNote": "It gave them 'I Predict a Riot' and 'Oh My God'."
+        },
+        {
+          "id": "r1q17",
+          "prompt": "Who released 'Curtain Call: The Hits' in 2005?",
+          "options": [
+            "Jay-Z",
+            "50 Cent",
+            "Eminem",
+            "Dr. Dre"
+          ],
+          "correctIndex": 2,
+          "answerNote": "It was his first greatest-hits collection."
+        },
+        {
+          "id": "r1q18",
+          "prompt": "Which artist's real name is Adam Wiles?",
+          "options": [
+            "Calvin Harris",
+            "Avicii",
+            "Diplo",
+            "Zedd"
+          ],
+          "correctIndex": 0,
+          "answerNote": "The Dumfries-born producer chose the name early on."
+        },
+        {
+          "id": "r1q19",
+          "prompt": "'Dance Monkey' was a 2019 worldwide hit for which artist?",
+          "options": [
+            "Tones and I",
+            "Sigrid",
+            "Billie Eilish",
+            "Mabel"
+          ],
+          "correctIndex": 0,
+          "answerNote": "It topped the UK chart for eleven weeks."
+        },
+        {
+          "id": "r1q20",
+          "prompt": "Which band released 'Silent Alarm' in 2005?",
+          "options": [
+            "Bloc Party",
+            "Editors",
+            "The Futureheads",
+            "Razorlight"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Their debut, led by 'Banquet'."
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "intro",
+      "title": "Round Two — Name That Intro",
+      "blurb": "One chorus each. Shout it when you have it.",
+      "questions": [
+        {
+          "id": "r2q1",
+          "prompt": "Which track is this?",
+          "options": [
+            "Mr. Brightside",
+            "Somebody Told Me",
+            "When You Were Young",
+            "Human"
+          ],
+          "correctIndex": 0,
+          "answerNote": "Their debut single, and still a wedding-disco certainty.",
+          "cue": {
+            "title": "Mr. Brightside",
+            "artist": "The Killers",
+            "from": "0:00"
+          }
+        },
+        {
+          "id": "r2q2",
+          "prompt": "Which track is this?",
+          "options": [
+            "Do You Want To",
+            "Take Me Out",
+            "The Dark of the Matinée",
+            "No You Girls"
+          ],
+          "correctIndex": 1,
+          "answerNote": "The tempo drops about a minute in — that is the bit everyone knows.",
+          "cue": {
+            "title": "Take Me Out",
+            "artist": "Franz Ferdinand",
+            "from": "0:00"
+          }
+        },
+        {
+          "id": "r2q3",
+          "prompt": "Which track is this?",
+          "options": [
+            "Icky Thump",
+            "Fell in Love with a Girl",
+            "Seven Nation Army",
+            "The Hardest Button to Button"
+          ],
+          "correctIndex": 2,
+          "answerNote": "That riff is a guitar through an octave pedal, not a bass.",
+          "cue": {
+            "title": "Seven Nation Army",
+            "artist": "The White Stripes",
+            "from": "0:00"
+          }
+        },
+        {
+          "id": "r2q4",
+          "prompt": "Which track is this?",
+          "options": [
+            "Whistle for the Choir",
+            "Flathead",
+            "Chelsea Dagger",
+            "Baby Fratelli"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Named after the singer's wife's burlesque stage name.",
+          "cue": {
+            "title": "Chelsea Dagger",
+            "artist": "The Fratellis",
+            "from": "0:00"
+          }
+        },
+        {
+          "id": "r2q5",
+          "prompt": "Which track is this?",
+          "options": [
+            "Someone Like You",
+            "Set Fire to the Rain",
+            "Hello",
+            "Rolling in the Deep"
+          ],
+          "correctIndex": 3,
+          "answerNote": "The lead single from 21.",
+          "cue": {
+            "title": "Rolling in the Deep",
+            "artist": "Adele",
+            "from": "0:00"
+          }
+        },
+        {
+          "id": "r2q6",
+          "prompt": "Which track is this?",
+          "options": [
+            "One More Time",
+            "Get Lucky",
+            "Around the World",
+            "Instant Crush"
+          ],
+          "correctIndex": 1,
+          "answerNote": "Nile Rodgers plays the guitar part.",
+          "cue": {
+            "title": "Get Lucky",
+            "artist": "Daft Punk",
+            "from": "0:00"
+          }
+        },
+        {
+          "id": "r2q7",
+          "prompt": "Which track is this?",
+          "options": [
+            "Hey Brother",
+            "Levels",
+            "Wake Me Up",
+            "Waiting for Love"
+          ],
+          "correctIndex": 2,
+          "answerNote": "Aloe Blacc sings it.",
+          "cue": {
+            "title": "Wake Me Up",
+            "artist": "Avicii",
+            "from": "0:00"
+          }
+        },
+        {
+          "id": "r2q8",
+          "prompt": "Which track is this?",
+          "options": [
+            "Shake It Out",
+            "You've Got the Love",
+            "Spectrum",
+            "Dog Days Are Over"
+          ],
+          "correctIndex": 3,
+          "answerNote": "From Lungs, her 2009 debut.",
+          "cue": {
+            "title": "Dog Days Are Over",
+            "artist": "Florence + the Machine",
+            "from": "0:00"
+          }
+        },
+        {
+          "id": "r2q9",
+          "prompt": "Which track is this?",
+          "options": [
+            "Castle on the Hill",
+            "Perfect",
+            "Shape of You",
+            "Galway Girl"
+          ],
+          "correctIndex": 2,
+          "answerNote": "The lead single from ÷, his 2017 album.",
+          "cue": {
+            "title": "Shape of You",
+            "artist": "Ed Sheeran",
+            "from": "0:00"
+          }
+        },
+        {
+          "id": "r2q10",
+          "prompt": "Which track is this?",
+          "options": [
+            "Sex on Fire",
+            "Pyro",
+            "Use Somebody",
+            "Notion"
+          ],
+          "correctIndex": 2,
+          "answerNote": "From Only by the Night, 2008.",
+          "cue": {
+            "title": "Use Somebody",
+            "artist": "Kings of Leon",
+            "from": "0:00"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,265 @@
+{
+  "id": "mbc-6",
+  "kind": "bingo",
+  "title": "MBC 6 - 2000s & 2010s",
+  "subtitle": "Two decades of chart and indie, one chorus each",
+  "cardRows": 4,
+  "cardCols": 4,
+  "cardSize": 4,
+  "notes": "Written 22 September 2026 for the Station Tap. Chorus-first picks: every one lands on its own within a few seconds to a half-listening room. Checked against every other pack in bingo/ \u2014 nothing here is a repeat except Wild, which is also in MBC 5 and was asked for by name.",
+  "createdAt": "2026-09-22T00:00:00.000Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Wild",
+      "artist": "Jessie J",
+      "year": 2013
+    },
+    {
+      "id": "t2",
+      "title": "One Kiss",
+      "artist": "Calvin Harris",
+      "year": 2018
+    },
+    {
+      "id": "t3",
+      "title": "Summer",
+      "artist": "Calvin Harris",
+      "year": 2014
+    },
+    {
+      "id": "t4",
+      "title": "Sweet but Psycho",
+      "artist": "Ava Max",
+      "year": 2018
+    },
+    {
+      "id": "t5",
+      "title": "Don't Call Me Up",
+      "artist": "Mabel",
+      "year": 2019
+    },
+    {
+      "id": "t6",
+      "title": "New Rules",
+      "artist": "Dua Lipa",
+      "year": 2017
+    },
+    {
+      "id": "t7",
+      "title": "Break My Heart",
+      "artist": "Dua Lipa",
+      "year": 2020
+    },
+    {
+      "id": "t8",
+      "title": "Sorry",
+      "artist": "Justin Bieber",
+      "year": 2015
+    },
+    {
+      "id": "t9",
+      "title": "Love Yourself",
+      "artist": "Justin Bieber",
+      "year": 2015
+    },
+    {
+      "id": "t10",
+      "title": "Stay With Me",
+      "artist": "Sam Smith",
+      "year": 2014
+    },
+    {
+      "id": "t11",
+      "title": "Money on My Mind",
+      "artist": "Sam Smith",
+      "year": 2014
+    },
+    {
+      "id": "t12",
+      "title": "Budapest",
+      "artist": "George Ezra",
+      "year": 2014
+    },
+    {
+      "id": "t13",
+      "title": "Shotgun",
+      "artist": "George Ezra",
+      "year": 2018
+    },
+    {
+      "id": "t14",
+      "title": "Thinking Out Loud",
+      "artist": "Ed Sheeran",
+      "year": 2014
+    },
+    {
+      "id": "t15",
+      "title": "Galway Girl",
+      "artist": "Ed Sheeran",
+      "year": 2017
+    },
+    {
+      "id": "t16",
+      "title": "Ho Hey",
+      "artist": "The Lumineers",
+      "year": 2012
+    },
+    {
+      "id": "t17",
+      "title": "Riptide",
+      "artist": "Vance Joy",
+      "year": 2013
+    },
+    {
+      "id": "t18",
+      "title": "Pompeii",
+      "artist": "Bastille",
+      "year": 2013
+    },
+    {
+      "id": "t19",
+      "title": "Counting Stars",
+      "artist": "OneRepublic",
+      "year": 2013
+    },
+    {
+      "id": "t20",
+      "title": "Dance Monkey",
+      "artist": "Tones and I",
+      "year": 2019
+    },
+    {
+      "id": "t21",
+      "title": "Shout Out to My Ex",
+      "artist": "Little Mix",
+      "year": 2016
+    },
+    {
+      "id": "t22",
+      "title": "We Found Love",
+      "artist": "Rihanna",
+      "year": 2011
+    },
+    {
+      "id": "t23",
+      "title": "Only Girl (In The World)",
+      "artist": "Rihanna",
+      "year": 2010
+    },
+    {
+      "id": "t24",
+      "title": "I Gotta Feeling",
+      "artist": "The Black Eyed Peas",
+      "year": 2009
+    },
+    {
+      "id": "t25",
+      "title": "Naive",
+      "artist": "The Kooks",
+      "year": 2006
+    },
+    {
+      "id": "t26",
+      "title": "Dakota",
+      "artist": "Stereophonics",
+      "year": 2005
+    },
+    {
+      "id": "t27",
+      "title": "Ruby",
+      "artist": "Kaiser Chiefs",
+      "year": 2007
+    },
+    {
+      "id": "t28",
+      "title": "I Predict a Riot",
+      "artist": "Kaiser Chiefs",
+      "year": 2004
+    },
+    {
+      "id": "t29",
+      "title": "Grace Kelly",
+      "artist": "Mika",
+      "year": 2007
+    },
+    {
+      "id": "t30",
+      "title": "Rule the World",
+      "artist": "Take That",
+      "year": 2007
+    },
+    {
+      "id": "t31",
+      "title": "Patience",
+      "artist": "Take That",
+      "year": 2006
+    },
+    {
+      "id": "t32",
+      "title": "Beautiful Day",
+      "artist": "U2",
+      "year": 2000
+    },
+    {
+      "id": "t33",
+      "title": "Viva La Vida",
+      "artist": "Coldplay",
+      "year": 2008
+    },
+    {
+      "id": "t34",
+      "title": "Yellow",
+      "artist": "Coldplay",
+      "year": 2000
+    },
+    {
+      "id": "t35",
+      "title": "Bring Me to Life",
+      "artist": "Evanescence",
+      "year": 2003
+    },
+    {
+      "id": "t36",
+      "title": "Poker Face",
+      "artist": "Lady Gaga",
+      "year": 2008
+    },
+    {
+      "id": "t37",
+      "title": "Just Dance",
+      "artist": "Lady Gaga",
+      "year": 2008
+    },
+    {
+      "id": "t38",
+      "title": "Murder on the Dancefloor",
+      "artist": "Sophie Ellis-Bextor",
+      "year": 2001
+    },
+    {
+      "id": "t39",
+      "title": "Can't Get You Out of My Head",
+      "artist": "Kylie Minogue",
+      "year": 2001
+    },
+    {
+      "id": "t40",
+      "title": "Unwritten",
+      "artist": "Natasha Bedingfield",
+      "year": 2004
+    },
+    {
+      "id": "t41",
+      "title": "Mercy",
+      "artist": "Duffy",
+      "year": 2008
+    },
+    {
+      "id": "t42",
+      "title": "American Boy",
+      "artist": "Estelle",
+      "year": 2008
+    }
+  ]
+}
