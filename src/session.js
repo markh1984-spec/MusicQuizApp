@@ -283,6 +283,23 @@ function nightWideOpts(state) {
     teamMode: state.teamMode,
     askForRounds: state.askForRounds,
     roundIdeas: state.roundIdeas,
+    /*
+     * AND HOW MANY DRINKS THE NIGHT HAS ALREADY HANDED OUT.
+     *
+     * Each part pays its own winners as it ends, so without this every part
+     * started again at the top of the venue's list: a quiz and the bingo after
+     * it both gave out "A pint", and the fourth, fifth and sixth drinks the
+     * venue put up were never reached. A host who lists six means six, in
+     * order.
+     *
+     * Counted from the vouchers rather than kept as a tally, because the
+     * vouchers ARE the record — `carried` marks the ones minted by earlier
+     * parts, so "what this part gave" is the ones without it. A tally would be
+     * a second copy of a number the state already holds, and this file has a
+     * long list of those going out of step.
+     */
+    prizesBefore: (Number(state.prizesBefore) || 0)
+      + Object.values(state.vouchers || {}).filter((v) => !v.carried && !v.funny).length,
   };
 }
 
@@ -831,7 +848,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbyGames = [], lobbySound = true, league = false, online = false, teamPlay = false, teamMode = 'assigned', venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, photoLink = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbyGames = [], lobbySound = true, league = false, online = false, teamPlay = false, teamMode = 'assigned', venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, photoLink = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null, prizesBefore = 0 } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -1099,6 +1116,13 @@ export class Session {
      * question nobody has asked. Trailing blanks are dropped by `rewardList()`
      * rather than here, so what was typed survives a restart.
      */
+    /*
+     * HOW MANY DRINKS THE NIGHT HAS ALREADY GIVEN, so `rewardList()` can slice
+     * past them. Zero on every ordinary launch — only `advanceOrder()` ever
+     * passes a number, and only on the second part onward — so a one-game
+     * night is byte-for-byte what it was.
+     */
+    this.engine.state.prizesBefore = Math.max(0, Number(prizesBefore) || 0);
     this.engine.state.rewards = (Array.isArray(rewards) ? rewards : [rewards])
       .slice(0, MAX_REWARDS)
       .map((r) => String(r || '')
@@ -1278,6 +1302,37 @@ export class Session {
      * `nightWideOpts()`'s existing `vouchers` hand-over.
      */
     this.engine.settlePhotoVote();
+    /*
+     * AND THE PART THAT IS ENDING PAYS ITS WINNERS, HERE, BEFORE IT IS THROWN
+     * AWAY.
+     *
+     * An intermediate part never reaches FINAL — that is what stops it being
+     * archived and what this file's own comment above calls "quiz prizes only
+     * at the end, for free". It was half right. It stops them going out EARLY;
+     * it also stopped them going out AT ALL, because the only part that ever
+     * reaches its own ending is the last one.
+     *
+     * So a night that ends on the bingo paid the bingo's winners and nobody
+     * else: the quiz's podium got applause and no drink, with the host stood
+     * in front of them. `prizes-fuzz`'s own quiz -> bingo -> QUIZ section
+     * passed throughout, because there the last part is a quiz — which is
+     * exactly how a fault like this stays hidden.
+     *
+     * `issueVouchers()` is idempotent and reads the board it is called on, so
+     * calling it at the boundary mints this part's placings against this
+     * part's standing. **ASKED AS A CAPABILITY, NEVER AS A KIND** — this file
+     * has been bitten six times by `kind === 'quiz'` written when there were
+     * two games. Bingo mints at the CLAIM through `issueVoucher()` (singular)
+     * and has no plural, so it answers no and needs nothing; a DJ set mints no
+     * voucher at all and answers no for the same reason; and a fifth game
+     * answers for itself rather than falling down somebody else's branch.
+     *
+     * The codes land in `view.vouchers` and so in *My prizes* on the phone,
+     * which already draws every live code at every phase with room for one —
+     * so the winner sees their drink at the moment they won it, and can go to
+     * the bar during the bingo rather than queueing with everybody at eleven.
+     */
+    if (typeof this.engine.issueVouchers === 'function') this.engine.issueVouchers();
     const opts = nightWideOpts(this.engine.state);
     /*
      * THE RUNNING SCORE ONLY EXISTS ON A QUIZ ENGINE'S PLAYERS. Bingo has

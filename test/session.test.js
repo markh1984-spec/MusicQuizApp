@@ -176,7 +176,14 @@ test('quiz -> bingo -> quiz: the same team keeps its identity and its score acro
       { kind: 'bingo', packId: 'bingo-a', prizes: 2 },
       { kind: 'quiz', order: [{ packId: 'quiz-b', round: 0 }] },
     ];
-    it.session.launchRunningOrder(segments, { venue: 'The Nag\'s Head', rewards: ['A trophy'] });
+    /*
+     * THREE PRIZES, ONE PER PART — because each part now pays its own winners
+     * as it ends and the list is worked THROUGH rather than restarted. With
+     * one prize on the list the first part would take it and the other two
+     * would have nothing to give, which is correct and is asserted separately
+     * below rather than smuggled into this test's subject.
+     */
+    it.session.launchRunningOrder(segments, { venue: 'The Nag\'s Head', rewards: ['A trophy', 'A medal', 'A mug'] });
     assert.equal(it.session.kind, 'quiz');
 
     const joined = it.session.engine.join({ name: 'Quizteam Aguilera' });
@@ -205,7 +212,17 @@ test('quiz -> bingo -> quiz: the same team keeps its identity and its score acro
     }
     const claim = it.session.engine.claim(id);
     assert.ok(claim.valid, 'the bingo interlude needs a real win to prove prizes are separate');
-    assert.equal(Object.keys(it.session.engine.state.vouchers).length, 1, 'the bingo prize was not given out at the time it was won');
+    /*
+     * TWO VOUCHERS HERE NOW, AND THAT IS THE CHANGE: the quiz part paid its
+     * own winner as it ended (`advanceOrder()`), so its trophy is already on
+     * the phone and marked `carried`, and the bingo has just minted the NEXT
+     * drink on the list beside it.
+     */
+    const inBingoNow = Object.values(it.session.engine.state.vouchers);
+    assert.equal(inBingoNow.length, 2, 'the quiz part paid at its boundary and the bingo at its claim');
+    assert.equal(inBingoNow.filter((v) => v.carried).length, 1, "the quiz's own is carried");
+    assert.deepEqual(inBingoNow.map((v) => v.reward).sort(), ['A medal', 'A trophy'],
+      'the bingo started again at the top of the list instead of taking the next drink');
 
     it.session.advanceOrder();
     assert.equal(it.session.kind, 'quiz');
@@ -238,18 +255,77 @@ test('quiz -> bingo -> quiz: the same team keeps its identity and its score acro
      * below by counting the ones that are not carried.
      */
     const beforeTheEnd = Object.values(it.session.engine.state.vouchers || {});
-    assert.equal(beforeTheEnd.length, 1, "the bingo interlude's voucher was destroyed by the part boundary");
-    assert.equal(beforeTheEnd[0].carried, true, 'and it has to be marked, or it blocks the quiz from paying out');
-    assert.equal(beforeTheEnd.filter((v) => !v.carried).length, 0, 'no quiz prize before the final');
+    assert.equal(beforeTheEnd.length, 2, "the earlier parts' vouchers were destroyed by a part boundary");
+    assert.equal(beforeTheEnd.filter((v) => v.carried).length, 2,
+      'both have to be marked, or they block the last part from paying out');
+    assert.equal(beforeTheEnd.filter((v) => !v.carried).length, 0,
+      "the LAST part has not paid yet — it has not reached its own ending");
 
     it.session.engine.next(); // ROUND_BOARD -> FINAL, the real end of the night
     assert.equal(it.session.engine.state.phase, 'final');
     const atTheEnd = Object.values(it.session.engine.state.vouchers);
-    assert.equal(atTheEnd.filter((v) => !v.carried).length, 1, 'the quiz prize was not given out at the true end');
-    assert.equal(atTheEnd.length, 2, 'and the bingo one is still live at the bar');
+    assert.equal(atTheEnd.filter((v) => !v.carried).length, 1, 'the last part was not paid at the true end');
+    assert.equal(atTheEnd.length, 3, 'and both earlier drinks are still live at the bar');
+    assert.deepEqual(atTheEnd.map((v) => v.reward).sort(), ['A medal', 'A mug', 'A trophy'],
+      'three parts, three different drinks, in the order the venue listed them');
     // The same person won both, which is exactly the case the `carried` flag
     // exists for: the old idempotency check would have refused the second.
     assert.equal(new Set(atTheEnd.map((v) => v.winnerId)).size, 1);
+  } finally {
+    it.done();
+  }
+});
+
+/*
+ * THE VENUE'S LIST IS WORKED THROUGH, NOT RESTARTED BY EVERY PART.
+ *
+ * Each part pays its own winners as it ends. Without an offset every part
+ * began again at the top: a quiz and the bingo after it both handed out "A
+ * pint" and the venue's fourth, fifth and sixth drinks were never reached —
+ * while the bar, who had been told six, saw the same name twice.
+ *
+ * `state.prizesBefore` is how many the NIGHT has already given when a part
+ * starts, and `rewardList()` slices past them in BOTH engines. It is counted
+ * off the vouchers rather than kept as a tally, because the vouchers are the
+ * record and a second copy of a number is how two of them come to disagree.
+ *
+ * The other half matters just as much: **a part with nothing left gives
+ * nothing**, rather than repeating a drink the venue has already paid for.
+ */
+test('A PART TAKES THE NEXT DRINK ON THE LIST, AND NONE WHEN THERE IS NONE LEFT', () => {
+  const it = withFileSession();
+  try {
+    // ONE prize, two parts. The quiz takes it; the bingo must not take it again.
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a', prizes: 2 },
+    ], { venue: "The Nag's Head", rewards: ['The only drink'] });
+
+    const { id } = it.session.engine.join({ name: 'Quizteam Aguilera' });
+    playQuizSegmentToRoundBoard(it.session, id);
+    it.session.advanceOrder();
+
+    const carried = Object.values(it.session.engine.state.vouchers || {});
+    assert.equal(carried.length, 1, 'the quiz part did not pay its winner as it ended');
+    assert.equal(carried[0].reward, 'The only drink');
+    assert.equal(it.session.engine.state.prizesBefore, 1,
+      'the bingo part was not told the night had already given one');
+    assert.deepEqual(it.session.engine.rewardList(), [],
+      'the bingo can still see a drink that has already gone out');
+
+    // And a real win now mints nothing rather than the same drink twice.
+    it.session.engine.start();
+    const me = it.session.engine.state.players[id];
+    const line = it.session.engine.lines()[0];
+    for (const i of line) {
+      it.session.engine.call(me.card[i]);
+      it.session.engine.mark({ playerId: id, index: i, marked: true });
+    }
+    it.session.engine.claim(id);
+    const after = Object.values(it.session.engine.state.vouchers || {});
+    assert.equal(after.length, 1, 'a second drink went out that the venue never put up');
+    assert.equal(after.filter((v) => !v.carried).length, 0,
+      'the bingo minted a voucher with nothing on the list to pay it with');
   } finally {
     it.done();
   }

@@ -780,11 +780,36 @@ export class BingoGame {
    * this only exists here so bingo does not have to reach into the quiz
    * engine to ask.
    */
+    /*
+     * WHAT THIS PART HAS LEFT TO GIVE, not what the venue put up.
+     *
+     * `state.prizesBefore` is how many drinks the NIGHT had already handed out
+     * when this part started, and the list is sliced past them. On an ordinary
+     * single-game night it is 0 and this is exactly the list it always was —
+     * so `pub-unchanged` still says IDENTICAL.
+     *
+     * It exists because each part now pays its own winners as it ends
+     * (`advanceOrder()`), and without it every part started again at the top:
+     * a quiz and the bingo after it both handed out "A pint" while the venue's
+     * fourth, fifth and sixth drinks were never reached — and the bar, told
+     * six, saw the same name twice. A host who lists six means six, in order.
+     *
+     * A PART'S OFFSET IS FIXED WHEN THE PART STARTS and never recomputed as
+     * vouchers mint — bingo's own `prizesGiven` indexes into this list, so a
+     * slice that moved underneath it would shift every prize it had left.
+     *
+     * AND A PART WITH NOTHING LEFT GIVES NOTHING, rather than handing out a
+     * drink the venue has already paid for once.
+     */
   rewardList() {
     const list = Array.isArray(this.state.rewards) ? this.state.rewards : [];
     const out = list.map((r) => String(r || '').trim());
     while (out.length && !out[out.length - 1]) out.pop();
-    return out;
+    /*
+     * SLICED PAST WHAT THE NIGHT HAS ALREADY GIVEN — see the note above.
+     */
+    const before = Math.max(0, Number(this.state.prizesBefore) || 0);
+    return before ? out.slice(before) : out;
   }
 
   /**

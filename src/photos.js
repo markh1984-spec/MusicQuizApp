@@ -401,12 +401,18 @@ export class Photos {
      * quizmaster's projector. Narrow, but the comment claiming the name was
      * already unique is what stopped anybody checking.
      *
-     * Four random base36 characters is ~17 bits on top of the rest. The
-     * shape is unchanged — `PHOTO_NAME` matches `[a-z0-9]+`, so every name
+     * EIGHT hex characters, not four. Four is 65,536 values, and a birthday
+     * collision across just 25 of them is about one in two hundred — which
+     * turned up as a flaky test the day after this was written, on a guard
+     * asserting the very property it was supposed to provide. Thin entropy on
+     * a name that must be unique across every room is not a detail to round
+     * down: this is 4.3 billion, and the guard stopped flaking.
+     *
+     * The shape is unchanged — `PHOTO_NAME` matches `[a-z0-9]+`, so every name
      * ever filed still parses, and the lamps, flags and pins keyed on those
      * names are untouched.
      */
-    const rand = crypto.randomBytes(3).toString('hex').slice(0, 4);
+    const rand = crypto.randomBytes(4).toString('hex');
     const id = `p${at.toString(36)}${Math.floor(at % 997).toString(36)}${this.state.items.length}${rand}`;
     /*
      * THE FLAG RIDES IN THE FILENAME, not a second file beside it.

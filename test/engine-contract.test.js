@@ -80,7 +80,18 @@ const PER_KIND = {
     // The roster carried across a part boundary hands a quiz part its scores
     // through the engine's own funnel (`bumpScore`/`setScore`), behind the
     // same `kind === 'quiz'` check that used to write `p.score` directly.
-    'setScore'],
+    'setScore',
+    /*
+     * A PART PAYS ITS WINNERS AS IT ENDS — `advanceOrder()`. Quiz-only
+     * because only the quiz pays by POSITION: bingo mints at the claim
+     * through `issueVoucher()` (singular) and a DJ set mints nothing.
+     *
+     * It is on this list rather than the contract because only one engine
+     * answers to it — but the CALL SITE asks `typeof …=== 'function'`, not
+     * the kind, so a fifth game that grows a plural is paid automatically
+     * and one that does not is skipped rather than throwing.
+     */
+    'issueVouchers'],
   bingo: ['start', 'call', 'uncall', 'undoLastCall', 'playOn', 'newRound', 'finish',
     'mark', 'claim', 'syncTarget'],
   /*
