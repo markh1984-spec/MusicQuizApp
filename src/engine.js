@@ -869,7 +869,6 @@ export class Engine {
      */
     if (this.state.phase === PHASES.FINAL) {
       this.issueVouchers();
-      this.drawLuckyDip();
     }
     this.changed();
     return true;
@@ -1623,7 +1622,6 @@ export class Engine {
           s.finishedAt = this.now();
           s.question = null;
           this.issueVouchers();
-          this.drawLuckyDip();
           this.changed();
           return true;
         }
@@ -1666,7 +1664,6 @@ export class Engine {
     // A night stopped early still has a winner, so it still has a voucher —
     // and the people who stayed to the end still stayed to the end.
     this.issueVouchers();
-    this.drawLuckyDip();
     this.changed();
     return true;
   }
@@ -1804,141 +1801,33 @@ export class Engine {
     }
   }
 
-  /**
-   * The draw: one prize, from the BOTTOM half, for somebody still playing.
+  /*
+   * THE DRAW IS GONE — binned on 21 September 2026, at the host's word.
    *
-   * **It is a retention feature, not a raffle**, and the host's own reason is
-   * the whole design: a table that works out by round three they cannot win
-   * has nothing left to stay for, and a room that thins out at nine is worth
-   * less to the pub than a room that stays till eleven. So this is the reason
-   * to keep answering when the scoreboard has stopped being interesting.
+   * It gave a free drink to one team picked at random out of the bottom half
+   * of the board, and took the LAST prize on the venue's list to do it. The
+   * reasoning was retention: a table that works out by round three it cannot
+   * win has no reason to stay, and a room that empties at nine is worth less
+   * to the pub.
    *
-   * **STILL PLAYING AT THE END IS THE POINT, not a nicety.** Eligibility is
-   * answering the LAST QUESTION THE NIGHT ACTUALLY ENDED ON — which is
-   * exactly the behaviour being paid for, and it is also what stops the
-   * failure this would otherwise have: drawing somebody who left at half
-   * nine, calling their name on the microphone, and getting silence from a
-   * room that then watches the prize go nowhere.
+   * **WHAT KILLED IT WAS THAT THE HOST DID NOT KNOW IT EXISTED.** Asked
+   * directly what the draw was, three times, the answer was *"not sure what
+   * the draw even means"* — about a band his own projector had been printing
+   * every week. There was no switch anywhere: it fired by itself on any night
+   * with three or more prizes listed. So a venue funding three drinks was
+   * quietly giving away a fourth, and the person paying for them could not
+   * have told you why.
    *
-   * **"Answered in the final round" was the first version and it is far too
-   * loose.** Most nights this app runs are ONE round — the host's own format
-   * — so it collapsed to "answered anything at all", which every phone that
-   * ever joined satisfies. Caught by its own test drawing a table that had
-   * stopped after question one. The last question is the only definition
-   * that means the same thing on a one-round night and a five-round one, and
-   * it has the useful property of being sayable on a microphone: **you had
-   * to still be in it at the last question.**
+   * That is this file's own first rule failing — *if a control needs
+   * explaining, the control is wrong* — and a feature nobody can explain is
+   * worse than one nobody uses, because this one spends money.
    *
-   * **The same prize as third place**, at the host's own instruction. So a
-   * venue that puts up three prizes runs a draw and one that puts up fewer
-   * does not, with nothing extra to set up and nothing extra to agree.
-   *
-   * Four more things, each there for a reason:
-   *
-   *  - **Nobody wins twice.** With five players the bottom half can reach
-   *    third place, who is holding a voucher already — so anybody with one is
-   *    out of the hat. A second code in the same hand is one of them looking
-   *    valid and not being.
-   *  - **TWO IN THE HAT MINIMUM, or it is not a draw, it is a gift.** In a
-   *    room of four there is one eligible person and calling it a draw in
-   *    front of them would be a lie the room can see.
-   *  - **Decided ONCE and written into the state**, exactly like the
-   *    vouchers. `Back` off the final and forward again is one press each way
-   *    and a host will do it; a second roll would name a different person to
-   *    a room that heard the first.
-   *  - **The engine draws, never a phone.** Same rule as the clock: anything
-   *    a browser decides is something a browser can be made to decide again.
+   * **A `draw: true` VOUCHER IS STILL TOLERATED EVERYWHERE IT WAS.** Nothing
+   * mints one now, but a night already running across the deploy that removes
+   * this can hold one, and withdrawing somebody's drink mid-evening because
+   * the app was upgraded underneath them is the one outcome worth avoiding.
    */
-  drawLuckyDip() {
-    const s = this.state;
-    if (s.luckyDip) return;
-    /*
-     * THE LAST PRIZE ON THE TABLE, and only where there are at least three.
-     *
-     * It was `[2]` — third place — because the host's instruction was "the same
-     * prize as third", and while every venue put up exactly three those are the
-     * same sentence. They stopped being the same when a venue could list one,
-     * five or twenty: with five prizes, third is a middling one and handing it
-     * to a draw from the BOTTOM half reads as a mistake, while the last is the
-     * smallest and is what a raffle prize actually is.
-     *
-     * The floor of three is the half that must not move. It is what keeps the
-     * host's own rule — a venue putting up three prizes runs a draw and one
-     * putting up fewer does not — and it stops a one-prize night handing the
-     * TOP prize to somebody in the bottom half, which would be the app
-     * inventing a result in front of a room.
-     *
-     * Behaviour on today's data is unchanged: with three prizes the last IS
-     * the third.
-     */
-    const prizes = this.rewardList();
-    if (prizes.length < 3) return;
-    const reward = prizes[prizes.length - 1];
-    if (!reward) return;
 
-    const board = this.leaderboard();
-    const half = Math.ceil(board.length / 2);
-    const held = new Set(Object.values(s.vouchers || {}).map((v) => v.winnerId));
-    const stillIn = this.answeredTheLastQuestion();
-    const hat = board.filter((row) => row.position > half && stillIn.has(row.id) && !held.has(row.id));
-    if (hat.length < 2) return;
-
-    const pick = hat[Math.floor(this.random() * hat.length)];
-    s.luckyDip = { id: pick.id, name: pick.name, outOf: hat.length, drawnAt: this.now() };
-
-    if (!s.vouchers) s.vouchers = {};
-    let code = newVoucherCode();
-    while (s.vouchers[code]) code = newVoucherCode();
-    s.vouchers[code] = {
-      code,
-      winnerId: pick.id,
-      name: pick.name,
-      // Not a placing, and it must not read as one — `rankPlayers` owns those
-      // and this person came nowhere near the podium. The projector says "the
-      // draw"; a number here would put them on it.
-      place: null,
-      draw: true,
-      reward,
-      venue: s.venue || '',
-      issuedAt: this.now(),
-      redeemedAt: null,
-      reinstated: 0,
-      history: [],
-    };
-  }
-
-  /**
-   * Who answered the last question of the night — by BOARD row, so a team
-   * counts once however many of them were still tapping.
-   *
-   * Deliberately the question the night ENDED on rather than the last one in
-   * the pack: `finish()` stops a night wherever it is, and the people who
-   * were still playing when the host called time are still the people who
-   * were still playing.
-   */
-  answeredTheLastQuestion() {
-    const found = new Set();
-    /*
-     * THE LAST QUESTION ACTUALLY PLAYED, not wherever the pointer happens to
-     * be. `answersFor()` with no arguments reads the CURRENT round and
-     * question — which for a night stopped at a round intro is a question
-     * nobody has been asked, so the answer map is empty, nobody is eligible
-     * and **the draw silently does not happen**. Stopping early is exactly the
-     * case the draw is for: the room is thinning out.
-     *
-     * `history` is appended at each reveal and re-appended on a replay, so its
-     * last entry is the most recent question the room genuinely played. On an
-     * ordinary ending it IS the current pointer, so nothing changes.
-     */
-    const played = (this.state.history || [])[(this.state.history || []).length - 1];
-    const answers = played
-      ? this.answersFor(played.roundIndex, played.questionIndex)
-      : this.answersFor();
-    for (const playerId of Object.keys(answers || {})) {
-      found.add(this.boardIdFor(playerId));
-    }
-    return found;
-  }
 
   /**
    * The prizes for tonight, first place first.
@@ -1998,7 +1887,6 @@ export class Engine {
     this.state.rewards = list.slice(0, 10).map((r) => String(r ?? '').trim().slice(0, 200));
     if (this.state.phase === PHASES.FINAL) {
       this.issueVouchers();
-      this.drawLuckyDip();
     }
     this.changed();
     return true;
@@ -2234,6 +2122,9 @@ export class Engine {
      * this row" check does not.
      */
     for (const v of Object.values(this.state.vouchers || {})) v.carried = true;
+    // THE DRAW IS BINNED AND THIS CLEAR STAYS: a state written before it was
+    // removed can still carry a `luckyDip`, and a relaunch must not put that
+    // band back on the projector. One line, and it covers the deploy.
     this.state.luckyDip = null;
     for (const p of this.playerList()) {
       this.setScore(p, 0);
@@ -2853,20 +2744,15 @@ export class Engine {
     }
 
     /*
-     * The draw, on the big screen, at the FINAL and nowhere else.
+     * THE DRAW'S BAND IS GONE — see the headstone on `drawLuckyDip()` above.
      *
-     * The NAME is the whole point — this is a moment for the room, and the
-     * people it is aimed at are the ones who stopped being on the scoreboard
-     * an hour ago. The CODE is not here and never will be: that is the
-     * credential, it goes to one phone, and this payload is public to
-     * anybody holding the join code.
-     *
-     * Spread in only when there is one, like the countdown and the vouchers,
-     * so a night that runs no draw gains no field at all.
+     * A night still RUNNING across the deploy that removed it can hold a
+     * `luckyDip` on its state, and it is deliberately NOT forwarded: the band
+     * would be the one thing on the projector nobody could explain, which is
+     * what got the feature binned. The voucher it already minted is honoured
+     * either way. *A field on a view is a promise that something draws it*,
+     * and nothing draws this now.
      */
-    if (s.phase === PHASES.FINAL && s.luckyDip) {
-      view.luckyDip = { name: s.luckyDip.name, outOf: s.luckyDip.outOf };
-    }
 
     /*
      * WHEN THE NEXT ONE IS, at the FINAL and nowhere else.

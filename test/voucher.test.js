@@ -586,39 +586,15 @@ test('RESET SCORES HANDS THE NEXT GAME A CLEAN LEDGER, without destroying a priz
   assert.equal(fresh[0].name, 'Rob');
 });
 
-test('STOPPING AT A ROUND INTRO STILL RUNS THE DRAW', () => {
-  /*
-   * TWO ROUNDS, deliberately: a one-round quiz never reaches a second round
-   * intro, so the same test written against the shared fixture would walk
-   * straight to the final and assert nothing. The pointer sitting on a
-   * question nobody has been asked is the whole fault.
-   */
-  const twoRounds = {
-    ...QUIZ,
-    rounds: [
-      QUIZ.rounds[0],
-      { id: 'r2', type: 'text', title: 'Round Two', questions: [
-        { id: 'q2', prompt: 'Another?', options: ['a', 'b', 'c', 'd'], correctIndex: 0 },
-      ] },
-    ],
-  };
-  let at = Date.parse('2026-08-14T21:00:00.000Z');
-  const engine = new Engine({ quiz: twoRounds, now: () => at, random: () => 0 });
-  engine.state.rewards = ['A free drink', 'A bag of crisps', 'A packet of nuts'];
-  const ids = ['A', 'B', 'C', 'D', 'E', 'F'].map((n) => engine.join({ name: n }));
-
-  engine.start();
-  while (engine.state.phase !== PHASES.QUESTION) engine.next();
-  ids.forEach((p, i) => engine.answer({ playerId: p.id, optionIndex: i < 3 ? 0 : 1 }));
-  at += 1000;
-  engine.next(); // -> REVEAL
-  engine.next(); // -> ROUND_BOARD
-  engine.next(); // -> ROUND_INTRO of round two
-  assert.equal(engine.state.phase, PHASES.ROUND_INTRO, 'the fixture must reach a second round intro');
-
-  // The room is thinning out and the host presses Stop.
-  engine.finish();
-  assert.ok(engine.state.luckyDip,
-    'answeredTheLastQuestion() read the pointer, which at a round intro is a question nobody was asked');
-  assert.equal(engine.state.luckyDip.outOf >= 2, true, 'two in the hat, minimum');
-});
+/*
+ * THE DRAW IS BINNED, AND ITS TEST WITH IT — see `drawLuckyDip()`'s headstone
+ * in `engine.js`. What this asserted was that stopping a quiz at a round
+ * intro still ran the draw, because `answeredTheLastQuestion()` read the
+ * pointer rather than the last question actually PLAYED. Both the draw and
+ * that helper are gone; nothing else called it.
+ *
+ * The lesson it was written for is not gone, and is worth carrying: the
+ * pointer is not the night. Anything asking *what did the room last do* must
+ * read `state.history`, not `roundIndex`/`questionIndex`, or it answers about
+ * a question nobody was asked.
+ */

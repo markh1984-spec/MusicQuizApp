@@ -547,7 +547,7 @@ opening a second file.
 - **One type ladder, ten steps, named for the JOB**
 - **ONE MENU, built in one place, on every page a quizmaster drives**
 - **A push goes out on a Monday, after `gig-build.mjs` prints SAFE TO DEPLOY, and on no other day**
-- **The draw takes the LAST prize on the table**
+- **THE DRAW IS BINNED — a free drink to a random team from the bottom half, removed 21 September 2026. Do not rebuild it.**
 - **A Render disk — wanted (reverses the 18 Sept decline): a deploy no longer wipes the running night, but the GitHub backup stays the source of truth. Auto-Deploy stays off via the release train.**
 
 ## The GUI rules — what a control looks like is decided by what it DOES
@@ -936,8 +936,8 @@ drink… perhaps you could let the crowd vote on their favourite as well?"*
 - **NO RUNNING TALLY ON THE WALL** — structural, `voteForScreen()` never builds
   the field. **Nor the CODE, nor any sender's player id, on any wire** (rule 3)
   — the guard sweeps the WHOLE payload.
-- **THE PRIZE IS THE LAST ON THE TABLE AND IS NAMED ON THE BUTTON** — no floor
-  like the draw's.
+- **THE PRIZE IS THE LAST ON THE TABLE AND IS NAMED ON THE BUTTON** — and no
+  floor on how many are up.
 - **A TIE IS BROKEN AT RANDOM, ONCE, IN THE STATE.** **NOBODY VOTING IS NOT
   SOMEBODY WINNING.**
 - **SHARED, BECAUSE `engine-contract.test.js` FORCED THE DECISION** — a `kind`
@@ -2472,10 +2472,12 @@ gig actually takes.
   top-prize codes on a night with two winners. **A redeemed, `draw` or
   `carried` one stays.**
 - **RESET SCORES HANDS THE NEXT GAME A CLEAN LEDGER, and destroys nothing** —
-  it kept `luckyDip` (so the draw never ran again) and game one's vouchers in
-  the paid set. **Marked `carried`, never deleted.**
-- **AND THE DRAW READS THE LAST QUESTION PLAYED, not the pointer** — stopping
-  at a round intro left it reading a question nobody had been asked.
+  it kept game one's vouchers in the paid set. **Marked `carried`, never
+  deleted.** It still clears `luckyDip`, which the binned draw wrote: a state
+  from before the removal must not put that band back on a relaunch.
+- **AND THE POINTER IS NOT THE NIGHT** — learned from the draw: on a quiz
+  stopped at a round intro, `roundIndex`/`questionIndex` names a question
+  nobody was asked. *What did the room last do* reads `state.history`.
 
 ### A TEAM'S SEATS ARE SETTLED AT A BOUNDARY, AND A PHONE MAY NOT MINT ONE
 
@@ -3453,28 +3455,25 @@ in a night with no effect on scores, teams or tokens.
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
-### The draw from the bottom half — a retention feature, not a raffle
+### THE DRAW IS BINNED — and WHY it went is the part worth keeping
 
-`drawLuckyDip()` and `state.luckyDip` in `src/engine.js`, the band under the
-podium in `screen.js`. A table that works out by round three that it cannot win
-has nothing left to stay for, and a room that thins out at nine is worth less to
-the pub. **Eligibility is answering the LAST QUESTION THE NIGHT ENDED ON** —
-not "the final round", which on a one-round night collapses to "answered
-anything at all". **The LAST prize on the table** — the third, with three up. All tested:
+It paid a free drink to one team drawn at random from the bottom half of the
+board, taking the LAST prize on the venue's list, for retention: a table that
+knows by round three it cannot win will not stay. `drawLuckyDip()`,
+`state.luckyDip`, the band under the podium and `answeredTheLastQuestion()`
+are gone.
 
-- **Nobody wins twice** — anybody already holding a voucher is out of the hat.
-- **Two in the hat minimum.** One eligible person is a gift, not a draw.
-- **Decided ONCE, in the state**, like the vouchers: `Back` and forward again
-  must not name a different person to a room that heard the first.
-- **The ENGINE draws, never a phone**, and `random` is injected like `now()`.
-- **The projector gets the NAME and never the code.**
-- **A draw voucher has NO PLACE** — `place: mine.place || 1` would tell somebody
-  who finished eleventh they had won the quiz.
+**IT WENT BECAUSE THE HOST DID NOT KNOW IT EXISTED.** Asked outright, *"not
+sure what the draw even means"* — about a band his own projector had printed
+under every final for months. **There was no switch**: it fired by itself on
+any night with three or more prizes listed, so a venue funding three drinks
+quietly gave away a fourth and the person paying could not say why. That is
+*clarity beats everything* failing at the top of its own list, and a feature
+nobody can explain is worse than one nobody uses when it spends money weekly.
 
-A band BELOW the podium, never on it, with the count printed. Entry is FREE;
-**if a venue ever charges per team this needs looking at again.**
-
-Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
+**DO NOT REBUILD IT.** Retention starts from a control he chose, never a
+behaviour he inherits. **A `draw: true` voucher is still tolerated**, so a
+night running across the deploy keeps its drink.
 
 ### The tabs run ALONG a quizmaster's evening, behind their door
 

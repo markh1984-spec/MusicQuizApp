@@ -511,69 +511,52 @@ glance, which is exactly the failure the coloured edge exists to prevent.
 
 ---
 
-## The draw from the bottom half — a retention feature, not a raffle
+## THE DRAW FROM THE BOTTOM HALF — binned, 21 September 2026
 
-`drawLuckyDip()` and `state.luckyDip` in `src/engine.js`, the band under the
-podium in `screen.js`.
+**The feature is gone; this is kept because the REASON it went generalises.**
 
-Asked for by the host on 14 August 2026 and his reasoning is the design: **a
-table that works out by round three that it cannot win has nothing left to
-stay for**, and a room that thins out at nine is worth less to the pub than
-one that stays till eleven. This is the reason to keep answering after the
-scoreboard has stopped being interesting.
+It paid a free drink to one team drawn at random out of the bottom half of the
+board, taking the LAST prize on the venue's list. The argument for it was
+retention, and it was a good argument: a table that has worked out by round
+three that it cannot win has no reason to stay, and a room that empties at nine
+is worth less to the pub than one that does not.
 
-**STILL PLAYING AT THE END IS THE POINT.** Eligibility is answering the LAST
-QUESTION THE NIGHT ENDED ON — exactly the behaviour being paid for, and also
-what stops the failure it would otherwise have: drawing somebody who left at
-half nine, calling their name on the mic, and getting silence from a room
-that then watches the prize go nowhere.
+**It went because the person paying for the drinks did not know it existed.**
+Asked outright what the draw was — twice, then a third time — the answer was
+*"not sure what the draw even means"*, about a band his own projector had been
+printing under every final for months. There was no switch anywhere in the
+console or the launch options: it fired by itself on any night with three or
+more prizes listed, took the last one, and said so on the big screen.
 
-**"Answered in the final ROUND" was the first version and it was far too
-loose** — most nights this app runs are one round, so it collapsed to
-"answered anything at all", which every phone that ever joined satisfies.
-Caught by its own test drawing a table that had stopped after question one.
-The last QUESTION is the only definition that means the same thing on a
-one-round night and a five-round one, and it is sayable on a microphone:
-**you had to still be in it at the last question.**
+So a venue funding three drinks was quietly handing out a fourth, every week,
+and the quizmaster could not have told you why. That is this project's first
+rule failing at the top of its own list — *if a control needs explaining, the
+control is wrong* — with the aggravation that **this one spends money**. A
+feature nobody uses is clutter; a feature nobody can explain that also costs a
+customer a drink a week is worse than clutter.
 
-**The LAST prize on the table**, which with three up is the third — the
-host's own instruction, so a venue putting up three prizes runs a draw and one
-putting up fewer does not, with nothing extra to set up and nothing extra for
-the pub to agree to. The code took the last one from the day it was written and
-this page said "third" for a month; `prizes-fuzz.mjs` section F pins which.
+**What was removed:** `drawLuckyDip()`, `state.luckyDip`, the `dip` band in
+`screen.js`, the `final` card key's dependency on it, `test/lucky-dip.test.js`,
+and `answeredTheLastQuestion()` — which existed only for the draw and had no
+other caller.
 
-Six things that are load-bearing, all tested:
+**What was deliberately KEPT:**
 
-- **Nobody wins twice.** With five players the bottom half reaches third
-  place, who is already holding a voucher, so anybody with one is out of the
-  hat. A second code in one hand is one of them looking valid and not being.
-- **TWO IN THE HAT MINIMUM.** One eligible person is a gift, not a draw, and
-  calling it a draw is a lie the room can see.
-- **Decided ONCE, in the state**, exactly like the vouchers. `Back` off the
-  final and forward again is one press each way and a host will do it; a
-  second roll would name a different person to a room that heard the first.
-- **The ENGINE draws, never a phone**, and `random` is injected like `now()`
-  so the draw is testable at all — "it picked the right person" is not
-  something you can assert against `Math.random`.
-- **The projector gets the NAME and never the code.** The name is the moment;
-  the code is the credential and goes to one phone, like every other voucher.
-- **A draw voucher has NO PLACE.** `place: mine.place || 1` would have given
-  it first — telling somebody who finished eleventh that they had won the
-  quiz, in a room that had just watched somebody else win it.
+- **`resetScores()` still clears `state.luckyDip`.** A state written before the
+  removal can carry one, and a relaunch must not put that band back.
+- **A `draw: true` voucher is still tolerated** by
+  `withdrawVouchersNoLongerOwed()` and by the archive. Nothing mints one now,
+  but a night already running across the deploy that removed this can hold one,
+  and withdrawing somebody's drink mid-evening because the app changed
+  underneath them is the one outcome worth avoiding.
+- **The lesson underneath `answeredTheLastQuestion()`**: the POINTER IS NOT THE
+  NIGHT. It read `roundIndex`/`questionIndex`, so a quiz stopped at a round
+  intro was asking about a question nobody had been asked. Anything wanting
+  *what did the room last actually do* reads `state.history`.
 
-**On screen it is a band BELOW the podium and deliberately not on it.**
-Somebody who came eleventh has not beaten anybody, and a medal would say they
-had. The count is printed — *"drawn from 9 still playing at the last
-question"* — because that is what makes it obviously fair to the eight who
-did not win, and it is the sentence that gets people to stay in next week.
-
-**The legal question was asked and answered: entry is FREE.** The pubs are
-paying for a full room on a dead night, not selling tickets — so a free-entry
-draw is exempt and there is nothing to work around. **If a venue ever charges
-per team, this needs looking at again before the prize gets big**, because a
-paid-entry draw is a different thing in law.
-
----
+**Do not rebuild it.** If retention is wanted again it starts from a control
+the host chose, never a behaviour he inherits — and it names its own cost on
+the screen he sets it from.
 
 ## A phone must not say you were right before the projector does
 
@@ -874,7 +857,7 @@ not touch:
 
 Two shorter quizzes for one room is the case the `winners` setting was built
 for, and Reset scores is how you get there. It cleared the answers, the history
-and the scores — and kept `luckyDip` set, so the draw never ran again, and kept
+and the scores — and kept `luckyDip` set (the draw, since binned), and kept
 every game-one voucher in the "already paid" set, so the second game's genuine
 winner got nothing while night one's first-place code was still live at the bar.
 

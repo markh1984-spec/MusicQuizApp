@@ -83,8 +83,13 @@ try {
   let vs = vouchersOf(r.hv);
   const placed = vs.filter((v) => !v.draw);
   check('three placed vouchers go out', placed.length === 3, `${placed.length}: ${vs.map((v) => `${v.place}:${v.name}:${v.reward}`).join(', ')}`);
-  const draw = vs.find((v) => v.draw);
-  check('the draw from the bottom half ran and took the LAST prize on the table', draw && draw.reward === 'A hug' && draw.place === null, JSON.stringify(draw || null));
+  /*
+   * THE DRAW IS BINNED, so the assertion is inverted: nothing may mint one.
+   * It used to take the LAST prize on the table — 'A hug' here — which is
+   * exactly the fourth drink a venue funding three never agreed to.
+   */
+  check('NO draw voucher is minted — the draw is binned', !vs.some((v) => v.draw), JSON.stringify(vs.filter((v) => v.draw)));
+  check('and the last prize on the table stays on the table', !vs.some((v) => v.reward === 'A hug'), JSON.stringify(vs.map((v) => v.reward)));
   check('first, second, third get the first, second, third prize', vs.find((v) => v.place === 1)?.reward === 'A pint' && vs.find((v) => v.place === 2)?.reward === 'A half' && vs.find((v) => v.place === 3)?.reward === 'Crisps', vs.map((v) => `${v.place}=${v.reward}`).join(' '));
   check('fourth and fifth get nothing', !vs.some((v) => v.place > 3));
   const scr = await screenView(r.code);
@@ -151,7 +156,7 @@ try {
   r = await quizToFinal(['Dave', 'Sue', 'Six', 'Al', 'Bo', 'Cy'], { Dave: 1, Sue: 0.5, Six: 0.34, Al: 0.25, Bo: 0.2, Cy: 0 }, { winners: 3 });
   vs = vouchersOf(r.hv);
   check('the emoji survives to the voucher intact', vs.find((v) => v.place === 3)?.reward === '🍺 a beer 🍺', JSON.stringify(vs.map((v) => [v.place, v.reward])));
-  check('the draw takes the last prize on the table, past an empty slot', vs.find((v) => v.draw)?.reward === 'A half', JSON.stringify(vs.find((v) => v.draw) || null));
+  check('still no draw voucher, however the prize list is spelt', !vs.some((v) => v.draw), JSON.stringify(vs.filter((v) => v.draw)));
   const pdf = await fetch(`${B}/api/past-gigs/${encodeURIComponent(((await J('/api/past-gigs', { headers: H() })).body.nights || [])[0].night)}/report.pdf`, { headers: { cookie } });
   check('the report still renders with those words in it', pdf.status === 200);
 

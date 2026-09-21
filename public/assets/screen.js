@@ -157,7 +157,7 @@ const cards = {
    * which is what `draw()` already does for a fresh card.
    */
   final: {
-    key: (s) => `final:${fingerprint([s.leaderboard, s.winners, s.league, s.luckyDip, s.comeBack])}`,
+    key: (s) => `final:${fingerprint([s.leaderboard, s.winners, s.league, s.comeBack])}`,
     render: renderWinner,
   },
 };
@@ -1602,12 +1602,6 @@ function renderWinner(s) {
         </div>`).join('')}</div>` : ''}
       ${leagueBand(s)}
       <div class="endband">
-        ${s.luckyDip ? `
-          <div class="dip">
-            <div class="dip-label">And the draw goes to</div>
-            <div class="dip-name">${esc(s.luckyDip.name)}</div>
-            <div class="dip-note">drawn from ${s.luckyDip.outOf} still playing at the last question</div>
-          </div>` : ''}
         ${comeBackBand(s)}
       </div>
     </div>
