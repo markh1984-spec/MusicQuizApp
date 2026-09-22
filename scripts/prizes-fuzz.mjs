@@ -353,7 +353,23 @@ try {
    */
   const words = all.map((v) => v.reward);
   check('and no drink was handed out twice across the night', new Set(words).size === words.length, JSON.stringify(words));
-  check('each part paid out of its OWN slice of the list, in order', words.join(' | ') === 'A pint | Crisps | A shot', JSON.stringify(words));
+  /*
+   * SORTED, BECAUSE `state.vouchers` IS KEYED BY A RANDOM CODE.
+   *
+   * The first version of this compared `words.join(' | ')` against the order
+   * the parts were played in, and passed — by luck. `Object.values()` walks
+   * insertion order over keys that are `newVoucherCode()`'s output, so the
+   * same correct night comes back as ["Crisps","A pint","A shot"] whenever the
+   * codes happen to land differently. It failed on the next run with all three
+   * drinks right.
+   *
+   * What this section is actually asserting is WHICH drinks the night paid —
+   * one out of each part's own slice — and that is a set. A guard that pins an
+   * order nothing promises is a guard that goes red about nothing, which is
+   * how a suite teaches you to ignore it.
+   */
+  check('each part paid out of its OWN slice of the list',
+    [...words].sort().join(' | ') === 'A pint | A shot | Crisps', JSON.stringify(words));
   const daveAll = await phoneCodes(rp[0], rcode);
   check("Dave's phone shows every drink he won tonight, quiz and bingo", daveAll.length === all.filter((v) => v.winnerId === rp[0].id).length, `${daveAll.length} on the phone vs ${all.filter((v) => v.winnerId === rp[0].id).length} owed`);
   // The archive holds the codes: redeem the quiz drink through the bar and the
