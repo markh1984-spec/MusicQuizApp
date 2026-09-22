@@ -383,6 +383,22 @@ export function venuesSection() {
                 hit it on a gig day.
               -->
               ${brandOnly ? '' : `
+              <!--
+                THE USUAL NIGHT DOES MORE THAN THE LABEL SAYS, so it says so.
+
+                It is not only the diary's projection. The venue is deliberately
+                never remembered on the device (a remembered one files next
+                Tuesday under last Thursday's pub), so the launch bar works out
+                whose night it is — and the usual night is how. Clear it and
+                after any restart the bar opens on "No venue - pick one", which
+                stands Launch down for want of prizes until somebody picks the
+                pub by hand. deploy-with-a-disk.mjs is what found that, and
+                this line is so nobody has to find it twice.
+
+                One line, under the control it explains, in the house shape: it
+                names the consequence rather than the mechanism.
+                NOTE: no backticks in here. This is a template literal.
+              -->
               <label class="venue-night">Usual night
                 <select class="v-night">
                   <option value="">No usual night</option>
@@ -390,6 +406,10 @@ export function venuesSection() {
                     <option value="${id}" ${v.usualNight === id ? 'selected' : ''}>${esc(label)}</option>`).join('')}
                 </select>
               </label>
+              <div class="tiny venue-night-why">${v.usualNight
+    ? 'The launch bar picks this pub by itself on a ' + esc((WEEKDAY_LABELS.find(([id]) => id === v.usualNight) || [])[1] || '').replace(/s$/, '')
+      + ', and after a restart mid-night.'
+    : 'No usual night, so the bar will not pick this pub by itself \u2014 you choose it each time, and again after any restart.'}</div>
               <!--
                 WHERE TO SEND THE ROOM at the end of the night, as a QR on the
                 last slide. Labelled by the JOB rather than by the field —
@@ -776,6 +796,30 @@ export function venuesSection() {
         const rewards = [...card.querySelectorAll('.v-reward')].map((b) => b.value.trim());
         while (rewards.length && !rewards[rewards.length - 1]) rewards.pop();
         const usualNight = card.querySelector('.v-night').value;
+        /*
+         * TAKING THE USUAL NIGHT OFF IS ASKED ABOUT, because it costs more
+         * than it looks and the cost lands weeks later.
+         *
+         * The venue is never remembered on the device, so this field is how
+         * the launch bar knows whose night it is. Clearing it means the bar
+         * opens on "No venue" after every restart — and no venue means no
+         * prizes, which stands Launch down. A deploy mid-evening then reads
+         * as the app refusing to start the night.
+         *
+         * ONLY ON THE WAY FROM SOMETHING TO NOTHING. Changing Thursdays to
+         * Fridays is an ordinary edit and is not questioned; setting one for
+         * the first time certainly is not. And saying no leaves the card
+         * exactly as it was rather than saving the rest of it, or the answer
+         * would be a lie about what was kept.
+         */
+        const hadNight = (v.usualNight || '');
+        if (hadNight && !usualNight) {
+          const ok = confirm(`Take the usual night off ${v.name}?\n\n`
+            + 'The launch bar uses it to pick this pub by itself. Without it you will have '
+            + 'to choose the venue every time \u2014 including after a restart mid-night, '
+            + 'where an unpicked venue means no prizes and Launch stands down.');
+          if (!ok) { save.disabled = false; save.textContent = 'Save it'; return; }
+        }
         const link = card.querySelector('.v-link').value.trim();
         try {
           await invoiceApi(`/api/invoices/customers/${encodeURIComponent(id)}/rewards`, {

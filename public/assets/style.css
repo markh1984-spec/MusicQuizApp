@@ -1494,6 +1494,45 @@ body.host::after { display: none; }
 .host [data-act="menu"] { min-width: 44px; min-height: 44px; }
 /* And the two full-width minors that came out at 35-36px. */
 .host .minor.tidy, .host .report-q { min-height: 44px; }
+
+/* ---------------------------------------------------------------------------
+ * AND THE CONSOLE, WHICH WAS LEFT OUT AND SHOULD NOT HAVE BEEN.
+ *
+ * The block above is scoped to `body.host` on the reasoning that "the console
+ * has its own 44px rule on the launch bar". That rule covers the launch bar's
+ * SETTINGS ROW and nothing else, so everything else on five doors stayed where
+ * the browser left it. Swept on 22 September 2026, every pressable thing on
+ * every door at 390px and 1280px:
+ *
+ *   button.venue-name   18px   the venue card's own expander
+ *   .minor              37px   Copy, Save, Refresh, Sign out — the commonest
+ *   input / select      34px   every text box and picker
+ *   a.minor             37px   Pack editor, Download results
+ *
+ * Reported as *"I'm hunting for tiny click areas to expand sections or click
+ * buttons"*, which is what an 18px expander is.
+ *
+ * MIN-HEIGHT, NEVER A PADDED HIT AREA HERE. The lamp's `::after { inset }`
+ * trick is right for a dot floating on a photograph with space around it; in a
+ * row of buttons 6px apart it makes neighbours OVERLAP, and the later one in
+ * the DOM silently wins — which is *a bigger target is not a hittable one*,
+ * the rule this app already learned off the tile's own close button. Growing
+ * the box cannot do that.
+ *
+ * THE SETTINGS ROW IS NOT TOUCHED — it is already 44 by its own rule, and it
+ * is the one row where a height is load-bearing (`--bay-h` is measured off the
+ * open panel). `console-frame.mjs` and `community-bay.mjs` are the guards that
+ * would catch it if this moved anything that matters.
+ */
+.console .minor,
+.console a.minor,
+.console button.minor { min-height: 44px; }
+.console input[type="text"], .console input[type="search"], .console input[type="url"],
+.console input[type="email"], .console input[type="number"], .console select { min-height: 44px; }
+/* THE EXPANDER IS THE WHOLE ROW, not the words in it. A venue card's name is
+   the control that opens it, and at 18px it was the smallest thing on the
+   door doing the biggest job. The text does not grow; the target does. */
+.console .venue-name { min-height: 44px; display: inline-flex; align-items: center; }
 .actions .minor {
   padding: 13px 6px; font-size: var(--fs-note); font-weight: 800;
   border-radius: var(--r-field); cursor: pointer;
@@ -3323,7 +3362,13 @@ body.screen { cursor: none; overflow: hidden; }
    widths being 1500, 1280, 1280 and 390 — so it only ever measured one of the
    two bands. It measures both now. */
 @media (min-width: 900px) { :root { --bay-h: 494px; } }
-@media (min-width: 1150px) { :root { --bay-h: 377px; } }
+/* 389 SINCE 22 SEPTEMBER 2026, RE-MEASURED — it was 377. The touch-floor
+   sweep took the launch bar's picker faces and its ordinary buttons up to
+   44px, so the reference panel this token copies grew by 12. Measured off the
+   bar under `community-bay.mjs`'s own conditions (a night running with two
+   phones in it), never idle — the idle bar is shorter and both sides would
+   then agree with each other and with nothing else. */
+@media (min-width: 1150px) { :root { --bay-h: 389px; } }
 
 /* THE STRIP A SCROLLBAR IS PAINTED IN — kept clear of anything clickable.
    14px, because a macOS overlay bar is about 15px across the moment the
@@ -3621,6 +3666,9 @@ body.screen { cursor: none; overflow: hidden; }
   justify-content: space-between;
   gap: 8px;
   width: 100%;
+  /* 40px was four short of the floor, on the control every door is reached
+     through. The padding already nearly got there; this says so. */
+  min-height: 44px;
   padding: 11px 14px;
   border: none;
   /* THE MARKER IS THE LEFT EDGE NOW, because the bar turned ninety degrees.
@@ -7297,6 +7345,13 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .pick-face {
   display: inline-flex; align-items: center; gap: 8px;
   max-width: 100%; min-width: 0;
+  /* 44px, AND IT IS THE LAUNCH BAR'S OWN RULE BEING KEPT RATHER THAN A NEW
+     ONE. *One height for every control in that row — 44px, the touch floor*
+     was written about the settings row, and the row obeyed it; then the native
+     selects were skinned, and the SKIN is what a thumb actually lands on.
+     Measured at 36-41px across every door — the one row driven all night, in a
+     dark pub, with a thumb. The face covers a control that is already 44. */
+  min-height: 44px;
   padding: 9px 11px;
   border-radius: var(--r-field);
   border: 1px solid var(--panel-line);
@@ -9470,6 +9525,9 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
    the drag source, which is what `cursor: grab` above already says. */
 .venue-name.flat { cursor: inherit; }
 .venue-name.flat::after { content: none; }
+/* The one line under the usual night saying what it actually decides — see
+   `console-venues.js`. Sits with the control rather than in a panel note. */
+.venue-night-why { margin: -4px 0 4px; color: var(--ink-dim); }
 /* ON THE CONSOLE DOOR THE WHOLE CARD IS THE CONTROL — tapping it picks the
    venue for tonight. `grab` above says it can be dragged, which is true and is
    the fast way on a laptop; this says it can also just be pressed, which is
@@ -10574,7 +10632,7 @@ body.gal-zoomed { overflow: hidden; }
    1150. Re-measured with `--bay-h` above; a poster left behind would make the
    bench the one bay that did not fill. */
 :root { --bench-poster: 366px; }
-@media (min-width: 1150px) { :root { --bench-poster: 249px; } }
+@media (min-width: 1150px) { :root { --bench-poster: 261px; } } /* --bay-h (389) less 128 */
 @media (min-width: 900px) {
   .bench.launchbar > .bench-body {
     flex: 1 1 auto;
