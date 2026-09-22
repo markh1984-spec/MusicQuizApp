@@ -48,8 +48,24 @@ export function diarySection() {
       <div class="game-head">
         <div>
           <h2>Coming up</h2>
+          <!-- AND THE THING AT THE BOTTOM OF THIS PAGE IS NAMED UP HERE.
+
+               The subscribe panel has existed, worked and been reachable the
+               whole time — a valid feed, a secret address, a revoke — and it
+               was asked for as if it did not exist, by the person who uses
+               this app every day. Measured at y=633: on the screen, below
+               where anybody is looking. A feature nobody finds is a feature
+               nobody has, and the cheapest fix is to say it where the reading
+               already happens rather than move the thing.
+
+               Not a link, because it is not another tab — "do it over there
+               must be a link to there" answers a different question, and the
+               panel is thirty lines down the same page.
+               NOTE: no backticks in here. This is a template literal. -->
           <div class="tiny">The next four weeks, from the usual nights on your Venues tab.
-            Pick a date to book anything that is not your usual.</div>
+            Pick a date to book anything that is not your usual.
+            You can subscribe to all of it in your own calendar — the address is at the
+            bottom of this page.</div>
         </div>
       </div>
       <!-- THE MONTH, because "book a quiz on the 23rd" needs a 23rd to click.

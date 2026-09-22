@@ -734,6 +734,21 @@ is a tab you scroll past looking for the half you wanted.
 past-facing like evidence, chasing is organisation — and on a Monday it is a
 destination you land on rather than scroll to.
 
+### A FEATURE NOBODY FINDS IS A FEATURE NOBODY HAS — the calendar feed
+
+`src/ics.js`, `/api/calendar/link`, `/api/calendar.ics?key=…`, the `.cal-feed`
+panel on the Calendar tab. **IT WAS ALL BUILT AND WORKING AND WAS ASKED FOR AS
+IF IT DID NOT EXIST**, by the person who uses this app daily — *"can we get
+ical functionality here?"*
+
+- **CHECK BEFORE BUILDING** — the feed serves `text/calendar`, residencies
+  projected forward, a wrong key 404s, **New address** revokes every
+  subscriber. Verified from plain node with no cookie.
+- **IT MEASURED AT y=633 ON A 900px WINDOW** — on the screen, below where
+  anybody looks. **The blurb at the top NAMES it**: cheaper than moving it, and
+  the month stays first because the month is the daily job. **Not a link — it
+  is the same page.**
+
 ### THE MONTH IS ON THE LEFT AND WHAT YOU DO ABOUT A DATE IS ON THE RIGHT
 
 `diarySection()` in `console-diary.js`, `.cal-wrap` / `.cal-side` in `style.css`.
