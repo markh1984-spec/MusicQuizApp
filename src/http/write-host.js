@@ -2,7 +2,7 @@
  * WRITE ROUTES — host. Moved whole out of `handleWrite()` in server.js;
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
-import { ANY_LOBBY_GAME, FEATURES, HOST_MOVES, MAX_ROUNDS, accounts, canPlayPack, comeBackFor, config, entitlements, flight, fullLibrary, hostCursor, isOwnPack, isSting, listOwn, lobbyGameFor, lobbyGamesFor, packlessKind, photosRepoConfigured, pickIdeas, reports, wholePackKind } from './context.js';
+import { ANY_LOBBY_GAME, FEATURES, HOST_MOVES, MAX_ROUNDS, accounts, canPlayPack, comeBackFor, config, entitlements, flight, fullLibrary, hostCursor, isComposed, isOwnPack, isSting, listOwn, lobbyGameFor, lobbyGamesFor, packlessKind, photosRepoConfigured, pickIdeas, reports, wholePackKind } from './context.js';
 import { readJson, sendJson } from './plumbing.js';
 import { packDating, photoLinkFor, roomForHost, whoIs } from './identity.js';
 import { allowed } from './gates.js';
@@ -505,8 +505,24 @@ export async function writeHost(req, res, url, route) {
       const round = typeof engine.round === 'function' ? engine.round() : null;
       if (!q) return sendJson(res, 200, { ok: false, reason: 'no_question' }), true;
       const me = whoIs(req, url);
+      /*
+       * THE PACK THE ROUND CAME FROM, never `~tonight`.
+       *
+       * A composed pack's id matches no file, so every composed night filed a
+       * correction nothing could join back to the pack needing it —
+       * `cataloguePerformance()` joins on `packId`, so rule 11's feedback loop
+       * was broken on exactly the nights this app promotes. And composed is
+       * not rare: one round unticked does it, as does any running order.
+       * `composeQuiz()` already records the source per round.
+       */
+      const roundAt = engine.state.roundIndex;
+      const sourceOf = (pack) => {
+        if (!pack || !isComposed(pack.id)) return (pack && pack.id) || '';
+        const src = (pack.sources || [])[roundAt];
+        return (src && src.packId) || pack.id;
+      };
       const result = reports.add({
-        packId: session.pack?.id || '',
+        packId: sourceOf(session.pack),
         packKind: session.kind,
         roundIndex: engine.state.roundIndex,
         questionIndex: engine.state.questionIndex,
