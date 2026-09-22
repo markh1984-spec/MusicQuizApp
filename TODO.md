@@ -17,7 +17,22 @@ decision from the host first.
 **DELETE AN ITEM FROM HERE THE MOMENT IT IS BUILT.**
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
-### 0. UPLOAD THE TWO LOGOS — you asked to be reminded
+### 1. IS `HOST_KEY` SET? — two minutes, and it has locked you out once
+
+**Check this first because it is the smallest thing here and the only one that
+can lock you out of your own console.** `hostKey()` invents a key and writes it
+to `data/` when `HOST_KEY` is unset — and `data/` is wiped on every deploy, so
+every push silently hands out a new key and every bookmark stops working.
+
+Open [the environment page](https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env)
+and look for `HOST_KEY`. If it is not there, add it with any long random
+string. The current key is in the Render startup banner on the `Host key:`
+line.
+
+**It matters less than it did** — you sign in as a real account now, so the key
+is the back way in rather than the only way. It is still two minutes.
+
+### 2. UPLOAD THE TWO LOGOS — you asked to be reminded
 
 **Only you can do these and the field is already waiting.** Built 17 September
 2026: a venue card now takes a **Photo overlay** — Venues tab, open a venue,
@@ -44,34 +59,21 @@ baked into the stored bytes, so **correcting a venue's overlay corrects every
 photograph that already exists** — rule 11, for free, where a copy written at
 publish time would have had to be regenerated. Do not rebuild it as a bake.
 
-### 0a. THE DJ APP'S OWN ADDRESS — two settings, and it is called Jukebox now
+### 3. WHAT A DJ SET COSTS — the only thing left on it
 
-**Named on 20 September 2026.** The rest of it was already built: a DJ set runs
-end to end — the code on the screen, the photo wall, the unlock, the request
-box with Spotify search and a typed fallback, and the queue on the desk with a
-copy button. `node scripts/dj-set.mjs` drives the lot in a real browser.
+**The address is live.** `dj.pubchampions.co.uk` answers on the service with
+`DJ_HOST` set, so its bare address is the Jukebox door rather than a redirect
+into the quiz app — verified 22 September 2026. The set itself has run end to
+end since the 20th: the code on the screen, the photo wall, the unlock, the
+request box with Spotify search and a typed fallback, and the queue on the desk
+with a copy button. `node scripts/dj-set.mjs` drives the lot in a real browser.
 
-Two things left, both yours, neither blocking:
+**One thing left and it is a pricing decision, not a setting.** `/api/dj/*`
+asks only that somebody is signed in. Nothing gates it on a tier, deliberately
+— putting it behind `FEATURES.QUIZ` would answer the pricing question by
+accident, in the hardest place to find later. See [`docs/dj.md`](docs/dj.md).
 
-- **What it costs.** `/api/dj/*` asks only that somebody is signed in. Nothing
-  gates it on a tier, deliberately — putting it behind `FEATURES.QUIZ` would
-  answer the pricing question by accident, in the hardest place to find later.
-- **Its own address — `dj.pubchampions.co.uk`.** The code is done; what is
-  left is yours, and it is two settings:
-  1. **Render → the service → Settings → Custom Domains → Add**, and type
-     `dj.pubchampions.co.uk`. Render then shows you a CNAME target.
-  2. **At whoever hosts pubchampions.co.uk**, add a CNAME record: name `dj`,
-     value the target Render just gave you. Certificates issue themselves
-     within a few minutes.
-  3. **Render → Environment → Add**: `DJ_HOST` = `dj.pubchampions.co.uk`.
-     Without it the domain still works, but the BARE address redirects into
-     the quiz app; with it, the bare address is the DJ door.
-
-  **It is the same service, so it costs nothing extra.** A second service is
-  only worth it if you want the DJ set to keep running while the quiz app is
-  down. See [`docs/dj.md`](docs/dj.md).
-
-### 0. TURN THE MONEY ON — five environment variables, about forty minutes
+### 4. TURN THE MONEY ON — five environment variables, about forty minutes
 
 **Nothing else on the money path matters until this is done, and nobody but you
 can do it.** Stripe is wired end to end and tested; the keys are not set, so
@@ -90,7 +92,9 @@ STRIPE_PRICE_GOLD        £30/mo
 STRIPE_WEBHOOK_SECRET    whsec_…
 ```
 
-The webhook endpoint is `https://musicquizapp.onrender.com/api/stripe/webhook`,
+The webhook endpoint is `https://musicquizapp.onrender.com/api/stripe/webhook`
+(deliberately the ORIGIN rather than `quizporium.co.uk` — a machine-to-machine
+call should not ride on a domain that can lapse or be re-pointed),
 subscribed to `checkout.session.completed`, `invoice.paid`,
 `invoice.payment_failed` and `customer.subscription.deleted`.
 
@@ -111,7 +115,7 @@ deliberately: a script that mints prices can mint the wrong one on a rerun, and
 there are three of them, made once, in a form that shows you what you are
 charging before you save it.
 
-### 1. ONE EMAIL KEY, and a new signup stops being silent
+### 5. ONE EMAIL KEY, and a new signup stops being silent
 
 **Twenty minutes, same page, and it is the difference between a signup and a
 person.** Today the app sends nothing: no welcome, no password link in their
@@ -128,7 +132,13 @@ EMAIL_FROM      Quizporium <no-reply@quizporium.co.uk>
 password link no longer comes back in the page, because on a deployed app that
 let anybody activate an account on an address they do not own.
 
-### 2. TWO FACTS FOR THE LEGAL PAGES, and they are on screen right now
+**The domain half is already done**, so this is the key and the DNS records and
+nothing else: `quizporium.co.uk` is live with `PUBLIC_URL` pinned to it, which
+is what `fromAddress()` falls back to and what every emailed link is built
+from. SPF, DKIM and DMARC go on that domain, once, wherever it is hosted —
+whichever provider you pick will print the exact three records to paste.
+
+### 6. TWO FACTS FOR THE LEGAL PAGES, and they are on screen right now
 
 `[your trading name]` and `[support email]` render **live** on terms, privacy and
 refunds, to somebody deciding whether to pay:
@@ -142,7 +152,7 @@ deliberately does **not** fail while one is unfilled: a suite left red until you
 answer is one people learn to ignore.
 
 
-### 2. DECIDE WHAT GETS FIXED OFF THE SWEEPS — the list is written, nothing is actioned
+### 7. DECIDE WHAT GETS FIXED OFF THE SWEEPS — the list is written, nothing is actioned
 
 **Blocked on the host, which is why it is above everything else.** Two passes on
 5-7 September 2026 found roughly 160 faults between them; **none has been
@@ -161,40 +171,7 @@ shapes worth knowing before starting: fixing the symptom rather than the
 neighbour, fixing one path and missing the parallel one, and believing the diff
 instead of the screen. **One fix, one check that fails first, one push.**
 
-### 3. PLAY FOUR LOBBY GAMES ON A REAL PHONE — the only thing left on them
-
-**Nothing else here is blocked on the host; this is.** Rally, Tailback, Quick
-Draw and **Last Orders** have never been touched by a human thumb — every check on
-them so far has been a headless browser, and this repo's own history says that
-proves the code runs, not that the game is playable. **Maze Mouth is done**
-(4 September 2026) and its corners and its new death are worth a second look at
-the same time.
-
-**How:** open the console, drop a pack into Tonight, set **Game** to each in
-turn, Launch, and join on the phone — the join QR is on the projector, or
-**https://musicquizapp.onrender.com/play** for the house room. One code covers
-all five; the game is chosen at launch, not in the URL.
-
-**What only a phone can answer:** whether the controls read under a thumb,
-whether it is playable one-handed, whether Last Orders' formation is too fast by
-the tenth wave, and whether Quick Draw's windows are generous enough on a real
-touchscreen — **a reaction game puts input latency in the score, and that is
-the one limit no test here can see.**
-
-**DELETE THIS ENTRY once he has played all four and said what is wrong.**
-
-### 4. A DOMAIN, because the shop window is `musicquizapp.onrender.com`
-
-The code already talks about `quizporium.co.uk` in four places — the gallery
-addresses, the league pages, the email from-address — and a quizmaster being
-asked for £30 a month reads that Render address. **Buy it and point it at the
-service** (Render → Settings → Custom domains); then set `PUBLIC_URL`, which is
-what `fromAddress()` falls back to and what every emailed link is built from.
-
-**One domain setup serves the email too** — SPF, DKIM and DMARC go on the
-domain once, so doing this before item 1 saves doing the DNS twice.
-
-### 5. EIGHT `.mp3` FILES, whenever you have made them
+### 8. EIGHT `.mp3` FILES, whenever you have made them
 
 The soundboard's synthesised noises are the FALLBACK and are never deleted, so
 this is a drop-in: `public/assets/stings/` with these exact names, any subset,
@@ -210,7 +187,7 @@ commercial use** — this repo is public and the app is sold. If whatever you us
 is murkier than that, say so and they can be served from the private repo
 instead (about an hour's work, same filenames).
 
-### 6. THE CATALOGUE IS THINNER THAN THE LADDER PROMISES — and only you can fix it
+### 9. THE CATALOGUE IS THINNER THAN THE LADDER PROMISES — and only you can fix it
 
 Counted on 13 September 2026: **10 multi-round quizzes**, 24 single rounds, 8
 bingo games. Silver's promise is *"every pack there is, and every new one
@@ -581,7 +558,7 @@ packs being written for subscribers is the whole arrangement.
 
 | What | Link |
 |---|---|
-| **Your live app** | https://musicquizapp.onrender.com |
+| **Your live app** | https://quizporium.co.uk |
 | Your repository | https://github.com/markh1984-spec/MusicQuizApp |
 | Render dashboard | https://dashboard.render.com |
 | **Your service — environment variables** | https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env |

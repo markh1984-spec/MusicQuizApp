@@ -742,12 +742,10 @@ IF IT DID NOT EXIST**, by the person who uses this app daily — *"can we get
 ical functionality here?"*
 
 - **CHECK BEFORE BUILDING** — the feed serves `text/calendar`, residencies
-  projected forward, a wrong key 404s, **New address** revokes every
-  subscriber. Verified from plain node with no cookie.
+  projected forward, a wrong key 404s, **New address** revokes every subscriber.
 - **IT MEASURED AT y=633 ON A 900px WINDOW** — on the screen, below where
-  anybody looks. **The blurb at the top NAMES it**: cheaper than moving it, and
-  the month stays first because the month is the daily job. **Not a link — it
-  is the same page.**
+  anybody looks. **The blurb at the top NAMES it**, the month staying first
+  because the month is the daily job. **Not a link — it is the same page.**
 
 ### THE MONTH IS ON THE LEFT AND WHAT YOU DO ABOUT A DATE IS ON THE RIGHT
 
@@ -4732,23 +4730,24 @@ to make an account.
 `hostKey()` in `src/config.js` uses `HOST_KEY` when set, and otherwise
 **invents one and writes it to `data/`** — empty again after every deploy. So
 each deploy silently hands out a different key and every
-bookmark stops working, with nothing on screen explaining why. The startup
+bookmark stops working, with nothing on screen saying why. The startup
 banner now says so (`hostKeyIsTemporary()`).
 
 **If he says his bookmark stopped working, this is why.** The current key is in
-the Render startup banner on the `Host key:` line. The fix is one environment
-variable and it is step A of TODO.md.
+the Render startup banner on the `Host key:` line. The fix is the `HOST_KEY` environment
+variable, a step in TODO.md.
 
 ---
 
 ## The host's deployment
 
-- Live app: **https://musicquizapp.onrender.com**
+- Live app: **https://quizporium.co.uk** — `PUBLIC_URL` pins it: every QR and
+  link says that name from either door. `musicquizapp.onrender.com` is the
+  ORIGIN, not the one to quote. DJ: `dj.pubchampions.co.uk`, `DJ_HOST` on.
 - Render service: `srv-d9pnk0e417fc73bvjdkg` (Frankfurt, **Starter, $7 a month — not the free tier. It never spins down; the disk is still wiped on every deploy**)
 - Repo: https://github.com/markh1984-spec/MusicQuizApp
 
-Render's newer UI nests the service inside a project: `/web/srv-…` is the
-right level. **Do not send him to the project page.**
+`/web/srv-…` is the right level. **Do not send him to the project page.**
 
 ---
 
