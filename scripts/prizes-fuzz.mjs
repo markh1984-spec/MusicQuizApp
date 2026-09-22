@@ -303,7 +303,23 @@ try {
 
   // -------------------------------------------------------- RUNNING ORDER
   section('N. QUIZ → BINGO → QUIZ — the drinks travel');
-  await setRewards(['A pint', 'A half', 'Crisps']);
+  /*
+   * FIVE DRINKS, BECAUSE THIS NIGHT PAYS FIVE PLACES — 2 winners, one bingo
+   * stop, 2 winners again.
+   *
+   * It was three, and passed because the venue's list used to be WALKED by
+   * counting the vouchers a night had minted: one quiz winner spent one drink,
+   * so the next part started at the second. That is the arithmetic
+   * `prize-parts.js` records as wrong — a tie for first or a row scoring zero
+   * moved every later part onto a different drink, silently.
+   *
+   * The deal is by what a part PAYS now, fixed at launch, so a quiz that
+   * recognises two places reserves two whether or not two teams score. Three
+   * drinks across a night wanting five therefore leaves the LAST game nothing,
+   * which is correct and is asserted on its own below — but it is not this
+   * section's subject, which is vouchers surviving a part boundary.
+   */
+  await setRewards(['A pint', 'A half', 'Crisps', 'A shot', 'A cola']);
   const ro = await host('launchOrder', { segments: [
     { kind: 'quiz', order: [{ packId: '1980s-pop-music', round: 0 }] },
     { kind: 'bingo', packId: 'mbc-4', shape: { rows: 3, cols: 3 }, prizes: 1 },
@@ -329,6 +345,15 @@ try {
   const hvF = await hostView();
   const all = Object.values(hvF.vouchers || {});
   check('at the final, the bingo drink is still held (carried) beside the quiz drink', all.some((v) => v.carried) && all.filter((v) => !v.carried).length === 1, JSON.stringify(all.map((v) => [v.name, v.place, v.reward, v.carried ? 'carried' : ''])));
+  /*
+   * AND NO DRINK IS ON TWO PARTS. Each game was dealt its own slice of the
+   * venue's list — [pint, half] [crisps] [shot, cola] — and starts at its own
+   * first place, so the same words can never be handed out twice however the
+   * scoring falls.
+   */
+  const words = all.map((v) => v.reward);
+  check('and no drink was handed out twice across the night', new Set(words).size === words.length, JSON.stringify(words));
+  check('each part paid out of its OWN slice of the list, in order', words.join(' | ') === 'A pint | Crisps | A shot', JSON.stringify(words));
   const daveAll = await phoneCodes(rp[0], rcode);
   check("Dave's phone shows every drink he won tonight, quiz and bingo", daveAll.length === all.filter((v) => v.winnerId === rp[0].id).length, `${daveAll.length} on the phone vs ${all.filter((v) => v.winnerId === rp[0].id).length} owed`);
   // The archive holds the codes: redeem the quiz drink through the bar and the
