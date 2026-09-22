@@ -1293,7 +1293,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * real browser this session, and a rule that stops a bad change has to be
  * readable without opening a second file.
  */
-const BUDGET = 283_000;
+/*
+ * AND TO 285_000 ON 22 SEPTEMBER 2026, for the launch-path sweep. Its section
+ * is four prohibitions the code cannot state: the prize table's read and write
+ * being in two places, `rewards` missing from a launch whitelist, a deck being
+ * bingo-shaped for the lobby default, and the console asking for a different
+ * entitlement from the one the route enforces. Each is a bug that shipped and
+ * was measured in a browser, and the first ran a night with nobody to pay.
+ */
+const BUDGET = 285_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

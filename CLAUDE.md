@@ -2409,6 +2409,33 @@ Settled 22 September 2026, and he was right for a reason he had not seen.
   venue is DERIVED (usual night), never remembered** — without one, Launch
   stands down for want of prizes after every restart.
 
+### THE LAUNCH-PATH SWEEP, 22 SEPTEMBER 2026 — three found, one critical
+
+- **THE PRIZE TABLE WAS INERT ON A ONE-GAME NIGHT, AND OPENED THE GATE
+  ANYWAY — `typed-prizes-reach-the-room.mjs`.** A quiz pack BURSTS into a tile
+  per round, so `lbSlots` exists on an ordinary one-pack night: the table wrote
+  the part's list onto `lbSlots[0]` while `simpleNight()` collapsed the row and
+  the launch read `night.*`. **Reading one place and writing another.** The bar
+  showed the typed drinks and the room played the VENUE's; with no venue the
+  typed list still satisfied `noPrizesReason()` and then went nowhere, so the
+  night ran with **nobody to pay** — the failure the table exists to prevent.
+  **`soleRewards()` is the fix: a one-part night's list IS the night's list.**
+  **BOTH GUARDS MISSED IT FOR ONE REASON — neither was on this path**: the
+  drive that shipped it used a quiz AND a bingo (per-part lists ride on
+  segments), and `bar-reaches-the-room.mjs` picks a BINGO pack, which has no
+  rounds and never bursts. **A quiz on its own is most nights.**
+- **AND `rewards` WAS MISSING FROM `doLaunch()`/`doLaunchOrder()`'S
+  WHITELISTS** — the trap this file already records for `winners`, hit again by
+  the change that needed it.
+- **A DECK TAKES THE BINGO LOBBY DEFAULT — seventh kind-test sighting.**
+  `firstKind` asked `=== 'bingo' ? 'bingo' : 'quiz'`, so card bingo got Maze
+  Mouth. **Ask whether it is a QUIZ; everything else is bingo-shaped** — only
+  those two have a `defaultFor`, so 'cards' fell to the global default.
+- **AND `canRun()` ASKED FOR THE WRONG ENTITLEMENT** — `FEATURES.QUIZ` for a
+  deck, where both routes gate every non-quiz part on `FEATURES.BINGO`. Latent
+  while every tier holds both; **a console that offers what the server refuses**
+  the moment one does not.
+
 ### ONE PRIZE EACH PER BINGO ROUND, WHILE ANYBODY IS STILL WITHOUT ONE
 
 `claim()` / `holdsAPrize()` / `stillWithoutAPrize()` in `src/bingo.js`,
@@ -4496,6 +4523,7 @@ node scripts/funniest-photo.mjs         # does the room's vote reach a drink?
 node scripts/bar-staff-camera.mjs       # the camera code — same bucket, and nothing else
 node scripts/props-on-a-photo.mjs       # do the googly eyes go on, on BOTH cameras?
 node scripts/no-prizes-no-launch.mjs    # can a night launch with nobody to pay?
+node scripts/typed-prizes-reach-the-room.mjs  # does what you TYPE in the prize table reach the room?
 node scripts/after-a-deploy.mjs         # after a restart, can the host still launch?
 node scripts/a-night-survives-a-deploy.mjs  # the venue, the night and its frame, after a wipe
 node scripts/deploy-with-a-disk.mjs     # the night that was running comes back WITH the disk — can the host replace it?

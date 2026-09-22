@@ -1435,7 +1435,7 @@ export function launchBar() {
        * the parts that brought none; a part that brought its own carries it
        * on its segment (`segmentsFromSlots()`).
        */
-      rewards: Array.isArray(night.rewards) ? night.rewards : undefined,
+      rewards: soleRewards(),
     };
   }
 
@@ -2118,6 +2118,34 @@ export function launchBar() {
    */
   function prizesNow() {
     try { return prizesTonight(partsNow()); } catch { return []; }
+  }
+
+  /*
+   * WHAT A ONE-GAME NIGHT PAYS — and it is not simply `night.rewards`.
+   *
+   * The prize table writes per PART, because that is what the launch reads on
+   * a mixed night: a part's own list travels on its segment. A quiz pack
+   * BURSTS into a tile per round, so `lbSlots` exists on an ordinary one-pack
+   * night too — and the table therefore writes onto `lbSlots[0]`, while
+   * `simpleNight()` collapses the row back and the launch sends `night.*`.
+   *
+   * The two halves were reading and writing different places, which is this
+   * repo's oldest shape of bug. Measured in a browser before it was believed:
+   * the bar read "TYPED 1, TYPED 2, TYPED 3" and the room played for the
+   * venue's list, silently — and with no venue at all the typed prizes opened
+   * the launch gate and then went nowhere, so the night ran with nobody to
+   * pay, which is the failure the whole feature exists to prevent.
+   *
+   * A ONE-PART NIGHT'S LIST IS THE NIGHT'S LIST, which is all this says. More
+   * than one part and it returns nothing on purpose: each carries its own and
+   * the server deals the venue's across whichever brought none.
+   */
+  function soleRewards() {
+    if (Array.isArray(night.rewards)) return night.rewards;
+    try {
+      const parts = partsNow();
+      return (parts.length === 1 && parts[0].own) ? parts[0].list : undefined;
+    } catch { return undefined; }
   }
 
   function paintPrizeTable() {

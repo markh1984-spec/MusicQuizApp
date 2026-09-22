@@ -110,6 +110,47 @@ try {
   });
   check('the bar names a card', Boolean(face.shape && face.shape.rows), true);
 
+  /*
+   * AND THE PRIZE TABLE, TYPED BEFORE THE ONE LAUNCH PRESS.
+   *
+   * It must happen here rather than after: `sendLaunch()` sends the host to
+   * the control view on success, and there is no launch bar on that page — so
+   * a check written after the press reads a console that is no longer on
+   * screen and reports the table missing. One press, both questions.
+   *
+   * THE FOURTH SIGHTING OF THE BAR AND THE ROOM DISAGREEING, found by
+   * sweeping the launch path the day after the table was built. A quiz pack
+   * BURSTS into a tile per round, so `lbSlots` exists on an ordinary one-pack
+   * night; the table wrote a part's list onto `lbSlots[0]` while
+   * `simpleNight()` collapsed the row back and the launch read `night.*`.
+   * Reading and writing two different places. The bar showed the typed drinks
+   * and the room played for the venue's — and with no venue the typed list
+   * still OPENED the gate and then went nowhere, so the night ran with nobody
+   * to pay. Invisible to the drive that shipped the feature, which used a
+   * quiz AND a bingo: on a mixed night each part's list travels on its own
+   * segment and this path is never taken. One game is most nights.
+   */
+  const typed = ['A PINT OF THE GOOD STUFF', 'A LARGE WINE', 'A PACKET OF CRISPS'];
+  const opened = await page.evaluate(async (want) => {
+    const head = document.querySelector('.lb-pz-head');
+    if (!head) return { ok: false, why: 'no prize table on the bar' };
+    if (head.getAttribute('aria-expanded') !== 'true') head.click();
+    await new Promise((r) => setTimeout(r, 400));
+    const boxes = [...document.querySelectorAll('.lb-pz-in')];
+    if (!boxes.length) return { ok: false, why: 'the table opened with no boxes' };
+    const n = Math.min(boxes.length, want.length);
+    for (let i = 0; i < n; i += 1) {
+      boxes[i].value = want[i];
+      boxes[i].dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    document.querySelector('.lb-pz-head').click();
+    await new Promise((r) => setTimeout(r, 400));
+    return { ok: true, used: n, ledger: document.querySelector('.lb-prizes').innerText.replace(/\s+/g, ' ').trim() };
+  }, typed);
+  check(`the prize table takes what is typed${opened.why ? ` (${opened.why})` : ''}`, opened.ok, true);
+  const wanted = opened.ok ? typed.slice(0, opened.used) : [];
+  if (opened.ok) check('and the shut ledger reads it back', wanted.every((t) => opened.ledger.includes(t)), true);
+
   bodies.length = 0;
   await page.evaluate(() => {
     const go = [...document.querySelectorAll('button')].find((b) => /^Launch/.test(b.textContent.trim()));
@@ -125,6 +166,18 @@ try {
   const room = await (await fetch(`${BASE}/api/state?role=screen`)).json();
   check('and the ROOM got that card', { rows: room.cardRows, cols: room.cardCols },
     { rows: face.shape && face.shape.rows, cols: face.shape && face.shape.cols });
+
+  /*
+   * THE LIST IS ON THE WIRE, wherever this night's shape puts it — the
+   * night-wide field on a one-game launch, a segment's own on a mixed one.
+   * Asserting the FIELD would pin the shape rather than the promise.
+   */
+  if (opened.ok) {
+    const onWire = JSON.stringify(sent.rewards || (sent.segments || []).map((x) => x.rewards || []));
+    check('the drinks it SENT are the drinks it SHOWED', wanted.every((t) => onWire.includes(t)), true);
+    const host = await (await fetch(`${BASE}/api/state?role=host`, { headers: { 'X-Host-Key': KEY } })).json();
+    check('and the ROOM is playing for them', wanted.every((t) => JSON.stringify(host.rewards || []).includes(t)), true);
+  }
 
   check('nothing threw', errors.join(' | ') || 'none', 'none');
 

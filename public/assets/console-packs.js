@@ -1180,8 +1180,18 @@ function playedLine(pack) {
   return pack.playCount ? `Never played here · ${times} in all` : 'Never played';
 }
 
-/** Can this account actually RUN this game? An owner writes packs, never plays. */
-const canRun = (kind) => can(kind === 'bingo' ? FEATURES.BINGO : FEATURES.QUIZ);
+/*
+ * Can this account actually RUN this game? An owner writes packs, never plays.
+ *
+ * ANYTHING THAT IS NOT A QUIZ ASKS FOR BINGO, which is what the SERVER asks:
+ * both launch routes treat every non-quiz segment as `neededGame` and gate it
+ * on `FEATURES.BINGO`. This read `=== 'bingo' ? BINGO : QUIZ`, so a card-bingo
+ * deck asked for the QUIZ entitlement here and the BINGO one there — a console
+ * that offers a game the server then refuses. Latent today, because every tier
+ * holds both; live the moment one does not, and by then the two halves would
+ * have been apart for months with nothing to point at.
+ */
+const canRun = (kind) => can(kind === 'quiz' ? FEATURES.QUIZ : FEATURES.BINGO);
 
 /**
  * WHICH PACK IS OPEN, per tab, remembered outside the render.
@@ -1695,9 +1705,36 @@ async function sendLaunch(url, bodyFor, button) {
  * field HERE as well as everywhere else, and prove it by reading the request
  * body out of a real browser rather than by reading the diff.
  */
-export async function doLaunch(kind, packId, { shape = null, prizes = 0, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', order = null, breaks = {} }, button) {
+export async function doLaunch(kind, packId, { shape = null, prizes = 0, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', rewards = null, order = null, breaks = {} }, button) {
   return sendLaunch('/api/host/launch', (replace) => ({
     game: kind, packId, shape, prizes, winners, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
+    /*
+     * WHAT TONIGHT PAYS, when the host typed it into the prize table.
+     *
+     * NAMED HERE OR DROPPED IN SILENCE — this literal is a whitelist, and a
+     * field missing from it never reaches the server however carefully it was
+     * wired everywhere else. `winners` fell in exactly here: through the bar,
+     * `night`, both payload builders, the route, `session.launch()` and the
+     * show, and still arrived null because nobody named it in this object.
+     *
+     * `rewards` fell in too, the day the per-game prize table was built. On a
+     * MIXED night it was invisible, because a part's own list travels on its
+     * segment — so the browser drive that proved the feature used a quiz and a
+     * bingo and passed. On a ONE-GAME night, which is most nights:
+     *
+     *   - with a venue picked, the bar read "TYPED 1, TYPED 2, TYPED 3" and
+     *     the room played for the venue's list. The console and the big screen
+     *     disagreeing, silently, which this app has a rule against;
+     *   - with no venue, the typed prizes OPENED the launch gate
+     *     (`noPrizesReason()` accepts what was typed) and then went nowhere,
+     *     so the night launched with nothing to pay anybody — the exact
+     *     failure the whole feature was built to stop.
+     *
+     * `undefined` when nothing was typed, which `JSON.stringify` drops, so the
+     * server reads the venue record exactly as it always has.
+     */
+    ...(Array.isArray(rewards) ? { rewards } : {}),
+
     /*
      * WHAT HAPPENS IN THE GAPS. Sent on EVERY launch, including an empty one
      * — a launch that left it out would inherit the previous night's plan,
@@ -1727,9 +1764,14 @@ export async function doLaunch(kind, packId, { shape = null, prizes = 0, winners
  * `show-parts.js`). Every later part loads through `/api/host/advanceOrder`
  * from the control view, never through here.
  */
-export async function doLaunchOrder(segments, { winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', breaks = {} }, button) {
+export async function doLaunchOrder(segments, { winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', rewards = null, breaks = {} }, button) {
   return sendLaunch('/api/host/launchOrder', (replace) => ({
     segments, winners, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
+    /*
+     * THE NIGHT-WIDE LIST, which the server deals across any part that brought
+     * none of its own. Named for the same reason as the ordinary launch above.
+     */
+    ...(Array.isArray(rewards) ? { rewards } : {}),
     // Same rule as the ordinary launch — always sent, so a fresh night can
     // never inherit the last one's plan.
     breakPlan: breaks || {},

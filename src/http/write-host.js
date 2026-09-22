@@ -141,7 +141,12 @@ export async function writeHost(req, res, url, route) {
          */
         const tierNow = (entitlements(whoIs(req, url) || {}) || {}).tierInUse || '';
         const lobbyGame = lobbyGameFor(
-          String(body.game || 'quiz'),
+          // Anything that is not a quiz takes the bingo default — see the note
+          // on `firstKind` in the running-order route. `lobbyGameFor` matches
+          // a game's own `defaultFor`, and only 'quiz' and 'bingo' have one,
+          // so passing 'cards' straight through fell to the global default,
+          // which is the quiz's.
+          String(body.game || 'quiz') === 'quiz' ? 'quiz' : 'bingo',
           String(body.lobbyGame || ''),
           tierNow,
         ).id;
@@ -383,9 +388,19 @@ export async function writeHost(req, res, url, route) {
       }
 
       try {
-        // The FIRST part decides the lobby default — Maze Mouth before a
-        // quiz, Rally before bingo — exactly like an ordinary launch.
-        const firstKind = segments[0] && segments[0].kind === 'bingo' ? 'bingo' : 'quiz';
+        /*
+         * The FIRST part decides the lobby default — Maze Mouth before a
+         * quiz, Rally before bingo — exactly like an ordinary launch.
+         *
+         * ASKED THE OTHER WAY ROUND, because a deck is not a quiz. This read
+         * `=== 'bingo' ? 'bingo' : 'quiz'`, so card bingo — a whole-pack game
+         * built on the same engine as music bingo — fell into the quiz branch
+         * and its room got Maze Mouth. *The default follows the GAME*, and a
+         * deck's game is a bingo. Seventh sighting of a kind test written when
+         * there were two games; `wholePackKind()` is the distinction that
+         * matters, so anything that is not a quiz takes the bingo default.
+         */
+        const firstKind = segments[0] && segments[0].kind === 'quiz' ? 'quiz' : 'bingo';
         const look = String(body.look || '');
         // Same clamp as an ordinary launch — one number for the whole night,
         // applied to every quiz part; see nightWideOpts() for how it carries

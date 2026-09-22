@@ -462,7 +462,9 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  */
 const BUDGET = {
   /*
-   * RAISED FROM 4240 TO 4410 ON 22 SEPTEMBER 2026, deliberately, for the
+   * RAISED FROM 4240 TO 4440 ON 22 SEPTEMBER 2026 (4410, then 4440 for
+ * `soleRewards()` — the launch-path sweep's fix for the prize table writing
+ * where the MIXED launch reads while the SIMPLE launch read somewhere else), deliberately, for the
    * prize table's WIRING — the table itself went into its own module
    * (`console-prizes.js`, ~180 lines) rather than in here, which is the seam
    * this budget exists to force. What is left is the launch bar's own half
@@ -474,7 +476,7 @@ const BUDGET = {
    * rather than a target: every feature that touches this bar will need a
    * seam or a raise, and the seam was taken first.
    */
-  'console-tonight.js': 4410, 'console.js': 2000, 'console-packs.js': 1890,
+  'console-tonight.js': 4440, 'console.js': 2000, 'console-packs.js': 1890,
   'console-account.js': 1620, 'console-community.js': 1620,
 };
 const DEFAULT_BUDGET = 1600;
