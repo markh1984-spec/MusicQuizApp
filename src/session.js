@@ -18,12 +18,19 @@ import { sendNote, markNoteRead } from './notes.js';
 
 import { Engine, PHASES, MAX_WINNERS, winnersOf, isSafeId, ownsPlayer, newToken } from './engine.js';
 import { JoinGate } from './joins.js';
-import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes } from './bingo.js';
+import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes, cardShape, defaultPrizes } from './bingo.js';
 import { DjSet, DJ_PHASES } from './dj.js';
 // ONE cap on how many prizes a night can carry, shared with the venue record
 // that authors them — two copies of a number like this drift, and the one that
 // drifts is the one nobody is looking at.
 import { MAX_REWARDS } from './invoices.js';
+/*
+ * THE PRIZE DEAL IS A SHARED MODEL — `show-parts.js` and `break-parts.js`'s
+ * arrangement. The console draws the prize table off the same two functions
+ * the launch deals by, so the bar and the room cannot disagree about what
+ * tonight is playing for.
+ */
+import { dealPrizes, paysOf } from '../public/assets/prize-parts.js';
 import { listQuizzes } from './quizzes.js';
 import { listBingoPacks, recordLaunch, archiveResults, updateArchivedNight, listArchive, HOUSE_ROOM } from './library.js';
 import { mergeGigs, sameVenue } from './past-gigs.js';
@@ -162,6 +169,35 @@ export function packlessKind(kind) {
   return Boolean(LAUNCHERS[kind] && LAUNCHERS[kind].builtIn);
 }
 
+/**
+ * WHAT ONE PART OF THE NIGHT PAYS — its own list, never a slice of the
+ * venue's.
+ *
+ * It was a slice: the venue put up six drinks and each part took the next
+ * few, counted by `state.prizesBefore`. That is arithmetic the app was doing
+ * on the host's behalf and getting quietly wrong, because the count came from
+ * the vouchers actually MINTED rather than the places recognised — so a tie
+ * for first (paid in full, by decision) minted four for three places and the
+ * bingo started at the venue's FIFTH drink, and a small room where only two
+ * teams scored (a nought is skipped, by decision) minted two and the bingo
+ * started again at the THIRD. Both silent, both in front of the room.
+ *
+ * *"I can keep track of how many prizes I've given out over 2-3 games no
+ * problem at all"* — so the app stops trying. Each part carries what it pays,
+ * starting at its own first place, and nothing is offset against anything.
+ *
+ * ABSENT IS NOT EMPTY. A part with no list of its own falls back to the
+ * night's, which is what the venue record pre-fills — so an ordinary one-game
+ * night is byte-for-byte the night it always was and `pub-unchanged` still
+ * says IDENTICAL. `null` rather than `[]` for exactly that reason: an empty
+ * array is a host saying "this part pays nothing", which is a real answer.
+ */
+function segRewards(s) {
+  if (!s || !Array.isArray(s.rewards)) return null;
+  return s.rewards.slice(0, MAX_REWARDS).map((r) => String(r || '')
+    .replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80));
+}
+
 function normaliseSegments(segments) {
   const list = Array.isArray(segments) ? segments : [];
   return list.map((s) => {
@@ -180,11 +216,11 @@ function normaliseSegments(segments) {
         ? { rows: Number(s.shape.rows), cols: Number(s.shape.cols) }
         : null;
       const prizes = Math.max(0, Math.min(5, Number(s.prizes) || 0));
-      return { kind: s.kind, packId, shape, prizes };
+      return { kind: s.kind, packId, shape, prizes, rewards: segRewards(s) };
     }
     const order = Array.isArray(s && s.order) ? s.order : [];
     if (!order.length) return null;
-    return { kind: 'quiz', order };
+    return { kind: 'quiz', order, rewards: segRewards(s) };
   }).filter(Boolean);
 }
 
@@ -284,22 +320,15 @@ function nightWideOpts(state) {
     askForRounds: state.askForRounds,
     roundIdeas: state.roundIdeas,
     /*
-     * AND HOW MANY DRINKS THE NIGHT HAS ALREADY HANDED OUT.
+     * AND NOTHING ABOUT WHAT THE NIGHT HAS ALREADY PAID.
      *
-     * Each part pays its own winners as it ends, so without this every part
-     * started again at the top of the venue's list: a quiz and the bingo after
-     * it both gave out "A pint", and the fourth, fifth and sixth drinks the
-     * venue put up were never reached. A host who lists six means six, in
-     * order.
-     *
-     * Counted from the vouchers rather than kept as a tally, because the
-     * vouchers ARE the record — `carried` marks the ones minted by earlier
-     * parts, so "what this part gave" is the ones without it. A tally would be
-     * a second copy of a number the state already holds, and this file has a
-     * long list of those going out of step.
+     * This carried `prizesBefore` — a count of the vouchers minted so far, so
+     * each part could slice past them into the venue's one long list. It is
+     * gone, and `segRewards()` above records why: the count came from vouchers
+     * rather than places, so a tie for first or a room where nobody scored
+     * moved every later part onto the wrong drink, silently. Each part now
+     * carries what IT pays and starts at its own first place.
      */
-    prizesBefore: (Number(state.prizesBefore) || 0)
-      + Object.values(state.vouchers || {}).filter((v) => !v.carried && !v.funny).length,
   };
 }
 
@@ -848,7 +877,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbyGames = [], lobbySound = true, league = false, online = false, teamPlay = false, teamMode = 'assigned', venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, photoLink = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null, prizesBefore = 0 } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbyGames = [], lobbySound = true, league = false, online = false, teamPlay = false, teamMode = 'assigned', venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, photoLink = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -1116,13 +1145,6 @@ export class Session {
      * question nobody has asked. Trailing blanks are dropped by `rewardList()`
      * rather than here, so what was typed survives a restart.
      */
-    /*
-     * HOW MANY DRINKS THE NIGHT HAS ALREADY GIVEN, so `rewardList()` can slice
-     * past them. Zero on every ordinary launch — only `advanceOrder()` ever
-     * passes a number, and only on the second part onward — so a one-game
-     * night is byte-for-byte what it was.
-     */
-    this.engine.state.prizesBefore = Math.max(0, Number(prizesBefore) || 0);
     this.engine.state.rewards = (Array.isArray(rewards) ? rewards : [rewards])
       .slice(0, MAX_REWARDS)
       .map((r) => String(r || '')
@@ -1268,16 +1290,53 @@ export class Session {
      * way for a single-pack night; this does the same for every part of a
      * mixed one, and for bingo, which has no `composeQuiz` of its own.
      */
+    const packOfPart = new Map();
     for (const seg of list) {
       if (seg.kind !== 'quiz') {
         try {
-          LAUNCHERS[seg.kind].load(this.config, seg.packId, this.paths);
+          // KEPT, not discarded: the prize deal below needs each bingo part's
+          // own card shape to know how many stopping points it pays, and
+          // loading every pack twice on the launch path to find out would be
+          // work bought for a number already in hand.
+          packOfPart.set(seg, LAUNCHERS[seg.kind].load(this.config, seg.packId, this.paths));
         } catch {
           throw new Error(`There is no ${seg.kind} pack called ${seg.packId} any more.`);
         }
       } else {
         composeQuiz(seg.order, (id) => LAUNCHERS.quiz.load(this.config, id, this.paths));
       }
+    }
+    /*
+     * AND THE VENUE'S LIST IS DEALT ACROSS THE PARTS THAT BROUGHT NONE.
+     *
+     * A part carries its own prizes when the host has opened *What they win*;
+     * one that has not falls back to the night's list — and on a night of one
+     * part that is exactly right and exactly what it always was.
+     *
+     * On a night of SEVERAL it is not: every part would start at the top and
+     * a quiz then the bingo would both hand out the venue's first drink. That
+     * was `prizesBefore`'s job and `prize-parts.js` records why counting
+     * minted vouchers was the wrong way to do it. So the split is worked out
+     * HERE, once, from what each part PAYS — known at launch, the same every
+     * time, and unmoved by a tie for first or a room where nobody scored.
+     *
+     * ONLY THE PARTS THAT BROUGHT NOTHING TAKE FROM THE DEAL, and the deal
+     * still counts their share: a host who typed the bingo's three drinks by
+     * hand has not changed where the quiz's three come from.
+     */
+    if (list.length > 1 && list.some((seg) => !Array.isArray(seg.rewards))) {
+      const dealt = dealPrizes(opts.rewards || [], list.map((seg) => paysOf(seg, {
+        winners: opts.winners,
+        /*
+         * THE SHAPE'S OWN DEFAULT WHEN THE HOST HAS NOT PICKED A COUNT — the
+         * segment's shape if it carries one, the PACK's otherwise, which is
+         * exactly what `BingoGame.shape` resolves at launch. Reading one and
+         * launching the other is how a 5x5 came to be dealt a 4x4's share.
+         */
+        bingo: seg.kind === 'quiz' ? 0
+          : defaultPrizes(seg.shape || cardShape(packOfPart.get(seg) || {})),
+      })));
+      list.forEach((seg, i) => { if (!Array.isArray(seg.rewards)) seg.rewards = dealt[i]; });
     }
     return this.startOrderSegment(list, 0, opts, null);
   }
@@ -1494,9 +1553,18 @@ export class Session {
 
   startOrderSegment(list, pos, opts, carry, scores = null, teams = null, prevState = null) {
     const seg = list[pos];
+    /*
+     * A PART'S OWN PRIZE LIST BEATS THE NIGHT'S, and absent is not empty.
+     *
+     * `seg.rewards` is `null` when the host never opened *What they win* for
+     * this part, and an ordinary night has one part and no list — so this
+     * spreads nothing and `opts.rewards` (the venue's, read at launch) is
+     * what lands, exactly as it always did.
+     */
+    const mine = Array.isArray(seg.rewards) ? { rewards: seg.rewards } : null;
     const started = seg.kind !== 'quiz'
-      ? this.launch(seg.kind, seg.packId, { ...opts, shape: seg.shape, prizes: seg.prizes })
-      : this.launch('quiz', null, { ...opts, order: seg.order });
+      ? this.launch(seg.kind, seg.packId, { ...opts, ...mine, shape: seg.shape, prizes: seg.prizes })
+      : this.launch('quiz', null, { ...opts, ...mine, order: seg.order });
     /*
      * `launch()` above just cleared all three of these (`runningOrder`,
      * `orderPos`, `carriedScores`) — right for an ORDINARY launch, wrong

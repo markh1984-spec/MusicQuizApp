@@ -12329,3 +12329,73 @@ body.dj .head .score { color: var(--ink); }
   border-radius: var(--r-field); background: #fff; padding: 8px;
 }
 .cams-url { color: var(--ink-dim); word-break: break-all; }
+
+/* ---------------------------------------------------------------------------
+ * WHAT THEY WIN — the prize table on the launch bar.
+ *
+ * Shut it is the night's ledger, read at a glance; pressed it is a box per
+ * prize each game pays. *Narrow shut, wide open*, the same arrangement the
+ * venue sheet and the dropdown popovers use — and the reason it is not a
+ * tenth control on `.lb-set-night` is that the row is already nine and a
+ * tenth cost three of them their labels.
+ *
+ * It sits ABOVE the tiles, where the break strip went, because the band
+ * directly above Launch is kept clear.
+ */
+.lb-prizes { margin: 10px 0 2px; min-width: 0; }
+/*
+ * 44px, THE TOUCH FLOOR — and it had to be said explicitly.
+ *
+ * Shut, this row is as tall as the prize chips inside it and comfortably
+ * over. OPEN, the chips move into the panel and the head is left holding two
+ * `--fs-mini` spans: MEASURED AT 15px, a control the whole table folds behind,
+ * a third of the floor every other control on this bar is held to. It is the
+ * same rule the launch row's own controls follow and for the same reason — a
+ * thumb, in a dark pub, ten minutes before a gig.
+ */
+.lb-pz-head {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap; width: 100%;
+  min-height: 44px;
+  background: none; border: 0; padding: 0; margin: 0;
+  cursor: pointer; text-align: left; color: var(--ink); font: inherit;
+}
+.lb-pz-lab { color: var(--ink-dim); font-size: var(--fs-mini); }
+/* BESIDE THE LABEL, never floated to the far edge — at the end of a flex row
+   a caret reads as a speck of dust rather than as "this opens". */
+.lb-pz-car { color: var(--ink-dim); font-size: var(--fs-mini); margin-left: -6px; }
+.lb-pz-line {
+  display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap;
+  background: var(--panel); border: 1px solid var(--panel-line);
+  border-radius: var(--r-field); padding: 5px 10px; min-height: 36px;
+}
+.lb-pz-line > b { font-size: var(--fs-tag); margin-right: 2px; }
+.lb-pz {
+  display: inline-flex; gap: 5px; align-items: center;
+  background: rgba(255, 255, 255, 0.05); border-radius: var(--r-pill);
+  padding: 3px 9px; font-size: var(--fs-mini); color: var(--ink-dim); white-space: nowrap;
+}
+.lb-pz i { font-style: normal; color: var(--hot); font-weight: 700; }
+/* A PLACE WITH NOTHING ON IT IS SAID, NOT LEFT BLANK — a gap in the ledger
+   reads as the table not having loaded. It is dim rather than red: a night
+   can legitimately pay fewer than the places it recognises. */
+.lb-pz-none { opacity: 0.55; font-style: italic; }
+.lb-pz-panel {
+  background: var(--panel); border: 1px solid var(--panel-line);
+  border-radius: var(--r-card); padding: 12px 14px; margin-top: 8px;
+}
+.lb-pz-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 10px; }
+.lb-pz-row:last-of-type { margin-bottom: 0; }
+.lb-pz-who { color: var(--ink-dim); font-size: var(--fs-mini); align-self: center; min-width: 54px; }
+.lb-pz-box { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-mini); color: var(--ink-dim); }
+.lb-pz-in {
+  background: var(--panel); border: 1px solid var(--panel-line); border-radius: var(--r-field);
+  color: var(--ink); padding: 8px 10px; height: 44px; width: 150px; font: inherit; font-size: var(--fs-tag);
+}
+.lb-pz-note { margin-top: 10px; color: var(--ink-dim); }
+/* ON A PHONE THE BOXES TAKE THE WIDTH — 150px each wraps into a ragged grid
+   below 560, and a prize is a sentence rather than a word. */
+@media (max-width: 560px) {
+  .lb-pz-row { flex-direction: column; align-items: stretch; }
+  .lb-pz-box { width: 100%; }
+  .lb-pz-in { width: 100%; }
+}

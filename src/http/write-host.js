@@ -321,12 +321,28 @@ export async function writeHost(req, res, url, route) {
     if (action === 'launchOrder') {
       const rawSegments = Array.isArray(body.segments) ? body.segments : [];
       const segments = rawSegments.map((s) => {
+        /*
+         * WHAT THIS PART PAYS — carried through, cleaned in
+         * `normaliseSegments()` where the rest of a segment is cleaned.
+         *
+         * THIS OBJECT IS A WHITELIST AND A FIELD MISSING FROM IT IS DROPPED
+         * IN SILENCE — the trap `winners` fell into, wired through the bar,
+         * the night, both payload builders, the route and the session, and
+         * still arriving null because nobody named it in a literal like this
+         * one. Nothing throws; the night just pays the wrong thing.
+         *
+         * `undefined` when the host never opened *What they win* for this
+         * part, which `normaliseSegments()` reads as *use the night's list*
+         * — the venue's, exactly as before. An ordinary night sends nothing
+         * here and is unchanged.
+         */
+        const rewards = Array.isArray(s && s.rewards) ? s.rewards.map(String) : undefined;
         // Every whole-pack kind keeps its own — see `wholePackKind()`.
         if (s && wholePackKind(s.kind)) {
-          return { kind: s.kind, packId: String((s && s.packId) || ''), shape: s.shape, prizes: s.prizes };
+          return { kind: s.kind, packId: String((s && s.packId) || ''), shape: s.shape, prizes: s.prizes, rewards };
         }
         const order = Array.isArray(s && s.order) ? s.order.slice(0, MAX_ROUNDS) : [];
-        return { kind: 'quiz', order };
+        return { kind: 'quiz', order, rewards };
       }).filter((s) => (s.kind !== 'quiz' ? s.packId : s.order.length));
 
       // Every pack in every part, checked the same way `launch` checks its

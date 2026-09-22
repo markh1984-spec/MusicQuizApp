@@ -781,35 +781,31 @@ export class BingoGame {
    * engine to ask.
    */
     /*
-     * WHAT THIS PART HAS LEFT TO GIVE, not what the venue put up.
+     * WHAT THIS PART PAYS, STARTING AT ITS OWN FIRST PLACE.
      *
-     * `state.prizesBefore` is how many drinks the NIGHT had already handed out
-     * when this part started, and the list is sliced past them. On an ordinary
-     * single-game night it is 0 and this is exactly the list it always was —
-     * so `pub-unchanged` still says IDENTICAL.
+     * This used to slice past `state.prizesBefore` — how many drinks the NIGHT
+     * had handed out before this part started — so one venue list of six could
+     * be walked through by a quiz and then the bingo after it.
      *
-     * It exists because each part now pays its own winners as it ends
-     * (`advanceOrder()`), and without it every part started again at the top:
-     * a quiz and the bingo after it both handed out "A pint" while the venue's
-     * fourth, fifth and sixth drinks were never reached — and the bar, told
-     * six, saw the same name twice. A host who lists six means six, in order.
+     * IT IS GONE, AND THE COUNT IS WHY. `prizesBefore` was built from the
+     * vouchers actually MINTED, not the places recognised, and those are
+     * different numbers on ordinary nights: a tie for first is paid in full
+     * (by decision), so two teams at 1st plus 2nd and 3rd is FOUR vouchers for
+     * three places and the next part started at the venue's fifth drink; a
+     * row scoring zero is skipped (also by decision), so a quiet room minted
+     * two and the next part started again at the third, handing the same
+     * drink out twice. Silent both ways, in front of the room.
      *
-     * A PART'S OFFSET IS FIXED WHEN THE PART STARTS and never recomputed as
-     * vouchers mint — bingo's own `prizesGiven` indexes into this list, so a
-     * slice that moved underneath it would shift every prize it had left.
-     *
-     * AND A PART WITH NOTHING LEFT GIVES NOTHING, rather than handing out a
-     * drink the venue has already paid for once.
+     * *"I can keep track of how many prizes I've given out over 2-3 games no
+     * problem at all"* — so each part carries its OWN list now
+     * (`segRewards()` in `session.js`), the venue's record pre-fills it, and
+     * nothing is offset against anything.
      */
   rewardList() {
     const list = Array.isArray(this.state.rewards) ? this.state.rewards : [];
     const out = list.map((r) => String(r || '').trim());
     while (out.length && !out[out.length - 1]) out.pop();
-    /*
-     * SLICED PAST WHAT THE NIGHT HAS ALREADY GIVEN — see the note above.
-     */
-    const before = Math.max(0, Number(this.state.prizesBefore) || 0);
-    return before ? out.slice(before) : out;
+    return out;
   }
 
   /**

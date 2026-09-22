@@ -42,8 +42,29 @@
  * `console-tonight-mix-ui.js`.
  */
 
-/** How many rounds this many prizes wants — mirrors `bingo.js`'s DEFAULT_STAGES shape without importing server code into the browser. */
-export const DEFAULT_BINGO_PRIZES = 2;
+/*
+ * A NEW BINGO SLOT CHOOSES NO PRIZE COUNT, AND 0 IS HOW IT SAYS SO.
+ *
+ * This was `DEFAULT_BINGO_PRIZES = 2`, written here with a comment claiming
+ * it "mirrors bingo.js's DEFAULT_STAGES shape". It did not mirror anything:
+ * it was a second prize table, in the browser, and CLAUDE.md's own rule for
+ * the first one says *the table lives BESIDE the shape, never in the console,
+ * so a sixth shape names its own default rather than inheriting an answer
+ * nobody chose.*
+ *
+ * It was invisible because 2 IS a 4x4's default. On the SIMPLE path a bingo
+ * night never came through here, so `paintPrizes()` resolved the count off
+ * `library.cardShapes[].prizes` — `defaultPrizes()` on the server — and a 5x5
+ * correctly offered five. The moment a quiz was in Tonight as well the pack
+ * became a SLOT, this 2 landed on it, and the bar read **5x5 with 2 prizes**:
+ * a card the room plays for five stopping points paying two. Only ever on a
+ * mixed night, which is the commonest night this app runs.
+ *
+ * So there is no default here at all. `0` means *nobody has chosen*, which is
+ * what `paintPrizes()` already reads it as — it resolves against the shape and
+ * writes the answer straight back onto the slot — and what `session.launch()`
+ * already reads a falsy count as on the server. One table, on the shape.
+ */
 
 /**
  * The general slots array, built once from today's simple state — the moment
@@ -64,7 +85,7 @@ export function slotsFromSimple({ currentPack, lbExtra, lbOff, packOf, kind = 'b
   if (!Array.isArray(currentPack.rounds)) {
     // `kind` is the tab the pack was picked on — a deck is not a music bingo
     // pack, and a slot that said so sent `bingo:deck` to the server.
-    return [{ kind: kind === 'quiz' ? 'bingo' : kind, packId: currentPack.id, shape: null, prizes: DEFAULT_BINGO_PRIZES }];
+    return [{ kind: kind === 'quiz' ? 'bingo' : kind, packId: currentPack.id, shape: null, prizes: 0 }];
   }
   // ONE SLOT PER ROUND, like `addQuizPackSlot()` — a night converting into
   // this shape must look the same as one built in it, or the row rearranges
@@ -242,8 +263,8 @@ export function hasPack(slots, packId) {
   return (slots || []).some((slot) => slot && slot.packId === packId);
 }
 
-/** Add a bingo pack as its own new slot, with the night-wide defaults until its own control changes them. */
-export function addBingoSlot(slots, pack, { shape = null, prizes = DEFAULT_BINGO_PRIZES, at, kind = 'bingo' } = {}) {
+/** Add a bingo pack as its own new slot. `prizes: 0` is *nobody has chosen* — the SHAPE's own default answers it. */
+export function addBingoSlot(slots, pack, { shape = null, prizes = 0, at, kind = 'bingo' } = {}) {
   if (hasPack(slots, pack.id)) return slots;
   // `kind` is carried, never assumed: a card-bingo deck is a whole-pack part
   // exactly like a bingo game, and the server launches it by its OWN kind.
@@ -278,16 +299,69 @@ export function segmentsFromSlots(slots) {
   const segments = [];
   for (const slot of slots) {
     if (!slot) continue;
+    /*
+     * WHAT THIS PART PAYS, SPREAD IN ONLY WHEN THE HOST HAS SAID.
+     *
+     * Absent means *use the night's list* — the venue's, dealt across the
+     * parts on the server — so a night nobody has opened the prize table on
+     * sends exactly the segments it always sent, and `pub-unchanged` still
+     * says IDENTICAL. An EMPTY array is a different answer and a real one:
+     * "this game pays nothing".
+     */
+    const mine = Array.isArray(slot.rewards) ? { rewards: slot.rewards } : null;
     if (slot.kind !== 'quiz') {
-      segments.push({ kind: slot.kind, packId: slot.packId, shape: slot.shape || null, prizes: slot.prizes || 0 });
+      segments.push({
+        kind: slot.kind, packId: slot.packId, shape: slot.shape || null, prizes: slot.prizes || 0, ...mine,
+      });
       continue;
     }
     const order = slot.rounds.map((round) => ({ packId: slot.packId, round }));
     const last = segments[segments.length - 1];
+    /*
+     * A RUN OF QUIZ SLOTS IS ONE PART AND THEREFORE ONE PRIZE LIST — the
+     * FIRST slot of the run owns it, which is what `partsOfSlots()` below
+     * tells the console so the table writes where the launch reads. A later
+     * slot's list is deliberately ignored rather than merged: three tiles of
+     * one quiz are three rounds, not three games, and only games pay.
+     */
     if (last && last.kind === 'quiz') last.order.push(...order);
-    else segments.push({ kind: 'quiz', order });
+    else segments.push({ kind: 'quiz', order, ...mine });
   }
   return segments;
+}
+
+/**
+ * THE GAMES TONIGHT HAS, AND WHICH SLOT HOLDS EACH ONE'S PRIZES.
+ *
+ * The prize table draws a row per GAME, and a game is not a tile: a quiz pack
+ * bursts into a tile per round and `segmentsFromSlots()` merges a run of them
+ * back into one part. So the table cannot walk the slots — it would offer
+ * four prize lists for a four-round quiz, three of which the launch would
+ * throw away in silence.
+ *
+ * This walks the SAME merge, and hands back the index of the slot that owns
+ * each part's list — the first of the run — so what the table writes is what
+ * the launch reads. Same reasoning as `gapIdsOfSlot()` below, which had to
+ * learn it the hard way when every round tile of one pack was handed the same
+ * four gaps and the last tile's dial changed the first.
+ */
+export function partsOfSlots(slots) {
+  const parts = [];
+  for (let at = 0; at < (slots || []).length; at += 1) {
+    const slot = slots[at];
+    if (!slot) continue;
+    const last = parts[parts.length - 1];
+    if (slot.kind === 'quiz' && last && last.kind === 'quiz') continue;
+    parts.push({
+      kind: slot.kind,
+      at,
+      packId: slot.packId,
+      prizes: slot.prizes || 0,
+      shape: slot.shape || null,
+      rewards: Array.isArray(slot.rewards) ? slot.rewards : null,
+    });
+  }
+  return parts;
 }
 
 /**

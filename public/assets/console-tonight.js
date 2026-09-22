@@ -2,7 +2,7 @@
 
 import { breakPlumbing, breaksOf, gapDial, gapsOfPack, gapsWithScreen, prunePlan } from './console-breaks.js';
 import { refreshPicks } from './console-pick.js';
-import { esc, gripIcon, node, postJson } from './client.js';
+import { bestBingoShape, esc, gripIcon, node, postJson } from './client.js';
 import { tonightsVenue } from './console-gigs.js';
 import { invoiceApi, openInvoiceForm, share } from './console-invoices.js';
 import {
@@ -13,9 +13,17 @@ import { ANY_LOBBY_GAME } from './lobby-games.js';
 import { packTitle, shelfFor } from './console-shows.js';
 import {
   MAX_NIGHT_ROUNDS, addBingoSlot, addQuizPackSlot, gapIdsOfSlot, longestQuiz,
-  moveRoundToSlot, segmentsFromSlots, simpleNight, slotsFromSimple,
+  moveRoundToSlot, partsOfSlots, segmentsFromSlots, simpleNight, slotsFromSimple,
 } from './console-tonight-mix.js';
+/*
+ * THE PRIZE MODEL IS SHARED WITH THE SERVER — `show-parts.js`'s arrangement.
+ * The table below draws a box per prize a game PAYS and the launch deals the
+ * venue's list by the same two functions, so the bar and the room cannot
+ * disagree about what tonight is playing for.
+ */
+import { dealPrizes, paysOf } from './prize-parts.js';
 import { renderSlots } from './console-tonight-mix-ui.js';
+import { prizeNote, prizeParts, prizeTableInto, prizesTonight, venueRewards } from './console-prizes.js';
 import { lastNightWarning, noPrizesReason, venuePrizeWarning } from './console-warnings.js'; import { readyLine } from './console-ready.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, me, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfOf, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
 import { nowNextRows } from './console-venues.js';
@@ -188,6 +196,13 @@ let lbExtra = [];
  * behind for the next one.
  */
 let lbSlots = null;
+/*
+ * IS THE PRIZE TABLE OPEN — a module binding, never a flag in the markup.
+ * `launchBar()` rebuilds its whole template on every state push, so a table
+ * opened by hand would shut itself the instant the next phone joined. Same
+ * reasoning as the soundboard panel and the *My prizes* fold.
+ */
+let prizeTableOpen = false;
 
 /**
  * IS THIS PACK ALREADY IN TONIGHT? — asked by the SHELF as it draws itself
@@ -925,6 +940,13 @@ export function launchBar() {
            It names WHICH pack it is setting, because with six tiles above
            it an unlabelled row is a row you have to remember the context
            of. Present and inert with nothing picked, like Launch. -->
+      <!-- WHAT EACH GAME PAYS — above the tiles, where the break strip went,
+           because THE BAND ABOVE LAUNCH IS KEPT CLEAR. Not a tenth control on
+           the settings row: that cost three of the nine their labels. The
+           table itself is console-prizes.js.
+           NOTE: no backticks in here. This is a template literal, and a stray
+           one made the whole console a syntax error once — twice now. -->
+      <div class="lb-prizes"></div>
       <div class="lb-order" hidden></div>
       <div class="lb-chosen" hidden></div>
       <!-- KEEP THE WHOLE EVENING — the way a saved night is built, and it
@@ -1400,6 +1422,20 @@ export function launchBar() {
       // ONE source for where tonight is — the picker at the top. Two controls
       // for one field is how a night gets filed under last week's pub.
       venue: venueNow(),
+      /*
+       * WHAT TONIGHT PAYS, when the host has typed it.
+       *
+       * `undefined` when they have not, which `JSON.stringify` drops — so the
+       * server reads the venue's record exactly as it always has and an
+       * ordinary night's body is byte-for-byte what it was. A body that
+       * carries `rewards` wins, which that route has always allowed and
+       * nothing has ever used.
+       *
+       * On a MIXED night this is the night-wide list the server deals across
+       * the parts that brought none; a part that brought its own carries it
+       * on its segment (`segmentsFromSlots()`).
+       */
+      rewards: Array.isArray(night.rewards) ? night.rewards : undefined,
     };
   }
 
@@ -1407,7 +1443,7 @@ export function launchBar() {
     // THE QUIET LAUNCH ANSWERS TO THE PRIZE GATE TOO — a room joins what is on
     // the big screen, so a night with nobody to pay was up before Launch could
     // stand down. The button says why; this just does not go up.
-    if (noPrizesReason(venueNow(), library && library.venueRecords)) { paintLive(); return; }
+    if (noPrizesReason(venueNow(), library && library.venueRecords, prizesNow())) { paintLive(); return; }
     try {
       await postJson('/api/host/launch', {
         game: kind,
@@ -1948,6 +1984,16 @@ export function launchBar() {
      * the one seam every settings repaint already passes through.
      */
     refreshPicks(el);
+    /*
+     * AND THE PRIZE TABLE, because what it draws depends on this row.
+     *
+     * The boxes ARE the prize count — Winners for a quiz, the card's stopping
+     * points for a bingo game — so a table painted before those are read is a
+     * table showing last press's night. This is the seam every settings
+     * change already passes through, which is exactly why it goes here and
+     * not in three change handlers.
+     */
+    paintPrizeTable();
     if (setSave) {
       // Mirrors the exact check `paintMixedOrder()` uses for the Launch
       // button itself — "anything to keep" and "anything to launch" have to
@@ -2030,6 +2076,56 @@ export function launchBar() {
    * there is nothing to guess either way, and it is only ever greyed when
    * there genuinely is no bingo game in Tonight at all.
    */
+  /*
+   * WHAT THEY WIN — the wiring; the table itself is `console-prizes.js`.
+   *
+   * Only the two things that are the launch bar's own stay here: WHERE a
+   * game's list is kept (a mixed night keeps one per slot, an ordinary night
+   * one on the night) and the fold, which has to be a module binding because
+   * this bar is rebuilt on every state push.
+   */
+  /*
+   * `venuePrizes`, NOT `venueList` — that name is 1,100 lines up and is the
+   * venue PICKER'S list element. Two things called one word meaning different
+   * sets is the collision this project renames rather than argues about, and
+   * here the parser caught it for free.
+   */
+  const venuePrizes = () => venueRewards(venueNow(), (library && library.venueRecords) || []);
+
+  const partsNow = () => prizeParts({
+    slots: lbSlots,
+    night,
+    picked: lbSlots ? null : pickedPack(),
+    packOf: anyPack,
+    cardShapes: (library && library.cardShapes) || [],
+    venueList: venuePrizes(),
+  });
+
+  /** Write one game's list back to wherever that game keeps it. */
+  function setPartRewards(part, list) {
+    const clean = list.map((r) => String(r || '').trim());
+    while (clean.length && !clean[clean.length - 1]) clean.pop();
+    if (part.at < 0) { night.rewards = clean; return; }
+    const next = lbSlots.slice();
+    next[part.at] = { ...next[part.at], rewards: clean };
+    lbSlots = next;
+  }
+
+  /*
+   * FAILS OPEN LIKE THE GATE IT FEEDS. An empty list here can only ever make
+   * `noPrizesReason()` fall through to the venue record, which is exactly
+   * what it did before a game could pay something of its own.
+   */
+  function prizesNow() {
+    try { return prizesTonight(partsNow()); } catch { return []; }
+  }
+
+  function paintPrizeTable() {
+    prizeTableInto(el.querySelector('.lb-prizes'), partsNow(), {
+      open: prizeTableOpen, venueName: venueNow(), venueList: venuePrizes(),
+    });
+  }
+
   function bingoToSet() {
     const picked = pickedPack();
     if (picked && picked.kind === 'bingo') return picked;
@@ -2134,6 +2230,79 @@ export function launchBar() {
     // The tile shows its own shape, so it has to be redrawn with it.
     if (lbSlots) paintOrder();
   });
+  /* DELEGATED, BOUND ONCE — `paintPrizeTable()` replaces the whole table on
+     every settings change and every state push, so a listener per input would
+     be re-bound on every phone that joins and leak with the room. Same reason
+     the dropdown popovers share one document listener. */
+  el.addEventListener('click', (e) => {
+    /*
+     * NO `el.contains()` CHECK, AND THAT IS THE BUG THIS ONCE HAD.
+     *
+     * Leaving a prize box fires `change`, which repaints the table — so by
+     * the time the CLICK that caused the blur is dispatched, the head it
+     * landed on has already been replaced and is detached from the document.
+     * `el.contains()` then says no and this returned, silently: type a prize,
+     * press the heading, nothing happens. A dead control that draws
+     * perfectly, which is this repo's commonest fault and exactly what
+     * driving it in a browser is for.
+     *
+     * The guard was never needed anyway — this listener is bound to the
+     * panel, so anything reaching it came from inside the panel.
+     */
+    if (!e.target.closest('.lb-pz-head')) return;
+    prizeTableOpen = !prizeTableOpen;
+    /*
+     * A FULL REPAINT, because shutting the table is the moment Launch has to
+     * catch up — the gate asks whether anybody can be paid, and what was just
+     * typed may be the answer. There is no caret to lose: the table is going
+     * away.
+     */
+    paintOrder();
+  });
+  /*
+   * TYPING WRITES AND DOES NOT REPAINT — a repaint per keystroke rebuilds the
+   * inputs and takes the caret with them, so you would type one letter a box.
+   *
+   * AND IT STORES THE WHOLE ROW, not the box that changed: what is on screen
+   * is the venue's deal until somebody edits it, so pinning one box would
+   * leave the rest following a deal that has since moved. What you can see is
+   * what the night gets.
+   */
+  el.addEventListener('input', (e) => {
+    const box = e.target.closest('.lb-pz-in');
+    if (!box) return;
+    const part = partsNow()[Number(box.dataset.part)];
+    if (!part) return;
+    const list = [...el.querySelectorAll(`.lb-pz-in[data-part="${box.dataset.part}"]`)]
+      .sort((a, b) => Number(a.dataset.at) - Number(b.dataset.at))
+      .map((n) => n.value);
+    setPartRewards(part, list);
+    // The reason-line under the table counts what is typed, so it has to keep
+    // up — and it holds no caret, so it is safe to rewrite mid-keystroke.
+    const note = el.querySelector('.lb-pz-note');
+    if (note) note.textContent = prizeNote(partsNow(), { venueName: venueNow(), venueList: venuePrizes() });
+  });
+  /*
+   * AND NOTHING REPAINTS ON BLUR. THIS IS LOAD-BEARING.
+   *
+   * There was a `change` listener here that called `paintOrder()`, on the
+   * reasoning that leaving a box is the first moment a full repaint costs no
+   * caret. It cost something far worse: `change` fires on BLUR, blur happens
+   * on MOUSEDOWN, and the repaint replaces the table — so the element the
+   * mouse went down on is detached before the mouse comes up, and the browser
+   * dispatches NO CLICK AT ALL.
+   *
+   * Measured in a real browser: zero click events reached `document`. Every
+   * control pressed straight after typing a prize was dead on the first
+   * press, including LAUNCH, with nothing thrown and nothing in the console.
+   * A test that the payload is right proves nothing about whether anybody
+   * could press the button — this is that lesson, in the one place a gig
+   * cannot afford it.
+   *
+   * So typing only stores, and the repaint happens when the table is SHUT,
+   * which is a press that is not competing with a blur.
+   */
+
   prizePick?.addEventListener('change', () => {
     setPickedBingo(bingoToSet(), { prizes: Number(prizePick.value) || 0 });
     if (lbSlots) paintOrder();
@@ -2743,7 +2912,7 @@ export function launchBar() {
     const segments = segmentsNow();
     night.breaks = prunePlan(night.breaks, segments);
     if (sayEl) {
-      const warns = [readyLine({ venueName: venueNow(), prizesOk: Array.isArray(library && library.venueRecords) ? !noPrizesReason(venueNow(), library.venueRecords) : null }), lastNightWarning(me), prizeWarning()].filter(Boolean);
+      const warns = [readyLine({ venueName: venueNow(), prizesOk: Array.isArray(library && library.venueRecords) ? !noPrizesReason(venueNow(), library.venueRecords, prizesNow()) : null }), lastNightWarning(me), prizeWarning()].filter(Boolean);
       sayEl.replaceChildren(...warns);
       sayEl.hidden = !warns.length;
     }
@@ -3233,7 +3402,7 @@ export function launchBar() {
    */
   function standDownWithoutPrizes() {
     if (goBtn.disabled) return;
-    const why = noPrizesReason(venueNow(), library && library.venueRecords);
+    const why = noPrizesReason(venueNow(), library && library.venueRecords, prizesNow());
     if (!why) return;
     goBtn.disabled = true;
     goBtn.textContent = why;

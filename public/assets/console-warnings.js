@@ -108,11 +108,26 @@ function prizesOn(name, venueRecords) {
  * directly above: a button cannot hold a link, and two of them would be two
  * controls for one job.
  */
-export function noPrizesReason(name, venueRecords) {
+export function noPrizesReason(name, venueRecords, typedTonight = null) {
+  /*
+   * WHAT THE HOST TYPED FOR TONIGHT COUNTS TOO — added when prizes became a
+   * per-GAME decision rather than a standing venue arrangement.
+   *
+   * This asked the venue record and nothing else, which was right while the
+   * record was the only place a prize could come from. It is not any more:
+   * the prize table on the launch bar sets what each game pays, *"regardless
+   * of what the venue prizes says"*, so a night with three drinks typed onto
+   * the quiz and three onto the bingo was a night with somebody to pay — and
+   * this stood Launch down over an empty venue record.
+   *
+   * IT ONLY EVER OPENS THE GATE, never closes it: anything typed is enough,
+   * and the fail-open reasoning below is untouched.
+   */
+  if (Array.isArray(typedTonight) && typedTonight.some((r) => String(r || '').trim())) return null;
   // NOT LOADED IS NOT EMPTY. Only an actual list can say there are no prizes.
   if (!Array.isArray(venueRecords)) return null;
   if (prizesOn(name, venueRecords).length) return null;
   return name
-    ? `No prizes set for ${name} — add them on the Venues tab`
-    : 'Pick a venue with prizes on it';
+    ? `No prizes set for ${name} — nothing to give out, so add them above or on the Venues tab`
+    : 'Pick a venue, or type what tonight pays above';
 }

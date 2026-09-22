@@ -12,7 +12,7 @@ import { packWord } from './console.js';
 import { library } from './console-state.js';
 import { packLookAttrs, shortTitle, isBreakoutPack, roundGlyph, roundWord } from './pack-look.js';
 import {
-  DEFAULT_BINGO_PRIZES, addBingoSlot, addQuizPackSlot, hasPack, homeSlotIndex, moveRoundToSlot, swapSlots,
+  addBingoSlot, addQuizPackSlot, hasPack, homeSlotIndex, moveRoundToSlot, swapSlots,
   offRoundsFor, removeSlot, toggleRoundOff,
 } from './console-tonight-mix.js';
 
@@ -332,7 +332,23 @@ export function renderSlots(slots, {
 
   function bingoSaid(slot, pack) {
     const shape = slot.shape || packOwnShape(pack);
-    const n = slot.prizes || DEFAULT_BINGO_PRIZES;
+    /*
+     * THE SHAPE'S OWN DEFAULT, NEVER A NUMBER WRITTEN IN THE CONSOLE.
+     *
+     * `slot.prizes` is 0 until somebody opens the Prizes picker, so this has
+     * to resolve it — and it resolves it the way `paintPrizes()` does, off
+     * `library.cardShapes[].prizes`, which is `defaultPrizes()` on the server.
+     * It used to read a `DEFAULT_BINGO_PRIZES = 2` kept in the browser, so a
+     * 5x5 tile on a mixed night said "2 prizes" about a card the launch would
+     * run for five. See that constant's own grave in `console-tonight-mix.js`.
+     *
+     * Falls back to the tile's own shape count only if the library has not
+     * arrived — a tile drawn before the payload lands must not print
+     * `undefined prizes`.
+     */
+    const known = ((library && library.cardShapes) || [])
+      .find((sh) => sh.rows === shape.rows && sh.cols === shape.cols);
+    const n = Number(slot.prizes) || Number(known && known.prizes) || 1;
     return `<div class="mix-bingo-said tiny">${esc(`${shape.rows}×${shape.cols}`)} · ${n} prize${n === 1 ? '' : 's'}</div>`;
   }
 

@@ -461,7 +461,20 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * Worth doing on a day with room for it, not at the end of one.
  */
 const BUDGET = {
-  'console-tonight.js': 4240, 'console.js': 2000, 'console-packs.js': 1890,
+  /*
+   * RAISED FROM 4240 TO 4410 ON 22 SEPTEMBER 2026, deliberately, for the
+   * prize table's WIRING — the table itself went into its own module
+   * (`console-prizes.js`, ~180 lines) rather than in here, which is the seam
+   * this budget exists to force. What is left is the launch bar's own half
+   * and could not sensibly leave it: where a game's prize list is KEPT (one
+   * per slot on a mixed night, one on the night otherwise), the fold's module
+   * binding, and three delegated listeners on the panel.
+   *
+   * The file was sitting at 4239 against a 4240 ceiling, so this is a ratchet
+   * rather than a target: every feature that touches this bar will need a
+   * seam or a raise, and the seam was taken first.
+   */
+  'console-tonight.js': 4410, 'console.js': 2000, 'console-packs.js': 1890,
   'console-account.js': 1620, 'console-community.js': 1620,
 };
 const DEFAULT_BUDGET = 1600;

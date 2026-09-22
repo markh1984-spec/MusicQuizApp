@@ -168,22 +168,25 @@ function playQuizSegmentToRoundBoard(session, playerId, correctIndex = 0) {
 test('quiz -> bingo -> quiz: the same team keeps its identity and its score across both switches', () => {
   const it = withFileSession();
   try {
+    /*
+     * ONE PRIZE ON EACH PART, NAMED ON THE PART.
+     *
+     * This test's subject is a team's identity and score surviving two
+     * switches, so the prizes are pinned here rather than left to the deal:
+     * a part now carries its own list and starts at its own first place, and
+     * a night that brought none has the venue's spread across it by what each
+     * part PAYS. Both of those are asserted on their own below; entangling
+     * them here is how this fixture came to break when the rule changed.
+     */
     const segments = [
-      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }], rewards: ['A trophy'] },
       // 2 prizes stages the night as [a line, a full house] — a genuine
       // single-line win only counts against the FIRST of those. See
       // bingo.test.js's own stagedGame() helper for the same trap.
-      { kind: 'bingo', packId: 'bingo-a', prizes: 2 },
-      { kind: 'quiz', order: [{ packId: 'quiz-b', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a', prizes: 2, rewards: ['A medal'] },
+      { kind: 'quiz', order: [{ packId: 'quiz-b', round: 0 }], rewards: ['A mug'] },
     ];
-    /*
-     * THREE PRIZES, ONE PER PART — because each part now pays its own winners
-     * as it ends and the list is worked THROUGH rather than restarted. With
-     * one prize on the list the first part would take it and the other two
-     * would have nothing to give, which is correct and is asserted separately
-     * below rather than smuggled into this test's subject.
-     */
-    it.session.launchRunningOrder(segments, { venue: 'The Nag\'s Head', rewards: ['A trophy', 'A medal', 'A mug'] });
+    it.session.launchRunningOrder(segments, { venue: 'The Nag\'s Head', winners: 1 });
     assert.equal(it.session.kind, 'quiz');
 
     const joined = it.session.engine.join({ name: 'Quizteam Aguilera' });
@@ -292,14 +295,35 @@ test('quiz -> bingo -> quiz: the same team keeps its identity and its score acro
  * The other half matters just as much: **a part with nothing left gives
  * nothing**, rather than repeating a drink the venue has already paid for.
  */
-test('A PART TAKES THE NEXT DRINK ON THE LIST, AND NONE WHEN THERE IS NONE LEFT', () => {
+/*
+ * EACH GAME PAYS ITS OWN LIST, AND NOTHING IS COUNTED OFF ANYTHING.
+ *
+ * REVERSES A PINNED TEST, deliberately and on the host's say-so: *"I want to
+ * offer prizes on a game basis and those prizes be given at the end of the
+ * game regardless of what the venue prizes says... I can keep track of how
+ * many prizes I've given out over 2-3 games no problem at all."*
+ *
+ * The test this replaces asserted `state.prizesBefore` — a count of the
+ * vouchers a night had already MINTED, which each later part sliced the
+ * venue's list past. `prize-parts.js` records why that was wrong: the count
+ * is not the number of PLACES a part recognises, so a tie for first (paid in
+ * full) or a room where somebody scored nothing moved every later part onto
+ * the wrong drink, silently, in front of the room.
+ *
+ * What replaces it is the two halves of the new rule: a part carries its own
+ * list and starts at its own first place, and a part that brought none takes
+ * its share of a deal worked out at launch from what each part PAYS.
+ */
+test('a part pays the list IT was given, starting at its own first place', () => {
   const it = withFileSession();
   try {
-    // ONE prize, two parts. The quiz takes it; the bingo must not take it again.
     it.session.launchRunningOrder([
-      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
-      { kind: 'bingo', packId: 'bingo-a', prizes: 2 },
-    ], { venue: "The Nag's Head", rewards: ['The only drink'] });
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }], rewards: ['The quiz drink'] },
+      { kind: 'bingo', packId: 'bingo-a', prizes: 2, rewards: ['The bingo drink', 'And another'] },
+    ], { venue: "The Nag's Head", winners: 1, rewards: ['Something else entirely'] });
+
+    assert.deepEqual(it.session.engine.rewardList(), ['The quiz drink'],
+      'the quiz part did not get the list it was handed');
 
     const { id } = it.session.engine.join({ name: 'Quizteam Aguilera' });
     playQuizSegmentToRoundBoard(it.session, id);
@@ -307,13 +331,12 @@ test('A PART TAKES THE NEXT DRINK ON THE LIST, AND NONE WHEN THERE IS NONE LEFT'
 
     const carried = Object.values(it.session.engine.state.vouchers || {});
     assert.equal(carried.length, 1, 'the quiz part did not pay its winner as it ended');
-    assert.equal(carried[0].reward, 'The only drink');
-    assert.equal(it.session.engine.state.prizesBefore, 1,
-      'the bingo part was not told the night had already given one');
-    assert.deepEqual(it.session.engine.rewardList(), [],
-      'the bingo can still see a drink that has already gone out');
+    assert.equal(carried[0].reward, 'The quiz drink');
 
-    // And a real win now mints nothing rather than the same drink twice.
+    // AND THE BINGO STARTS AT ITS OWN FIRST PRIZE — no offset, no slice.
+    assert.deepEqual(it.session.engine.rewardList(), ['The bingo drink', 'And another'],
+      'the bingo part did not start at its own first prize');
+
     it.session.engine.start();
     const me = it.session.engine.state.players[id];
     const line = it.session.engine.lines()[0];
@@ -323,9 +346,87 @@ test('A PART TAKES THE NEXT DRINK ON THE LIST, AND NONE WHEN THERE IS NONE LEFT'
     }
     it.session.engine.claim(id);
     const after = Object.values(it.session.engine.state.vouchers || {});
-    assert.equal(after.length, 1, 'a second drink went out that the venue never put up');
-    assert.equal(after.filter((v) => !v.carried).length, 0,
-      'the bingo minted a voucher with nothing on the list to pay it with');
+    const fresh = after.filter((v) => !v.carried);
+    assert.equal(fresh.length, 1, 'the bingo did not pay its own line winner');
+    assert.equal(fresh[0].reward, 'The bingo drink',
+      'the bingo paid something off another part of the night');
+  } finally {
+    it.done();
+  }
+});
+
+/*
+ * AND A PART THAT BROUGHT NO LIST TAKES ITS SHARE OF THE VENUE'S, DEALT BY
+ * WHAT IT PAYS.
+ *
+ * The default when nobody opens *What they win*: the venue's standing list is
+ * spread across the night in order, a part at a time. Dealt from `pays` — the
+ * Winners setting and the card's stopping points, both known at launch — so
+ * the same night deals the same way whoever ties and whoever scores nothing,
+ * which is the whole difference from the `prizesBefore` this replaces.
+ */
+test('a part with no list of its own is dealt its share of the venue list', () => {
+  const it = withFileSession();
+  try {
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a', prizes: 2 },
+    ], {
+      venue: "The Nag's Head",
+      winners: 2,
+      rewards: ['One', 'Two', 'Three', 'Four', 'Five'],
+    });
+
+    assert.deepEqual(it.session.engine.rewardList(), ['One', 'Two'],
+      'the quiz was not dealt the first two, one per place it recognises');
+
+    const { id } = it.session.engine.join({ name: 'Quizteam Aguilera' });
+    playQuizSegmentToRoundBoard(it.session, id);
+    it.session.advanceOrder();
+
+    assert.deepEqual(it.session.engine.rewardList(), ['Three', 'Four'],
+      'the bingo was not dealt the next two — its own two stopping points');
+  } finally {
+    it.done();
+  }
+});
+
+/*
+ * AND THE DEAL DOES NOT MOVE WHEN A TIE PAYS FOUR VOUCHERS FOR THREE PLACES.
+ *
+ * This is the fault `prizesBefore` had, asserted directly so it cannot come
+ * back: the quiz below pays its three places to FOUR teams, because a tie for
+ * first is paid in full by decision. Counting vouchers put the bingo on the
+ * venue's fifth drink. Dealing by places leaves it on the fourth, where the
+ * host who wrote the list down expects it.
+ */
+test('a tie for first does not move what the next game pays', () => {
+  const it = withFileSession();
+  try {
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'bingo', packId: 'bingo-a', prizes: 2 },
+    ], {
+      venue: "The Nag's Head",
+      winners: 3,
+      rewards: ['One', 'Two', 'Three', 'Four', 'Five'],
+    });
+
+    const a = it.session.engine.join({ name: 'Tied A' });
+    const b = it.session.engine.join({ name: 'Tied B' });
+    const c = it.session.engine.join({ name: 'Third' });
+    playQuizSegmentToRoundBoard(it.session, a.id);
+    // Two teams level at the top, one behind: three places, four vouchers.
+    const P = it.session.engine.state.players;
+    it.session.engine.setScore(P[a.id], 100);
+    it.session.engine.setScore(P[b.id], 100);
+    it.session.engine.setScore(P[c.id], 50);
+    it.session.advanceOrder();
+
+    const paid = Object.values(it.session.engine.state.vouchers || {});
+    assert.ok(paid.length >= 3, `the quiz paid ${paid.length} vouchers, expected at least three`);
+    assert.deepEqual(it.session.engine.rewardList(), ['Four', 'Five'],
+      'a tie for first moved the bingo off the drinks the venue listed for it');
   } finally {
     it.done();
   }

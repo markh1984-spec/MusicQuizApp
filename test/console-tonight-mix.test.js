@@ -62,10 +62,19 @@ test('slotsFromSimple: no pack chosen at all is an empty night', () => {
   assert.deepEqual(slotsFromSimple({ currentPack: null, lbExtra: [], lbOff: new Set(), packOf }), []);
 });
 
+/*
+ * A NEW SLOT CHOOSES NO PRIZE COUNT — `prizes: 0`, meaning *nobody has said*.
+ *
+ * REVERSES A PINNED 2. That 2 was `DEFAULT_BINGO_PRIZES`, a prize table kept
+ * in the browser beside the real one on the shape, and it only ever landed on
+ * a MIXED night, where a bingo pack becomes a slot: a 5x5 card said "2
+ * prizes" on the bar and the launch ran it for five. It was invisible because
+ * 2 is a 4x4's correct default. The shape answers this now, in one place.
+ */
 test('slotsFromSimple: a BINGO currentPack converts to a bingo slot, not an empty quiz one', () => {
   const bingoPack = { id: 'disco', title: 'Disco & Funk', trackCount: 40 };
   const slots = slotsFromSimple({ currentPack: bingoPack, lbExtra: [], lbOff: new Set(), packOf });
-  assert.deepEqual(slots, [{ kind: 'bingo', packId: 'disco', shape: null, prizes: 2 }]);
+  assert.deepEqual(slots, [{ kind: 'bingo', packId: 'disco', shape: null, prizes: 0 }]);
 });
 
 test('moveRoundToSlot: drags round 3 out of pack A into a new empty slot after a bingo one', () => {
@@ -143,9 +152,9 @@ test('addQuizPackSlot: nothing is added if every round of that pack is already i
   assert.deepEqual(addQuizPackSlot(start, PACK_A), start);
 });
 
-test('addBingoSlot: a new bingo slot with its OWN prizes/shape, defaulting sensibly', () => {
+test('addBingoSlot: a new bingo slot names no shape and no prize count — both are the shape\'s to answer', () => {
   const after = addBingoSlot([], { id: 'disco' });
-  assert.deepEqual(after, [{ kind: 'bingo', packId: 'disco', shape: null, prizes: 2 }]);
+  assert.deepEqual(after, [{ kind: 'bingo', packId: 'disco', shape: null, prizes: 0 }]);
 });
 
 test('removeSlot drops the one slot and leaves the rest in order', () => {
@@ -314,7 +323,7 @@ test('gapIdsOfSlot: two packs in one part keep counting up the SAME part', () =>
 test('a whole-pack slot keeps ITS OWN kind on the way to the server — a deck is not a bingo pack', () => {
   const deck = { id: 'deck', title: 'Card Bingo' };
   const row = addBingoSlot([], deck, { kind: 'cards' });
-  assert.deepEqual(row, [{ kind: 'cards', packId: 'deck', shape: null, prizes: 2 }]);
+  assert.deepEqual(row, [{ kind: 'cards', packId: 'deck', shape: null, prizes: 0 }]);
   const segs = segmentsFromSlots([...row, { kind: 'bingo', packId: 'mbc-5', shape: null, prizes: 2 }]);
   assert.deepEqual(segs.map((s) => `${s.kind}:${s.packId}`), ['cards:deck', 'bingo:mbc-5']);
   // and converting an ordinary card-bingo night into the mixed row says what it was
