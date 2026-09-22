@@ -40,13 +40,12 @@
  *     node scripts/photo-to-socials.mjs
  */
 
-import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { freePort, stopped } from '../test/helpers/live-server.mjs';
+import { startApp } from './helpers/live-app.mjs';
 import { playwright } from './helpers/playwright.mjs';
 
 const { chromium } = playwright();
@@ -64,22 +63,22 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? '  ok  ' : '  FAIL'} ${name}${detail ? `  — ${detail}` : ''}`);
 };
 
-const data = mkdtempSync(join(tmpdir(), 'socials-'));
 const repo = mkdtempSync(join(tmpdir(), 'socials-gh-'));
-const port = await freePort();
-const env = {
-  ...process.env,
-  PORT: String(port), HOST_KEY: 'not-used-here', DATA_DIR: data,
-  GH_STUB_DIR: repo, PHOTO_REPO: 'someone/photos', PHOTO_TOKEN: 'stub',
-};
-const base = `http://127.0.0.1:${port}`;
-let server = spawn(process.execPath, ['--import', STUB, 'server.js'], { cwd: ROOT, env, stdio: 'ignore' });
-const up = async () => {
-  for (let i = 0; i < 60; i += 1) {
-    try { await fetch(base); return; } catch { await wait(200); }
-  }
-  throw new Error('the server never came up');
-};
+/*
+ * ONE SPAWN FOR EVERY SPAWNER — `startApp()` in `scripts/helpers/live-app.mjs`:
+ * it waits for its OWN server by pid, runs it on a COPY of the catalogue, and
+ * its restart waits for the old server to be gone before binding the port
+ * again. This script used to take a port on trust and restart with a kill and
+ * a sleep.
+ */
+const app = await startApp({
+  key: 'not-used-here',
+  nodeArgs: ['--import', STUB],
+  env: {
+    GH_STUB_DIR: repo, PHOTO_REPO: 'someone/photos', PHOTO_TOKEN: 'stub',
+  },
+});
+const { base, data } = app;
 const post = (path, body, cookie = '') => fetch(`${base}${path}`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json', ...(cookie ? { Cookie: cookie } : {}) },
@@ -88,7 +87,6 @@ const post = (path, body, cookie = '') => fetch(`${base}${path}`, {
 
 const browser = await chromium.launch();
 try {
-  await up();
 
   /* ---------------------------------------- one login, an owner and his room */
 
@@ -106,9 +104,7 @@ try {
     comped: true, status: 'active',
   });
   writeFileSync(file, JSON.stringify(acc));
-  server.kill(); await wait(300);
-  server = spawn(process.execPath, ['--import', STUB, 'server.js'], { cwd: ROOT, env, stdio: 'ignore' });
-  await up();
+  if (!await app.restart({ hard: false })) throw new Error('the server did not come back');
 
   const signIn = await post('/api/sign-in', { email: 'mark@example.com', password: PASSWORD });
   const cookie = (signIn.headers.getSetCookie() || []).map((c) => c.split(';')[0]).join('; ');
@@ -367,8 +363,7 @@ try {
    * flushing state: ENOTEMPTY out of this very block, with every assertion
    * above it passed. The same fault cost a day in the suite.
    */
-  await stopped(server);
-  rmSync(data, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  await app.stopAndWait();
   rmSync(repo, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
 }
 

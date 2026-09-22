@@ -32,8 +32,17 @@ export async function getStaticFiles(req, res, url, route) {
     // `selfTest` is the boot-time run-through in `src/self-test.js`: null
     // until it has run, then ok/at/ms and the names of any failed steps.
     const st = selfTestResult();
+    /*
+     * `pid` IS HOW A CHECK KNOWS THE SERVER ANSWERING IS THE ONE IT STARTED.
+     * A port is asked for, freed, and only bound by the app seconds later, after
+     * the restore — so under a busy suite another test's server can take it in
+     * between and answer every request, and a check then measures somebody
+     * else's process with nothing to say so. `bootApp()` in
+     * `test/helpers/live-server.mjs` compares this against its child's own.
+     * A process id says nothing an attacker can use.
+     */
     return sendJson(res, 200, {
-      ok: true, game: house.session.kind, phase: house.session.engine.state.phase, rooms: rooms.all().length,
+      ok: true, pid: process.pid, game: house.session.kind, phase: house.session.engine.state.phase, rooms: rooms.all().length,
       streams: hub.count(), rss: process.memoryUsage().rss,
       selfTest: st ? { ok: st.ok, at: st.at, ms: st.ms, steps: st.steps, failed: st.failed } : null,
     }), true;

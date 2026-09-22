@@ -25,12 +25,11 @@
  * draws and composites into a save, exactly as `console-photo-export.js` does.
  */
 
-import { spawn } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { freePort } from '../test/helpers/live-server.mjs';
+import { startApp } from './helpers/live-app.mjs';
 import { playwright } from './helpers/playwright.mjs';
 
 const { chromium } = playwright();
@@ -44,13 +43,22 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 let failures = 0;
 const check = (name, ok, detail = '') => { if (!ok) failures += 1; console.log(`${ok ? '  ok  ' : '  FAIL'} ${name}${!ok && detail ? `  — ${detail}` : ''}`); };
 
-const data = mkdtempSync(join(tmpdir(), 'gfr-'));
 const repo = mkdtempSync(join(tmpdir(), 'gfr-gh-'));
-const port = await freePort();
-const env = { ...process.env, PORT: String(port), HOST_KEY: 'x', DATA_DIR: data, GH_STUB_DIR: repo, PHOTO_REPO: 'a/b', PHOTO_TOKEN: 'stub' };
-const base = `http://127.0.0.1:${port}`;
-let server = spawn(process.execPath, ['--import', STUB, 'server.js'], { cwd: ROOT, env, stdio: 'ignore' });
-const up = async () => { for (let i = 0; i < 60; i += 1) { try { await fetch(base); return; } catch { await wait(200); } } throw new Error('no up'); };
+/*
+ * ONE SPAWN FOR EVERY SPAWNER — `startApp()` in `scripts/helpers/live-app.mjs`:
+ * it waits for its OWN server by pid, runs it on a COPY of the catalogue, and
+ * its restart waits for the old server to be gone before binding the port
+ * again. This script used to take a port on trust and restart with a kill and
+ * a sleep.
+ */
+const app = await startApp({
+  key: 'x',
+  nodeArgs: ['--import', STUB],
+  env: {
+    GH_STUB_DIR: repo, PHOTO_REPO: 'a/b', PHOTO_TOKEN: 'stub',
+  },
+});
+const { base, data } = app;
 const post = (p, b, c = '') => fetch(`${base}${p}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(c ? { Cookie: c } : {}) }, body: JSON.stringify(b) });
 const get = (p, c = '') => fetch(`${base}${p}`, { headers: c ? { Cookie: c } : {} });
 const put = (p, b, c) => fetch(`${base}${p}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Cookie: c }, body: JSON.stringify(b) });
@@ -58,12 +66,11 @@ const put = (p, b, c) => fetch(`${base}${p}`, { method: 'PUT', headers: { 'Conte
 const browser = await chromium.launch();
 console.log('\nTHE VENUE FRAME ON THE PUBLIC GALLERY — on screen and in the save?\n');
 try {
-  await up();
   const made = await (await post('/api/signup', { email: 'qm@example.com', password: PW, name: 'Mark' })).json();
   const t = new URL(made.devLink).searchParams.get('t'); await post('/api/reset/complete', { token: t, password: PW });
   const file = join(data, 'accounts.json'); const acc = JSON.parse(readFileSync(file, 'utf8'));
   acc.accounts[0].role = 'quizmaster'; acc.accounts[0].comped = true; acc.accounts[0].status = 'active'; writeFileSync(file, JSON.stringify(acc));
-  server.kill(); await wait(300); server = spawn(process.execPath, ['--import', STUB, 'server.js'], { cwd: ROOT, env, stdio: 'ignore' }); await up();
+  if (!await app.restart({ hard: false })) throw new Error('the server did not come back');
   const signIn = await post('/api/sign-in', { email: 'qm@example.com', password: PW });
   const cookie = (signIn.headers.getSetCookie() || []).map((c) => c.split(';')[0]).join('; ');
   const me = await (await get('/api/me', cookie)).json(); const roomId = me.account.id;
@@ -204,7 +211,9 @@ try {
   failures += 1;
   console.log('  FAIL threw:', err.stack || err.message);
 } finally {
-  await browser.close(); server.kill();
+  await browser.close();
+  await app.stopAndWait();
+  rmSync(repo, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
 }
 console.log(failures ? `\n${failures} FAILED\n` : '\nALL GOOD — the venue frame is on the public gallery, on screen and in the save.\n');
 process.exit(failures ? 1 : 0);

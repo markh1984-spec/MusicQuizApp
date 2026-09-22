@@ -357,3 +357,46 @@ Twelve consecutive clean runs through the gig-build invocation. Then the `await`
 was removed from `stopped()` and the same twelve-run hunt failed on run seven.
 A fix for a flake that is not demonstrated to fail again without it is a
 coincidence, not a fix.
+
+## ONE SPAWN OF THE APP, AND IT CHECKS WHO ANSWERED — 22 September 2026
+
+`bootApp()` / `ownsPort()` / `safeEnv()` in `test/helpers/live-server.mjs`,
+`pid` on `/health`, `test/boot-app.test.js`.
+
+**There were twenty-five spawns of `server.js`**: three in the helpers and
+twenty-two private copies in tests and guards. Every one asked for a port once,
+spawned once, and polled *does something answer?* — and `freePort()` cannot
+promise the port stays free, because it lets the port go and the app binds it
+seconds later, after the restore. Under `gig-build`, with a dozen servers
+booting at once, another check's server can take it in between. Something then
+DID answer, so the check ran its whole body against a different process while
+its own child died on `EADDRINUSE` behind it. A pass there is about somebody
+else's server; a failure names a feature that is fine.
+
+- **`/health` says its `pid` and `ownsPort()` compares it with the child's.**
+  Another pid means another server: stop at once and ask for a fresh port.
+  **No pid at all** is an app older than this — only `pub-unchanged.mjs` boots
+  one, for its baseline, and it says so with `legacyOk`.
+- **Three attempts on a fresh port each; ONE on a restart**, which must keep its
+  address because the caller holds `base` — and says so if it cannot, rather
+  than handing back someone else's server.
+- **`env` is built ONCE and a restart reuses it** (`safeEnv()`), which is what
+  stops a restart dropping the catalogue copy — the fault `startApp()` had until
+  this month. **`withStubbedApp()` never copied the catalogue at all, and
+  NONE of the twenty-two private copies did either** — every one ran against
+  the packs the app ships. (`pub-unchanged.mjs` still does, deliberately: it
+  compares each tree's OWN packs, and writes none.)
+- **Eight guards restarted with `kill()` and a 300ms sleep**, and six never
+  deleted their temp directories. All of them now restart through the helper,
+  which waits for the old server to EXIT, and tidy up after themselves.
+- **`pub-unchanged.mjs`'s port was `4870 + (process.pid % 40)`** — guessed, from
+  the pid, which this file already forbade by name. **`final-fits.mjs` held a
+  fixed 8971.** Both bind port 0 now; so does `rude-photo.mjs`'s Vision stub.
+- **`waitForApp()` is deleted** — nothing called it once every spawner went
+  through `bootApp()`.
+
+**The impostor is bound the way the APP binds, on every interface.** Bound to
+`127.0.0.1` alone, the app quietly took the wildcard address beside it, never
+died, and the legacy case waited out its full twenty-five seconds. Two apps
+colliding is wildcard against wildcard, so that is what the test has to be.
+Verified by putting the old poll back: both impostor cases go red.

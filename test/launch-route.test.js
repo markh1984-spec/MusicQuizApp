@@ -31,11 +31,9 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync, readdirSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { freePort, stopped, waitForApp } from './helpers/live-server.mjs';
+import { withServer as withLiveServer } from './helpers/live-server.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const KEY = 'launch-route-test-key';
@@ -53,44 +51,12 @@ function aRealQuiz() {
  * collide with a server somebody left running — which on this machine is a
  * real possibility, because half the checks in this repo start one.
  */
-async function withServer(run) {
-  const dir = mkdtempSync(join(tmpdir(), 'launch-route-'));
-  /*
-   * A PORT FROM THE OPERATING SYSTEM, NEVER FROM THE PID.
-   *
-   * Ten test files spawn a server and every one of them derived a port from
-   * `process.pid` — the SAME pid — so their ranges overlapped and, at CPU
-   * concurrency, two suites could want one port. That is a flake that reads
-   * as a bug in the app: a different test each run, all of them passing
-   * alone. See `test/helpers/live-server.mjs`.
-   */
-  const port = await freePort();
-  const child = spawn(process.execPath, ['server.js'], {
-    cwd: ROOT,
-    env: { ...process.env, PORT: String(port), DATA_DIR: dir, HOST_KEY: KEY },
-    stdio: 'ignore',
-  });
-  const base = `http://127.0.0.1:${port}`;
-  try {
-    // Up to ten seconds to come up, then give in — a hang here would be worse
-    // than a failure, because a test that hangs is a test people skip.
-    // One poll for every spawner — see `waitForApp()`. Ten seconds was not
-    // enough under gig-build, and it waited them out on a server already dead.
-    const up = await waitForApp(child, `${base}/api/state?role=screen`);
-    assert.ok(up, 'the server never came up');
-    await run(base);
-  } finally {
-    /*
-     * GONE, THEN DELETED — `stopped()` is `test/helpers/live-server.mjs`'s.
-     * `kill()` sends a signal and waits for nothing, so deleting the data
-     * directory on the next line races a server still flushing `state.json`
-     * into it: ENOTEMPTY out of this `finally`, every assertion already
-     * passed, naming a feature that works.
-     */
-    await stopped(child, 'SIGKILL');
-    rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
-  }
-}
+/*
+ * ONE SPAWN FOR EVERY SPAWNER — `withServer()` in `test/helpers/live-server.mjs`.
+ * This file carried its own copy, which took a port on trust and ran against
+ * the shipped catalogue; `bootApp()` there says what that could measure instead.
+ */
+const withServer = (run) => withLiveServer((base) => run(base), { hostKey: KEY });
 
 test('LAUNCH ACTUALLY LAUNCHES — the route, not the engine behind it', async () => {
   const packId = aRealQuiz();

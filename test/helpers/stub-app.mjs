@@ -45,17 +45,15 @@
  * whatever it asked first rather than on the restart.
  */
 
-import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { freePort, stopped, waitForApp } from './live-server.mjs';
+import { bootApp, safeEnv, stopped } from './live-server.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const STUB = join(ROOT, 'test', 'helpers', 'photo-repo-stub.mjs');
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /*
  * `stopped()` IS `live-server.mjs`'S NOW, not a second copy here. The account
@@ -78,39 +76,36 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 export async function withStubbedApp(run, { prefix = 'stubapp', env: extra = {} } = {}) {
   const data = mkdtempSync(join(tmpdir(), `${prefix}-`));
   const repo = mkdtempSync(join(tmpdir(), `${prefix}-gh-`));
-  // ASKED FOR, NEVER GUESSED — and per run, so two tests in one file cannot
-  // share one and two files cannot collide.
-  const port = await freePort();
-  const env = {
-    ...process.env,
-    PORT: String(port),
-    HOST_KEY: 'not-used-here',
-    DATA_DIR: data,
-    GH_STUB_DIR: repo,
-    PHOTO_REPO: 'someone/photos',
-    PHOTO_TOKEN: 'stub',
-    ...extra,
-  };
-  const start = () => spawn(process.execPath, ['--import', STUB, 'server.js'],
-    { cwd: ROOT, env, stdio: 'ignore' });
-
-  let server = start();
-  const base = `http://127.0.0.1:${port}`;
   /*
-   * ONE POLL FOR EVERY SPAWNER — `waitForApp()`. Twelve seconds was not enough
-   * under `gig-build`, where `npm test` runs at CPU concurrency with browsers
-   * either side of it, and this waited them out on a server that had already
-   * died. It notices a dead child at once and gives a live one longer.
+   * ONE ENVIRONMENT, BUILT ONCE — `safeEnv()`, so the catalogue is a COPY as it
+   * is for every other spawner. This helper never copied it: every photo test
+   * ran against the repository's own `quizzes/` and `bingo/`, the packs the app
+   * ships. And a restart reuses the SAME object, so it cannot drop half of it.
    */
+  const env = safeEnv(data, {
+    hostKey: 'not-used-here',
+    env: { GH_STUB_DIR: repo, PHOTO_REPO: 'someone/photos', PHOTO_TOKEN: 'stub', ...extra },
+  });
+  const nodeArgs = ['--import', STUB];
+
+  /*
+   * ONE SPAWN FOR EVERY SPAWNER — `bootApp()`: a fresh port per attempt, and it
+   * waits for ITS OWN child by pid, so another test's server that took the port
+   * in the gap is never the one measured.
+   */
+  let server = null;
+  let base = '';
+  let port = 0;
   const up = async () => {
-    if (!await waitForApp(server, base)) throw new Error('the server never came up');
+    const booted = await bootApp({ env, nodeArgs, port });
+    if (!booted) throw new Error(port ? `the server did not come back on :${port}` : 'the server never came up');
+    ({ child: server, base, port } = booted);
   };
   const restart = async () => {
-    // GONE BEFORE THE REPLACEMENT BINDS. A sleep is a guess about how long a
-    // process takes to release a socket, and the answer is "longer, when the
-    // machine is busy" — which is exactly when the suite is running.
+    // GONE BEFORE THE REPLACEMENT BINDS — and on the SAME port, because the
+    // caller is holding `base`. If something else took it in the gap, `up()`
+    // says so rather than handing back somebody else's server.
     await stopped(server);
-    server = start();
     await up();
   };
 

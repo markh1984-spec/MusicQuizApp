@@ -13,50 +13,18 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { freePort, stopped, waitForApp } from './helpers/live-server.mjs';
+import { withServer as withLiveServer } from './helpers/live-server.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 
-async function withServer(run) {
-  const dir = mkdtempSync(join(tmpdir(), 'signup-route-'));
-  /*
-   * A PORT FROM THE OPERATING SYSTEM, NEVER FROM THE PID.
-   *
-   * Ten test files spawn a server and every one of them derived a port from
-   * `process.pid` — the SAME pid — so their ranges overlapped and, at CPU
-   * concurrency, two suites could want one port. That is a flake that reads
-   * as a bug in the app: a different test each run, all of them passing
-   * alone. See `test/helpers/live-server.mjs`.
-   */
-  const port = await freePort();
-  const child = spawn(process.execPath, ['server.js'], {
-    cwd: ROOT,
-    env: { ...process.env, PORT: String(port), DATA_DIR: dir, HOST_KEY: 'signup-route-test-key' },
-    stdio: 'ignore',
-  });
-  const base = `http://127.0.0.1:${port}`;
-  try {
-    // One poll for every spawner — see `waitForApp()`. Ten seconds was not
-    // enough under gig-build, and it waited them out on a server already dead.
-    const up = await waitForApp(child, `${base}/api/state?role=screen`);
-    assert.ok(up, 'the server never came up');
-    await run(base, dir);
-  } finally {
-    /*
-     * GONE, THEN DELETED — `stopped()` is `test/helpers/live-server.mjs`'s.
-     * `kill()` sends a signal and waits for nothing, so deleting the data
-     * directory on the next line races a server still flushing `state.json`
-     * into it: ENOTEMPTY out of this `finally`, every assertion already
-     * passed, naming a feature that works.
-     */
-    await stopped(child, 'SIGKILL');
-    rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
-  }
-}
+/*
+ * ONE SPAWN FOR EVERY SPAWNER — `withServer()` in `test/helpers/live-server.mjs`.
+ * This file carried its own copy, which took a port on trust and ran against
+ * the shipped catalogue; `bootApp()` there says what that could measure instead.
+ */
+const withServer = (run) => withLiveServer((base, _seeded, dir) => run(base, dir), { hostKey: 'signup-route-test-key' });
 
 test('the landing and signup pages serve with no key and no account', async () => {
   await withServer(async (base) => {

@@ -35,30 +35,15 @@
  * one is fixed is the day the other eight are not.
  */
 
-import { spawn } from 'node:child_process';
-import net from 'node:net';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 // GONE, NOT MERELY SIGNALLED — one definition, in the leaf nine scripts in
 // this folder already borrow `freePort` from. See its own account of why.
-import { stopped } from '../../test/helpers/live-server.mjs';
+import { bootApp, safeEnv, stopped } from '../../test/helpers/live-server.mjs';
 
-const ROOT = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** A port the OS says is free right now, on the loopback the server binds. */
-export function freePort() {
-  return new Promise((resolve, reject) => {
-    const probe = net.createServer();
-    probe.once('error', reject);
-    probe.listen(0, '127.0.0.1', () => {
-      const { port } = probe.address();
-      probe.close(() => resolve(port));
-    });
-  });
-}
 
 /**
  * Start the app on a free port with its own data directory.
@@ -70,12 +55,6 @@ export function freePort() {
  * Returns `{ base, key, stop }`. Prefer `withApp()` below, which cannot forget
  * to call `stop`.
  */
-/** One of the shipped pack folders, copied where a check may safely write it. */
-function catalogueCopy(dir, name) {
-  const to = path.join(dir, name);
-  fs.cpSync(path.join(ROOT, name), to, { recursive: true });
-  return to;
-}
 
 /**
  * `nodeArgs` go in front of `server.js` — the way a guard puts a stub behind
@@ -85,52 +64,26 @@ function catalogueCopy(dir, name) {
 export async function startApp({ key = 'live-app-key', seed, env = {}, nodeArgs = [] } = {}) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'live-app-'));
   const seeded = seed ? seed(data) : undefined;
-  let child = null;
-  let base = '';
-  for (let attempt = 0; attempt < 3 && !base; attempt += 1) {
-    const port = await freePort();
-    child = spawn(process.execPath, [...nodeArgs, 'server.js'], {
-      cwd: ROOT,
-      env: {
-        ...process.env,
-        PORT: String(port),
-        DATA_DIR: data,
-        // Never let a spawned app default to the repo's own adverts folder — a
-        // real, git-tracked directory a check would write fixtures into.
-        ADVERT_DIR: path.join(data, 'adverts'),
-        /*
-         * AND THE CATALOGUE IS A COPY, for the same reason one step further
-         * on. `QUIZ_DIR`/`BINGO_DIR` default to the repository's own
-         * `quizzes/` and `bingo/` — the packs the app SHIPS, tracked in git —
-         * so any check that SAVES a pack edits them in the working tree. One
-         * already did: verifying that a create cannot land on an existing pack
-         * meant taking the refusal out for a single run, and that run replaced
-         * `1980s-pop-music.json` with a one-question stub. **A guard that can
-         * damage the thing it guards is one nobody should have to remember to
-         * be careful around.** 240KB, thrown away with the directory.
-         */
-        QUIZ_DIR: catalogueCopy(data, 'quizzes'),
-        BINGO_DIR: catalogueCopy(data, 'bingo'),
-        HOST_KEY: key,
-        ...env,
-      },
-      stdio: 'ignore',
-    });
-    /*
-     * `unref()` IS WHAT LETS THE SCRIPT END. Without it the child keeps the
-     * event loop alive and the process never exits, however tidy the rest of
-     * the code is.
-     */
-    child.unref();
-    const at = `http://127.0.0.1:${port}`;
-    for (let i = 0; i < 120; i += 1) {
-      if (child.exitCode !== null) break;
-      try { await fetch(at); base = at; break; } catch { await wait(100); }
-    }
-    // THE RETRY PATH REUSES THIS SAME `data` DIRECTORY, so a half-started
-    // server still writing into it races the attempt that replaces it.
-    if (!base) { await stopped(child, 'SIGKILL'); child = null; }
-  }
+  /*
+   * ONE ENVIRONMENT, BUILT ONCE — `safeEnv()`: its own data directory, its own
+   * adverts folder, and a COPY of the catalogue, because `QUIZ_DIR`/`BINGO_DIR`
+   * default to the packs the app SHIPS and a check that saves a pack would edit
+   * them in the working tree — one replaced `1980s-pop-music.json` with a
+   * one-question stub. **The restart below reuses this same object**, which is
+   * what stops it losing the copy: it once rebuilt its environment by hand, left
+   * both directories out, and every crash-recovery guard measured its second boot
+   * against a different library from the one it launched with.
+   */
+  const appEnv = safeEnv(data, { hostKey: key, env });
+  /*
+   * ONE SPAWN FOR EVERY SPAWNER — `bootApp()`: a fresh port per attempt, and it
+   * waits for ITS OWN child by pid, so another check's server that took the port
+   * in the gap is never the one measured. `unref()` IS WHAT LETS THE SCRIPT END:
+   * without it the child keeps the event loop alive and the process never exits.
+   */
+  const booted = await bootApp({ env: appEnv, nodeArgs, unref: true });
+  let child = booted ? booted.child : null;
+  const base = booted ? booted.base : '';
   let down = false;
 
   /**
@@ -182,43 +135,14 @@ export async function startApp({ key = 'live-app-key', seed, env = {}, nodeArgs 
      * flush, which is the whole point of the crash-recovery check.
      */
     await stopped(child, hard ? 'SIGKILL' : 'SIGTERM');
-    child = spawn(process.execPath, [...nodeArgs, 'server.js'], {
-      cwd: ROOT,
-      env: {
-        ...process.env,
-        PORT: String(port),
-        DATA_DIR: data,
-        ADVERT_DIR: path.join(data, 'adverts'),
-        /*
-         * THE SAME CATALOGUE COPY THE FIRST BOOT GOT — and it was missing.
-         *
-         * `startApp()` hands the app a COPY of `quizzes/` and `bingo/`
-         * precisely because *a test may not write the shipped catalogue*; a
-         * guard once replaced `1980s-pop-music.json` with a stub in the
-         * working tree. This env block did not carry them, so `config.js`
-         * defaulted both back to the repository's own folders: every
-         * crash-recovery guard — the one thing `restart()` exists for —
-         * measured its SECOND boot against a different library from the one it
-         * launched with, and anything that saved a pack after a restart wrote
-         * into git.
-         *
-         * Proved by deleting a pack from the copy: the restarted server went
-         * on offering it.
-         */
-        /* THE SAME DIRECTORY, never a fresh copy — `catalogueCopy()` would
-           re-copy and quietly restore whatever the guard had just deleted. */
-        QUIZ_DIR: path.join(data, 'quizzes'),
-        BINGO_DIR: path.join(data, 'bingo'),
-        HOST_KEY: key,
-        ...env,
-      },
-      stdio: 'ignore',
-    });
-    child.unref();
-    for (let i = 0; i < 120; i += 1) {
-      try { await fetch(base); return true; } catch { await wait(100); }
-    }
-    return false;
+    // THE SAME PORT AND THE SAME ENVIRONMENT — the caller is holding `base`, and
+    // `appEnv` carries the same catalogue copy the first boot got (never a
+    // fresh one, which would quietly restore a pack the check had just
+    // deleted). One attempt: if something took the port in the gap, this says
+    // so rather than handing back somebody else's server.
+    const again = await bootApp({ env: appEnv, nodeArgs, port, unref: true });
+    child = again ? again.child : null;
+    return Boolean(again);
   };
 
   return { base, key, data, port, seeded, stop, stopAndWait, restart };

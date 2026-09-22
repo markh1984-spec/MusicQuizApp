@@ -21,14 +21,11 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { writeFileSync, readFileSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 
+import { withStubbedApp } from './helpers/stub-app.mjs';
 import { galleryNumbers, cleanBooking, bookingLink, bookingOf, BOOKING_MAX } from '../src/gallery-about.js';
-import { freePort, stopped, waitForApp } from './helpers/live-server.mjs';
 
 /* ---------------------------------------------------------- the arithmetic */
 
@@ -160,56 +157,18 @@ test('NOTHING IS DERIVED — silence is the default', () => {
 
 /* ------------------------------------------------- the two gates, over HTTP */
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const STUB = join(ROOT, 'test', 'helpers', 'photo-repo-stub.mjs');
 const PASSWORD = 'a longer pass phrase';
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const UP = '2026-08-20';    // at The Station Tap, and published
 const QUIET = '2026-08-13'; // at The Wheatsheaf, and never published
 
-async function withApp(run) {
-  const data = mkdtempSync(join(tmpdir(), 'galabout-'));
-  const repo = mkdtempSync(join(tmpdir(), 'galabout-gh-'));
-  const port = await freePort();
-  const env = {
-    ...process.env,
-    PORT: String(port), HOST_KEY: 'not-used-here', DATA_DIR: data,
-    GH_STUB_DIR: repo, PHOTO_REPO: 'someone/photos', PHOTO_TOKEN: 'stub',
-  };
-  const start = () => spawn(process.execPath, ['--import', STUB, 'server.js'],
-    { cwd: ROOT, env, stdio: 'ignore' });
-  let server = start();
-  const base = `http://127.0.0.1:${port}`;
-  // One poll for every spawner — see `waitForApp()`. Twelve seconds was not
-  // enough under gig-build, and it waited them out on a server already dead.
-  const up = async () => {
-    if (!await waitForApp(server, base)) throw new Error('the server never came up');
-  };
-  const restart = async () => {
-    // GONE BEFORE THE REPLACEMENT BINDS THE SAME PORT — a sleep is a guess
-    // about how long a process takes to release a socket, and the answer is
-    // "longer, when the machine is busy", which is exactly when this runs.
-    await stopped(server);
-    server = start();
-    await up();
-  };
-  try {
-    await up();
-    await run({ base, data, repo, restart });
-  } finally {
-    /*
-     * GONE, THEN DELETED — `stopped()` is `test/helpers/live-server.mjs`'s.
-     * `kill()` sends a signal and waits for nothing, so deleting the data
-     * directory on the next line races a server still flushing `state.json`
-     * into it: ENOTEMPTY out of this `finally`, every assertion already
-     * passed, naming a feature that works.
-     */
-    await stopped(server);
-    rmSync(data, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
-    rmSync(repo, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
-  }
-}
+/*
+ * ONE SPAWN FOR EVERY SPAWNER — see `bootApp()` in `test/helpers/live-server.mjs`.
+ * This file carried its own copy, which took a port on trust and ran against
+ * the shipped catalogue.
+ */
+const withApp = (run) => withStubbedApp(run, { prefix: 'galabout' });
 
 const post = (base, path, body, cookie = '') => fetch(`${base}${path}`, {
   method: 'POST',

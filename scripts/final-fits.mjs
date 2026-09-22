@@ -28,7 +28,6 @@ import { playwright } from './helpers/playwright.mjs';
 const { chromium } = playwright();
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
-const PORT = 8971;
 
 let bad = 0;
 const check = (what, ok, note = '') => {
@@ -67,7 +66,10 @@ const srv = http.createServer((q, r) => {
   r.writeHead(200, { 'Content-Type': type });
   r.end(fs.readFileSync(f));
 });
-await new Promise((r) => srv.listen(PORT, r));
+// PORT 0, AND READ BACK WHAT WAS BOUND. It was a fixed 8971, so a second run —
+// or anything else that happened to hold it — died on EADDRINUSE.
+await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+const PORT = srv.address().port;
 
 /*
  * A LONG TEAM NAME ON PURPOSE. Names are capped at 28 characters and carry no

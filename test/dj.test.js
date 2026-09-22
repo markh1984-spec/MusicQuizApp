@@ -19,15 +19,10 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 
 import { DjSet, DJ_PHASES, REQUESTS_EACH, MAX_REQUESTS } from '../src/dj.js';
-import { freePort, stopped, waitForApp } from './helpers/live-server.mjs';
+import { withServer as withLiveServer } from './helpers/live-server.mjs';
 
-const ROOT = new URL('..', import.meta.url).pathname;
 
 /** A set with a clock that never repeats, so request ids cannot collide. */
 function aSet() {
@@ -251,38 +246,12 @@ const A_JPEG = Buffer.concat([
   Buffer.alloc(200, 7),
 ]);
 
-async function withApp(run) {
-  const data = mkdtempSync(join(tmpdir(), 'dj-'));
-  const port = await freePort();
-  const child = spawn(process.execPath, ['server.js'], {
-    cwd: ROOT,
-    env: {
-      ...process.env,
-      PORT: String(port), DATA_DIR: data, HOST_KEY: 'dj-test-key',
-      ADVERT_DIR: join(data, 'adverts'),
-    },
-    stdio: 'ignore',
-  });
-  child.unref();
-  const base = `http://127.0.0.1:${port}`;
-  try {
-    // One poll for every spawner — see `waitForApp()`. Ten seconds was not
-    // enough under gig-build, and it waited them out on a server already dead.
-    const up = await waitForApp(child, base);
-    assert.ok(up, 'the server never came up');
-    await run(base);
-  } finally {
-    /*
-     * GONE, THEN DELETED — `stopped()` is `test/helpers/live-server.mjs`'s.
-     * `kill()` sends a signal and waits for nothing, so deleting the data
-     * directory on the next line races a server still flushing `state.json`
-     * into it: ENOTEMPTY out of this `finally`, every assertion already
-     * passed, naming a feature that works.
-     */
-    await stopped(child, 'SIGKILL');
-    rmSync(data, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
-  }
-}
+/*
+ * ONE SPAWN FOR EVERY SPAWNER — see `bootApp()` in `test/helpers/live-server.mjs`.
+ * This file carried its own copy, which took a port on trust and ran against
+ * the shipped catalogue.
+ */
+const withApp = (run) => withLiveServer((base) => run(base), { hostKey: 'dj-test-key' });
 
 const post = (base, path, body, headers = {}) => fetch(base + path, {
   method: 'POST',

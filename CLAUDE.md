@@ -4684,13 +4684,11 @@ account is in [`docs/checks.md`](docs/checks.md):**
   hand-copies kept it** — three of four full runs failed on 20 September, a
   different test each time. **A private `withApp()` may not re-roll the wait**:
   `rmSync` also takes `maxRetries`, which is the belt and braces, never the fix.
-- **EVERY GUARD AND TEST THAT SPAWNS THE APP SHOULD GO THROUGH THE HELPERS —
-  `scripts/helpers/live-app.mjs`, `test/helpers/live-server.mjs`. TWENTY DO
-  NOT**, and that is a job rather than a claim: each borrows `freePort` and
-  then re-rolls the spawn. A guessed port fails to bind SILENTLY, so every
-  measurement is then about somebody else's process; a fixed one made the suite
-  flaky. `unref()` is why four guards could exit at all. **`live-server.mjs`
-  seeds the accounts book BEFORE the spawn** — `Accounts` reads it once.
+- **EVERY SPAWN OF THE APP IS `bootApp()` in `test/helpers/live-server.mjs`**
+  — twenty-two private copies each trusted whatever answered on the port, so a
+  server that took it in the gap was measured in place of their own. **It waits
+  for a `/health` naming ITS child's `pid`**; `boot-app.test.js` plants an
+  impostor. Never guess a port. **Seed the accounts book BEFORE the spawn.**
 - **A CONTROL THAT REPORTS SUCCESS IT DID NOT HAVE is this repo's commonest
   fault, and `console-controls.mjs` presses one.** Five at once, all green under
   every other guard — including a rename that DELETED the night. **It makes its

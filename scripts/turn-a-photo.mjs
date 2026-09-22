@@ -8,11 +8,10 @@
  *
  *   node scripts/turn-a-photo.mjs
  */
-import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync, readFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { freePort, stopped } from '../test/helpers/live-server.mjs';
+import { startApp } from './helpers/live-app.mjs';
 import { playwright } from './helpers/playwright.mjs';
 
 const { chromium } = playwright();
@@ -24,18 +23,25 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 let fails = 0;
 const check = (n, ok, note = '') => { if (!ok) fails += 1; console.log(`${ok ? '  ok  ' : '  FAIL'} ${n}${note ? `\n        ${note}` : ''}`); };
 
-const data = mkdtempSync(join(tmpdir(), 'turn-'));
 const repo = mkdtempSync(join(tmpdir(), 'turn-gh-'));
-const port = await freePort();
-const env = { ...process.env, PORT: String(port), HOST_KEY: 'not-used', DATA_DIR: data, GH_STUB_DIR: repo, PHOTO_REPO: 'someone/photos', PHOTO_TOKEN: 'stub' };
-const base = `http://127.0.0.1:${port}`;
-let server = spawn(process.execPath, ['--import', STUB, 'server.js'], { cwd: ROOT, env, stdio: 'ignore' });
-server.unref();
-const up = async () => { for (let i = 0; i < 80; i += 1) { try { await fetch(base); return; } catch { await wait(150); } } throw new Error('never came up'); };
+/*
+ * ONE SPAWN FOR EVERY SPAWNER — `startApp()` in `scripts/helpers/live-app.mjs`:
+ * it waits for its OWN server by pid, runs it on a COPY of the catalogue, and
+ * its restart waits for the old server to be gone before binding the port
+ * again. This script used to take a port on trust and restart with a kill and
+ * a sleep.
+ */
+const app = await startApp({
+  key: 'not-used',
+  nodeArgs: ['--import', STUB],
+  env: {
+    GH_STUB_DIR: repo, PHOTO_REPO: 'someone/photos', PHOTO_TOKEN: 'stub',
+  },
+});
+const { base, data } = app;
 const post = (route, body) => fetch(base + route, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 let browser;
 try {
-  await up();
   const made = await (await post('/api/signup', { email: 'mark@example.com', password: PASSWORD, name: 'Mark' })).json();
   const token = new URL(made.devLink).searchParams.get('t');
   await post('/api/reset/complete', { token, password: PASSWORD });
@@ -44,9 +50,7 @@ try {
   acc.accounts[0].role = 'owner';
   acc.accounts.push({ ...acc.accounts[0], id: 'qm-mark', email: 'mark+qm@example.com', name: "Mark's Quizporium", role: 'quizmaster', ownedBy: acc.accounts[0].id, tier: 'gold', comped: true, status: 'active' });
   writeFileSync(file, JSON.stringify(acc));
-  server.kill(); await wait(300);
-  server = spawn(process.execPath, ['--import', STUB, 'server.js'], { cwd: ROOT, env, stdio: 'ignore' }); server.unref();
-  await up();
+  if (!await app.restart({ hard: false })) throw new Error('the server did not come back');
 
   const arc = join(data, 'rooms', 'qm-mark', 'archive'); mkdirSync(arc, { recursive: true });
   writeFileSync(join(arc, 'n1.json'), JSON.stringify({ id: 'n1', kind: 'quiz', quizTitle: '80s Anthems', packId: 'eighties', archivedAt: Date.parse(`${NIGHT}T21:30:00Z`), venue: 'The Station Tap, Wokingham', leaderboard: [{ name: 'Beer Pressure', score: 2000, position: 1, faceKey: '' }] }));
@@ -169,14 +173,13 @@ try {
 } finally {
   await browser?.close().catch(() => {});
   /*
-   * GONE, THEN DELETED — `stopped()` is `test/helpers/live-server.mjs`'s.
+   * GONE, THEN DELETED — `stopAndWait()` is `startApp()`'s.
    * `kill()` sends a signal and waits for nothing, so deleting the data
    * directory on the next line races a server still flushing `state.json`
    * into it: ENOTEMPTY out of this `finally`, every assertion already
    * passed, naming a feature that works.
    */
-  await stopped(server);
-  rmSync(data, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+  await app.stopAndWait();
   rmSync(repo, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
 }
 console.log(fails ? `\n${fails} FAILED` : '\nA filed photograph can be turned from its tile.');

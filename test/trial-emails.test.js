@@ -16,13 +16,12 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { freePort, stopped } from './helpers/live-server.mjs';
+import { bootApp, safeEnv, stopped } from './helpers/live-server.mjs';
 import { Accounts } from '../src/accounts.js';
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -44,29 +43,28 @@ async function withApp(seed, run) {
   seed(book);
   book.save();
 
-  const port = await freePort();
-  const child = spawn(process.execPath, ['--import', STUB, 'server.js'], {
-    cwd: ROOT,
+  /*
+   * ONE SPAWN FOR EVERY SPAWNER — `bootApp()` in `test/helpers/live-server.mjs`.
+   * This used to take a port on trust, and its restart KILLED and then SLEPT
+   * 300ms before binding the same port again — and never waited for the second
+   * server at all, so the data directory could be deleted from under it.
+   * `PUBLIC_URL` follows the port, because the links in the emails are checked.
+   */
+  const common = safeEnv(data, {
+    hostKey: 'trial-mail-key',
     env: {
-      ...process.env,
-      PORT: String(port),
-      DATA_DIR: data,
-      HOST_KEY: 'trial-mail-key',
       MAIL_STUB_FILE: outbox,
       // A provider and a from-address, or `emailConfigured()` is false and the
       // sweep declines to do anything at all — which is itself a case below.
       BREVO_API_KEY: 'stub-key',
       EMAIL_FROM: 'Quizporium <no-reply@example.com>',
-      PUBLIC_URL: `http://127.0.0.1:${port}`,
     },
-    stdio: 'ignore',
   });
-  child.unref();
-  const base = `http://127.0.0.1:${port}`;
-  for (let i = 0; i < 120; i += 1) {
-    if (child.exitCode !== null) break;
-    try { await fetch(base); break; } catch { await wait(100); }
-  }
+  const env = (port) => ({ ...common, PUBLIC_URL: `http://127.0.0.1:${port}` });
+  const nodeArgs = ['--import', STUB];
+  let app = await bootApp({ env, nodeArgs });
+  assert.ok(app, 'the server never came up');
+  const { base, port } = app;
   // The sweep is fired at boot and nothing awaits it, so give the outbound calls
   // a moment to land in the fixture.
   await wait(700);
@@ -77,35 +75,15 @@ async function withApp(seed, run) {
 
   try {
     await run({ base, sent, now, restart: async () => {
-      child.kill('SIGKILL');
-      await wait(300);
-      const again = spawn(process.execPath, ['--import', STUB, 'server.js'], {
-        cwd: ROOT,
-        env: {
-          ...process.env,
-          PORT: String(port), DATA_DIR: data, HOST_KEY: 'trial-mail-key',
-          MAIL_STUB_FILE: outbox, BREVO_API_KEY: 'stub-key',
-          EMAIL_FROM: 'Quizporium <no-reply@example.com>',
-          PUBLIC_URL: base,
-        },
-        stdio: 'ignore',
-      });
-      again.unref();
-      for (let i = 0; i < 120; i += 1) {
-        try { await fetch(base); break; } catch { await wait(100); }
-      }
+      // GONE, then the SAME port and the SAME environment again.
+      await stopped(app.child, 'SIGKILL');
+      app = await bootApp({ env, nodeArgs, port });
+      assert.ok(app, `the server did not come back on :${port}`);
       await wait(700);
-      return () => again.kill('SIGKILL');
+      return () => app.child.kill('SIGKILL');
     } });
   } finally {
-    /*
-     * GONE, THEN DELETED — `stopped()` is `test/helpers/live-server.mjs`'s.
-     * `kill()` sends a signal and waits for nothing, so deleting the data
-     * directory on the next line races a server still flushing `state.json`
-     * into it: ENOTEMPTY out of this `finally`, every assertion already
-     * passed, naming a feature that works.
-     */
-    await stopped(child, 'SIGKILL');
+    await stopped(app && app.child, 'SIGKILL');
     rmSync(data, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 }
@@ -205,21 +183,16 @@ test('and with no mail provider the sweep does nothing at all, quietly', async (
   const book = new Accounts(file);
   quizmaster(book, 'nobody@example.com', { trialEndsAt: inDays(1) });
   book.save();
-  const port = await freePort();
-  const child = spawn(process.execPath, ['--import', STUB, 'server.js'], {
-    cwd: ROOT,
-    env: {
-      ...process.env,
-      PORT: String(port), DATA_DIR: data, HOST_KEY: 'k', MAIL_STUB_FILE: outbox,
-      BREVO_API_KEY: '', RESEND_API_KEY: '', EMAIL_FROM: '', PUBLIC_URL: '',
-    },
-    stdio: 'ignore',
+  // ONE SPAWN FOR EVERY SPAWNER — `bootApp()`; see `withApp()` above.
+  const app = await bootApp({
+    env: safeEnv(data, {
+      hostKey: 'k',
+      env: { MAIL_STUB_FILE: outbox, BREVO_API_KEY: '', RESEND_API_KEY: '', EMAIL_FROM: '', PUBLIC_URL: '' },
+    }),
+    nodeArgs: ['--import', STUB],
   });
-  child.unref();
-  const base = `http://127.0.0.1:${port}`;
-  for (let i = 0; i < 120; i += 1) {
-    try { await fetch(base); break; } catch { await wait(100); }
-  }
+  assert.ok(app, 'the server never came up');
+  const { child } = app;
   await wait(700);
   try {
     assert.equal(readFileSync(outbox, 'utf8'), '', 'nothing sent');

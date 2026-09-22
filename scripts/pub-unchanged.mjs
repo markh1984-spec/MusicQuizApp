@@ -46,12 +46,12 @@
  * It makes a temporary git worktree and removes it afterwards.
  */
 
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync, mkdtempSync, rmSync } from 'node:fs';
 
-// GONE, NOT MERELY SIGNALLED — one definition, the same one nine other
-// scripts in this folder already borrow `freePort` from.
-import { stopped } from '../test/helpers/live-server.mjs';
+// GONE, NOT MERELY SIGNALLED, and started on a port that is provably its own —
+// one definition of each, the leaf every other spawner borrows from.
+import { bootApp, stopped } from '../test/helpers/live-server.mjs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -355,41 +355,38 @@ function short(v) {
 
 
 /** One running app: its own port, its own data dir, torn down by `stop()`. */
-async function startApp(root, port) {
+async function startApp(root, { legacyOk = false } = {}) {
   const data = mkdtempSync(join(tmpdir(), 'pub-wire-'));
-  const child = spawn(process.execPath, ['server.js'], {
+  /*
+   * ONE SPAWN FOR EVERY SPAWNER — `bootApp()` in `test/helpers/live-server.mjs`.
+   * The port was `4870 + (process.pid % 40)`: GUESSED, from the pid, which this
+   * repo forbids by name — and the two apps took it and the next one up, so a
+   * second copy of this script, or anything else near 4870, answered in their
+   * place with nothing to say so. A port from the OS now, and it waits for ITS
+   * OWN server. **`legacyOk` is for the baseline alone**: an app older than the
+   * `pid` on `/health` cannot say who it is, and the working tree always can.
+   *
+   * **No catalogue copy, deliberately**: each app reads its OWN tree's
+   * `quizzes/`, so a pack changed by the diff is part of what is compared, and
+   * nothing here writes a pack.
+   */
+  const booted = await bootApp({
     cwd: root,
+    legacyOk,
     env: {
       ...process.env,
-      PORT: String(port),
       DATA_DIR: data,
       // Never let a spawned app default to the repo's own adverts folder —
       // `offers.test.js` learned that by writing fixtures into it once.
       ADVERT_DIR: join(data, 'adverts'),
       HOST_KEY: KEY,
     },
-    stdio: 'ignore',
   });
-  const base = `http://127.0.0.1:${port}`;
-  /*
-   * AND IT HAS TO SAY SO WHEN THE APP WILL NOT START.
-   *
-   * The first version just looped and then made requests, so a tree whose
-   * `server.js` throws on import — a missing import, a bad `session.js`, a
-   * syntax error in anything it pulls in — came out as a wall of
-   * `ECONNREFUSED` from whichever fetch happened first. That is a guard
-   * failing for the right reason and reporting the wrong one, which is most of
-   * the way to being ignored.
-   */
-  let up = false;
-  for (let i = 0; i < 120 && !up; i += 1) {
-    try { await fetch(base); up = true; } catch { await wait(100); }
-  }
-  if (!up) {
-    await stopped(child, 'SIGKILL');
+  if (!booted) {
     rmSync(data, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
     throw new Error(`the app in ${root} never started — it cannot serve a pub night at all`);
   }
+  const { child, base } = booted;
   return {
     base,
     /*
@@ -512,7 +509,6 @@ async function compareOnTheWire({ here, work, ref, oldFaceKey, newFaceKey }) {
   const packId = readdirSync(dir).filter((f) => f.endsWith('.json')).sort()[0].replace(/\.json$/, '');
   console.log(`\nOn the wire: launching "${packId}" on ${ref} and on this working tree`);
 
-  const port = 4870 + (process.pid % 40);
   const out = { checks: 0, diffs: [] };
   /*
    * BOTH STARTS INSIDE THE `try`, or the first one leaks when the second
@@ -524,8 +520,8 @@ async function compareOnTheWire({ here, work, ref, oldFaceKey, newFaceKey }) {
   let older = null;
   let newer = null;
   try {
-    older = await startApp(work, port);
-    newer = await startApp(here, port + 1);
+    older = await startApp(work, { legacyOk: true });
+    newer = await startApp(here);
     const a = await driveNight(older, packId, oldFaceKey);
     const b = await driveNight(newer, packId, newFaceKey);
     const n = Math.min(a.seen.length, b.seen.length);

@@ -15,61 +15,27 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { freePort, stopped, waitForApp } from './helpers/live-server.mjs';
+import { withServer as withLiveServer } from './helpers/live-server.mjs';
 
-const ROOT = new URL('..', import.meta.url).pathname;
 const KEY = 'gallery-route-test-key';
 
-async function withServer(run) {
-  const dir = mkdtempSync(join(tmpdir(), 'gallery-route-'));
-  mkdirSync(join(dir), { recursive: true });
-
-  // Two real quizmaster accounts, seeded directly — same file shape
-  // Accounts.save() writes, so this is exactly what a real signup produces,
-  // just without going through the email/reset-link dance to get there.
-  const { Accounts } = await import('../src/accounts.js');
-  const book = new Accounts(join(dir, 'accounts.json'));
-  const a = book.create({ email: 'alice@example.com', password: 'a horse walked into a pub', name: 'Alice', tier: 'gold', status: 'active' });
-  const b = book.create({ email: 'bob@example.com', password: 'a horse walked into a pub', name: 'Bob', tier: 'gold', status: 'active' });
-
-  /*
-   * A PORT FROM THE OPERATING SYSTEM, NEVER FROM THE PID.
-   *
-   * Ten test files spawn a server and every one of them derived a port from
-   * `process.pid` — the SAME pid — so their ranges overlapped and, at CPU
-   * concurrency, two suites could want one port. That is a flake that reads
-   * as a bug in the app: a different test each run, all of them passing
-   * alone. See `test/helpers/live-server.mjs`.
-   */
-  const port = await freePort();
-  const child = spawn(process.execPath, ['server.js'], {
-    cwd: ROOT,
-    env: { ...process.env, PORT: String(port), DATA_DIR: dir, HOST_KEY: KEY },
-    stdio: 'ignore',
-  });
-  const base = `http://127.0.0.1:${port}`;
-  try {
-    // One poll for every spawner — see `waitForApp()`. Ten seconds was not
-    // enough under gig-build, and it waited them out on a server already dead.
-    const up = await waitForApp(child, `${base}/api/state?role=screen`);
-    assert.ok(up, 'the server never came up');
-    await run(base, { a, b });
-  } finally {
-    /*
-     * GONE, THEN DELETED — `stopped()` is `test/helpers/live-server.mjs`'s.
-     * `kill()` sends a signal and waits for nothing, so deleting the data
-     * directory on the next line races a server still flushing `state.json`
-     * into it: ENOTEMPTY out of this `finally`, every assertion already
-     * passed, naming a feature that works.
-     */
-    await stopped(child, 'SIGKILL');
-    rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
-  }
-}
+/*
+ * ONE SPAWN FOR EVERY SPAWNER — `withServer()` in `test/helpers/live-server.mjs`.
+ * This file carried its own copy, which took a port on trust and ran against
+ * the shipped catalogue; `bootApp()` there says what that could measure instead.
+ */
+const { Accounts } = await import('../src/accounts.js');
+const withServer = (run) => withLiveServer((base, seeded) => run(base, seeded), {
+  hostKey: KEY,
+  // Seeded BEFORE the spawn: `Accounts` reads its file once, at boot.
+  seed: (dir) => {
+    const book = new Accounts(join(dir, 'accounts.json'));
+    const a = book.create({ email: 'alice@example.com', password: 'a horse walked into a pub', name: 'Alice', tier: 'gold', status: 'active' });
+    const b = book.create({ email: 'bob@example.com', password: 'a horse walked into a pub', name: 'Bob', tier: 'gold', status: 'active' });
+    return { a, b };
+  },
+});
 
 async function signIn(base, email, password) {
   const res = await fetch(`${base}/api/sign-in`, {

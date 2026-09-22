@@ -27,54 +27,25 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 
-import { freePort, stopped, waitForApp } from './helpers/live-server.mjs';
+import { withServer as withLiveServer } from './helpers/live-server.mjs';
 
-const ROOT = new URL('..', import.meta.url).pathname;
 const KEY = 'own-photos-test-key';
 
 /** The smallest thing `sniffType()` accepts as a JPEG. */
 const JPEG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(64, 1)]);
 
-async function withServer(run) {
-  const dir = mkdtempSync(join(tmpdir(), 'own-photos-'));
-  // ASKED FOR, never guessed — a guessed port binds silently onto somebody
-  // else's process, and this file shared one across all four tests.
-  const port = await freePort();
-  const child = spawn(process.execPath, ['server.js'], {
-    cwd: ROOT,
-    // PHOTO_REPO deliberately absent: the branch a fresh deployment hits, and
-    // the only one reachable without a token.
-    env: {
-      ...process.env, PORT: String(port), DATA_DIR: dir, HOST_KEY: KEY,
-      PHOTO_REPO: '', PHOTO_TOKEN: '', GITHUB_TOKEN: '', GITHUB_REPO: '',
-    },
-    stdio: 'ignore',
-  });
-  const base = `http://127.0.0.1:${port}`;
-  try {
-    // One poll for every spawner — see `waitForApp()`. Ten seconds was not
-    // enough under gig-build, and it waited them out on a server already dead.
-    const up = await waitForApp(child, `${base}/api/state?role=screen`);
-    assert.ok(up, 'the server never came up');
-    await run(base);
-  } finally {
-    /*
-     * WAITED FOR, THEN DELETED. `kill()` sends a signal and waits for nothing,
-     * so deleting the data directory on the next line raced a server still
-     * flushing `state.json` into it — ENOTEMPTY out of this `finally`, with all
-     * four assertions already passed, naming a route that works. See
-     * `test/helpers/live-server.mjs` for the full account; this file was the
-     * third hand-copy of the same wait, and there were seventeen.
-     */
-    await stopped(child, 'SIGKILL');
-    rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
-  }
-}
+/*
+ * ONE SPAWN FOR EVERY SPAWNER — `withServer()` in `test/helpers/live-server.mjs`.
+ * This file carried its own copy, which took a port on trust and ran against
+ * the shipped catalogue; `bootApp()` there says what that could measure instead.
+ */
+const withServer = (run) => withLiveServer((base) => run(base), {
+  hostKey: KEY,
+  // No photo store at all: this file is about a quizmaster's own uploads
+  // being refused cleanly when there is nowhere to put them.
+  env: { PHOTO_REPO: '', PHOTO_TOKEN: '', GITHUB_TOKEN: '', GITHUB_REPO: '' },
+});
 
 const post = (base, night, body, type = 'image/jpeg') => fetch(
   `${base}/api/past-photo/${encodeURIComponent(night)}`,

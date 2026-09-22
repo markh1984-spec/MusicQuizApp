@@ -26,13 +26,12 @@
  * key set (to the stub), so it never touches Google.
  */
 
-import { spawn } from 'node:child_process';
 import http from 'node:http';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { freePort } from '../test/helpers/live-server.mjs';
+import { startApp } from './helpers/live-app.mjs';
 import { playwright } from './helpers/playwright.mjs';
 
 const { chromium } = playwright();
@@ -69,24 +68,28 @@ const vision = http.createServer((req, res) => {
     }));
   });
 });
-const visionPort = await freePort();
-await new Promise((r) => vision.listen(visionPort, '127.0.0.1', r));
+// PORT 0, AND READ BACK WHAT WAS BOUND — a port asked for and then bound is a
+// race; one bound by asking for any port is not.
+await new Promise((r) => vision.listen(0, '127.0.0.1', r));
+const visionPort = vision.address().port;
 
-const data = mkdtempSync(join(tmpdir(), 'rude-'));
 const repo = mkdtempSync(join(tmpdir(), 'rude-gh-'));
-const port = await freePort();
-const env = {
-  ...process.env,
-  PORT: String(port), HOST_KEY: 'not-used-here', DATA_DIR: data,
-  GH_STUB_DIR: repo, PHOTO_REPO: 'someone/photos', PHOTO_TOKEN: 'stub',
-  GOOGLE_API_KEY: 'stub-key', VISION_URL: `http://127.0.0.1:${visionPort}`,
-};
-const base = `http://127.0.0.1:${port}`;
-let server = spawn(process.execPath, ['--import', STUB, 'server.js'], { cwd: ROOT, env, stdio: 'ignore' });
-const up = async () => {
-  for (let i = 0; i < 60; i += 1) { try { await fetch(base); return; } catch { await wait(200); } }
-  throw new Error('the server never came up');
-};
+/*
+ * ONE SPAWN FOR EVERY SPAWNER — `startApp()` in `scripts/helpers/live-app.mjs`:
+ * it waits for its OWN server by pid, runs it on a COPY of the catalogue, and
+ * its restart waits for the old server to be gone before binding the port
+ * again. This script used to take a port on trust and restart with a kill and
+ * a sleep.
+ */
+const app = await startApp({
+  key: 'not-used-here',
+  nodeArgs: ['--import', STUB],
+  env: {
+    GH_STUB_DIR: repo, PHOTO_REPO: 'someone/photos', PHOTO_TOKEN: 'stub',
+    GOOGLE_API_KEY: 'stub-key', VISION_URL: `http://127.0.0.1:${visionPort}`,
+  },
+});
+const { base, data } = app;
 const post = (path, body, cookie = '', extra = {}) => fetch(`${base}${path}`, {
   method: 'POST', headers: { 'Content-Type': 'application/json', ...(cookie ? { Cookie: cookie } : {}), ...extra }, body: JSON.stringify(body),
 });
@@ -95,7 +98,6 @@ const get = (path, cookie = '') => fetch(`${base}${path}`, { headers: cookie ? {
 const browser = await chromium.launch();
 console.log('\nTHE RUDE-PHOTO CHECK — does a flag get written, and does the host see it?\n');
 try {
-  await up();
 
   // ---- one plain quizmaster
   const made = await (await post('/api/signup', { email: 'qm@example.com', password: PASSWORD, name: 'Quizzy' })).json();
@@ -105,9 +107,7 @@ try {
   const acc = JSON.parse(readFileSync(file, 'utf8'));
   acc.accounts[0].role = 'quizmaster'; acc.accounts[0].comped = true; acc.accounts[0].status = 'active';
   writeFileSync(file, JSON.stringify(acc));
-  server.kill(); await wait(300);
-  server = spawn(process.execPath, ['--import', STUB, 'server.js'], { cwd: ROOT, env, stdio: 'ignore' });
-  await up();
+  if (!await app.restart({ hard: false })) throw new Error('the server did not come back');
   const signIn = await post('/api/sign-in', { email: 'qm@example.com', password: PASSWORD });
   const cookie = (signIn.headers.getSetCookie() || []).map((c) => c.split(';')[0]).join('; ');
   const me = await (await get('/api/me', cookie)).json();
@@ -189,9 +189,7 @@ try {
   // above was written straight to the repo behind its back — so restart, and
   // the console reads the seeded flags fresh. A restart is what a deploy is
   // anyway; the archive and repo survive it.
-  server.kill(); await wait(400);
-  server = spawn(process.execPath, ['--import', STUB, 'server.js'], { cwd: ROOT, env, stdio: 'ignore' });
-  await up();
+  if (!await app.restart({ hard: false })) throw new Error('the server did not come back');
 
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const url = new URL(base);
@@ -233,7 +231,8 @@ try {
   console.log('  FAIL threw:', err.stack || err.message);
 } finally {
   await browser.close();
-  server.kill();
+  await app.stopAndWait();
+  rmSync(repo, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   vision.close();
 }
 

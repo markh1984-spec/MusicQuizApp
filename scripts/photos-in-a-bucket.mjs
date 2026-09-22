@@ -26,12 +26,11 @@
  *     which is the entire reason for the move.
  */
 
-import { spawn } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { freePort } from '../test/helpers/live-server.mjs';
+import { startApp } from './helpers/live-app.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const STUB = join(ROOT, 'test', 'helpers', 'object-store-stub.mjs');
@@ -42,36 +41,34 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 let failures = 0;
 const check = (name, ok, detail = '') => { if (!ok) failures += 1; console.log(`${ok ? '  ok  ' : '  FAIL'} ${name}${!ok && detail ? `  — ${detail}` : ''}`); };
 
-const data = mkdtempSync(join(tmpdir(), 'bucket-'));
 const shelf = mkdtempSync(join(tmpdir(), 'bucket-obj-'));
-const port = await freePort();
-const env = {
-  ...process.env,
-  PORT: String(port),
-  HOST_KEY: 'x',
-  DATA_DIR: data,
-  OBJECT_STUB_DIR: shelf,
-  R2_ENDPOINT: 'https://acct.r2.cloudflarestorage.com',
-  R2_BUCKET: 'photos',
-  R2_ACCESS_KEY_ID: 'key',
-  R2_SECRET_ACCESS_KEY: 'secret',
-};
-// THE REPOSITORY IS DELIBERATELY NOT SET UP. If any of this passes because
-// something fell through to GitHub, it has not been tested at all.
-delete env.PHOTO_REPO;
-delete env.PHOTO_TOKEN;
-delete env.GITHUB_TOKEN;
-delete env.GITHUB_REPO;
-
-const base = `http://127.0.0.1:${port}`;
-let server = spawn(process.execPath, ['--import', STUB, 'server.js'], { cwd: ROOT, env, stdio: 'ignore' });
-const up = async () => { for (let i = 0; i < 60; i += 1) { try { await fetch(base); return; } catch { await wait(200); } } throw new Error('no up'); };
+/*
+ * ONE SPAWN FOR EVERY SPAWNER — `startApp()` in `scripts/helpers/live-app.mjs`:
+ * it waits for its OWN server by pid, runs it on a COPY of the catalogue, and
+ * its restart waits for the old server to be gone before binding the port
+ * again. This script used to take a port on trust and restart with a kill and
+ * a sleep.
+ */
+const app = await startApp({
+  key: 'x',
+  nodeArgs: ['--import', STUB],
+  env: {
+    OBJECT_STUB_DIR: shelf,
+    R2_ENDPOINT: 'https://acct.r2.cloudflarestorage.com',
+    R2_BUCKET: 'photos',
+    R2_ACCESS_KEY_ID: 'key',
+    R2_SECRET_ACCESS_KEY: 'secret',
+    // UNSET, so the store is the only place a photograph can go: empty is how
+    // this app reads a variable nobody set.
+    PHOTO_REPO: '', PHOTO_TOKEN: '', GITHUB_TOKEN: '', GITHUB_REPO: '',
+  },
+});
+const { base, data } = app;
 const post = (p, b, c = '') => fetch(`${base}${p}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(c ? { Cookie: c } : {}) }, body: JSON.stringify(b) });
 const get = (p, c = '') => fetch(`${base}${p}`, { headers: c ? { Cookie: c } : {} });
 
 console.log('\nTHE PHOTOGRAPHS IN AN OBJECT STORE — and does the bin mean it?\n');
 try {
-  await up();
   const made = await (await post('/api/signup', { email: 'qm@example.com', password: PW, name: 'Mark' })).json();
   const t = new URL(made.devLink).searchParams.get('t');
   await post('/api/reset/complete', { token: t, password: PW });
@@ -79,9 +76,7 @@ try {
   const acc = JSON.parse(readFileSync(file, 'utf8'));
   acc.accounts[0].role = 'quizmaster'; acc.accounts[0].comped = true; acc.accounts[0].status = 'active';
   writeFileSync(file, JSON.stringify(acc));
-  server.kill(); await wait(300);
-  server = spawn(process.execPath, ['--import', STUB, 'server.js'], { cwd: ROOT, env, stdio: 'ignore' });
-  await up();
+  if (!await app.restart({ hard: false })) throw new Error('the server did not come back');
   const signIn = await post('/api/sign-in', { email: 'qm@example.com', password: PW });
   const cookie = (signIn.headers.getSetCookie() || []).map((c) => c.split(';')[0]).join('; ');
   const me = await (await get('/api/me', cookie)).json();
@@ -168,7 +163,8 @@ try {
   failures += 1;
   console.log('  FAIL threw:', err.stack || err.message);
 } finally {
-  server.kill();
+  await app.stopAndWait();
+  rmSync(shelf, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
 }
 console.log(failures ? `\n${failures} FAILED\n` : '\nALL GOOD — the gallery runs off the object store, and a binned photo is really gone.\n');
 process.exit(failures ? 1 : 0);
