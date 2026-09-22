@@ -796,12 +796,73 @@ export class Session {
        * Compared rather than written on every push, or a game left sitting on
        * the final scores would rewrite the file for nothing.
        */
+      /*
+       * AND A PART PLAYED AFTER THE NIGHT WAS FILED IS FOLDED IN, WHICH IS
+       * WHAT MAKES A MIS-PRESSED `Finish` RECOVERABLE.
+       *
+       * Bingo's `Finish` is the stated escape hatch and it files the evening
+       * there and then. The control view still offers *Continue to the quiz*
+       * afterwards — correctly, because the host who pressed Finish by mistake
+       * will reach for it — but the quiz that followed was played in front of
+       * the room and recorded NOWHERE: not in Past gigs, not in the league,
+       * not in the headcounts, not in the report. The confirm promised the
+       * later part would not be played and then the app played it.
+       *
+       * So the later part UPDATES the filed night rather than being lost. One
+       * row for one evening, which is the rule; `kind` moves with the board,
+       * so a night finished on the bingo and then continued into a quiz is
+       * filed as the quiz it ended as, with both named in `parts`.
+       *
+       * Keyed on the RESULTS rather than a flag: compared and skipped when
+       * nothing moved, so a night sitting on its final scores does not rewrite
+       * the file on every push — the same discipline the voucher check above
+       * already follows.
+       */
+      const ended = this.launcher.isOver(state);
+      /*
+       * THE ENDING PART'S OWN RESULTS, then `scoresOfTheNight()` over the top.
+       *
+       * Both halves are needed and neither is enough. The ending part's
+       * `results()` is what carries a quiz's board and its `kind` — and
+       * `scoresOfTheNight()` deliberately returns `{}` when the part that
+       * ended IS the quiz, because there is then nothing to substitute. Patch
+       * with that alone and the record keeps the BINGO's leaderboard and
+       * `kind: 'bingo'`, which `league.js` drops on sight: the quiz would be
+       * filed and then ignored.
+       *
+       * **`kind` MOVES WITH THE BOARD** — the rule the running-order archive
+       * already follows, applied to the recovery path.
+       */
+      const endedResults = ended ? this.engine.results() : null;
+      /*
+       * AND A KEY WORTH NOTHING IS LEFT OUT RATHER THAN WRITTEN AS UNDEFINED.
+       *
+       * `updateArchivedNight()` spreads the patch over the record, so a key
+       * present-and-undefined DELETES a good value. The quiz's `results()`
+       * carries no `kind` where bingo's does — so naming the field blind
+       * replaced `kind: 'bingo'` with nothing at all, and a night with no kind
+       * is a night `league.js` and the report both read as neither game.
+       * `this.kind` is the session's own answer and is always set.
+       */
+      const onlyReal = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
+      const fuller = (ended && this.runningOrder)
+        ? onlyReal({
+          parts: this.describeOrderParts(this.runningOrder),
+          kind: endedResults.kind || this.kind,
+          leaderboard: endedResults.leaderboard,
+          questions: endedResults.questions,
+          ...this.scoresOfTheNight(endedResults),
+        })
+        : null;
+      const fullerKey = fuller ? JSON.stringify(fuller) : '';
       const now = JSON.stringify(state.vouchers || {});
-      if (now !== this.filedVouchers) {
+      if (now !== this.filedVouchers || (fullerKey && fullerKey !== this.filedParts)) {
         this.filedVouchers = now;
+        if (fullerKey) this.filedParts = fullerKey;
         try {
           const record = updateArchivedNight(this.archiveDir, state.archivedAs, {
             vouchers: this.engine.results().vouchers,
+            ...(fuller || {}),
           });
           // The permanent record is the whole point, so it goes back up too.
           if (record) {

@@ -41,12 +41,31 @@ export function phonesAre(s) {
   if (!s) return '';
 
   /*
-   * WHAT IS OVER THE TOP WINS, on the phone exactly as it does on the
-   * projector. A scoreboard or an advert is a flag rather than a phase, so the
-   * quiz underneath carries on — but it is not what anybody is looking at.
+   * THE PROJECTOR'S FLAGS ARE NOT ON THE PHONES, AND THIS USED TO SAY THEY
+   * WERE.
+   *
+   * It read *"what is over the top wins, on the phone exactly as it does on
+   * the projector"* and returned "The scores" / "The advert" for the
+   * scoreboard and advert flags. Measured against a real phone's payload:
+   * `playerView()` carries no `scoreboard`, no `leaderboard`, no `advert` and
+   * no `photoSlide` — none of the three ever reaches a phone. They are big
+   * screen features, which is what the control view's own button says: *"the
+   * scores on the big screen, on demand"*.
+   *
+   * So with the scoreboard up the host read **"On their phones: The scores"**,
+   * said "have a look at your phones for the standings" — and sixty people
+   * were looking at the answer to the last question. That is the exact fault
+   * this function exists to prevent, written into the function itself.
+   *
+   * A comment claiming the opposite is where the next bug hides, and this one
+   * WAS the bug. The phones are on the phase underneath, so the phase is what
+   * gets reported; `whereLabel()` an inch above already says where the GAME
+   * is, and the projector is in the room.
+   *
+   * `test/phones-are.test.js` walks every phase AND every flag against what
+   * `playerView()` actually sends, so a field reaching the phone later makes
+   * this true again rather than leaving it stale.
    */
-  if (s.advert && s.advert.showing) return 'The advert';
-  if (s.scoreboard && s.scoreboard.on) return 'The scores';
 
   /*
    * A DJ SET, WHERE THE PHONE'S JOB DOES NOT CHANGE ALL NIGHT — there being

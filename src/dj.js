@@ -403,7 +403,22 @@ export class DjSet {
     const idle = Object.values(this.state.players)
       .filter((p) => !p.photos && !this.state.requests.some((r) => r.playerId === p.id));
     for (const p of idle) this.removePlayer(p.id);
-    return idle.length;
+    /*
+     * THE SAME SHAPE THE OTHER TWO ENGINES RETURN — `{ ok, removed }`, not a
+     * bare number.
+     *
+     * `removeIdle` is ONE dispatch for every engine (`session.js`), and this
+     * was the only one answering differently: a DJ set replied `{"ok":1}`
+     * where a quiz and a bingo reply `{"ok":{"ok":true,"removed":0}}`. Nothing
+     * broke, because the one caller ignores the reply — which is exactly how
+     * this kind of drift survives until somebody reads it.
+     *
+     * It is the shape of the original fault, too: `removeIdle` is the method
+     * that once existed on one engine and not the other and made every phone
+     * take a 500. `engine-contract.test.js` asserts a method EXISTS and cannot
+     * see what it returns.
+     */
+    return { ok: true, removed: idle.length };
   }
 
   /** A fresh set: the room stays, what they asked for goes. */

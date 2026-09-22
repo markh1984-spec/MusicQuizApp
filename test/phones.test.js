@@ -38,14 +38,30 @@ test('a quiz phase and the same-named bingo phase do not say the same thing', ()
   assert.notEqual(phonesAre({ phase: 'lobby' }), phonesAre({ game: 'bingo', phase: 'lobby' }));
 });
 
-test('WHAT IS OVER THE TOP WINS, exactly as it does on the projector', () => {
+test('A PROJECTOR FLAG IS NOT ON THE PHONES, so the prompt keeps describing the phase', () => {
   /*
-   * The scoreboard and an advert are flags rather than phases, so the quiz
-   * underneath carries on — but it is not what anybody is holding. A host told
-   * "Answering" while the scores are up would chase a room that is not there.
+   * REVERSES THIS TEST, which pinned the wrong half of a true sentence.
+   *
+   * It read "what is over the top wins, exactly as it does on the projector"
+   * and required "The scores" while the scoreboard was up. Measured against a
+   * real phone's payload: `playerView()` carries no `scoreboard`, no
+   * `leaderboard`, no `advert` and no `photoSlide` — not one of the three ever
+   * reaches a phone. They are big-screen features, which is what the control
+   * view's own button says: "the scores on the big screen, on demand".
+   *
+   * So the host read "On their phones: The scores", said "have a look at your
+   * phones for the standings", and sixty people were looking at the answer to
+   * the last question — the exact fault `phonesAre()` exists to prevent,
+   * written into the function and pinned here.
+   *
+   * The flag still wins on the PROJECTOR; nothing about `screenView()` moved.
+   * `test/phones-are.test.js` walks every phase against every flag and reads
+   * `playerView()` itself, so the day a flag does reach a phone this becomes
+   * wrong out loud rather than quietly.
    */
-  assert.equal(phonesAre({ phase: 'question', scoreboard: { on: true } }), 'The scores');
-  assert.equal(phonesAre({ phase: 'question', advert: { showing: { packId: 'x' } } }), 'The advert');
+  const plain = phonesAre({ phase: 'question' });
+  assert.equal(phonesAre({ phase: 'question', scoreboard: { on: true } }), plain);
+  assert.equal(phonesAre({ phase: 'question', advert: { showing: { packId: 'x' } } }), plain);
 });
 
 test('the lobby says there is a game, because that is the thing worth saying', () => {

@@ -36,6 +36,15 @@ export async function writeDj(req, res, url, route) {
     const me = whoIs(req, url);
     if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
     const room = roomForHost(req, url);
+  /*
+   * THE ROOM THIS REFUSAL BELONGS TO — *a route that resolves a room sets
+   * `res.flightRoom`, or its refusals file under nobody*. The DJ desk refuses
+   * with a 409 ("No DJ set is running") and a 404, and `Flight.recent()` keeps
+   * a room-less `warn` for no one — so a set that would not take a press wrote
+   * nothing the host could copy off the Help tab, which is the whole mechanism
+   * for *a broken night writes itself down*.
+   */
+  res.flightRoom = room.id;
     const { session } = room;
     const body = await readJson(req);
 

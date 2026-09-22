@@ -2409,6 +2409,39 @@ Settled 22 September 2026, and he was right for a reason he had not seen.
   venue is DERIVED (usual night), never remembered** — without one, Launch
   stands down for want of prizes after every restart.
 
+### THE CONTROL VIEW, FINISHED — the phones' prompt, and a recoverable Finish
+
+- **`phonesAre()` REPORTED THE PROJECTOR'S FLAGS AS IF THEY WERE ON THE
+  PHONES.** It read *"what is over the top wins, on the phone exactly as it
+  does on the projector"* and returned "The scores" / "The advert" — while
+  `playerView()` carries **no** `scoreboard`, `leaderboard`, `advert` or
+  `photoSlide`. So the host read *"On their phones: The scores"*, said *"have a
+  look at your phones for the standings"*, and sixty people were looking at the
+  last answer. **The exact fault the function exists to prevent, written into
+  the function.** A comment claiming the opposite, for the fourth time.
+  **`test/phones-are.test.js` walks every phase AND every flag and reads
+  `playerView()` itself**, so a flag reaching a phone later makes the prompt
+  true again rather than leaving it stale. **REVERSES a pinned test.**
+- **A MIS-PRESSED `Finish` IS RECOVERABLE NOW, AND THE PART AFTER IT IS
+  FILED.** Bingo's `Finish` files the evening on the spot; the control view
+  still offers *Continue* afterwards — correctly, because that is what a host
+  reaches for — but the game that followed was played in front of the room and
+  recorded NOWHERE. **The later part UPDATES the filed night: one row for one
+  evening, and `kind` MOVES WITH THE BOARD** or `league.js` drops a quiz's
+  scores for being filed as bingo. **A key worth nothing is LEFT OUT, never
+  written as `undefined`** — the patch is spread over the record, so naming a
+  field blind deletes a good value; the quiz's `results()` carries no `kind`
+  where bingo's does.
+- **THE ARCHIVE IS WRITTEN TEMP+RENAME LIKE EVERYTHING ELSE.**
+  `updateArchivedNight()` TRUNCATES a filed night and runs every time the bar
+  scans a QR; `listArchive()` wraps each file in its own `try`, so a torn one
+  is not an error anybody sees — it is a night that silently stopped existing.
+- **AND THE DJ DESK SETS `res.flightRoom`** — its 409s and 404s filed under
+  nobody, so a set that would not take a press wrote nothing the host could
+  copy off the Help tab. **`removeIdle` answers `{ok, removed}` on all three
+  engines** — the DJ's bare number was the shape of the original fault, which
+  `engine-contract.test.js` cannot see because it asserts a method EXISTS.
+
 ### THE CONTROL-VIEW SWEEP, 22 SEPTEMBER 2026 — and three that shipped
 
 - **`MOVES` NAMED ENGINE METHODS, NOT ACTIONS, SO SKIP AND ASK AGAIN TOOK A

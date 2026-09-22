@@ -270,7 +270,14 @@ export function archiveResults(dir, results, at = Date.now()) {
   while (fs.existsSync(path.join(dir, name + '.json'))) name = `${base}-${n++}`;
 
   const record = { ...results, archivedAt: at, id: name };
-  fs.writeFileSync(path.join(dir, name + '.json'), JSON.stringify(record, null, 2) + '\n', 'utf8');
+  /*
+   * TEMP+RENAME, like every other whole-file write in here. A night's record
+   * IS the evidence — Past gigs, the league, the headcounts and the landlord's
+   * report all read it — and `listArchive()` wraps each file in its own `try`,
+   * so a half-written one is not an error anybody sees. It is a night that
+   * silently stopped existing.
+   */
+  writeWhole(path.join(dir, name + '.json'), JSON.stringify(record, null, 2) + '\n');
   return record;
 }
 
@@ -303,7 +310,12 @@ export function updateArchivedNight(dir, id, patch) {
   try {
     const record = JSON.parse(fs.readFileSync(file, 'utf8'));
     const updated = { ...record, ...patch };
-    fs.writeFileSync(file, JSON.stringify(updated, null, 2) + '\n', 'utf8');
+    /*
+     * AND THIS ONE MATTERS MORE, because it TRUNCATES a file that already
+     * holds a filed night — and it runs on the ordinary path, every time the
+     * bar scans a winner's QR. A kill in that window leaves nothing.
+     */
+    writeWhole(file, JSON.stringify(updated, null, 2) + '\n');
     return updated;
   } catch {
     return null;

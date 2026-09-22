@@ -314,6 +314,60 @@ test('quiz -> bingo -> quiz: the same team keeps its identity and its score acro
  * list and starts at its own first place, and a part that brought none takes
  * its share of a deal worked out at launch from what each part PAYS.
  */
+/*
+ * A MIS-PRESSED `Finish` IS RECOVERABLE, AND THE GAME THAT FOLLOWS IS FILED.
+ *
+ * Bingo's `Finish` is the stated escape hatch and it files the evening on the
+ * spot. The control view still offers *Continue to the quiz* afterwards —
+ * correctly, because a host who pressed Finish by mistake will reach for it —
+ * but the quiz that followed used to be played in front of the room and
+ * recorded NOWHERE: not Past gigs, not the league, not the headcounts, not the
+ * report. The confirm promised the later part would not be played, and then
+ * the app played it.
+ *
+ * ONE ROW FOR ONE EVENING, and `kind` MOVES WITH THE BOARD — a night finished
+ * on the bingo and then continued into a quiz is filed as the quiz it ended
+ * as, or `league.js` holds a quiz's scores under `kind: 'bingo'` and drops
+ * them on sight.
+ */
+test('a night finished early still files the part played after it', () => {
+  const it = withFileSession();
+  try {
+    it.session.launchRunningOrder([
+      { kind: 'bingo', packId: 'bingo-a', prizes: 1, rewards: ['A pint'] },
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }], rewards: ['A half'] },
+    ], { venue: "The Nag's Head", winners: 1 });
+
+    const { id } = it.session.engine.join({ name: 'Dave' });
+    // The escape hatch, pressed by mistake at part one of two.
+    it.session.engine.finish();
+    const filedFirst = it.session.engine.state.archivedAs;
+    assert.ok(filedFirst, 'Finish did not file the night at all');
+
+    // And the recovery: Continue, then play the quiz to its end.
+    /*
+     * `advanceOrder()` returns the STARTED game, not `{ok:true}` — the `ok`
+     * wrapper belongs to the HTTP route. Assert on what actually moved.
+     */
+    it.session.advanceOrder();
+    assert.equal(it.session.orderPos, 1, 'Continue did not move on to the quiz after Finish');
+    assert.equal(it.session.kind, 'quiz');
+    playQuizSegmentToRoundBoard(it.session, id);
+    for (let i = 0; i < 20 && it.session.engine.state.phase !== 'final'; i += 1) it.session.engine.next();
+
+    assert.equal(it.session.engine.state.archivedAs, filedFirst,
+      'the recovered part filed a SECOND night — one evening is one row');
+    const filed = JSON.parse(readFileSync(join(it.session.archiveDir, `${filedFirst}.json`), 'utf8'));
+    assert.equal(filed.kind, 'quiz',
+      'the night ended as a quiz, so it must be filed as one — the league drops a bingo record');
+    assert.deepEqual((filed.parts || []).map((p) => p.kind), ['bingo', 'quiz'],
+      'both games belong in the record');
+    assert.ok((filed.leaderboard || []).length > 0, 'the quiz that was played has no board in the filed night');
+  } finally {
+    it.done();
+  }
+});
+
 test('a part pays the list IT was given, starting at its own first place', () => {
   const it = withFileSession();
   try {
