@@ -12457,3 +12457,11 @@ body.dj .head .score { color: var(--ink); }
   .lb-pz-box { width: 100%; }
   .lb-pz-in { width: 100%; }
 }
+
+/* THE PHOTO SCREEN, beside the code it puts up — Community > Photos.
+   A link rather than a button: it opens a page, it does not act on the room,
+   which is the same distinction "Open the projector" draws on the control
+   view. The sentence sits with it because what it is FOR (a night with no
+   quiz) is not something the two words can carry on their own. */
+.cams-second { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.cams-second .tiny { flex: 1 1 260px; min-width: 0; }

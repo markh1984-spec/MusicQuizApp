@@ -1380,6 +1380,11 @@ function camerasPanel() {
         <img class="cams-qr" src="/qr.svg?text=${encodeURIComponent(link)}" alt="Scan to open a camera">
         <div class="tiny cams-url">${esc(link.replace(/^https?:\/\//, ''))}</div>
       </div>` : ''}
+      ${!code ? '' : `<div class="cams-second">
+        <a class="minor" href="/wall?g=${encodeURIComponent(code)}&amp;photos=only" target="_blank" rel="noopener">Photo screen</a>
+        <span class="tiny">A whole screen showing this code and the photographs as they land \u2014 for a
+          second display on a night with no quiz on it. Nothing else is on it.</span>
+      </div>`}
     </div>`);
 }
 

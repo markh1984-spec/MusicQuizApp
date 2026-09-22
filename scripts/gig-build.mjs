@@ -81,6 +81,7 @@ export const GUARDS = [
    */
   { name: 'a-night-survives-a-deploy', core: true, why: 'the venue, the night and its frame — after the disk is taken away' },
   { name: 'deploy-with-a-disk',      core: true,  why: 'the night that was running comes back WITH the disk — and the host can still replace it' },
+  { name: 'photo-screen',            core: false, why: 'photos only, no quiz — the second screen on a karaoke night' },
   // ---- the rest of the app: run with --full
   { name: 'community-bay',         core: false, why: 'does the Community bay still fit the frame?' },
   { name: 'pages-scroll',          core: false, why: 'can a person actually scroll each page?' },

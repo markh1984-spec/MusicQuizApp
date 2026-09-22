@@ -44,7 +44,39 @@ import { paintScheme } from './schemes.js';
  * means the house room.
  */
 const roomQuery = roomParam('?');
-const joinQr = `/join-qr.svg${roomQuery}`;
+/*
+ * PHOTOS ONLY — `/wall?photos=only`, and it is a flag on the URL rather than a
+ * field on the payload.
+ *
+ * Asked for against a karaoke night: *"I need a separate DJ QR code where
+ * literally its only function is to gather photos... no quiz explainer on this
+ * one because there is no quiz."* The ordinary wall's second step is **Type in
+ * a name**, because its code is the JOIN code and a joined phone carries a
+ * camera into the rest of the evening. On a night with no game that is three
+ * instructions about photographs ending at a box asking for a team name —
+ * exactly the fault the current wording was written to fix, wearing the other
+ * hat.
+ *
+ * SO THE CODE CHANGES TOO, not just the words. Photos-only shows the SNAP
+ * code: `/snap` is the identity-free camera — no player, no caption, no row on
+ * a board — which is what "its only function is to gather photos" means. The
+ * words follow the destination, which is the rule the join wording already
+ * records.
+ *
+ * A URL FLAG, BECAUSE `wallView()` SAYS NOTHING ABOUT THE GAME AND MUST NOT
+ * START. That silence is what keeps rule 1 structural for a third screen — the
+ * page cannot show a quiz because it is never told about one. Asking the
+ * server "is a quiz running" to pick wording would be the first crack in it.
+ * The host knows whether tonight has a quiz; the host opens the screen. Same
+ * shape as the gallery's `?as=visitor`, which only ever SUBTRACTS and
+ * therefore needs no gate.
+ */
+const PHOTOS_ONLY = new URLSearchParams(location.search).get('photos') === 'only';
+const roomCode = new URLSearchParams(location.search).get('g') || '';
+const snapUrl = `${location.origin}/snap${roomCode ? `?g=${encodeURIComponent(roomCode)}` : ''}`;
+const joinQr = PHOTOS_ONLY
+  ? `/qr.svg?text=${encodeURIComponent(snapUrl)}`
+  : `/join-qr.svg${roomQuery}`;
 
 const cardEl = document.getElementById('card');
 const countPill = document.getElementById('countPill');
@@ -88,12 +120,12 @@ function build() {
         <h1 class="grad-text">Get your photos on the screen</h1>
         <ol class="join-steps">
           <li><span class="n">1</span><span>Point your camera at the code</span></li>
-          <li><span class="n">2</span><span>Type in a name</span></li>
-          <li><span class="n">3</span><span>Send photos — they land here</span></li>
+          ${PHOTOS_ONLY ? '' : '<li><span class="n">2</span><span>Type in a name</span></li>'}
+          <li><span class="n">${PHOTOS_ONLY ? '2' : '3'}</span><span>Send photos \u2014 they land here</span></li>
         </ol>
         <div class="qr-panel wall-qr">
           <img src="${joinQr}" alt="Scan to join and send photos">
-          <div class="url" id="wallUrl">${esc(joinUrl)}</div>
+          <div class="url" id="wallUrl">${esc(PHOTOS_ONLY ? snapUrl.replace(/^https?:\/\//, '') : joinUrl)}</div>
         </div>
       </div>
       <div class="wall-shots" id="wallShots"></div>
@@ -183,14 +215,22 @@ function draw(s) {
 
 // -------------------------------------------------------------------- boot
 
-fetch(`/api/join-url${roomQuery}`)
-  .then((r) => r.json())
-  .then((d) => {
-    joinUrl = (d.url || '').replace(/^https?:\/\//, '');
-    const el = document.getElementById('wallUrl');
-    if (el) el.textContent = joinUrl;
-  })
-  .catch(() => {});
+/*
+ * THE ADDRESS UNDER THE CODE IS ASKED FOR — except in photos-only, where the
+ * code is the SNAP one and this would quietly put the join address back under
+ * it. The QR and the words beneath it must name the same destination, or the
+ * one person who types it instead of scanning lands somewhere else.
+ */
+if (!PHOTOS_ONLY) {
+  fetch(`/api/join-url${roomQuery}`)
+    .then((r) => r.json())
+    .then((d) => {
+      joinUrl = (d.url || '').replace(/^https?:\/\//, '');
+      const el = document.getElementById('wallUrl');
+      if (el) el.textContent = joinUrl;
+    })
+    .catch(() => {});
+}
 
 new Live(`/api/stream?role=wall${roomParam()}`, {
   onState: draw,

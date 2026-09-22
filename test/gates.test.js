@@ -309,11 +309,24 @@ test('a photo is filed under the room the gallery reads, never room.id', () => {
 test('no Big screen link opens the house projector by accident', () => {
   const console_ = consoleSource();
   const host = fs.readFileSync(new URL('../public/assets/host.js', import.meta.url), 'utf8');
+  /*
+   * AND THE DJ DOOR, WHICH WAS WRITTEN AFTER THIS GUARD AND SAT OUTSIDE IT.
+   *
+   * It shipped `href="/screen"` with no room code — the exact bug this test
+   * exists for, on the one page whose whole job is putting a screen up. It
+   * survived for the reason the comment above gives: the owner's room IS the
+   * house room, so it is only ever wrong for a second login.
+   *
+   * The lesson is the list rather than the line. A guard that names the files
+   * it knew about when it was written stops guarding the moment somebody adds
+   * a page, silently — so anything that opens a projector belongs here.
+   */
+  const dj = fs.readFileSync(new URL('../public/assets/dj-door.js', import.meta.url), 'utf8');
 
   // A bare '/screen' in a link or window.open, with no room code anywhere near
   // it, is the bug. screenLink() and the ?g= template are the two right ways.
   const bare = /(?:href=["'`]|window\.open\(\s*["'`])\/screen["'`]/g;
-  for (const [name, src] of [['console.js', console_], ['host.js', host]]) {
+  for (const [name, src] of [['console.js', console_], ['host.js', host], ['dj-door.js', dj]]) {
     const found = src.match(bare) || [];
     assert.equal(found.length, 0,
       `${name} has a Big screen link with no room code: ${found.join(', ')}`);

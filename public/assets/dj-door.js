@@ -100,14 +100,47 @@ function drawSignIn() {
     <a class="ld-cta" href="${esc(BACK_HERE)}">Sign in</a>`);
 }
 
+/*
+ * THIS ROOM'S projector, never the house one — `screenLink()`'s reasoning, on
+ * the page that did not have it. No code at all is still the house room, which
+ * is right for the owner and for every card printed before rooms existed.
+ */
+const screenHref = (code) => (code ? `/screen?g=${encodeURIComponent(code)}` : '/screen');
+/*
+ * The photo screen for a night with no quiz on it — see the comment in
+ * `drawRunning()` and `PHOTOS_ONLY` in `wall.js`.
+ */
+const photoScreenHref = (code) => (code
+  ? `/wall?g=${encodeURIComponent(code)}&photos=only`
+  : '/wall?photos=only');
+
 function drawRunning(s) {
   const el = shell(`
     <h1 class="ld-h2">The set is on</h1>
     <p class="ld-section-lede">${s.joinCode
       ? `Your code is <b>${esc(s.joinCode)}</b>. Put the screen up and they can start sending.`
       : 'Put the screen up and they can start sending.'}</p>
+    <!--
+      THE CODE GOES ON BOTH LINKS, AND A BARE /screen WAS A REAL BUG.
+
+      The linkTo helper adds the host KEY, which says who you are; it says nothing
+      about WHICH room's projector you want, and a bare /screen is the HOUSE
+      room. For the owner that is right, because his room IS the house room —
+      which is exactly why this survived here: it is only ever wrong for the
+      second login, whose set would have opened somebody else's screen. The
+      console and host.js were swept for this and given a screenLink helper; the DJ
+      door was written later and sat outside the guard that checks it.
+
+      AND THE SECOND SCREEN IS THE ONE THIS NIGHT ACTUALLY WANTS. A DJ set has
+      no quiz, so the photo screen is the point rather than an extra: karaoke
+      or the video on the main output, photographs and a code on the other.
+      The photos=only flag swaps the join code for the SNAP code and drops "type in a
+      name" — there is no game to join.
+      NO BACKTICKS IN HERE: this comment is inside a template literal.
+    -->
     <div class="dj-door-links">
-      <a class="ld-cta" href="/screen" target="_blank" rel="noopener">Open the screen</a>
+      <a class="ld-cta" href="${esc(screenHref(s.joinCode))}" target="_blank" rel="noopener">Open the screen</a>
+      <a class="minor" href="${esc(photoScreenHref(s.joinCode))}" target="_blank" rel="noopener">Photo screen</a>
       <a class="minor" href="${esc(withKey('/host'))}">Go to the desk</a>
     </div>
     <p class="tiny dj-door-note">${s.requests ? s.requests.length : 0} waiting ·

@@ -975,6 +975,24 @@ and photo uploads."*
   the grid first**. **A MEDIA QUERY ADDS NO SPECIFICITY** either — fourth
   sighting. **Measure after.**
 
+- **AND `?photos=only` IS THE SAME SCREEN FOR A NIGHT WITH NO QUIZ —
+  `photo-screen.mjs`.** *"A separate DJ QR code where literally its only
+  function is to gather photos… no quiz explainer because there is no quiz."*
+  The ordinary wall's code is the JOIN code, so its second step is **Type in a
+  name**; with no game that is three instructions about photographs ending at a
+  box asking for a team. **So the CODE changes, not just the words** — it shows
+  the SNAP code, and the step goes. **A URL FLAG, NEVER A PAYLOAD FIELD**:
+  `wallView()` saying nothing about the game is what keeps rule 1 structural
+  here, so asking the server *is a quiz running* would be the first crack. The
+  HOST knows and the host opens the screen — `?as=visitor`'s shape, subtracting
+  only. **The printed address must follow the QR** — the join-url fetch used to
+  overwrite it. Reachable from the DJ door and Community > Photos.
+- **AND THE DJ DOOR OPENED THE HOUSE ROOM'S PROJECTOR** — a bare `/screen`
+  with no `?g=`, on the one page whose job is putting a screen up. Invisible
+  for the owner, whose room IS the house room. **`gates.test.js` names
+  `dj-door.js` now**: a guard listing the files it knew about stops guarding
+  the moment somebody adds a page.
+
 ### THE CAMERAS ARE ONE QR ON COMMUNITY > PHOTOS — `/snap`, never a button
 
 `camerasPanel()` in `console-community.js`, `public/assets/snap.js`, `POST
@@ -4473,6 +4491,7 @@ node scripts/photos-to-r2.mjs           # move the photographs off GitHub (--go 
 node scripts/second-screen.mjs          # the second display: the code and the photos
 node scripts/two-screens.mjs            # two outputs, a real account, quiz -> bingo
 node scripts/second-laptop.mjs          # the wall on a spare laptop
+node scripts/photo-screen.mjs           # photos only, no quiz — the karaoke screen
 node scripts/funniest-photo.mjs         # does the room's vote reach a drink?
 node scripts/bar-staff-camera.mjs       # the camera code — same bucket, and nothing else
 node scripts/props-on-a-photo.mjs       # do the googly eyes go on, on BOTH cameras?

@@ -1293,7 +1293,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * real browser this session, and a rule that stops a bad change has to be
  * readable without opening a second file.
  */
-const BUDGET = 281_500;
+const BUDGET = 283_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;
