@@ -7,7 +7,8 @@ import { readBody, readJson, sendJson } from './plumbing.js';
 import { roomForHost, roomForPhone, whoIs } from './identity.js';
 import { allowed } from './gates.js';
 import { photosWanted, pushState } from './views.js';
-import { backUpAsks, backUpPropUse, fileAway } from './helpers.js';
+import { backUpAsks, backUpPropUse } from './helpers.js';
+import { fileAway } from './photo-filing.js';
 
 export async function writePlayers(req, res, url, route) {
   // ---- players (open to anyone with the join link)

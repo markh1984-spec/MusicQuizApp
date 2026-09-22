@@ -116,6 +116,14 @@ export function photosSection() {
     const res = await post('/api/owner/photos/file');
     fileBtn.disabled = false;
     fileBtn.textContent = 'File the rest away';
+    // STILL GOING IS NOT A FAILURE. The server stops holding the request after
+    // a few seconds and carries on filing, so this says so and looks again —
+    // an alert here would report a problem about a job that is succeeding.
+    if (res.still) {
+      status.textContent = `Filing ${res.waiting} in the background — this page will catch up.`;
+      setTimeout(refresh, 15_000);
+      return;
+    }
     if (res.failed) alert(`${res.filed} filed, ${res.failed} could not be. Check the token can write to the photo repo.`);
     refresh();
   });

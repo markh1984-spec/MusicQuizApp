@@ -17,6 +17,7 @@ import { send, sendJson } from './src/http/plumbing.js';
 import { brandForRoom } from './src/http/identity.js';
 import { supportGuard } from './src/http/support-log.js';
 import { backUpAccounts, restoreFromBackup } from './src/http/helpers.js';
+import { startPhotoSweep } from './src/http/photo-filing.js';
 import { getPages } from './src/http/get-pages.js';
 import { getStaticFiles } from './src/http/get-static-files.js';
 import { getQrAndVouchers } from './src/http/get-qr-and-vouchers.js';
@@ -172,6 +173,9 @@ server.listen(config.port, () => {
   setInterval(() => {
     sweepTrials().catch((err) => console.warn('[trials] sweep failed:', err.message));
   }, TRIAL_SWEEP_MS).unref();
+
+  // AND RETRY ANY PHOTOGRAPH THAT DID NOT REACH THE STORE — see `startPhotoSweep()`.
+  startPhotoSweep();
 
   /*
    * THE FLIGHT RECORDER SEES THE BOOT, then the server plays a night against

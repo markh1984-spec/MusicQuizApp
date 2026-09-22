@@ -1468,3 +1468,45 @@ grid — what a quizmaster PRESSES between the gig and the public page — moved
 whole to **[`photo-controls.md`](photo-controls.md)** on 20 September 2026, when
 this file went past its cap. The sort those controls drive stayed here, because
 it is their consequence rather than one of them.
+
+## A PHOTOGRAPH THAT MISSED THE STORE IS RETRIED BY NOBODY PRESSING ANYTHING — 22 September 2026
+
+`src/http/photo-filing.js`, `src/photo-sweep.js`, `test/photo-filing.test.js`.
+
+**`fileAway()` said a failure was "retried by the file the rest away button",
+and for every quizmaster but the owner there was no such button.** The control
+view's had come off and its route (`photosFile`) was left with no caller; the
+owner's page only ever acts on the owner's own room. So a subscriber's
+photograph that met one bad GitHub minute sat on this server, missing from Past
+gigs and the gallery, until the next deploy took it — silently, because the
+upload itself had already answered `{ok:true}`. *A comment that claims the
+opposite is where the next bug hides*, fifth sighting.
+
+- **THE RETRY IS A SWEEP WITH A BACKOFF, NOT A BUTTON.** Every loaded room,
+  every five minutes, doubling on each sweep that files nothing, to an hour; the
+  first success puts it back to five. The reason given for having no loop —
+  *"a loop on a bad token would hammer GitHub all night"* — is true of a fixed
+  interval and not of this one: a dead token costs one attempt per photo per
+  hour. **A queue that works itself is cheap; a button is Monday admin.**
+- **ONE PHOTO IS ONE JOB — `fileAway()` JOINS a filing already on its way.**
+  The upload and the sweep (or the owner's button) can reach the same photo at
+  once, and two concurrent PUTs both ask for a `sha` before the file exists, so
+  the Contents API refuses the second and a failure is written about a photo
+  that was filed perfectly well. The guard COUNTS the PUTs off the stub.
+- **A FEW AT A TIME — `FILE_AT_ONCE`, three.** The owner's button awaited sixty
+  photos one after another with a twenty-second deadline each, so a slow
+  morning held the request for twenty minutes, past every proxy between here
+  and a browser. All at once is the other way to be wrong: it spends the GitHub
+  hour the packs and backups share in one go.
+- **THE BUTTON STOPS WAITING AFTER TEN SECONDS AND SAYS "still going"** —
+  `within()`'s shape. The job carries on; the page looks again rather than
+  reporting a failure that is not one.
+- **SAID ONCE PER SWEEP, NEVER ONCE PER PHOTO** (`quiet`), or one bad token
+  writes sixty lines an hour into the record the host copies off the Help tab.
+- **A ROOM THAT IS NOT LOADED IS LEFT ALONE.** It loads the moment a photo
+  arrives or its quizmaster opens the console; scanning every room's disk at
+  boot for stragglers is paid on every deploy for a case the disk keeps safe.
+- **The stub refuses on demand** — `GH_STUB_REFUSE` names a flag file outside
+  its directory — which is what lets the check make the FIRST attempt fail and
+  then watch what retries it. Verified by putting each fault back: no sweep, no
+  join, and the button awaiting everything each turn the check red.

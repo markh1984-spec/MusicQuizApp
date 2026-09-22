@@ -35,6 +35,17 @@ const full = (p) => path.join(ROOT, p);
  */
 const DELAY = Number(process.env.GH_STUB_DELAY_MS) || 0;
 const hold = () => (DELAY ? new Promise((r) => setTimeout(r, DELAY)) : null);
+/*
+ * A GITHUB THAT REFUSES, WHILE A CHECK SAYS SO — `GH_STUB_REFUSE` names a flag
+ * file OUTSIDE the stub's directory, so nothing listing the repository ever
+ * sees it. While the file exists every write answers 503, which is how a check
+ * makes the first attempt at filing a photograph fail and then watches what
+ * retries it. And `GH_STUB_LOG`, also outside, gets one line per request, so a
+ * check can COUNT writes rather than infer them.
+ */
+const REFUSE = process.env.GH_STUB_REFUSE || '';
+const LOG = process.env.GH_STUB_LOG || '';
+const note = (line) => { if (LOG) fs.appendFileSync(LOG, `${line}\n`); };
 
 globalThis.fetch = async (input, init = {}) => {
   const url = typeof input === 'string' ? input : input.url;
@@ -45,7 +56,11 @@ globalThis.fetch = async (input, init = {}) => {
   const p = decodeURI(m[1]);
   const method = (init.method || 'GET').toUpperCase();
   const abs = full(p);
+  note(`${method} ${p}`);
 
+  if (method === 'PUT' && REFUSE && fs.existsSync(REFUSE)) {
+    return new Response('{"message":"stub refusing writes"}', { status: 503 });
+  }
   if (method === 'PUT') {
     const body = JSON.parse(init.body);
     fs.mkdirSync(path.dirname(abs), { recursive: true });

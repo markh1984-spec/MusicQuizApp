@@ -131,8 +131,10 @@ actions), `brandForRoom`, `schemeForRoom`, the library builders
 set (`packInUse`, `changesTheLiveQuestion`, `packPlayState`,
 `packStillThere`, `reloadPackEverywhere` — used by the quiz editor, the own
 packs and the bingo editor, far apart), the four `ensure*Restored`, `accountRef`
-and `firstNameOf` (suggestions and the trial emails), `fileAway` (all three
-photo writes), `backUp` and `backUpMany` (every pack write).
+and `firstNameOf` (suggestions and the trial emails), `backUp` and
+`backUpMany` (every pack write). **`fileAway` left for `photo-filing.js`** on
+22 September 2026, with the retry sweep that made it three callers and one
+rule about each photo going exactly once.
 
 `server` is referenced only by its declaration, `listen` and `shutdown`.
 `hub` only by `pushState`, `/api/stream`, `/api/host/ready` and `shutdown`.

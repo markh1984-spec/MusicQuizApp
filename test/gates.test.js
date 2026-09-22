@@ -286,8 +286,10 @@ test('the owner photo routes are owner-only by path, so they skip the broad quiz
  */
 test('a photo is filed under the room the gallery reads, never room.id', () => {
   const server = serverCode();
-  const at = server.indexOf('async function fileAway(');
-  assert.ok(at > 0, 'fileAway has moved');
+  // `fileAwayOnce()` since 22 September 2026: `fileAway()` is now the join
+  // that makes one photo one job, and this is the body that decides the room.
+  const at = server.indexOf('async function fileAwayOnce(');
+  assert.ok(at > 0, 'fileAwayOnce has moved');
   const body = server.slice(at, at + 900);
   assert.match(body, /galleryRoomOf\(room\.id\)/,
     'fileAway is not resolving the gallery room — a house night files where no reader looks');

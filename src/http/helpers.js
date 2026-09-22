@@ -1209,52 +1209,6 @@ export async function backUpHistory(log = () => {}) {
 }
 
 /**
- * Put one photo in the private repository, foldered by night.
- *
- * Never throws and never blocks a response: a failure here means the photo is
- * still on screen and still on this server, just not yet permanent. It is
- * retried by the "file the rest away" button rather than in a loop, because a
- * loop on a bad token would hammer GitHub all night for nothing.
- */
-export async function fileAway(room, photo) {
-  if (!photosRepoConfigured()) return { ok: false };
-  const { photos } = room;
-  const read = photos.read(photo.id);
-  if (!read) return { ok: false };
-  // THE ROOM THE READERS WILL LOOK IN, never `room.id` — see `galleryRoomOf()`.
-  // Foldered per room, so one quizmaster's night is never mixed in with
-  // another's.
-  const filedIn = galleryRoomOf(room.id);
-  const folder = `${photoFolder(filedIn)}/${photo.night}`;
-  // One of the three places a night's folder changes — see `photo-cache.js`.
-  dropNight(folder);
-  const result = await putFile(
-    `${folder}/${photo.file}`,
-    read.bytes,
-    `${photo.night}${photo.teamName ? ` — ${photo.teamName}` : ''}`,
-    'photos',
-  );
-  if (result.ok) {
-    photos.markFiled(photo.id);
-    pushState(room);
-    /*
-     * THE RUDE-PHOTO CHECK — background, inert without a Vision key, and it
-     * never blocks the file-away it rides behind. A flag sorts this photo to
-     * the front of the night's grid for review; it never deletes and never
-     * touches the room. See `src/moderation.js` and `src/photo-flags.js`.
-     */
-    if (moderationConfigured()) {
-      scorePhoto(read.bytes, { onSpend: spendRecorder(spend) })
-        .then((r) => (r.level ? setPhotoFlag(filedIn, photo.night, photo.file, r.level) : null))
-        .catch(() => { /* a flag that will not settle costs the flag, never the photo */ });
-    }
-  } else {
-    console.warn('[photos] could not file one away:', result.error);
-  }
-  return result;
-}
-
-/**
  * Reload a quiz pack in every room that is currently playing it.
  *
  * The library is shared, so one save can affect more than one live game. It

@@ -75,7 +75,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
  * @param {string} prefix  what the temp directories are named, for a human
  *                         reading `/tmp` after a failure
  */
-export async function withStubbedApp(run, { prefix = 'stubapp' } = {}) {
+export async function withStubbedApp(run, { prefix = 'stubapp', env: extra = {} } = {}) {
   const data = mkdtempSync(join(tmpdir(), `${prefix}-`));
   const repo = mkdtempSync(join(tmpdir(), `${prefix}-gh-`));
   // ASKED FOR, NEVER GUESSED — and per run, so two tests in one file cannot
@@ -89,6 +89,7 @@ export async function withStubbedApp(run, { prefix = 'stubapp' } = {}) {
     GH_STUB_DIR: repo,
     PHOTO_REPO: 'someone/photos',
     PHOTO_TOKEN: 'stub',
+    ...extra,
   };
   const start = () => spawn(process.execPath, ['--import', STUB, 'server.js'],
     { cwd: ROOT, env, stdio: 'ignore' });

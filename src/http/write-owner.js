@@ -7,7 +7,8 @@ import { isHostKey, readJson, sendJson } from './plumbing.js';
 import { ACTING_COOKIE, SESSION_COOKIE, TIER_COOKIE, cookie, cookieFor, refuseBreached, roomForHost } from './identity.js';
 import { allowed } from './gates.js';
 import { pushState } from './views.js';
-import { backUpAccounts, backUpReports, backUpSpend, fileAway, subscriberList } from './helpers.js';
+import { backUpAccounts, backUpReports, backUpSpend, subscriberList, within } from './helpers.js';
+import { FILE_REST_WAIT_MS, fileTheRest } from './photo-filing.js';
 
 export async function writeOwner(req, res, url, route) {
   // ---- managing subscribers
@@ -296,15 +297,19 @@ export async function writeOwner(req, res, url, route) {
     const { photos } = room;
     const body = await readJson(req);
 
+    /*
+     * A FEW AT A TIME, AND THE REQUEST STOPS WAITING — `fileTheRest()`. It used
+     * to await sixty photos one after another, each with a twenty-second
+     * deadline, so a slow morning held this request past every proxy on the
+     * way to the browser. The job carries on either way; `still` tells the
+     * page to look again rather than to report a failure that is not one.
+     */
     if (what === 'file') {
       if (!photosRepoConfigured()) return sendJson(res, 200, { ok: false, reason: 'no_repo' }), true;
-      const todo = photos.unfiled();
-      let filed = 0;
-      for (const photo of todo) {
-        const result = await fileAway(room, photo);
-        if (result.ok) filed++;
-      }
-      return sendJson(res, 200, { ok: true, filed, failed: todo.length - filed }), true;
+      const waiting = photos.unfiled().length;
+      const done = await within(fileTheRest(room), FILE_REST_WAIT_MS);
+      if (done.late) return sendJson(res, 200, { ok: true, still: true, waiting }), true;
+      return sendJson(res, 200, { ok: true, filed: done.filed, failed: done.failed }), true;
     }
     if (what === 'remove') {
       const removed = photos.remove(String(body.id || ''));

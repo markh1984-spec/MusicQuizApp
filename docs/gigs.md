@@ -426,10 +426,16 @@ Two things that makes true, and neither is a compromise:
   per-photo bin are on the CONTROL VIEW, which is where they are wanted — with
   a mic in one hand, while the thing is on the projector. A page is the wrong
   place for that and always was.
-- **Filing still happens for everybody.** A photo is pushed to the repo as it
-  arrives, and `photosFile` (the retry, for when GitHub was having a bad
-  evening) is still a host action. If it were the owner's, every subscriber's
-  past gigs would be empty.
+- **Filing still happens for everybody.** A photo is pushed to the store as it
+  arrives, and one that does not make it is retried by `sweepUnfiledPhotos()`
+  in `src/http/photo-filing.js`, on its own, every few minutes and backing off
+  to hourly while nothing lands. **This paragraph used to name `photosFile`, a
+  host action, as the retry** — and nothing had called that action since the
+  control view's button came off, so from then until 22 September 2026 a
+  subscriber's photo that met one bad GitHub minute was retried by nothing and
+  lost at the next deploy. The route is deleted; the owner's *File the rest
+  away* stays, and now answers within ten seconds rather than holding the
+  request for as long as sixty uploads take.
 
 Be honest about what read-only means: there is no bin and no share button, and
 a browser can still save an image. The point is that this is a shelf to look

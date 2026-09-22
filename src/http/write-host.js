@@ -2,12 +2,12 @@
  * WRITE ROUTES — host. Moved whole out of `handleWrite()` in server.js;
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
-import { ANY_LOBBY_GAME, FEATURES, HOST_MOVES, MAX_ROUNDS, accounts, canPlayPack, comeBackFor, config, entitlements, flight, fullLibrary, hostCursor, isComposed, isOwnPack, isSting, listOwn, lobbyGameFor, lobbyGamesFor, packlessKind, photosRepoConfigured, pickIdeas, reports, wholePackKind } from './context.js';
+import { ANY_LOBBY_GAME, FEATURES, HOST_MOVES, MAX_ROUNDS, accounts, canPlayPack, comeBackFor, config, entitlements, flight, fullLibrary, hostCursor, isComposed, isOwnPack, isSting, listOwn, lobbyGameFor, lobbyGamesFor, packlessKind, pickIdeas, reports, wholePackKind } from './context.js';
 import { readJson, sendJson } from './plumbing.js';
 import { packDating, photoLinkFor, roomForHost, whoIs } from './identity.js';
 import { allowed } from './gates.js';
 import { pushState, startIntroTrack } from './views.js';
-import { backUpLibraryStats, backUpReports, fileAway, seesTheirLeague } from './helpers.js';
+import { backUpLibraryStats, backUpReports, seesTheirLeague } from './helpers.js';
 
 export async function writeHost(req, res, url, route) {
   if (route.startsWith('/api/host/') && req.method === 'POST') {
@@ -573,20 +573,6 @@ export async function writeHost(req, res, url, route) {
       const removed = photos.remove(String(body.id || ''));
       if (removed) pushState(room);
       return sendJson(res, 200, { ok: removed }), true;
-    }
-    // File everything that has not made it to the private repo yet. Used at
-    // the end of a night, or after a spell where GitHub was unreachable.
-    if (action === 'photosFile') {
-      if (!photosRepoConfigured()) {
-        return sendJson(res, 200, { ok: false, reason: 'no_repo' }), true;
-      }
-      const todo = photos.unfiled();
-      let filed = 0;
-      for (const photo of todo) {
-        const result = await fileAway(room, photo);
-        if (result.ok) filed++;
-      }
-      return sendJson(res, 200, { ok: true, filed, failed: todo.length - filed }), true;
     }
     /*
      * THE FUNNIEST PHOTOGRAPH, PUT TO THE ROOM — `src/photo-vote.js`.
