@@ -1246,9 +1246,8 @@ Full reasoning: **[`docs/dj.md`](docs/dj.md)**.
 A running order builds a FRESH engine per part, so anything night-wide has to
 be handed over explicitly. Every one of these failed silently.
 
-- **`winners`** — vouchers are only issued by the LAST part, the one that never
-  received it, so the picker was 100% inert: asked for one winner, three drinks
-  went out.
+- **`winners`** — only the LAST part issues vouchers and it never received
+  it: asked for one winner, three drinks went out.
 - **`lobbyGames`** — *"Let them choose"* switched itself off after part one.
 - **THE TEAMS, AND THE MAP GOES ON BEFORE ANYBODY IS SEEDED.** `join()` deals a
   random-mode player the moment it is called, so seeding first re-deals the
@@ -2357,6 +2356,41 @@ bingo winners on thursday didn't receive a QR code"*.
   exists and the select goes silently blank.
   **[`docs/bingo.md`](docs/bingo.md)**.
 
+### PRIZES ARE PER GAME, DEALT BY WHAT EACH PAYS — `prize-parts.js`, `console-prizes.js`
+
+*"I want to offer prizes on a game basis… regardless of what the venue prizes
+says — I can keep track of how many I've given out over 2-3 games no problem."*
+Settled 22 September 2026, and he was right for a reason he had not seen.
+
+- **EACH GAME CARRIES ITS OWN LIST AND STARTS AT ITS OWN 1st. `prizesBefore`
+  IS DELETED — never count minted vouchers to walk a list.** It counted
+  vouchers, not PLACES: a tie for first (paid in full) put the bingo on the
+  venue's fifth drink; a zero-score row (skipped) put it back on the third.
+  Silent both ways, in front of the room.
+- **THE VENUE'S LIST STILL PRE-FILLS, DEALT BY WHAT EACH PART PAYS** —
+  `dealPrizes()`/`paysOf()`, ONE model for the server (`launchRunningOrder()`)
+  and the console. **Absent is not empty**: `null` = the night's list, `[]` =
+  this game pays nothing. An ordinary one-game night is byte-identical.
+- **THE TABLE DRAWS ONE BOX PER PRIZE A GAME PAYS** — Winners for a quiz, the
+  card's stopping points for bingo — so it cannot disagree with the night.
+  **Shut it is the ledger.** NOT a tenth control on the settings row: that cost
+  three of nine their labels. Above the tiles, where the break strip is.
+- **`DEFAULT_BINGO_PRIZES = 2` IS GONE** — a prize table in the BROWSER, applied
+  only when a bingo pack became a slot, so on a mixed night a 5x5 said "2
+  prizes" and launched five. `prizes: 0` = nobody chose; the SHAPE answers.
+- **NOTHING REPAINTS ON BLUR — LOAD-BEARING.** `change` fires on the blur a
+  MOUSEDOWN causes; a repaint there detached the pressed element and the
+  browser dispatched NO click. Launch was dead on the first press after typing
+  a prize, nothing thrown. Typing STORES; shutting the table repaints.
+- **THE FOLD'S HEAD IS 44px** — measured at 15 when open. And `noPrizesReason()`
+  takes what was typed tonight; it only ever OPENS the gate.
+- **A DEPLOY WITH THE DISK BRINGS THE NIGHT BACK — `deploy-with-a-disk.mjs`.**
+  A TAP over a launched night with phones does not move the projector (a
+  silent 409, by design); the live line names the wall and **Launch asks, then
+  replaces.** Reads as "the console isn't changing state" and is correct. **The
+  venue is DERIVED (usual night), never remembered** — without one, Launch
+  stands down for want of prizes after every restart.
+
 ### ONE PRIZE EACH PER BINGO ROUND, WHILE ANYBODY IS STILL WITHOUT ONE
 
 `claim()` / `holdsAPrize()` / `stillWithoutAPrize()` in `src/bingo.js`,
@@ -2389,17 +2423,17 @@ the prizes."*
 - **WHEN THE LAST PRIZE GOES THE WHOLE ROOM IS TOLD — `allPrizesGone`.**
   **IT IS NOT THE `WON` PHASE**: it is `onLastStage && stageTaken()`, neither
   half alone. **DRAWN ON EVERY PHONE, not only the winners'.**
-- **THE CODES ARE HELD AND ALL APPEAR TOGETHER AT THE END OF THE ROUND** —
-  **do not put the trickle back.** **MINTED at the win, held from the PHONE.**
-  **THREE RELEASES, ALL LOAD-BEARING** — the round ending, `Finish`, and an
-  EARLIER `round` or `carried`. **The HOST's panel is never held.**
+- **THE CODES ARE HELD AND APPEAR TOGETHER AT THE END OF THE ROUND — do not
+  put the trickle back.** MINTED at the win, held from the PHONE; three
+  releases (the round ending, `Finish`, an EARLIER `round` or `carried`).
+  **The HOST's panel is never held.**
 - **ONE PRIZE PER PHONE PER BINGO *GAME*, not per round.** **`state.wonThisGame`,
   and `newRound()` MUST NOT CLEAR IT** — one line puts the fault back and looks
   like tidying. **REVERSES two pinned tests.** **The round that cannot pay out
   is NOT automated away** (`view.noneLeft`). **A fresh bingo PART is a fresh
   game.**
-- **A ROUND'S PRIZE IS THE NEXT ON THE TABLE — `prizesGiven`, a `prizeIndex`
-  on every win.** Keyed on the STAGE, round two paid the pint again.
+- **A ROUND'S PRIZE IS THE NEXT ON THE TABLE — `prizesGiven`.** Keyed on the
+  STAGE, round two paid the pint again.
 - **A SCORE FIXED AT THE FINAL MOVES THE DRINKS — `adjustScore()`.** The
   board is cached until `changed()`, which runs AFTER, so the first build paid
   off a stale board. **EVERY SCORE WRITE GOES THROUGH `bumpScore()` /
@@ -4445,6 +4479,7 @@ node scripts/props-on-a-photo.mjs       # do the googly eyes go on, on BOTH came
 node scripts/no-prizes-no-launch.mjs    # can a night launch with nobody to pay?
 node scripts/after-a-deploy.mjs         # after a restart, can the host still launch?
 node scripts/a-night-survives-a-deploy.mjs  # the venue, the night and its frame, after a wipe
+node scripts/deploy-with-a-disk.mjs     # the night that was running comes back WITH the disk — can the host replace it?
 node scripts/every-game.mjs             # every game and round type, end to end
 node scripts/prizes-fuzz.mjs            # every prize count, word and tie
 node scripts/github-down.mjs            # GitHub gone quiet — does a night still run?

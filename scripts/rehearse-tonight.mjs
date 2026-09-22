@@ -98,13 +98,17 @@ try {
     await con.evaluate(async (v) => {
       document.querySelector('.lb-where')?.click();
       await new Promise((r) => setTimeout(r, 500));
-      [...document.querySelectorAll('.lb-venues button')].find((b) => b.textContent.includes('Station Tap'))?.click();
+      // THE VENUE IT MADE, never a hard-coded name: this said 'Station Tap'
+      // while the default venue was The Rehearsal Arms, so with no --venue
+      // the pick found nothing, Launch stood down for want of prizes, and
+      // the guard only ever passed when somebody named the venue by hand.
+      [...document.querySelectorAll('.lb-venues button')].find((b) => b.textContent.includes(v))?.click();
     }, VENUE);
     await con.waitForTimeout(1000);
   };
   await pickVenue();
   const venueSet = await con.$eval('.lb-where', (n) => n.textContent.trim()).catch(() => '');
-  check('the venue is picked on the bar', /station tap/i.test(venueSet), venueSet.slice(0, 50));
+  check('the venue is picked on the bar', venueSet.includes(VENUE), venueSet.slice(0, 50));
 
   section(`LAUNCHING THE QUIZ — ${QUIZ}`);
   const put = await con.evaluate(async (id) => {
