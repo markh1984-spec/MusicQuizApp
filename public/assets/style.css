@@ -1491,7 +1491,17 @@ body.host::after { display: none; }
 .host select { padding-top: 0; padding-bottom: 0; }
 /* The row menu is not in the action bar — it is on each player's line, and at
    31x27 it was the smallest control on the page. */
-.host [data-act="menu"] { min-width: 44px; min-height: 44px; }
+/*
+ * AND THE BINGO LIST'S ENVELOPE, WHICH IS THE SAME CONTROL ON THE OTHER
+ * ENGINE — *a decision taken for both engines needs an assertion in both*.
+ *
+ * The quiz's row menu was measured at 31x27 and brought to the floor; the
+ * bingo player list has no menu (a bingo player has no score to nudge) and
+ * carries a single ✉ instead, which nobody measured: 26x27, on the screen
+ * driven with a thumb in a dark pub. Found by `host-controls.mjs`, which
+ * presses every control on this page at every phase.
+ */
+.host [data-act="menu"], .host [data-act="note"] { min-width: 44px; min-height: 44px; }
 /* And the two full-width minors that came out at 35-36px. */
 .host .minor.tidy, .host .report-q { min-height: 44px; }
 

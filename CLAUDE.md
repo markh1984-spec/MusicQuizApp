@@ -2409,6 +2409,38 @@ Settled 22 September 2026, and he was right for a reason he had not seen.
   venue is DERIVED (usual night), never remembered** — without one, Launch
   stands down for want of prizes after every restart.
 
+### THE CONTROL-VIEW SWEEP, 22 SEPTEMBER 2026 — and three that shipped
+
+- **`MOVES` NAMED ENGINE METHODS, NOT ACTIONS, SO SKIP AND ASK AGAIN TOOK A
+  STALE PRESS.** `skipQuestion`/`redoQuestion` are the engine's; the actions
+  are `skip`/`redo`, so `HOST_MOVES.has(action)` was false and the two-devices
+  guard was **off** for the two controls drawn at `question` and `reveal` — the
+  phases two control views are most often one press apart. A stale Skip takes
+  the question the room is answering off the projector; a stale Ask again wipes
+  its answers. **`test/host-moves.test.js` reads the DISPATCH**, never a second
+  list, and `two-devices.mjs` never walked `MOVES` at all.
+- **`state.archivedAs` NEVER REACHED DISK, SO A RESTART FILED THE NIGHT
+  TWICE.** `Store.flush()` clears `pending` BEFORE writing, and the archive
+  block sets `archivedAs` AFTER `handleChange()` has flushed — so the flag
+  stayed in memory. An ordinary `SIGTERM` does it, which is Render's ordinary
+  deploy: **two identical games in one Past gigs row**, two backups, and
+  `archivedAs` naming the SECOND file so a prize scanned later updates a copy
+  nobody reads. **Save and flush again at the end of the block.** The pinned
+  test could not see it — a stub store, and the "restart" state taken from
+  MEMORY.
+- **AND `restart()` REBOOTED AGAINST THE SHIPPED CATALOGUE** — it carried
+  `DATA_DIR` but not `QUIZ_DIR`/`BINGO_DIR`, so every crash-recovery guard
+  measured its SECOND boot against a different library from the one it launched
+  with. *A guard that can damage the thing it guards.* **The same directory,
+  never a fresh `catalogueCopy()`**, which would restore what a guard deleted.
+- **`host-controls.mjs` PRESSES EVERY CONTROL ON `/host` AT EVERY PHASE** —
+  `dead-controls.mjs` only ever covered the console's doors, so half the
+  protected surface had no dead-control guard. **It re-drives a fresh night
+  between presses**, because here a press genuinely moves the night on. It
+  found the bingo list's ✉ at **26x27** — *a decision taken for both engines
+  needs an assertion in both*: the quiz's row menu was brought to the floor and
+  its twin was never measured.
+
 ### THE LAUNCH-PATH SWEEP, 22 SEPTEMBER 2026 — three found, one critical
 
 - **THE PRIZE TABLE WAS INERT ON A ONE-GAME NIGHT, AND OPENED THE GATE
@@ -4532,6 +4564,7 @@ node scripts/prizes-fuzz.mjs            # every prize count, word and tie
 node scripts/github-down.mjs            # GitHub gone quiet — does a night still run?
 node scripts/ready-light.mjs            # does the launch bar's ready line go green?
 node scripts/two-devices.mjs            # two control views — does a press land once?
+node scripts/host-controls.mjs          # is every control on the control view alive? (--bingo)
 node scripts/wifi-blip.mjs              # the wifi drops on each screen — does it come back right?
 node scripts/long-night.mjs             # sixty phones, forty questions — memory and latency
 node scripts/flight-recorder.mjs        # does a broken night write itself down, and can the host copy it?

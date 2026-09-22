@@ -189,6 +189,26 @@ export async function startApp({ key = 'live-app-key', seed, env = {}, nodeArgs 
         PORT: String(port),
         DATA_DIR: data,
         ADVERT_DIR: path.join(data, 'adverts'),
+        /*
+         * THE SAME CATALOGUE COPY THE FIRST BOOT GOT — and it was missing.
+         *
+         * `startApp()` hands the app a COPY of `quizzes/` and `bingo/`
+         * precisely because *a test may not write the shipped catalogue*; a
+         * guard once replaced `1980s-pop-music.json` with a stub in the
+         * working tree. This env block did not carry them, so `config.js`
+         * defaulted both back to the repository's own folders: every
+         * crash-recovery guard — the one thing `restart()` exists for —
+         * measured its SECOND boot against a different library from the one it
+         * launched with, and anything that saved a pack after a restart wrote
+         * into git.
+         *
+         * Proved by deleting a pack from the copy: the restarted server went
+         * on offering it.
+         */
+        /* THE SAME DIRECTORY, never a fresh copy — `catalogueCopy()` would
+           re-copy and quietly restore whatever the guard had just deleted. */
+        QUIZ_DIR: path.join(data, 'quizzes'),
+        BINGO_DIR: path.join(data, 'bingo'),
         HOST_KEY: key,
         ...env,
       },

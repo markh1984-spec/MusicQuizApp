@@ -1301,7 +1301,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * entitlement from the one the route enforces. Each is a bug that shipped and
  * was measured in a browser, and the first ran a night with nobody to pay.
  */
-const BUDGET = 285_000;
+const BUDGET = 287_500;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

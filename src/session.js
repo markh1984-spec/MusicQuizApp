@@ -747,6 +747,32 @@ export class Session {
             }
           }
         } catch { /* a league is never worth losing a filed night over */ }
+        /*
+         * AND WRITE THE STATE AGAIN, BECAUSE THE FLUSH ABOVE ALREADY HAPPENED.
+         *
+         * `handleChange()` calls `store.save(state)` and then flushes on a
+         * milestone — and `Store.flush()` clears `pending` BEFORE it writes.
+         * Everything this block sets (`archivedAs`, `league`) is written to
+         * the state AFTERWARDS, so the debounce that fires next finds nothing
+         * pending and writes nothing at all. `archivedAs` — the one flag that
+         * stops a night being filed twice — stayed in memory only.
+         *
+         * MEASURED: launch, play, finish, wait, then kill and reboot, and the
+         * evening is filed a SECOND time. An ordinary `SIGTERM` does it too,
+         * which is Render's ordinary deploy — so a push while a night sits on
+         * the final scores puts two identical games in one Past gigs row, two
+         * backups, and leaves `archivedAs` naming the SECOND file, so a prize
+         * scanned at the bar afterwards updates a copy nobody reads.
+         *
+         * The window is exactly "the host touched nothing between the final
+         * scores and the restart", which on a gig night is most of the time.
+         *
+         * `test/archive-vouchers.test.js` pins this and could not see it: it
+         * builds a Session with a stub store and takes the restart state from
+         * MEMORY, so it proves the half that works.
+         */
+        this.store.save(state);
+        this.store.flush();
         // Never awaited. The night has ended and the room is looking at a
         // scoreboard; whether GitHub is having a good evening is not their
         // problem, and a backup that held up the final slide would be.
