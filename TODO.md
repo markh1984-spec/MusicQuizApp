@@ -114,6 +114,11 @@ re-checked** — do that before acting on any of it.
 **One is purely a decision and is ready now: `/api/brand?q=` confirms that an
 account id is real.** Recorded in the code as a trade-off, never in `docs/`.
 
+**AND A SECOND, DEEPER SWEEP OF THE LAUNCH PATH ALONE ran on 23 September —
+[`docs/sweeps-launch-path-2026-09-23.md`](docs/sweeps-launch-path-2026-09-23.md):
+seven new reds, every one confirmed in the code, with an ordering at the end.**
+Read that one first; it is the gig-night list.
+
 **AND THE FILE'S OWN WORKING NOTE IS THE PART TO READ FIRST.** Fixing forty
 findings in one fast sitting closed about twenty and introduced ten, in three
 shapes worth knowing before starting: fixing the symptom rather than the
