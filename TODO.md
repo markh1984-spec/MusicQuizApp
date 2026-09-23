@@ -17,22 +17,7 @@ decision from the host first.
 **DELETE AN ITEM FROM HERE THE MOMENT IT IS BUILT.**
 `test/todo-budget.test.js` fails if anything left in the list claims to be done.
 
-### 1. IS `HOST_KEY` SET? — two minutes, and it has locked you out once
-
-**Check this first because it is the smallest thing here and the only one that
-can lock you out of your own console.** `hostKey()` invents a key and writes it
-to `data/` when `HOST_KEY` is unset — and `data/` is wiped on every deploy, so
-every push silently hands out a new key and every bookmark stops working.
-
-Open [the environment page](https://dashboard.render.com/web/srv-d9pnk0e417fc73bvjdkg/env)
-and look for `HOST_KEY`. If it is not there, add it with any long random
-string. The current key is in the Render startup banner on the `Host key:`
-line.
-
-**It matters less than it did** — you sign in as a real account now, so the key
-is the back way in rather than the only way. It is still two minutes.
-
-### 2. UPLOAD THE TWO LOGOS — you asked to be reminded
+### 1. UPLOAD THE TWO LOGOS — you asked to be reminded
 
 **Only you can do these and the field is already waiting.** Built 17 September
 2026: a venue card now takes a **Photo overlay** — Venues tab, open a venue,
@@ -59,7 +44,7 @@ baked into the stored bytes, so **correcting a venue's overlay corrects every
 photograph that already exists** — rule 11, for free, where a copy written at
 publish time would have had to be regenerated. Do not rebuild it as a bake.
 
-### 3. WHAT A DJ SET COSTS — the only thing left on it
+### 2. WHAT A DJ SET COSTS — the only thing left on it
 
 **The address is live.** `dj.pubchampions.co.uk` answers on the service with
 `DJ_HOST` set, so its bare address is the Jukebox door rather than a redirect
@@ -73,7 +58,7 @@ asks only that somebody is signed in. Nothing gates it on a tier, deliberately
 — putting it behind `FEATURES.QUIZ` would answer the pricing question by
 accident, in the hardest place to find later. See [`docs/dj.md`](docs/dj.md).
 
-### 4. TURN THE MONEY ON — five environment variables, about forty minutes
+### 3. TURN THE MONEY ON — five environment variables, about forty minutes
 
 **Nothing else on the money path matters until this is done, and nobody but you
 can do it.** Stripe is wired end to end and tested; the keys are not set, so
@@ -115,44 +100,23 @@ deliberately: a script that mints prices can mint the wrong one on a rerun, and
 there are three of them, made once, in a form that shows you what you are
 charging before you save it.
 
-### 5. ONE EMAIL KEY, and a new signup stops being silent
+### 4. SEND YOURSELF ONE EMAIL — the key and the DNS are both done
 
-**Twenty minutes, same page, and it is the difference between a signup and a
-person.** Today the app sends nothing: no welcome, no password link in their
-inbox, no receipt, no card-failed notice — and **you are not told anybody signed
-up**. `src/email.js` is live with two providers behind one interface; it needs
-one key and a from-address.
+**Checked 23 September 2026.** `BREVO_API_KEY` is set on Render, and with no
+`EMAIL_FROM` the app sends as `Quizporium <no-reply@quizporium.co.uk>`, built
+off `PUBLIC_URL` (`fromAddress()` in `src/email.js`) — so `emailConfigured()` is
+true on the live app. The domain is authenticated for Brevo in DNS: the
+`brevo-code` TXT, both DKIM CNAMEs (`brevo1`/`brevo2._domainkey`) and DMARC are
+all there, and `mark@quizporium.co.uk` reaches you through the registrar's
+forwarding (the MX records).
 
-```
-BREVO_API_KEY   or   RESEND_API_KEY
-EMAIL_FROM      Quizporium <no-reply@quizporium.co.uk>
-```
+**What DNS cannot prove is that a message arrives.** One minute: sign out, press
+*Email me a sign-in link* with your own address, and check it lands — in the
+inbox, not spam. If it does not, the Brevo dashboard's *Transactional → Logs*
+says why, and the usual answer is that `no-reply@quizporium.co.uk` needs adding
+under *Senders*. **Delete this step once a link has arrived.**
 
-**Until it is set, a signup from the live app is told to get in touch** — the
-password link no longer comes back in the page, because on a deployed app that
-let anybody activate an account on an address they do not own.
-
-**The domain half is already done**, so this is the key and the DNS records and
-nothing else: `quizporium.co.uk` is live with `PUBLIC_URL` pinned to it, which
-is what `fromAddress()` falls back to and what every emailed link is built
-from. SPF, DKIM and DMARC go on that domain, once, wherever it is hosted —
-whichever provider you pick will print the exact three records to paste.
-
-### 6. TWO FACTS FOR THE LEGAL PAGES, and they are on screen right now
-
-`[your trading name]` and `[support email]` render **live** on terms, privacy and
-refunds, to somebody deciding whether to pay:
-
-- **your trading name** — or your own name, if you trade as yourself
-- **the support email address** you want on them
-
-They are marked `class="ld-legal-todo"` so they are greppable, and
-`test/legal-pages.test.js` asserts a placeholder can never go unmarked. It
-deliberately does **not** fail while one is unfilled: a suite left red until you
-answer is one people learn to ignore.
-
-
-### 7. DECIDE WHAT GETS FIXED OFF THE SWEEPS — the list is written, nothing is actioned
+### 5. DECIDE WHAT GETS FIXED OFF THE SWEEPS — the list is written, nothing is actioned
 
 **Blocked on the host, which is why it is above everything else.** Two passes on
 5-7 September 2026 found roughly 160 faults between them; **none has been
@@ -171,7 +135,7 @@ shapes worth knowing before starting: fixing the symptom rather than the
 neighbour, fixing one path and missing the parallel one, and believing the diff
 instead of the screen. **One fix, one check that fails first, one push.**
 
-### 8. EIGHT `.mp3` FILES, whenever you have made them
+### 6. EIGHT `.mp3` FILES, whenever you have made them
 
 The soundboard's synthesised noises are the FALLBACK and are never deleted, so
 this is a drop-in: `public/assets/stings/` with these exact names, any subset,
@@ -187,7 +151,7 @@ commercial use** — this repo is public and the app is sold. If whatever you us
 is murkier than that, say so and they can be served from the private repo
 instead (about an hour's work, same filenames).
 
-### 9. THE CATALOGUE IS THINNER THAN THE LADDER PROMISES — and only you can fix it
+### 7. THE CATALOGUE IS THINNER THAN THE LADDER PROMISES — and only you can fix it
 
 Counted on 13 September 2026: **10 multi-round quizzes**, 24 single rounds, 8
 bingo games. Silver's promise is *"every pack there is, and every new one

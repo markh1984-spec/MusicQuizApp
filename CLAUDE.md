@@ -4733,7 +4733,7 @@ banner now says so (`hostKeyIsTemporary()`).
 
 **If he says his bookmark stopped working, this is why.** The current key is in
 the Render startup banner on the `Host key:` line. The fix is the `HOST_KEY` environment
-variable, a step in TODO.md.
+variable, and it is set.
 
 ---
 
