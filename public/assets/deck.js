@@ -113,6 +113,15 @@ export function deckPack() {
     cardCols: HAND,
     // Dealt in suit-and-rank order — see `makeCard()` for why not at render.
     sortCard: true,
+    /*
+     * EVERY ROUND IS A GAME, AND EVERY GAME PAYS. Thirteen cards is one line,
+     * so a round has one prize and nothing else to play for — *"can I play
+     * multiple games of card bingo?"* is New round. DECLARED here rather than
+     * read off `kind` or the shape (a kind test written when there were two
+     * games has cost this repo six faults); `rewardFor()` in `bingo.js` reads
+     * it so a game past the end of the list pays the last drink, never nothing.
+     */
+    everyRoundPays: true,
     tracks: DECK.map((c) => ({ ...c })),
   };
 }

@@ -304,20 +304,14 @@ try {
   // -------------------------------------------------------- RUNNING ORDER
   section('N. QUIZ → BINGO → QUIZ — the drinks travel');
   /*
-   * FIVE DRINKS, BECAUSE THIS NIGHT PAYS FIVE PLACES — 2 winners, one bingo
-   * stop, 2 winners again.
-   *
-   * It was three, and passed because the venue's list used to be WALKED by
-   * counting the vouchers a night had minted: one quiz winner spent one drink,
-   * so the next part started at the second. That is the arithmetic
-   * `prize-parts.js` records as wrong — a tie for first or a row scoring zero
-   * moved every later part onto a different drink, silently.
-   *
-   * The deal is by what a part PAYS now, fixed at launch, so a quiz that
-   * recognises two places reserves two whether or not two teams score. Three
-   * drinks across a night wanting five therefore leaves the LAST game nothing,
-   * which is correct and is asserted on its own below — but it is not this
-   * section's subject, which is vouchers surviving a part boundary.
+   * EACH GAME IS DEALT THE VENUE'S LIST FROM THE TOP — per game, not per
+   * night, set 23 September 2026. The venue's list used to be shared DOWN the
+   * night, first by counting minted vouchers (a tie or a silent row moved every
+   * later part, silently) and then by what each part pays — which cut card
+   * bingo, one prize a round, to a single drink and left its second game's
+   * winner with nothing. So every part starts at the top: this night deals
+   * [pint, half] [pint] [pint, half]. This section's subject is still vouchers
+   * surviving a part boundary.
    */
   await setRewards(['A pint', 'A half', 'Crisps', 'A shot', 'A cola']);
   const ro = await host('launchOrder', { segments: [
@@ -346,13 +340,13 @@ try {
   const all = Object.values(hvF.vouchers || {});
   check('at the final, the bingo drink is still held (carried) beside the quiz drink', all.some((v) => v.carried) && all.filter((v) => !v.carried).length === 1, JSON.stringify(all.map((v) => [v.name, v.place, v.reward, v.carried ? 'carried' : ''])));
   /*
-   * AND NO DRINK IS ON TWO PARTS. Each game was dealt its own slice of the
-   * venue's list — [pint, half] [crisps] [shot, cola] — and starts at its own
-   * first place, so the same words can never be handed out twice however the
-   * scoring falls.
+   * AND THE SAME DRINK MAY BE ON EVERY PART — which REVERSES the assertion that
+   * stood here, that no drink was handed out twice across the night. Each game
+   * pays from the top of the list, so each game's first place is the venue's
+   * first drink; how many pints an evening costs is the host's and the venue's
+   * to agree, never the software's to ration.
    */
   const words = all.map((v) => v.reward);
-  check('and no drink was handed out twice across the night', new Set(words).size === words.length, JSON.stringify(words));
   /*
    * SORTED, BECAUSE `state.vouchers` IS KEYED BY A RANDOM CODE.
    *
@@ -364,12 +358,12 @@ try {
    * drinks right.
    *
    * What this section is actually asserting is WHICH drinks the night paid —
-   * one out of each part's own slice — and that is a set. A guard that pins an
-   * order nothing promises is a guard that goes red about nothing, which is
-   * how a suite teaches you to ignore it.
+   * each part's first place, off the TOP of the list — and that is a set. A
+   * guard that pins an order nothing promises is a guard that goes red about
+   * nothing, which is how a suite teaches you to ignore it.
    */
-  check('each part paid out of its OWN slice of the list',
-    [...words].sort().join(' | ') === 'A pint | A shot | Crisps', JSON.stringify(words));
+  check('each part paid its first place off the TOP of the list, per game',
+    [...words].sort().join(' | ') === 'A pint | A pint | A pint', JSON.stringify(words));
   const daveAll = await phoneCodes(rp[0], rcode);
   check("Dave's phone shows every drink he won tonight, quiz and bingo", daveAll.length === all.filter((v) => v.winnerId === rp[0].id).length, `${daveAll.length} on the phone vs ${all.filter((v) => v.winnerId === rp[0].id).length} owed`);
   // The archive holds the codes: redeem the quiz drink through the bar and the

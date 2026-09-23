@@ -831,6 +831,24 @@ export class BingoGame {
   }
 
   /**
+   * WHICH DRINK THE Nth PRIZE PAYS — ONE answer, asked by the mint and by the
+   * catch-up in `payWinnersOwed()`, so the two cannot disagree about it.
+   *
+   * Past the end of the list a MUSIC bingo stage mints nothing, deliberately:
+   * a free extra line before the house is a real thing. A DECK is different —
+   * every round is a game with one prize (`everyRoundPays`, declared on the
+   * pack), so a card-bingo game played past the drinks set for it pays the
+   * LAST one again. Without this the second game of card bingo on a night of
+   * three games found an empty list and its winner got nothing on their phone.
+   */
+  rewardFor(prizeIndex) {
+    const list = this.rewardList();
+    if (list[prizeIndex]) return list[prizeIndex];
+    if (this.pack && this.pack.everyRoundPays && list.length) return list[list.length - 1];
+    return '';
+  }
+
+  /**
    * Change what tonight is playing for, mid-game — see the same method on
    * `engine.js`'s Engine class, and the same catch-up for the same reason.
    *
@@ -902,7 +920,6 @@ export class BingoGame {
   }
 
   payWinnersOwed() {
-    const rewards = this.rewardList();
     const held = Object.values(this.state.vouchers || {});
     for (const w of this.state.prizeWinners || []) {
       // A record from before prizes counted across rounds has no prizeIndex
@@ -932,7 +949,7 @@ export class BingoGame {
        * it said afterwards is editing history rather than correcting a
        * promise.
        */
-      const now = rewards[slot];
+      const now = this.rewardFor(slot);
       if (now && !mine.redeemedAt && mine.reward !== now) mine.reward = now;
     }
   }
@@ -950,7 +967,7 @@ export class BingoGame {
    * and must not mint a voucher for nothing.
    */
   issueVoucher(prizeIndex, playerId, name, stageIndex = prizeIndex) {
-    const reward = this.rewardList()[prizeIndex];
+    const reward = this.rewardFor(prizeIndex);
     if (!reward) return;
     if (!this.state.vouchers) this.state.vouchers = {};
     let code = newVoucherCode();

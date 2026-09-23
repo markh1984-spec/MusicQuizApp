@@ -1406,22 +1406,19 @@ export class Session {
       }
     }
     /*
-     * AND THE VENUE'S LIST IS DEALT ACROSS THE PARTS THAT BROUGHT NONE.
+     * AND EACH PART THAT BROUGHT NONE IS DEALT THE VENUE'S LIST FROM THE TOP.
      *
      * A part carries its own prizes when the host has opened *What they win*;
-     * one that has not falls back to the night's list — and on a night of one
-     * part that is exactly right and exactly what it always was.
+     * one that has not falls back to the night's list — per GAME, never a
+     * share of the night: *"drinks should be assigned per game and not per
+     * night."* The quiz's first place and the bingo's first line are both the
+     * venue's first drink, and how many that comes to over an evening is the
+     * host's and the venue's to settle. This used to SPLIT the list down the
+     * night, which cut card bingo — one prize a round — to a single drink, so
+     * its second game's winner got nothing. `prize-parts.js` records both.
      *
-     * On a night of SEVERAL it is not: every part would start at the top and
-     * a quiz then the bingo would both hand out the venue's first drink. That
-     * was `prizesBefore`'s job and `prize-parts.js` records why counting
-     * minted vouchers was the wrong way to do it. So the split is worked out
-     * HERE, once, from what each part PAYS — known at launch, the same every
-     * time, and unmoved by a tie for first or a room where nobody scored.
-     *
-     * ONLY THE PARTS THAT BROUGHT NOTHING TAKE FROM THE DEAL, and the deal
-     * still counts their share: a host who typed the bingo's three drinks by
-     * hand has not changed where the quiz's three come from.
+     * Dealt by what each part PAYS, known at launch and unmoved by a tie or a
+     * silent room. ONLY THE PARTS THAT BROUGHT NOTHING TAKE FROM THE DEAL.
      */
     if (list.length > 1 && list.some((seg) => !Array.isArray(seg.rewards))) {
       const dealt = dealPrizes(opts.rewards || [], list.map((seg) => paysOf(seg, {

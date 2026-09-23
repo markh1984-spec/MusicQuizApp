@@ -28,8 +28,22 @@
  * *"I can keep track of how many prizes I've given out over 2-3 games no
  * problem at all and putting this into code seems overly restrictive"* — so
  * the counting is gone. Each part carries its OWN list and starts at its own
- * first place. This file is only the DEAL: how the venue's standing list is
- * spread across tonight's games to fill the table in before anybody edits it.
+ * first place. This file is only the DEAL: what each of tonight's games is
+ * handed from the venue's standing list before anybody edits the table.
+ *
+ * ---
+ *
+ * AND THE DRINKS ARE ASSIGNED PER GAME, NOT PER NIGHT — set 23 September 2026:
+ * *"I actually think then that drinks should be assigned per game and not per
+ * night."* The deal used to SHARE the venue's one list down the night — the
+ * quiz the first three, the next game the three after — and a card-bingo game
+ * pays one prize a round, so its share was ONE: the second game of card bingo
+ * found nothing on its list and its winner got nothing on their phone, with
+ * nothing thrown. What the venue and the host agree the night costs is theirs
+ * to decide, never the software's, so **EVERY GAME IS DEALT FROM THE TOP.**
+ * The quiz's first place and the bingo's first line are both the venue's first
+ * drink. **Do not put the sharing back to "save" drinks** — that is the host's
+ * call on the night, and the typed table is where he makes it.
  *
  * THE DEAL IS BY WHAT A PART PAYS, NOT BY WHAT IT PAID. `pays` is known at
  * launch — the Winners setting for a quiz, the card's stopping points for a
@@ -38,7 +52,7 @@
  */
 
 /**
- * Deal a venue's list across the night's parts.
+ * Deal a venue's list to each of the night's parts — every one FROM THE TOP.
  *
  * @param {string[]} list   the venue's prizes, in the order they go out
  * @param {number[]} pays   how many each part pays, in running order
@@ -50,11 +64,10 @@
  */
 export function dealPrizes(list, pays) {
   const all = (Array.isArray(list) ? list : []).map((r) => String(r || '').trim());
-  let at = 0;
   return (Array.isArray(pays) ? pays : []).map((n) => {
     const want = Math.max(0, Math.floor(Number(n) || 0));
-    const mine = all.slice(at, at + want);
-    at += want;
+    // FROM THE TOP, every part — per game, never a share of the night.
+    const mine = all.slice(0, want);
     while (mine.length && !mine[mine.length - 1]) mine.pop();
     return mine;
   });

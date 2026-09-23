@@ -313,10 +313,14 @@ try {
   check('tracks are called and a prize is claimed', claimed >= 1, `${called} called, ${claimed} claimed`);
   const allv = await vouchers();
   const fresh = allv.filter((v) => !v.carried);
-  check('the bingo takes the NEXT drink, not a pint again',
-    fresh.length >= 1 && fresh[0].reward === DRINKS[3], fresh.map((v) => v.reward).join(', ') || 'none');
-  check('nothing was handed out twice',
-    new Set(allv.map((v) => v.reward)).size === allv.length, allv.map((v) => v.reward).join(', '));
+  /*
+   * PER GAME, NOT PER NIGHT (23 September 2026) — this used to assert the
+   * bingo took the NEXT drink after the quiz's three, and that nothing went
+   * out twice. Every game is dealt from the TOP now, so the bingo's first line
+   * is the venue's first drink, exactly like the quiz's first place.
+   */
+  check('the bingo starts at the TOP of the list too — per game, not per night',
+    fresh.length >= 1 && fresh[0].reward === DRINKS[0], fresh.map((v) => v.reward).join(', ') || 'none');
 
   await screen.waitForTimeout(800);
   await screen.screenshot({ path: `${SHOTS}/6-screen-bingo.png` });
@@ -499,11 +503,15 @@ try {
         body: JSON.stringify({ playerId: p.id, token: p.token, joinCode: code3 }),
       });
       const cj = await c.json().catch(() => ({}));
-      return Boolean(cj && (cj.prize || cj.valid));
+      /* ONLY A PAID CLAIM IS A WIN. A right hand from a table already holding
+       * a prize comes back `valid` WITH a `reason` and takes nothing; counting
+       * it as a win is how a probe once reported three winners and two drinks. */
+      return Boolean(cj && cj.valid && !cj.reason);
     };
 
     const played = [];
     const owedAfter = [];
+    const snaps = [];
     for (let part = 0; part < 3; part += 1) {
       /*
        * THE PROJECTOR IS ASKED WITH THE JOIN CODE — `role=screen` with no `g=`
@@ -553,22 +561,35 @@ try {
         }
         check('the quiz part plays to its own boundary', true);
       } else if (g === 'cards') {
-        /* THIRTEEN IS ONE LINE OF ALL THIRTEEN — a hand is complete or it is
-         * not, so the deck is turned until somebody has the lot. */
-        let turned = 0;
-        let claimed = 0;
-        for (let i = 0; i < 56 && !claimed; i += 1) {
-          const d = await host3('draw');
-          if (d.status !== 200 || d.body === null) break;
-          turned += 1;
-          for (const p of crowd) {
-            if (await marks(p)) { claimed += 1; break; }
+        /*
+         * THREE GAMES OF CARD BINGO, WITH NEW ROUND — *"can I play multiple
+         * games of card bingo?"* A deck is dealt ONE drink (one prize a round),
+         * and before 23 September the second game found nothing on its list:
+         * a hand completed, the claim accepted, nothing on the winner's phone.
+         * Thirteen is one line of all thirteen, so each game is turned until
+         * somebody who has not won yet completes the lot.
+         */
+        for (let game = 1; game <= 3; game += 1) {
+          if (game > 1) {
+            const nr = await host3('newRound');
+            check(`New round deals card bingo game ${game}`, nr.status === 200, `${nr.status}`);
+          }
+          let turned = 0;
+          let paid = false;
+          for (let i = 0; i < 56 && !paid; i += 1) {
+            const d = await host3('draw');
+            if (d.status !== 200 || d.body === null) break;
+            turned += 1;
+            for (const p of crowd) {
+              if (await marks(p)) { paid = true; break; }
+            }
+          }
+          check(`card bingo game ${game} is won AND PAID`, paid, `${turned} turned`);
+          if (game === 1) {
+            await screen3.waitForTimeout(600);
+            await screen3.screenshot({ path: `${SHOTS}/8-screen-cards.png` });
           }
         }
-        check('the deck deals and a hand is completed', turned > 0 && claimed >= 1,
-          `${turned} turned, ${claimed} claimed`);
-        await screen3.waitForTimeout(600);
-        await screen3.screenshot({ path: `${SHOTS}/8-screen-cards.png` });
       } else if (g === 'bingo') {
         const st3 = await view3();
         const list = (st3.tracks || st3.callSheet || []).map((t) => t.id || t);
@@ -594,6 +615,10 @@ try {
         check(`Continue out of the ${g} part`, nxt.status === 200, JSON.stringify(nxt.body).slice(0, 70));
         await wait(500);
       }
+      /* A quiz mints at the Continue press and a bingo or a deck as it goes,
+       * so the list AFTER each boundary is what the night had paid by then —
+       * and the difference between two is what that one game paid. */
+      snaps.push(await vouchers3());
     }
 
     check('all three games reached the projector, each as its own part',
@@ -603,12 +628,33 @@ try {
     const words = end.map((v) => v.reward);
     check("every drink handed out is one of the venue's own",
       words.length > 0 && words.every((w) => DRINKS.includes(w)), words.join(', ') || 'none');
-    check('NOTHING WAS HANDED OUT TWICE ACROSS THE WHOLE NIGHT',
-      new Set(words).size === words.length, words.join(', '));
-    check('the three games worked DOWN the list rather than each starting at a pint',
-      words.filter((w) => w === DRINKS[0]).length <= 1, words.join(', '));
-    check('and the night paid more than the quiz alone', words.length > 3,
-      `${words.length} drinks: ${words.join(', ')}`);
+    /*
+     * PER GAME, NOT PER NIGHT. These REVERSE the assertions that stood here —
+     * that nothing went out twice and the games worked DOWN one list. Each
+     * game is dealt from the top, and how many drinks that comes to is the
+     * host's and the venue's to agree.
+     */
+    const codesIn = (list) => new Set(list.map((v) => v.code));
+    const paidIn = (from, to) => to.filter((v) => !codesIn(from).has(v.code));
+    const quizPaid = snaps[0] || [];
+    const cardsPaid = paidIn(snaps[0] || [], snaps[1] || []);
+    const bingoPaid = paidIn(snaps[1] || [], snaps[2] || []);
+    check('the quiz pays its three from the top of the list',
+      JSON.stringify([...quizPaid].sort((a, b) => a.place - b.place).map((v) => v.reward))
+        === JSON.stringify(DRINKS.slice(0, 3)),
+      quizPaid.map((v) => v.reward).join(', '));
+    check('THREE GAMES OF CARD BINGO PAID THREE DRINKS — none left blank',
+      cardsPaid.length === 3 && cardsPaid.every((v) => v.reward),
+      cardsPaid.map((v) => `${v.reward}->${v.name}`).join(', ') || 'none');
+    check('and to three DIFFERENT tables — one each while anybody has none',
+      new Set(cardsPaid.map((v) => v.winnerId)).size === 3,
+      cardsPaid.map((v) => v.name).join(', '));
+    check('the card bingo starts at the TOP of the list too',
+      cardsPaid.length > 0 && cardsPaid.every((v) => v.reward === DRINKS[0]),
+      cardsPaid.map((v) => v.reward).join(', '));
+    check('and so does the music bingo',
+      bingoPaid.length >= 1 && bingoPaid[0].reward === DRINKS[0],
+      bingoPaid.map((v) => v.reward).join(', ') || 'none');
     console.log(`     drinks owed after each part: ${owedAfter.join(' -> ')}`);
     check('nothing the console asked for was missing', misses.length === 0,
       [...new Set(misses)].slice(0, 4).join(' '));

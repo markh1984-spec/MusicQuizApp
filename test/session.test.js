@@ -410,16 +410,17 @@ test('a part pays the list IT was given, starting at its own first place', () =>
 });
 
 /*
- * AND A PART THAT BROUGHT NO LIST TAKES ITS SHARE OF THE VENUE'S, DEALT BY
- * WHAT IT PAYS.
+ * AND A PART THAT BROUGHT NO LIST IS DEALT THE VENUE'S FROM THE TOP — PER
+ * GAME, NOT PER NIGHT.
  *
- * The default when nobody opens *What they win*: the venue's standing list is
- * spread across the night in order, a part at a time. Dealt from `pays` — the
- * Winners setting and the card's stopping points, both known at launch — so
- * the same night deals the same way whoever ties and whoever scores nothing,
- * which is the whole difference from the `prizesBefore` this replaces.
+ * *"I actually think then that drinks should be assigned per game and not per
+ * night."* This REVERSES the test it replaces, which asserted the bingo was
+ * dealt the venue's NEXT two after the quiz's — a share of one list down the
+ * night. That share cut card bingo, one prize a round, to a single drink, and
+ * the second game's winner got nothing. How many drinks an evening costs is
+ * the host's and the venue's to decide; each game starts at the top.
  */
-test('a part with no list of its own is dealt its share of the venue list', () => {
+test('a part with no list of its own is dealt the venue list from the top', () => {
   const it = withFileSession();
   try {
     it.session.launchRunningOrder([
@@ -438,8 +439,8 @@ test('a part with no list of its own is dealt its share of the venue list', () =
     playQuizSegmentToRoundBoard(it.session, id);
     it.session.advanceOrder();
 
-    assert.deepEqual(it.session.engine.rewardList(), ['Three', 'Four'],
-      'the bingo was not dealt the next two — its own two stopping points');
+    assert.deepEqual(it.session.engine.rewardList(), ['One', 'Two'],
+      'the bingo was dealt a share of the night instead of its own two from the top');
   } finally {
     it.done();
   }
@@ -451,8 +452,8 @@ test('a part with no list of its own is dealt its share of the venue list', () =
  * This is the fault `prizesBefore` had, asserted directly so it cannot come
  * back: the quiz below pays its three places to FOUR teams, because a tie for
  * first is paid in full by decision. Counting vouchers put the bingo on the
- * venue's fifth drink. Dealing by places leaves it on the fourth, where the
- * host who wrote the list down expects it.
+ * venue's fifth drink. Per game, the bingo starts at the TOP whatever the quiz
+ * paid — so a tie still moves nothing, which is what this guards.
  */
 test('a tie for first does not move what the next game pays', () => {
   const it = withFileSession();
@@ -479,8 +480,51 @@ test('a tie for first does not move what the next game pays', () => {
 
     const paid = Object.values(it.session.engine.state.vouchers || {});
     assert.ok(paid.length >= 3, `the quiz paid ${paid.length} vouchers, expected at least three`);
-    assert.deepEqual(it.session.engine.rewardList(), ['Four', 'Five'],
-      'a tie for first moved the bingo off the drinks the venue listed for it');
+    assert.deepEqual(it.session.engine.rewardList(), ['One', 'Two'],
+      'a tie for first moved the bingo off the top of the venue list');
+  } finally {
+    it.done();
+  }
+});
+
+/*
+ * AND EVERY GAME OF CARD BINGO PAYS — the failure the per-game rule was set
+ * for, on the night it was found: a quiz, card bingo and music bingo.
+ *
+ * A deck pays one prize a round, so it is dealt ONE drink. Play three games of
+ * card bingo with New round and the second found nothing on its list: a hand
+ * completed, the claim accepted, and nothing on the winner's phone. A deck
+ * declares `everyRoundPays`, so past its list it pays the LAST drink again.
+ * Music bingo does NOT — a free extra line before the house is deliberate.
+ */
+test('every game of card bingo pays, and music bingo keeps its free extra line', () => {
+  const it = withFileSession();
+  try {
+    it.session.launchRunningOrder([
+      { kind: 'quiz', order: [{ packId: 'quiz-a', round: 0 }] },
+      { kind: 'cards', packId: 'deck' },
+      { kind: 'bingo', packId: 'bingo-a', prizes: 2 },
+    ], {
+      venue: "The Nag's Head",
+      winners: 3,
+      rewards: ['One', 'Two', 'Three', 'Four', 'Five'],
+    });
+    const { id } = it.session.engine.join({ name: 'Quizteam Aguilera' });
+    playQuizSegmentToRoundBoard(it.session, id);
+    it.session.advanceOrder();
+
+    assert.deepEqual(it.session.engine.rewardList(), ['One'],
+      'the card bingo was not dealt its one drink from the top');
+    assert.equal(it.session.engine.rewardFor(0), 'One', 'the first game of card bingo pays nothing');
+    assert.equal(it.session.engine.rewardFor(1), 'One',
+      'the SECOND game of card bingo pays nothing — its winner gets a blank phone');
+    assert.equal(it.session.engine.rewardFor(2), 'One', 'the third game of card bingo pays nothing');
+
+    it.session.advanceOrder();
+    assert.deepEqual(it.session.engine.rewardList(), ['One', 'Two'],
+      'the music bingo was not dealt its own two from the top');
+    assert.equal(it.session.engine.rewardFor(2), '',
+      'music bingo paid a stage nobody put a prize on — the free extra line is deliberate');
   } finally {
     it.done();
   }

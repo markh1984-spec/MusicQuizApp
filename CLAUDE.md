@@ -2382,13 +2382,9 @@ bingo winners on thursday didn't receive a QR code"*.
   THE WORDS.** **Updated in place, never a second voucher**, and **a REDEEMED
   one is left alone.**
 - **THE CARD SHAPE CHOOSES THE PRIZE COUNT, A NUMBER PER SHAPE RATHER THAN A
-  FORMULA** — `defaultPrizes()`: 3x3 → 1, 4x4 → 2, 5x5 → 5, 4x6 → 4, 3x8 → 3.
-  **The table lives BESIDE the shape, never in the console**, so a sixth names
-  its own default rather than inheriting an answer nobody chose. **Clamped**, so
-  it cannot promise a prize the geometry will not pay — and **the picker CLAMPS
-  too**, or a count carried onto a smaller card names an option that no longer
-  exists and the select goes silently blank.
-  **[`docs/bingo.md`](docs/bingo.md)**.
+  FORMULA** — `defaultPrizes()`. **The table lives BESIDE the shape, never in
+  the console**, and it is **clamped — and the picker CLAMPS too**, or the
+  select goes silently blank. **[`docs/bingo.md`](docs/bingo.md)**.
 - **AND THE HOST CHOOSES WHICH LINES EACH PAYS ON — `checkStages()` in
   `prize-parts.js`, a dropdown per prize in the table.** The full house is
   always LAST and never offered; line counts strictly RISE; none above
@@ -2567,6 +2563,12 @@ the prizes."*
   game.**
 - **A ROUND'S PRIZE IS THE NEXT ON THE TABLE — `prizesGiven`.** Keyed on the
   STAGE, round two paid the pint again.
+- **DRINKS ARE PER GAME, NOT PER NIGHT — `dealPrizes()` deals EVERY game from
+  the TOP**, reversing the share down the night, which cut card bingo to ONE
+  drink so its second game's winner got nothing. **Do not put the sharing
+  back** — what an evening costs is the host's and the venue's call. **A deck
+  declares `everyRoundPays`**: past its list it pays the last drink
+  (`rewardFor()`), its box says *Each game*. Music bingo keeps its free line.
 - **A SCORE FIXED AT THE FINAL MOVES THE DRINKS — `adjustScore()`.** The
   board is cached until `changed()`, which runs AFTER, so the first build paid
   off a stale board. **EVERY SCORE WRITE GOES THROUGH `bumpScore()` /
@@ -2612,11 +2614,9 @@ name, and `LAUNCHERS.cards` builds a `BingoGame`, so **not one rule in
   those as EMOJI, which is *drawn, never emoji* again. It is still NAMED `7♥`.
   **The pip layout is centuries old and free; the SHAPES are drawn here**, this
   app being SOLD.
-- **AND THE COURT CARDS GET NO DRAWN FIGURE — the evidence is in
-  [`docs/bingo.md`](docs/bingo.md).** J/Q/K take the ACE's treatment: one big
-  pip under a big index. **ONE index, where a card has two**, and **the PIPS
-  pay for the size.** **The pip field is INSET BELOW the index** (0.30–0.84,
-  pivot 0.57) — enlarge one and it lands on the other. **Measure after.**
+- **AND THE COURT CARDS GET NO DRAWN FIGURE** — J/Q/K take the ACE's
+  treatment, **ONE index**, the pip field **INSET BELOW** it. **Measure after.**
+  [`docs/bingo.md`](docs/bingo.md).
 - **A DROPPED-IN PICTURE BEATS THE DRAWING — `public/assets/cards/`, the
   SOUNDBOARD'S interface exactly.** All 52, not only the courts. **The DRAWN one
   is the FALLBACK, never deleted**; **a manifest read ONCE, never 52

@@ -38,6 +38,15 @@ import { bestBingoShape, esc } from './client.js';
 import { partsOfSlots } from './console-tonight-mix.js';
 import { FULL_HOUSE, checkStages, dealPrizes, defaultStages, moveStage, paysOf, stageChoices, stageWord } from './prize-parts.js';
 
+/*
+ * CARD BINGO'S ONE BOX PAYS EVERY GAME, SO IT SAYS SO. A deck pays a prize a
+ * round and a round past its list pays the last drink again (`rewardFor()` in
+ * `bingo.js`), so "1st" over it read as first place in ONE game — the wrong
+ * thing on the control where the host sets what every game of card bingo is
+ * worth. Named per kind, like `UNIT` on a pack card.
+ */
+const boxWord = (part, at) => (part.kind === 'cards' ? 'Each game' : placeWord(at + 1));
+
 /** "1st", "2nd", "3rd" — the same wording the venue card's own prize rows use. */
 export function placeWord(n) {
   const v = n % 100;
@@ -173,7 +182,7 @@ export function prizeTableInto(box, parts, { open, venueName, venueList }) {
       // "the line", "the full house" — and what the host chose; a quiz's by
       // its place.
       const chips = Array.from({ length: n }, (_, at) => `<span class="lb-pz${
-        list[at] ? '' : ' lb-pz-none'}"><i>${esc(part.lines ? stageWord(part.lines[at]) : String(at + 1))}</i>${
+        list[at] ? '' : ' lb-pz-none'}"><i>${esc(part.lines ? stageWord(part.lines[at]) : (part.kind === 'cards' ? boxWord(part, at) : String(at + 1)))}</i>${
         esc(list[at] || 'Nothing set')}</span>`).join('');
       return `<span class="lb-pz-line"><b>${esc(partName(part))}</b>${chips}</span>`;
     }
@@ -206,7 +215,7 @@ export function prizeTableInto(box, parts, { open, venueName, venueList }) {
     return `<div class="lb-pz-row" data-part="${i}">
         <span class="lb-pz-who">${esc(partName(part))}</span>
         ${Array.from({ length: n }, (_, at) => `<label class="lb-pz-box">
-          <span>${esc(placeWord(at + 1))}</span>
+          <span>${esc(boxWord(part, at))}</span>
           <input class="lb-pz-in" data-part="${i}" data-at="${at}" type="text" maxlength="80"
             value="${esc(list[at] || '')}" placeholder="Nothing for this one">
         </label>`).join('')}
