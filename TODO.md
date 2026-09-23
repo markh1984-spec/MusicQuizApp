@@ -100,23 +100,7 @@ deliberately: a script that mints prices can mint the wrong one on a rerun, and
 there are three of them, made once, in a form that shows you what you are
 charging before you save it.
 
-### 4. SEND YOURSELF ONE EMAIL — the key and the DNS are both done
-
-**Checked 23 September 2026.** `BREVO_API_KEY` is set on Render, and with no
-`EMAIL_FROM` the app sends as `Quizporium <no-reply@quizporium.co.uk>`, built
-off `PUBLIC_URL` (`fromAddress()` in `src/email.js`) — so `emailConfigured()` is
-true on the live app. The domain is authenticated for Brevo in DNS: the
-`brevo-code` TXT, both DKIM CNAMEs (`brevo1`/`brevo2._domainkey`) and DMARC are
-all there, and `mark@quizporium.co.uk` reaches you through the registrar's
-forwarding (the MX records).
-
-**What DNS cannot prove is that a message arrives.** One minute: sign out, press
-*Email me a sign-in link* with your own address, and check it lands — in the
-inbox, not spam. If it does not, the Brevo dashboard's *Transactional → Logs*
-says why, and the usual answer is that `no-reply@quizporium.co.uk` needs adding
-under *Senders*. **Delete this step once a link has arrived.**
-
-### 5. DECIDE WHAT GETS FIXED OFF THE SWEEPS — now one table, re-checked
+### 4. DECIDE WHAT GETS FIXED OFF THE SWEEPS — now one table, re-checked
 
 **Blocked on the host: he picks.** The September sweeps found roughly 160
 faults. **Re-checked against the code on 22–23 September 2026, most turned out
@@ -136,7 +120,7 @@ shapes worth knowing before starting: fixing the symptom rather than the
 neighbour, fixing one path and missing the parallel one, and believing the diff
 instead of the screen. **One fix, one check that fails first, one push.**
 
-### 6. EIGHT `.mp3` FILES, whenever you have made them
+### 5. EIGHT `.mp3` FILES, whenever you have made them
 
 The soundboard's synthesised noises are the FALLBACK and are never deleted, so
 this is a drop-in: `public/assets/stings/` with these exact names, any subset,
@@ -152,7 +136,7 @@ commercial use** — this repo is public and the app is sold. If whatever you us
 is murkier than that, say so and they can be served from the private repo
 instead (about an hour's work, same filenames).
 
-### 7. THE CATALOGUE IS THINNER THAN THE LADDER PROMISES — and only you can fix it
+### 6. THE CATALOGUE IS THINNER THAN THE LADDER PROMISES — and only you can fix it
 
 Counted on 13 September 2026: **10 multi-round quizzes**, 24 single rounds, 8
 bingo games. Silver's promise is *"every pack there is, and every new one
