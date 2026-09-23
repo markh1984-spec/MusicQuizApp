@@ -1703,7 +1703,15 @@ export class Engine {
      * away for having already had one — which is a bingo rule, deliberately,
      * and not a rule about the night. See `startOrderSegment()`.
      */
-    const already = new Set(Object.values(s.vouchers).filter((v) => !v.carried).map((v) => v.winnerId));
+    /*
+     * AND ONLY A PLACING VOUCHER COUNTS AS "ALREADY PAID A PLACE". The
+     * funniest-photo drink (`funny`) and the binned draw's (`draw`) are not
+     * places: counting them here meant a team whose photo won the vote and who
+     * then finished FIRST got no first-place code — named in gold on the
+     * projector, nothing to show the bar. The same three flags
+     * `withdrawVouchersNoLongerOwed()` already leaves alone.
+     */
+    const already = new Set(Object.values(s.vouchers).filter((v) => !v.carried && !v.funny && !v.draw).map((v) => v.winnerId));
     for (const row of this.leaderboard()) {
       /*
        * POSITIONS, NOT THE TOP THREE ROWS. `rankPlayers` gives 1, 2, 2, 4 so

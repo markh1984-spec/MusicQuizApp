@@ -91,3 +91,20 @@ test('the SVG has a quiet zone and scales to any projector', () => {
   assert.match(svg, /shape-rendering="crispEdges"/);
   assert.ok(svg.includes('</svg>'));
 });
+
+/*
+ * A COLOUR IS A COLOUR, NEVER MARKUP. `/qr.svg?dark=…` hands whatever is in the
+ * query to `toSvg()`, which used to put it straight into `fill="…"` inside an
+ * `image/svg+xml` response — a reflected script injection on the app's own
+ * origin, found by the 23 September launch-path sweep. So the drawing itself
+ * refuses anything that is not a hex colour, whoever calls it.
+ */
+test('toSvg() draws only a hex colour, never whatever the query said', () => {
+  const svg = toSvg('x', { dark: '"/><script>alert(1)</script><path fill="', light: 'red; }</style><script>1</script>' });
+  assert.doesNotMatch(svg, /<script/i, 'the query string reached the SVG as markup');
+  assert.match(svg, /fill="#000000"/, 'a bad dark colour must fall back to the default');
+  assert.match(svg, /fill="#ffffff"/, 'a bad light colour must fall back to the default');
+  const fine = toSvg('x', { dark: '#0b0b12', light: '#FFF' });
+  assert.match(fine, /fill="#0b0b12"/);
+  assert.match(fine, /fill="#FFF"/);
+});

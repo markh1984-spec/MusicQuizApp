@@ -538,10 +538,33 @@ function paintCameraButton(s) {
   document.body.appendChild(btn);
 }
 
+/** A short, stable stamp of a list of words, for a card key. */
+function fingerprint(list) {
+  const text = (Array.isArray(list) ? list : []).join('\u0001');
+  let h = 0;
+  for (let i = 0; i < text.length; i += 1) h = (h * 31 + text.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+
 function screenKey(s) {
   if (s.game === 'dj') return djKey(s);
   if (playsACard(s)) return bingoKey(s);
-  if (s.phase === 'question' || s.phase === 'reveal') return `q:${s.roundIndex}:${s.questionIndex}:${s.phase}`;
+  /*
+   * A CARD KEY IS A FINGERPRINT OF WHAT IT DRAWS, NEVER ONE FIELD OF IT — the
+   * sixth sighting, and on the phone. `q:round:question:phase` did not change
+   * when the host pressed Ask again, so a phone that had answered never
+   * rebuilt: it kept its old pick painted and read "Locked in" for the whole
+   * replay, scoring nothing on the button that exists for the PA cutting out.
+   * The same key hid a mid-question CORRECTION (rule 11) from the options.
+   *
+   * So the clock's start is in the key — a redo is a new clock — and so is
+   * what the options SAY. Both are stable for the length of an ordinary
+   * question, so this cannot rebuild a card mid-answer.
+   */
+  if (s.phase === 'question' || s.phase === 'reveal') {
+    const started = (s.clock && s.clock.startedAt) || 0;
+    return `q:${s.roundIndex}:${s.questionIndex}:${s.phase}:${started}:${fingerprint(s.options)}`;
+  }
   /*
    * AND THE LOBBY'S KEY CARRIES WHETHER THE PHOTO IS STILL OWED.
    *

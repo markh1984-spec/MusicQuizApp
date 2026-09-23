@@ -442,7 +442,19 @@ export function encodeQr(text) {
  * @param {string} [opts.dark]
  * @param {string} [opts.light]
  */
+/**
+ * A COLOUR IS A HEX COLOUR OR IT IS THE DEFAULT — never whatever the query
+ * said. `/qr.svg?dark=…` hands the query straight in, and this used to put it
+ * into `fill="…"` unescaped inside an `image/svg+xml` response: a reflected
+ * script injection on the app's own origin (23 September 2026). Checked HERE
+ * rather than at the route, so the next caller is safe without knowing why.
+ */
+const HEX_COLOUR = /^#[0-9a-fA-F]{3,8}$/;
+const colour = (v, fallback) => (HEX_COLOUR.test(String(v ?? '')) ? String(v) : fallback);
+
 export function toSvg(text, { margin = 4, dark = '#000000', light = '#ffffff' } = {}) {
+  dark = colour(dark, '#000000');
+  light = colour(light, '#ffffff');
   const { matrix, size } = encodeQr(text);
   const total = size + margin * 2;
   const parts = [];

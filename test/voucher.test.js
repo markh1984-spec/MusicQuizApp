@@ -598,3 +598,25 @@ test('RESET SCORES HANDS THE NEXT GAME A CLEAN LEDGER, without destroying a priz
  * read `state.history`, not `roundIndex`/`questionIndex`, or it answers about
  * a question nobody was asked.
  */
+
+/*
+ * THE FUNNIEST PHOTO IS NOT A PLACE. `issueVouchers()` skips anybody already
+ * holding a voucher from THIS part — so Back off the final and forward again
+ * cannot mint twice — and it counted the funniest-photo drink as one of those.
+ * A team whose photo won the vote and who then finished first got no
+ * first-place code: the projector named them in gold, the bar had nothing to
+ * scan. Found by the 23 September launch-path sweep.
+ */
+test('winning the funniest photo does not cost a team its podium prize', () => {
+  const { engine, plays } = withGame({ reward: 'A pint' });
+  const rob = plays('Rob', 780);
+  plays('Bev', 290);
+  // The funny-photo drink, exactly as `closeVote()` writes it: no place.
+  engine.state.vouchers = engine.state.vouchers || {};
+  engine.state.vouchers.FUNNY1 = { code: 'FUNNY1', winnerId: rob.id, reward: 'Crisps', funny: true, place: null, issuedAt: 1 };
+  engine.finish();
+  const mine = Object.values(engine.state.vouchers).filter((v) => v.winnerId === rob.id);
+  assert.equal(mine.length, 2, `Rob should hold the funny drink AND first place, holds ${mine.map((v) => v.funny ? 'funny' : v.place).join(', ')}`);
+  assert.ok(mine.some((v) => v.place === 1), 'no first-place voucher for the winner');
+  assert.ok(mine.some((v) => v.funny), 'the funny-photo drink was taken away');
+});
