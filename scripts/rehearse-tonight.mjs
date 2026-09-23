@@ -441,6 +441,14 @@ try {
 
     const go3 = await con3.$eval('.lb-go', (n) => ({ off: n.disabled, text: n.textContent.trim() }));
     check('Launch is live for a three-game night', !go3.off, go3.text);
+    /*
+     * AND IT NAMES BOTH GAMES. It read *"2 rounds + 2 bingo games"* for this
+     * night — card bingo and music bingo counted as one thing, on the one
+     * control that says what is about to be played to a room.
+     */
+    check('Launch names the card bingo and the music bingo separately',
+      /card bingo/i.test(go3.text) && /music bingo/i.test(go3.text)
+        && !/2 bingo games/i.test(go3.text), go3.text);
     await con3.screenshot({ path: `${SHOTS}/7-three-game-bar.png` });
 
     await con3.locator('.lb-go').click();

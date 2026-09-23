@@ -2822,9 +2822,25 @@ export function launchBar() {
     const parts = segmentsFromSlots(lbSlots).length;
     const placed = (lbSlots || []).filter(Boolean);
     const rounds = placed.reduce((n, s2) => n + (s2.kind === 'quiz' ? (s2.rounds || []).length : 0), 0);
-    const games = placed.filter((slot) => slot.kind !== 'quiz').length;
+    /*
+     * AND IT NAMES EACH GAME RATHER THAN CALLING THEM ALL BINGO. `kind !==
+     * 'quiz'` made a night with one of each read *"2 bingo games"* — SEPARATE
+     * GAMES by decision, which is why `LAUNCHERS.cards` exists. NAMED per kind
+     * like `UNIT`, an unnamed kind falling back to "game", in the night's order.
+     */
+    const GAME_LABEL = {
+      bingo: ['music bingo', 'music bingo games'],
+      cards: ['card bingo', 'card bingo games'],
+    };
+    const perKind = new Map();
+    for (const slot of placed) {
+      if (slot.kind !== 'quiz') perKind.set(slot.kind, (perKind.get(slot.kind) || 0) + 1);
+    }
     const says = [rounds ? `${rounds} round${rounds === 1 ? '' : 's'}` : '',
-      games ? `${games} bingo game${games === 1 ? '' : 's'}` : ''].filter(Boolean).join(' + ');
+      ...[...perKind].map(([kind, n]) => {
+        const [one, many] = GAME_LABEL[kind] || ['game', 'games'];
+        return n === 1 ? one : `${n} ${many}`;
+      })].filter(Boolean).join(' + ');
     goBtn.disabled = !parts;
     goBtn.textContent = parts
       ? `Launch tonight — ${says || `${parts} part${parts === 1 ? '' : 's'}`}`
