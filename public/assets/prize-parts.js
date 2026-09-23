@@ -90,3 +90,75 @@ export function paysOf(part, { winners = 3, bingo = 0 } = {}) {
   if (kind === 'cards') return 1;
   return Math.max(1, Math.floor(Number(part && part.prizes) || Number(bingo) || 1));
 }
+
+/*
+ * ========================================================== WHICH LINES PAY
+ *
+ * A bingo prize is a STAGE: a number — how many complete lines it takes — or
+ * `'full'`, a full house. The Prizes control has always chosen HOW MANY; since
+ * 23 September 2026 the host also chooses WHICH: *"I select 3 and then select
+ * lines 2, 3 and full house."*
+ *
+ * **HERE, BECAUSE BOTH SIDES HAVE TO GIVE THE SAME ANSWER.** The console draws
+ * the choices and the server checks them at launch; two copies of "is this a
+ * list a room can play" is one that gets fixed while the other launches. The
+ * GEOMETRY — how many lines a card can hold — stays in `bingo.js` beside the
+ * card, and is handed in as `maxLine`.
+ */
+export const FULL_HOUSE = 'full';
+
+/** The stages nobody chose: a line, 2 lines, 3 … then a full house. */
+export function defaultStages(count) {
+  const n = Math.max(1, Math.floor(Number(count) || 1));
+  return [...Array(n - 1).keys()].map((i) => i + 1).concat(FULL_HOUSE);
+}
+
+/** "a line", "3 lines", "a full house" — one wording, used on every screen. */
+export function stageWord(stage) {
+  if (stage === FULL_HOUSE) return 'a full house';
+  return stage === 1 ? 'a line' : `${stage} lines`;
+}
+
+/**
+ * THE LIST ITSELF IF A ROOM CAN PLAY IT, `null` IF NOT — and `null` means "use
+ * the default", never "refuse the launch": a refusal there costs the night.
+ *
+ * - **exactly `count` of them, a full house LAST and only last** — the night
+ *   ends on the whole card, as pub bingo does, and that was the correction
+ *   when this was asked for (*"I meant full house actually not 5 lines"*);
+ * - **the line counts strictly RISING**, or the second prize is already won by
+ *   whoever took the first;
+ * - **none above `maxLine`**, the most lines a card holds WITHOUT being a full
+ *   house — past that a line prize and the full house are one prize twice.
+ */
+export function checkStages(list, count, maxLine) {
+  const n = Math.floor(Number(count) || 0);
+  if (!Array.isArray(list) || !n || list.length !== n || list[n - 1] !== FULL_HOUSE) return null;
+  let last = 0;
+  for (const lines of list.slice(0, -1)) {
+    if (!Number.isInteger(lines) || lines <= last || lines > maxLine) return null;
+    last = lines;
+  }
+  return list.slice();
+}
+
+/** The line counts line-prize `at` may be set to, leaving room either side of it. */
+export function stageChoices(at, count, maxLine) {
+  const lineRows = Math.floor(Number(count) || 0) - 1;
+  const lo = at + 1;
+  const hi = maxLine - (lineRows - 1 - at);
+  return lo > hi ? [] : Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
+}
+
+/**
+ * Put line-prize `at` on `lines` and move its neighbours only as far as they
+ * must — later ones up, earlier ones down — so every choice the picker offers
+ * lands on a list the room can play, and nothing else the host set is moved.
+ */
+export function moveStage(list, at, lines) {
+  const next = list.slice();
+  next[at] = lines;
+  for (let i = at + 1; i < next.length - 1; i += 1) next[i] = Math.max(next[i], next[i - 1] + 1);
+  for (let i = at - 1; i >= 0; i -= 1) next[i] = Math.min(next[i], next[i + 1] - 1);
+  return next;
+}

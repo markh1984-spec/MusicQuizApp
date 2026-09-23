@@ -58,6 +58,7 @@ export const GUARDS = [
   { name: 'drinks-keep',           core: true,  why: 'is the drink still there next week?' },
   { name: 'no-prizes-no-launch',   core: true,  why: 'can a night launch with nobody to pay?' },
   { name: 'typed-prizes-reach-the-room', core: true, why: 'what the prize table says it pays is what the room plays for' },
+  { name: 'lines-reach-the-room',  core: true,  why: 'the lines chosen for each bingo prize are the lines the room plays' },
   { name: 'bar-reaches-the-room',  core: true,  why: "does the bar's card reach the room?" },
   { name: 'reaches-the-wall',      core: true,  why: 'does a correction reach the projector?' },
   { name: 'phone-holds-up',        core: true,  why: 'what a phone does when a request fails' },

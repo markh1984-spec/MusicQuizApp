@@ -64,6 +64,17 @@ import path from 'node:path';
 
 import { MAX_ROUNDS } from './running-order.js';
 import { itemsOf } from '../public/assets/show-parts.js';
+import { checkStages } from '../public/assets/prize-parts.js';
+
+/*
+ * WHICH LINES PAY, KEPT ONLY WHILE IT STILL FITS THE PRIZE COUNT BESIDE IT.
+ * Structure only — rising line counts, a full house last, one per prize — so a
+ * list that no longer matches its count is dropped rather than carried into a
+ * launch that would drop it anyway. Whether it fits the CARD is `launch()`'s
+ * question, because only the launch knows which card is dealt; 35 is simply
+ * more lines than any card this app deals.
+ */
+const savedStages = (raw, prizes) => checkStages(raw && raw.stages, prizes, 35);
 
 /**
  * How many a room may keep.
@@ -171,12 +182,14 @@ function normaliseItem(raw = {}) {
     ? { rows: Number(raw.shape.rows), cols: Number(raw.shape.cols) }
     : null;
   const prizes = kind === 'bingo' ? Math.max(0, Math.min(5, Number(raw.prizes) || 0)) : 0;
+  const stages = prizes ? savedStages(raw, prizes) : null;
   return {
     kind,
     packId,
     ...(order.length ? { order } : {}),
     ...(shape ? { shape } : {}),
     ...(prizes ? { prizes } : {}),
+    ...(stages ? { stages } : {}),
   };
 }
 
@@ -232,6 +245,8 @@ export function normalise(raw = {}, now = Date.now()) {
   const shape = raw.shape && Number(raw.shape.rows) && Number(raw.shape.cols)
     ? { rows: Number(raw.shape.rows), cols: Number(raw.shape.cols) }
     : null;
+  const prizes = Math.max(0, Math.min(5, Number(raw.prizes) || 0));
+  const stages = prizes ? savedStages(raw, prizes) : null;
 
   return {
     id,
@@ -268,7 +283,8 @@ export function normalise(raw = {}, now = Date.now()) {
     teamMode: raw.teamMode === 'random' ? 'random' : 'assigned',
     online: Boolean(raw.online),
     shape,
-    prizes: Math.max(0, Math.min(5, Number(raw.prizes) || 0)),
+    prizes,
+    ...(stages ? { stages } : {}),
     /*
      * How many places the night recognises. Cleaned exactly as
      * `session.launch()` cleans it, for the reason `teamMode` above says: two

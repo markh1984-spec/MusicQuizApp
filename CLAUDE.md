@@ -2386,6 +2386,13 @@ bingo winners on thursday didn't receive a QR code"*.
   too**, or a count carried onto a smaller card names an option that no longer
   exists and the select goes silently blank.
   **[`docs/bingo.md`](docs/bingo.md)**.
+- **AND THE HOST CHOOSES WHICH LINES EACH PAYS ON — `checkStages()` in
+  `prize-parts.js`, a dropdown per prize in the table.** The full house is
+  always LAST and never offered; line counts strictly RISE; none above
+  `maxLineStage()`, the most lines a card holds short of a full house. **A list
+  that does not fit is the count's default plan, never a refused launch**, and
+  a new card or count clears it. `lines-reach-the-room.mjs` drives all three
+  paths.
 
 ### PRIZES ARE PER GAME, DEALT BY WHAT EACH PAYS — `prize-parts.js`, `console-prizes.js`
 
@@ -3614,22 +3621,12 @@ Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### THE DRAW IS BINNED — and WHY it went is the part worth keeping
 
-It paid a free drink to one team drawn at random from the bottom half of the
-board, taking the LAST prize on the venue's list, for retention: a table that
-knows by round three it cannot win will not stay. `drawLuckyDip()`, the band
-under the podium and `answeredTheLastQuestion()` are gone.
-
-**IT WENT BECAUSE THE HOST DID NOT KNOW IT EXISTED.** Asked outright, *"not
-sure what the draw even means"* — about a band his own projector had printed
-under every final for months. **There was no switch**: it fired by itself on
-any night with three or more prizes listed, so a venue funding three drinks
-quietly gave away a fourth and the person paying could not say why. *Clarity
-beats everything* failing at the top of its own list — and a feature nobody
-can explain is worse than one nobody uses when it spends money weekly.
-
-**DO NOT REBUILD IT.** Retention starts from a control he chose, never a
-behaviour he inherits. **A `draw: true` voucher is still tolerated**, so a
-night running across the deploy keeps its drink.
+A free drink to a random team from the bottom half, off the LAST prize on the
+venue's list. **IT WENT BECAUSE THE HOST DID NOT KNOW IT EXISTED** — no switch,
+so a venue funding three drinks quietly gave away a fourth. **DO NOT REBUILD
+IT.** Retention starts from a control he chose, never a behaviour he inherits.
+**A `draw: true` voucher is still tolerated**, so a night running across the
+deploy keeps its drink. **[`docs/engine.md`](docs/engine.md)**.
 
 ### The tabs run ALONG a quizmaster's evening, behind their door
 
@@ -4602,6 +4599,7 @@ node scripts/bar-staff-camera.mjs       # the camera code — same bucket, and n
 node scripts/props-on-a-photo.mjs       # do the googly eyes go on, on BOTH cameras?
 node scripts/no-prizes-no-launch.mjs    # can a night launch with nobody to pay?
 node scripts/typed-prizes-reach-the-room.mjs  # does what you TYPE in the prize table reach the room?
+node scripts/lines-reach-the-room.mjs   # do the lines chosen for each prize reach the room?
 node scripts/after-a-deploy.mjs         # after a restart, can the host still launch?
 node scripts/a-night-survives-a-deploy.mjs  # the venue, the night and its frame, after a wipe
 node scripts/deploy-with-a-disk.mjs     # the night that was running comes back WITH the disk — can the host replace it?

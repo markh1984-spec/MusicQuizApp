@@ -21,9 +21,9 @@ import {
  * venue's list by the same two functions, so the bar and the room cannot
  * disagree about what tonight is playing for.
  */
-import { dealPrizes, paysOf } from './prize-parts.js';
+import { checkStages, dealPrizes, paysOf, stageWord } from './prize-parts.js';
 import { renderSlots } from './console-tonight-mix-ui.js';
-import { prizeNote, prizeParts, prizeTableInto, prizesTonight, venueRewards } from './console-prizes.js';
+import { bindPrizeTable, prizeNote, prizeParts, prizeTableInto, prizesTonight, venueRewards } from './console-prizes.js';
 import { lastNightWarning, noPrizesReason, venuePrizeWarning } from './console-warnings.js'; import { readyLine } from './console-ready.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, me, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfOf, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
 import { nowNextRows } from './console-venues.js';
@@ -85,6 +85,9 @@ export const night = {
   winners: 3,
   shape: null,
   prizes: 0,
+  // WHICH LINES EACH PRIZE PAYS ON — `null` is the plan for the count (a line,
+  // 2 lines … a full house), which is what every night did before this.
+  stages: null,
   /*
    * WHAT HAPPENS IN THE GAPS — `{ [breakId]: { phone, screen } }`, sparse.
    *
@@ -1449,10 +1452,11 @@ export function launchBar() {
         game: kind,
         packId: pack.id,
         ...nightOpts(),
-        // The picked pack's own two, which only mean anything on a bingo
+        // The picked pack's own three, which only mean anything on a bingo
         // pack and are ignored on a quiz.
         shape: night.shape,
         prizes: night.prizes,
+        stages: night.stages || null,
         /*
          * ALWAYS SENT, like the real launch: the server reads a MISSING
          * `breakPlan` as "clear it", so leaving it out of a quiet launch and
@@ -1598,6 +1602,7 @@ export function launchBar() {
         ...nightOpts(),
         shape: night.shape,
         prizes: night.prizes,
+        stages: night.stages || null,
         // Empty unless a second pack has actually been dropped in — see
         // `lbExtra`. An ordinary night sends nothing at all and takes exactly
         // the route it always did.
@@ -2116,6 +2121,14 @@ export function launchBar() {
    * `noPrizesReason()` fall through to the venue record, which is exactly
    * what it did before a game could pay something of its own.
    */
+  /** Which lines a bingo part's prizes pay on — the slot's own, or the one game's. */
+  function setPartStages(part, lines) {
+    if (part.at < 0) { night.stages = lines; return; }
+    const next = lbSlots.slice();
+    next[part.at] = { ...next[part.at], stages: lines };
+    lbSlots = next;
+  }
+
   function prizesNow() {
     try { return prizesTonight(partsNow()); } catch { return []; }
   }
@@ -2181,16 +2194,31 @@ export function launchBar() {
   }
 
   /** Write a shape and prize count back to wherever this pack keeps them. */
-  function setPickedBingo(picked, { shape, prizes }) {
+  function setPickedBingo(picked, { shape, prizes, stages }) {
     if (!picked) return;
+    /*
+     * WHICH LINES PAY IS ONLY TRUE OF THE CARD AND THE COUNT IT WAS CHOSEN ON.
+     * A new shape, or a count that actually changed, starts again from that
+     * count's own plan — three prizes on lines 2, 3 and a full house carried
+     * onto a strip that holds three lines is a list no room can play. The
+     * server would drop it anyway (`checkStages()`); clearing it HERE is what
+     * stops the table showing one thing while the room plays another.
+     * `paintPrizes()` re-writes the SAME count on every paint, which must not
+     * count as a change or every repaint would throw the host's choice away.
+     */
+    const had = picked.slot || night;
+    const changed = Boolean(shape) || (prizes != null && Number(prizes) !== Number(had.prizes || 0));
+    const keep = stages !== undefined ? stages : (changed ? null : (had.stages || null));
     if (picked.slot) {
+      const { stages: _old, ...rest } = picked.slot;
       const next = lbSlots.slice();
-      next[picked.at] = { ...picked.slot, ...(shape ? { shape } : {}), ...(prizes != null ? { prizes } : {}) };
+      next[picked.at] = { ...rest, ...(shape ? { shape } : {}), ...(prizes != null ? { prizes } : {}), ...(keep ? { stages: keep } : {}) };
       lbSlots = next;
       return;
     }
     if (shape) night.shape = shape;
     if (prizes != null) night.prizes = prizes;
+    night.stages = keep;
   }
 
   /** The prize plans for whichever shape is currently picked. */
@@ -2203,10 +2231,17 @@ export function launchBar() {
     if (!found) return;
     // The COUNT shut, what each prize is for open — same split as the card
     // shape beside it, and for the same reason: this row holds eight controls.
-    prizePick.innerHTML = found.plans
-      .map((plan, i) => `<option value="${i + 1}" data-short="${i + 1}">${i + 1} — ${esc(plan.join(', then '))}</option>`).join('');
     // The same pack the row is about, or the count comes off a different one.
     const picked = bingoToSet();
+    /* AND THE COUNT THAT HAS LINES CHOSEN FOR IT SAYS THOSE LINES — the
+       dropdown and the prize table under it are one decision, and two words
+       for it on one screen is the collision this app renames on sight. */
+    const chosen = picked ? (picked.slot ? picked.slot.stages : night.stages) : null;
+    prizePick.innerHTML = found.plans.map((plan, i) => {
+      const mine = checkStages(chosen, i + 1, Number(found.maxLine) || 0);
+      const words = mine ? mine.map(stageWord) : plan;
+      return `<option value="${i + 1}" data-short="${i + 1}">${i + 1} — ${esc(words.join(', then '))}</option>`;
+    }).join('');
     const has = picked && picked.slot ? picked.slot.prizes : night.prizes;
     /*
      * THE SHAPE CHOOSES THE COUNT, and the number comes from the SHAPE —
@@ -2258,78 +2293,19 @@ export function launchBar() {
     // The tile shows its own shape, so it has to be redrawn with it.
     if (lbSlots) paintOrder();
   });
-  /* DELEGATED, BOUND ONCE — `paintPrizeTable()` replaces the whole table on
-     every settings change and every state push, so a listener per input would
-     be re-bound on every phone that joins and leak with the room. Same reason
-     the dropdown popovers share one document listener. */
-  el.addEventListener('click', (e) => {
-    /*
-     * NO `el.contains()` CHECK, AND THAT IS THE BUG THIS ONCE HAD.
-     *
-     * Leaving a prize box fires `change`, which repaints the table — so by
-     * the time the CLICK that caused the blur is dispatched, the head it
-     * landed on has already been replaced and is detached from the document.
-     * `el.contains()` then says no and this returned, silently: type a prize,
-     * press the heading, nothing happens. A dead control that draws
-     * perfectly, which is this repo's commonest fault and exactly what
-     * driving it in a browser is for.
-     *
-     * The guard was never needed anyway — this listener is bound to the
-     * panel, so anything reaching it came from inside the panel.
-     */
-    if (!e.target.closest('.lb-pz-head')) return;
-    prizeTableOpen = !prizeTableOpen;
-    /*
-     * A FULL REPAINT, because shutting the table is the moment Launch has to
-     * catch up — the gate asks whether anybody can be paid, and what was just
-     * typed may be the answer. There is no caret to lose: the table is going
-     * away.
-     */
-    paintOrder();
-  });
   /*
-   * TYPING WRITES AND DOES NOT REPAINT — a repaint per keystroke rebuilds the
-   * inputs and takes the caret with them, so you would type one letter a box.
-   *
-   * AND IT STORES THE WHOLE ROW, not the box that changed: what is on screen
-   * is the venue's deal until somebody edits it, so pinning one box would
-   * leave the rest following a deal that has since moved. What you can see is
-   * what the night gets.
+   * THE PRIZE TABLE'S LISTENERS — `bindPrizeTable()` in `console-prizes.js`,
+   * bound once on the panel. The open flag and the repaints stay HERE, because
+   * they are this bar's: a module may not assign to a binding it imports.
    */
-  el.addEventListener('input', (e) => {
-    const box = e.target.closest('.lb-pz-in');
-    if (!box) return;
-    const part = partsNow()[Number(box.dataset.part)];
-    if (!part) return;
-    const list = [...el.querySelectorAll(`.lb-pz-in[data-part="${box.dataset.part}"]`)]
-      .sort((a, b) => Number(a.dataset.at) - Number(b.dataset.at))
-      .map((n) => n.value);
-    setPartRewards(part, list);
-    // The reason-line under the table counts what is typed, so it has to keep
-    // up — and it holds no caret, so it is safe to rewrite mid-keystroke.
-    const note = el.querySelector('.lb-pz-note');
-    if (note) note.textContent = prizeNote(partsNow(), { venueName: venueNow(), venueList: venuePrizes() });
+  bindPrizeTable(el, {
+    partsNow,
+    setPartRewards,
+    setPartStages,
+    onToggle: () => { prizeTableOpen = !prizeTableOpen; paintOrder(); },
+    afterStages: paintPrizes,
+    noteText: () => prizeNote(partsNow(), { venueName: venueNow(), venueList: venuePrizes() }),
   });
-  /*
-   * AND NOTHING REPAINTS ON BLUR. THIS IS LOAD-BEARING.
-   *
-   * There was a `change` listener here that called `paintOrder()`, on the
-   * reasoning that leaving a box is the first moment a full repaint costs no
-   * caret. It cost something far worse: `change` fires on BLUR, blur happens
-   * on MOUSEDOWN, and the repaint replaces the table — so the element the
-   * mouse went down on is detached before the mouse comes up, and the browser
-   * dispatches NO CLICK AT ALL.
-   *
-   * Measured in a real browser: zero click events reached `document`. Every
-   * control pressed straight after typing a prize was dead on the first
-   * press, including LAUNCH, with nothing thrown and nothing in the console.
-   * A test that the payload is right proves nothing about whether anybody
-   * could press the button — this is that lesson, in the one place a gig
-   * cannot afford it.
-   *
-   * So typing only stores, and the repaint happens when the table is SHUT,
-   * which is a press that is not competing with a blur.
-   */
 
   prizePick?.addEventListener('change', () => {
     setPickedBingo(bingoToSet(), { prizes: Number(prizePick.value) || 0 });
@@ -2886,11 +2862,15 @@ export function launchBar() {
            card per bingo part, and `night.*` is what the settings row wrote
            for the part currently picked. A deck takes neither. */
         const bingo = item.kind === 'bingo';
+        // The lines go with whichever COUNT is used below — the part's own,
+        // or the night's when the part never chose one.
+        const lines = bingo ? (Number(item.prizes) ? item.stages : night.stages) : null;
         return {
           kind: item.kind,
           packId: item.packId,
           shape: bingo ? (item.shape || night.shape) : null,
           prizes: bingo ? (Number(item.prizes) || night.prizes) : 0,
+          ...(Array.isArray(lines) ? { stages: lines } : {}),
         };
       }
       const order = (item.order && item.order.length)
@@ -3930,6 +3910,11 @@ export function launchBar() {
       ? { rows: Number(wantShape.rows), cols: Number(wantShape.cols) } : null;
     const partPrizes = item.kind === 'bingo' ? Number(item.prizes) || 0 : 0;
     night.prizes = Math.max(0, Math.min(5, partPrizes || Number(show.prizes) || 0));
+    // WHICH LINES PAY BELONGS TO WHICHEVER COUNT WAS USED — the part's with the
+    // part's, the show's with the show's — or a list chosen for three prizes
+    // lands on a count of five. `null` is that count's own plan.
+    const lines = partPrizes ? item.stages : show.stages;
+    night.stages = Array.isArray(lines) && lines.length === night.prizes ? lines.slice() : null;
     /*
      * WHAT HAPPENS IN THE GAPS — restored, and it is one of the things a show
      * is FOR. A break plan is exactly the sort of decision worth making days
@@ -4048,6 +4033,7 @@ function tonightAsShow(name, segmentsNow) {
       packId: seg.packId,
       ...(seg.shape ? { shape: seg.shape } : {}),
       ...(seg.prizes ? { prizes: seg.prizes } : {}),
+      ...(Array.isArray(seg.stages) ? { stages: seg.stages } : {}),
     }
     : { kind: 'quiz', packId: (seg.order[0] || {}).packId || '', order: seg.order }));
   return {
@@ -4073,6 +4059,7 @@ function tonightAsShow(name, segmentsNow) {
     teamMode: night.playing === 'random' ? 'random' : 'assigned',
     shape: night.shape,
     prizes: night.prizes,
+    ...(Array.isArray(night.stages) ? { stages: night.stages } : {}),
     // How many places the night recognises, saved with the prizes for exactly
     // the reason they are: it is a fact about the EVENING, which is what a
     // show is. An older show has no `winners` and `applyShow` reads three.

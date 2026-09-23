@@ -36,7 +36,7 @@
  */
 import { bestBingoShape, esc } from './client.js';
 import { partsOfSlots } from './console-tonight-mix.js';
-import { dealPrizes, paysOf } from './prize-parts.js';
+import { FULL_HOUSE, checkStages, dealPrizes, defaultStages, moveStage, paysOf, stageChoices, stageWord } from './prize-parts.js';
 
 /** "1st", "2nd", "3rd" — the same wording the venue card's own prize rows use. */
 export function placeWord(n) {
@@ -84,19 +84,20 @@ export function prizeParts({ slots, night, picked, packOf, cardShapes = [], venu
    * launch: reading one and launching another is how a 5x5 card came to be
    * dealt a 4x4's share of the drinks.
    */
-  const shapePrizes = (part) => {
+  const cardOf = (part) => {
     const pack = packOf(part.packId);
     const best = pack ? bestBingoShape(cardShapes, pack.trackCount) : null;
     const shape = part.shape || (best ? { rows: best.rows, cols: best.cols } : null);
-    const known = cardShapes.find((sh) => shape && sh.rows === shape.rows && sh.cols === shape.cols);
-    return Number(known && known.prizes) || 1;
+    return cardShapes.find((sh) => shape && sh.rows === shape.rows && sh.cols === shape.cols) || null;
   };
+  const shapePrizes = (part) => Number((cardOf(part) || {}).prizes) || 1;
   const raw = slots ? partsOfSlots(slots) : (picked ? [{
     kind: picked.kind === 'bingo' ? 'bingo' : picked.kind,
     at: -1,
     packId: picked.pack.id,
     prizes: night.prizes || 0,
     shape: night.shape || null,
+    stages: Array.isArray(night.stages) ? night.stages : null,
     rewards: Array.isArray(night.rewards) ? night.rewards : null,
   }] : []);
   const parts = raw.map((part) => ({
@@ -110,11 +111,25 @@ export function prizeParts({ slots, night, picked, packOf, cardShapes = [], venu
    * this at all.
    */
   const dealt = dealPrizes(venueList, parts.map((part) => part.pays));
-  return parts.map((part, i) => ({
-    ...part,
-    list: Array.isArray(part.rewards) ? part.rewards : dealt[i],
-    own: Array.isArray(part.rewards),
-  }));
+  return parts.map((part, i) => {
+    /*
+     * WHICH LINES EACH PRIZE PAYS ON — music bingo alone: a deck is one line
+     * of thirteen and a quiz pays places. `lines` is what the host chose if it
+     * still fits this card and this count, otherwise the count's own plan —
+     * THE SAME `checkStages()` THE LAUNCH RUNS, so the table can never show a
+     * list the room will not be dealt. `maxLine` 0 means a server too old to
+     * say, and the table then shows the plan and offers no choice.
+     */
+    const card = part.kind === 'bingo' ? cardOf(part) : null;
+    const maxLine = card ? Number(card.maxLine) || 0 : 0;
+    return {
+      ...part,
+      list: Array.isArray(part.rewards) ? part.rewards : dealt[i],
+      own: Array.isArray(part.rewards),
+      maxLine,
+      lines: card ? (checkStages(part.stages, part.pays, maxLine) || defaultStages(part.pays)) : null,
+    };
+  });
 }
 
 /**
@@ -154,10 +169,39 @@ export function prizeTableInto(box, parts, { open, venueName, venueList }) {
       /* A PLACE WITH NOTHING ON IT IS SAID, NOT LEFT BLANK — a gap in the
          ledger reads as the table not having loaded rather than as a prize
          nobody has typed. */
+      // A bingo prize is named by what WINS it, which is what a pub calls it —
+      // "the line", "the full house" — and what the host chose; a quiz's by
+      // its place.
       const chips = Array.from({ length: n }, (_, at) => `<span class="lb-pz${
-        list[at] ? '' : ' lb-pz-none'}"><i>${at + 1}</i>${
+        list[at] ? '' : ' lb-pz-none'}"><i>${esc(part.lines ? stageWord(part.lines[at]) : String(at + 1))}</i>${
         esc(list[at] || 'Nothing set')}</span>`).join('');
       return `<span class="lb-pz-line"><b>${esc(partName(part))}</b>${chips}</span>`;
+    }
+    if (part.lines) {
+      /*
+       * A MUSIC BINGO ROW SAYS WHAT WINS EACH PRIZE, AND LETS YOU CHOOSE IT —
+       * *"I select 3 and then select lines 2, 3 and full house."* The last is
+       * always the full house and is SAID rather than offered: the night ends
+       * on the whole card. A `<div>` rather than a `<label>`, because one label
+       * around two controls sends a press on its padding to the first of them.
+       */
+      return `<div class="lb-pz-row" data-part="${i}">
+        <span class="lb-pz-who">${esc(partName(part))}</span>
+        ${Array.from({ length: n }, (_, at) => {
+          const stage = part.lines[at];
+          const choices = stage === FULL_HOUSE || !part.maxLine ? [] : stageChoices(at, n, part.maxLine);
+          const head = choices.length
+            ? `<select class="lb-pz-stage" data-part="${i}" data-at="${at}" aria-label="${esc(`What wins the ${placeWord(at + 1)} prize`)}">${
+              choices.map((c) => `<option value="${c}"${c === stage ? ' selected' : ''}>${esc(stageWord(c))}</option>`).join('')}</select>`
+            : `<span class="lb-pz-stage-said">${esc(stageWord(stage))}</span>`;
+          return `<div class="lb-pz-box">
+            ${head}
+            <input class="lb-pz-in" data-part="${i}" data-at="${at}" type="text" maxlength="80"
+              aria-label="${esc(`The prize for ${stageWord(stage)}`)}"
+              value="${esc(list[at] || '')}" placeholder="Nothing for this one">
+          </div>`;
+        }).join('')}
+      </div>`;
     }
     return `<div class="lb-pz-row" data-part="${i}">
         <span class="lb-pz-who">${esc(partName(part))}</span>
@@ -177,4 +221,111 @@ export function prizeTableInto(box, parts, { open, venueName, venueList }) {
     ${open ? `<div class="lb-pz-panel">${rows}
       <div class="tiny lb-pz-note">${esc(prizeNote(parts, { venueName, venueList }))}</div>
     </div>` : ''}`;
+}
+
+/**
+ * THE TABLE'S LISTENERS, BOUND ONCE ON THE LAUNCH BAR'S PANEL — moved here from
+ * `launchBar()` on 23 September 2026, when adding the lines picker took that
+ * file past its budget: everything below is about this table and nothing else.
+ *
+ * **THE HOOKS ARE THE BAR'S, and must stay the bar's.** Whether the table is
+ * open is a module binding in `console-tonight.js`, and an ES import is a
+ * read-only view — assigning to it here would throw WHEN THE LINE RUNS, not
+ * when the file loads, which is the fault `console-state.js` exists to prevent.
+ * So a press asks the bar to flip it (`onToggle`), and the bar repaints.
+ */
+export function bindPrizeTable(el, { partsNow, setPartRewards, setPartStages, onToggle, afterStages, noteText }) {
+  /* DELEGATED, BOUND ONCE — `paintPrizeTable()` replaces the whole table on
+     every settings change and every state push, so a listener per input would
+     be re-bound on every phone that joins and leak with the room. Same reason
+     the dropdown popovers share one document listener. */
+  el.addEventListener('click', (e) => {
+    /*
+     * NO `el.contains()` CHECK, AND THAT IS THE BUG THIS ONCE HAD.
+     *
+     * Leaving a prize box fires `change`, which repaints the table — so by
+     * the time the CLICK that caused the blur is dispatched, the head it
+     * landed on has already been replaced and is detached from the document.
+     * `el.contains()` then says no and this returned, silently: type a prize,
+     * press the heading, nothing happens. A dead control that draws
+     * perfectly, which is this repo's commonest fault and exactly what
+     * driving it in a browser is for.
+     *
+     * The guard was never needed anyway — this listener is bound to the
+     * panel, so anything reaching it came from inside the panel.
+     */
+    if (!e.target.closest('.lb-pz-head')) return;
+    /*
+     * THE BAR FLIPS THE FLAG AND DOES A FULL REPAINT, because shutting the
+     * table is the moment Launch has to catch up — the gate asks whether
+     * anybody can be paid, and what was just typed may be the answer. There is
+     * no caret to lose: the table is going away.
+     */
+    onToggle();
+  });
+  /*
+   * TYPING WRITES AND DOES NOT REPAINT — a repaint per keystroke rebuilds the
+   * inputs and takes the caret with them, so you would type one letter a box.
+   *
+   * AND IT STORES THE WHOLE ROW, not the box that changed: what is on screen
+   * is the venue's deal until somebody edits it, so pinning one box would
+   * leave the rest following a deal that has since moved. What you can see is
+   * what the night gets.
+   */
+  /*
+   * WHICH LINES PAY — a CHOICE rather than typing, so it stores and puts the
+   * neighbours right in place: `moveStage()` may move the prizes either side
+   * to keep the list rising, and a row's choices never depend on its
+   * neighbours, so each dropdown just takes its new value. **NOTHING IS
+   * REPAINTED** — this is a `change` listener in the panel the note below
+   * warns about, and it is safe for exactly the reason that note gives: the
+   * table is never replaced under the pointer. `afterStages()` only rewrites
+   * the settings row, so the Prizes dropdown names the lines chosen here.
+   */
+  el.addEventListener('change', (e) => {
+    const pick = e.target.closest('.lb-pz-stage');
+    if (!pick) return;
+    const part = partsNow()[Number(pick.dataset.part)];
+    if (!part || !part.lines) return;
+    const next = moveStage(part.lines, Number(pick.dataset.at), Number(pick.value));
+    setPartStages(part, next);
+    for (const other of el.querySelectorAll(`.lb-pz-stage[data-part="${pick.dataset.part}"]`)) {
+      other.value = String(next[Number(other.dataset.at)]);
+    }
+    afterStages();
+  });
+  el.addEventListener('input', (e) => {
+    const box = e.target.closest('.lb-pz-in');
+    if (!box) return;
+    const part = partsNow()[Number(box.dataset.part)];
+    if (!part) return;
+    const list = [...el.querySelectorAll(`.lb-pz-in[data-part="${box.dataset.part}"]`)]
+      .sort((a, b) => Number(a.dataset.at) - Number(b.dataset.at))
+      .map((n) => n.value);
+    setPartRewards(part, list);
+    // The reason-line under the table counts what is typed, so it has to keep
+    // up — and it holds no caret, so it is safe to rewrite mid-keystroke.
+    const note = el.querySelector('.lb-pz-note');
+    if (note) note.textContent = noteText();
+  });
+  /*
+   * AND NOTHING REPAINTS ON BLUR. THIS IS LOAD-BEARING.
+   *
+   * There was a `change` listener here that called `paintOrder()`, on the
+   * reasoning that leaving a box is the first moment a full repaint costs no
+   * caret. It cost something far worse: `change` fires on BLUR, blur happens
+   * on MOUSEDOWN, and the repaint replaces the table — so the element the
+   * mouse went down on is detached before the mouse comes up, and the browser
+   * dispatches NO CLICK AT ALL.
+   *
+   * Measured in a real browser: zero click events reached `document`. Every
+   * control pressed straight after typing a prize was dead on the first
+   * press, including LAUNCH, with nothing thrown and nothing in the console.
+   * A test that the payload is right proves nothing about whether anybody
+   * could press the button — this is that lesson, in the one place a gig
+   * cannot afford it.
+   *
+   * So typing only stores, and the repaint happens when the table is SHUT,
+   * which is a press that is not competing with a blur.
+   */
 }

@@ -312,6 +312,9 @@ export function segmentsFromSlots(slots) {
     if (slot.kind !== 'quiz') {
       segments.push({
         kind: slot.kind, packId: slot.packId, shape: slot.shape || null, prizes: slot.prizes || 0, ...mine,
+        // Which lines pay, when the host chose — absent otherwise, so an
+        // ordinary night's segment is exactly what it was.
+        ...(Array.isArray(slot.stages) ? { stages: slot.stages } : {}),
       });
       continue;
     }
@@ -358,6 +361,7 @@ export function partsOfSlots(slots) {
       packId: slot.packId,
       prizes: slot.prizes || 0,
       shape: slot.shape || null,
+      stages: Array.isArray(slot.stages) ? slot.stages : null,
       rewards: Array.isArray(slot.rewards) ? slot.rewards : null,
     });
   }

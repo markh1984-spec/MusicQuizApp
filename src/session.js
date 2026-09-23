@@ -18,7 +18,7 @@ import { sendNote, markNoteRead } from './notes.js';
 
 import { Engine, PHASES, MAX_WINNERS, winnersOf, isSafeId, ownsPlayer, newToken } from './engine.js';
 import { JoinGate } from './joins.js';
-import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes, cardShape, defaultPrizes } from './bingo.js';
+import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes, maxLineStage, cardShape, defaultPrizes } from './bingo.js';
 import { DjSet, DJ_PHASES } from './dj.js';
 // ONE cap on how many prizes a night can carry, shared with the venue record
 // that authors them — two copies of a number like this drift, and the one that
@@ -30,7 +30,7 @@ import { MAX_REWARDS } from './invoices.js';
  * the launch deals by, so the bar and the room cannot disagree about what
  * tonight is playing for.
  */
-import { dealPrizes, paysOf } from '../public/assets/prize-parts.js';
+import { checkStages, dealPrizes, paysOf } from '../public/assets/prize-parts.js';
 import { listQuizzes } from './quizzes.js';
 import { listBingoPacks, recordLaunch, archiveResults, updateArchivedNight, listArchive, HOUSE_ROOM } from './library.js';
 import { mergeGigs, sameVenue } from './past-gigs.js';
@@ -216,7 +216,10 @@ function normaliseSegments(segments) {
         ? { rows: Number(s.shape.rows), cols: Number(s.shape.cols) }
         : null;
       const prizes = Math.max(0, Math.min(5, Number(s.prizes) || 0));
-      return { kind: s.kind, packId, shape, prizes, rewards: segRewards(s) };
+      // Which lines pay: carried as sent and CHECKED at the part's own launch,
+      // against the card that part is played on — see `launch()`.
+      const stages = Array.isArray(s.stages) ? s.stages.slice(0, 5) : null;
+      return { kind: s.kind, packId, shape, prizes, ...(stages ? { stages } : {}), rewards: segRewards(s) };
     }
     const order = Array.isArray(s && s.order) ? s.order : [];
     if (!order.length) return null;
@@ -964,7 +967,7 @@ export class Session {
     };
   }
 
-  launch(kind, packId, { shape = null, prizes = 0, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbyGames = [], lobbySound = true, league = false, online = false, teamPlay = false, teamMode = 'assigned', venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, photoLink = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null } = {}) {
+  launch(kind, packId, { shape = null, prizes = 0, stages = null, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbyGames = [], lobbySound = true, league = false, online = false, teamPlay = false, teamMode = 'assigned', venue = '', venueId = '', rewards = [], venueLogo = '', comeBack = null, photoLink = null, askForRounds = false, roundIdeas = [], order = null, breakPlan = null } = {}) {
     if (!LAUNCHERS[kind]) throw new Error(`Unknown game: ${kind}`);
     /*
      * TONIGHT'S RUNNING ORDER, when one was built — rounds from more than one
@@ -1043,7 +1046,16 @@ export class Session {
     // same reason: it is a decision about this evening, not about the pack.
     if (kind === 'bingo' && prizes) {
       const wanted = Math.max(1, Math.min(maxPrizes(this.engine.shape), Math.floor(prizes)));
-      this.engine.state.stages = stagePlan(wanted);
+      /*
+       * AND WHICH LINES EACH ONE PAYS ON, when the host said — *"lines 2, 3
+       * and full house"*. Checked here against THIS card, never trusted: a
+       * list that does not fit (a count that moved, a shape switched after
+       * it was chosen, anything a request body made up) falls back to the
+       * plan for the count rather than refusing, because a refusal at launch
+       * costs the night and the default is what the room got before this
+       * existed.
+       */
+      this.engine.state.stages = checkStages(stages, wanted, maxLineStage(this.engine.shape)) || stagePlan(wanted);
       this.engine.state.stageIndex = 0;
       this.engine.syncTarget();
     }
@@ -1650,7 +1662,7 @@ export class Session {
      */
     const mine = Array.isArray(seg.rewards) ? { rewards: seg.rewards } : null;
     const started = seg.kind !== 'quiz'
-      ? this.launch(seg.kind, seg.packId, { ...opts, ...mine, shape: seg.shape, prizes: seg.prizes })
+      ? this.launch(seg.kind, seg.packId, { ...opts, ...mine, shape: seg.shape, prizes: seg.prizes, stages: seg.stages || null })
       : this.launch('quiz', null, { ...opts, ...mine, order: seg.order });
     /*
      * `launch()` above just cleared all three of these (`runningOrder`,

@@ -788,3 +788,72 @@ that is a stylesheet rule rather than forty files.
   nothing. **Third sighting** of the same trap this repo has recorded for
   `.tier-row` and for the shorthand `border` on a pack tile. The rule now sits
   below the one it has to beat, with a comment saying why.
+
+## WHICH LINES EACH PRIZE PAYS ON — chosen in the prize table, 23 September 2026
+
+`FULL_HOUSE`, `defaultStages()`, `stageWord()`, `checkStages()`,
+`stageChoices()` and `moveStage()` in `public/assets/prize-parts.js`;
+`maxLineStage()` in `src/bingo.js`; the dropdowns in `prizeTableInto()` and
+`bindPrizeTable()` in `console-prizes.js`; `node scripts/lines-reach-the-room.mjs`
+and `test/which-lines-pay.test.js`.
+
+Asked for as *"when I click music bingo I can choose how many prizes and also
+which line the prizes pay out on — so I select 3 and then select lines 2, 3 and
+5"*, then corrected by the host himself: *"I meant full house actually not 5
+lines."* That correction is a rule, because five lines and a full house are
+different targets: five rows are the whole card, but three rows and both
+diagonals are also five lines and barely half of it.
+
+- **THE ENGINE ALREADY PLAYED ANY LIST.** `state.stages` has always been a list
+  of line counts ending in `'full'`, and `stagePlan(n)` only ever produced
+  `[1, 2, … 'full']`. Nothing in `bingo.js`'s claim or evaluation changed — the
+  work was a way to SAY a list, and a check that what is said can be played.
+- **THE CHECK IS SHARED, SO THE PICKER AND THE LAUNCH CANNOT DISAGREE.**
+  `checkStages()` lives in `prize-parts.js`, imported by the console and the
+  server alike. A list is playable when it has exactly one stage per prize, the
+  full house LAST and only last, the line counts strictly RISING (level or
+  falling, one card takes two prizes at once), and none above the card's
+  ceiling.
+- **THE CEILING IS GEOMETRY, NOT A NUMBER TYPED IN — `maxLineStage()`.** One
+  unmarked square breaks every line through it, so the most a card can complete
+  while short of the full house is all its lines less those through its
+  least-crossed square: 10 on a 5×5, 8 on a 4×4, 6 on a 3×3, 3 on the 6×4
+  strip, 2 on the 8×3. The last is the old strip rule — *two line stages is the
+  most that leaves the last prize meaning anything* — found by the same sum
+  rather than written out by hand. The library sends it per shape as `maxLine`.
+- **A LIST THAT DOES NOT FIT IS THE DEFAULT, NEVER A REFUSAL.** `session.launch()`
+  checks what arrives against the card actually dealt and falls back to the
+  count's own plan. A refusal at launch costs the night; the default is what
+  every room played before this existed.
+- **THE FULL HOUSE IS SAID, NOT OFFERED.** The last row of a bingo part in the
+  table is text, because the night ends on the whole card; every other row is
+  a dropdown offering only what leaves room either side (`stageChoices()`).
+- **A CHOICE MOVES ITS NEIGHBOURS AS LITTLE AS IT MUST** (`moveStage()`) —
+  later prizes up, earlier ones down — so every option the picker offers lands
+  on a playable list, and nothing the host set further away is touched. A test
+  walks every shape, every count and every choice.
+- **AND IT REPAINTS NOTHING.** A row's choices never depend on its neighbours,
+  so a change just sets their values in place. That is what keeps this `change`
+  listener clear of the dead-click fault recorded beside the prize table: the
+  table is never replaced under the pointer.
+- **A NEW CARD OR A CHANGED COUNT CLEARS THE CHOICE** (`setPickedBingo()`), or a
+  list chosen for three prizes on a 5×5 rides onto a strip that cannot hold it
+  and the table shows one thing while the room plays another. `paintPrizes()`
+  re-writes the SAME count on every paint, which does not count as a change.
+- **THE PRIZES DROPDOWN NAMES THE CHOSEN LINES ON THE CHOSEN COUNT** — the
+  dropdown and the table are one decision, and two wordings for it on one
+  screen is the collision this app renames on sight.
+- **EIGHT PLACES CARRY IT, AND THE GUARD WATCHES THEM ALL.** The table, the one-
+  game launch (`doLaunch()` names it in its whitelist), the slots and their
+  segments, the running-order route and the part's own launch, and a saved show
+  both ways (`tonightAsShow()` and `applyShow()` / `runningShowSegments()`,
+  kept by `shows.js` only while it still matches its count).
+  `lines-reach-the-room.mjs` presses the real controls three ways — bingo on its
+  own, bingo leading a running order, and that order saved and loaded back —
+  and reads the ROOM, with the room reset to the default plan between the last
+  two so the third cannot pass on what the second left. **Six faults put back
+  one at a time, six times red.**
+- **The table's listeners moved into `console-prizes.js` with it**
+  (`bindPrizeTable()`), which took `console-tonight.js` back under its budget:
+  the open flag stays the bar's, because a module may not assign to a binding
+  it imports.

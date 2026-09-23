@@ -112,6 +112,10 @@ export async function writeHost(req, res, url, route) {
           ? { rows: Number(body.shape.rows), cols: Number(body.shape.cols) }
           : null;
         const prizes = Math.max(0, Math.min(5, Number(body.prizes) || 0));
+        // Which lines each prize pays on, when the host said. Passed through as
+        // sent: `session.launch()` checks it against the card actually dealt,
+        // which is the only place that knows it.
+        const stages = Array.isArray(body.stages) ? body.stages.slice(0, 5) : null;
         /*
          * How many places tonight recognises. 0 means the console did not ask,
          * which leaves the engine's default of three — so an old console, or a
@@ -278,7 +282,7 @@ export async function writeHost(req, res, url, route) {
           ? pickIdeas((fullLibrary(config, room.id, listOwn(room.paths)).quizzes || [])
             .map((q) => q.title))
           : [];
-        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, winners, look, questionSeconds, lobbyGame, lobbyGames, lobbySound, league, online, teamPlay, teamMode, venue, venueId, rewards, venueLogo, comeBack, photoLink: photoLinkFor(req, url, venue), askForRounds, roundIdeas: askIdeas, order: wantedOrder, breakPlan: body.breakPlan || {} });
+        const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, stages, winners, look, questionSeconds, lobbyGame, lobbyGames, lobbySound, league, online, teamPlay, teamMode, venue, venueId, rewards, venueLogo, comeBack, photoLink: photoLinkFor(req, url, venue), askForRounds, roundIdeas: askIdeas, order: wantedOrder, breakPlan: body.breakPlan || {} });
         /*
          * AND IF A LAPSED SUBSCRIPTION GOT THROUGH, THIS IS THE NIGHT IT
          * SPENDS — stamped AFTER the launch, never before it.
@@ -344,7 +348,7 @@ export async function writeHost(req, res, url, route) {
         const rewards = Array.isArray(s && s.rewards) ? s.rewards.map(String) : undefined;
         // Every whole-pack kind keeps its own — see `wholePackKind()`.
         if (s && wholePackKind(s.kind)) {
-          return { kind: s.kind, packId: String((s && s.packId) || ''), shape: s.shape, prizes: s.prizes, rewards };
+          return { kind: s.kind, packId: String((s && s.packId) || ''), shape: s.shape, prizes: s.prizes, stages: s.stages, rewards };
         }
         const order = Array.isArray(s && s.order) ? s.order.slice(0, MAX_ROUNDS) : [];
         return { kind: 'quiz', order, rewards };

@@ -1705,9 +1705,9 @@ async function sendLaunch(url, bodyFor, button) {
  * field HERE as well as everywhere else, and prove it by reading the request
  * body out of a real browser rather than by reading the diff.
  */
-export async function doLaunch(kind, packId, { shape = null, prizes = 0, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', rewards = null, order = null, breaks = {} }, button) {
+export async function doLaunch(kind, packId, { shape = null, prizes = 0, stages = null, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', rewards = null, order = null, breaks = {} }, button) {
   return sendLaunch('/api/host/launch', (replace) => ({
-    game: kind, packId, shape, prizes, winners, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
+    game: kind, packId, shape, prizes, stages, winners, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
     /*
      * WHAT TONIGHT PAYS, when the host typed it into the prize table.
      *

@@ -23,6 +23,7 @@ import { cleanTeamName, faceKey, isSafeId, newId, newToken, newVoucherCode, owns
 import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
 import { breakNow, offersGame, offersPhotos } from '../public/assets/break-parts.js';
+import { FULL_HOUSE, defaultStages, stageWord } from '../public/assets/prize-parts.js';
 
 import { noteForPlayer, notesForHost } from './notes.js';
 import { castVote, closeVote, dropVote, openVote, voteForHost, voteForPlayer, voteForScreen } from './photo-vote.js';
@@ -46,7 +47,7 @@ export const MAX_SQUARES = 36;
 /** What a full card has to look like to win. */
 export const TARGETS = {
   LINE: 'line',
-  FULL: 'full',
+  FULL: FULL_HOUSE,
 };
 
 /**
@@ -63,10 +64,32 @@ export const TARGETS = {
  */
 export const DEFAULT_STAGES = [1, TARGETS.FULL];
 
-/** The stages for a given number of prizes: 1, 2, 3 … then a full house. */
+/**
+ * The stages for a given number of prizes: 1, 2, 3 … then a full house — the
+ * plan when the host has not said which lines pay. `defaultStages()` in
+ * `prize-parts.js`, because the console draws the same list.
+ */
 export function stagePlan(prizes = 2) {
-  const n = Math.max(1, Math.floor(prizes));
-  return [...Array(n - 1).keys()].map((i) => i + 1).concat(TARGETS.FULL);
+  return defaultStages(prizes);
+}
+
+/**
+ * THE MOST LINES A CARD CAN HOLD WITHOUT BEING A FULL HOUSE — the ceiling on
+ * any line prize the host picks.
+ *
+ * One unmarked square breaks every line through it, so the most a card can
+ * complete while still short of the whole card is all its lines less the ones
+ * through its LEAST-crossed square. On a 5x5 an edge square sits on only its
+ * row and its column, so ten of twelve; on a strip every square is on exactly
+ * one line, so all but one — which is the old rule about strips (*"two line
+ * stages is the most that leaves the last prize meaning anything"*) found by
+ * the same sum rather than written out by hand.
+ */
+export function maxLineStage(shape) {
+  const lines = cardLines(shape);
+  const crossing = new Array(shape.rows * shape.cols).fill(0);
+  for (const line of lines) for (const at of line) crossing[at] += 1;
+  return Math.max(1, lines.length - Math.min(...crossing));
 }
 
 /**
@@ -97,8 +120,7 @@ export function maxPrizes(shape) {
 
 /** "a line", "3 lines", "a full house" — one wording, used on every screen. */
 export function stageLabel(stage) {
-  if (stage === TARGETS.FULL) return 'a full house';
-  return stage === 1 ? 'a line' : `${stage} lines`;
+  return stageWord(stage);
 }
 
 export class BingoGame {

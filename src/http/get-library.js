@@ -2,7 +2,7 @@
  * GET ROUTES — library. Moved whole out of `handleGet()` in server.js;
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
-import { CARD_SHAPES, FEATURES, LOOKS, MAX_OWN, PACK_PENCE, SCHEMES, artProvider, bookingOf, config, countOwn, defaultPrizes, fullLibrary, githubConfigured, googleConfigured, hub, leaguesByVenue, listAdvertPacks, listArchive, listOwn, maxPrizes, mergeGigs, minimumTracks, missingGithubConfig, missingSpotifyConfig, openaiConfigured, packsRepoConfigured, packsRepoName, playedByVenue, recentTracks, reports, rewardsByVenue, rewardsUsed, rooms, shapeLabel, spotifyConfigured, stageLabel, stagePlan, suggestions, venueHeadcounts, venuesUsed } from './context.js';
+import { CARD_SHAPES, FEATURES, LOOKS, MAX_OWN, PACK_PENCE, SCHEMES, artProvider, bookingOf, config, countOwn, defaultPrizes, fullLibrary, githubConfigured, googleConfigured, hub, leaguesByVenue, listAdvertPacks, listArchive, listOwn, maxLineStage, maxPrizes, mergeGigs, minimumTracks, missingGithubConfig, missingSpotifyConfig, openaiConfigured, packsRepoConfigured, packsRepoName, playedByVenue, recentTracks, reports, rewardsByVenue, rewardsUsed, rooms, shapeLabel, spotifyConfigured, stageLabel, stagePlan, suggestions, venueHeadcounts, venuesUsed } from './context.js';
 import { sendJson } from './plumbing.js';
 import { brandForRoom, fullLibraryTier, onlyTheirPacks, roomForHost, roomIdFor, schemeForRoom, whoIs, withShop } from './identity.js';
 import { allowed, showsFor } from './gates.js';
@@ -205,6 +205,9 @@ export async function getLibrary(req, res, url, route) {
         // card that is over before the room has settled.
         prizes: defaultPrizes(shape),
         plans: Array.from({ length: maxPrizes(shape) }, (_, i) => stagePlan(i + 1).map(stageLabel)),
+        // The most lines a line prize can ask for on this card before it is
+        // the full house — the ceiling on the picker for which lines pay.
+        maxLine: maxLineStage(shape),
       })),
       /*
        * Your room's code, whether or not a game is running.

@@ -12460,12 +12460,19 @@ body.dj .head .score { color: var(--ink); }
   color: var(--ink); padding: 8px 10px; height: 44px; width: 150px; font: inherit; font-size: var(--fs-tag);
 }
 .lb-pz-note { margin-top: 10px; color: var(--ink-dim); }
+/* WHICH LINES PAY — the app's own dropdown, chevron block and all, at the
+   width of the box under it, so a bingo prize is one column of two controls.
+   The full house is SAID rather than offered: it is the one prize nobody
+   chooses, because the night ends on the whole card. */
+.lb-pz-stage { width: 150px; height: 44px; }
+.lb-pz-stage-said { min-height: 44px; display: flex; align-items: center; color: var(--ink); font-weight: 800; }
 /* ON A PHONE THE BOXES TAKE THE WIDTH — 150px each wraps into a ragged grid
    below 560, and a prize is a sentence rather than a word. */
 @media (max-width: 560px) {
   .lb-pz-row { flex-direction: column; align-items: stretch; }
   .lb-pz-box { width: 100%; }
   .lb-pz-in { width: 100%; }
+  .lb-pz-stage { width: 100%; }
 }
 
 /* THE PHOTO SCREEN, beside the code it puts up — Community > Photos.
