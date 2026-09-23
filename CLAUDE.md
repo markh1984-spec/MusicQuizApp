@@ -2569,11 +2569,11 @@ the prizes."*
   back** — what an evening costs is the host's and the venue's call. **A deck
   declares `everyRoundPays`**: past its list it pays the last drink
   (`rewardFor()`), its box says *Each game*. Music bingo keeps its free line.
-- **A SCORE FIXED AT THE FINAL MOVES THE DRINKS — `adjustScore()`.** The
-  board is cached until `changed()`, which runs AFTER, so the first build paid
-  off a stale board. **EVERY SCORE WRITE GOES THROUGH `bumpScore()` /
-  `setScore()`, which drop the cache** — `test/score-writes.test.js` reads the
-  engine as text and refuses a third writer.
+  **A NIGHT'S TOTAL IS A REMINDER, NEVER A LIMIT** — `nightReminder()`, card
+  bingo SAID per game, never counted: an undercount is a lie.
+- **A SCORE FIXED AT THE FINAL MOVES THE DRINKS — `adjustScore()`.** **EVERY
+  SCORE WRITE GOES THROUGH `bumpScore()` / `setScore()`, which drop the
+  cache** — `test/score-writes.test.js` refuses a third writer.
 - **A CODE STAYS ON THE PHONE UNTIL THE BAR SCANS IT — `view.vouchers` on the
   QUIZ engine too.** **Every live code, at every phase with room, NEVER over a
   live QUESTION.** **A REDEEMED one now DISAPPEARS from the phone** — see *My

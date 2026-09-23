@@ -74,6 +74,37 @@ export function dealPrizes(list, pays) {
 }
 
 /**
+ * THE NIGHT'S DRINKS, AS A REMINDER — NEVER A LIMIT.
+ *
+ * *"Nights shouldn't even have drinks totals in code, it should only be there
+ * to remind me what the total should be."* Nothing in this app counts, shares
+ * or caps what a night hands out: every game is dealt from the top and pays
+ * what it pays. This is the one place a night-wide number appears, and it is
+ * a sentence under the prize table that stops nothing.
+ *
+ * IT MUST BE TRUE, which is why card bingo is said rather than counted: a
+ * deck pays one drink a GAME and nobody knows at launch how many games there
+ * will be, so any single total would be a number that undercounts in front of
+ * the man agreeing it with a landlord. And it no longer compares the night to
+ * the venue's list — per game, a list shorter than the night runs nobody dry,
+ * so saying so would be a warning about nothing.
+ *
+ * @param {Array<{kind: string, list: string[]}>} parts  the table's parts
+ * @returns {string} the reminder, or '' when nothing is set to be won
+ */
+export function nightReminder(parts) {
+  const all = Array.isArray(parts) ? parts : [];
+  const filled = (p) => (Array.isArray(p && p.list) ? p.list : [])
+    .filter((r) => String(r || '').trim()).length;
+  const fixed = all.filter((p) => p && p.kind !== 'cards').reduce((n, p) => n + filled(p), 0);
+  const perGame = all.some((p) => p && p.kind === 'cards' && filled(p));
+  if (!fixed && !perGame) return '';
+  if (!fixed) return 'Tonight gives out one drink for every game of card bingo you play.';
+  return `Tonight gives out ${fixed} drink${fixed === 1 ? '' : 's'}${
+    perGame ? ', plus one for every game of card bingo you play' : ''}.`;
+}
+
+/**
  * HOW MANY PRIZES ONE PART PAYS.
  *
  * The number the deal above spreads by, and the number of boxes the console's

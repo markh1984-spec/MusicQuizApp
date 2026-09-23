@@ -19,8 +19,9 @@
  * bar, taps the pack into Tonight, presses Launch in a browser, opens the
  * projector, joins five phones, answers every question in the pack, and reads
  * the vouchers back. Then it does the bingo as the second part of the SAME
- * night and checks the drinks carry on down the venue's list instead of
- * starting again at the first one.
+ * night and checks it is dealt the venue's list FROM THE TOP — drinks are
+ * assigned per game, not per night (23 September 2026), which reversed the
+ * check that stood here, that they carried on down one list.
  *
  *   node scripts/rehearse-tonight.mjs --quiz <packId> --bingo <packId>
  *

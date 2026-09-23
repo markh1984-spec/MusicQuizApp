@@ -36,7 +36,7 @@
  */
 import { bestBingoShape, esc } from './client.js';
 import { partsOfSlots } from './console-tonight-mix.js';
-import { FULL_HOUSE, checkStages, dealPrizes, defaultStages, moveStage, paysOf, stageChoices, stageWord } from './prize-parts.js';
+import { FULL_HOUSE, checkStages, dealPrizes, defaultStages, moveStage, nightReminder, paysOf, stageChoices, stageWord } from './prize-parts.js';
 
 /*
  * CARD BINGO'S ONE BOX PAYS EVERY GAME, SO IT SAYS SO. A deck pays a prize a
@@ -152,18 +152,15 @@ export function prizesTonight(parts) {
 }
 
 /*
- * THE ONE LINE UNDER THE TABLE, and it is silent unless something is wrong.
- *
- * *Silence where there is nothing true to say* — a night whose prizes are
- * right gains nothing from being told so, and space is at a premium. What it
- * does say is the thing the host cannot see at a glance: how many drinks the
- * whole evening is about to hand out against what the venue has put up.
+ * THE ONE LINE UNDER THE TABLE — the night's drinks as a REMINDER, never a
+ * limit. It used to speak only when the night wanted more than the venue's
+ * list held, which was a real shortfall while one list was shared down the
+ * night and is a warning about nothing now every game is dealt from the top.
+ * The sentence is `nightReminder()` in `prize-parts.js`, where it is tested.
+ * Callers still pass the venue as a second argument; it is no longer read.
  */
-export function prizeNote(parts, { venueName, venueList }) {
-  const want = prizesTonight(parts).length;
-  const have = (venueList || []).length;
-  if (!have || want <= have) return '';
-  return `That is ${want} prizes across the night and ${have} on ${venueName}'s list.`;
+export function prizeNote(parts) {
+  return nightReminder(parts);
 }
 
 /** Draw the table into `box` — shut it is the ledger, open it is the editor. */
