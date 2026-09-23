@@ -116,18 +116,19 @@ inbox, not spam. If it does not, the Brevo dashboard's *Transactional → Logs*
 says why, and the usual answer is that `no-reply@quizporium.co.uk` needs adding
 under *Senders*. **Delete this step once a link has arrived.**
 
-### 5. DECIDE WHAT GETS FIXED OFF THE SWEEPS — the list is written, nothing is actioned
+### 5. DECIDE WHAT GETS FIXED OFF THE SWEEPS — now one table, re-checked
 
-**Blocked on the host, which is why it is above everything else.** Two passes on
-5-7 September 2026 found roughly 160 faults between them; **none has been
-actioned** except the dead Save button, which was fixed and verified at his
-request. The worked list — file:line, how each was reproduced, what it costs in
-a pub, and the fix suggested but not applied — is
-**[`docs/sweeps-september-2026.md`](docs/sweeps-september-2026.md)**.
+**Blocked on the host: he picks.** The September sweeps found roughly 160
+faults. **Re-checked against the code on 22–23 September 2026, most turned out
+to be fixed already**: of the 106 in "Everything else", 75 are fixed and 2 are
+deliberate, leaving **16 still live and 12 partly — one table** in
+**[`docs/sweeps-september-2026.md`](docs/sweeps-september-2026.md)**, under
+*Re-verified 22–23 September*, each with what it costs on a night. **Seven sit
+on the protected surface** and head it. **Part C (36 bullets) is still not
+re-checked** — do that before acting on any of it.
 
-**It is a menu, not a to-do list.** Fifty findings sit on the protected surface
-and those outrank the rest; a fair number of the others are things this codebase
-decided deliberately. The host picks.
+**One is purely a decision and is ready now: `/api/brand?q=` confirms that an
+account id is real.** Recorded in the code as a trade-off, never in `docs/`.
 
 **AND THE FILE'S OWN WORKING NOTE IS THE PART TO READ FIRST.** Fixing forty
 findings in one fast sitting closed about twenty and introduced ten, in three

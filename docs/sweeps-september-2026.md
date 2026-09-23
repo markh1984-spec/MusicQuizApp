@@ -1,7 +1,9 @@
 # The September 2026 sweeps — a worked list
 
 **This is a findings list, not a plan.** Nothing in it has been actioned unless
-it says so — **and the twelve that matter most now all say so.** They were
+it says so — **and the twelve that matter most now all say so. "Everything
+else" and Part B were re-checked on 22–23 September; what is still wrong is one
+table, below.** They were
 re-verified against the code on 20 September 2026 and every one is fixed; see
 *What has already been actioned* below before acting on anything here. It exists because the analysis behind it cost two days and lived
 only in a chat window, and a session that starts without it re-derives it at
@@ -71,11 +73,68 @@ the cap is on POSITION), and `prizeWinners` is still not carried across a part
 boundary (finding 10 — carrying it makes `stageTaken()` true for a prize nobody
 played for).
 
-**The rest of this file has NOT been re-verified.** "Everything else, grouped"
-and the whole of Part C are still as written on 7 September, and by the same
-arithmetic a good share of them will have been fixed too. **Do not read an
-untriaged bullet as a live fault** — check the code first, the way these twelve
-were.
+**"Everything else, grouped" and Part B were re-verified on 22–23 September
+— see the next section. Part C still has NOT been**, so **do not read one of its
+bullets as a live fault**: check the code first, the way these were.
+
+### RE-VERIFIED 22–23 SEPTEMBER 2026 — "Everything else" and Part B
+
+Four read-only agents, each in its own copy of the repository at `d2b238f`,
+checked every bullet against the code by reading it end to end — and where
+cheap, by running it — never by trusting that a rule in `CLAUDE.md` meant the
+fix was in. **Of 106 bullets: 75 fixed, 2 deliberate, 16 still live and 13
+partly** — one of the thirteen fixed since, below. The Part C agent was stopped
+twice before finishing; that part is untouched.
+
+**STILL LIVE OR PARTLY, protected surface first** — each with what it costs on a
+night:
+
+| | Where | What is still wrong | In a pub |
+|---|---|---|---|
+| **[P]** | running orders | a pack deleted mid-evening | Continue shows a raw `ENOENT` toast with a file path; the quiz is stuck on its last round board, Stop is refused, and the night never files |
+| **[P]** | accounts | the owner's reset/close is unlogged and has no busy guard | a reset mid-question signs the host out — Next and Reveal stop — and their log says nothing happened |
+| **[P]** | accounts | tier and subscription are checked at LAUNCH only | a lapsed or Bronze account can play a whole night off the boot pack it does not hold |
+| **[P]** | projector | a big photo's dark overlay covers the lobby QR (~37% darker) | contradicts *A BIG PHOTO NEVER DIMS THE JOIN CODE* — while people are scanning |
+| **[P]** partly | launch bar | thirteen-plus rounds built by dropping on SLOTS skip the ceiling check | the room plays twelve and nothing says so; `console-tonight-mix.js` says the server refuses, and it slices |
+| **[P]** partly | phones | a mid-quiz correction reaches the projector but not the phones' options (key `q:ri:qi:phase`) | a team taps the old wording and is scored against the new — rule 9's fingerprint rule, on the phone |
+| **[P]** partly | guards | `final-fits.mjs` measures a hand-written winner card that has drifted from `screen.js` | a clipped final slide could pass the guard |
+| | running orders | Unlaunch mid-order leaves the order in memory | a stale *Continue to the quiz now* puts the next part up with venue, look, winners and teams gone |
+| | accounts | a hand-set `mmm_acting` cookie skips the busy check and the "came in" line | the owner can watch a control view, answer key included, unlogged — the owner-into-quizmaster direction |
+| | accounts | a Gold tier preview follows the owner into a support session | what he creates there stays on their account |
+| | accounts | a break plan's adverts are not tier-checked | a downgraded account's slides keep rotating |
+| | accounts | owner-set *trialing* writes no end date | "another two weeks" is the top tier for ever, or nothing |
+| | accounts, partly | the owner's row buttons write the RAW seat record | closing a venue seat leaves it able to launch |
+| | accounts, partly | the Money tab counts each seat as a Bronze payer | Monday's figures overstated per seat |
+| | accounts, partly | grandfathering reaches only seats that existed at the move | a venue joining later lacks what the group kept |
+| | privacy, partly | `/api/playing` answers for other accounts' private pack ids | a subscriber can confirm another's pack is on, and which question |
+| | privacy | subscriber rooms have no `offers` path | advert-scan counts reset on every deploy |
+| | privacy | `/api/brand?q=` confirms real account ids | **the host's decision** — recorded as a trade-off in the code, never in `docs/` |
+| | owner overview | found in passing: a composed night unmasks a subscriber's OWN round title | the one thing `own-packs.js` promises the owner cannot read |
+| | public pages | the league page never sends `?as=visitor` | a signed-in host sees unpublished tables (with a pill) |
+| | bingo, partly | a prize corrected after round one does not reach round one's voucher | the bar reads out the old prize |
+| | bingo | found in passing: *"Start a new round to open it up"* on the stall line | untrue since one prize per phone per GAME; same claim in this folder's `bingo.md` and a `bingo.js` comment |
+| | mixed nights | `winnersOf` reads a bingo state as three places; a late arrival loses the dealt team | the last quiz goes back to three winners |
+| | lobby games | Maze Mouth and Tailback step on the frame clock with no accumulator | a 30fps phone plays a slower player against the same chasers — against the lobby-games rule on frame deltas |
+| | lobby games | shutting the card mid-load leaves the game running unseen | battery and CPU on slow wifi |
+| | launch bar, partly | a show dragged on the Workshop door lands nowhere | the tap works; a laptop drag does not |
+| | control view, partly | *Edit this pack* opens the editor's first pack | a host fixing an answer mid-night lands on the wrong pack |
+| | guards, partly | the `/api/past-gigs` gate is a text search | a gate reduced to a comment at a line's end stays green |
+| | stored data | `offerLobbyGames()` says "memory only" and reaches `state.json` | low: a stale list until the console next asks |
+| | dead code, partly | `supportWords()` branches for routes that no longer exist | a log line says "Opened your pack" for the wrong reason |
+
+**Fixed since by this session, so not in the table:** the fixed port in
+`final-fits.mjs` (guards #7) — see `docs/checks.md`, *One spawn of the app*.
+
+**Part B — the sixteen areas nobody swept:** swept since — concurrency between
+rooms and devices; partly — the backup layer (no 429 branch, nothing shows the
+last good backup), photo capture, device geometries (no 4:3 question slide, no
+landscape phone), money (the invoice half untouched; the PDF prints non-Latin-1
+as `?`), generation, the pack editor, the diary (UTC and local day boundaries
+differ), other public pages (the bar's voucher page has no guard), the owner
+page, the smaller items; **still unswept** — CPU on the quiz thread (sign-in is
+unthrottled synchronous scrypt at ~43ms), scale (`/api/library` reads the
+archive FOUR times a request, where `CLAUDE.md` says once), chat, accessibility
+and forced colours, and the Monday-load reducers.
 
 ## What is verified BY HAND, over and above the two verifiers
 
