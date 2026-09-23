@@ -61,7 +61,26 @@ const fingerprint = (value) => JSON.stringify(value ?? null);
 // --------------------------------------------------------------- card registry
 
 const cards = {
-  lobby: { key: () => 'lobby', render: renderLobby, update: updateLobby },
+  /*
+   * THE LOBBY NAMES WHAT IT DRAWS — sixth sighting of the card-key trap, and
+   * the first where the key named NOTHING AT ALL. `renderLobby()` draws the
+   * game's title and the prize list; `updateLobby()` refreshes neither, so a
+   * constant key meant the card survived a PART BOUNDARY untouched. Found
+   * rehearsing a three-game night: at the music bingo's lobby the heading
+   * above the card read "MBC 6 - 2000s & 2010s" while the card under it still
+   * said "Card Bingo" — and the "Playing for" list was the previous part's
+   * too, which is the rule that the room is told what it is playing for,
+   * running backwards. Nine seconds and a correct payload; nothing threw.
+   *
+   * The fingerprint is the game, the title and the prizes, so it is stable for
+   * the whole of a part and changes only when one of those does — never on an
+   * ordinary state push, which would flash the QR the room is scanning.
+   */
+  lobby: {
+    key: (s) => `lobby:${fingerprint([s.game, s.quizTitle, s.rewards || []])}`,
+    render: renderLobby,
+    update: updateLobby,
+  },
   dj: { key: (s) => `dj:${s.phase}`, render: renderDj, update: updateDj },
   rules: { key: () => 'rules', render: renderRules },
   // A stable key: the card is built once when the scoreboard opens, and the

@@ -410,7 +410,7 @@ and pressing it did nothing.
 
 **AND A CARD KEY IS A FINGERPRINT OF WHAT IT DRAWS, NEVER ONE FIELD OF IT.**
 A key is STABLE on purpose, so naming one field — or nothing at all — lets
-everything else change unseen. Four sightings, all silent, all with the PAYLOAD
+everything else change unseen. Five sightings, all silent, all with the PAYLOAD
 correct: `ad:${heading}`; the break rotation on `breakAdverts.length`;
 `q:round:question`, so **a question corrected mid-quiz never reached the room**
 and a moved ANSWER lit the new index against the old options, against rule 11;
@@ -419,6 +419,12 @@ announced the wrong team in gold at 13vh** while the voucher went to the
 engine's winner. **`view.question` is the static half**, the clock and the
 reveal banner being siblings, so this cannot rebuild a card mid-answer.
 `reaches-the-wall.mjs` drives all of it.
+
+**AND THE FIFTH NAMED NOTHING AT ALL — the LOBBY, at a PART BOUNDARY.** A
+three-game night kept its first card: the heading read *"MBC 6"* over a card
+still saying *"Card Bingo"*, with the previous part's *Playing for*.
+Fingerprint the GAME, title and prizes — **never a state push, which
+flashes the QR the room is scanning.** `rehearse-tonight.mjs` reads THE WALL.
 
 ### 10. "Pick them all" tells the room HOW MANY, never which
 A `multi` question shows six options with 2–3 correct. The screen and the phone
@@ -703,16 +709,13 @@ and deliberately NOT the full gradient, which means "press this" and would be
 the loudest thing in the app sitting on the one control there is no point
 pressing. A `rgba` fallback is declared before the `color-mix`.
 
-**AND THE WORDMARK'S DIET WAS THE RIGHT TRADE AT THE WRONG SCOPE.** It took
-`.brand-app` from 431px to 1180 — so the owner's bar read *"Mark's"* with
-nothing under it on every laptop, reported twice. **MEASURED on his own bar
-with a night running and two phones in it, restoring the whole stack costs
-1px** at 1050, 1100, 1160 and 1179, and never a second row; **1000px is where
-it genuinely costs one**, so the hide moved into the `max-width: 1050px` block
-beside the live line, which is the other thing that gives way there. **The
-guard was the thing at fault**: of `console-frame.mjs`'s seven sizes exactly
-ONE satisfied `framed`, so the whole band this rule governed had nothing
-asserting a single row in it — it has a framed 1160 and a framed 1000 now.
+**AND THE WORDMARK'S DIET WAS THE RIGHT TRADE AT THE WRONG SCOPE** — taking
+`.brand-app` to 1180px read *"Mark's"* with nothing under it on every laptop,
+reported twice. **The whole stack costs 1px above 1050 and never a second
+row**, so the hide lives in the `max-width: 1050px` block beside the live line.
+**The guard was the thing at fault**: one of `console-frame.mjs`'s seven sizes
+satisfied `framed`, so this band had nothing asserting a single row — it has a
+framed 1160 and 1000 now. [`docs/console/chrome.md`](docs/console/chrome.md).
 
 **The hat switch already followed the scheme** and was left alone. The B/S/G
 rungs keep the metals, because there the colour IS the meaning — and they are
