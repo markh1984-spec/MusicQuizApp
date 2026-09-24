@@ -2502,17 +2502,17 @@ Settled 22 September 2026, and he was right for a reason he had not seen.
 
 - **THE PRIZE TABLE WAS INERT ON A ONE-GAME NIGHT, AND OPENED THE GATE
   ANYWAY — `typed-prizes-reach-the-room.mjs`.** A quiz pack BURSTS into a tile
-  per round, so `lbSlots` exists on an ordinary one-pack night: the table wrote
-  the part's list onto `lbSlots[0]` while `simpleNight()` collapsed the row and
-  the launch read `night.*`. **Reading one place and writing another.** The bar
-  showed the typed drinks and the room played the VENUE's; with no venue the
-  typed list still satisfied `noPrizesReason()` and then went nowhere, so the
-  night ran with **nobody to pay** — the failure the table exists to prevent.
-  **`soleRewards()` is the fix: a one-part night's list IS the night's list.**
-  **BOTH GUARDS MISSED IT FOR ONE REASON — neither was on this path**: the
-  drive that shipped it used a quiz AND a bingo (per-part lists ride on
-  segments), and `bar-reaches-the-room.mjs` picks a BINGO pack, which has no
-  rounds and never bursts. **A quiz on its own is most nights.**
+  per round, so the table wrote onto `lbSlots[0]` while the launch read
+  `night.*` — **reading one place and writing another**: the room played the
+  VENUE's list, and with no venue the night ran with **nobody to pay**.
+  **`soleRewards()`: a one-part night's list IS the night's list.** **Both
+  guards missed it because neither drove a quiz on its own — most nights.**
+- **AND `night.rewards` IS THE NO-TILE NIGHT'S ALONE, AND IT MOVES ONTO THE
+  TILE.** `soleRewards()` let it win over every tile's own list and nothing
+  cleared it, so drinks typed on a bingo picked alone reached a quiz tapped in
+  after that bingo was taken out, and a 3x3 with one drink went out as a 5x5
+  with five stops. `forgetTyped()` on a different pack or none; `burst()`
+  moves the card, count, lines and drinks onto the tile. Same guard, three ways.
 - **AND `rewards` WAS MISSING FROM `doLaunch()`/`doLaunchOrder()`'S
   WHITELISTS** — the trap this file already records for `winners`, hit again by
   the change that needed it.

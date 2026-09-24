@@ -1484,26 +1484,19 @@ export function launchBar() {
   function pick(pack, { quiet = false, keepOrder = false } = {}) {
     const switching = !quiet && currentPack?.id !== pack.id;
     /*
-     * CHOOSING A DIFFERENT PACK STARTS THE NIGHT AGAIN.
-     *
-     * Picking one out of the box or dropping it on the bar is somebody saying
-     * "we are playing THIS" — so a running order built round the last pack has
-     * to go, or you would launch a night whose name says one thing and whose
-     * rounds are mostly another. Adding to an order is the strip's job and it
-     * is a different gesture, which is the whole reason the two are split.
-     *
-     * **UNLESS `keepOrder` SAYS THIS IS A REORDER, NOT A NEW PICK.**
-     * `movePack()` promotes a different pack to slot 1 by calling this — the
-     * SAME pack identity change this block exists to catch, for a reason
-     * this block must not act on. It had already computed the reordered
-     * `lbExtra` itself; without `keepOrder` this silently overwrote it with
-     * `[]`, so dragging pack A to sit after pack B deleted A outright. Found
-     * live: two packs in, drag one past the other, one pack left.
+     * CHOOSING A DIFFERENT PACK STARTS THE NIGHT AGAIN — "we are playing
+     * THIS", so a running order built round the last pack goes, and so does
+     * what was typed for it (`forgetTyped()`). Adding to an order is the
+     * strip's job, a different gesture. **UNLESS `keepOrder` SAYS THIS IS A
+     * REORDER**: `movePack()` promotes a different pack to slot 1 through
+     * here with the reordered `lbExtra` already computed; without the flag it
+     * was overwritten with `[]`, so dragging A past B deleted A outright.
      */
     if (!keepOrder && currentPack && currentPack.id !== pack.id) {
       lbExtra = [];
       lbOff = new Set();
       lbSlots = null;
+      forgetTyped();
       /*
        * AND IT IS NOT THAT SHOW'S EVENING ANY MORE. Choosing a different pack
        * by hand is somebody saying "we are playing THIS", so a "Then: the
@@ -1654,6 +1647,7 @@ export function launchBar() {
     currentPack = null;
     lbExtra = [];
     lbSlots = null;
+    forgetTyped();
     chosen.hidden = true;
     text.value = '';
     startOn();
@@ -2136,30 +2130,34 @@ export function launchBar() {
   /*
    * WHAT A ONE-GAME NIGHT PAYS — and it is not simply `night.rewards`.
    *
-   * The prize table writes per PART, because that is what the launch reads on
-   * a mixed night: a part's own list travels on its segment. A quiz pack
-   * BURSTS into a tile per round, so `lbSlots` exists on an ordinary one-pack
-   * night too — and the table therefore writes onto `lbSlots[0]`, while
-   * `simpleNight()` collapses the row back and the launch sends `night.*`.
+   * The table writes per PART, which is what a mixed launch reads. A quiz
+   * pack BURSTS into a tile per round, so `lbSlots` exists on an ordinary
+   * one-pack night too: the table wrote onto `lbSlots[0]` while the launch
+   * collapsed the row and sent `night.*` — reading one place and writing
+   * another. Measured: the bar read the typed drinks and the room played for
+   * the venue's, and with no venue the typed list opened the gate and went
+   * nowhere. A ONE-PART NIGHT'S LIST IS THE NIGHT'S LIST; more than one part
+   * and each carries its own on its segment.
    *
-   * The two halves were reading and writing different places, which is this
-   * repo's oldest shape of bug. Measured in a browser before it was believed:
-   * the bar read "TYPED 1, TYPED 2, TYPED 3" and the room played for the
-   * venue's list, silently — and with no venue at all the typed prizes opened
-   * the launch gate and then went nowhere, so the night ran with nobody to
-   * pay, which is the failure the whole feature exists to prevent.
-   *
-   * A ONE-PART NIGHT'S LIST IS THE NIGHT'S LIST, which is all this says. More
-   * than one part and it returns nothing on purpose: each carries its own and
-   * the server deals the venue's across whichever brought none.
+   * AND `night.rewards` IS THE NO-TILE NIGHT'S ALONE. It won over every
+   * tile's own list and nothing ever cleared it, so drinks typed on a bingo
+   * picked alone reached a quiz tapped in after that bingo was taken out
+   * (R7 of the 23 September 2026 sweep). See `forgetTyped()` and `burst()`.
    */
   function soleRewards() {
-    if (Array.isArray(night.rewards)) return night.rewards;
+    if (!lbSlots && Array.isArray(night.rewards)) return night.rewards;
     try {
       const parts = partsNow();
       return (parts.length === 1 && parts[0].own) ? parts[0].list : undefined;
     } catch { return undefined; }
   }
+
+  // A DIFFERENT PACK, OR NONE, FORGETS WHAT WAS TYPED FOR THE LAST ONE — the
+  // card, the count, the lines and the drinks. A pack's tiles take theirs with
+  // them when they go; the no-tile night's live on `night` and did not.
+  function forgetTyped() { Object.assign(night, { rewards: undefined, stages: null, shape: null, prizes: 0 }); }
+  // The no-tile night as tiles: its card, count, lines and drinks MOVE onto them.
+  function burst(opts) { const slots = slotsFromSimple({ ...opts, night }); night.rewards = undefined; return slots; }
 
   function paintPrizeTable() {
     prizeTableInto(el.querySelector('.lb-prizes'), partsNow(), {
@@ -2651,6 +2649,7 @@ export function launchBar() {
       lbExtra = [];
       lbOff = new Set();
       lbSlots = null;
+      forgetTyped();
       chosen.hidden = true;
       paintOrder();
       paintLive();
@@ -2918,7 +2917,7 @@ export function launchBar() {
   function segmentsNow() {
     const show = runningShowSegments();
     if (show) return show;
-    const slots = lbSlots || slotsFromSimple({ currentPack, lbExtra, lbOff, packOf });
+    const slots = lbSlots || slotsFromSimple({ currentPack, lbExtra, lbOff, packOf, night });
     return segmentsFromSlots(slots);
   }
 
@@ -3556,7 +3555,7 @@ export function launchBar() {
        * is one tile per round. A bingo pack has no rounds and is untouched.
        */
       if ((from.rounds || []).length) {
-        lbSlots = slotsFromSimple({ currentPack: from, lbExtra: [], lbOff, packOf });
+        lbSlots = burst({ currentPack: from, lbExtra: [], lbOff, packOf });
         paintOrder();
       }
       return;
@@ -3577,7 +3576,7 @@ export function launchBar() {
     // AND A QUIZ PACK GOES THIS WAY TOO NOW — that is what bursts it. The
     // launch collapses the row back; see `simpleNight()`.
     if (kind !== 'quiz' || kind !== gameOf().id || lbSlots || (from.rounds || []).length) {
-      if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf, kind: gameOf().id });
+      if (!lbSlots) lbSlots = burst({ currentPack, lbExtra, lbOff, packOf, kind: gameOf().id });
       /*
        * `at` — WHICH SLOT IT WAS DROPPED ON, when it was dropped on one.
        * Undefined for a drop that landed on the panel rather than a square,
@@ -3633,7 +3632,7 @@ export function launchBar() {
       paintOrder();
       return;
     }
-    if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf: anyPack });
+    if (!lbSlots) lbSlots = burst({ currentPack, lbExtra, lbOff, packOf: anyPack });
     const next = moveRoundToSlot(lbSlots, { packId: round.packId, round: round.round }, lbSlots.length);
     if (tooLong(next)) return;
     lbSlots = next;
@@ -3659,7 +3658,7 @@ export function launchBar() {
     const pack = anyPack(round.packId);
     if (!pack) return;
     if (!currentPack) { addRoundToNight(round); return; }
-    if (!lbSlots) lbSlots = slotsFromSimple({ currentPack, lbExtra, lbOff, packOf: anyPack });
+    if (!lbSlots) lbSlots = burst({ currentPack, lbExtra, lbOff, packOf: anyPack });
     const next = moveRoundToSlot(lbSlots, { packId: round.packId, round: round.round }, at);
     if (tooLong(next)) return;
     lbSlots = next;
@@ -3878,6 +3877,7 @@ export function launchBar() {
     lbExtra = here.slice(1);
     lbOff = new Set();
     lbSlots = null;
+    forgetTyped();
     if (item.order && item.order.length) {
       const on = new Set(item.order.map((r) => offKey(r.packId, r.round)));
       for (const pack of lbPacks()) {

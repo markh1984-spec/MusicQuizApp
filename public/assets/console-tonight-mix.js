@@ -80,21 +80,40 @@
  * all, by design — see CLAUDE.md) produced `{kind:'quiz', rounds: []}`, an
  * empty quiz slot standing in for the actual bingo game.
  */
-export function slotsFromSimple({ currentPack, lbExtra, lbOff, packOf, kind = 'bingo' }) {
+export function slotsFromSimple({ currentPack, lbExtra, lbOff, packOf, kind = 'bingo', night = null }) {
   if (!currentPack) return [];
+  /*
+   * WHAT WAS SET ON THE NO-TILE NIGHT COMES WITH IT — the card, the count,
+   * the lines and the typed drinks live on `night` until the row converts,
+   * and used to be left behind: the slot arrived as a default card with
+   * nothing typed on it, while `night.rewards` went on winning night-wide.
+   * A 3x3 with one typed drink reached the room as a 5x5 with five stops
+   * playing for "BINGO TYPED 1" (R7, 23 September 2026). Spread in only when
+   * set, so a night nobody touched converts to exactly the slots it always did.
+   */
+  const typed = night && Array.isArray(night.rewards) ? { rewards: night.rewards } : {};
   if (!Array.isArray(currentPack.rounds)) {
     // `kind` is the tab the pack was picked on — a deck is not a music bingo
     // pack, and a slot that said so sent `bingo:deck` to the server.
-    return [{ kind: kind === 'quiz' ? 'bingo' : kind, packId: currentPack.id, shape: null, prizes: 0 }];
+    return [{
+      kind: kind === 'quiz' ? 'bingo' : kind,
+      packId: currentPack.id,
+      shape: (night && night.shape) || null,
+      prizes: (night && night.prizes) || 0,
+      ...(night && Array.isArray(night.stages) ? { stages: night.stages } : {}),
+      ...typed,
+    }];
   }
   // ONE SLOT PER ROUND, like `addQuizPackSlot()` — a night converting into
   // this shape must look the same as one built in it, or the row rearranges
-  // itself the moment a bingo game joins.
+  // itself the moment a bingo game joins. The FIRST tile owns the run's list,
+  // which is where `segmentsFromSlots()` reads it.
   const packs = [currentPack, ...lbExtra.map(packOf).filter(Boolean)];
   return packs.flatMap((pack) => (pack.rounds || [])
     .map((_, i) => i)
     .filter((i) => !lbOff.has(`${pack.id}:${i}`))
-    .map((round) => ({ kind: 'quiz', packId: pack.id, rounds: [round] })));
+    .map((round) => ({ kind: 'quiz', packId: pack.id, rounds: [round] })))
+    .map((slot, i) => (i === 0 ? { ...slot, ...typed } : slot));
 }
 
 /** Every quiz round currently placed anywhere in the slots, so a shelf pick or a drag-in can refuse a duplicate. */

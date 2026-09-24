@@ -355,3 +355,30 @@ test('the same bingo or card-bingo pack can be added to Tonight more than once; 
   quiz = addQuizPackSlot(quiz, PACK_A, { packOf });
   assert.equal(quiz.length, before, 'a quiz is not played twice');
 });
+
+/*
+ * THE NO-TILE NIGHT'S OWN SETTINGS TRAVEL ONTO ITS TILE — R7 of the 23
+ * September 2026 sweep. A bingo picked alone keeps its card, count, lines and
+ * drinks on `night`; the moment a quiz joins it the row converts, and the slot
+ * used to arrive as `{shape: null, prizes: 0}` with nothing typed on it while
+ * `night.rewards` went on winning night-wide. A 3x3 with one typed drink
+ * reached the room as a 5x5 with five stops playing for "BINGO TYPED 1".
+ */
+test("slotsFromSimple: the no-tile night's card, count, lines and drinks move onto the tile", () => {
+  const BINGO = { id: 'mbc', title: 'MBC 3', trackCount: 40 };
+  const night = { shape: { rows: 3, cols: 3 }, prizes: 1, stages: [2], rewards: ['BINGO TYPED 1'] };
+  assert.deepEqual(slotsFromSimple({ currentPack: BINGO, lbExtra: [], lbOff: new Set(), packOf, night }), [
+    { kind: 'bingo', packId: 'mbc', shape: { rows: 3, cols: 3 }, prizes: 1, stages: [2], rewards: ['BINGO TYPED 1'] },
+  ]);
+
+  // A quiz picked through the search box: its drinks land on the FIRST tile,
+  // which is the one `segmentsFromSlots()` reads a run's list off.
+  const quiz = slotsFromSimple({ currentPack: PACK_A, lbExtra: [], lbOff: new Set(), packOf, night: { rewards: ['A', 'B', 'C'] } });
+  assert.deepEqual(quiz[0].rewards, ['A', 'B', 'C']);
+  assert.equal('rewards' in quiz[1], false, 'a later round of the same pack is not a second game');
+  assert.deepEqual(segmentsFromSlots(quiz), [{ kind: 'quiz', order: [{ packId: 'a', round: 0 }, { packId: 'a', round: 1 }, { packId: 'a', round: 2 }], rewards: ['A', 'B', 'C'] }]);
+
+  // And nothing typed is nothing carried — the slot is exactly what it was.
+  assert.deepEqual(slotsFromSimple({ currentPack: BINGO, lbExtra: [], lbOff: new Set(), packOf }),
+    [{ kind: 'bingo', packId: 'mbc', shape: null, prizes: 0 }]);
+});

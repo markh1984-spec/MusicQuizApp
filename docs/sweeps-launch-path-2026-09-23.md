@@ -44,7 +44,12 @@ tagged *(known)* where an agent re-confirmed them.
   `backUpCodes()` holds a minted code's push back until the boot's read has
   succeeded, and the retry then pushes the merged book
   (`test/join-codes-restore.test.js`, fail-first both ways).
-- **R2, R7** — see below; not yet actioned.
+- **R7** — fixed on 24 September: `night.rewards` is the no-tile night's alone
+  (`soleRewards()`), forgotten on a different pack or none (`forgetTyped()`),
+  and moved onto the tile with the card, count and lines when the row converts
+  (`burst()`; `slotsFromSimple()` takes `night`).
+  `typed-prizes-reach-the-room.mjs` drives all three ways, each fail-first.
+- **R2** — see below; not yet actioned.
 
 ---
 
