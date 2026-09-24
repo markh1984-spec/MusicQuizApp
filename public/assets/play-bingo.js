@@ -88,12 +88,24 @@ export function renderBingo(s, me) {
      * moment sixty of them would. The game is the reliability half of this
      * feature, not the toy half.
      */
+    /*
+     * AND A DRINK ALREADY WON IS DRAWN HERE TOO. This screen had no vouchers
+     * box and never called `paintVouchers()`, which cost nothing while a bingo
+     * lobby could only ever come BEFORE anything was won. A running order
+     * changed that: three games of card bingo, then the music bingo at ten —
+     * and its lobby is the hour in between, where a pint won at eight was in
+     * the payload (`carried`) and on no screen. *A held code is drawn at every
+     * phase of a night.* `updateBingo()` looks for `.bingo-lobby` for the same
+     * reason: the key names no vouchers, so a code arriving mid-lobby is a
+     * repaint, not a rebuild.
+     */
     const el = node(`
-      <div style="display:grid;gap:14px;text-align:center">
+      <div class="bingo-lobby" style="display:grid;gap:14px;text-align:center">
         <div class="pill" style="justify-self:center;font-size:13px">You're in</div>
         <h1 class="grad-text">${esc(s.you ? s.you.name : '')}</h1>
         <p>Your card is ready. It appears the moment the first song plays.</p>
         <p class="muted" style="font-size:14px">This card is yours for the whole round — it will not change.</p>
+        <div class="bingo-vouchers" id="bingoVouchers"></div>
         ${photoVoteCard(s)}
         <div class="wait-menu">${arcadeCard(s)}</div>
       </div>`);
@@ -101,6 +113,7 @@ export function renderBingo(s, me) {
       playerId: me.id, token: me.token, joinCode: roomCode(), score, game,
     }).catch(() => {}));
     wirePhotoVote(el, votePoster(me));
+    paintVouchers(el, s);
     return el;
   }
 
@@ -143,9 +156,11 @@ export function renderBingo(s, me) {
 }
 
 export function updateBingo(s, me) {
-  const el = document.querySelector('.bingo-wrap');
+  const el = document.querySelector('.bingo-wrap, .bingo-lobby');
   if (!el) return;
-  paintCard(el, s, me);
+  // The lobby has no card yet; it has a prizes box, and that is what a
+  // carried voucher arriving on a state push needs repainted.
+  if (el.classList.contains('bingo-wrap')) paintCard(el, s, me);
   paintVouchers(el, s);
 }
 
@@ -157,6 +172,14 @@ let lastVouchersSeen = '';
 function paintVouchers(root, s) {
   const box = root.querySelector('#bingoVouchers');
   if (!box) return;
+  /*
+   * A FRESH BOX IS ALWAYS PAINTED. The key below is module-level so it
+   * survives a REBUILD — and a rebuild hands this function a brand-new empty
+   * box with the same list as before, which read as "nothing changed" and
+   * left it empty. That is how a pint carried into the bingo lobby drew after
+   * a reload and not on the push that got there. Emptiness is the tell.
+   */
+  if (!box.childElementCount) lastVouchersSeen = '';
   /*
    * A COLLECTED PRIZE IS GONE FROM THE PHONE — see `client.js`. On a bingo
    * card this matters most: the box sits ABOVE the grid, so a spent voucher

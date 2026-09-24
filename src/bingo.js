@@ -172,11 +172,24 @@ export class BingoGame {
       // The prizes, and which one is being played for. Chosen at launch beside
       // the card shape and, like the shape, written here so a restart brings
       // the same night back rather than the default.
-      stages: [...DEFAULT_STAGES],
+      /*
+       * A DECK HAS ONE STAGE, AND IT IS THE WHOLE HAND. Thirteen cards is one
+       * line of all thirteen — CLAUDE.md: *one prize, and more prizes is more
+       * ROUNDS* — so "a line then a full house" is two prizes for one game.
+       * The launch only ever set stages for `kind === 'bingo'`, so a deck kept
+       * these defaults: the first hand completed was "a line", the round was
+       * NOT over, the winner's code was HELD ("comes up at the end of the
+       * round"), and the host's main button offered *Play on for a full
+       * house* — which pays a second pint to the next hand. Eighth sighting
+       * of the kind test written when there were two games. Asked of the PACK
+       * (`everyRoundPays`), never the kind, so a restart and `resetAll()`
+       * answer the same as a launch.
+       */
+      stages: pack && pack.everyRoundPays ? [TARGETS.FULL] : [...DEFAULT_STAGES],
       stageIndex: 0,
       // Derived from the stage above, and kept in the state because the phone,
       // the projector and the control view have always read it.
-      target: TARGETS.LINE,
+      target: pack && pack.everyRoundPays ? TARGETS.FULL : TARGETS.LINE,
       // Bumped whenever cards should all be reissued (a new round).
       round: 1,
       players: {},

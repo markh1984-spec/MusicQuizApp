@@ -75,8 +75,17 @@ try {
 
   /* A running order, because a code won in the bingo and carried into the quiz
      is the case the phone gets wrong — and the one a real night has. */
+  /*
+   * AND A SECOND BINGO BEFORE THE QUIZ, because its LOBBY is the case nobody
+   * had: a bingo lobby could only ever come before anything was won until
+   * running orders existed. Three games of card bingo then the music bingo at
+   * ten is a real night, and its lobby is the hour in between — where a code
+   * carried in was in the payload and drawn NOWHERE, on the push that got
+   * there and on a reload alike.
+   */
   await act('launchOrder', {
     segments: [
+      { kind: 'bingo', packId: bingoPack.id, shape: { rows: 4, cols: 4 }, prizes: 2 },
       { kind: 'bingo', packId: bingoPack.id, shape: { rows: 4, cols: 4 }, prizes: 2 },
       { kind: 'quiz', order: [{ packId: quizPack.id, round: 0 }] },
     ],
@@ -106,13 +115,26 @@ try {
    * see it" are different questions*. So every card is measured and the first
    * one is asked whether it is genuinely the thing under its own middle.
    */
+  /*
+   * A SHUT FOLD COUNTS, WHEN ITS HEAD SAYS HOW MANY. *My prizes* opens itself
+   * the moment a NEW code arrives and never again — so a phone reopened with
+   * codes already on it comes back SHUT, the number on the head, the cards one
+   * tap behind it. That is a code on the phone; only a head that is missing or
+   * counts wrong is a code off it. The visible-card count is kept for every
+   * moment the fold should be open.
+   */
   const onScreen = () => page.evaluate(() => {
-    const cards = [...document.getElementById('body').querySelectorAll('.win-card')];
+    const body = document.getElementById('body');
+    const head = body.querySelector('.prizes-head');
+    const hr = head ? head.getBoundingClientRect() : null;
+    const foldN = hr && hr.width > 0 && hr.height > 0
+      ? Number((head.querySelector('.prizes-n') || {}).textContent) || 0 : 0;
+    const cards = [...body.querySelectorAll('.win-card')];
     const seen = cards.filter((el) => {
       const r = el.getBoundingClientRect();
       return r.width > 0 && r.height > 0;
     });
-    if (!seen.length) return { count: 0 };
+    if (!seen.length) return { count: foldN, folded: true };
     const el = seen[0];
     el.scrollIntoView({ block: 'center' });
     const r = el.getBoundingClientRect();
@@ -120,12 +142,23 @@ try {
     return { count: seen.length, pressable: Boolean(hit && el.contains(hit)) };
   });
 
+  /*
+   * THE PHONE IS GIVEN TIME TO CATCH UP, THEN JUDGED. A fixed 700ms measured
+   * a reload before its first state had arrived and called a drawn code
+   * missing. So this polls until what is drawn matches what is held — up to
+   * three seconds, which is longer than any push takes — and a phone that
+   * never catches up is the real fault, reported with the same line.
+   */
   const look = async (where) => {
-    await wait(700);
-    const s = await mine();
-    const held = (s.vouchers || []).length;
-    const shown = await onScreen();
-    const line = `${where} — phase ${s.phase}, holding ${held}, drawn ${shown.count}`;
+    let s; let held; let shown;
+    for (let tries = 0; tries < 6; tries += 1) {
+      await wait(tries ? 500 : 700);
+      s = await mine();
+      held = (s.vouchers || []).length;
+      shown = await onScreen();
+      if (held === 0 || shown.count >= held) break;
+    }
+    const line = `${where} — phase ${s.phase}, holding ${held}, drawn ${shown.count}${shown.folded && shown.count ? ' (folded, counted on the head)' : ''}`;
     if (held > 0 && shown.count === 0) gaps.push(line);
     if (held > 0 && shown.count > 0 && shown.pressable === false) {
       gaps.push(`${line} (drawn but painted over)`);
@@ -154,6 +187,29 @@ try {
   const next = await look('the next bingo round');
   check("and last round's code is on the phone once the round has turned over",
     next.held > 0 && next.shown.count > 0, next.line);
+
+  await act('advanceOrder');
+  const lobby2 = await look('the second bingo, at its LOBBY — the gap before ten o\'clock');
+  check('A CODE CARRIED INTO A BINGO LOBBY IS DRAWN THERE, on the push that arrived',
+    lobby2.held > 0 && lobby2.shown.count > 0, lobby2.line);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  const lobby2r = await look('the same lobby, phone reopened');
+  check('and after the phone is closed and reopened at that lobby',
+    lobby2r.held > 0 && lobby2r.shown.count > 0, lobby2r.line);
+
+  /* Play the second bingo to a line so the night can move on into the quiz,
+     with the carried code drawn the whole way. */
+  await act('start');
+  const hv2 = await asHost(`/api/state?role=host${q}`);
+  const ids2 = new Map((hv2.tracks || []).map((t) => [t.title, t.id]));
+  const s2 = await mine();
+  for (const [i, sq] of (s2.card || []).entries()) {
+    await act('call', { trackId: ids2.get(sq.title) });
+    await post('/api/mark', { playerId: me.id, token: me.token, index: i, marked: true, joinCode: jc });
+  }
+  await post('/api/claim', { playerId: me.id, token: me.token, joinCode: jc });
+  await look('the second bingo, a line landed');
+  await act('newRound');
 
   await act('advanceOrder');
   const carried = await look('the quiz, after "Continue to the quiz"');

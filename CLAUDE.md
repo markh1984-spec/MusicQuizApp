@@ -905,36 +905,40 @@ they say next.
 *"the app already remembers phones from previous weeks including their name, so
 I don't understand why it can't just remember the drinks they've won as well?"*
 
-- **NOTHING NEW IS STORED** — `/api/voucher` read the LIVE state, which the next
-  launch replaces; `src/wallet.js` falls back to the nights `results()` has
-  filed since the bar started scanning. **A new store would have to earn
-  surviving a deploy from scratch.**
-- **THE LIVE GAME IS ASKED FIRST, IN BOTH ROUTES AND IN THAT ORDER** —
-  archive-first lets a filed copy be taken while the live one still reads as
-  owed: two drinks for one win. **`already` is NOT a reason to fall through.**
+- **NOTHING NEW IS STORED** — `src/wallet.js` falls back to the nights
+  `results()` has filed. **A new store would have to earn surviving a deploy
+  from scratch.**
+- **THE LIVE GAME IS ASKED FIRST, IN BOTH ROUTES** — archive-first pays a filed
+  copy while the live one reads as owed. **`already` is NOT a reason to fall
+  through.**
 - **A VOUCHER REACHES THE ARCHIVE WHEN THE NIGHT IS FILED.** A night abandoned
   by launching over the top has no record and never had one.
 - **THE PHONE REMEMBERS THE CODE AND NOTHING ELSE**, so it cannot carry a lie to
   a bar. **`musicquiz.drinks`, NEVER `STORE_KEY`, and that is rule 5.** **The
   room rides with the code.** **A 404 drops it; a request that FAILED does not.**
 - **MERGED IN `draw()`** — one list, two engines. **Tonight's copy wins.**
-- **AND THE WALLET BUTTON STAYS DELETED** — a held code is drawn at every phase
-  of a night, so a chip has no moment to exist in. **Do not build one without
-  running `drinks-in-your-pocket.mjs` and finding a gap.** `drinks-keep.mjs` is
-  the across-nights half, and it relaunches.
-- **THEY NEVER EXPIRE, BY DECISION** — the card carries the date won; the app
-  does not decide for the venue.
-- **IT IS A SECTION CALLED *My prizes*, AND IT IS SHUT** — a QR is square and
-  pushed the game, the camera and the bingo squares off the screen. **ONE fold,
-  not one per prize**; **the count is in the shut row.**
+- **AND THE WALLET BUTTON STAYS DELETED** — a held code is drawn at every phase,
+  so a chip has no moment to exist in. **Do not build one without running
+  `drinks-in-your-pocket.mjs` and finding a gap.**
+- **THEY NEVER EXPIRE, BY DECISION** — the venue decides, not the app.
+- **IT IS A SECTION CALLED *My prizes*, AND IT IS SHUT** — a square QR pushed
+  the game off the screen. **ONE fold, not one per prize; the count is in the
+  shut row.**
 - **IT OPENS ITSELF WHEN A PRIZE IS WON AND NEVER AGAIN** — `noteDrinks()` seeds
   on the FIRST draw, which is what keeps the on-the-night guards honest.
-- **A COLLECTED PRIZE DISAPPEARS, WHICH REVERSES THE PINNED RECEIPT RULE.**
-  **The evidence did not move** — the host's panel and the filed night hold
-  every voucher. **The phone forgets the code too.**
+- **A COLLECTED PRIZE DISAPPEARS, REVERSING THE PINNED RECEIPT RULE** — the
+  host's panel and the filed night hold every voucher; **the phone forgets
+  it too.**
 - **THE FOLD IS A MODULE BINDING IN `client.js`, NEVER THE MARKUP** — the bingo
   card repaints on every mark. **ONE document listener**, **the press toggles
   the ELEMENT**, and **the fold is part of `paintVouchers()`'s key.**
+- **THE BINGO LOBBY DRAWS A CARRIED CODE TOO.** It had no vouchers box —
+  harmless until a running order made it the hour between card bingo and
+  music bingo at ten: a pint in the payload, on no screen. **AND A FRESH
+  BOX IS ALWAYS PAINTED** — the paint's key is module-level, so a REBUILD
+  with the same list left its new box empty. `drinks-in-your-pocket.mjs`
+  plays bingo → bingo → quiz and **counts a shut fold's head** (a reopened
+  phone seeds shut).
 
 
 ### THE FUNNIEST PHOTOGRAPH — you shortlist four, the room votes, the winner gets a drink
@@ -2594,37 +2598,38 @@ name, and `LAUNCHERS.cards` builds a `BingoGame`, so **not one rule in
 - **THIRTEEN IS PRIME, SO A HAND IS NOT A GRID AND HAS NO LINES.**
   `{rows: 1, cols: 13}` is ONE line of all thirteen, so **one prize, and more
   prizes is more ROUNDS.** The seven-over-six is a WRAP in the stylesheet,
-  never a second opinion about where a line is.
+  never a second opinion about where a line is. **AND THE ROUND HAS ONE
+  STAGE — `freshState()` off `pack.everyRoundPays`**, eighth kind-test
+  sighting: stages were set for `kind === 'bingo'` only, so a deck kept *a
+  line then a full house* — the first hand's code HELD, *Play on* paying a
+  second pint for one game. `test/deck-one-stage.test.js`.
 - **A KIND TEST WRITTEN WHEN THERE WERE TWO GAMES IS A BUG WAITING FOR THE
   THIRD — third sighting.** `runPlayerAction` gated `mark`/`claim` on
-  `kind === 'bingo'`, so **the game was UNPLAYABLE while every screen drew
-  perfectly and 1,982 tests passed**. **Ask `playsACard()`, never the kind.**
-- **MUSIC BINGO MUST NEVER GAIN THE DRAW** — `/api/host/draw` 404s on a music
-  night. **No pre-shuffled deck on the state**: `state.called` IS the order.
+  `kind === 'bingo'`: **UNPLAYABLE, every screen drawn, 1,982 tests green.
+  Ask `playsACard()`, never the kind.**
+- **MUSIC BINGO MUST NEVER GAIN THE DRAW** — `/api/host/draw` 404s there. **No
+  pre-shuffled deck on the state**: `state.called` IS the order.
 - **THE HAND IS DEALT SORTED, NEVER SORTED AT RENDER** — `marks[i]` is a
-  POSITION. **Its name is its TITLE**, so no payload changed; **red is its own
-  colour, never `--bad`**; **no pack file**, so `validateBingoPack()` stands.
+  POSITION. **Its name is its TITLE**; **red is its own colour, never
+  `--bad`**; **no pack file**, so `validateBingoPack()` stands.
 - **[`docs/bingo.md`](docs/bingo.md)**.
-- **AND A RUNNING ORDER DROPPED IT — sixth sighting.** `kind === 'bingo'` in
-  the route, session and Tonight row sent a deck down the quiz branch
-  as "a quiz with no rounds", so card bingo then music bingo launched as the
-  music bingo alone. **A part is a QUIZ or a WHOLE PACK (`wholePackKind()`),
-  and a whole pack keeps its own kind.** Only MUSIC bingo has a card shape.
-- **THE CARDS ARE DRAWN — `card-face.js`, SVG: one drawing, 45px to a wall.** **NO SUIT IS EVER THE CHARACTER `♠♥♦♣`** — a phone may draw
-  those as EMOJI, which is *drawn, never emoji* again. It is still NAMED `7♥`.
-  **The pip layout is centuries old and free; the SHAPES are drawn here**, this
-  app being SOLD.
+- **AND A RUNNING ORDER DROPPED IT — sixth sighting.** `kind === 'bingo'` sent
+  a deck down the quiz branch, so card then music bingo launched as the music
+  bingo alone. **A part is a QUIZ or a WHOLE PACK (`wholePackKind()`), keeping
+  its own kind.** Only MUSIC bingo has a card shape.
+- **THE CARDS ARE DRAWN — `card-face.js`, SVG. NO SUIT IS EVER THE CHARACTER
+  `♠♥♦♣`** (a phone draws those as EMOJI); still NAMED `7♥`. **The pip layout
+  is free; the SHAPES are drawn here** — the app is SOLD.
 - **AND THE COURT CARDS GET NO DRAWN FIGURE** — J/Q/K take the ACE's
   treatment, **ONE index**, the pip field **INSET BELOW** it. **Measure after.**
   [`docs/bingo.md`](docs/bingo.md).
 - **A DROPPED-IN PICTURE BEATS THE DRAWING — `public/assets/cards/`, the
-  SOUNDBOARD'S interface exactly.** All 52, not only the courts. **The DRAWN one
-  is the FALLBACK, never deleted**; **a manifest read ONCE, never 52
-  speculative 404s per phone**; **an id the DECK does not hold is ignored.**
-- **`cards/` IS THE MIDDLE AND `cards/full/` THE WHOLE CARD**, told apart by
-  where they SIT. **THE INDEX IS ALWAYS THE APP'S AND ALWAYS ON TOP** — a
-  supplied one is a smudge at 45px. **ONE full card DRESSES the other
-  fifty-one** (`themed()`) — **DERIVED, never a setting.**
+  SOUNDBOARD'S interface.** **The DRAWN one is the FALLBACK, never deleted; a
+  manifest read ONCE, never 52 404s per phone; an id the DECK does not hold
+  is ignored.**
+- **`cards/` IS THE MIDDLE, `cards/full/` THE WHOLE CARD. THE INDEX IS THE
+  APP'S, ON TOP. ONE full card DRESSES the other fifty-one** (`themed()`) —
+  **DERIVED, never a setting.**
 
 ### FOUR WAYS A NIGHT'S SCORES AND PRIZES CAME APART
 
