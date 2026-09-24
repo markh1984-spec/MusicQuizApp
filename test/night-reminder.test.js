@@ -17,7 +17,7 @@ const bingo = (list) => ({ kind: 'bingo', list });
 
 test('the reminder states the night total from what each game will pay', () => {
   assert.equal(nightReminder([quiz(['A pint', 'A half', 'Crisps']), bingo(['A pint', 'A half'])]),
-    'Tonight gives out 5 drinks.');
+    'Tonight gives out 5 drinks, plus one for every extra round of bingo.');
   assert.equal(nightReminder([quiz(['A pint'])]), 'Tonight gives out 1 drink.');
 });
 
@@ -29,7 +29,7 @@ test('the reminder states the night total from what each game will pay', () => {
 test('card bingo is said as one per game rather than counted into a total', () => {
   assert.equal(
     nightReminder([quiz(['A pint', 'A half', 'Crisps']), cards(['A pint']), bingo(['A pint', 'A half'])]),
-    'Tonight gives out 5 drinks, plus one for every game of card bingo you play.');
+    'Tonight gives out 5 drinks, plus one for every game of card bingo you play and one for every extra round of bingo.');
   assert.equal(nightReminder([cards(['A pint'])]),
     'Tonight gives out one drink for every game of card bingo you play.');
 });

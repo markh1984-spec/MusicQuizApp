@@ -313,28 +313,41 @@ Asked for on 11 September 2026, after a quiz-and-bingo night:
 > codes to all appear at the end and not disappear until the bar has scanned
 > them — that's the whole point!"*
 
-### One prize per phone per GAME
+### A round is a game — one prize per phone per ROUND (24 September 2026)
 
-One prize each was scoped to the ROUND, and `newRound()` clears
-`prizeWinners` — so the table that took round one's line was fully eligible
-again in round two with a fresh card. Over an evening of three rounds that is
-the same person hoovering up prizes, which is the exact complaint this whole
-area was built for, arriving one level up.
+For two days (22–24 September) one prize each was scoped to the whole GAME:
+`state.wonThisGame` was game-long and `newRound()` left it alone, so the
+table that took round one's line stood down for every later round. That was
+built for a four-prize round, where the best card is the favourite for every
+prize after the first, and it arrived "one level up" as a table hoovering an
+evening. Then a night of card bingo showed the cost: Archie won hand one and
+could not win again all evening, and the host chose the simpler rule for
+both games in one sitting — *"I might just simplify it for now — one prize
+per round and 9 songs on a bingo card, then as many rounds as necessary."*
 
-`state.wonThisGame` is the game-long list. **`newRound()` must never clear
-it for music bingo** — that single line puts the fault straight back, and it
-looks like tidying. `resetAll()` builds a fresh state and therefore starts
-empty, which is right: that is a new game. A fresh bingo PART is likewise a
-fresh game, which is what *"per music bingo"* says.
+So `newRound()` clears `wonThisGame` for every pack. Within a round nothing
+changed: whoever holds this round's prize stands down while anybody is still
+without one, and a one-prize round has no "after the first" for the old rule
+to protect. `resetAll()` still builds a fresh state and a fresh bingo PART is
+still a fresh game. `test/round-is-a-game.test.js` pins music bingo and
+`test/deck-one-stage.test.js` the deck; `test/bingo.test.js` still pins the
+within-round stand-down.
 
-**Card bingo is the exception, chosen on 24 September 2026.** Three hands of
-card bingo are three separate games (*"it's a separate game to music
-bingo"*), and after a night where the table that won hand one could not win
-again all evening the host chose one drink per ROUND of card bingo: Archie
-can take hand one and hand three. So `newRound()` clears `wonThisGame` for a
-pack that `everyRoundPays` — asked of the pack, never the kind — and leaves
-it alone for music bingo. `test/deck-one-stage.test.js` pins the deck and
-`test/bingo.test.js` the music bingo.
+**And a round past the venue's list pays the last drink again.** A 3x3 night
+on a three-drink list reaches round four with the list spent; `rewardFor()`
+used to mint nothing there for music bingo, which is the blank-phone fault
+card bingo had on 23 September. A STAGE the list never covered even in round
+one — three drinks, five stopping points — still pays nothing: a free extra
+line before the house is deliberate. `stageIndex`, where in THIS round the
+prize sits, tells the two apart, and both the mint and the catch-up pass it.
+`nightReminder()` therefore says extra rounds rather than counting them.
+
+**And the same bingo pack may be in Tonight more than once.** `addBingoSlot()`
+refused it, on the reasoning that it gave one evening the same forty tracks
+twice — which is exactly what a second game of bingo is, and a deck has no
+tracks to repeat at all. *"I need to be able to add multiple music bingo and
+card bingo rounds and at the moment that's not possible."* Each copy is its
+own part with its own row in the prize table. A quiz is still refused twice.
 
 ### Sat out — the host takes a phone out of one round
 

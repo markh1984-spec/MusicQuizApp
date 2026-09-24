@@ -299,40 +299,38 @@ test('a voucher written before the round stamp existed still shows', () => {
 });
 
 /*
- * ONE PRIZE PER PHONE PER *GAME*, ACROSS ROUNDS — and every live code stays
- * on the phone until the bar scans it.
+ * A ROUND IS A GAME — a fresh round DOES reopen it — and every live code
+ * stays on the phone until the bar scans it.
  *
- * Both off a live night: *"the same person can't win multiple prizes per quiz
- * or music bingo"*, and *"need the QR codes to all appear at the end and not
- * disappear until the bar has scanned them — that's the whole point!"*
+ * This test pinned the opposite for two days (*"the same person can't win
+ * multiple prizes per quiz or music bingo"*, 22 September) and is REVERSED
+ * deliberately: on 24 September the host chose *"one prize per round and 9
+ * songs on a bingo card, then as many rounds as necessary"*. Within a round
+ * the stand-down is unchanged, and this still checks it.
  */
 
-test('a fresh round does NOT reopen the rule for somebody who has won', () => {
+test('a fresh round reopens the prizes for somebody who has won — a round is a game', () => {
   const game = threePrizeGame();
   const a = game.join({ name: 'Table One' });
   const b = game.join({ name: 'Table Two' });
   game.start();
   winLine(game, a);
   game.claim(a.id);
+  assert.equal(game.holdsAPrize(a.id), true, 'within round one they stand down');
 
   game.newRound();
   assert.equal(game.state.prizeWinners.length, 0, 'a new round clears the per-STAGE list');
-  assert.equal(game.holdsAPrize(a.id), true,
-    'a new round handed round one’s winner a clean slate — the per-GAME list was cleared');
-  assert.equal(game.holdsAPrize(b.id), false, 'and it did not tar anybody else');
+  assert.equal(game.holdsAPrize(a.id), false,
+    'round one’s winner was still stood down in round two — a round is a game now');
+  assert.equal(game.holdsAPrize(b.id), false, 'and nobody else is tarred either');
 
   winHouse(game, a);
   const again = game.claim(a.id);
   assert.equal(again.valid, true, 'the call was right and is recorded as right');
-  assert.equal(again.prize, false, 'the same phone took a prize in two rounds of one game');
-
-  // Table Two is still free to win it, which is the whole point of the rule.
-  winHouse(game, b);
-  const theirs = game.claim(b.id);
-  assert.equal(theirs.valid, true);
-  assert.equal(theirs.prize, undefined, 'a successful claim carries no refusal');
-  assert.equal(game.state.prizeWinners.length, 1, 'round two paid its own winner');
-  assert.equal(game.state.prizeWinners[0].playerId, b.id);
+  assert.notEqual(again.prize, false, 'round one’s winner was refused round two’s prize');
+  assert.equal(game.state.prizeWinners.length, 1);
+  assert.equal(game.state.prizeWinners[0].playerId, a.id, 'round two paid its own winner');
+  assert.equal(game.holdsAPrize(a.id), true, 'and within round two they stand down again');
 });
 
 test('a bingo code stays on the phone after a new round, until it is scanned', () => {

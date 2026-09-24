@@ -245,7 +245,7 @@ try {
   bv = vouchersOf(await hostView());
   check('…and a second prize typed in late pays them', bv.length === 2 && bv.find((v) => v.place === 2)?.reward === 'A late half', JSON.stringify(bv.map((v) => [v.name, v.place, v.reward])));
 
-  section('L. MUSIC BINGO — a new round: the winner of round one cannot win again');
+  section('L. MUSIC BINGO — a new round is a new game: anybody can win it, round one\'s winner included');
   await setRewards(['A pint', 'A half', 'Crisps']);
   b = await bingoRun({ rows: 3, cols: 3 }, 1, ['Dave', 'Sue']);
   const r1 = vouchersOf(b.hv);
@@ -254,23 +254,30 @@ try {
   await host('newRound');
   const hv2 = await hostView();
   const tracks2 = hv2.tracks || [];
+  /*
+   * A ROUND IS A GAME (24 September 2026) — this section pinned the opposite
+   * and is REVERSED deliberately. Whoever completes first claims, round
+   * one's winner included, and nobody who completes is stood down.
+   */
   let stoodDown = null;
   for (const t of tracks2) {
     await host('call', { trackId: t.id });
+    let claimed = false;
     for (const p of b.phones) {
       const s = await phoneView(p, b.code);
       for (const c of s.card || []) if (c.called && !c.marked) await phoneDo('mark', p, b.code, { index: c.index, marked: true });
       const s2 = await phoneView(p, b.code);
       if ((s2.you || {}).squaresAway === 0) {
         if (p.name === r1Winner) stoodDown = Boolean(s2.standDown);
-        else { const c = await phoneDo('claim', p, b.code); if (c.status === 200) break; }
+        const c = await phoneDo('claim', p, b.code);
+        if (c.status === 200) { claimed = true; break; }
       }
     }
     const h = await hostView();
-    if (h.phase === 'won' || h.phase === 'finished' || stoodDown !== null) break;
+    if (claimed || h.phase === 'won' || h.phase === 'finished') break;
   }
   const r2 = vouchersOf(await hostView());
-  check('round two pays somebody ELSE, or stands the round-one winner down', (stoodDown === true) || (r2.length === 2 && new Set(r2.map((v) => v.name)).size === 2), JSON.stringify({ stoodDown, r2: r2.map((v) => [v.name, v.place, v.reward]) }));
+  check('round two pays one more drink, and nobody who completes is stood down', stoodDown !== true && r2.length === 2, JSON.stringify({ stoodDown, r2: r2.map((v) => [v.name, v.place, v.reward]) }));
   check('round two\'s prize is the next on the table, not the pint again', r2.length < 2 || r2[1].reward !== r2[0].reward, JSON.stringify(r2.map((v) => v.reward)));
 
   // ----------------------------------------------------------- CARD BINGO
@@ -298,7 +305,10 @@ try {
   await host('newRound');
   const w2 = await playHand();
   cv = vouchersOf(await hostView());
-  check('round two pays a DIFFERENT phone', w2 && w2 !== w1 && cv.length === 2, JSON.stringify({ w1, w2, cv: cv.map((v) => [v.name, v.place, v.reward]) }));
+  // Whoever completes first — the same table as round one is allowed (a round
+  // is a game, 24 Sept). This said "a DIFFERENT phone", which since then was a
+  // coin-flip on the deal rather than a rule.
+  check('round two pays its own winner a second drink', w2 && cv.length === 2 && cv.filter((v) => v.name === w2).length >= 1, JSON.stringify({ w1, w2, cv: cv.map((v) => [v.name, v.place, v.reward]) }));
   check("round two's prize is the NEXT on the table, not a second pint", cv.length === 2 && cv[1].reward === 'A half', JSON.stringify(cv.map((v) => v.reward)));
 
   // -------------------------------------------------------- RUNNING ORDER

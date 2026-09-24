@@ -493,9 +493,11 @@ test('a tie for first does not move what the next game pays', () => {
  *
  * A deck pays one prize a round, so it is dealt ONE drink. Play three games of
  * card bingo with New round and the second found nothing on its list: a hand
- * completed, the claim accepted, and nothing on the winner's phone. A deck
- * declares `everyRoundPays`, so past its list it pays the LAST drink again.
- * Music bingo does NOT — a free extra line before the house is deliberate.
+ * completed, the claim accepted, and nothing on the winner's phone. A round
+ * is a game (24 September 2026), so past its list a later ROUND pays the
+ * LAST drink again — on a deck and on music bingo alike. A STAGE the list
+ * never covered in round one still pays nothing: a free extra line before
+ * the house is deliberate, and `stageIndex` is what tells the two apart.
  */
 test('every game of card bingo pays, and music bingo keeps its free extra line', () => {
   const it = withFileSession();
@@ -515,16 +517,18 @@ test('every game of card bingo pays, and music bingo keeps its free extra line',
 
     assert.deepEqual(it.session.engine.rewardList(), ['One'],
       'the card bingo was not dealt its one drink from the top');
-    assert.equal(it.session.engine.rewardFor(0), 'One', 'the first game of card bingo pays nothing');
-    assert.equal(it.session.engine.rewardFor(1), 'One',
+    assert.equal(it.session.engine.rewardFor(0, 0), 'One', 'the first game of card bingo pays nothing');
+    assert.equal(it.session.engine.rewardFor(1, 0), 'One',
       'the SECOND game of card bingo pays nothing — its winner gets a blank phone');
-    assert.equal(it.session.engine.rewardFor(2), 'One', 'the third game of card bingo pays nothing');
+    assert.equal(it.session.engine.rewardFor(2, 0), 'One', 'the third game of card bingo pays nothing');
 
     it.session.advanceOrder();
     assert.deepEqual(it.session.engine.rewardList(), ['One', 'Two'],
       'the music bingo was not dealt its own two from the top');
-    assert.equal(it.session.engine.rewardFor(2), '',
+    assert.equal(it.session.engine.rewardFor(2, 2), '',
       'music bingo paid a stage nobody put a prize on — the free extra line is deliberate');
+    assert.equal(it.session.engine.rewardFor(2, 0), 'Two',
+      'but round two of the music bingo, the list spent, pays the last drink again');
   } finally {
     it.done();
   }

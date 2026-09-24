@@ -87,8 +87,8 @@ test('and a second hand in the SAME round takes nothing — one game, one pint',
  * A DECK'S ROUNDS ARE SEPARATE GAMES — one drink per ROUND of card bingo,
  * chosen by the host on 24 September 2026 after a night where a table that
  * won hand one could not win again all evening. `newRound()` clears
- * `wonThisGame` for a pack that `everyRoundPays`; a music bingo pack keeps
- * the game-long list, which the bingo tests pin.
+ * `wonThisGame` — for every pack since the same evening, when the host chose
+ * the same rule for music bingo (`test/round-is-a-game.test.js`).
  */
 test('on a deck the table that won hand one can win hand two', () => {
   const game = aDeckGame();

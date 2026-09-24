@@ -330,3 +330,28 @@ test('a whole-pack slot keeps ITS OWN kind on the way to the server — a deck i
   const simple = slotsFromSimple({ currentPack: deck, lbExtra: [], lbOff: new Set(), packOf: () => null, kind: 'cards' });
   assert.equal(simple[0].kind, 'cards');
 });
+
+/**
+ * THE SAME BINGO PACK MAY BE IN TONIGHT MORE THAN ONCE — *"I need to be able
+ * to add multiple music bingo and card bingo rounds and at the moment that's
+ * not possible."* A second game of bingo is fresh cards over the same songs,
+ * and a deck has no songs to repeat at all. Each copy is its own part with its
+ * own drink. A QUIZ is still refused twice: a night does not play the same
+ * ten questions in rounds two and four.
+ */
+test('the same bingo or card-bingo pack can be added to Tonight more than once; a quiz cannot', () => {
+  const deck = { id: 'deck', title: 'Card Bingo' };
+  let row = addBingoSlot([], deck, { kind: 'cards' });
+  row = addBingoSlot(row, deck, { kind: 'cards' });
+  row = addBingoSlot(row, deck, { kind: 'cards' });
+  assert.equal(row.length, 3, 'three games of card bingo');
+  row = addBingoSlot(row, { id: 'mbc-6' }, { kind: 'bingo' });
+  row = addBingoSlot(row, { id: 'mbc-6' }, { kind: 'bingo' });
+  assert.deepEqual(segmentsFromSlots(row).map((s) => `${s.kind}:${s.packId}`),
+    ['cards:deck', 'cards:deck', 'cards:deck', 'bingo:mbc-6', 'bingo:mbc-6']);
+  // and a quiz pack already in the row adds nothing the second time
+  let quiz = addQuizPackSlot([], PACK_A, { packOf });
+  const before = quiz.length;
+  quiz = addQuizPackSlot(quiz, PACK_A, { packOf });
+  assert.equal(quiz.length, before, 'a quiz is not played twice');
+});

@@ -851,18 +851,22 @@ export class BingoGame {
    * WHICH DRINK THE Nth PRIZE PAYS — ONE answer, asked by the mint and by the
    * catch-up in `payWinnersOwed()`, so the two cannot disagree about it.
    *
-   * Past the end of the list a MUSIC bingo stage mints nothing, deliberately:
-   * a free extra line before the house is a real thing. A DECK is different —
-   * every round is a game with one prize (`everyRoundPays`, declared on the
-   * pack), so a card-bingo game played past the drinks set for it pays the
-   * LAST one again. Without this the second game of card bingo on a night of
-   * three games found an empty list and its winner got nothing on their phone.
+   * TWO WAYS TO RUN PAST THE LIST, AND THEY ARE PAID DIFFERENTLY. A STAGE the
+   * list never covered even in round one — three drinks, five stopping points
+   * — mints nothing, deliberately: a free extra line before the house is a
+   * real thing. But a list spent by EARLIER ROUNDS is another matter: a round
+   * is a game (24 September 2026 — *"one prize per round… as many rounds as
+   * necessary"*), so round four of a 3x3 night with three drinks on the list
+   * pays the LAST drink again rather than handing its winner a blank phone.
+   * That is what a deck always did (`everyRoundPays`), and it is every bingo
+   * now; `stageIndex` — where in THIS round the prize sits — is what tells the
+   * two apart, which is why the mint and the catch-up both pass it.
    */
-  rewardFor(prizeIndex) {
+  rewardFor(prizeIndex, stageIndex = prizeIndex) {
     const list = this.rewardList();
     if (list[prizeIndex]) return list[prizeIndex];
-    if (this.pack && this.pack.everyRoundPays && list.length) return list[list.length - 1];
-    return '';
+    if (!list.length || stageIndex >= list.length) return '';
+    return list[list.length - 1];
   }
 
   /**
@@ -1002,7 +1006,7 @@ export class BingoGame {
        * it said afterwards is editing history rather than correcting a
        * promise.
        */
-      const now = this.rewardFor(slot);
+      const now = this.rewardFor(slot, typeof w.stageIndex === 'number' ? w.stageIndex : slot);
       if (now && !mine.redeemedAt && mine.reward !== now) mine.reward = now;
     }
   }
@@ -1020,7 +1024,7 @@ export class BingoGame {
    * and must not mint a voucher for nothing.
    */
   issueVoucher(prizeIndex, playerId, name, stageIndex = prizeIndex) {
-    const reward = this.rewardFor(prizeIndex);
+    const reward = this.rewardFor(prizeIndex, stageIndex);
     if (!reward) return;
     if (!this.state.vouchers) this.state.vouchers = {};
     let code = newVoucherCode();
@@ -1212,14 +1216,18 @@ export class BingoGame {
     // Sat out was for the round that has just ended.
     this.state.satOut = {};
     /*
-     * A DECK'S ROUNDS ARE SEPARATE GAMES, SO ITS LIST IS CLEARED AND MUSIC
-     * BINGO'S IS NOT. *"It's a separate game to music bingo"*, and on 24
-     * September 2026 the host chose one drink per ROUND of card bingo — a
-     * table can win hand one and hand three — while a music bingo night
-     * keeps one prize per phone across its rounds. Asked of the PACK
-     * (`everyRoundPays`), never the kind, like the one stage above.
+     * A ROUND IS A GAME. ONE PRIZE PER PHONE PER ROUND, AND A NEW ROUND
+     * PUTS EVERYBODY BACK IN — chosen by the host on 24 September 2026, for
+     * card bingo first and then for music bingo the same evening: *"I might
+     * just simplify it for now — one prize per round and 9 songs on a bingo
+     * card, then as many rounds as necessary."* This REVERSES the 22
+     * September widening that made `wonThisGame` game-long; that rule was
+     * built for a four-prize round where the best card is the favourite for
+     * every prize after the first, and a one-prize round has no "after the
+     * first". Within a round the rule is unchanged: whoever holds this
+     * round's prize stands down while anybody is still without one.
      */
-    if (this.pack && this.pack.everyRoundPays) this.state.wonThisGame = [];
+    this.state.wonThisGame = [];
     this.syncTarget();
     this.state.phase = BINGO_PHASES.PLAYING;
     for (const p of this.playerList()) {

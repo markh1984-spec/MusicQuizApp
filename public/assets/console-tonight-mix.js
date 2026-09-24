@@ -249,23 +249,27 @@ export function simpleNight(slots) {
   return { packId, rounds };
 }
 
-/**
- * IS THIS PACK ALREADY IN THE RUNNING ORDER?
- *
- * The ordinary row has always refused the same pack twice — *"a night does not
- * play the same ten questions in rounds two and four"* — and the mixed row
- * enforced it for a QUIZ only by accident, because `addQuizPackSlot()` finds no
- * unplaced rounds and returns the list unchanged. A bingo game had no such
- * check at all and could be dropped in twice, giving one evening the same forty
- * tracks in two different slots.
- */
+/** Is this pack anywhere in the running order? (The shelf's "In tonight" ghost.) */
 export function hasPack(slots, packId) {
   return (slots || []).some((slot) => slot && slot.packId === packId);
 }
 
-/** Add a bingo pack as its own new slot. `prizes: 0` is *nobody has chosen* — the SHAPE's own default answers it. */
+/**
+ * Add a bingo pack as its own new slot. `prizes: 0` is *nobody has chosen* —
+ * the SHAPE's own default answers it.
+ *
+ * THE SAME BINGO PACK MAY BE IN TONIGHT MORE THAN ONCE. A quiz is refused
+ * twice (*"a night does not play the same ten questions in rounds two and
+ * four"*, and `addQuizPackSlot()` finds no unplaced rounds), and until 24
+ * September 2026 a bingo game was refused too, on the reasoning that it gave
+ * one evening the same forty tracks in two slots. That is exactly what a
+ * second game of bingo IS — fresh cards over the same songs — and the host
+ * asked for it outright: *"I need to be able to add multiple music bingo and
+ * card bingo rounds and at the moment that's not possible."* Card bingo is
+ * the clearest case: a deck has no tracks to repeat at all. Each copy is its
+ * own PART, with its own row in the prize table and its own drink.
+ */
 export function addBingoSlot(slots, pack, { shape = null, prizes = 0, at, kind = 'bingo' } = {}) {
-  if (hasPack(slots, pack.id)) return slots;
   // `kind` is carried, never assumed: a card-bingo deck is a whole-pack part
   // exactly like a bingo game, and the server launches it by its OWN kind.
   return placeAt(slots, { kind, packId: pack.id, shape, prizes }, at);

@@ -2556,16 +2556,15 @@ the prizes."*
   is `onLastStage && stageTaken()`, NOT the `WON` phase. ON EVERY PHONE.**
 - **THE CODES ARE HELD AND APPEAR TOGETHER AT THE END OF THE ROUND — do not
   put the trickle back.** MINTED at the win, held from the PHONE only.
-- **ONE PRIZE PER PHONE PER MUSIC BINGO *GAME*, not per round** —
-  `state.wonThisGame`, which `newRound()` clears ONLY for a pack that
-  `everyRoundPays`: **a deck's rounds are separate games, one drink per ROUND
-  of card bingo (his call, 24 Sept)**. **The round that cannot pay out is NOT
-  automated away** (`view.noneLeft`). **A fresh bingo PART is a fresh game.**
+- **A ROUND IS A GAME — one prize per phone per ROUND, and `newRound()` puts
+  everybody back in (his call, 24 Sept; REVERSES the 22 Sept game-long
+  list).** Within a round the stand-down is unchanged. **`view.noneLeft` is
+  NOT automated away.** **THE SAME BINGO PACK MAY BE IN TONIGHT MORE THAN
+  ONCE** (`addBingoSlot()`), each copy its own part; a QUIZ is refused twice.
 - **SAT OUT — the host takes a phone out of ONE round from its row
-  (`sitOut()`/`sitIn()`), never automated.** A completed card nobody called
-  would take the prize three tracks later off whoever just completed. Not a
-  prize: `holdsAPrize()` is untouched; *Back in next round* on the button;
-  `newRound()` clears it. `test/sit-out.test.js`.
+  (`sitOut()`/`sitIn()`), never automated** — a completed card nobody called
+  would take the prize off whoever just completed. Not a prize:
+  `holdsAPrize()` is untouched; `newRound()` clears it. `test/sit-out.test.js`.
 - **NO NATIVE `confirm()` ON THE BINGO CONTROL VIEW — `pressTwice()`.**
   Finish and New round ARM on the first press and act on the second: a
   browser told to suppress dialogs answers every `confirm()` No in silence
@@ -2573,9 +2572,10 @@ the prizes."*
 - **A ROUND'S PRIZE IS THE NEXT ON THE TABLE — `prizesGiven`**, never the STAGE.
 - **DRINKS ARE PER GAME, NOT PER NIGHT — `dealPrizes()` deals EVERY game from
   the TOP. Do not put the sharing back** — what an evening costs is the
-  host's and the venue's call. **A deck declares `everyRoundPays`**: past its
-  list it pays the last drink (`rewardFor()`). **A NIGHT'S TOTAL IS A
-  REMINDER, NEVER A LIMIT** — `nightReminder()`, card bingo SAID per game.
+  host's and the venue's call. **A ROUND PAST THE LIST PAYS THE LAST DRINK
+  AGAIN; A STAGE THE LIST NEVER COVERED IS A FREE LINE** — `rewardFor(prize,
+  stage)`, both callers pass the stage. **A NIGHT'S TOTAL IS A REMINDER,
+  NEVER A LIMIT** — `nightReminder()`, extra rounds SAID, never counted.
 - **A SCORE FIXED AT THE FINAL MOVES THE DRINKS — `adjustScore()`. EVERY SCORE
   WRITE GOES THROUGH `bumpScore()` / `setScore()`** (`test/score-writes.test.js`).
 - **A CODE STAYS ON THE PHONE UNTIL THE BAR SCANS IT — `view.vouchers` on the

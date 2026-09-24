@@ -98,10 +98,17 @@ export function nightReminder(parts) {
     .filter((r) => String(r || '').trim()).length;
   const fixed = all.filter((p) => p && p.kind !== 'cards').reduce((n, p) => n + filled(p), 0);
   const perGame = all.some((p) => p && p.kind === 'cards' && filled(p));
+  // A round is a game (24 September 2026): a music bingo round past its list
+  // pays the last drink again, so extra rounds are SAID rather than counted,
+  // exactly as card bingo's games are.
+  const extraRounds = all.some((p) => p && p.kind === 'bingo' && filled(p));
   if (!fixed && !perGame) return '';
   if (!fixed) return 'Tonight gives out one drink for every game of card bingo you play.';
-  return `Tonight gives out ${fixed} drink${fixed === 1 ? '' : 's'}${
-    perGame ? ', plus one for every game of card bingo you play' : ''}.`;
+  const also = [
+    perGame ? 'one for every game of card bingo you play' : '',
+    extraRounds ? 'one for every extra round of bingo' : '',
+  ].filter(Boolean).join(' and ');
+  return `Tonight gives out ${fixed} drink${fixed === 1 ? '' : 's'}${also ? `, plus ${also}` : ''}.`;
 }
 
 /**

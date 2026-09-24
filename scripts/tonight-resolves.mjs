@@ -146,6 +146,31 @@ try {
   }
 
   /*
+   * THE SAME BINGO PACK GOES IN TWICE — *"I need to be able to add multiple
+   * music bingo and card bingo rounds and at the moment that's not
+   * possible."* A second game of bingo is its own part; tapped on the
+   * shelf, the way a real host does it.
+   */
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForSelector('.launchbar');
+  await page.waitForTimeout(1200);
+  await page.evaluate(() => document.querySelector('button.tab[data-tab="bingo"]')?.click());
+  await page.waitForTimeout(500);
+  const bingoCard = await page.evaluate(() => (document.querySelector('.pack-card[data-pack]') || {}).dataset?.pack || '');
+  check('there is a bingo pack to tap', Boolean(bingoCard), true);
+  if (bingoCard) {
+    const before = await page.evaluate(() => document.querySelectorAll('.lb-tiles .lb-tile.is-pack').length);
+    for (let i = 0; i < 2; i += 1) {
+      await page.evaluate((id) => document.querySelector(`.pack-card[data-pack="${id}"]`)?.click(), bingoCard);
+      await page.waitForTimeout(900);
+    }
+    const after = await page.evaluate(() => document.querySelectorAll('.lb-tiles .lb-tile.is-pack').length);
+    // Two TILES, not the Launch label — with no venue picked the button
+    // stands down for want of prizes and says so instead of counting games.
+    check('  ...and tapping it twice puts TWO games of it in Tonight', after - before, 2);
+  }
+
+  /*
    * The 400s this check causes ITSELF are the point of the launch probes
    * above — a pack id that does not exist. Anything else is a real error.
    */

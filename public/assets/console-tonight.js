@@ -3277,7 +3277,7 @@ export function launchBar() {
          * has always turned the same pack away — but a square that lit up and
          * then did nothing is what made it read as broken.
          */
-        const takes = shelfRoundDrag
+        const takes = shelfRoundDrag || (packDrag && packDrag.kind !== 'quiz') // bingo may go in twice
           || !(lbSlots ? lbSlots.filter(Boolean).some((s2) => s2.packId === packDrag.id)
             : lbPacks().some((p) => p.id === packDrag.id));
         if (!takes) ev.dataTransfer.dropEffect = 'none';

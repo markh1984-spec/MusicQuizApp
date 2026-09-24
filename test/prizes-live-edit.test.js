@@ -260,10 +260,11 @@ test('a second bingo round still pays its own line winner', () => {
     'the second round line winner was refused because round one had already been paid for stage 1');
 
   /*
-   * AND SHARON IS STILL OUT WITH A GENUINE FULL CARD OF HER OWN — the rule
-   * spans the GAME, which is the half `newRound()` must never quietly undo.
-   * She has to really have the pattern, or this passes for the boring reason
-   * that she had nothing marked.
+   * AND SHARON CAN WIN AGAIN IN ROUND TWO — a round is a game (24 September
+   * 2026, REVERSING the 22 September rule this tail used to pin). Dave has
+   * round two's first prize, so Sharon takes the second with a genuine full
+   * card of her own. It is past the two drinks on the list, so it pays the
+   * LAST one again rather than a blank phone.
    */
   const sharonsCard = game.state.players[sharon.id];
   sharonsCard.card.forEach((trackId, i) => {
@@ -273,12 +274,14 @@ test('a second bingo round still pays its own line winner', () => {
   game.playOn();
   const second = game.claim(sharon.id);
   assert.equal(second.valid, true, 'her call was right and must be recorded as right');
-  assert.equal(second.prize, false, 'a new round handed round one’s winner a second prize');
-  assert.equal(Object.values(game.state.vouchers).length, 2, 'and no third code was minted');
+  assert.notEqual(second.prize, false, 'round one’s winner was refused a prize in round two');
+  const codes = Object.values(game.state.vouchers);
+  assert.equal(codes.length, 3, 'one code per prize won, across both rounds');
+  assert.equal(codes.filter((v) => v.winnerId === sharon.id).length, 2);
 
-  // And a Save in the middle of round two must still not duplicate either.
+  // And a Save in the middle of round two must still not duplicate any.
   game.setRewards(['A free drink', 'A bottle of wine']);
-  assert.equal(Object.values(game.state.vouchers).length, 2);
+  assert.equal(Object.values(game.state.vouchers).length, 3);
 });
 
 test('a score fixed AT the final moves the drinks with it — and reads the board AFTER the nudge', () => {
