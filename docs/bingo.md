@@ -372,11 +372,12 @@ So `view.vouchers` carries every live code, at every phase with room for it,
 and `wallet()` in `play.js` draws them. Never over a live QUESTION: twenty
 seconds and four options, and a QR over them is the room looking down.
 
-**A redeemed code is kept and drawn as a receipt**, which is what the bingo
-card has always done — *"Collected. Already redeemed. If that is wrong, ask
-the quizmaster."* One that vanishes the moment a barman scans it leaves the
-one person who needs to query it with nothing to point at. The two engines may
-not disagree about this.
+**A redeemed code DISAPPEARS from the phone** — this reversed the receipt
+rule that stood here (*"Collected. Already redeemed."*) when *My prizes* was
+built: the host's panel and the filed night hold every voucher, so somebody
+querying a scan has the quizmaster to point at, and a phone keeping receipts
+was a fold that only ever grew. `client.js` drops the redeemed ones on the
+way to the screen. The two engines may not disagree about this.
 
 ### Neither guard could see any of it
 

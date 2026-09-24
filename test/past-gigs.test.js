@@ -202,6 +202,38 @@ test('a filed night says how many prizes were actually taken', () => {
   const [night] = listArchive(dir);
   assert.equal(night.rewards.length, 3, 'what was put up');
   assert.equal(night.rewardsTaken, 2, 'what was collected — the half nothing read back out');
+  assert.equal(night.rewardsGiven, 3, 'what went out — every voucher, not the last part\'s list');
+});
+
+/**
+ * A RUNNING ORDER PAYS MORE THAN THE LAST PART'S LIST. Three games of card
+ * bingo then a music bingo filed six vouchers against a `rewards` of three —
+ * the LAST part's — so Past gigs read "3 prizes, 6 taken". What went out is
+ * the vouchers, and the count has to survive `mergeGigs()`, which picks its
+ * fields by name.
+ */
+test('a running-order night counts every part\'s prizes, not the last list', () => {
+  const dir = tempDir();
+  archiveResults(dir, {
+    packId: 'mbc-6',
+    quizTitle: 'MBC 6',
+    kind: 'bingo',
+    rewards: ['A pint', 'A half', 'A wine'],
+    vouchers: [
+      { code: 'C1', redeemedAt: null, carried: true }, { code: 'C2', redeemedAt: null, carried: true },
+      { code: 'C3', redeemedAt: null, carried: true }, { code: 'M1', redeemedAt: null },
+      { code: 'M2', redeemedAt: null }, { code: 'M3', redeemedAt: null },
+    ],
+    leaderboard: [],
+  }, Date.now());
+  const [night] = listArchive(dir);
+  assert.equal(night.rewardsGiven, 6);
+  const [merged] = mergeGigs(listArchive(dir), []);
+  assert.equal(merged.games[0].rewardsGiven, 6, 'mergeGigs picks fields by name and dropped it');
+  // A night filed before vouchers existed has no count and falls back to the list.
+  archiveResults(dir, { packId: 'old', quizTitle: 'Old', kind: 'quiz', rewards: ['A pint'], leaderboard: [] }, Date.now() + 1);
+  const old = listArchive(dir).find((n) => n.packId === 'old');
+  assert.equal(old.rewardsGiven, undefined);
 });
 
 /**

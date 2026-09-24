@@ -222,12 +222,15 @@ function paintVouchers(root, s) {
    * done, so nobody is left wondering whether to sit back down.
    */
   const done = Boolean(s.prizesAllGone);
+  // Once the host has pressed Finish nothing follows, and "there is more to
+  // come" was the last thing the room read on a night that had just ended.
+  const finished = s.phase === 'finished';
   const banner = done
     ? [node(`<div class="bingo-allgone">
         <b>That's all the prizes gone.</b>
         <span>${list.length
     ? 'Show the code below at the bar.'
-    : 'Nothing for this one \u2014 stay put, there is more to come.'}</span>
+    : (finished ? 'Nothing for this one \u2014 thanks for playing.' : 'Nothing for this one \u2014 stay put, there is more to come.')}</span>
       </div>`)]
     : [];
   const prizes = list.length

@@ -553,7 +553,9 @@ function gigRowMarkup(night, isSelected) {
     ? night.games.map(gameLabel).join(' · ')
     : 'No results saved';
   const heads = night.games.reduce((n, g) => Math.max(n, g.players || 0), 0);
-  const put = night.games.reduce((n, g) => n + ((g.rewards || []).length), 0);
+  // What went OUT across every part of the night — `rewards` is only the last
+  // part's list, so a running order under-counted. Older nights have no count.
+  const put = night.games.reduce((n, g) => n + (typeof g.rewardsGiven === 'number' ? g.rewardsGiven : (g.rewards || []).length), 0);
   const taken = night.games.reduce((n, g) => n + (g.rewardsTaken || 0), 0);
   const backAgain = night.games.reduce((n, g) => n + (g.rewardsReinstated || 0), 0);
   const prizes = put

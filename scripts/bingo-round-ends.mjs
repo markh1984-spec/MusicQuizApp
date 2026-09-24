@@ -125,6 +125,15 @@ try {
   check('A PHONE THAT WON NOTHING SAYS IT TOO', Boolean(b && b.drawn), JSON.stringify(b));
   check('and tells them to stay put', Boolean(b && /stay put/i.test(b.text)), b && b.text);
 
+  /* AND ONCE THE HOST PRESSES FINISH, NOTHING FOLLOWS — so the phone with
+     nothing on it may not go on promising "more to come". It did, and that
+     was the last thing the room read on a night that had just ended. */
+  await act('finish');
+  await wait(900);
+  const f = await banner(everyoneElse.page);
+  check('AFTER FINISH A PHONE WITH NOTHING IS NOT PROMISED MORE',
+    Boolean(f && f.drawn && !/more to come/i.test(f.text) && /thanks for playing/i.test(f.text)), f && f.text);
+
   /* And the instant voucher is UNCHANGED — "both", which is what he asked for. */
   const mine = (await playerState(winner.me)).vouchers || [];
   check('the winner still holds their own code, as they always did', mine.length === 1, `${mine.length}`);

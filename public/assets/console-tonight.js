@@ -1886,9 +1886,9 @@ export function launchBar() {
        * "Card · Disco & Funk" followed by "Prizes · Disco & Funk" was the
        * same label twice — the duplication this project's own sweep mode
        * hunts for, and 70px of a row that has to hold eight controls on one
-       * line. The name on the first of the pair says whose both are.
-       */
-      prizesRow.querySelector('.set-word').textContent = 'Prizes';
+       * line. The name on the first of the pair says whose both are. And it
+       * is "Bingo prizes", never "Prizes" (test/bingo-prizes-label.test.js). */
+      prizesRow.querySelector('.set-word').textContent = 'Bingo prizes';
       prizesRow.title = cardRow ? cardRow.title : '';
     }
     /*

@@ -471,6 +471,14 @@ export function listArchive(dir, { boards = false } = {}) {
            * that cannot reach us or somebody working it.
            */
           rewardsReinstated: (r.vouchers || []).reduce((n, v) => n + (v && v.reinstated ? v.reinstated : 0), 0),
+          /*
+           * HOW MANY PRIZES WENT OUT — every part's. `rewards` above is the
+           * LAST part's list, so a night of card bingo then music bingo read
+           * "3 prizes, 6 taken" on Past gigs: the vouchers hold all six, and
+           * they are what a landlord is shown. Absent on a night filed before
+           * vouchers were, so the row falls back to the list as it always did.
+           */
+          ...(Array.isArray(r.vouchers) ? { rewardsGiven: r.vouchers.length } : {}),
           // Only when asked for — see the note on the signature.
           ...(boards ? { leaderboard: r.leaderboard || [] } : {}),
           /*

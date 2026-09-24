@@ -152,6 +152,7 @@ export function mergeGigs(archived = [], photoNights = []) {
       winner: record.winner || null,
       rewards: record.rewards || [],
       rewardsTaken: record.rewardsTaken || 0,
+      ...(typeof record.rewardsGiven === 'number' ? { rewardsGiven: record.rewardsGiven } : {}),
       rewardsReinstated: record.rewardsReinstated || 0,
       /*
        * The leaderboard rides along ONLY when the caller asked `listArchive`
