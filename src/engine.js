@@ -405,6 +405,25 @@ export class Engine {
   }
 
   /**
+   * THE PICTURE FOR A QUESTION THE ROOM HAS BEEN ASKED — its file, or '' for
+   * one it has not, or for no picture at that position. The projector fetches
+   * a picture by POSITION (see `screenQuestionExtras`), and this is what keeps
+   * a positional address from being a way to read the round ahead: only the
+   * question live or revealed now, or one already in the recap — which is to
+   * say one the room has seen, whose answers stand.
+   */
+  pictureAsked(ri, qi) {
+    const s = this.state;
+    const round = this.round(ri);
+    const q = round && Array.isArray(round.questions) ? round.questions[qi] : null;
+    if (!round || !q || round.type !== 'image' || !q.image) return '';
+    const live = ri === s.roundIndex && qi === s.questionIndex
+      && (s.phase === PHASES.QUESTION || s.phase === PHASES.REVEAL);
+    const recapped = (s.history || []).some((h) => h.roundIndex === ri && h.questionIndex === qi);
+    return live || recapped ? String(q.image) : '';
+  }
+
+  /**
    * "Round 2 of 2" — but counting only the rounds that CAN change the score.
    *
    * TODO.md, "THE COUNT IS WHAT SCORES": a breakout round is delivered like
@@ -2488,7 +2507,18 @@ export class Engine {
     switch (round.type) {
       case 'image':
         return {
-          image: q.image ? `/quiz-images/${q.image}` : null,
+          /*
+           * THE PICTURE IS NAMED BY WHERE IT IS ASKED, NEVER BY WHAT IT IS.
+           * The file is `portraits/chris-martin.png` — the answer, spelt out
+           * — and it rode in this payload and in the projector's `<img src>`
+           * while the room was still watching the zoom, readable by anybody
+           * holding the join code, which is on the wall (rule 1; R2 of the 23
+           * September 2026 sweep). So the projector is told the question's
+           * POSITION and asks `/quiz-images/q/<round>/<question>`, which
+           * `pictureAsked()` answers only for a question the room has been
+           * asked. The host's own view keeps the file: they hold the answer.
+           */
+          image: q.image ? `/quiz-images/q/${this.state.roundIndex}/${qi}` : null,
           // The caption that makes clear these are illustrations, not photos.
           /*
            * NO CAPTION UNLESS A PACK ASKS FOR ONE.

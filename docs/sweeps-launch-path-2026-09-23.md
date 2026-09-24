@@ -49,7 +49,16 @@ tagged *(known)* where an agent re-confirmed them.
   and moved onto the tile with the card, count and lines when the row converts
   (`burst()`; `slotsFromSimple()` takes `night`).
   `typed-prizes-reach-the-room.mjs` drives all three ways, each fail-first.
-- **R2** — see below; not yet actioned.
+- **R2** — fixed on 24 September: the projector payload names the question's
+  POSITION (`/quiz-images/q/<round>/<question>`), and the server serves it
+  only for a question the room has been asked (`Engine.pictureAsked()`: live
+  or revealed now, or in the recap), so nothing on the wire names the answer
+  and the round cannot be read ahead. Positional rather than a salted hash: no
+  new state, and the gate does the hash's job. `test/picture-answers.test.js`
+  reads the raw payload for the slug, fail-first both ways. **Residual, not
+  fixed**: whoever holds the code can fetch the LIVE picture at full size the
+  moment it goes up, while the projector zooms in — the picture itself, never
+  its name, and a harder cheat than reading a slug out of JSON.
 
 ---
 

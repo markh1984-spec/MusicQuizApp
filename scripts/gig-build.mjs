@@ -61,6 +61,7 @@ export const GUARDS = [
   { name: 'lines-reach-the-room',  core: true,  why: 'the lines chosen for each bingo prize are the lines the room plays' },
   { name: 'bar-reaches-the-room',  core: true,  why: "does the bar's card reach the room?" },
   { name: 'reaches-the-wall',      core: true,  why: 'does a correction reach the projector?' },
+  { name: 'picture-by-position',   core: true,  why: 'is the picture on the wall, asked for by where it is and never by name?' },
   { name: 'phone-holds-up',        core: true,  why: 'what a phone does when a request fails' },
   { name: 'drag-check',            core: true,  why: "Tonight's drags, with a real browser drag" },
   { name: 'tonight-resolves',      core: true,  why: 'does the bar offer real games, and find every pack?' },

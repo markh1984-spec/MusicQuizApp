@@ -6,6 +6,7 @@ import { HOUSE, config, faviconSvg, fs, hub, path, rooms } from './context.js';
 import { selfTestResult } from '../self-test.js';
 import { send, sendJson } from './plumbing.js';
 import { MIME, serveFile } from './static.js';
+import { roomForPhone } from './identity.js';
 
 export async function getStaticFiles(req, res, url, route) {
   /*
@@ -51,6 +52,32 @@ export async function getStaticFiles(req, res, url, route) {
   // ---- static
   if (route.startsWith('/assets/')) {
     return serveFile(res, config.publicDir, route), true;
+  }
+  /*
+   * A PICTURE BY ITS POSITION — `/quiz-images/q/<round>/<question>[?g=CODE]`.
+   *
+   * The file's name is the answer (`portraits/chris-martin.png`), and it used
+   * to ride in the projector's payload and `<img src>` while the room was
+   * still watching the zoom — readable by anyone with the join code, which is
+   * on the wall. Rule 1, broken for every picture round (R2 of the 23
+   * September 2026 sweep). So the projector names the QUESTION and this
+   * answers with the file — and ONLY for a question the room has been asked
+   * (`Engine.pictureAsked()`): the one live or revealed now, or one already
+   * in the recap. Anything else is 404, so the round cannot be read ahead by
+   * counting. A capability check, never a kind test: a bingo engine has no
+   * pictures and simply lacks the method. `no-cache`, never an hour — the
+   * same address is a different picture on a different night.
+   */
+  const asked = route.match(/^\/quiz-images\/q\/(\d{1,3})\/(\d{1,3})$/);
+  if (asked) {
+    let file = '';
+    try {
+      const engine = roomForPhone(req, url).session.engine;
+      if (engine && typeof engine.pictureAsked === 'function') file = engine.pictureAsked(Number(asked[1]), Number(asked[2]));
+    } catch { file = ''; }
+    if (!file) return send(res, 404, 'Not found'), true;
+    const swap = file.replace(/\.(png|jpg|jpeg|webp)$/i, '.svg');
+    return serveFile(res, config.imageDir, fs.existsSync(path.join(config.imageDir, file)) ? file : swap), true;
   }
   if (route.startsWith('/quiz-images/')) {
     const rel = decodeURIComponent(route.slice('/quiz-images/'.length));

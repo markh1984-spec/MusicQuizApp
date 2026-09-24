@@ -705,11 +705,36 @@ test('the removed list cannot grow without bound over a long night', () => {
   assert.equal(engine.playerView(last.id).kicked, true);
 });
 
+test('a picture is given up by its position, and only once the room has been asked it', () => {
+  const { engine } = makeEngine();
+  // At the lobby nothing has been asked: nothing is served, by position or otherwise.
+  assert.equal(engine.pictureAsked(1, 0), '');
+  // A text question has no picture, and neither does a position that does not exist.
+  engine.goTo(0, 0);
+  assert.equal(engine.pictureAsked(0, 0), '');
+  assert.equal(engine.pictureAsked(7, 7), '');
+  assert.equal(engine.pictureAsked(1, 0), '', 'the picture round could be read ahead from round one');
+  // Live, and revealed: the file. Then it stays in the recap once the night moves on.
+  engine.goTo(1, 0);
+  assert.equal(engine.pictureAsked(1, 0), 'face.png');
+  engine.reveal();
+  assert.equal(engine.pictureAsked(1, 0), 'face.png');
+  engine.next();
+  assert.notEqual(engine.state.phase, PHASES.QUESTION);
+  assert.equal(engine.pictureAsked(1, 0), 'face.png', 'a picture the room has seen went missing from the recap');
+  // The host going back to an earlier question does not un-ask this one: the
+  // room saw it, its answers stand, and so does its picture.
+  engine.goTo(0, 1);
+  assert.equal(engine.pictureAsked(1, 0), 'face.png');
+  assert.equal(engine.pictureAsked(0, 1), '', 'a text question grew a picture');
+});
+
 test('the picture round tells the screen how to zoom, and carries no caption by default', () => {
   const { engine } = makeEngine();
   engine.goTo(1, 0);
   const view = engine.screenView();
-  assert.equal(view.question.image, '/quiz-images/face.png');
+  // BY POSITION, NEVER BY NAME — the file is the answer (R2, 23 September 2026).
+  assert.equal(view.question.image, '/quiz-images/q/1/0');
   assert.ok(view.question.zoomFrom > view.question.zoomTo);
   /*
    * NO CAPTION UNLESS THE PACK ASKS FOR ONE.

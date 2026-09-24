@@ -1173,11 +1173,14 @@ function renderQuestionMedia(s, q) {
    * there is nothing to draw.
    */
   if (s.roundType === 'image' && q.image) {
+    // The picture is asked for by POSITION with this room's code on it — the
+    // server answers only for a question the room has been asked, so the
+    // address never names the answer. See `pictureAsked()` in the engine.
     const mode = q.reveal || 'zoom';
     return `
       <div class="zoom-stage">
         <div class="zoom-frame reveal-${esc(mode)}" id="zoomFrame">
-          <img class="zoom-img" id="zoomImg" src="${esc(q.image)}" alt="Mystery musician"
+          <img class="zoom-img" id="zoomImg" src="${esc(q.image + roomQuery)}" alt="Mystery musician"
                onerror="this.closest('.zoom-frame').classList.add('no-image')">
           ${mode === 'pixelate' ? '<canvas class="pix-canvas" id="pixCanvas"></canvas>' : ''}
           ${mode === 'tiles' ? tileGrid(s) : ''}

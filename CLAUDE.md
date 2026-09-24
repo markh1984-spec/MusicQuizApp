@@ -238,22 +238,24 @@ payload field by field from a whitelist (`screenQuestionExtras` vs
 `hostQuestionExtras` in `src/engine.js`). A new sensitive field must be added
 to the host view only.
 
+**AND A PICTURE'S FILENAME IS ITS ANSWER.** `portraits/chris-martin.png` rode
+in the projector payload and its `<img src>` while the room watched the zoom.
+The projector is told the question's POSITION (`/quiz-images/q/<round>/<q>`)
+and the server answers only for a question the room has been asked
+(`Engine.pictureAsked()`: live or revealed now, or in the recap), so the round
+cannot be read ahead by counting. **The host's own view keeps the file.**
+
 **Who answered what is host-only too.** `whoPicked` in `hostView()` names every
-team under the option they chose, plus who let it go by — the counts said four
-got it wrong, this says which four, which is what the host reads off the mic.
-It is not in `screenView()` or `playerView()`, and there are tests for both.
+team under the option they chose, plus who let it go by. It is not in
+`screenView()` or `playerView()`, and there are tests for both.
 
 It shows **live as well as on the reveal**, folded behind the count with a
-caret — hiding the names during the question bought nothing, the COUNTS being
-on that screen already. Closed while the clock runs, open on the reveal.
+caret. Closed while the clock runs, open on the reveal.
 
 The open ones are remembered in a module-level Map in `host.js`, keyed by
-**phase**, round, question and option. **It has to be outside the render**: the
-panel is rebuilt on every state push, so a list you had just opened would shut
-itself the moment the next team pressed a button. The PHASE is in the key
-because the first attempt stored "the opposite of the default" — and the
-default flips at the reveal, so the list you opened closed itself and one you
-had never touched sprang open.
+**phase**, round, question and option — outside the render, which rebuilds on
+every push, and with the PHASE in the key because the default flips at the
+reveal.
 
 ### 2. The server owns the clock
 Every timestamp used for scoring comes from an injected `now()`. Phones send
@@ -2736,10 +2738,8 @@ in a 900px window, and a real wheel moved nothing.
   six pages must escape is how two of them come to be missed** — name the
   exception instead.
 - **A PROGRAMMATIC SCROLL IS NOT A SCROLL.** `scrollTo(0, 220)` succeeds on a
-  hidden viewport and `scrollY` reads back 220, so a check written that way
-  reports a page scrolling while a finger does nothing. **Turn the real wheel**
-  — `node scripts/pages-scroll.mjs`, which asserts the projector is PINNED
-  rather than merely still.
+  hidden viewport and `scrollY` reads back 220. **Turn the real wheel** —
+  `node scripts/pages-scroll.mjs`, which asserts the projector is PINNED.
 - **THE PROJECTOR MUST NEVER GAIN IT**: a stray scroll in a dark pub takes the
   question off the top of the room's screen.
 
@@ -4577,6 +4577,7 @@ node scripts/final-fits.mjs             # is the last slide of the night all on 
 node scripts/advert-on-the-wall.mjs     # does a corrected slide reach the room?
 node scripts/bar-reaches-the-room.mjs   # does the bar's card reach the room?
 node scripts/reaches-the-wall.mjs       # does a correction reach the projector?
+node scripts/picture-by-position.mjs    # is the picture on the wall, asked for by where it is?
 node scripts/lobby-games-play.mjs       # do the five games draw, run and score?
 node scripts/pack-shapes.mjs            # which quiz packs are short?
 node scripts/pack-repeats.mjs           # does one night ask the same thing twice?
