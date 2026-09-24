@@ -256,6 +256,15 @@ export function archiveBackupName(room) {
  */
 export async function backUpArchive(room) {
   if (!privateRepoConfigured()) return saidSo('a night', { ok: false, error: 'no private repo set up' });
+  // NEVER OVER NIGHTS THAT WERE NOT READ BACK FIRST. The backup is the WHOLE
+  // book, serialised off the disk — written from a disk that came up empty
+  // before the backup could be read, it replaced every past night with tonight.
+  // A refusal costs one night's backup until GitHub answers, and
+  // `ensureArchiveRestored()` pushes the disk out itself the moment it does.
+  await ensureArchiveRestored(room);
+  if (!archiveRestored.has(room.id)) {
+    return saidSo('a night', { ok: false, error: 'the past nights could not be read back first, so tonight was not written over them; it goes out when GitHub answers' });
+  }
   try {
     return saidSo('a night', await within(putFile(archiveBackupName(room), serialiseArchive(room.paths.archive), 'Update past nights', 'private')));
   } catch (err) {
@@ -308,7 +317,8 @@ export async function backUpArchive(room) {
  * `RESTORE_BACKOFF_MS` and the next request inside that window draws with
  * what is on disk; the one after it asks again. Keyed per latch set, per room.
  */
-export const RESTORE_BACKOFF_MS = 60_000;
+// The env is a seam for a check that has to WATCH the retry, like `GH_STUB_DELAY_MS`.
+export const RESTORE_BACKOFF_MS = Number(process.env.RESTORE_BACKOFF_MS) || 60_000;
 export const restoreFailedAt = new WeakMap();   // done Set -> Map<id, ms>
 export async function restoreOnce(done, inFlight, id, run) {
   if (done.has(id)) return;
@@ -328,6 +338,22 @@ export async function restoreOnce(done, inFlight, id, run) {
 
 export const archiveRestored = new Set();
 export const archiveInFlight = new Map();
+/**
+ * BRING BACK WHAT A LAUNCH READS AND WRITES — the venue book, the own packs and
+ * the archive tonight files INTO — from both launch routes, before the pack is
+ * read or a prize resolved. Rooms are made lazily, so only the HOUSE room's
+ * come back at boot; every other room's came back when a CONSOLE PAGE asked,
+ * and a console left open across a deploy onto an empty disk launched before
+ * any had. Once per boot, so an ordinary night waits on nothing here.
+ */
+export async function restoreForLaunch(room) {
+  await Promise.all([ensureArchiveRestored(room), ensureInvoicesRestored(room), ensureOwnPacksRestored(room)]);
+}
+
+function nightsOnDisk(dir) {   // filed nights in this room's archive folder
+  try { return fs.readdirSync(dir).filter((f) => f.endsWith('.json')).length; } catch { return 0; }
+}
+
 export async function ensureArchiveRestored(room) {
   await restoreOnce(archiveRestored, archiveInFlight, room.id, async () => {
     if (!privateRepoConfigured()) return true;
@@ -338,9 +364,19 @@ export async function ensureArchiveRestored(room) {
       console.warn(`[archive] could not fetch the backup for ${room.id}:`, read.error);
       return false;
     }
-    if (!read.body) return true;
-    const result = restoreArchive(room.paths.archive, read.body.toString('utf8'));
+    // MERGED, NEVER REFUSED — see `restoreArchive()`. And the direction a merge
+    // cannot take is taken here: a night the DISK holds that the backup never
+    // named (filed while GitHub was down) is pushed out now, so the two converge
+    // without another night being launched. Not awaited: it waits for THIS
+    // restore to be marked done.
+    const result = read.body
+      ? restoreArchive(room.paths.archive, read.body.toString('utf8'))
+      : { ok: true, nights: 0, unbacked: nightsOnDisk(room.paths.archive) };
     if (result.ok && result.nights) console.log(`[archive] restored ${result.nights} past night(s) for ${room.id}`);
+    if (result.ok && result.unbacked) {
+      console.log(`[archive] ${result.unbacked} night(s) on disk for ${room.id} were not in the backup — backing up`);
+      setImmediate(() => { backUpArchive(room).catch(() => {}); });
+    }
     return true;
   });
 }
@@ -466,6 +502,7 @@ export async function ensureAdvertsRestored(room) {
  */
 export let codesWriting = Promise.resolve();
 export let codesPending = null;
+let codeBookRead = false;   // the boot, or its retry, has read the book — or been told there is none
 export function backUpCodesSoon(serialised) {
   codesPending = serialised;
   codesWriting = codesWriting.then(async () => {
@@ -487,6 +524,12 @@ export async function backUpCodes(serialised) {
    * is not a lost code — which is why the refusal below is the silent one.
    */
   if (!privateRepoConfigured()) return { ok: false, error: 'no private repo set up' };
+  // NEVER OVER PRINTED CODES THAT WERE NOT READ BACK FIRST — `backUpArchive`'s
+  // rule for the book every printed QR resolves through: a console load MINTS a
+  // code and this is the WHOLE book, so pushed before the boot's read succeeded
+  // it replaced every printed code with the minted one, for good. Held until
+  // the retry reads the book and pushes the merged one (`restoreFromBackup`).
+  if (!codeBookRead) return saidSo('the join code book', { ok: false, error: 'the printed codes could not be read back first, so a minted code was not written over them; it goes out when GitHub answers' });
   try {
     return saidSo('the join code book', await putFile('room-codes.json', serialised, 'Update join codes', 'private'));
   } catch (err) {
@@ -587,9 +630,11 @@ export async function restoreFromBackup() {
   const restoreCodes = async () => {
     const read = await tryGetFile('room-codes.json', 'private');
     if (!read.ok) { unreachable = true; console.warn('[rooms] could not reach the join-code backup:', read.error); return; }
-    if (!read.body) return;
-    const result = rooms.restoreCodes(read.body.toString('utf8'));
-    if (result.ok) console.log(`[rooms] restored ${result.codes} join code(s) from the private repository`);
+    codeBookRead = true;
+    const result = read.body ? rooms.restoreCodes(read.body.toString('utf8')) : { ok: true, kept: Object.keys(rooms.codes).length };
+    if (result.ok && result.codes) console.log(`[rooms] restored ${result.codes} join code(s) from the private repository`);
+    // A code minted while the book was unreadable was held back (`backUpCodes`); the disk holds more: push it.
+    if (result.ok && result.kept) backUpCodesSoon(JSON.stringify(rooms.codes, null, 2) + '\n');
   };
   /*
    * Play counts, and the same rule as everything else: only into an empty
@@ -638,7 +683,7 @@ export async function restoreFromBackup() {
   }
 }
 /** How long to wait before asking GitHub again for a backup it could not hand over. */
-export const RESTORE_RETRY_MS = 60_000;
+export const RESTORE_RETRY_MS = Number(process.env.RESTORE_RETRY_MS) || 60_000;   // env: a seam for a check
 /**
  * Bring one room's invoice book back from the private repo, once.
  *

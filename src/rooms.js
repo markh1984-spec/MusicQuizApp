@@ -289,8 +289,21 @@ export class Rooms {
    * that is already scanning it — the one failure this whole feature cannot
    * have.
    */
+  /*
+   * RESTORED BY MERGE, AND THE BACKUP WINS — never refused for a book that is
+   * no longer empty. It used to refuse (`already_have_some`), and that was a
+   * dead room on an empty disk: if the code-book read failed at boot, the
+   * first console load MINTED a code (`codeFor()`), the sixty-second retry
+   * then found a non-empty book and refused, and every printed QR in every
+   * quizmaster's pub stayed dead until the next deploy. Reproduced by the
+   * 23 September 2026 sweep with the read failing for twenty seconds.
+   *
+   * So a code the backup names replaces whatever was minted meanwhile — the
+   * printed one is the truth — and a room the backup does not know keeps the
+   * code it was given. A room already booted has its `code` updated too, or
+   * `byCode()` would go on answering to the minted one.
+   */
   restoreCodes(serialised) {
-    if (Object.keys(this.codes).length) return { ok: false, reason: 'already_have_some' };
     let parsed;
     try {
       parsed = JSON.parse(String(serialised));
@@ -298,12 +311,22 @@ export class Rooms {
       return { ok: false, reason: 'unreadable', error: err.message };
     }
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { ok: false, reason: 'nothing_in_it' };
-    const codes = {};
+    const codes = { ...this.codes };
+    // What the DISK holds that the backup does not name — a code minted while
+    // the book could not be read. Reported so the caller can push the merged
+    // book out; `backUpCodes()` held the minted one back until now.
+    const kept = Object.keys(this.codes).filter((id) => !tidyCode(parsed[id])).length;
+    let replaced = 0;
     for (const [roomId, code] of Object.entries(parsed)) {
       const tidy = tidyCode(code);
-      if (roomId && tidy) codes[roomId] = tidy;
+      if (!roomId || !tidy) continue;
+      if (codes[roomId] && codes[roomId] !== tidy) replaced += 1;
+      codes[roomId] = tidy;
+      const booted = this.rooms.get(roomId);
+      if (booted) booted.code = tidy;
     }
     this.codes = codes;
+    if (replaced) console.warn(`[rooms] ${replaced} join code(s) minted before the backup arrived were replaced by the printed ones`);
     // Written straight to disk rather than through saveCodes, which would push
     // the backup we have just read back out again.
     try {
@@ -312,7 +335,7 @@ export class Rooms {
     } catch (err) {
       console.error('[rooms] could not write the restored join codes:', err.message);
     }
-    return { ok: true, codes: Object.keys(codes).length };
+    return { ok: true, codes: Object.keys(codes).length, replaced, kept };
   }
 
   codeFor(roomId) {

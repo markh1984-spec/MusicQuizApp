@@ -2140,26 +2140,35 @@ Hung GitHub behind the real server and drove a night. Four things waited:
 - **A FAILED LIBRARY RESTORE BACKS OFF A MINUTE** (`restoreOnce`) — never
   latched as empty, never retried per request.
 - **AND A BACKUP THAT FAILED SAYS SO — `saidSo()` in `http/helpers.js`.** Six
-  weeks of nights, venues, prizes, overlays and join codes went nowhere:
-  `PHOTO_TOKEN` stopped being able to write, every backup is fired and
-  forgotten, and `onArchive`'s `.catch(() => {})` ate the rest. **`data/` is
-  wiped on every deploy and there is no disk, so THE BACKUP IS THE DATA** — and
-  the only symptom was the gallery losing its frame — `venueOverlayFor()` needs
-  the night's ARCHIVE record to know which pub it was. **`backup` is a
+  weeks of nights, venues and join codes went nowhere, every backup fired and
+  forgotten. **THE BACKUP IS THE DATA.** **`backup` is a
   `SHARED_KIND`**, or a warn with no room never reaches the Help tab.
-  **`a-night-survives-a-deploy.mjs` takes the disk away** and demands the venue,
-  its prizes, its overlay, the night and the night's pub all come back — and
-  that a backup which cannot be written is said out loud.
 - **AND STILL WRITING IS NOT A FAILURE — `within()` marks it `late` and
-  `saidSo()` stays silent on it.** The request stops waiting after three
-  seconds; the write is still running and still lands. Warning there says a
-  night was not backed up about a night that was, on any slow GitHub morning —
-  **a warning that fires when nothing is wrong is how the one sentence he is
-  meant to act on becomes the one he skims.** **The guard has to SLOW the stub**
-  (`GH_STUB_DELAY_MS`) or the timeout branch never runs and it passes with the
-  fault in. **AND `putFile()` RESOLVES `{ok:false}` AND NEVER REJECTS**, so a
-  bare `.catch()` on it cannot fire for a failed write — that is the shape that
-  lost six weeks, and five more backups still had it.
+  `saidSo()` stays silent on it**, or it warns about a night that WAS backed
+  up. **The guard has to SLOW the stub** (`GH_STUB_DELAY_MS`) or it passes with
+  the fault in. **AND `putFile()` RESOLVES `{ok:false}` AND NEVER REJECTS** — a
+  bare `.catch()` cannot see a failed write.
+- **AND A LAUNCH BRINGS BACK WHAT IT READS AND WRITES — `restoreForLaunch()`,
+  in both launch routes.** Only the HOUSE room's books come back at boot;
+  every other room's came back when a CONSOLE PAGE asked, and a console left
+  open across a deploy onto an empty disk launched before any had: no prizes, `ENOENT` on an own pack, and tonight filed OVER
+  the backup. `test/launch-restores.test.js` drives the host route alone, **as a
+  quizmaster, never the host key** — the house room's restores run at boot.
+- **THE ARCHIVE IS RESTORED BY MERGE, AND NEVER WRITTEN OVER NIGHTS IT DID
+  NOT READ BACK.** `restoreArchive()` refused a folder holding anything, so
+  tonight filed before the backup was read turned the backup away for the
+  whole boot while the backup was rewritten from that one night. A night is a
+  file named by its id: **the disk wins on a night both hold, the backup fills
+  the rest, and a disk holding MORE than the backup is pushed.**
+  `backUpArchive()` reads back first and refuses if it cannot, out loud.
+  **REVERSES a pinned test.**
+- **AND THE JOIN-CODE BOOK IS RESTORED BY MERGE, THE PRINTED CODE WINNING —
+  AND A MINTED CODE IS HELD BACK UNTIL THE BOOK HAS BEEN READ.** `restoreCodes()`
+  refused a non-empty book, so a read that failed at boot plus one console
+  load — which MINTS a code and pushes the WHOLE book — left every printed QR
+  dead until the next deploy, and for good once that push landed.
+  `backUpCodes()` waits for the boot's read; its retry pushes the merge.
+  **REVERSES a pinned test.**
 
 ### TWO DEVICES, ONE QUIZ — a move carries the cursor it was pressed against
 
@@ -2239,21 +2248,13 @@ bytes for ever, so the repository could only grow.
   changed** and the shapes are identical. **`{ok:false}` is not empty**, or a
   blank gallery goes in front of a room and caches itself.
 - **AND IT IS `'photos'` ALONE. `'private'` IS THE ACCOUNTS BOOK AND THE JOIN
-  CODES, AND NAMING IT COST A LIVE GALLERY.** `inStore()` said both for one
-  evening while the comment above it said photos only. `PHOTO_REPO` was then
-  unset for two minutes: the book was looked for in the bucket, MISSED, had no
-  repository to fall through to, and the app wrote its own fresh state up there
-  — **and the store is read FIRST, so those files shadowed the good copies for
-  good.** `/api/gallery` answered `nights: []` with nothing in the log, because
-  the book decides which room it reads. **`readyFor('private')` asks the REPO**,
-  never *"somewhere to put a photograph"*, so an unset variable is SAID; and
-  **`leagues-published.json` is `'photos'`** — it lives in the photo folder
-  beside `published.json`, and two neighbours in two stores is the read-and-write
-  disagreement again. **`photos-in-a-bucket.mjs` asserts the bucket's root holds
-  nothing but `photos/`**; `why-no-nights.mjs` prints both books side by side
-  with no secret in the output, and `private-out-of-the-bucket.mjs` is the
-  repair, which **refuses to write over a richer file** — newer by time is not
-  better. **[`docs/gigs/photos-in-a-bucket.md`](docs/gigs/photos-in-a-bucket.md)**.
+  CODES, AND NAMING IT COST A LIVE GALLERY** — the store is read FIRST, so a
+  book written up there shadows the good copy for good. **`readyFor('private')`
+  asks the REPO**, never *"somewhere to put a photograph"*, and
+  **`leagues-published.json` is `'photos'`**, beside `published.json`.
+  **`photos-in-a-bucket.mjs` asserts the bucket's root holds nothing but
+  `photos/`**; `private-out-of-the-bucket.mjs` is the repair, which **refuses to
+  write over a richer file**. **[`docs/gigs/photos-in-a-bucket.md`](docs/gigs/photos-in-a-bucket.md)**.
 - **READS FALL BACK TO GITHUB; WRITES DO NOT, AND LISTINGS ARE UNIONED** —
   *the archives are UNIONED, never swapped*, so the migration never has to run
   and a night filed in both places is ONE night. **A fallback happens on a MISS, never on a FAILURE**, or a failing

@@ -320,16 +320,31 @@ test('a voucher filed before reinstate counting existed reports zero, not a cras
   assert.equal(listArchive(dir)[0].rewardsReinstated, 0);
 });
 
-test('a disk that already has nights on it is ahead of any backup', () => {
-  // The same rule as the accounts, the invoice book and the play counts.
-  // Reading a backup over the top would either duplicate a night or lose one.
+test('a disk that already has nights on it is MERGED with the backup, and the disk wins on a night both hold', () => {
+  /*
+   * REVERSES "a disk that already has nights on it is ahead of any backup" —
+   * that refusal (`already_have_some`) was the second half of a lost history:
+   * a launch on an empty disk filed tonight before the backup had been read,
+   * and the restore then refused for the whole boot while the backup was
+   * rewritten from the one night on disk. A night is a file named by its id,
+   * so a merge duplicates nothing and loses nothing. (23 September 2026.)
+   */
   const dir = tempDir();
-  archiveResults(dir, { packId: 'tonight', title: 'Tonight', kind: 'quiz' }, Date.now());
-  const result = restoreArchive(dir, JSON.stringify({ nights: [{ id: '2020-01-01-old', title: 'Old' }] }));
-  assert.equal(result.ok, false);
-  assert.equal(result.reason, 'already_have_some');
-  assert.equal(listArchive(dir).length, 1);
-  assert.equal(listArchive(dir)[0].title, 'Tonight');
+  const tonight = archiveResults(dir, { packId: 'tonight', title: 'Tonight', kind: 'quiz' }, Date.now());
+  const result = restoreArchive(dir, JSON.stringify({ nights: [
+    { id: '2020-01-01-old', title: 'Old' },
+    { id: tonight.id, title: 'A STALE COPY OF TONIGHT' },
+  ] }));
+  assert.equal(result.ok, true);
+  assert.equal(result.nights, 1, 'only the night the disk lacked is written');
+  assert.equal(result.unbacked, 0, 'the backup named tonight, so nothing on disk is unbacked');
+  assert.deepEqual(listArchive(dir).map((n) => n.title).sort(), ['Old', 'Tonight'], "the disk's tonight was replaced by the backup's stale copy");
+
+  // And a night only the DISK holds is COUNTED, so the caller can push it out.
+  const again = restoreArchive(dir, JSON.stringify({ nights: [{ id: '2020-01-01-old', title: 'Old' }] }));
+  assert.equal(again.nights, 0);
+  assert.equal(again.unbacked, 1);
+  assert.equal(listArchive(dir).length, 2);
 });
 
 test('a corrupt backup is refused rather than believed', () => {

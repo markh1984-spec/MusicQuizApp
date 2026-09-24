@@ -44,6 +44,10 @@ const hold = () => (DELAY ? new Promise((r) => setTimeout(r, DELAY)) : null);
  * check can COUNT writes rather than infer them.
  */
 const REFUSE = process.env.GH_STUB_REFUSE || '';
+// The same shape for READS — `GH_STUB_REFUSE_READS` names a flag file, and
+// every GET answers 503 while it exists. A check that wants GitHub down at the
+// launch and back for the retry deletes the file between the two.
+const REFUSE_READS = process.env.GH_STUB_REFUSE_READS || '';
 const LOG = process.env.GH_STUB_LOG || '';
 const note = (line) => { if (LOG) fs.appendFileSync(LOG, `${line}\n`); };
 
@@ -60,6 +64,9 @@ globalThis.fetch = async (input, init = {}) => {
 
   if (method === 'PUT' && REFUSE && fs.existsSync(REFUSE)) {
     return new Response('{"message":"stub refusing writes"}', { status: 503 });
+  }
+  if (method === 'GET' && REFUSE_READS && fs.existsSync(REFUSE_READS)) {
+    return new Response('{"message":"stub refusing reads"}', { status: 503 });
   }
   if (method === 'PUT') {
     const body = JSON.parse(init.body);

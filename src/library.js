@@ -354,20 +354,24 @@ export function serialiseArchive(dir) {
 }
 
 /**
- * Put it back, and ONLY into an empty archive.
+ * Put it back — BY MERGE, and a night already on disk is left alone.
  *
- * The same rule as the accounts, the invoice book and the play counts: a disk
- * that already has nights on it is ahead of any backup, and reading one over
- * the top would either duplicate a night or lose one, depending which way it
- * went.
+ * It used to refuse a folder that held anything (`already_have_some`), the rule
+ * the accounts book and the play counts follow. For the archive that refusal
+ * was the second half of a lost history: a launch on an empty disk filed
+ * tonight BEFORE the backup had been read (GitHub slow, or nothing had asked
+ * yet), and from then on the restore refused for the whole boot while the
+ * backup was rewritten from the one night on disk. Every past night gone, in
+ * silence. Found by the 23 September 2026 launch-path sweep.
+ *
+ * A night is a FILE named by its id, so there is nothing to duplicate and
+ * nothing to lose: a night on disk wins over the backup's copy of it (the disk
+ * is ahead — a prize scanned since), and a night only the backup knows is
+ * written back. `unbacked` counts the nights the DISK holds that the backup did
+ * not name; the caller pushes the backup again when it is not zero, so the two
+ * converge from either side rather than one silently replacing the other.
  */
 export function restoreArchive(dir, serialised) {
-  let already = [];
-  try {
-    already = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
-  } catch { /* no folder yet is exactly the case this is for */ }
-  if (already.length) return { ok: false, reason: 'already_have_some' };
-
   let parsed;
   try {
     parsed = JSON.parse(String(serialised));
@@ -376,8 +380,15 @@ export function restoreArchive(dir, serialised) {
   }
   if (!parsed || !Array.isArray(parsed.nights)) return { ok: false, reason: 'nothing_in_it' };
 
+  let already = [];
+  try {
+    already = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
+  } catch { /* no folder yet is the ordinary empty-disk case */ }
+  const onDisk = new Set(already.map((f) => f.slice(0, -'.json'.length)));
+
   fs.mkdirSync(dir, { recursive: true });
   let written = 0;
+  const named = new Set();
   for (const night of parsed.nights) {
     /*
      * Refused, not scrubbed. `archiveResults` only ever issues an id of
@@ -388,10 +399,13 @@ export function restoreArchive(dir, serialised) {
      */
     const id = String(night && night.id || '');
     if (!/^[a-z0-9-]+$/i.test(id)) continue;
+    named.add(id);
+    if (onDisk.has(id)) continue;   // the disk is ahead on a night it already holds
     fs.writeFileSync(path.join(dir, id + '.json'), JSON.stringify(night, null, 2) + '\n', 'utf8');
     written++;
   }
-  return { ok: true, nights: written };
+  const unbacked = [...onDisk].filter((id) => !named.has(id)).length;
+  return { ok: true, nights: written, kept: onDisk.size, unbacked };
 }
 
 /**

@@ -367,15 +367,31 @@ test('a restored join code is the SAME code, and a disk with codes on it wins', 
     assert.match(code, /^[0-9A-Z]{4,8}$/);
     assert.ok(kept.length, 'nothing was told the code had been minted');
 
+    const bevCode = rooms.codeFor('acct-bev');   // also minted, and on disk
     // A fresh server, no disk — the printed QR still has to work.
     fs.rmSync(path.join(dir, 'room-codes.json'), { force: true });
     const after = new Rooms({ config, paths, onPush: () => {} });
     assert.equal(after.restoreCodes(kept[kept.length - 1]).ok, true);
     assert.equal(after.codeFor('acct-rob'), code, 'a deploy reissued a code that is already on a printed card');
 
-    // …and a disk that already has codes on it is ahead of any backup.
-    assert.equal(after.restoreCodes(JSON.stringify({ 'acct-rob': 'ZZZZ' })).reason, 'already_have_some');
-    assert.equal(after.codeFor('acct-rob'), code);
+    /*
+     * …AND THE BACKUP'S PRINTED CODE WINS OVER A MINTED ONE — REVERSES the old
+     * "a disk with codes on it is ahead of any backup". That refusal was a dead
+     * QR on an empty disk: if the code-book read failed at boot, the first
+     * console load MINTED a code, and the retry then found a non-empty book and
+     * refused, so every printed card stayed dead. The backup is the data here
+     * as everywhere; a code it names replaces a minted one, and a room the
+     * backup does not know keeps what it was given. (23 September 2026 sweep.)
+     */
+    const merged = after.restoreCodes(JSON.stringify({ 'acct-rob': 'ZZZZ' }));
+    assert.equal(merged.ok, true);
+    assert.equal(after.codeFor('acct-rob'), 'ZZZZ', 'the printed (backup) code did not win over the minted one');
+    assert.equal(after.codeFor('acct-bev'), bevCode, 'a room the backup did not name lost its minted code');
+    // …and it SAYS what the disk held that the backup did not, so the caller
+    // can push the merged book back out — Bev's code, minted while the book
+    // could not be read, is what `backUpCodes()` held back.
+    assert.equal(merged.replaced, 1);
+    assert.equal(merged.kept, 1, 'the code only the disk knew was not counted');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

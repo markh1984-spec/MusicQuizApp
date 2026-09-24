@@ -7,7 +7,7 @@ import { readJson, sendJson } from './plumbing.js';
 import { packDating, photoLinkFor, roomForHost, whoIs } from './identity.js';
 import { allowed } from './gates.js';
 import { pushState, startIntroTrack } from './views.js';
-import { backUpLibraryStats, backUpReports, seesTheirLeague } from './helpers.js';
+import { backUpLibraryStats, backUpReports, restoreForLaunch, seesTheirLeague } from './helpers.js';
 
 export async function writeHost(req, res, url, route) {
   if (route.startsWith('/api/host/') && req.method === 'POST') {
@@ -24,6 +24,11 @@ export async function writeHost(req, res, url, route) {
 
     // Launching a different game is the one action that replaces the engine.
     if (action === 'launch') {
+      // Bring back what a launch reads and writes before it does — see
+      // `restoreForLaunch()`. Only console pages reached these, so a console
+      // left open across a deploy onto an empty disk launched with no prizes,
+      // a raw ENOENT on an own pack, and filed tonight OVER the archive backup.
+      await restoreForLaunch(room);
       /*
        * The one host action a lapsed subscription DOES stop.
        *
@@ -328,6 +333,11 @@ export async function writeHost(req, res, url, route) {
      * guard before replacing a live game.
      */
     if (action === 'launchOrder') {
+      // Bring back what a launch reads and writes before it does — see
+      // `restoreForLaunch()`. Only console pages reached these, so a console
+      // left open across a deploy onto an empty disk launched with no prizes,
+      // a raw ENOENT on an own pack, and filed tonight OVER the archive backup.
+      await restoreForLaunch(room);
       const rawSegments = Array.isArray(body.segments) ? body.segments : [];
       const segments = rawSegments.map((s) => {
         /*

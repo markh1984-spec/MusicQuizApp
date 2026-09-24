@@ -1,6 +1,8 @@
 # The launch-path sweep — 23 September 2026
 
-**A findings list, not a plan. Nothing here has been actioned.** The host asked
+**A findings list, not a plan — nothing was actioned in the sweep itself.** What
+has been actioned since is listed under *Actioned* below; every row stays as
+the sweep found it, because the row is the evidence. The host asked
 for *"a complete sweep of the launch path including bugs, UI fixes,
 vulnerabilities and anything else, labelled red, orange, yellow and green"*.
 Five read-only agents ran at `7ab3c30`, each in its own copy of the repository
@@ -22,6 +24,27 @@ The severity scale, shared by all five:
 **Totals: 7 red (new), 21 orange, ~30 yellow, and a long list that held.** Seven
 protected-surface faults from the September sweeps were already known and are
 tagged *(known)* where an agent re-confirmed them.
+
+---
+
+## Actioned
+
+- **R1, R3, R4** — fixed on 23 September (`f5f6b71`): the QR colours are
+  validated, the funny drink no longer costs a podium prize, and the phone's
+  question card carries the clock so *Ask again* unlocks it.
+- **R5** — fixed on 24 September: `restoreForLaunch()` runs the archive, venue
+  and own-pack restores from both launch routes; `restoreArchive()` merges by
+  night id rather than refusing a disk with a night on it; `backUpArchive()`
+  reads the past nights back before it writes and refuses if it cannot; and a
+  disk holding more than the backup is pushed. `test/launch-restores.test.js`
+  drives all five shapes as a signed-in quizmaster, each proven fail-first.
+- **R6** — fixed on 24 September: `restoreCodes()` merges, the backup's printed
+  code winning over one minted meanwhile (`test/rooms.test.js` reverses its
+  pinned "disk wins" assertion, deliberately); and the "for good" half —
+  `backUpCodes()` holds a minted code's push back until the boot's read has
+  succeeded, and the retry then pushes the merged book
+  (`test/join-codes-restore.test.js`, fail-first both ways).
+- **R2, R7** — see below; not yet actioned.
 
 ---
 
