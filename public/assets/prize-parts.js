@@ -163,6 +163,39 @@ export function stageWord(stage) {
   return stage === 1 ? 'a line' : `${stage} lines`;
 }
 
+/** The ordinal the host says on the mic: prize 2 is "the second prize". */
+const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth'];
+
+/**
+ * THE MAIN BUTTON AFTER A WIN — "Play on for the second prize — 2 lines".
+ *
+ * Asked for in those words: *"after the first bingo it should say 'play on
+ * for the second prize' and then 'play on for the third prize' etc. but this
+ * MUST be conditional on the amount of prizes selected at the start of the
+ * game."* The COUNT is the launch's (`stage.total`, off the card's stopping
+ * points or the Bingo prizes picker) and the ordinal is the NEXT prize's, so
+ * the button says what the host is about to announce; the stage word rides
+ * along after a dash, so what the room needs for it is on the same line.
+ *
+ * At the LAST stage there is nothing to play on for and this is `null` — the
+ * caller draws Finish or Continue there. A deck has ONE stage, so it is null
+ * from its first win: that is what keeps card bingo from offering a second
+ * pint on one game.
+ *
+ * @param {{index: number, total: number, last: boolean}|null} stage  the host view's `stage`
+ * @param {Array<{label: string}>|null} prizes  the host view's `prizes`, one per stage
+ * @returns {string|null}
+ */
+export function playOnLabel(stage, prizes) {
+  if (!stage || stage.last) return null;
+  const next = Number(stage.index || 0) + 1;
+  const total = Number(stage.total || 0);
+  if (total && next >= total) return null;
+  const ordinal = ORDINALS[next] || `${next + 1}th`;
+  const needs = Array.isArray(prizes) && prizes[next] && prizes[next].label;
+  return `Play on for the ${ordinal} prize${needs ? ` — ${needs}` : ''}`;
+}
+
 /**
  * THE LIST ITSELF IF A ROOM CAN PLAY IT, `null` IF NOT — and `null` means "use
  * the default", never "refuse the launch": a refusal there costs the night.

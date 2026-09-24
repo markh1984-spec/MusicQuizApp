@@ -2532,18 +2532,16 @@ music bingo prizes yesterday… it looks really bad on me if one guy wins all
 the prizes."*
 
 - **THE CLAIM IS STILL RIGHT AND IS RECORDED AS RIGHT** — THREE outcomes on
-  the control view, not two. **AND NO SENTENCE ON A PHONE MAY SAY "you have
-  already won"**: **the wording is about the PRIZE, never the person.**
+  the control view. **NO PHONE MAY SAY "you have already won"**: **the
+  wording is about the PRIZE, never the person.**
 - **THE CARDS CANNOT DO THIS ON THEIR OWN, asked for twice** — who wins is
-  decided by the ORDER the tracks are played. **Read `docs/bingo.md` first.**
+  decided by the ORDER the tracks are played. **`docs/bingo.md` first.**
 - **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert. **NO
-  SETTING** — one line to invert if anybody ever asks.
+  SETTING.**
 - **A STAGE CAN ONLY BE TAKEN ONCE — `stageTaken()`, checked BEFORE anything
-  is recorded.** **The button stands down for EVERYBODY**, and **`tooLate` is a
-  separate flag**.
-- **AND THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE** — it is
-  `evaluate()`'s shape on MARKS; **the two may not disagree about what the
-  prize IS.**
+  is recorded**; **`tooLate` is a separate flag**.
+- **THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE** — **the two may not
+  disagree about what the prize IS.**
 - **A VOUCHER SURVIVES A PART BOUNDARY — `carried` in
   `startOrderSegment()`.** **The flag is load-bearing**: the idempotency check
   sees THIS part's only, the lookup and the archive see all. **`prizeWinners`
@@ -2551,15 +2549,16 @@ the prizes."*
   nobody played for.
 - **`Continue to the quiz` IS DRAWN ONCE**, and **bingo's `Finish` STAYS AND
   SAYS WHAT IT COSTS** — a deliberate escape hatch, unlike the quiz's *Stop*.
-- **AND THE ROUND CAN STALL, SO THE CONTROL VIEW SAYS SO — `view.stalled`.**
-  **NOT lifted.**
-- **WHEN THE LAST PRIZE GOES THE WHOLE ROOM IS TOLD — `allPrizesGone`.**
-  **IT IS NOT THE `WON` PHASE**: it is `onLastStage && stageTaken()`, neither
-  half alone. **DRAWN ON EVERY PHONE, not only the winners'.**
+- **PLAY ON NAMES THE PRIZE BY ITS ORDINAL — `playOnLabel()` in
+  `prize-parts.js`**: *"Play on for the second prize — 2 lines"*, counted
+  against the prizes CHOSEN AT LAUNCH, null at the last stage. **Never "a
+  full house" for whatever comes next.**
+- **A STALLED ROUND IS SAID ON THE CONTROL VIEW (`view.stalled`), NOT lifted.**
+- **WHEN THE LAST PRIZE GOES THE WHOLE ROOM IS TOLD — `allPrizesGone`, which
+  is `onLastStage && stageTaken()`, NOT the `WON` phase. ON EVERY PHONE.**
 - **THE CODES ARE HELD AND APPEAR TOGETHER AT THE END OF THE ROUND — do not
-  put the trickle back.** MINTED at the win, held from the PHONE; three
-  releases (the round ending, `Finish`, an EARLIER `round` or `carried`).
-  **The HOST's panel is never held.**
+  put the trickle back.** MINTED at the win, held from the PHONE only; released
+  by the round ending, `Finish`, an EARLIER `round` or `carried`.
 - **ONE PRIZE PER PHONE PER BINGO *GAME*, not per round.** **`state.wonThisGame`,
   and `newRound()` MUST NOT CLEAR IT** — one line puts the fault back and looks
   like tidying. **REVERSES two pinned tests.** **The round that cannot pay out

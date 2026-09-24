@@ -149,6 +149,7 @@ try {
       packId: BINGO ? 'mbc-6' : '2000s-2010s-mixed',
       venue: 'The Probe Arms',
       rewards: ['A pint', 'A half', 'A shot'],
+      prizes: 3,
       breakPlan: {},
       replace: true,
     });
@@ -228,6 +229,18 @@ try {
   for (const phase of PHASES) {
     const got = await driveTo(phase);
     if (got !== phase) { console.log(`  (skipped ${phase} — the night reached ${got})`); continue; }
+    /*
+     * THE BUTTON COUNTS PRIZES THE WAY THE HOST DOES ON THE MIC. This night
+     * launched with three prizes and three drinks; after the first win the
+     * primary must offer the SECOND
+     * prize by its ordinal, never "a full house" for whatever comes next.
+     */
+    if (BINGO && phase === 'won') {
+      const label = await page.evaluate(() => (document.querySelector('.actions .primary, button.primary') || {}).textContent || '');
+      const ok = /^Play on for the second prize — /.test(label.trim());
+      if (!ok) fails += 1;
+      console.log(`  ${ok ? 'ok  ' : 'FAIL'} after the first win the button reads "${label.trim()}"`);
+    }
     const controls = await controlsHere();
     let pressed = 0;
     for (const c of controls) {

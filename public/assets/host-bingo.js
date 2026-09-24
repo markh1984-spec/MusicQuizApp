@@ -10,6 +10,7 @@ import {
   esc, node, rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote,
 } from './client.js';
 import { SUITS, RANKS, isRed, saidAloud } from './deck.js';
+import { playOnLabel } from './prize-parts.js';
 import { cardFaceSvg, ensureCardArt } from './card-face.js';
 
 let filter = '';
@@ -61,11 +62,12 @@ export function bingoPanels(s, act) {
 export function bingoActions(s, act, minor) {
   const out = [];
 
-  // What the next prize is, by name, rather than "a full house" whatever it
-  // actually is. With three prizes the host is announcing "now play on for two
-  // lines", and the button has to agree with what they are about to say.
+  // "Play on for the second prize — 2 lines": the ordinal the host says on the
+  // mic, counted against the prizes chosen at launch, with what the room needs
+  // for it after the dash. Null at the last stage, where there is nothing to
+  // play on for. Built in prize-parts.js so a test can walk every count.
   const stage = s.stage || { index: 0, total: 2, label: 'a line', last: false };
-  const nextLabel = (s.prizes && s.prizes[stage.index + 1] && s.prizes[stage.index + 1].label) || 'a full house';
+  const playOn = playOnLabel(stage, s.prizes);
 
   /*
    * TONIGHT AS MORE THAN ONE GAME — this bingo interlude is not the whole
@@ -99,7 +101,7 @@ export function bingoActions(s, act, minor) {
     : s.win
       ? (stage.last
         ? (continuing ? `Continue to ${continueWord}` : 'Finish the game')
-        : `Play on for ${nextLabel}`)
+        : playOn)
       : (deck ? 'Turn the cards above' : 'Tap a track above as you play it');
 
   const primary = node(`<button class="primary" ${!s.win && s.phase !== 'lobby' ? 'disabled' : ''}>${esc(primaryLabel)}</button>`);

@@ -24,16 +24,27 @@ function aDeckGame() {
   return game;
 }
 
-/** Turn cards, marking everybody's, until `who` can claim; return the claim. */
+/**
+ * Turn cards, marking everybody's, until `who` can claim; return the claim.
+ *
+ * THE CLAIM IS CHECKED BEFORE THE DRAW. Two hands of thirteen come off one
+ * deck of fifty-two, so one time in four the first hand completes on the
+ * LAST card — at which point the second hand is complete too and the deck is
+ * out. Drawing first broke out on the empty deck and never looked at the hand
+ * in front of it, which made this file flake at exactly that rate.
+ */
 function playUntilClaim(game, who, everyone) {
-  for (let i = 0; i < 60; i += 1) {
-    if (!game.drawNext()) break;
+  const markAll = () => {
     for (const id of everyone) {
       for (const sq of game.playerView(id).card || []) {
         if (sq.called && !sq.marked) game.mark({ playerId: id, index: sq.index, marked: true });
       }
     }
+  };
+  for (let i = 0; i < 60; i += 1) {
+    markAll();
     if (game.playerView(who).canClaim) return game.claim(who);
+    if (!game.drawNext()) break;
   }
   return null;
 }
