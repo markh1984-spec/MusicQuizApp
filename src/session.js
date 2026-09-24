@@ -2019,6 +2019,9 @@ export class Session {
       playOn: () => this.engine.playOn(body.target),
       newRound: () => this.engine.newRound(),
       finish: () => this.engine.finish(),
+      // The host takes a phone out of this round, and puts it back — `sitOut()`.
+      sitOut: () => this.engine.sitOut(String(body.playerId || '')),
+      sitIn: () => this.engine.sitIn(String(body.playerId || '')),
       /*
        * AND ONLY CARD BINGO DEALS.
        *

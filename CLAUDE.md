@@ -2532,58 +2532,57 @@ music bingo prizes yesterday… it looks really bad on me if one guy wins all
 the prizes."*
 
 - **THE CLAIM IS STILL RIGHT AND IS RECORDED AS RIGHT** — THREE outcomes on
-  the control view. **NO PHONE MAY SAY "you have already won"**: **the
-  wording is about the PRIZE, never the person.**
+  the control view. **NO PHONE MAY SAY "you have already won"**: the wording
+  is about the PRIZE, never the person.
 - **THE CARDS CANNOT DO THIS ON THEIR OWN, asked for twice** — who wins is
   decided by the ORDER the tracks are played. **`docs/bingo.md` first.**
 - **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert. **NO
   SETTING.**
 - **A STAGE CAN ONLY BE TAKEN ONCE — `stageTaken()`, checked BEFORE anything
   is recorded**; **`tooLate` is a separate flag**.
-- **THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE** — **the two may not
-  disagree about what the prize IS.**
+- **THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE.**
 - **A VOUCHER SURVIVES A PART BOUNDARY — `carried` in
-  `startOrderSegment()`.** **The flag is load-bearing**: the idempotency check
-  sees THIS part's only, the lookup and the archive see all. **`prizeWinners`
-  does NOT carry** — a carried list makes `stageTaken()` true for a prize
-  nobody played for.
+  `startOrderSegment()`**, load-bearing: the idempotency check sees THIS
+  part's only. **`prizeWinners` does NOT carry** — it makes `stageTaken()`
+  true for a prize nobody played for.
 - **`Continue to the quiz` IS DRAWN ONCE**, and **bingo's `Finish` STAYS AND
   SAYS WHAT IT COSTS** — a deliberate escape hatch, unlike the quiz's *Stop*.
 - **PLAY ON NAMES THE PRIZE BY ITS ORDINAL — `playOnLabel()` in
   `prize-parts.js`**: *"Play on for the second prize — 2 lines"*, counted
   against the prizes CHOSEN AT LAUNCH, null at the last stage. **Never "a
   full house" for whatever comes next.**
-- **A STALLED ROUND IS SAID ON THE CONTROL VIEW (`view.stalled`), NOT lifted.**
+- **A STALLED ROUND IS SAID (`view.stalled`), NOT lifted.**
 - **WHEN THE LAST PRIZE GOES THE WHOLE ROOM IS TOLD — `allPrizesGone`, which
   is `onLastStage && stageTaken()`, NOT the `WON` phase. ON EVERY PHONE.**
 - **THE CODES ARE HELD AND APPEAR TOGETHER AT THE END OF THE ROUND — do not
-  put the trickle back.** MINTED at the win, held from the PHONE only; released
-  by the round ending, `Finish`, an EARLIER `round` or `carried`.
-- **ONE PRIZE PER PHONE PER BINGO *GAME*, not per round.** **`state.wonThisGame`,
-  and `newRound()` MUST NOT CLEAR IT** — one line puts the fault back and looks
-  like tidying. **REVERSES two pinned tests.** **The round that cannot pay out
-  is NOT automated away** (`view.noneLeft`). **A fresh bingo PART is a fresh
-  game.**
-- **A ROUND'S PRIZE IS THE NEXT ON THE TABLE — `prizesGiven`.** Keyed on the
-  STAGE, round two paid the pint again.
+  put the trickle back.** MINTED at the win, held from the PHONE only.
+- **ONE PRIZE PER PHONE PER MUSIC BINGO *GAME*, not per round** —
+  `state.wonThisGame`, which `newRound()` clears ONLY for a pack that
+  `everyRoundPays`: **a deck's rounds are separate games, one drink per ROUND
+  of card bingo (his call, 24 Sept)**. **The round that cannot pay out is NOT
+  automated away** (`view.noneLeft`). **A fresh bingo PART is a fresh game.**
+- **SAT OUT — the host takes a phone out of ONE round from its row
+  (`sitOut()`/`sitIn()`), never automated.** A completed card nobody called
+  would take the prize three tracks later off whoever just completed. Not a
+  prize: `holdsAPrize()` is untouched; *Back in next round* on the button;
+  `newRound()` clears it. `test/sit-out.test.js`.
+- **NO NATIVE `confirm()` ON THE BINGO CONTROL VIEW — `pressTwice()`.**
+  Finish and New round ARM on the first press and act on the second: a
+  browser told to suppress dialogs answers every `confirm()` No in silence
+  (*"nothing at all happens"*); every guard DISMISSED them.
+- **A ROUND'S PRIZE IS THE NEXT ON THE TABLE — `prizesGiven`**, never the STAGE.
 - **DRINKS ARE PER GAME, NOT PER NIGHT — `dealPrizes()` deals EVERY game from
-  the TOP**, reversing the share down the night, which cut card bingo to ONE
-  drink so its second game's winner got nothing. **Do not put the sharing
-  back** — what an evening costs is the host's and the venue's call. **A deck
-  declares `everyRoundPays`**: past its list it pays the last drink
-  (`rewardFor()`), its box says *Each game*. Music bingo keeps its free line.
-  **A NIGHT'S TOTAL IS A REMINDER, NEVER A LIMIT** — `nightReminder()`, card
-  bingo SAID per game, never counted: an undercount is a lie.
-- **A SCORE FIXED AT THE FINAL MOVES THE DRINKS — `adjustScore()`.** **EVERY
-  SCORE WRITE GOES THROUGH `bumpScore()` / `setScore()`, which drop the
-  cache** — `test/score-writes.test.js` refuses a third writer.
+  the TOP. Do not put the sharing back** — what an evening costs is the
+  host's and the venue's call. **A deck declares `everyRoundPays`**: past its
+  list it pays the last drink (`rewardFor()`). **A NIGHT'S TOTAL IS A
+  REMINDER, NEVER A LIMIT** — `nightReminder()`, card bingo SAID per game.
+- **A SCORE FIXED AT THE FINAL MOVES THE DRINKS — `adjustScore()`. EVERY SCORE
+  WRITE GOES THROUGH `bumpScore()` / `setScore()`** (`test/score-writes.test.js`).
 - **A CODE STAYS ON THE PHONE UNTIL THE BAR SCANS IT — `view.vouchers` on the
-  QUIZ engine too.** **Every live code, at every phase with room, NEVER over a
-  live QUESTION.** **A REDEEMED one now DISAPPEARS from the phone** — see *My
-  prizes*; the two engines may not disagree. **`view.voucher` UNCHANGED.**
-- **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS — it reads `quizzes/`
-  only, sets no venue and mints no voucher.** `bingo-prizes.mjs` drives three
-  phones over real HTTP instead.
+  QUIZ engine too, NEVER over a live QUESTION; a REDEEMED one DISAPPEARS** (see
+  *My prizes*). **`view.voucher` UNCHANGED.**
+- **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS** — it mints no
+  voucher; `bingo-prizes.mjs` drives three phones over real HTTP instead.
 
 Full reasoning, with the measurements: **[`docs/bingo.md`](docs/bingo.md)**.
 

@@ -82,3 +82,23 @@ test('and a second hand in the SAME round takes nothing — one game, one pint',
   assert.ok(next && next.valid && !next.reason, `the next game did not pay: ${JSON.stringify(next)}`);
   assert.equal(Object.keys(game.state.vouchers).length, 2);
 });
+
+/**
+ * A DECK'S ROUNDS ARE SEPARATE GAMES — one drink per ROUND of card bingo,
+ * chosen by the host on 24 September 2026 after a night where a table that
+ * won hand one could not win again all evening. `newRound()` clears
+ * `wonThisGame` for a pack that `everyRoundPays`; a music bingo pack keeps
+ * the game-long list, which the bingo tests pin.
+ */
+test('on a deck the table that won hand one can win hand two', () => {
+  const game = aDeckGame();
+  const a = game.join({ name: 'Beer Pressure' }).id;
+  const b = game.join({ name: 'Smarty Pints' }).id;
+  const first = playUntilClaim(game, a, [a, b]);
+  assert.ok(first && first.valid && !first.reason, `hand one was not paid: ${JSON.stringify(first)}`);
+  game.newRound();
+  assert.equal(game.holdsAPrize(a), false, 'a new round of card bingo is a fresh game');
+  const again = playUntilClaim(game, a, [a, b]);
+  assert.ok(again && again.valid && !again.reason, `the same table was not paid in hand two: ${JSON.stringify(again)}`);
+  assert.equal(Object.keys(game.state.vouchers).length, 2, 'two drinks, one per hand');
+});

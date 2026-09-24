@@ -669,6 +669,10 @@ export class BingoGame {
     if (this.state.phase !== BINGO_PHASES.PLAYING && this.state.phase !== BINGO_PHASES.WON) {
       return { ok: false, reason: 'not_playing' };
     }
+    // Sat out by the host for this round — see `sitOut()`. Refused BEFORE a
+    // claim is recorded: the phone's button already stands down, so this is
+    // only ever a stale phone, and a shout nobody made is not put on the list.
+    if (this.isSatOut(playerId)) return { ok: false, reason: 'sat_out' };
 
     const result = this.evaluate(p);
     const at = this.now();
@@ -932,6 +936,42 @@ export class BingoGame {
     return (this.state.prizeWinners || []).some((w) => w.playerId === playerId);
   }
 
+  /**
+   * SAT OUT — the host takes a phone out of the running for THIS ROUND.
+   *
+   * *"If someone doesn't claim their bingo I need to be able to exclude them
+   * from the running."* A card completes and nobody presses BINGO — a phone
+   * face down, a table at the bar — and three tracks later that same line is
+   * still a valid claim, which would take the prize off whoever genuinely
+   * completed just now. Pub bingo's rule is that a bingo not called before
+   * the next number is lost; here it is the HOST's call, one press on the
+   * row, never automated: the app cannot tell a phone that missed it from a
+   * phone that is thinking.
+   *
+   * Per ROUND, cleared by `newRound()`; `sitIn()` undoes it. It is not a
+   * prize, so `holdsAPrize()` is untouched and the drink stays on the table.
+   * The phone's button stands down with the reason on it (`view.satOut`).
+   */
+  sitOut(playerId) {
+    if (!this.state.players[playerId]) return { ok: false, reason: 'unknown_player' };
+    if (!this.state.satOut || typeof this.state.satOut !== 'object') this.state.satOut = {};
+    this.state.satOut[playerId] = this.state.round;
+    this.changed();
+    return { ok: true };
+  }
+
+  sitIn(playerId) {
+    if (!this.state.players[playerId]) return { ok: false, reason: 'unknown_player' };
+    if (this.state.satOut) delete this.state.satOut[playerId];
+    this.changed();
+    return { ok: true };
+  }
+
+  isSatOut(playerId) {
+    const out = this.state.satOut;
+    return Boolean(out && typeof out === 'object' && out[playerId] === this.state.round);
+  }
+
   payWinnersOwed() {
     const held = Object.values(this.state.vouchers || {});
     for (const w of this.state.prizeWinners || []) {
@@ -1169,6 +1209,17 @@ export class BingoGame {
      */
     this.state.lastWin = null;
     this.state.stageIndex = 0;
+    // Sat out was for the round that has just ended.
+    this.state.satOut = {};
+    /*
+     * A DECK'S ROUNDS ARE SEPARATE GAMES, SO ITS LIST IS CLEARED AND MUSIC
+     * BINGO'S IS NOT. *"It's a separate game to music bingo"*, and on 24
+     * September 2026 the host chose one drink per ROUND of card bingo — a
+     * table can win hand one and hand three — while a music bingo night
+     * keeps one prize per phone across its rounds. Asked of the PACK
+     * (`everyRoundPays`), never the kind, like the one stage above.
+     */
+    if (this.pack && this.pack.everyRoundPays) this.state.wonThisGame = [];
     this.syncTarget();
     this.state.phase = BINGO_PHASES.PLAYING;
     for (const p of this.playerList()) {
@@ -1400,6 +1451,8 @@ export class BingoGame {
     // Can they legitimately press BINGO? They may still be wrong — this only
     // stops the button being mashed when no line is even marked.
     view.canClaim = this.hasMarkedPattern(p);
+    // Taken out of this round by the host; the button says so (`sitOut()`).
+    if (this.isSatOut(playerId)) view.satOut = true;
     /*
      * STOOD DOWN — they hold a prize and somebody else has not had one yet.
      *
@@ -1620,6 +1673,7 @@ export class BingoGame {
         falseCalls: p.falseCalls,
         connected: p.connected,
         won: this.state.winners.line.includes(p.id) || this.state.winners.full.includes(p.id),
+        ...(this.isSatOut(p.id) ? { satOut: true } : {}),
       }))
       .sort((a, b) => a.away - b.away || a.name.localeCompare(b.name));
 
@@ -1684,8 +1738,9 @@ export class BingoGame {
      *
      * Host-only, and only when it is actually true.
      */
+    // A phone sat out cannot claim either, so it counts as stuck the same way.
     const stuck = this.playerList().filter((p) => this.squaresAway(p) === 0);
-    if (stuck.length && stuck.every((p) => this.holdsAPrize(p.id)) && !this.stageTaken()) {
+    if (stuck.length && stuck.every((p) => this.holdsAPrize(p.id) || this.isSatOut(p.id)) && !this.stageTaken()) {
       view.stalled = stuck.length;
     }
     /*
@@ -1705,7 +1760,7 @@ export class BingoGame {
      * the host's to make.
      */
     const everyone = this.playerList();
-    if (everyone.length && everyone.every((p) => this.holdsAPrize(p.id)) && !this.stageTaken()) {
+    if (everyone.length && everyone.every((p) => this.holdsAPrize(p.id) || this.isSatOut(p.id)) && !this.stageTaken()) {
       view.noneLeft = true;
     }
     // `standDown` rides with each row: a correct call that took no prize is a

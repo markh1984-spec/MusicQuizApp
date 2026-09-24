@@ -255,11 +255,49 @@ try {
       const dlgBefore = dialogs;
       if (!(await press(c))) continue;
       await page.waitForTimeout(700);
+      /*
+       * A CONTROL THAT ARMS ON THE FIRST PRESS IS PRESSED AGAIN, as a person
+       * would — `pressTwice()` in host-bingo.js replaced the native confirm()
+       * this guard used to dismiss. The second press is the one that acts.
+       */
+      const armed = await page.evaluate(() => {
+        const b = [...document.querySelectorAll('.actions button')].find((x) => /^Press again/.test(x.textContent.trim()));
+        if (!b) return false;
+        b.click();
+        return true;
+      });
+      if (armed) await page.waitForTimeout(700);
       const after = await print();
       if (after === before && requests === reqBefore && dialogs === dlgBefore) dead.push({ phase, ...c });
       pressed += 1;
     }
     console.log(`  ${phase} — pressed ${pressed} of ${controls.length}`);
+    /*
+     * FINISH IS PRESSED TWICE, FOR REAL. It used to ask with a native
+     * confirm(), which this guard DISMISSES — so the path behind OK was never
+     * driven, and on a gig day the host reported *"nothing at all happens"*.
+     * It arms on the first press and acts on the second now; both presses go
+     * through the real button, and the night must end.
+     */
+    if (BINGO && phase === 'playing') {
+      const at = await driveTo('playing');
+      if (at === 'playing') {
+        const twice = await page.evaluate(async () => {
+          const find = () => [...document.querySelectorAll('.actions button')].find((b) => /^Finish$|^Press again/.test(b.textContent.trim()));
+          const b1 = find(); if (!b1) return 'no Finish button';
+          b1.click();
+          await new Promise((r) => setTimeout(r, 300));
+          const b2 = find(); if (!b2) return 'button vanished after the first press';
+          const label = b2.textContent.trim();
+          b2.click();
+          return label;
+        });
+        await page.waitForTimeout(900);
+        const ended = (await view()).phase === 'finished';
+        if (!ended) fails += 1;
+        console.log(`  ${ended ? 'ok  ' : 'FAIL'} Finish pressed twice ends the game (armed label "${twice}")`);
+      }
+    }
   }
 
   console.log('');

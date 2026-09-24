@@ -322,10 +322,59 @@ the same person hoovering up prizes, which is the exact complaint this whole
 area was built for, arriving one level up.
 
 `state.wonThisGame` is the game-long list. **`newRound()` must never clear
-it** — that single line puts the fault straight back, and it looks like
-tidying. `resetAll()` builds a fresh state and therefore starts empty, which
-is right: that is a new game. A fresh bingo PART is likewise a fresh game,
-which is what *"per music bingo"* says.
+it for music bingo** — that single line puts the fault straight back, and it
+looks like tidying. `resetAll()` builds a fresh state and therefore starts
+empty, which is right: that is a new game. A fresh bingo PART is likewise a
+fresh game, which is what *"per music bingo"* says.
+
+**Card bingo is the exception, chosen on 24 September 2026.** Three hands of
+card bingo are three separate games (*"it's a separate game to music
+bingo"*), and after a night where the table that won hand one could not win
+again all evening the host chose one drink per ROUND of card bingo: Archie
+can take hand one and hand three. So `newRound()` clears `wonThisGame` for a
+pack that `everyRoundPays` — asked of the pack, never the kind — and leaves
+it alone for music bingo. `test/deck-one-stage.test.js` pins the deck and
+`test/bingo.test.js` the music bingo.
+
+### Sat out — the host takes a phone out of one round
+
+*"If someone doesn't claim their bingo I need to be able to exclude them
+from the running."* A card completes and nobody presses BINGO — a phone face
+down, a table at the bar — and three tracks later that same line is still a
+valid claim, which takes the prize off whoever genuinely completed just now.
+Pub bingo's rule is that a bingo not called before the next number is lost;
+here it is the HOST's call, one press on the row (`Sit out` / `Back in` in
+`playersPanel()`), never automated: the app cannot tell a phone that missed
+it from a phone that is thinking.
+
+`sitOut()` / `sitIn()` / `isSatOut()` in `bingo.js`, `state.satOut` keyed by
+player id to the round it applies to, so `newRound()` clears it for free and
+a state written before it existed reads as nobody sat out. `claim()` refuses
+with `sat_out` BEFORE recording anything — the phone's button already stands
+down (*Back in next round*, `view.satOut`), so a press can only ever be a
+stale phone and no shout is put on the list. It is not a prize:
+`holdsAPrize()` is untouched and the drink stays on the table; a sat-out
+completed card counts as stuck for `stalled` / `noneLeft`, because it cannot
+claim either. `test/sit-out.test.js`, and `bingo-prizes.mjs` drives it over
+HTTP.
+
+### Finish and New round are pressed twice, never confirmed
+
+On a gig day the host reported Finish as *"nothing at all happens"* — no
+box, no message. Both buttons asked with a native `confirm()`, and that is
+exactly what a browser does once "don't let this page show more dialogs" has
+been ticked (Chrome offers the box from the second dialog on): every
+`confirm()` answers No, instantly and silently. Every guard in this repo
+DISMISSED dialogs too, so the path behind OK had never once been driven.
+
+`pressTwice()` in `host-bingo.js`: the first press arms the button and says
+what a second press does (*Press again to finish*, *Press again — ends the
+whole night*, *Press again — new cards*), the second press does it, five
+seconds of nothing puts it back. The armed state is module level because the
+bar is rebuilt on every state push and a mark from any phone would otherwise
+disarm it mid-press. `host-controls.mjs` presses an armed button again, and
+presses Finish twice for real. The quiz's own `confirm()`s are untouched for
+now.
 
 `prizeWinners` is still consulted by `holdsAPrize()`, for states written
 before `wonThisGame` existed: the safe direction is to remember a win rather

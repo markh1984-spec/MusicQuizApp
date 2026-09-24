@@ -23,6 +23,40 @@ let filter = '';
  * square. The same reasoning `host.js` records for `whoPicked`'s open lists.
  */
 let showEveryPhone = false;
+/*
+ * PRESS TWICE, NEVER A NATIVE `confirm()`.
+ *
+ * Finish and New round each asked with `confirm()`, and on a gig day the
+ * host reported Finish as *"nothing at all happens"* — no box, no message.
+ * That is what a browser does once "don't let this page show more dialogs"
+ * has been ticked (Chrome offers it from the second dialog on), and it is
+ * also what every guard in this repo does to a dialog: `host-controls.mjs`
+ * DISMISSES them, so the path behind the OK button was never once driven.
+ * So the question is asked ON the button instead — the first press arms it
+ * and says what a second press does, the second press does it, and five
+ * seconds of nothing puts it back. Module level, because this bar is rebuilt
+ * on every state push and a mark from any phone would disarm it mid-press.
+ */
+const ARM_MS = 5000;
+let armed = { what: '', until: 0 };
+function pressTwice(minor, what, idleLabel, armedLabel, run, danger = false) {
+  const isArmed = () => armed.what === what && Date.now() < armed.until;
+  const b = minor(isArmed() ? armedLabel : idleLabel, () => {
+    if (isArmed()) { armed = { what: '', until: 0 }; run(); return; }
+    armed = { what, until: Date.now() + ARM_MS };
+    b.textContent = armedLabel;
+    b.classList.add('armed');
+    setTimeout(() => {
+      if (armed.what === what && Date.now() >= armed.until) armed = { what: '', until: 0 };
+      if (!isArmed()) { b.textContent = idleLabel; b.classList.remove('armed'); }
+    }, ARM_MS + 50);
+  }, danger);
+  if (isArmed()) {
+    b.classList.add('armed');
+    setTimeout(() => { if (!isArmed()) { b.textContent = idleLabel; b.classList.remove('armed'); } }, Math.max(0, armed.until - Date.now()) + 50);
+  }
+  return b;
+}
 
 export function bingoPanels(s, act) {
   /*
@@ -118,9 +152,7 @@ export function bingoActions(s, act, minor) {
   // Same control as the quiz's own — see the comment beside it in host.js.
   // One shared popover, one shared `setRewards` action, for either game.
   out.push(minor('Prizes', () => rewardsEditorPopover(s, act)));
-  out.push(minor('New round', () => {
-    if (confirm('New cards for everyone and nothing called. Carry on?')) act('newRound');
-  }));
+  out.push(pressTwice(minor, 'newRound', 'New round', 'Press again — new cards', () => act('newRound')));
   out.push(minor('Console', () => { location.href = '/console' + location.search; }));
   /*
    * A DELIBERATE WAY TO MOVE ON EARLY — before the last configured prize is
@@ -149,13 +181,9 @@ export function bingoActions(s, act, minor) {
    * Back does not undo an archive; this one has no such promise to break, so
    * the honest fix is to say what happens rather than to take the hatch away.
    */
-  out.push(minor('Finish', () => {
-    const question = continuing
-      ? `End the whole night here? ${continueWord === 'the quiz' ? 'The quiz' : 'The bingo'} still to come `
-        + 'will not be played, and tonight is filed on the bingo alone.'
-      : 'End the game and save the result?';
-    if (confirm(question)) act('finish');
-  }, true));
+  out.push(pressTwice(minor, 'finish', 'Finish',
+    continuing ? 'Press again — ends the whole night' : 'Press again to finish',
+    () => act('finish'), true));
 
   return out;
 }
@@ -335,9 +363,9 @@ function playersPanel(s, act) {
       nobody can claim this one — one each per round. Start a new round to open it up, or
       finish here.</div>`
     : s.stalled
-      ? `<div class="tiny" style="color:var(--gold);padding:6px 0">${s.stalled} ${
-        s.stalled === 1 ? 'card is' : 'cards are'} complete and already holding a prize — nobody
-        else can claim this one. Play on, start a new round, or hand it over yourself.</div>`
+      ? `<div class="tiny" style="color:var(--gold);padding:6px 0">${s.stalled} completed ${
+        s.stalled === 1 ? 'card' : 'cards'} cannot claim this one — already holding a prize, or sat
+        out. Play on, start a new round, or hand it over yourself.</div>`
       : '';
   /*
    * DO NOT PLAY THESE — the songs that would take somebody who has already
@@ -391,6 +419,9 @@ function playersPanel(s, act) {
             ${p.falseCalls ? `<span class="off">${p.falseCalls} false</span>` : ''}
             ${noteMark(s, p)}
             <span class="sc ${p.away === 1 ? 'hot' : ''}">${p.away === 0 ? '✓' : p.away}</span>
+            <button data-act="sit" title="${p.satOut
+    ? 'Let this phone claim again this round'
+    : 'They did not call it — take this phone out of the running for this round'}">${p.satOut ? 'Back in' : 'Sit out'}</button>
             <button data-act="note" title="Send this phone a message — only they see it">✉</button>
           </div>`).join('') || '<div class="tiny">Nobody has joined yet.</div>'}
       </div>
@@ -422,6 +453,18 @@ function playersPanel(s, act) {
     btn.addEventListener('click', () => {
       const row = btn.closest('.prow');
       askAndSendNote(act, row.dataset.id, row.dataset.name);
+    });
+  });
+  /*
+   * AND ONE MORE, FOR THE PHONE THAT DID NOT CALL IT — `sitOut()` in
+   * `bingo.js`. A completed card with no BINGO pressed would still take the
+   * prize three tracks later off whoever genuinely just completed; this takes
+   * that phone out of THIS round, and the same button puts it back.
+   */
+  el.querySelectorAll('[data-act="sit"]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('.prow');
+      act(btn.textContent.trim() === 'Back in' ? 'sitIn' : 'sitOut', { playerId: row.dataset.id });
     });
   });
   return el;

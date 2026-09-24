@@ -131,6 +131,25 @@ try {
   await playWholeCard(alpha);
   const ready = await stateFor(alpha);
   check('a full line IS the first prize, and the button says so', ready.canClaim === true);
+
+  /* ------------------------------------------ sat out: they did not call it */
+  /*
+   * *"If someone doesn't claim their bingo I need to be able to exclude them
+   * from the running."* Alpha has a line and has not pressed. The host takes
+   * Alpha out of this round from the row; Alpha's button stands down, a press
+   * is refused, the host's row says so, and Back in undoes it.
+   */
+  const out = await act('sitOut', { playerId: alpha.playerId || alpha.id });
+  check('the host can sit a phone out of the round', Boolean(out.body && out.body.ok && out.body.ok.ok), JSON.stringify(out.body && out.body.ok));
+  const satOut = await stateFor(alpha);
+  check('and the phone is told, on its button', satOut.satOut === true, JSON.stringify({ satOut: satOut.satOut, canClaim: satOut.canClaim }));
+  const refused = await claim(alpha);
+  check('a claim while sat out is refused, not banked', Boolean(refused.body && refused.body.ok === false && refused.body.reason === 'sat_out'), JSON.stringify(refused.body));
+  const hostRow = ((await hostState()).players || []).find((p) => p.name === 'Alpha');
+  check('the control view marks the row', Boolean(hostRow && hostRow.satOut === true), JSON.stringify(hostRow));
+  const backIn = await act('sitIn', { playerId: alpha.playerId || alpha.id });
+  check('and Back in undoes it', Boolean(backIn.body && backIn.body.ok && backIn.body.ok.ok) && !(await stateFor(alpha)).satOut);
+
   const won = await claim(alpha);
   check('Alpha wins the first prize', Boolean(won.body && won.body.valid && won.body.prize !== false),
     JSON.stringify(won.body));

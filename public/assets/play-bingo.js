@@ -351,10 +351,11 @@ function paintCard(root, s, me) {
       status.innerHTML = `<span class="won">You got it. Well done.</span>${
         s.prizesAllGone ? '' : '<span class="yours">Your code comes up at the end of the round</span>'}`;
     } else if (s.stage && s.stage.needs === 'full') {
-      status.innerHTML = `<span>Playing for a <b>full house</b></span><span class="away">${away} to go</span>${already}`;
+      status.innerHTML = `<span>Playing for a <b>full house</b></span><span class="away">${
+        away === 0 && s.satOut ? 'Not this one' : `${away} to go`}</span>${already}`;
     } else {
       status.innerHTML = `<span>${esc(lineWording(s))}</span><span class="away ${away === 1 ? 'hot' : ''}">${
-        away === 0 ? 'Press BINGO!' : `${away} to go`
+        away === 0 ? (s.satOut ? 'Not this one' : 'Press BINGO!') : `${away} to go`
       }</span>${already}`;
     }
   }
@@ -377,10 +378,14 @@ function paintCard(root, s, me) {
      * it is true, and it reads as the night carrying on rather than as a
      * refusal aimed at them.
      */
-    button.disabled = s.standDown || !s.canClaim;
-    button.textContent = s.standDown
-      ? 'Playing on'
-      : (s.canClaim ? 'BINGO!' : `Mark ${lineWording(s).replace(/^Get /, '')} first`);
+    // Sat out by the host for this round (`sitOut()` in bingo.js): present and
+    // inert, and about the round rather than the person.
+    button.disabled = s.satOut || s.standDown || !s.canClaim;
+    button.textContent = s.satOut
+      ? 'Back in next round'
+      : s.standDown
+        ? 'Playing on'
+        : (s.canClaim ? 'BINGO!' : `Mark ${lineWording(s).replace(/^Get /, '')} first`);
   }
 }
 
