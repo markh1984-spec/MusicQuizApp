@@ -17,6 +17,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { BingoGame, BINGO_PHASES, stagePlan, shapeFields } from '../src/bingo.js';
+import { claimNow } from './helpers/claim-now.js';
 
 const START = Date.parse('2026-09-10T20:00:00.000Z');
 
@@ -70,7 +71,7 @@ test('THE FIRST LINE DOES NOT END THE ROUND, however much the phase says WON', (
   game.start();
 
   winLine(game, a);
-  assert.equal(game.claim(a.id).valid, true);
+  assert.equal(claimNow(game, a.id).valid, true);
   // The phase IS won — which is exactly why nothing may key off it.
   assert.equal(game.state.phase, BINGO_PHASES.WON);
   assert.equal(game.allPrizesGone, false, 'the break fired on the first line');
@@ -79,8 +80,12 @@ test('THE FIRST LINE DOES NOT END THE ROUND, however much the phase says WON', (
   assert.equal(game.playerView(b.id).prizesAllGone, undefined);
 });
 
-test('…and the code WAITS for the end of the round, then arrives', () => {
+test('…and the code is on the phone the moment the host approves', () => {
   /*
+   * REVERSED AGAIN, 25 September 2026 — *"on an approved bingo press the QR
+   * code for the free drink is then dropped into their phone."* What follows
+   * is the history: it used to be HELD until the round was over.
+   *
    * THIS REVERSES WHAT THIS TEST FIRST ASSERTED, and the reversal is the ask.
    * The first build sent the code the instant it was won and put the banner
    * on top of it, on an answer of "both" given before anybody had seen it.
@@ -97,21 +102,21 @@ test('…and the code WAITS for the end of the round, then arrives', () => {
   const c = game.join({ name: 'Table Three' });
   game.start();
   winLine(game, a);
-  game.claim(a.id);
+  claimNow(game, a.id);
 
   assert.equal(Object.values(game.state.vouchers).length, 1, 'the code was never minted');
-  assert.equal(game.playerView(a.id).vouchers, undefined,
-    'the code went up while two prizes were still to play for');
+  assert.equal((game.playerView(a.id).vouchers || []).length, 1,
+    'the host approved it and the code did not reach the phone');
   assert.equal(game.hostView().vouchers.length, 1,
     'the host must still see it — they are who a blank phone asks');
 
   // Play the round out: the other two prizes go to the other two tables.
   game.playOn();
   winHouse(game, b);
-  game.claim(b.id);
+  claimNow(game, b.id);
   game.playOn();
   winHouse(game, c);
-  game.claim(c.id);
+  claimNow(game, c.id);
 
   assert.equal(game.allPrizesGone, true);
   const view = game.playerView(a.id);
@@ -127,13 +132,13 @@ test('ONLY THE LAST PRIZE TURNS IT ON', () => {
 
   // Stage one: a line.
   winLine(game, a);
-  game.claim(a.id);
+  claimNow(game, a.id);
   assert.equal(game.allPrizesGone, false);
   game.playOn();
 
   // Stage two: two lines. Winning the whole card satisfies any stage.
   winHouse(game, b);
-  game.claim(b.id);
+  claimNow(game, b.id);
   assert.equal(game.allPrizesGone, false, 'the break fired on the second of three');
   game.playOn();
 
@@ -141,7 +146,7 @@ test('ONLY THE LAST PRIZE TURNS IT ON', () => {
   // b is out of the running having taken stage two.
   const c = game.join({ name: 'Table Three' });
   winHouse(game, c);
-  assert.equal(game.claim(c.id).valid, true);
+  assert.equal(claimNow(game, c.id).valid, true);
   assert.equal(game.allPrizesGone, true, 'the last prize went and nothing said so');
 });
 
@@ -165,7 +170,7 @@ test('AND EVERY PHONE IS TOLD, not only the winners\u2019', () => {
 
   for (const winner of [a, b, c]) {
     winHouse(game, winner);
-    assert.equal(game.claim(winner.id).valid, true, `${winner.name} could not win`);
+    assert.equal(claimNow(game, winner.id).valid, true, `${winner.name} could not win`);
     if (winner !== c) game.playOn();
   }
 
@@ -184,7 +189,7 @@ test('A ONE-PRIZE ROUND ENDS ON ITS ONLY PRIZE', () => {
   game.start();
   assert.equal(game.allPrizesGone, false, 'it was over before anybody played');
   winHouse(game, a);
-  assert.equal(game.claim(a.id).valid, true);
+  assert.equal(claimNow(game, a.id).valid, true);
   assert.equal(game.allPrizesGone, true);
 });
 
@@ -195,9 +200,9 @@ test('a fresh round turns it back off', () => {
   const c = game.join({ name: 'Table Three' });
   game.start();
   // Three prizes now means three different tables — one each, absolutely.
-  winHouse(game, a); game.claim(a.id); game.playOn();
-  winHouse(game, b); game.claim(b.id); game.playOn();
-  winHouse(game, c); game.claim(c.id);
+  winHouse(game, a); claimNow(game, a.id); game.playOn();
+  winHouse(game, b); claimNow(game, b.id); game.playOn();
+  winHouse(game, c); claimNow(game, c.id);
   assert.equal(game.allPrizesGone, true);
 
   game.newRound();
@@ -235,14 +240,14 @@ test('the rule never lifts, however small the room', () => {
   game.start();
 
   winHouse(game, a);
-  game.claim(a.id);
+  claimNow(game, a.id);
   game.playOn();
   winHouse(game, b);
-  game.claim(b.id);
+  claimNow(game, b.id);
   game.playOn();
 
   // Everybody in the room now holds a prize. The rule USED to lift here.
-  const third = game.claim(a.id);
+  const third = claimNow(game, a.id);
   assert.equal(third.valid, true, 'the call was right and must be recorded as right');
   assert.equal(third.prize, false, 'a second prize went to a phone that already had one');
   assert.equal(game.state.prizeWinners.length, 2);
@@ -262,8 +267,8 @@ test('a code held back still arrives when the host FINISHES the round', () => {
   const a = game.join({ name: 'Table One' });
   game.start();
   winLine(game, a);
-  game.claim(a.id);
-  assert.equal(game.playerView(a.id).vouchers, undefined, 'held, correctly');
+  claimNow(game, a.id);
+  assert.equal((game.playerView(a.id).vouchers || []).length, 1, 'on the phone at once now');
 
   game.finish();
   assert.equal((game.playerView(a.id).vouchers || []).length, 1,
@@ -275,8 +280,8 @@ test('a code held back still arrives once a NEW ROUND has started', () => {
   const a = game.join({ name: 'Table One' });
   game.start();
   winLine(game, a);
-  game.claim(a.id);
-  assert.equal(game.playerView(a.id).vouchers, undefined);
+  claimNow(game, a.id);
+  assert.equal((game.playerView(a.id).vouchers || []).length, 1);
 
   // `newRound()` deliberately does not clear vouchers — so without the round
   // stamp on each one, round two would hold round one's code back for ever.
@@ -292,7 +297,7 @@ test('a voucher written before the round stamp existed still shows', () => {
   const a = game.join({ name: 'Table One' });
   game.start();
   winLine(game, a);
-  game.claim(a.id);
+  claimNow(game, a.id);
   for (const v of Object.values(game.state.vouchers)) delete v.round;
   assert.equal((game.playerView(a.id).vouchers || []).length, 1,
     'an older state file lost its winner their code');
@@ -315,7 +320,7 @@ test('a fresh round reopens the prizes for somebody who has won — a round is a
   const b = game.join({ name: 'Table Two' });
   game.start();
   winLine(game, a);
-  game.claim(a.id);
+  claimNow(game, a.id);
   assert.equal(game.holdsAPrize(a.id), true, 'within round one they stand down');
 
   game.newRound();
@@ -325,7 +330,7 @@ test('a fresh round reopens the prizes for somebody who has won — a round is a
   assert.equal(game.holdsAPrize(b.id), false, 'and nobody else is tarred either');
 
   winHouse(game, a);
-  const again = game.claim(a.id);
+  const again = claimNow(game, a.id);
   assert.equal(again.valid, true, 'the call was right and is recorded as right');
   assert.notEqual(again.prize, false, 'round one’s winner was refused round two’s prize');
   assert.equal(game.state.prizeWinners.length, 1);
@@ -338,7 +343,7 @@ test('a bingo code stays on the phone after a new round, until it is scanned', (
   const a = game.join({ name: 'Table One' });
   game.start();
   winLine(game, a);
-  game.claim(a.id);
+  claimNow(game, a.id);
 
   game.newRound();
   const held = game.playerView(a.id).vouchers || [];

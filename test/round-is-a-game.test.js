@@ -13,6 +13,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BingoGame } from '../src/bingo.js';
+import { claimNow } from './helpers/claim-now.js';
 
 function makePack() {
   return {
@@ -35,7 +36,7 @@ test('on music bingo the table that won round one can win round two', () => {
   const a = game.join({ name: 'Face Down' });
   game.join({ name: 'Paying Attention' });
   winWholeCard(game, a);
-  const first = game.claim(a.id);
+  const first = claimNow(game, a.id);
   assert.equal(first.valid, true);
   assert.notEqual(first.prize, false, 'round one paid');
   assert.equal(game.holdsAPrize(a.id), true, 'and within the round they stand down');
@@ -43,7 +44,7 @@ test('on music bingo the table that won round one can win round two', () => {
   assert.equal(game.holdsAPrize(a.id), false, 'a new round is a fresh game');
   const fresh = game.state.players[a.id];
   winWholeCard(game, fresh);
-  const second = game.claim(a.id);
+  const second = claimNow(game, a.id);
   assert.equal(second.valid, true);
   assert.notEqual(second.prize, false, 'round two paid the same table');
   assert.equal(Object.keys(game.state.vouchers).length, 2, 'two drinks, one per round');

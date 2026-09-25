@@ -84,7 +84,11 @@ try {
     await act('call', { trackId: ids.get(sq.title) });
     await post('/api/mark', { playerId: me.id, token: me.token, index: i, marked: true, joinCode: jc });
   }
-  await post('/api/claim', { playerId: me.id, token: me.token, joinCode: jc });
+  /* The press waits on the host now (25 September 2026), and his yes is what
+     pays — and what drops the code onto the phone there and then. */
+  const pressed = await post('/api/claim', { playerId: me.id, token: me.token, joinCode: jc });
+  check('the press waits on the host', Boolean(pressed && pressed.pending), JSON.stringify(pressed));
+  await act('approveClaim', { playerId: me.id });
   await wait(900);
 
   const drawnNow = () => page.evaluate(() => {

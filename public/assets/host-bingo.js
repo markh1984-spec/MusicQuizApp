@@ -76,6 +76,8 @@ export function bingoPanels(s, act) {
 
   const panels = [];
 
+  // A BINGO press waits here for the host's yes — first, above everything.
+  if (s.claimsWaiting && s.claimsWaiting.length) panels.push(waitingPanel(s, act));
   if (s.win) panels.push(winPanel(s, act));
   /*
    * CARD BINGO DEALS; MUSIC BINGO IS DEALT WITH.
@@ -191,12 +193,45 @@ export function bingoActions(s, act, minor) {
 function winPanel(s, act) {
   return node(`
     <div class="panel secret">
-      <h3>${esc(((s.win.label || 'a line').charAt(0).toUpperCase() + (s.win.label || 'a line').slice(1)))} claimed — and it checks out</h3>
+      <h3>${esc(((s.win.label || 'a line').charAt(0).toUpperCase() + (s.win.label || 'a line').slice(1)))} — approved</h3>
       <div class="cue">
         <div class="track">${esc(s.win.name)}</div>
-        <div class="from">Verified against what you actually played.</div>
+        <div class="from">Their QR code is on their phone now.</div>
       </div>
     </div>`);
+}
+
+/**
+ * BINGO CALLED — the host's yes or no. *"A one press button per game and I
+ * then validate my end or approve, on an approved bingo press the QR code for
+ * the free drink is then dropped into their phone."* The app's own check sits
+ * beside each claim, naming any marked square that was never called, but it
+ * is advice: the host may approve a card the app doubts (a track played and
+ * never tapped). Approve pays and sends the code; Not a bingo sits the phone
+ * out for the round — *Back in* on their row undoes it.
+ */
+function waitingPanel(s, act) {
+  const el = node(`
+    <div class="panel secret claims-waiting">
+      <h3>BINGO called — check it</h3>
+      ${s.claimsWaiting.map((c) => `
+        <div class="claim-wait" data-id="${esc(c.playerId)}">
+          <div class="claim-who">${esc(c.name)}</div>
+          <div class="claim-check ${c.checksOut ? 'good' : 'bad'}">${c.checksOut
+    ? 'Checks out against what you played'
+    : (c.unplayed.length ? `Marked but not played: ${esc(c.unplayed.join(', '))}` : 'Not complete yet')}</div>
+          <div class="row">
+            <button class="approve" data-act="approve">Approve — send the drink</button>
+            <button class="minor danger" data-act="reject">Not a bingo</button>
+          </div>
+        </div>`).join('')}
+    </div>`);
+  el.querySelectorAll('.claim-wait').forEach((row) => {
+    const playerId = row.dataset.id;
+    row.querySelector('[data-act="approve"]').addEventListener('click', () => act('approveClaim', { playerId }));
+    row.querySelector('[data-act="reject"]').addEventListener('click', () => act('rejectClaim', { playerId }));
+  });
+  return el;
 }
 
 /**
@@ -478,7 +513,7 @@ function claimsPanel(s) {
         ${s.claims.map((c) => `
           <div class="prow">
             <span class="nm">${esc(c.name)}</span>
-            <span class="sc" style="color:${c.valid ? 'var(--good)' : 'var(--bad)'}">${
+            <span class="sc" style="color:${c.valid && !c.rejected ? 'var(--good)' : 'var(--bad)'}">${
   /*
    * FOUR OUTCOMES, NOT TWO — a correct call that took no prize has to be told
    * apart from both. The room heard the shout and is looking at the host, so
@@ -490,8 +525,9 @@ function claimsPanel(s) {
    * is about the PLAYER and the other is about the CLOCK: "had one" is a fact
    * about them and is simply untrue of somebody beaten to a stage by a beat.
    */
-  c.tooLate ? 'GOOD — just missed it'
-    : (c.standDown ? 'GOOD — had one' : (c.valid ? 'GOOD' : 'false alarm'))}</span>
+  c.rejected ? 'turned down'
+    : c.tooLate ? 'GOOD — just missed it'
+    : (c.standDown ? 'GOOD — had one' : (c.approved || c.valid ? 'GOOD' : 'false alarm'))}</span>
           </div>`).join('')}
       </div>
     </div>`);

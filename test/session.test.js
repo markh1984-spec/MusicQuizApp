@@ -18,6 +18,7 @@ import assert from 'node:assert/strict';
 
 import { Session } from '../src/session.js';
 import { listArchive } from '../src/library.js';
+import { claimNow } from './helpers/claim-now.js';
 
 const START = 1_700_000_000_000;
 
@@ -57,7 +58,7 @@ test('a bingo night can redeem and reinstate a voucher through run(), same as th
     session.engine.call(p.card[i]);
     session.engine.mark({ playerId: p.id, index: i, marked: true });
   }
-  session.engine.claim(p.id);
+  claimNow(session.engine, p.id);
   const [code] = Object.keys(session.engine.state.vouchers);
   assert.ok(code, 'the test needs a real voucher to check the dispatcher against');
 
@@ -213,7 +214,7 @@ test('quiz -> bingo -> quiz: the same team keeps its identity and its score acro
       it.session.engine.call(inBingo.card[i]);
       it.session.engine.mark({ playerId: id, index: i, marked: true });
     }
-    const claim = it.session.engine.claim(id);
+    const claim = claimNow(it.session.engine, id);
     assert.ok(claim.valid, 'the bingo interlude needs a real win to prove prizes are separate');
     /*
      * TWO VOUCHERS HERE NOW, AND THAT IS THE CHANGE: the quiz part paid its
@@ -398,7 +399,7 @@ test('a part pays the list IT was given, starting at its own first place', () =>
       it.session.engine.call(me.card[i]);
       it.session.engine.mark({ playerId: id, index: i, marked: true });
     }
-    it.session.engine.claim(id);
+    claimNow(it.session.engine, id);
     const after = Object.values(it.session.engine.state.vouchers || {});
     const fresh = after.filter((v) => !v.carried);
     assert.equal(fresh.length, 1, 'the bingo did not pay its own line winner');

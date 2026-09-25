@@ -660,8 +660,24 @@ export class BingoGame {
   }
 
   /**
-   * A player pressed BINGO. Checked properly: a line where they have marked
-   * squares you never played is a false alarm, and is recorded as one.
+   * A player pressed BINGO — and the HOST decides.
+   *
+   * *"A bingo button… a one press button per game and I then validate my end
+   * or approve, on an approved bingo press the QR code for the free drink is
+   * then dropped into their phone"* (25 September 2026). So a press no longer
+   * wins anything by itself: it puts a claim in front of the host, with the
+   * app's own check beside it, and `approveClaim()` is what pays.
+   *
+   * **ONE PRESS PER ROUND.** A second press while one is waiting changes
+   * nothing, and a press the host turns down sits that phone out of the round
+   * (`rejectClaim()`), which is what stops the button being mashed. The host's
+   * *Back in* on the row undoes it, like any sit-out.
+   *
+   * **THE APP STILL CHECKS, AND SAYS SO — IT DOES NOT DECIDE.** The card is
+   * checked against what was actually played and the host sees the answer,
+   * including which marked squares were never called. He may approve one the
+   * app doubts: a track played off the DJ app and never tapped on the call
+   * sheet is the ordinary way the app is wrong and the room is right.
    */
   claim(playerId) {
     const p = this.state.players[playerId];
@@ -673,24 +689,89 @@ export class BingoGame {
     // claim is recorded: the phone's button already stands down, so this is
     // only ever a stale phone, and a shout nobody made is not put on the list.
     if (this.isSatOut(playerId)) return { ok: false, reason: 'sat_out' };
+    // Already waiting on the host: the one press has been made.
+    if (this.pendingClaim(playerId)) return { ok: true, pending: true, reason: 'waiting' };
 
     const result = this.evaluate(p);
-    const at = this.now();
     const record = {
       playerId,
       name: p.name,
-      at,
+      at: this.now(),
       valid: result.won,
       pattern: result.won ? result.pattern : this.state.target,
       squares: result.won ? result.squares : [],
+      stageIndex: this.state.stageIndex || 0,
     };
     this.state.claims.push(record);
-
-    if (!result.won) {
+    // A prize already gone, or one they already hold, needs nobody's judgement:
+    // the answer is the same whoever looks. A card that does not check out is
+    // the false call it always was; a right one is `settle()`'s to word.
+    if (this.stageTaken() || this.holdsAPrize(playerId)) {
+      if (result.won) return this.settle(record, p);
       p.falseCalls++;
       this.changed();
       return { ok: true, valid: false, reason: 'not_yet' };
     }
+    record.pending = true;
+    this.changed();
+    return { ok: true, pending: true };
+  }
+
+  /** The claim this phone has waiting on the host, if any. */
+  pendingClaim(playerId) {
+    return (this.state.claims || []).find((c) => c.pending && c.playerId === playerId) || null;
+  }
+
+  /**
+   * The host says yes. Pays exactly what a claim used to pay the instant it
+   * was pressed, and the code goes straight to the phone — see `playerView()`.
+   */
+  approveClaim(playerId) {
+    const record = this.pendingClaim(playerId);
+    if (!record) return { ok: false, reason: 'no_claim' };
+    if (this.state.phase !== BINGO_PHASES.PLAYING && this.state.phase !== BINGO_PHASES.WON) {
+      return { ok: false, reason: 'not_playing' };
+    }
+    record.pending = false;
+    const p = this.state.players[playerId];
+    if (!p) { record.dropped = true; this.changed(); return { ok: false, reason: 'unknown_player' }; }
+    record.approved = true;
+    // Checked again NOW: the host may have tapped in the track the app was
+    // missing, and the projector lights up whichever squares hold.
+    const result = this.evaluate(p);
+    if (result.won) { record.pattern = result.pattern; record.squares = result.squares; }
+    return this.settle(record, p);
+  }
+
+  /**
+   * The host says no. It costs the phone the rest of the round — one press
+   * per round — and counts as the false call it is. *Back in* on the row puts
+   * them back, because the host can be wrong too.
+   */
+  rejectClaim(playerId) {
+    const record = this.pendingClaim(playerId);
+    if (!record) return { ok: false, reason: 'no_claim' };
+    record.pending = false;
+    record.rejected = true;
+    const p = this.state.players[playerId];
+    if (p) {
+      p.falseCalls++;
+      if (!this.state.satOut || typeof this.state.satOut !== 'object') this.state.satOut = {};
+      this.state.satOut[playerId] = this.state.round;
+    }
+    this.changed();
+    return { ok: true, valid: false, reason: 'not_yet' };
+  }
+
+  /**
+   * What a claim comes to once it is decided — the body `claim()` used to run
+   * on every press, unchanged, now reached from the host's yes (or from a
+   * press that needed nobody's judgement).
+   */
+  settle(record, p) {
+    const playerId = record.playerId;
+    const at = record.at;
+    const result = { pattern: record.pattern, squares: record.squares };
 
     /*
      * ONE PRIZE EACH PER ROUND, WHILE ANYBODY ELSE IS STILL IN.
@@ -808,6 +889,14 @@ export class BingoGame {
       playerId, name: p.name, pattern: result.pattern, squares: result.squares, at,
       stage: this.stage, stageIndex, label: stageLabel(this.stage),
     };
+    /*
+     * ANYBODY ELSE STILL WAITING ON THIS PRIZE IS TOLD IT HAS GONE — one
+     * prize, taken once (`stageTaken()`), so leaving their claim open would be
+     * a second decision the host can only ever answer one way.
+     */
+    for (const c of this.state.claims) {
+      if (c.pending && c.stageIndex === stageIndex) { c.pending = false; c.standDown = true; c.tooLate = true; }
+    }
     this.changed();
     return { ok: true, valid: true, pattern: result.pattern, stage: this.stage };
   }
@@ -1185,6 +1274,9 @@ export class BingoGame {
 
   finish() {
     this.settlePhotoVote();
+    // A claim still waiting on the host goes with the game — approving it
+    // afterwards would put a finished night back to WON.
+    for (const c of this.state.claims || []) if (c.pending) { c.pending = false; c.dropped = true; }
     this.state.phase = BINGO_PHASES.FINISHED;
     this.state.finishedAt = this.now();
     this.changed();
@@ -1400,9 +1492,10 @@ export class BingoGame {
       };
     }
 
-    // The most recent false alarm, because the room loves it.
+    // The most recent false alarm, because the room loves it — one the HOST
+    // turned down, never the app's own doubt about a claim still waiting.
     const lastClaim = this.state.claims[this.state.claims.length - 1];
-    if (lastClaim && !lastClaim.valid) {
+    if (lastClaim && lastClaim.rejected) {
       view.falseAlarm = { name: lastClaim.name, at: lastClaim.at };
     }
 
@@ -1461,6 +1554,9 @@ export class BingoGame {
     view.canClaim = this.hasMarkedPattern(p);
     // Taken out of this round by the host; the button says so (`sitOut()`).
     if (this.isSatOut(playerId)) view.satOut = true;
+    // Their one press, waiting on the host (`approveClaim()`), or turned down.
+    if (this.pendingClaim(playerId)) view.claimWaiting = true;
+    else if (this.state.claims.some((c) => c.rejected && c.playerId === playerId && view.satOut)) view.claimRejected = true;
     /*
      * STOOD DOWN — they hold a prize and somebody else has not had one yet.
      *
@@ -1533,37 +1629,20 @@ export class BingoGame {
      * venue's logo, which the quiz's card already carries.
      */
     /*
-     * THE CODES ALL APPEAR AT THE END OF THE ROUND, TOGETHER.
-     *
-     * Asked for after a live night, in these words: *"the QR codes should all
-     * appear at the end."* A trickle of people getting up as each prize lands
-     * is the thing the break is meant to replace, so a code won at the line
-     * now waits until the last prize of that round has gone and the whole
-     * room is sent to the bar in one go.
-     *
-     * **HELD, NEVER LOST — three ways out, and the round ending normally is
-     * only one of them:**
-     *
-     *  - the round is OVER (`allPrizesGone`), which is the ordinary path;
-     *  - the game is FINISHED, so a host who presses *Finish* on a round that
-     *    can never pay out its last prize does not take a real drink off
-     *    somebody;
-     *  - it was won in an EARLIER round, or CARRIED in from another part of
-     *    the night, so `newRound()` and *Continue to the quiz* both release
-     *    what they inherit rather than swallowing it.
-     *
-     * A voucher with no `round` on it predates the stamp and is treated as an
-     * earlier one — it shows. **Every unsure case shows**, because a held
-     * code is a prize somebody standing at a bar cannot prove.
-     *
-     * The HOST's own panel is untouched and still lists every voucher the
-     * moment it exists: they are the person a phone with nothing on it asks.
+     * THE CODES USED TO BE HELD UNTIL THE ROUND ENDED (*"the QR codes should
+     * all appear at the end"*, a live night in September) — see below for why
+     * that stopped.
      */
-    const roundOver = this.allPrizesGone || this.state.phase === BINGO_PHASES.FINISHED;
-    const showsYet = (v) => roundOver || v.carried || v.round !== this.state.round;
+    /*
+     * **AND NOW THEY ARE NOT HELD — REVERSED BY THE HOST, 25 September 2026.**
+     * *"On an approved bingo press the QR code for the free drink is then
+     * dropped into their phone."* The host approving a claim IS the moment
+     * now, so the code lands on the phone as he says yes; one prize a round
+     * (3x3) makes the round's end and the win the same instant anyway. Every
+     * code a phone holds shows, each its own QR, spent whenever they like.
+     */
     const mine = Object.values(this.state.vouchers || {})
       .filter((v) => v.winnerId === playerId)
-      .filter(showsYet)
       .map((v) => ({
         code: v.code,
         name: v.name,
@@ -1586,13 +1665,8 @@ export class BingoGame {
      * AND WHETHER THAT IS THE LOT — so the phone can turn the codes people are
      * already holding into one shared moment.
      *
-     * **The codes are HELD until this is true** — see `showsYet` above. The
-     * first build sent them the instant they were won and put this banner on
-     * top, on an answer of *"both"* given before anybody had seen it; one
-     * live night later the ask was *"the QR codes should all appear at the
-     * end"*, so the banner and the codes now arrive together. *"You got it"*
-     * still means the prize on the table — the phone says so the moment they
-     * win (`view.tookOne`), it is only the CODE that waits.
+     * The codes no longer wait for it (see above); the banner still tells
+     * the whole room the round is done.
      *
      * SPREAD IN ONLY WHEN TRUE, like the draw and the comeback band, so a
      * phone's payload during play is byte-for-byte what it was.
@@ -1790,7 +1864,19 @@ export class BingoGame {
     if (prize) view.photoVotePrize = prize;
     const notes = notesForHost(this.state);
     if (Object.keys(notes).length) view.notes = notes;
-    view.claims = this.state.claims.slice(-6).reverse();
+    view.claims = this.state.claims.filter((c) => !c.pending).slice(-6).reverse();
+    /*
+     * THE CLAIMS WAITING ON THE HOST, with the app's check done NOW — a track
+     * tapped in since the press turns a doubtful card good — and the marked
+     * squares nobody called, named, so "no" can be said with a reason.
+     */
+    const waiting = this.state.claims.filter((c) => c.pending).map((c) => {
+      const p = this.state.players[c.playerId];
+      const unplayed = p ? p.card.filter((id, i) => p.marks[i] && !this.state.called.includes(id))
+        .map((id) => { const t = this.track(id); return t ? t.title : '—'; }) : [];
+      return { playerId: c.playerId, name: c.name, at: c.at, checksOut: Boolean(p && this.evaluate(p).won), unplayed };
+    });
+    if (waiting.length) view.claimsWaiting = waiting;
     if (this.state.lastWin) view.win = this.state.lastWin;
     // The prize panel — same shape as the quiz's, so host.js's existing
     // voucherPanel() draws it with no changes of its own. HOST-ONLY: a

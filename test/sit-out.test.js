@@ -12,6 +12,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BingoGame } from '../src/bingo.js';
+import { claimNow } from './helpers/claim-now.js';
 
 function makePack(trackCount = 40, cardSize = 4) {
   return {
@@ -44,7 +45,7 @@ test('a phone sat out cannot claim, is told so, and the host row says so', () =>
   const row = game.hostView().players.find((p) => p.id === a.id);
   assert.equal(row.satOut, true, 'the control view marks the row');
   assert.equal(game.hostView().players.find((p) => p.id === b.id).satOut, undefined);
-  const refused = game.claim(a.id);
+  const refused = claimNow(game, a.id);
   assert.deepEqual(refused, { ok: false, reason: 'sat_out' });
   assert.equal(game.state.claims.length, 0, 'nothing is recorded — no shout was made');
   assert.equal(game.holdsAPrize(a.id), false, 'sat out is not a prize');
@@ -58,7 +59,7 @@ test('Back in undoes it, and the claim then pays', () => {
   game.sitOut(a.id);
   assert.deepEqual(game.sitIn(a.id), { ok: true });
   assert.equal(game.playerView(a.id).satOut, undefined);
-  const won = game.claim(a.id);
+  const won = claimNow(game, a.id);
   assert.equal(won.valid, true);
   assert.notEqual(won.prize, false, 'paid');
 });

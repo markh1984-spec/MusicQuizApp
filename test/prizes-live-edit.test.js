@@ -13,6 +13,7 @@ import assert from 'node:assert/strict';
 import { Engine } from '../src/engine.js';
 import { BingoGame } from '../src/bingo.js';
 import { Session } from '../src/session.js';
+import { claimNow } from './helpers/claim-now.js';
 
 const QUIZ = {
   id: 'q', title: 'A Quiz', questionSeconds: 20,
@@ -190,7 +191,7 @@ test('a bingo prize typed in after a line is won still reaches that winner', () 
     game.call(trackId);
     game.mark({ playerId: sharon.id, index: i, marked: true });
   });
-  assert.equal(game.claim(sharon.id).valid, true);
+  assert.equal(claimNow(game, sharon.id).valid, true);
   assert.deepEqual(Object.values(game.state.vouchers || {}), [],
     'a bingo night with no prizes set should mint nothing at all');
 
@@ -209,8 +210,10 @@ test('a bingo prize typed in after a line is won still reaches that winner', () 
   assert.equal(minted.length, 1, 'the line winner got no voucher when the prize was typed in afterwards');
   assert.equal(minted[0].reward, 'A free drink');
   assert.equal(minted[0].winnerId, sharon.id);
-  assert.equal(game.playerView(sharon.id).vouchers, undefined,
-    'and it waits for the end of the round rather than going up on its own');
+  // Held no longer: the host's approval is the moment (25 Sept 2026), so a
+  // code minted by the catch-up is on the phone straight away.
+  assert.equal((game.playerView(sharon.id).vouchers || []).length, 1,
+    'and it goes straight to the phone');
 
   // Twice, and then with the wording corrected: still exactly one code.
   game.setRewards(['A free drink', 'A bottle of wine']);
@@ -247,7 +250,7 @@ test('a second bingo round still pays its own line winner', () => {
       game.call(trackId);
       game.mark({ playerId: who.id, index: i, marked: true });
     });
-    assert.equal(game.claim(who.id).valid, true);
+    assert.equal(claimNow(game, who.id).valid, true);
   };
 
   winALine(sharon);
@@ -272,7 +275,7 @@ test('a second bingo round still pays its own line winner', () => {
     game.mark({ playerId: sharon.id, index: i, marked: true });
   });
   game.playOn();
-  const second = game.claim(sharon.id);
+  const second = claimNow(game, sharon.id);
   assert.equal(second.valid, true, 'her call was right and must be recorded as right');
   assert.notEqual(second.prize, false, 'round one’s winner was refused a prize in round two');
   const codes = Object.values(game.state.vouchers);

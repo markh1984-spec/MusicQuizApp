@@ -175,17 +175,23 @@ try {
     await act('call', { trackId: ids.get(sq.title) });
     await post('/api/mark', { playerId: me.id, token: me.token, index: i, marked: true, joinCode: jc });
   }
-  await post('/api/claim', { playerId: me.id, token: me.token, joinCode: jc });
+  /* A press waits on the host now (25 September 2026) — nothing is won until
+     he approves it, so nothing is held and nothing is drawn yet. */
+  const pressed = await post('/api/claim', { playerId: me.id, token: me.token, joinCode: jc });
+  check('the press waits on the host', Boolean(pressed && pressed.pending), JSON.stringify(pressed));
+  check('and the phone knows it', (await mine()).claimWaiting === true);
+  await act('approveClaim', { playerId: me.id });
 
-  const won = await look('the moment the line lands');
-  /* THE HOLD IS DELIBERATE AND IS ASSERTED AS SUCH, or a later change that
-     released the codes early would slip through as an improvement. */
-  check('a code is HELD until the round is over — not a gap, a decision',
-    won.held === 0 && won.shown.count === 0, won.line);
+  const won = await look('the moment the host approves the line');
+  /* REVERSES the old hold (25 September 2026). The code used to wait for the
+     end of the round; now, in the host's words, *"on an approved bingo press
+     the QR code for the free drink is then dropped into their phone."* */
+  check('THE CODE IS ON THE PHONE THE MOMENT THE CLAIM IS APPROVED',
+    won.held > 0 && won.shown.count > 0, won.line);
 
   await act('newRound');
   const next = await look('the next bingo round');
-  check("and last round's code is on the phone once the round has turned over",
+  check("and last round's code is still on the phone once the round has turned over",
     next.held > 0 && next.shown.count > 0, next.line);
 
   await act('advanceOrder');
@@ -208,7 +214,8 @@ try {
     await post('/api/mark', { playerId: me.id, token: me.token, index: i, marked: true, joinCode: jc });
   }
   await post('/api/claim', { playerId: me.id, token: me.token, joinCode: jc });
-  await look('the second bingo, a line landed');
+  await act('approveClaim', { playerId: me.id });
+  await look('the second bingo, a line approved');
   await act('newRound');
 
   await act('advanceOrder');

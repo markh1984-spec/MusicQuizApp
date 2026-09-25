@@ -150,9 +150,27 @@ try {
   const backIn = await act('sitIn', { playerId: alpha.playerId || alpha.id });
   check('and Back in undoes it', Boolean(backIn.body && backIn.body.ok && backIn.body.ok.ok) && !(await stateFor(alpha)).satOut);
 
-  const won = await claim(alpha);
-  check('Alpha wins the first prize', Boolean(won.body && won.body.valid && won.body.prize !== false),
+  /*
+   * A PRESS NO LONGER WINS BY ITSELF — the host approves it (25 September
+   * 2026). The press puts a claim in front of the host; the phone says it is
+   * waiting; the host's "Approve — send the drink" is `approveClaim`, and that
+   * is what pays.
+   */
+  const pressed = await claim(alpha);
+  check('the press waits on the host rather than winning', Boolean(pressed.body && pressed.body.ok && pressed.body.pending),
+    JSON.stringify(pressed.body));
+  check('and the phone says it is waiting', (await stateFor(alpha)).claimWaiting === true);
+  const waitingRow = ((await hostState()).claimsWaiting || []).find((c) => c.name === 'Alpha');
+  check('the control view has the claim, and the app says it checks out', Boolean(waitingRow && waitingRow.checksOut),
+    JSON.stringify(waitingRow || null));
+  const approved = await act('approveClaim', { playerId: alpha.playerId || alpha.id });
+  const won = { body: approved.body && approved.body.ok };
+  check('Alpha wins the first prize once the host says yes', Boolean(won.body && won.body.valid && won.body.prize !== false),
     JSON.stringify(won.body));
+  // REVERSES the old hold (25 Sept 2026): the code used to wait for the end
+  // of the round. *"On an approved bingo press the QR code for the free drink
+  // is then dropped into their phone."*
+  check('and the code is on the phone the moment it is approved', ((await stateFor(alpha)).vouchers || []).length === 1);
 
   const wall = await screen();
   check('the projector names Alpha', wall.win && wall.win.name === 'Alpha', JSON.stringify(wall.win || null));
@@ -202,9 +220,28 @@ try {
   const oneLine = await stateFor(chris);
   check('ONE LINE IS NOT TWO: the BINGO button stays down', oneLine.canClaim === false,
     `canClaim ${oneLine.canClaim}, going for ${oneLine.stage && oneLine.stage.needs}`);
+  /*
+   * An early press still reaches the host — it is his call now — and the app
+   * says it does not check out. He turns it down, which is the false call it
+   * always was, and it sits Chris out of the round (one press per round) until
+   * the host's Back in, which a real host would press once Chris had a card
+   * worth claiming.
+   */
   const early = await claim(chris);
-  check('and an early press is refused rather than banked',
-    Boolean(early.body && early.body.valid === false), JSON.stringify(early.body));
+  check('an early press waits on the host too', Boolean(early.body && early.body.pending), JSON.stringify(early.body));
+  const doubtful = ((await hostState()).claimsWaiting || []).find((c) => c.name === 'Chris');
+  check('and the control view says it does NOT check out', Boolean(doubtful && doubtful.checksOut === false),
+    JSON.stringify(doubtful || null));
+  const turnedDown = await act('rejectClaim', { playerId: chris.playerId || chris.id });
+  check('the host turns it down, and it is refused rather than banked',
+    Boolean(turnedDown.body && turnedDown.body.ok && turnedDown.body.ok.valid === false), JSON.stringify(turnedDown.body && turnedDown.body.ok));
+  const chrisOut = await stateFor(chris);
+  check('which sits Chris out of the round', chrisOut.satOut === true && chrisOut.claimRejected === true,
+    JSON.stringify({ satOut: chrisOut.satOut, claimRejected: chrisOut.claimRejected }));
+  const wallNo = await screen();
+  check('and the projector gets its false alarm only now', Boolean(wallNo.falseAlarm && wallNo.falseAlarm.name === 'Chris'),
+    JSON.stringify(wallNo.falseAlarm || null));
+  await act('sitIn', { playerId: chris.playerId || chris.id });
 
   await playWholeCard(chris);
   const twoLines = await stateFor(chris);
@@ -241,6 +278,8 @@ try {
       await phone('/api/mark', { playerId: a.playerId || a.id, token: a.token, index: i, marked: true, joinCode: jc });
     }
     await phone('/api/claim', { playerId: a.playerId || a.id, token: a.token, joinCode: jc });
+    // The host says yes — a press alone pays nothing now.
+    await act('approveClaim', { playerId: a.playerId || a.id });
     const hv = (await host(`/api/state?role=host${jc ? `&g=${jc}` : ''}`)).body;
     return { code: (hv.vouchers || [])[0] && (hv.vouchers || [])[0].code, jc, who: a };
   })();

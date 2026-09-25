@@ -441,6 +441,43 @@ querying a scan has the quizmaster to point at, and a phone keeping receipts
 was a fold that only ever grew. `client.js` drops the redeemed ones on the
 way to the screen. The two engines may not disagree about this.
 
+### A BINGO press waits for the host (25 September 2026)
+
+*"A bingo button needs to crop up or already be there when they have a bingo,
+but it's a one press button per game and I then validate my end or approve.
+On an approved bingo press the QR code for the free drink is then dropped into
+their phone. They can win multiple free drinks in an evening and if they win 2,
+these need to be separate QR codes that they can redeem whenever they like."*
+
+- **`claim()` pays nothing.** It records the press as `pending` and returns
+  `{ok, pending: true}`. The phone's button reads *Waiting for the host…* and
+  the control view draws a **BINGO called — check it** panel at the top, one
+  row per claim: the app's check (*Checks out against what you played*, or
+  *Marked but not played: …* naming the squares) and two buttons.
+- **Approve — send the drink** (`approveClaim()`) runs exactly what a press
+  used to run on its own: the win, the projector's name, the voucher. Anybody
+  else waiting on the same prize is settled as `tooLate`, because a stage is
+  taken once.
+- **Not a bingo** (`rejectClaim()`) is the false call it always was *and* sits
+  the phone out for the round. That is the "one press per game": a room that
+  can press again after a wrong call can mash the button. *Back in* on the row
+  undoes it, because the host can be wrong too.
+- **The app's check is advice, not a gate.** The ordinary way the app is wrong
+  and the room is right is a track played off the DJ app and never tapped on
+  the call sheet, so the host may approve a card the app doubts.
+- **The end-of-round hold is reversed.** Approving is the moment now, so the
+  code goes to the phone at once. With one prize a round (3x3) the round's end
+  and the win are the same instant anyway. Every code a phone holds is its own
+  QR under *My prizes*, live until the bar scans it.
+- **The projector's false alarm waits for the host's no**, never the app's
+  doubt about a claim still pending. `claimsWaiting` is host-only (rule 1).
+- A press that needs nobody's judgement is still settled on the spot: a prize
+  already gone, or a phone that already holds one this round.
+
+`test/host-approves.test.js`. Older tests go through
+`test/helpers/claim-now.js`, which stands in for a host who approves whatever
+the app says checks out.
+
 ### Neither guard could see any of it
 
 `pub-unchanged.mjs` sets no venue and no rewards, so **no voucher is ever

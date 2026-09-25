@@ -1607,6 +1607,20 @@ body.host::after { display: none; }
   border-bottom-color: var(--bad);
 }
 .host .panel button.minor:disabled { opacity: 0.6; cursor: default; }
+/* BINGO CALLED — the host's yes or no (`waitingPanel()` in host-bingo.js).
+   Approve PAYS, so it is filled green: fill means commitment and green means
+   paying. "Not a bingo" is the ordinary outlined red beside it. */
+.host .claim-wait { padding: 10px 0; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.host .claim-wait:first-of-type { border-top: 0; }
+.host .claim-who { font-size: var(--fs-title); font-weight: 900; }
+.host .claim-check { margin: 4px 0 10px; font-weight: 700; }
+.host .claim-check.good { color: var(--good); }
+.host .claim-check.bad { color: var(--bad); }
+.host .claim-wait .row { display: flex; gap: 10px; flex-wrap: wrap; }
+.host .panel button.approve {
+  min-height: 44px; padding: 9px 16px; border: 0; border-radius: var(--r-field);
+  background: var(--good); color: #04240f; font: inherit; font-weight: 900; cursor: pointer;
+}
 /* A LABEL WEARING A BUTTON'S FACE HAS TO CENTRE ITS OWN TEXT — `.host .minor`
    puts a 44px floor under every pressable thing on this page and a `<button>`
    centres inside that for free, where an `inline-block` label does not. Kept

@@ -31,6 +31,10 @@ const hostView = async () => (await J('/api/state?role=host', { headers: H() }))
 const screenView = async (code) => (await J(`/api/state?role=screen&g=${code}`)).body;
 const phoneView = async (p, code) => (await J(`/api/state?role=player&playerId=${p.id}&token=${encodeURIComponent(p.token)}&g=${code}`)).body;
 const phoneDo = (action, p, code, extra = {}) => J(`/api/${action}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ playerId: p.id, token: p.token, joinCode: code, ...extra }) });
+// A BINGO press waits on the host now (25 Sept 2026): the claim comes back
+// `pending` and the host's `approveClaim` pays. So a claim here is the press
+// AND the host's yes, and the approval's result is the win.
+const claimApproved = async (p, code) => { const c = await phoneDo('claim', p, code); if (c.status !== 200 || !(c.body || {}).pending) return c; const a = await host('approveClaim', { playerId: p.id }); return { status: a.status, body: (a.body || {}).ok }; };
 const running = async () => (await J('/api/library', { headers: H() })).body.running;
 const joinAll = async (code, names) => { const out = []; for (const name of names) out.push((await J('/api/join', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name, joinCode: code }) })).body); return out; };
 const vouchersOf = (hv) => Object.values(hv.vouchers || {}).filter((v) => !v.carried);
@@ -214,7 +218,7 @@ try {
         const s = await phoneView(p, code);
         for (const c of s.card || []) if (c.called && !c.marked) await phoneDo('mark', p, code, { index: c.index, marked: true });
         const s2 = await phoneView(p, code);
-        if ((s2.you || {}).squaresAway === 0 && !s2.standDown) { const c = await phoneDo('claim', p, code); if (c.status === 200 && (c.body || {}).ok !== false) claims.push(p.name); }
+        if ((s2.you || {}).squaresAway === 0 && !s2.standDown) { const c = await claimApproved(p, code); if (c.status === 200 && (c.body || {}).ok !== false) claims.push(p.name); }
       }
       let h = await hostView();
       if (h.phase === 'won' && !h.allPrizesGone) { await host('playOn'); h = await hostView(); }
@@ -269,8 +273,8 @@ try {
       const s2 = await phoneView(p, b.code);
       if ((s2.you || {}).squaresAway === 0) {
         if (p.name === r1Winner) stoodDown = Boolean(s2.standDown);
-        const c = await phoneDo('claim', p, b.code);
-        if (c.status === 200) { claimed = true; break; }
+        const c = await claimApproved(p, b.code);
+        if (c.status === 200 && (c.body || {}).ok !== false) { claimed = true; break; }
       }
     }
     const h = await hostView();
@@ -294,7 +298,7 @@ try {
         const s = await phoneView(p, ccode);
         for (const c of s.card || []) if (c.called && !c.marked) await phoneDo('mark', p, ccode, { index: c.index, marked: true });
         const s2 = await phoneView(p, ccode);
-        if ((s2.you || {}).squaresAway === 0 && !s2.standDown) { const c = await phoneDo('claim', p, ccode); if (c.status === 200 && (c.body || {}).ok !== false) return p.name; }
+        if ((s2.you || {}).squaresAway === 0 && !s2.standDown) { const c = await claimApproved(p, ccode); if (c.status === 200 && (c.body || {}).ok !== false) return p.name; }
       }
     }
     return null;
@@ -339,7 +343,7 @@ try {
   let bingoWon = false;
   for (const t of hvb.tracks || []) {
     await host('call', { trackId: t.id });
-    for (const p of rp) { const s = await phoneView(p, rcode); for (const c of s.card || []) if (c.called && !c.marked) await phoneDo('mark', p, rcode, { index: c.index, marked: true }); const s2 = await phoneView(p, rcode); if ((s2.you || {}).squaresAway === 0) { const c = await phoneDo('claim', p, rcode); if (c.status === 200 && (c.body || {}).ok !== false) { bingoWon = true; break; } } }
+    for (const p of rp) { const s = await phoneView(p, rcode); for (const c of s.card || []) if (c.called && !c.marked) await phoneDo('mark', p, rcode, { index: c.index, marked: true }); const s2 = await phoneView(p, rcode); if ((s2.you || {}).squaresAway === 0) { const c = await claimApproved(p, rcode); if (c.status === 200 && (c.body || {}).ok !== false) { bingoWon = true; break; } } }
     if (bingoWon) break;
   }
   check('the bingo interlude pays a prize', bingoWon);

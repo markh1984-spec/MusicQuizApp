@@ -2022,6 +2022,9 @@ export class Session {
       // The host takes a phone out of this round, and puts it back — `sitOut()`.
       sitOut: () => this.engine.sitOut(String(body.playerId || '')),
       sitIn: () => this.engine.sitIn(String(body.playerId || '')),
+      // A BINGO press waits on the host now — `approveClaim()` pays, `rejectClaim()` sits them out.
+      approveClaim: () => this.engine.approveClaim(String(body.playerId || '')),
+      rejectClaim: () => this.engine.rejectClaim(String(body.playerId || '')),
       /*
        * AND ONLY CARD BINGO DEALS.
        *

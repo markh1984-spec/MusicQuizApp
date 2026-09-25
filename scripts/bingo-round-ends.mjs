@@ -106,6 +106,25 @@ try {
   await winner.page.click('#bingoCall');
   await wait(900);
 
+  /*
+   * AND THE PRESS NO LONGER WINS BY ITSELF — it waits for the host (25
+   * September 2026: *"a one press button per game and I then validate my end
+   * or approve"*). The phone's button says so, and the host's "Approve — send
+   * the drink" on the REAL control view is what pays, so that is pressed here
+   * rather than posted: it is the button a host will actually be reaching for.
+   */
+  check('the pressed phone says it is waiting on the host',
+    await winner.page.evaluate(() => /waiting for the host/i.test((document.querySelector('#bingoCall') || {}).textContent || '')));
+  const control = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  await control.goto(`${BASE}/host?key=${KEY}`, { waitUntil: 'load' });
+  const approveBtn = control.locator('.claim-wait', { hasText: 'Alpha' }).locator('button.approve[data-act="approve"]');
+  await approveBtn.waitFor({ state: 'visible', timeout: 10000 });
+  await approveBtn.click();
+  await wait(1100);
+  check('and once approved on the control view the claim has gone from it',
+    (await control.locator('.claim-wait').count()) === 0);
+  await control.close();
+
   /* PUT A FINGER ON IT: in the document, has a size, and is what is actually
      under that point — three questions, and this repo has been bitten by the
      gap between them five times. */
@@ -138,10 +157,19 @@ try {
   const mine = (await playerState(winner.me)).vouchers || [];
   check('the winner still holds their own code, as they always did', mine.length === 1, `${mine.length}`);
 
+  /* The host's yes, as the control view posts it — for the phones below,
+     where the press itself is not what is being looked at. */
+  const approve = (who) => act('approveClaim', { playerId: who.me.id });
+
   /* ------------------------------------------------------------------------
-   * AND THE HELD CASE, which is the whole point and which a one-prize round
-   * cannot show: with THREE prizes, the line winner's code has to stay off
-   * their phone until the last prize goes.
+   * AND THE CASE THAT USED TO BE HELD, which a one-prize round cannot show:
+   * with THREE prizes, the line winner's code used to stay off their phone
+   * until the last prize went.
+   *
+   * REVERSED, 25 September 2026, in the host's words: *"on an approved bingo
+   * press the QR code for the free drink is then dropped into their phone."*
+   * So the line winner's code now PAINTS the moment the host approves, and
+   * this checks the opposite of what it used to.
    *
    * Driven in a browser rather than asserted on the payload, because the
    * failure that matters is a QR code PAINTED when it should not be — and
@@ -193,17 +221,23 @@ try {
   await one.page.click('#bingoCall');
   await wait(900);
 
-  check('THE LINE WINNER HAS NO CODE ON SCREEN YET', (await codeOnScreen(one.page)) === 0,
+  check('before the host says yes there is no code on screen', (await codeOnScreen(one.page)) === 0,
     `${await codeOnScreen(one.page)} drawn`);
-  check('and is told when it is coming, so a blank space is not a fault',
-    await saysWaiting(one.page));
-  await one.page.screenshot({ path: 'screenshots/held-code-midround.png' });
+  check('and the phone knows its claim is waiting', (await playerState(one.me)).claimWaiting === true);
+  await approve(one);
+  await wait(1100);
+  check('THE LINE WINNER\'S CODE PAINTS THE MOMENT IT IS APPROVED', (await codeOnScreen(one.page)) > 0,
+    `${await codeOnScreen(one.page)} drawn`);
+  check('and nothing tells them to wait for the end of the round', !(await saysWaiting(one.page)));
+  await one.page.screenshot({ path: 'screenshots/code-on-approval.png' });
 
   /* One prize each is absolute now: the other two prizes need other phones. */
   await act('playOn');
   await playWholeCard(two);
   await wait(300);
   await two.page.click('#bingoCall');
+  await wait(500);
+  await approve(two);
   await wait(700);
   check('a phone that already won cannot take a second, and its button says so',
     await one.page.evaluate(() => {
@@ -215,14 +249,16 @@ try {
   await playWholeCard(three);
   await wait(300);
   await three.page.click('#bingoCall');
+  await wait(500);
+  await approve(three);
   await wait(1100);
 
-  check('AND WHEN THE LAST PRIZE GOES, THE HELD CODE PAINTS',
+  check('AND WHEN THE LAST PRIZE GOES, THE FIRST CODE IS STILL PAINTED',
     (await codeOnScreen(one.page)) > 0, `${await codeOnScreen(one.page)} drawn`);
   check('the last winner has theirs too', (await codeOnScreen(three.page)) > 0);
   check('and the phone that won nothing still has none', (await codeOnScreen(two.page)) > 0
     ? true : true); // Middle won prize two, so they hold one as well.
-  await one.page.screenshot({ path: 'screenshots/held-code-released.png' });
+  await one.page.screenshot({ path: 'screenshots/code-after-last-prize.png' });
 
   /* ------------------------------------------------------------------------
    * AND IT SURVIVES THE QUIZ STARTING — on the phone, not just on the wire.
@@ -261,6 +297,8 @@ try {
     }
     await wait(500);
     await mixed.page.click('#bingoCall');
+    await wait(500);
+    await approve(mixed);
     await wait(800);
     check('the bingo code paints before the boundary', (await codeOnScreen(mixed.page)) > 0);
 

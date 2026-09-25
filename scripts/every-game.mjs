@@ -55,6 +55,17 @@ const hostView = async () => (await J('/api/state?role=host', { headers: H() }))
 const screenView = async (code) => (await J(`/api/state?role=screen&g=${code}`)).body;
 const phoneView = async (p, code) => (await J(`/api/state?role=player&playerId=${p.id}&token=${encodeURIComponent(p.token)}&g=${code}`)).body;
 const phoneDo = (action, p, code, extra = {}) => J(`/api/${action}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ playerId: p.id, token: p.token, joinCode: code, ...extra }) });
+/*
+ * A BINGO press waits on the host now (25 Sept 2026): the phone's claim comes
+ * back `pending`, and the host's `approveClaim` is what pays. So a claim here
+ * is the press AND the host's yes, and the approval's result is the win.
+ */
+const claimApproved = async (p, code) => {
+  const c = await phoneDo('claim', p, code);
+  if (c.status !== 200 || !(c.body || {}).pending) return c;
+  const a = await host('approveClaim', { playerId: p.id });
+  return { status: a.status, body: (a.body || {}).ok };
+};
 const running = async () => (await J('/api/library', { headers: H() })).body.running;
 const joinAll = async (code, names) => {
   const out = [];
@@ -237,13 +248,15 @@ try {
       for (const c of s.card || []) if (c.called && !c.marked) await phoneDo('mark', p, code3, { index: c.index, marked: true });
     }
     const s1 = await phoneView(bp[0], code3);
-    if ((s1.you || {}).squaresAway === 0) { const c = await phoneDo('claim', bp[0], code3); if (c.status === 200) { winner = bp[0]; break; } }
+    if ((s1.you || {}).squaresAway === 0) { const c = await claimApproved(bp[0], code3); if (c.status === 200 && (c.body || {}).ok !== false) { winner = bp[0]; break; } }
   }
   check('Dave claims the first prize', Boolean(winner), `after ${calls} calls`);
   const hv3 = await hostView();
   check('the host sees the claim and the voucher', (hv3.vouchers || []).length === 1 || (hv3.prizeWinners || []).length >= 1, JSON.stringify({ v: (hv3.vouchers || []).length, pw: (hv3.prizeWinners || []).length }));
+  // Reverses the old hold (25 Sept 2026): an approved claim drops the code
+  // straight into the phone, rather than holding it to the end of the round.
   const held = await phoneView(bp[0], code3);
-  check("the code is HELD from the phone until the round ends", !(held.vouchers || []).length, `${(held.vouchers || []).length} on the phone mid-round`);
+  check('the code reaches the phone the moment the host approves', (held.vouchers || []).length >= 1, `${(held.vouchers || []).length} on the phone after approval`);
   // Keep calling until Dave could take the second prize too — he must be stood down.
   let stood = null;
   for (const t of hvb.tracks || []) {
@@ -254,7 +267,7 @@ try {
     const s1 = await phoneView(bp[0], code3);
     if ((s1.you || {}).squaresAway === 0) { stood = Boolean(s1.standDown); break; }
     const s2 = await phoneView(bp[1], code3);
-    if ((s2.you || {}).squaresAway === 0) { await phoneDo('claim', bp[1], code3); }
+    if ((s2.you || {}).squaresAway === 0) { await claimApproved(bp[1], code3); }
   }
   check('a phone already holding a prize is stood down for the second', stood === true, `standDown: ${stood}`);
   await host('finish');
@@ -277,7 +290,7 @@ try {
   for (let i = 0; i < 52 && !cwin; i += 1) {
     const d = await host('draw');
     if (d.status !== 200) { check('draw answers 200', false, `${d.status}`); break; }
-    for (const p of cp) { const s = await phoneView(p, code4); for (const c of s.card || []) if (c.called && !c.marked) await phoneDo('mark', p, code4, { index: c.index, marked: true }); const s2 = await phoneView(p, code4); if ((s2.you || {}).squaresAway === 0) { const c = await phoneDo('claim', p, code4); if (c.status === 200) { cwin = p; break; } } }
+    for (const p of cp) { const s = await phoneView(p, code4); for (const c of s.card || []) if (c.called && !c.marked) await phoneDo('mark', p, code4, { index: c.index, marked: true }); const s2 = await phoneView(p, code4); if ((s2.you || {}).squaresAway === 0) { const c = await claimApproved(p, code4); if (c.status === 200 && (c.body || {}).ok !== false) { cwin = p; break; } } }
   }
   check('somebody completes a hand and claims', Boolean(cwin));
   const nr = await host('newRound');

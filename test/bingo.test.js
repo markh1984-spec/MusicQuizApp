@@ -14,6 +14,7 @@ import {
   cardLines, cardShape, shapeLabel, minimumTracks, CARD_SHAPES,
   stagePlan, maxPrizes, stageLabel, DEFAULT_STAGES,
 } from '../src/bingo.js';
+import { claimNow } from './helpers/claim-now.js';
 
 const START = 1_700_000_000_000;
 
@@ -186,7 +187,7 @@ test('a line of tracks you actually played is a win', () => {
   const { game } = makeGame();
   const p = game.join({ name: 'Sofa King Good' });
   winLine(game, p);
-  const result = game.claim(p.id);
+  const result = claimNow(game, p.id);
   assert.equal(result.valid, true);
   assert.equal(result.pattern, 'line');
   assert.equal(game.state.phase, BINGO_PHASES.WON);
@@ -197,7 +198,7 @@ test('nobody can claim before you have started', () => {
   const { game } = makeGame();
   const p = game.join({ name: 'Keen' });
   for (const i of game.lines()[0]) game.mark({ playerId: p.id, index: i, marked: true });
-  assert.deepEqual(game.claim(p.id), { ok: false, reason: 'not_playing' });
+  assert.deepEqual(claimNow(game, p.id), { ok: false, reason: 'not_playing' });
   assert.equal(game.state.claims.length, 0);
 });
 
@@ -208,7 +209,7 @@ test('ANTI-CHEAT: marking squares you never heard is a false alarm', () => {
   // Mark a whole line without a single track being played.
   for (const i of game.lines()[0]) game.mark({ playerId: p.id, index: i, marked: true });
 
-  const result = game.claim(p.id);
+  const result = claimNow(game, p.id);
   assert.equal(result.valid, false);
   assert.equal(game.state.players[p.id].falseCalls, 1);
   assert.deepEqual(game.state.winners.line, []);
@@ -227,7 +228,7 @@ test('ANTI-CHEAT: one unplayed track in the line is enough to void it', () => {
   // Mark the last one anyway, without it having been played.
   game.mark({ playerId: p.id, index: line[line.length - 1], marked: true });
 
-  assert.equal(game.claim(p.id).valid, false);
+  assert.equal(claimNow(game, p.id).valid, false);
   assert.equal(game.squaresAway(game.state.players[p.id]), 1);
 });
 
@@ -236,7 +237,7 @@ test('a played track they forgot to mark does not win it for them', () => {
   const p = game.join({ name: 'Not Paying Attention' });
   for (const i of game.lines()[0]) game.call(p.card[i]);
   // Called, but never tapped.
-  assert.equal(game.claim(p.id).valid, false);
+  assert.equal(claimNow(game, p.id).valid, false);
 });
 
 test('the BINGO button is only live once they have marked a full line', () => {
@@ -252,7 +253,7 @@ test('columns and diagonals count, not just rows', () => {
     const { game } = makeGame();
     const p = game.join({ name: 'X' });
     winLine(game, p, lineIndex);
-    assert.equal(game.claim(p.id).valid, true, `line ${lineIndex}`);
+    assert.equal(claimNow(game, p.id).valid, true, `line ${lineIndex}`);
   }
 });
 
@@ -265,19 +266,22 @@ test('after a line, you can play on for a full house', () => {
   // recognised — not who may take it.
   const q = game.join({ name: 'Y' });
   winLine(game, p);
-  game.claim(p.id);
+  claimNow(game, p.id);
 
   game.playOn(TARGETS.FULL);
   assert.equal(game.state.target, TARGETS.FULL);
   assert.equal(game.state.phase, BINGO_PHASES.PLAYING);
   // The line they already had is no longer enough.
-  assert.equal(game.claim(q.id).valid, false);
+  assert.equal(claimNow(game, q.id).valid, false);
+  // Turned down, it sits them out — ONE PRESS PER ROUND (25 Sept 2026) — and
+  // the host's Back in is what lets them press again.
+  game.sitIn(q.id);
 
   for (let i = 0; i < q.card.length; i++) {
     game.call(q.card[i]);
     game.mark({ playerId: q.id, index: i, marked: true });
   }
-  const full = game.claim(q.id);
+  const full = claimNow(game, q.id);
   assert.equal(full.valid, true);
   assert.equal(full.pattern, 'full');
 
@@ -287,7 +291,7 @@ test('after a line, you can play on for a full house', () => {
     game.call(p.card[i]);
     game.mark({ playerId: p.id, index: i, marked: true });
   }
-  const again = game.claim(p.id);
+  const again = claimNow(game, p.id);
   assert.equal(again.valid, true, 'their call was right and is recorded as right');
   assert.equal(again.prize, false, 'but one prize each per round never lifts');
 });
@@ -296,9 +300,12 @@ test('every claim is recorded, right or wrong', () => {
   const { game } = makeGame();
   const p = game.join({ name: 'Chancers' });
   game.start();
-  game.claim(p.id);
+  claimNow(game, p.id);
+  // Turned down, it sits them out — ONE PRESS PER ROUND (25 Sept 2026) — and
+  // the host's Back in is what lets them press again.
+  game.sitIn(p.id);
   winLine(game, p);
-  game.claim(p.id);
+  claimNow(game, p.id);
   assert.equal(game.state.claims.length, 2);
   assert.equal(game.state.claims[0].valid, false);
   assert.equal(game.state.claims[1].valid, true);
@@ -345,7 +352,7 @@ test('a voucher code never reaches the big screen, only the host', () => {
     game.call(p.card[i]);
     game.mark({ playerId: p.id, index: i, marked: true });
   }
-  game.claim(p.id);
+  claimNow(game, p.id);
 
   const [code] = Object.keys(game.state.vouchers);
   assert.ok(code, 'the test itself needs a real voucher to check against');
@@ -559,7 +566,7 @@ test('a strip card is dealt the right number of squares and wins properly', () =
     game.call(p.card[i]);
     game.mark({ playerId: p.id, index: i, marked: true });
   }
-  const result = game.claim(p.id);
+  const result = claimNow(game, p.id);
   assert.equal(result.valid, true);
   assert.equal(result.pattern, 'line');
 });
@@ -574,7 +581,7 @@ test('a row of three on a strip is NOT a win', () => {
     game.call(p.card[i]);
     game.mark({ playerId: p.id, index: i, marked: true });
   }
-  const result = game.claim(p.id);
+  const result = claimNow(game, p.id);
   assert.equal(result.valid, false, 'three across is not a line on a strip');
   assert.equal(game.state.players[p.id].falseCalls, 1);
 });
@@ -624,7 +631,7 @@ test('a strip survives a crash — the shape is in the game, not the pack', () =
   assert.equal(revived.squareCount, 24);
   assert.equal(revived.lines().length, 3);
   assert.equal(revived.squaresAway(revived.state.players[p.id]), 1, 'and still one away, not a winner');
-  assert.equal(revived.claim(p.id).valid, false, 'nobody has won yet');
+  assert.equal(claimNow(revived, p.id).valid, false, 'nobody has won yet');
 });
 
 test('a game saved before shapes existed still comes back square', () => {
@@ -682,16 +689,16 @@ test('one line does not win the two-line prize', () => {
   const p = game.join({ name: 'Keen' });
   game.start();
   completeLine(game, p, 0);
-  assert.equal(game.claim(p.id).valid, true, 'the first prize is one line');
+  assert.equal(claimNow(game, p.id).valid, true, 'the first prize is one line');
 
   game.playOn();
   assert.equal(game.stage, 2, 'now playing for two lines');
   // The same card, the same one line — and it must not win again.
-  assert.equal(game.claim(p.id).valid, false);
+  assert.equal(claimNow(game, p.id).valid, false);
   assert.equal(game.state.players[p.id].falseCalls, 1);
 
   completeLine(game, p, 1);
-  assert.equal(game.claim(p.id).valid, true, 'two lines wins the second prize');
+  assert.equal(claimNow(game, p.id).valid, true, 'two lines wins the second prize');
 });
 
 test('the prizes are won in order and each has its own winner', () => {
@@ -701,11 +708,11 @@ test('the prizes are won in order and each has its own winner', () => {
   game.start();
 
   completeLine(game, a, 0);
-  game.claim(a.id);
+  claimNow(game, a.id);
   game.playOn();
   completeLine(game, b, 0);
   completeLine(game, b, 1);
-  game.claim(b.id);
+  claimNow(game, b.id);
 
   const prizes = game.hostView().prizes;
   assert.deepEqual(prizes.map((x) => x.label), ['a line', '2 lines', 'a full house']);
@@ -719,7 +726,7 @@ test('there is nothing to play on to after the last prize', () => {
   const p = game.join({ name: 'X' });
   game.start();
   completeLine(game, p, 0);
-  game.claim(p.id);
+  claimNow(game, p.id);
   assert.equal(game.playOn(), true, 'on to the full house');
   assert.equal(game.stage, TARGETS.FULL);
   assert.equal(game.playOn(), false, 'and no further — that was the last one');
@@ -762,7 +769,7 @@ test('a new round puts the prizes back to the first one', () => {
   const p = game.join({ name: 'X' });
   game.start();
   completeLine(game, p, 0);
-  game.claim(p.id);
+  claimNow(game, p.id);
   game.playOn();
   assert.equal(game.state.stageIndex, 1);
 
@@ -777,7 +784,7 @@ test('the prizes survive a crash, like the shape does', () => {
   const p = game.join({ name: 'X' });
   game.start();
   completeLine(game, p, 0);
-  game.claim(p.id);
+  claimNow(game, p.id);
   game.playOn();
 
   const onDisk = JSON.parse(JSON.stringify(game.state));
@@ -825,7 +832,7 @@ test('a player who has won one prize can still see how far off the next is', () 
   const p = game.join({ name: 'Sharon' });
   game.start();
   completeLine(game, p, 0);
-  game.claim(p.id);
+  claimNow(game, p.id);
   assert.equal(game.playerView(p.id).won, true, 'while the win is on the projector');
 
   game.playOn();
@@ -841,7 +848,7 @@ test('somebody else winning does not say "you got it" on your phone', () => {
   const b = game.join({ name: 'Dave' });
   game.start();
   completeLine(game, a, 0);
-  game.claim(a.id);
+  claimNow(game, a.id);
   assert.equal(game.playerView(a.id).won, true);
   assert.equal(game.playerView(b.id).won, false);
   assert.deepEqual(game.playerView(b.id).yourPrizes, []);
@@ -864,7 +871,7 @@ test('a claimed prize mints a voucher, matched to the venue\'s reward for that s
   const p = game.join({ name: 'Sharon' });
   game.start();
   completeLine(game, p, 0);
-  game.claim(p.id);
+  claimNow(game, p.id);
 
   const vouchers = Object.values(game.state.vouchers);
   assert.equal(vouchers.length, 1);
@@ -882,7 +889,7 @@ test('a second prize in the same night mints a second, separate voucher', () => 
   const q = game.join({ name: 'Dave' });
   game.start();
   completeLine(game, p, 0);
-  game.claim(p.id);
+  claimNow(game, p.id);
   game.playOn();
   // The second prize goes to Dave: one prize each per round is absolute, so
   // "a second prize in the same night" is now two winners rather than one
@@ -890,7 +897,7 @@ test('a second prize in the same night mints a second, separate voucher', () => 
   // mint two separate codes with their own places.
   completeLine(game, q, 0);
   completeLine(game, q, 1); // stage two is TWO lines, so Dave needs both
-  game.claim(q.id);
+  claimNow(game, q.id);
 
   const vouchers = Object.values(game.state.vouchers);
   assert.equal(vouchers.length, 2);
@@ -904,10 +911,10 @@ test('no reward on offer for a stage means no voucher, not a crash', () => {
   const p = game.join({ name: 'Sharon' });
   game.start();
   completeLine(game, p, 0);
-  game.claim(p.id);
+  claimNow(game, p.id);
   game.playOn();
   completeLine(game, p, 1);
-  game.claim(p.id);
+  claimNow(game, p.id);
 
   assert.equal(Object.values(game.state.vouchers).length, 1, 'only the funded stage gets one');
 });
@@ -920,8 +927,8 @@ test('claiming again for the same stage never mints a second voucher for it', ()
   game.start();
   completeLine(game, a, 0);
   completeLine(game, b, 0);
-  game.claim(a.id);
-  game.claim(b.id); // second claim on the same stage — already won, refused upstream by prizeWinners
+  claimNow(game, a.id);
+  claimNow(game, b.id); // second claim on the same stage — already won, refused upstream by prizeWinners
 
   assert.equal(Object.values(game.state.vouchers).length, 1, 'the stage was already taken');
 });
@@ -933,16 +940,18 @@ test('the winning player sees their own vouchers, and nobody else does', () => {
   const b = game.join({ name: 'Dave' });
   game.start();
   completeLine(game, a, 0);
-  game.claim(a.id);
+  claimNow(game, a.id);
 
-  // HELD until the round is over — the codes all appear together, so that
-  // the room goes to the bar in one go rather than trickling out.
-  assert.equal(game.playerView(a.id).vouchers, undefined,
-    'a code is not shown while the round is still being played for');
+  // ON THE PHONE THE MOMENT THE HOST APPROVES — this REVERSES the September
+  // rule that held every code until the round was over (25 Sept 2026: *"on an
+  // approved bingo press the QR code for the free drink is then dropped into
+  // their phone"*).
+  assert.equal(game.playerView(a.id).vouchers.length, 1,
+    'the code is on the phone while the round is still being played for');
 
   game.playOn();
   playWholeCard(game, b.id); // two prizes is a line then a FULL HOUSE
-  game.claim(b.id);
+  claimNow(game, b.id);
   assert.equal(game.allPrizesGone, true, 'both prizes have gone, so the round is over');
 
   const mine = game.playerView(a.id).vouchers;
@@ -960,11 +969,11 @@ test('the host sees every voucher issued so far, across every winner', () => {
   const b = game.join({ name: 'Dave' });
   game.start();
   completeLine(game, a, 0);
-  game.claim(a.id);
+  claimNow(game, a.id);
   game.playOn();
   completeLine(game, b, 0);
   completeLine(game, b, 1);
-  game.claim(b.id);
+  claimNow(game, b.id);
 
   const vouchers = game.hostView().vouchers;
   assert.equal(vouchers.length, 2);
@@ -986,7 +995,7 @@ test('redeeming a voucher marks it spent, once', () => {
     game.call(p.card[i]);
     game.mark({ playerId: p.id, index: i, marked: true });
   }
-  game.claim(p.id);
+  claimNow(game, p.id);
 
   const [code] = Object.keys(game.state.vouchers);
   const first = game.redeemVoucher(code, { by: 'scan' });
@@ -1013,7 +1022,7 @@ test('the host can put a voucher back, and the count says how many times', () =>
     game.call(p.card[i]);
     game.mark({ playerId: p.id, index: i, marked: true });
   }
-  game.claim(p.id);
+  claimNow(game, p.id);
   const [code] = Object.keys(game.state.vouchers);
 
   game.redeemVoucher(code);
@@ -1036,7 +1045,7 @@ test('a bingo night files its venue, rewards and vouchers, same as a quiz', () =
     game.call(p.card[i]);
     game.mark({ playerId: p.id, index: i, marked: true });
   }
-  game.claim(p.id);
+  claimNow(game, p.id);
 
   const results = game.results();
   assert.equal(results.venue, 'The Crown');
@@ -1077,11 +1086,11 @@ test('a player holding a prize cannot take the next one while anybody is still w
   game.start();
 
   playWholeCard(game, dave.id);
-  assert.equal(game.claim(dave.id).valid, true, 'Dave should win the first prize');
+  assert.equal(claimNow(game, dave.id).valid, true, 'Dave should win the first prize');
   assert.equal(game.state.prizeWinners.length, 1);
 
   game.playOn();
-  const second = game.claim(dave.id);
+  const second = claimNow(game, dave.id);
   assert.equal(second.valid, true, 'his card is still a line — this must not be a false call');
   assert.equal(second.prize, false, 'Dave took a second prize while Sue had none');
   assert.equal(second.reason, 'already_won');
@@ -1091,7 +1100,7 @@ test('a player holding a prize cannot take the next one while anybody is still w
 
   // And Sue can take it.
   playWholeCard(game, sue.id);
-  assert.equal(game.claim(sue.id).valid, true);
+  assert.equal(claimNow(game, sue.id).valid, true);
   assert.equal(game.state.prizeWinners.length, 2);
   assert.equal(game.state.prizeWinners[1].playerId, sue.id);
 });
@@ -1106,10 +1115,10 @@ test('the rule NEVER lifts, and a small room is told the prize cannot be won', (
   game.start();
 
   playWholeCard(game, dave.id);
-  game.claim(dave.id);
+  claimNow(game, dave.id);
   game.playOn();
   playWholeCard(game, sue.id);
-  game.claim(sue.id);
+  claimNow(game, sue.id);
   game.playOn();
 
   /*
@@ -1119,7 +1128,7 @@ test('the rule NEVER lifts, and a small room is told the prize cannot be won', (
    * reported off a live night as a "weird block midway through". One prize
    * each is absolute now, so the third prize here can never be claimed.
    */
-  const third = game.claim(dave.id);
+  const third = claimNow(game, dave.id);
   assert.equal(third.valid, true, 'his call was right and is recorded as right');
   assert.equal(third.prize, false, 'one prize each per round, and it never lifts');
   assert.equal(game.state.prizeWinners.length, 2, 'nobody could take the third');
@@ -1140,14 +1149,14 @@ test('the phone is told to stand down, and the control view says which of three 
 
   assert.equal(game.playerView(dave.id).standDown, false, 'nobody stands down before a prize is won');
   playWholeCard(game, dave.id);
-  game.claim(dave.id);
+  claimNow(game, dave.id);
   game.playOn();
   assert.equal(game.playerView(dave.id).standDown, true,
     'his BINGO button has to say why rather than refuse him silently');
   // And it must never be worded as a telling-off — asked for directly:
   // *"I don't want them to be told 'you've already won'."*
 
-  game.claim(dave.id);
+  claimNow(game, dave.id);
   const [latest] = game.hostView().claims;
   assert.equal(latest.valid, true);
   assert.equal(latest.standDown, true,
@@ -1186,14 +1195,17 @@ test('THE BINGO BUTTON WAITS FOR THE STAGE, not for one line', () => {
   }
   assert.equal(game.playerView(dave.id).canClaim, false,
     'one line is not two, and a lit button here is a false call the app invited');
-  assert.equal(game.claim(dave.id).valid, false, 'and the claim itself was never going to stand');
+  assert.equal(claimNow(game, dave.id).valid, false, 'and the claim itself was never going to stand');
+  // Turned down, it sits them out — ONE PRESS PER ROUND (25 Sept 2026) — and
+  // the host's Back in is what lets them press again.
+  game.sitIn(dave.id);
 
   for (const i of second) {
     if (!game.state.called.includes(player.card[i])) game.call(player.card[i]);
     game.mark({ playerId: dave.id, index: i, marked: true });
   }
   assert.equal(game.playerView(dave.id).canClaim, true, 'two lines IS the prize');
-  assert.equal(game.claim(dave.id).valid, true);
+  assert.equal(claimNow(game, dave.id).valid, true);
 });
 
 /*
@@ -1219,14 +1231,14 @@ test('A SECOND CORRECT BINGO ON A PRIZE ALREADY TAKEN CHANGES NOTHING', () => {
   game.start();
 
   playWholeCard(game, alpha.id);
-  assert.equal(game.claim(alpha.id).valid, true);
+  assert.equal(claimNow(game, alpha.id).valid, true);
   const winnerOnTheWall = game.screenView().win.name;
   assert.equal(winnerOnTheWall, 'Alpha');
 
   // Bravo's card is a line too, and Bravo holds nothing, so the old
   // `standDown` said nothing about it.
   playWholeCard(game, bravo.id);
-  const second = game.claim(bravo.id);
+  const second = claimNow(game, bravo.id);
 
   assert.equal(second.valid, true, 'Bravo really did have a line — this is not a false alarm');
   assert.equal(second.prize, false, 'but the prize had gone');
@@ -1254,7 +1266,7 @@ test('A SECOND CORRECT BINGO ON A PRIZE ALREADY TAKEN CHANGES NOTHING', () => {
   // The next prize is open to Bravo the moment the host presses on.
   game.playOn();
   assert.equal(game.playerView(bravo.id).standDown, false);
-  assert.equal(game.claim(bravo.id).valid, true);
+  assert.equal(claimNow(game, bravo.id).valid, true);
   assert.equal(game.state.prizeWinners.length, 2);
   assert.equal(game.state.prizeWinners[1].playerId, bravo.id);
 });
@@ -1303,7 +1315,7 @@ test('THE BINGO SCREEN AND PLAYER PAYLOADS NEVER CARRY A PLAYER ID', () => {
   game.start();
   look(BINGO_PHASES.PLAYING);
   winLine(game, alice);
-  game.claim({ playerId: alice.id });
+  claimNow(game, { playerId: alice.id });
   look(BINGO_PHASES.WON);
   game.newRound();
   look('a fresh round');
@@ -1361,7 +1373,7 @@ test('CHANGING A PRIZE AFTER IT IS WON UPDATES THE VOUCHER, rather than doing no
   game.start();
 
   playWholeCard(game, dave.id);
-  assert.equal(game.claim(dave.id).valid, true);
+  assert.equal(claimNow(game, dave.id).valid, true);
   const [code] = Object.keys(game.state.vouchers);
   assert.equal(game.state.vouchers[code].reward, 'A bottle of wine');
 
@@ -1380,7 +1392,7 @@ test('…but a prize already redeemed is left alone, because the drink has gone'
   game.setRewards(['A bottle of wine', 'A pint']);
   game.start();
   playWholeCard(game, dave.id);
-  game.claim(dave.id);
+  claimNow(game, dave.id);
   const [code] = Object.keys(game.state.vouchers);
   game.redeemVoucher(code, { by: 'scan' });
 
@@ -1406,14 +1418,14 @@ test('THE CONTROL VIEW SAYS WHEN NOBODY LEFT CAN CLAIM THE PRIZE', () => {
 
   playWholeCard(game, dave.id);
   assert.equal(game.hostView().stalled, undefined, 'nothing is stuck while the prize is there to take');
-  game.claim(dave.id);
+  claimNow(game, dave.id);
   game.playOn();
 
   // Dave has the whole card and already holds a prize; Sue has nothing.
   assert.equal(game.hostView().stalled, 1,
     'the app had watched somebody complete the card and said nothing about it');
   // The rule itself is untouched — this is a note, not a lift.
-  assert.equal(game.claim(dave.id).prize, false);
+  assert.equal(claimNow(game, dave.id).prize, false);
 });
 
 // ------------------------------------------------- hold these back (dontPlay)
@@ -1433,7 +1445,7 @@ test('the host is told which songs would carry a prize-holder to the next prize'
   game.setRewards(['Drink', 'Drink', 'Drink', '\u00a310 bar tab']);
 
   winLine(game, dave);
-  assert.equal(game.claim(dave.id).ok, true);
+  assert.equal(claimNow(game, dave.id).ok, true);
   // Before Play on the prize has just gone and there is nothing to avoid yet.
   assert.equal(game.hostView().dontPlay, undefined);
 
@@ -1468,7 +1480,7 @@ test('somebody who has not won is never listed, however close they are', () => {
     game.mark({ playerId: bob.id, index: i, marked: true });
   }
   winLine(game, dave);
-  game.claim(dave.id);
+  claimNow(game, dave.id);
   game.playOn();
   const rows = game.hostView().dontPlay || [];
   assert.ok(!rows.some((r) => r.name === 'Bob'),
@@ -1481,7 +1493,7 @@ test('RULE 1: the songs somebody needs never reach the projector or a phone', ()
   const bob = game.join({ name: 'Bob' });
   game.setRewards(['Drink', 'Drink']);
   winLine(game, dave);
-  game.claim(dave.id);
+  claimNow(game, dave.id);
   game.playOn();
   for (let i = 0; i < dave.card.length && game.squaresAway(dave) > 2; i += 1) {
     if (!game.isGood(dave, i)) {
@@ -1500,7 +1512,7 @@ test('a prize-holder too far off to matter is left out, so the panel stays short
   game.join({ name: 'Bob' });
   game.setRewards(['Drink', 'Drink']);
   winLine(game, dave);
-  game.claim(dave.id);
+  claimNow(game, dave.id);
   game.playOn();
   // Straight after the line, a full house is most of the card away.
   assert.ok(game.squaresAway(dave) > 3, 'far off by construction');

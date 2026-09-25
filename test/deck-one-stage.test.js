@@ -15,6 +15,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BingoGame, TARGETS } from '../src/bingo.js';
 import { deckPack } from '../public/assets/deck.js';
+import { claimNow } from './helpers/claim-now.js';
 
 function aDeckGame() {
   let t = 1000;
@@ -43,7 +44,7 @@ function playUntilClaim(game, who, everyone) {
   };
   for (let i = 0; i < 60; i += 1) {
     markAll();
-    if (game.playerView(who).canClaim) return game.claim(who);
+    if (game.playerView(who).canClaim) return claimNow(game, who);
     if (!game.drawNext()) break;
   }
   return null;

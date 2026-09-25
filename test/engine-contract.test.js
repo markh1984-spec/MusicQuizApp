@@ -92,7 +92,7 @@ const PER_KIND = {
      * and one that does not is skipped rather than throwing.
      */
     'issueVouchers'],
-  bingo: ['start', 'call', 'uncall', 'undoLastCall', 'playOn', 'newRound', 'finish', 'sitOut', 'sitIn',
+  bingo: ['start', 'call', 'uncall', 'undoLastCall', 'playOn', 'newRound', 'finish', 'sitOut', 'sitIn', 'approveClaim', 'rejectClaim',
     'mark', 'claim', 'syncTarget'],
   /*
    * CARD BINGO IS MUSIC BINGO'S LIST PLUS EXACTLY ONE CALL.

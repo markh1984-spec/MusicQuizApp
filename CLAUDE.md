@@ -2534,12 +2534,10 @@ the prizes."*
 - **THE CLAIM IS STILL RIGHT AND IS RECORDED AS RIGHT** — THREE outcomes on
   the control view. **NO PHONE MAY SAY "you have already won"**: the wording
   is about the PRIZE, never the person.
-- **THE CARDS CANNOT DO THIS ON THEIR OWN, asked for twice** — who wins is
-  decided by the ORDER the tracks are played. **`docs/bingo.md` first.**
+- **THE CARDS CANNOT DO THIS ON THEIR OWN** — the call ORDER decides.
 - **THE BUTTON STAYS AND SAYS WHY** (`standDown`), present and inert. **NO
   SETTING.**
-- **A STAGE CAN ONLY BE TAKEN ONCE — `stageTaken()`, checked BEFORE anything
-  is recorded**; **`tooLate` is a separate flag**.
+- **A STAGE IS TAKEN ONCE — `stageTaken()`**; `tooLate` is its own flag.
 - **THE BUTTON WAITS FOR THE STAGE, NOT FOR ONE LINE.**
 - **A VOUCHER SURVIVES A PART BOUNDARY — `carried` in
   `startOrderSegment()`**, load-bearing: the idempotency check sees THIS
@@ -2554,8 +2552,11 @@ the prizes."*
 - **A STALLED ROUND IS SAID (`view.stalled`), NOT lifted.**
 - **WHEN THE LAST PRIZE GOES THE WHOLE ROOM IS TOLD — `allPrizesGone`, which
   is `onLastStage && stageTaken()`, NOT the `WON` phase. ON EVERY PHONE.**
-- **THE CODES ARE HELD AND APPEAR TOGETHER AT THE END OF THE ROUND — do not
-  put the trickle back.** MINTED at the win, held from the PHONE only.
+- **A BINGO PRESS WAITS FOR THE HOST — `approveClaim()`/`rejectClaim()`
+  (his call, 25 Sept).** A press pays nothing; the app's check (and any marked
+  square never played) sits beside it as ADVICE, and **approving is what drops
+  the code on the phone — the end-of-round hold is REVERSED.** ONE PRESS PER
+  ROUND: a turned-down one is a false call and a sit-out. `test/host-approves.test.js`.
 - **A ROUND IS A GAME — one prize per phone per ROUND, and `newRound()` puts
   everybody back in (his call, 24 Sept; REVERSES the 22 Sept game-long
   list).** Within a round the stand-down is unchanged. **`view.noneLeft` is
@@ -2566,9 +2567,8 @@ the prizes."*
   would take the prize off whoever just completed. Not a prize:
   `holdsAPrize()` is untouched; `newRound()` clears it. `test/sit-out.test.js`.
 - **NO NATIVE `confirm()` ON THE BINGO CONTROL VIEW — `pressTwice()`.**
-  Finish and New round ARM on the first press and act on the second: a
-  browser told to suppress dialogs answers every `confirm()` No in silence
-  (*"nothing at all happens"*); every guard DISMISSED them.
+  Finish and New round ARM, then act: a browser suppressing dialogs answers
+  every `confirm()` No in silence (*"nothing at all happens"*).
 - **A ROUND'S PRIZE IS THE NEXT ON THE TABLE — `prizesGiven`**, never the STAGE.
 - **DRINKS ARE PER GAME, NOT PER NIGHT — `dealPrizes()` deals EVERY game from
   the TOP. Do not put the sharing back** — what an evening costs is the
@@ -2581,8 +2581,7 @@ the prizes."*
 - **A CODE STAYS ON THE PHONE UNTIL THE BAR SCANS IT — `view.vouchers` on the
   QUIZ engine too, NEVER over a live QUESTION; a REDEEMED one DISAPPEARS** (see
   *My prizes*). **`view.voucher` UNCHANGED.**
-- **`pub-unchanged.mjs` SAYS NOTHING ABOUT ANY OF THIS** — it mints no
-  voucher; `bingo-prizes.mjs` drives three phones over real HTTP instead.
+- **`pub-unchanged.mjs` MINTS NO VOUCHER** — `bingo-prizes.mjs` does.
 
 Full reasoning, with the measurements: **[`docs/bingo.md`](docs/bingo.md)**.
 
