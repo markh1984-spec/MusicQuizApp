@@ -142,8 +142,19 @@ try {
     return true;
   }, c);
 
-  /** Launch a fresh night and drive it to a named phase. */
-  const driveTo = async (phase) => {
+  let lastPlayers = [];
+  let lastCode = '';
+  /**
+   * Launch a fresh night and drive it to a named phase.
+   *
+   * `claim` is not a phase the engine has — it is `playing` with a BINGO press
+   * WAITING on the host. Since 25 September 2026 a press only puts a claim in
+   * front of him (`claim()` in bingo.js) and his Approve is what pays, so the
+   * panel holding those two buttons exists at no phase of its own, and a probe
+   * that walks phases alone would never see them.
+   */
+  const driveTo = async (target) => {
+    const phase = target === 'claim' ? 'won' : target;
     await host('launch', {
       game: BINGO ? 'bingo' : 'quiz',
       packId: BINGO ? 'mbc-6' : '2000s-2010s-mixed',
@@ -160,6 +171,8 @@ try {
       const me = (r.body && (r.body.you || r.body.player || r.body)) || {};
       if (me.id) players.push({ id: me.id, token: me.token });
     }
+    lastPlayers = players;
+    lastCode = code;
     if (phase !== 'lobby') {
       await host('start');
       /*
@@ -183,6 +196,7 @@ try {
       for (let i = 0; i < 60; i += 1) {
         const v = await view();
         if (v.phase === phase && (phase !== 'reveal' || (v.question || {}).revealedAt)) break;
+        if (target === 'claim' && (v.claimsWaiting || []).length) break;
         /*
          * A BINGO NIGHT MOVES BY CALLING TRACKS, not by `next` — and `won`
          * arrives only when somebody genuinely completes a line, which this
@@ -202,8 +216,13 @@ try {
             }
             const again = await J(`/api/state?role=player&playerId=${encodeURIComponent(players[0].id)}&g=${encodeURIComponent(code)}`);
             if (((again.body || {}).you || {}).squaresAway === 0) {
-              await J('/api/claim', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+              const c = await J('/api/claim', { method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ playerId: players[0].id, token: players[0].token, joinCode: code }) });
+              /*
+               * THE PRESS WAITS ON THE HOST, and for `won` he says yes over
+               * HTTP — the real browser presses Approve at `claim`, below.
+               */
+              if (target !== 'claim' && (c.body || {}).pending) await host('approveClaim', { playerId: players[0].id });
             }
           }
           continue;
@@ -220,10 +239,13 @@ try {
     }
     await page.goto(`${BASE}/host?key=${KEY}`, { waitUntil: 'load' });
     await page.waitForTimeout(1200);
-    return (await view()).phase;
+    const v = await view();
+    if (target === 'claim') return v.phase === 'playing' && (v.claimsWaiting || []).length ? 'claim' : `${v.phase} with no claim waiting`;
+    return v.phase;
   };
+  const phoneView = async (p) => (await J(`/api/state?role=player&playerId=${encodeURIComponent(p.id)}&token=${encodeURIComponent(p.token)}&g=${encodeURIComponent(lastCode)}`)).body || {};
 
-  const PHASES = BINGO ? ['lobby', 'playing', 'won'] : ['lobby', 'rules', 'round_intro', 'question', 'reveal', 'round_board'];
+  const PHASES = BINGO ? ['lobby', 'playing', 'claim', 'won'] : ['lobby', 'rules', 'round_intro', 'question', 'reveal', 'round_board'];
   console.log(`\nPRESSING EVERY CONTROL ON THE CONTROL VIEW — ${BINGO ? 'music bingo' : 'the quiz'}\n`);
 
   for (const phase of PHASES) {
@@ -273,6 +295,15 @@ try {
     }
     console.log(`  ${phase} — pressed ${pressed} of ${controls.length}`);
     /*
+     * AND THE TWO NEW BUTTONS WERE AMONG THEM — a probe that never found them
+     * would print "every control reacted" about a panel it did not see.
+     */
+    if (BINGO && phase === 'claim') {
+      const seen = ['Approve — send the drink', 'Not a bingo'].filter((l) => controls.some((c) => c.label === l));
+      if (seen.length !== 2) fails += 1;
+      console.log(`  ${seen.length === 2 ? 'ok  ' : 'FAIL'} the waiting panel's Approve and Not a bingo were probed (${seen.join(', ') || 'neither'})`);
+    }
+    /*
      * FINISH IS PRESSED TWICE, FOR REAL. It used to ask with a native
      * confirm(), which this guard DISMISSES — so the path behind OK was never
      * driven, and on a gig day the host reported *"nothing at all happens"*.
@@ -296,6 +327,61 @@ try {
         const ended = (await view()).phase === 'finished';
         if (!ended) fails += 1;
         console.log(`  ${ended ? 'ok  ' : 'FAIL'} Finish pressed twice ends the game (armed label "${twice}")`);
+      }
+    }
+    /*
+     * THE HOST'S YES AND NO, PRESSED FOR REAL AND READ BACK OFF THE PHONE.
+     *
+     * The probe above only proves the two buttons REACT. What they are for is
+     * on somebody else's screen: Approve must put the win on the night and the
+     * drink's code on the winner's phone at once (the codes are no longer held
+     * to the end of the round), and Not a bingo must sit that phone out of the
+     * round. A button that posts the right action for the wrong player reacts
+     * perfectly and does neither — so each is checked where it lands.
+     */
+    if (BINGO && phase === 'claim') {
+      const ok = (cond, what, got = '') => {
+        if (!cond) fails += 1;
+        console.log(`  ${cond ? 'ok  ' : 'FAIL'} ${what}${cond || !got ? '' : ` — ${got}`}`);
+      };
+      let at = await driveTo('claim');
+      const winner = lastPlayers[0];
+      if (at !== 'claim') ok(false, 'a BINGO press puts a claim in front of the host', at);
+      else {
+        const size = await page.evaluate(() => {
+          const n = document.querySelector('.claims-waiting button.approve[data-act="approve"]');
+          if (!n) return null;
+          const r = n.getBoundingClientRect();
+          return { w: Math.round(r.width), h: Math.round(r.height) };
+        });
+        ok(size && Math.min(size.w, size.h) >= 44, 'Approve is on the 44px touch floor', JSON.stringify(size));
+        const before = await phoneView(winner);
+        ok(before.claimWaiting === true && !(before.vouchers || []).length, 'the phone reads as waiting, with no code yet',
+          `claimWaiting ${before.claimWaiting}, ${(before.vouchers || []).length} codes`);
+        const hit = await page.evaluate(() => { const b = document.querySelector('.claims-waiting button[data-act="approve"]'); if (!b) return false; b.click(); return true; });
+        await page.waitForTimeout(900);
+        const hv = await view();
+        const pv = await phoneView(winner);
+        ok(hit, 'Approve — send the drink is on the control view');
+        ok(hv.phase === 'won' && hv.win && hv.win.playerId === winner.id, 'Approve pressed in the browser wins the night for that phone',
+          `phase ${hv.phase}, win ${hv.win ? hv.win.name : 'none'}`);
+        ok((pv.vouchers || []).length >= 1, 'and the drink\'s code is on the winner\'s phone straight away', `${(pv.vouchers || []).length} codes`);
+        ok(!(hv.claimsWaiting || []).length, 'and the claim leaves the waiting panel');
+      }
+
+      at = await driveTo('claim');
+      const loser = lastPlayers[0];
+      if (at !== 'claim') ok(false, 'a second BINGO press reaches the host', at);
+      else {
+        const hit = await page.evaluate(() => { const b = document.querySelector('.claims-waiting button[data-act="reject"]'); if (!b) return false; b.click(); return true; });
+        await page.waitForTimeout(900);
+        const hv = await view();
+        const pv = await phoneView(loser);
+        ok(hit, 'Not a bingo is on the control view');
+        ok(pv.satOut === true, 'Not a bingo pressed in the browser sits that phone out of the round', `satOut ${pv.satOut}`);
+        ok(hv.phase === 'playing' && !hv.win && !(pv.vouchers || []).length, 'and nobody won and no code was sent',
+          `phase ${hv.phase}, ${(pv.vouchers || []).length} codes`);
+        ok(!(hv.claimsWaiting || []).length, 'and the claim leaves the waiting panel');
       }
     }
   }

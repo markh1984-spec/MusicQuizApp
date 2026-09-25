@@ -306,7 +306,11 @@ try {
       const after = await (await fetch(`${BASE}/api/state?role=player&playerId=${p.id}&token=${p.token}&g=${code}`)).json();
       if (!after.canClaim) continue;
       const c = await fetch(`${BASE}/api/claim`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ playerId: p.id, token: p.token, joinCode: code }) });
-      const cj = await c.json().catch(() => ({}));
+      let cj = await c.json().catch(() => ({}));
+      /* A BINGO PRESS WAITS ON THE HOST now (25 September 2026): the press
+       * only puts the claim in front of him, and his Approve is what pays. The
+       * host route answers `{ ok: <what the engine said>, view }`. */
+      if (cj && cj.pending) cj = ((await host('approveClaim', { playerId: p.id })).body || {}).ok || {};
       if (cj && (cj.prize || cj.valid)) claimed += 1;
     }
     if (claimed >= 1 || called > 30) break;
@@ -503,7 +507,10 @@ try {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ playerId: p.id, token: p.token, joinCode: code3 }),
       });
-      const cj = await c.json().catch(() => ({}));
+      let cj = await c.json().catch(() => ({}));
+      /* AND THE HOST APPROVES IT — a press is only a claim waiting on him
+       * since 25 September 2026; `approveClaim` runs what the press used to. */
+      if (cj && cj.pending) cj = ((await host3('approveClaim', { playerId: p.id })).body || {}).ok || {};
       /* ONLY A PAID CLAIM IS A WIN. A right hand from a table already holding
        * a prize comes back `valid` WITH a `reason` and takes nothing; counting
        * it as a win is how a probe once reported three winners and two drinks. */
@@ -647,8 +654,16 @@ try {
     check('THREE GAMES OF CARD BINGO PAID THREE DRINKS — none left blank',
       cardsPaid.length === 3 && cardsPaid.every((v) => v.reward),
       cardsPaid.map((v) => `${v.reward}->${v.name}`).join(', ') || 'none');
-    check('and to three DIFFERENT tables — one each while anybody has none',
-      new Set(cardsPaid.map((v) => v.winnerId)).size === 3,
+    /*
+     * NOT "three DIFFERENT tables" any more. That asserted the 22 September
+     * game-long list, and the host reversed it on the 24th: *a round is a
+     * game* — one prize per phone per ROUND, and `newRound()` puts everybody
+     * back in — so the same table taking games two and three is the rule
+     * working, not breaking. It passed on the dealing's luck until it did not.
+     * What stays true is that every game's drink reached a real phone.
+     */
+    check('and each game\'s drink went to a phone in the room',
+      cardsPaid.length === 3 && cardsPaid.every((v) => crowd.some((p) => p.id === v.winnerId)),
       cardsPaid.map((v) => v.name).join(', '));
     check('the card bingo starts at the TOP of the list too',
       cardsPaid.length > 0 && cardsPaid.every((v) => v.reward === DRINKS[0]),
