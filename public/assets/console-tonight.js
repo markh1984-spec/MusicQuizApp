@@ -292,7 +292,6 @@ let showWanted = null;
  * "Then: the bingo" line left over from a show nobody is running is the
  * console describing a night that is not happening.
  */
-let showRunning = null;
 
 /**
  * A VENUE CHOSEN FROM SOMEWHERE THAT IS NOT THE BAR, applied on the next
@@ -778,17 +777,6 @@ export function launchBar() {
            call as the running panel's own Stop button, through the one shared
            stopRunningNight() — never a second copy of that confirm wording. -->
 
-      <!-- WHAT COMES AFTER THIS, when a show with more than one part is up.
-           A show is an EVENING and the bar plays one part of it, so without
-           this line the second half exists only in somebody's memory — which
-           is the thing building a night in advance is meant to replace.
-           A button that LOADS rather than launches: the bingo starts when the
-           quiz has finished and the prizes are handed out, and only the person
-           on the mic knows when that is. -->
-      <div class="lb-then" hidden>
-        <span class="tiny lb-then-what"></span>
-        <button class="minor lb-then-go" type="button">Load it</button>
-      </div>
       <!-- THE PICKER IS BEHIND THE DROP ZONE NOW, not standing in front of it.
            The bar used to open with a game dropdown, a search box and a pack
            already chosen for you — three controls answering a question that
@@ -999,29 +987,6 @@ export function launchBar() {
   const winnersPick = el.querySelector('.winners-pick');
   const screenPick = el.querySelector('.screen-pick');
   const setSave = el.querySelector('.set-save');
-  const thenEl = el.querySelector('.lb-then');
-  /**
-   * THEN: the next part of tonight's show.
-   *
-   * Hidden whenever there is nothing after this one, which is every ordinary
-   * night — a pack dragged in by hand has no show behind it, so the line does
-   * not exist rather than saying "nothing next".
-   */
-  function paintThen() {
-    const items = showRunning ? itemsOf(showRunning.show) : [];
-    const next = items[(showRunning ? showRunning.at : 0) + 1];
-    thenEl.hidden = !next;
-    if (!next) return;
-    thenEl.querySelector('.lb-then-what').textContent
-      = `Then: ${packTitle(next.kind, next.packId)}`;
-  }
-  el.querySelector('.lb-then-go').addEventListener('click', () => {
-    if (!showRunning) return;
-    applyShow(showRunning.show, showRunning.at + 1);
-    paintThen();
-    paintOrder();
-    startOn();
-  });
   // Called through an arrow rather than passed directly: both of these are
   // `const`s declared further down, so handing the function over here reads
   // them before they exist. By the time anybody clicks, they do.
@@ -1491,14 +1456,6 @@ export function launchBar() {
       lbOff = new Set();
       lbSlots = null;
       forgetTyped();
-      /*
-       * AND IT IS NOT THAT SHOW'S EVENING ANY MORE. Choosing a different pack
-       * by hand is somebody saying "we are playing THIS", so a "Then: the
-       * bingo" line left over from a show nobody is running would be the
-       * console describing a night that is not happening — the same fault as
-       * the bar naming a different quiz from the projector.
-       */
-      showRunning = null;
     }
     currentPack = pack;
     text.value = pack.title;
@@ -1558,10 +1515,9 @@ export function launchBar() {
        * `simpleNight()` carries that note, and without it bursting would move
        * every gig onto the running-order route for a change to the layout.
        */
-      const simple = runningShowSegments() ? null : simpleNight(lbSlots || []);
+      const simple = simpleNight(lbSlots || []);
       const simplePack = simple ? anyPack(simple.packId) : null;
-      const segments = runningShowSegments()
-        || (lbSlots && !simplePack ? segmentsFromSlots(lbSlots) : null);
+      const segments = lbSlots && !simplePack ? segmentsFromSlots(lbSlots) : null;
       if (segments) {
         await doLaunchOrder(segments, {
           ...nightOpts(),
@@ -2850,58 +2806,6 @@ export function launchBar() {
   }
 
   /**
-   * TONIGHT AS MORE THAN ONE GAME — quiz, then a bingo interlude, then quiz
-   * again, one running score across the interruption. Built from a SAVED
-   * SHOW rather than a new composer, because the show editor already lets a
-   * host add a bingo game between two quizzes (`showPartsEditor` in
-   * `console-shows.js`) — a second way to build the same list would be a
-   * second thing that could disagree with it.
-   *
-   * Only when we are sat on PART ZERO of a show with more than one part:
-   * every later part is reached through the control view's own "Continue"
-   * button and `/api/host/advanceOrder`, never through this bar again.
-   *
-   * A part with no `order` of its own (added to the show after the fact,
-   * never opened on Tonight to have rounds ticked off) plays EVERY round —
-   * `roundsOf()` is the same helper the ordinary strip uses for exactly
-   * that shape of pack.
-   */
-  function runningShowSegments() {
-    if (!showRunning || showRunning.at !== 0) return null;
-    const items = itemsOf(showRunning.show);
-    if (items.length < 2) return null;
-    const segments = items.map((item) => {
-      if (item.kind !== 'quiz') {
-        /* EACH PART'S OWN, falling back to the night's — a mixed show saves a
-           card per bingo part, and `night.*` is what the settings row wrote
-           for the part currently picked. A deck takes neither. */
-        const bingo = item.kind === 'bingo';
-        // The lines go with whichever COUNT is used below — the part's own,
-        // or the night's when the part never chose one.
-        const lines = bingo ? (Number(item.prizes) ? item.stages : night.stages) : null;
-        return {
-          kind: item.kind,
-          packId: item.packId,
-          shape: bingo ? (item.shape || night.shape) : null,
-          prizes: bingo ? (Number(item.prizes) || night.prizes) : 0,
-          ...(Array.isArray(lines) ? { stages: lines } : {}),
-        };
-      }
-      const order = (item.order && item.order.length)
-        ? item.order
-        : roundsOf((library.quizzes || []).find((p) => p.id === item.packId));
-      /* AND THE TICKS ARE HONOURED. This read the SHOW's order and nothing
-         else, so a round switched off on a loaded show was still played:
-         measured off the wire, Launch re-labelled itself "2 rounds" and
-         `launchOrder` carried all three. `lbOff` is what the tick and the
-         button label read, so it is the truth here too. */
-      return { kind: 'quiz', order: order.filter((r) => !isOff(r.packId, r.round)) };
-    });
-    if (segments.some((s) => (s.kind !== 'quiz' ? !s.packId : !s.order.length))) return null;
-    return segments;
-  }
-
-  /**
    * TONIGHT'S PARTS, THE WAY LAUNCH WILL SEND THEM — one definition, used by
    * the break strip and by nothing else that could disagree with it.
    *
@@ -2914,8 +2818,6 @@ export function launchBar() {
    * from once.
    */
   function segmentsNow() {
-    const show = runningShowSegments();
-    if (show) return show;
     const slots = lbSlots || slotsFromSimple({ currentPack, lbExtra, lbOff, packOf, night });
     return segmentsFromSlots(slots);
   }
@@ -3820,12 +3722,13 @@ export function launchBar() {
    * online, and every setting. Nothing is left for somebody to remember, which
    * is the whole reason to build a night in advance.
    *
-   * **THE RUNNING ORDER IS REBUILT INTO THE TWO THINGS THE BAR ACTUALLY
-   * HOLDS**, rather than stored a third way: the packs become `lbExtra` and
-   * everything the order leaves out becomes `lbOff`. That mapping is exact,
-   * because `nightOrder()` derives the order from those two and nothing else —
-   * and it means a loaded show can be edited with the same ticks and drags as
-   * a night built by hand, which a separate "a show is loaded" mode would not.
+   * **EVERY PART BECOMES A TILE — the row IS the evening.** It used to load
+   * ONE part and name the next in a "Then:" line, while Launch quietly sent
+   * the whole SAVED show: the bar showed one tile and the wire carried two
+   * games, and a round switched off or a pack added on the bar was silently
+   * lost (O2, 23 September 2026). With every part a tile, what the row says
+   * is what Launch sends, edits and all, and the label names every game; the
+   * parts after the first are reached through the control view's Continue.
    *
    * **IT NEVER LAUNCHES.** `startOn()` runs immediately after this and calls
    * `pick(currentPack, { quiet: true })`, and quiet is what stops a re-render
@@ -3837,54 +3740,48 @@ export function launchBar() {
    * `composeQuiz()` already refuses to commit at the server; saying so here is
    * the same refusal, days earlier, where it can still be fixed.
    */
-  function applyShow(show, at = 0) {
+  function applyShow(show) {
     showWanted = null;
-    /*
-     * ONE PART AT A TIME, and the bar SAYS what follows.
-     *
-     * A show is an evening — a quiz, then the bingo — but the launch bar runs
-     * one game, because the engine does: `session.launch()` builds one game
-     * and the projector shows one game. So the bar opens on the part you are
-     * about to play and `paintThen()` names the next one, with a button that
-     * loads it when the first is done.
-     *
-     * **THAT IS THE HONEST SHAPE RATHER THAN A COMPROMISE.** A combo night's
-     * bingo starts when the quiz has finished, the scores are up and the
-     * prizes are handed out — which is a moment only the person on the mic
-     * can identify. Auto-advancing would take that decision off them, in
-     * front of a room, on the protected path.
-     */
-    const item = itemsOf(show)[at];
-    if (!item) return;
-    showRunning = { show, at };
-    if (gamePick && item.kind && gamePick.value !== item.kind) gamePick.value = item.kind;
-    if (item.kind) lbGame = item.kind;
-    // THE LIBRARY, NOT THE TAB'S SHELF — see `shelvesFor()`.
-    const shelf = shelvesFor(gameOf().id);
-    const ids = (item.order && item.order.length)
-      ? [...new Set(item.order.map((r) => r.packId))]
-      : [String(item.packId || '')];
-    /*
-     * A PACK THAT HAS GONE IS DROPPED SILENTLY HERE, because `loadShow()` has
-     * already said so in a banner above the bar. It has to be said on that
-     * side of the render — `render()` builds `doneBanner()` before it builds
-     * this — and saying it twice would be worse than saying it once.
-     */
-    const here = ids.filter((id) => shelf.some((p) => p.id === id));
-    if (!here.length) return;
-    currentPack = shelf.find((p) => p.id === here[0]);
-    lbExtra = here.slice(1);
-    lbOff = new Set();
-    lbSlots = null;
-    forgetTyped();
-    if (item.order && item.order.length) {
-      const on = new Set(item.order.map((r) => offKey(r.packId, r.round)));
-      for (const pack of lbPacks()) {
-        for (const r of roundsOf(pack)) {
-          if (!on.has(offKey(r.packId, r.round))) lbOff.add(offKey(r.packId, r.round));
-        }
+    const items = itemsOf(show);
+    if (!items.length) return;
+    const first = items[0];
+    if (gamePick && first.kind && gamePick.value !== first.kind) gamePick.value = first.kind;
+    if (first.kind) lbGame = first.kind;
+    // A pack that has gone is dropped here because `loadShow()` has already
+    // said so in a banner above the bar — `render()` builds that first.
+    const slots = [];
+    for (const item of items) {
+      if (item.kind === 'quiz') {
+        const rounds = (item.order && item.order.length)
+          ? item.order.filter((r) => anyPack(r.packId))
+          : roundsOf(anyPack(item.packId) || {});
+        for (const r of rounds) slots.push({ kind: 'quiz', packId: r.packId, rounds: [r.round] });
+        continue;
       }
+      if (!anyPack(item.packId)) continue;
+      /* THE PART'S OWN CARD BEATS THE SHOW'S, and the show's is the fallback —
+         a show saved before `tonightAsShow()` kept a card per bingo part has
+         only the show-level pair, which is what it played. A deck takes neither. */
+      const bingo = item.kind === 'bingo';
+      const shape = bingo ? (item.shape || show.shape) : null;
+      const prizes = bingo ? Math.max(0, Math.min(5, Number(item.prizes) || Number(show.prizes) || 0)) : 0;
+      const lines = bingo ? (Number(item.prizes) ? item.stages : show.stages) : null;
+      slots.push({
+        kind: item.kind,
+        packId: item.packId,
+        shape: (shape && shape.rows && shape.cols) ? { rows: Number(shape.rows), cols: Number(shape.cols) } : null,
+        prizes,
+        ...(Array.isArray(lines) && lines.length === prizes ? { stages: lines.slice() } : {}),
+        ...(Array.isArray(item.rewards) ? { rewards: item.rewards } : {}),
+      });
     }
+    if (!slots.length) return;
+    currentPack = anyPack(slots[0].packId);
+    lbExtra = [];
+    lbOff = new Set();
+    lbPicked = 0;
+    forgetTyped();
+    lbSlots = slots;
     /*
      * THE VENUE IS LEFT OPEN, whatever the show carries — see the note on
      * `tonightAsShow()`. Loading a saved night leaves `lbVenue` alone, so
@@ -3905,31 +3802,21 @@ export function launchBar() {
     // Both halves default to ON wherever the field could be absent — the same
     // rule the lobby sound follows everywhere else.
     night.lobbySound = show.lobbySound !== false;
-    /*
-     * A show saved before this existed has `teamPlay` and no mode, and reads
-     * back as "they pick their own" — which is exactly what those nights did.
-     */
+    // A show saved before this existed has `teamPlay` and no mode, and reads
+    // back as "they pick their own" — which is exactly what those nights did.
     night.playing = show.teamPlay
       ? (show.teamMode === 'random' ? 'random' : 'assigned')
       : 'solo';
     // A show saved before this existed carries no `winners`, and three is what
     // those nights did — so an old show restores to exactly the night it was.
     night.winners = Number(show.winners) >= 1 && Number(show.winners) <= 3 ? Number(show.winners) : 3;
-    /* THE PART'S OWN CARD BEATS THE SHOW'S, and the show's is the fallback. A
-       show loads ONE PART AT A TIME, so these are set to what the part about
-       to be played wants; a show saved before `tonightAsShow()` kept a card
-       per bingo part has only the show-level pair, which is what it played. */
-    const partShape = item.kind === 'bingo' ? item.shape : null;
-    const wantShape = (partShape && partShape.rows && partShape.cols) ? partShape : show.shape;
+    // The show-level card, count and lines stay on `night` for the settings
+    // row's fallback; each bingo tile carries its own above.
+    const wantShape = show.shape;
     night.shape = (wantShape && wantShape.rows && wantShape.cols)
       ? { rows: Number(wantShape.rows), cols: Number(wantShape.cols) } : null;
-    const partPrizes = item.kind === 'bingo' ? Number(item.prizes) || 0 : 0;
-    night.prizes = Math.max(0, Math.min(5, partPrizes || Number(show.prizes) || 0));
-    // WHICH LINES PAY BELONGS TO WHICHEVER COUNT WAS USED — the part's with the
-    // part's, the show's with the show's — or a list chosen for three prizes
-    // lands on a count of five. `null` is that count's own plan.
-    const lines = partPrizes ? item.stages : show.stages;
-    night.stages = Array.isArray(lines) && lines.length === night.prizes ? lines.slice() : null;
+    night.prizes = Math.max(0, Math.min(5, Number(show.prizes) || 0));
+    night.stages = Array.isArray(show.stages) && show.stages.length === night.prizes ? show.stages.slice() : null;
     /*
      * WHAT HAPPENS IN THE GAPS — restored, and it is one of the things a show
      * is FOR. A break plan is exactly the sort of decision worth making days
@@ -3974,7 +3861,6 @@ export function launchBar() {
 
   paintMode();
   startOn();
-  paintThen();
   return el;
 }
 

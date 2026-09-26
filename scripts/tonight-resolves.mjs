@@ -146,6 +146,74 @@ try {
   }
 
   /*
+   * A SHOW WITH TWO PARTS IS TWO GAMES ON THE BAR, AND LAUNCH SENDS THE TILES
+   * (O2, 23 September 2026). The bar used to load ONE part and name the next
+   * in a "Then:" line, while Launch quietly sent the whole SAVED show: one
+   * tile on the bar, two games on the wire, and a round taken off the bar was
+   * still played. Saved with a subset order, loaded through the card, one
+   * tile removed, and the launch body read off the real request.
+   */
+  const twoPart = await page.evaluate(async ([b, key]) => {
+    const lib = await (await fetch(`${b}/api/library?key=${key}`)).json();
+    const quiz = (lib.quizzes || []).find((p) => (p.rounds || []).length >= 3 && !p.locked && !p.broken);
+    const bingo = (lib.bingo || [])[0];
+    if (!quiz || !bingo) return null;
+    const order = [0, 1, 2].map((round) => ({ packId: quiz.id, round }));
+    const r = await fetch(`${b}/api/shows?key=${key}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Two parts tonight', items: [{ kind: 'quiz', packId: quiz.id, order }, { kind: 'bingo', packId: bingo.id, prizes: 2 }] }),
+    });
+    const H = { 'Content-Type': 'application/json' };
+    const mk = await fetch(`${b}/api/invoices/customers?key=${key}`, { method: 'POST', headers: H, body: JSON.stringify({ name: 'The Show Arms' }) });
+    const c = ((await mk.json()).customers || []).find((x) => x.name === 'The Show Arms');
+    if (c) await fetch(`${b}/api/invoices/customers/${encodeURIComponent(c.id)}/rewards?key=${key}`, { method: 'PUT', headers: H, body: JSON.stringify({ rewards: ['Pint', 'Half', 'Crisps'], usualNight: 'thu' }) });
+    return { saved: r.status, quiz: quiz.id, bingo: bingo.id };
+  }, [BASE, KEY]);
+  check('a two-part show saved, with a venue to pay it', twoPart && twoPart.saved === 200, true);
+  if (twoPart) {
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForSelector('.launchbar');
+    await page.waitForTimeout(1200);
+    await page.evaluate(() => document.querySelector('button.tab[data-tab="shows"]')?.click());
+    await page.waitForSelector('.show-card');
+    await page.waitForTimeout(400);
+    await page.evaluate(() => [...document.querySelectorAll('.show-card')].find((c) => /Two parts tonight/.test(c.textContent))?.click());
+    await page.waitForTimeout(1500);
+    const kinds = await page.evaluate(() => [...document.querySelectorAll('.lb-tiles .lb-tile.is-pack')].map((t) => (t.className.match(/is-(quiz|bingo|cards)/) || [])[1] || (t.innerText.includes('Round') ? 'quiz' : '?')));
+    check(`  ...both parts are on the bar as tiles (${kinds.length})`, kinds.length >= 4, true);
+    await page.evaluate(async (v) => {
+      document.querySelector('.lb-where')?.click();
+      await new Promise((r) => setTimeout(r, 400));
+      [...document.querySelectorAll('.lb-venues button')].find((x) => x.textContent.includes(v))?.click();
+    }, 'The Show Arms');
+    await page.waitForTimeout(700);
+    const label = await page.evaluate(() => (document.querySelector('.lb-go') || {}).textContent || '');
+    check(`  ...and Launch names both games ("${label.trim()}")`, /round/.test(label) && /bingo/.test(label), true);
+    // take the first quiz tile out, then read what Launch actually sends
+    const before = await page.evaluate(() => document.querySelectorAll('.lb-tiles .lb-tile.is-pack').length);
+    await page.evaluate(() => document.querySelector('.lb-tiles .lb-tile.is-pack .lb-tile-off')?.click());
+    await page.waitForTimeout(600);
+    const after = await page.evaluate(() => document.querySelectorAll('.lb-tiles .lb-tile.is-pack').length);
+    check('  ...a tile taken off the loaded show goes', after, before - 1);
+    const bodies = [];
+    page.on('request', (r) => { if (r.method() === 'POST' && /\/api\/host\/launch/.test(r.url())) bodies.push(r.postData() || ''); });
+    page.on('dialog', (d) => d.accept().catch(() => {}));
+    await page.evaluate(() => document.querySelector('.lb-go')?.click());
+    await page.waitForTimeout(3000);
+    const sent = bodies.length ? JSON.parse(bodies[bodies.length - 1]) : {};
+    const segs = sent.segments || [];
+    const quizRounds = segs.filter((x) => x.kind === 'quiz').flatMap((x) => x.order || []).length;
+    check(`  ...and the wire carries what the tiles said: two rounds and the bingo, not the saved three (${quizRounds} rounds, ${segs.map((x) => x.kind).join('+')})`, quizRounds === 2 && segs.some((x) => x.kind === 'bingo'), true);
+    await page.goto(`${BASE}/console?key=${KEY}`, { waitUntil: 'load' });
+    await page.waitForTimeout(1500);
+    for (let i = 0; i < 3; i += 1) {
+      const pressed = await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((n) => /^(unlaunch|stop)$/i.test((n.textContent || '').trim())); if (!b) return false; b.click(); return true; });
+      if (!pressed) break;
+      await page.waitForTimeout(1500);
+    }
+  }
+
+  /*
    * THE SAME BINGO PACK GOES IN TWICE — *"I need to be able to add multiple
    * music bingo and card bingo rounds and at the moment that's not
    * possible."* A second game of bingo is its own part; tapped on the
