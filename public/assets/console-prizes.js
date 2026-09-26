@@ -240,7 +240,7 @@ export function prizeTableInto(box, parts, { open, venueName, venueList }) {
  * when the file loads, which is the fault `console-state.js` exists to prevent.
  * So a press asks the bar to flip it (`onToggle`), and the bar repaints.
  */
-export function bindPrizeTable(el, { partsNow, setPartRewards, setPartStages, onToggle, afterStages, noteText }) {
+export function bindPrizeTable(el, { partsNow, setPartRewards, setPartStages, onToggle, afterStages, afterTyping = () => {}, noteText }) {
   /* DELEGATED, BOUND ONCE — `paintPrizeTable()` replaces the whole table on
      every settings change and every state push, so a listener per input would
      be re-bound on every phone that joins and leak with the room. Same reason
@@ -310,9 +310,12 @@ export function bindPrizeTable(el, { partsNow, setPartRewards, setPartStages, on
       .map((n) => n.value);
     setPartRewards(part, list);
     // The reason-line under the table counts what is typed, so it has to keep
-    // up — and it holds no caret, so it is safe to rewrite mid-keystroke.
+    // up — and it holds no caret, so it is safe to rewrite mid-keystroke. So
+    // does Launch: it asked for this prize and stayed dead until the table
+    // was shut (`wakeLaunch()` in the bar touches the button and nothing else).
     const note = el.querySelector('.lb-pz-note');
     if (note) note.textContent = noteText();
+    afterTyping();
   });
   /*
    * AND NOTHING REPAINTS ON BLUR. THIS IS LOAD-BEARING.

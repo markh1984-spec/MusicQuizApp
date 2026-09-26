@@ -42,6 +42,10 @@ function packOwnShape(pack) {
 export function renderSlots(slots, {
   packOf, onChange, dragging, getPackDrag, clearPackDrag,
   getShelfRoundDrag = () => null, clearShelfRoundDrag = () => {}, maxSlots = 6,
+  // THE CEILING IS SAID ON EVERY DROP, NOT ONLY THE ROW'S OWN — a pack let go
+  // on an EMPTY TILE went round `tooLong()`, so a fourteen-round night drew
+  // fourteen tiles and the server sliced it to twelve with nothing said.
+  refuse = () => false,
   picked = -1, onPick = () => {},
 }) {
   const el = node('<div class="lb-tiles"></div>');
@@ -76,7 +80,11 @@ export function renderSlots(slots, {
   const want = Math.min(maxSlots, Math.max(ROW, Math.ceil((filled + 1) / ROW) * ROW));
   const shown = Array.from({ length: Math.max(want, slots.length) }, (_, i) => slots[i] || null);
 
-  const commit = (next) => onChange(next.length > maxSlots ? next.slice(0, maxSlots) : next);
+  const commit = (next) => {
+    const row = next.length > maxSlots ? next.slice(0, maxSlots) : next;
+    if (refuse(row)) return;
+    onChange(row);
+  };
 
   /*
    * `dragging(false)` IS CALLED HERE, ON DROP, NOT LEFT TO `dragend` —

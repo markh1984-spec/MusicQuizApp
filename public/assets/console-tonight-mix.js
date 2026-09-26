@@ -158,7 +158,7 @@ export function moveRoundToSlot(slots, { packId, round }, toIndex) {
   cleared[toIndex] = (targetNow && targetNow.kind === 'quiz' && targetNow.packId === packId)
     ? { ...targetNow, rounds: [...targetNow.rounds, round].sort((a, b) => a - b) }
     : { kind: 'quiz', packId, rounds: [round] };
-  return cleared;
+  return settleRunLists(slots, cleared);
 }
 
 /** Add a whole quiz pack (every round not already placed elsewhere) as a new slot. */
@@ -229,11 +229,11 @@ export function addQuizPackSlot(slots, pack, at) {
     .map((_, i) => i)
     .filter((i) => !placed.has(`${pack.id}:${i}`));
   if (!rounds.length) return slots;
-  return rounds.reduce(
+  return settleRunLists(slots, rounds.reduce(
     (row, round, n) => placeAt(row, { kind: 'quiz', packId: pack.id, rounds: [round] },
       Number.isInteger(at) ? at + n : at),
     slots,
-  );
+  ));
 }
 
 /**
@@ -296,7 +296,51 @@ export function addBingoSlot(slots, pack, { shape = null, prizes = 0, at, kind =
 
 /** Remove a whole slot — the tile's own × button, same gesture as today's pack tile. */
 export function removeSlot(slots, at) {
-  return slots.filter((_, i) => i !== at);
+  return settleRunLists(slots, slots.filter((_, i) => i !== at));
+}
+
+/**
+ * A QUIZ'S TYPED DRINKS BELONG TO THE GAME, NOT TO ITS FIRST TILE.
+ *
+ * `segmentsFromSlots()` reads a run's list off the FIRST quiz slot of the run
+ * and `setPartRewards()` writes it there — so taking that tile out, or
+ * dragging it past its siblings, silently put the night back on the venue's
+ * list (O3 of the 23 September 2026 sweep). Every mutator settles the row on
+ * its way out: the k-th quiz GAME's list, read off the row as it was, is put
+ * on the k-th game's first tile as it is now. Two games that become one keep
+ * the first's; a game split in two hands the new second nothing, which is the
+ * venue's list. A bingo slot is its own game and is never touched.
+ */
+function runLists(slots) {
+  const lists = [];
+  let inRun = false;
+  for (const slot of slots) {
+    if (!slot) continue;
+    if (slot.kind !== 'quiz') { inRun = false; continue; }
+    if (!inRun) { inRun = true; lists.push(Array.isArray(slot.rewards) ? slot.rewards : undefined); continue; }
+    if (Array.isArray(slot.rewards) && lists[lists.length - 1] === undefined) lists[lists.length - 1] = slot.rewards;
+  }
+  return lists;
+}
+export function settleRunLists(before, after) {
+  const lists = runLists(before);
+  const out = after.map((slot) => {
+    if (!slot || slot.kind !== 'quiz' || !('rewards' in slot)) return slot;
+    const { rewards: _dropped, ...rest } = slot;
+    return rest;
+  });
+  let k = -1;
+  let inRun = false;
+  for (let i = 0; i < out.length; i += 1) {
+    const slot = out[i];
+    if (!slot) continue;
+    if (slot.kind !== 'quiz') { inRun = false; continue; }
+    if (inRun) continue;
+    inRun = true;
+    k += 1;
+    if (Array.isArray(lists[k])) out[i] = { ...slot, rewards: lists[k] };
+  }
+  return out;
 }
 
 /**
@@ -311,7 +355,7 @@ export function removeSlot(slots, at) {
 export function swapSlots(slots, i, j) {
   const list = slots.slice();
   [list[i], list[j]] = [list[j], list[i]];
-  return list;
+  return settleRunLists(slots, list);
 }
 
 /**

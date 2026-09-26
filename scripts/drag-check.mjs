@@ -70,6 +70,8 @@ try {
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e.message)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  const dialogs = [];
+  page.on('dialog', (d) => { dialogs.push(d.message()); d.accept().catch(() => {}); });
   await page.goto(`${BASE}/console?key=${KEY}`, { waitUntil: 'load' });
   await page.waitForTimeout(2000);
 
@@ -83,6 +85,9 @@ try {
    * a single jump is read as a click, and no drag ever starts.
    */
   async function drag(fromSel, toSel) {
+    // A card below the fold has a box the mouse cannot reach; the row is
+    // sticky, so scrolling the card up leaves the target where it was.
+    await page.locator(fromSel).first().scrollIntoViewIfNeeded();
     const from = await page.locator(fromSel).first().boundingBox();
     const to = await page.locator(toSel).first().boundingBox();
     if (!from || !to) throw new Error(`nothing to drag: ${fromSel} -> ${toSel}`);
@@ -146,6 +151,30 @@ try {
    */
   await drag('.pack-card[data-pack]:not(.in-tonight) .pack-title', '.lb-tile.lb-drop, .lb-tile.mix-drop');
   check('a second pack card onto an EMPTY SLOT adds its rounds too', await packs() > afterOne, true);
+
+  /*
+   * THE CEILING IS SAID ON A DROP ONTO AN EMPTY TILE TOO. `tooLong()` guarded
+   * the row's own drop and every tap, and a pack let go on an EMPTY TILE went
+   * round it: a fourteen-round night drew fourteen tiles, Launch said
+   * fourteen, and the server sliced it to twelve with nothing said (the
+   * 23 September 2026 sweep, twice). Fill the row to the ceiling from the
+   * shelf, then drop one more pack on an empty tile: refused, said, unchanged.
+   */
+  const spare = () => page.locator('.pack-card[data-pack]:not(.in-tonight) .pack-title').count();
+  let rounds = await packs();
+  let refused = false;
+  for (let i = 0; i < 8 && await spare(); i += 1) {
+    // Without the ceiling the row simply fills up; a missing empty tile is
+    // then the symptom, and it must land as a FAIL rather than a throw.
+    if (!(await page.locator('.lb-tile.lb-drop, .lb-tile.mix-drop').count())) break;
+    dialogs.length = 0;
+    await drag('.pack-card[data-pack]:not(.in-tonight) .pack-title', '.lb-tile.lb-drop, .lb-tile.mix-drop');
+    const now = await packs();
+    if (now === rounds) { refused = true; break; }   // nothing landed: the ceiling
+    rounds = now;
+  }
+  check('a pack that would take the night past 12 rounds is refused on an EMPTY tile', refused && rounds <= 12 ? 'refused' : `${rounds} rounds on the row, ${await spare()} packs spare`, 'refused');
+  check('and the refusal is SAID', dialogs.some((d) => /at most 12 rounds/.test(d)) ? 'said' : `silent (${dialogs.join(' | ') || 'no dialog'})`, 'said');
 
   /*
    * MOVING A ROUND IS NOW MOVING ITS TILE — with one round to a tile there

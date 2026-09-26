@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import {
   slotsFromSimple, placedRounds, moveRoundToSlot, addQuizPackSlot, addBingoSlot,
   removeSlot, swapSlots, segmentsFromSlots, homeSlotIndex, toggleRoundOff, offRoundsFor,
-  simpleNight, gapIdsOfSlot,
+  simpleNight, gapIdsOfSlot, settleRunLists,
 } from '../public/assets/console-tonight-mix.js';
 import { breaksOf } from '../public/assets/console-breaks.js';
 
@@ -381,4 +381,59 @@ test("slotsFromSimple: the no-tile night's card, count, lines and drinks move on
   // And nothing typed is nothing carried — the slot is exactly what it was.
   assert.deepEqual(slotsFromSimple({ currentPack: BINGO, lbExtra: [], lbOff: new Set(), packOf }),
     [{ kind: 'bingo', packId: 'mbc', shape: null, prizes: 0 }]);
+});
+
+/*
+ * A QUIZ'S TYPED DRINKS BELONG TO THE GAME, NOT TO ITS FIRST TILE — O3 of the
+ * 23 September 2026 sweep. The list lived on the run's first slot, so taking
+ * that tile out or dragging it past its siblings put the night back on the
+ * venue's list, silently. `settleRunLists()` runs inside every mutator.
+ */
+test('the typed drinks stay with the quiz when its first tile is removed, moved, or joined from in front', () => {
+  const typed = ['A', 'B', 'C'];
+  const row = [
+    { kind: 'quiz', packId: 'a', rounds: [0], rewards: typed },
+    { kind: 'quiz', packId: 'a', rounds: [1] },
+    { kind: 'quiz', packId: 'a', rounds: [2] },
+  ];
+  const listOf = (slots) => segmentsFromSlots(slots).map((s) => s.rewards || null);
+
+  // the first tile goes: the list moves to the new first
+  const removed = removeSlot(row, 0);
+  assert.deepEqual(listOf(removed), [typed]);
+  assert.equal(removed.filter((s) => 'rewards' in s).length, 1, 'one copy, on the first tile');
+
+  // the first tile is dragged onto the last: the list stays with the game
+  const swapped = swapSlots(row, 0, 2);
+  assert.deepEqual(listOf(swapped), [typed]);
+  assert.ok(Array.isArray(swapped[0].rewards), 'the new first tile carries it');
+  assert.equal('rewards' in swapped[2], false, 'and the tile that had it does not');
+
+  // another pack's round landing in an EMPTY slot in front of the run: still the game's list
+  const joined = addQuizPackSlot([null, ...row], PACK_B, 0);
+  assert.deepEqual(listOf(joined), [typed]);
+  assert.ok(Array.isArray(joined[0].rewards) && joined[0].packId === 'b', JSON.stringify(joined[0]));
+
+  // a round moved to slot 0 ahead of the run
+  const moved = moveRoundToSlot([null, ...row], { packId: 'a', round: 2 }, 0);
+  assert.deepEqual(listOf(moved), [typed]);
+  assert.ok(Array.isArray(moved[0].rewards));
+});
+
+test('settleRunLists: two games become one and keep the first list; a game split in two hands the new one the venue\'s', () => {
+  const two = [
+    { kind: 'quiz', packId: 'a', rounds: [0], rewards: ['A'] },
+    { kind: 'bingo', packId: 'mbc', shape: null, prizes: 0, rewards: ['BINGO'] },
+    { kind: 'quiz', packId: 'b', rounds: [0], rewards: ['B'] },
+  ];
+  const merged = removeSlot(two, 1);
+  assert.deepEqual(segmentsFromSlots(merged).map((s) => s.rewards || null), [['A']]);
+
+  const split = settleRunLists(
+    [{ kind: 'quiz', packId: 'a', rounds: [0], rewards: ['A'] }, { kind: 'quiz', packId: 'a', rounds: [1] }],
+    [{ kind: 'quiz', packId: 'a', rounds: [0], rewards: ['A'] }, { kind: 'bingo', packId: 'mbc', shape: null, prizes: 0 }, { kind: 'quiz', packId: 'a', rounds: [1] }],
+  );
+  assert.deepEqual(segmentsFromSlots(split).map((s) => s.rewards || null), [['A'], null, null]);
+  // the bingo's own list is never touched by a quiz settle
+  assert.deepEqual(segmentsFromSlots(two)[1].rewards, ['BINGO']);
 });

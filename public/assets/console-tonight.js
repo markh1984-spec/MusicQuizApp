@@ -2101,17 +2101,16 @@ export function launchBar() {
   function setPartRewards(part, list) {
     const clean = list.map((r) => String(r || '').trim());
     while (clean.length && !clean[clean.length - 1]) clean.pop();
-    if (part.at < 0) { night.rewards = clean; return; }
+    // EVERY BOX CLEARED IS THE VENUE'S LIST AGAIN, NEVER "PAYS NOTHING": `[]`
+    // went out while the gate fell through to the venue and said "prizes set",
+    // so the night launched with nobody to pay (O4). Absent is the venue's deal.
+    if (part.at < 0) { night.rewards = clean.length ? clean : undefined; return; }
     const next = lbSlots.slice();
-    next[part.at] = { ...next[part.at], rewards: clean };
+    const { rewards: _was, ...rest } = next[part.at];
+    next[part.at] = clean.length ? { ...rest, rewards: clean } : rest;
     lbSlots = next;
   }
 
-  /*
-   * FAILS OPEN LIKE THE GATE IT FEEDS. An empty list here can only ever make
-   * `noPrizesReason()` fall through to the venue record, which is exactly
-   * what it did before a game could pay something of its own.
-   */
   /** Which lines a bingo part's prizes pay on — the slot's own, or the one game's. */
   function setPartStages(part, lines) {
     if (part.at < 0) { night.stages = lines; return; }
@@ -2300,6 +2299,7 @@ export function launchBar() {
     setPartStages,
     onToggle: () => { prizeTableOpen = !prizeTableOpen; paintOrder(); },
     afterStages: paintPrizes,
+    afterTyping: wakeLaunch,
     noteText: () => prizeNote(partsNow(), { venueName: venueNow(), venueList: venuePrizes() }),
   });
 
@@ -2779,6 +2779,7 @@ export function launchBar() {
       getShelfRoundDrag: () => shelfRoundDrag,
       clearShelfRoundDrag: () => setShelfRoundDrag(null),
       maxSlots: PACK_SLOTS,
+      refuse: tooLong,   // a drop on an EMPTY tile went round the round ceiling
       picked: lbPicked,
       onPick: (at) => { lbPicked = at; paintOrder(); },
     });
@@ -3402,31 +3403,31 @@ export function launchBar() {
   }
 
   /**
-   * NOTHING TO GIVE THE WINNER IS A REASON NOT TO LAUNCH — asked for after a
-   * night where the winners got a blank phone: *"a prompt that doesn't allow
-   * me to launch without prizes"*. The warning beside the button had existed
-   * since that night and had not stopped it, because a line next to a working
-   * button is a line you launch past.
-   *
-   * **ONE GATE, CALLED BY BOTH PAINTERS, WHICH IS THE WHOLE REASON IT IS A
-   * FUNCTION.** `paintGo()` and `paintOrder()` each set this button's words
-   * and its disabled state, independently — and since a pack BURSTS into a
-   * tile per round, `paintOrder()` is the one an ordinary night goes through.
-   * The first build put the check in `paintGo()` alone and the button never
-   * changed on any real night: the guard caught it, five assertions at once.
-   * Two places doing one job is how they come to disagree.
-   *
-   * **IT ONLY EVER SUBTRACTS.** It never enables a button another painter
-   * disabled, so every existing reason to be hollow still wins — and
-   * `noPrizesReason()` fails OPEN, returning null for anything it is not
-   * certain about, so an unloaded library launches as it always did.
+   * LAUNCH STANDS DOWN WITHOUT PRIZES — ONE GATE, CALLED BY BOTH PAINTERS.
+   * `paintGo()` and `paintOrder()` each set this button's words and state,
+   * and a pack BURSTS, so `paintOrder()` is the one an ordinary night goes
+   * through: the first build sat in `paintGo()` alone and gated nothing.
+   * **IT ONLY EVER SUBTRACTS** — never enables what another painter disabled —
+   * and `noPrizesReason()` fails OPEN, so an unloaded library launches as ever.
    */
   function standDownWithoutPrizes() {
+    delete goBtn.dataset.label;
     if (goBtn.disabled) return;
     const why = noPrizesReason(venueNow(), library && library.venueRecords, prizesNow());
     if (!why) return;
+    goBtn.dataset.label = goBtn.textContent;   // what it said, for `wakeLaunch()`
     goBtn.disabled = true;
     goBtn.textContent = why;
+  }
+  // TYPING THE PRIZE LAUNCH ASKED FOR WAKES IT — no repaint (the caret), and
+  // only a button THIS gate shut is put back; another painter's stays hollow.
+  function wakeLaunch() {
+    if (goBtn.disabled && 'label' in goBtn.dataset
+      && !noPrizesReason(venueNow(), library && library.venueRecords, prizesNow())) {
+      goBtn.disabled = false;
+      goBtn.textContent = goBtn.dataset.label;
+    }
+    standDownWithoutPrizes();
   }
 
   /* THE VENUE STAYS A BUTTON at the head of the bar and is READ here: it is

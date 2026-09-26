@@ -139,7 +139,7 @@ try {
    * picked next, and the bar showed the venue's list while the wire carried
    * the old typed one. Three ways in, each driven exactly as the sweep found it.
    */
-  const again = async () => {
+  const again = async ({ venue = true } = {}) => {
     // Launch lands on /host; the next act starts from the console.
     await p.goto(`${BASE}/console`, { waitUntil: 'load' });
     await p.waitForTimeout(2500);
@@ -162,6 +162,7 @@ try {
       if (done) break;
       await p.waitForTimeout(250);
     }
+    if (!venue) return;
     await p.evaluate(async (v) => {
       document.querySelector('.lb-where')?.click();
       await new Promise((r) => setTimeout(r, 400));
@@ -169,6 +170,7 @@ try {
     }, VENUE);
     await p.waitForTimeout(900);
   };
+  const goSays = () => p.$eval('.lb-go', (n) => ({ text: n.textContent.replace(/\s+/g, ' ').trim(), off: n.disabled }));
   const tab = async (t) => { await p.evaluate((x) => document.querySelector(`[data-tab="${x}"]`)?.click(), t); await p.waitForTimeout(900); };
   const tap = async (id) => {
     const hit = await p.evaluate((x) => { const c = document.querySelector(`.pack-card[data-pack="${x}"]`); if (!c) return false; c.click(); return true; }, id);
@@ -281,6 +283,62 @@ try {
    * and never the shut table, which went on listing five drinks while the
    * wire sent two.
    */
+  /*
+   * EVERY BOX CLEARED IS THE VENUE'S LIST AGAIN (O4). Clearing the three boxes
+   * sent `rewards: []` — a game that pays nothing — while the gate fell
+   * through to the venue record and said "prizes set", so Launch was live and
+   * the room had nobody to pay. A cleared table means the venue's deal now.
+   */
+  console.log('\nCLEAR EVERY BOX — the venue\'s list comes back, and the wire agrees');
+  await again();
+  await tab('quiz');
+  check('a quiz taps in', await tap('madonna'));
+  const cleared = await p.evaluate(async () => {
+    const head = document.querySelector('.lb-pz-head');
+    if (head.getAttribute('aria-expanded') !== 'true') head.click();
+    await new Promise((r) => setTimeout(r, 400));
+    for (const box of document.querySelectorAll('.lb-pz-in')) { box.value = ''; box.dispatchEvent(new Event('input', { bubbles: true })); }
+    document.querySelector('.lb-pz-head').click();
+    await new Promise((r) => setTimeout(r, 400));
+    return document.querySelector('.lb-prizes').innerText.replace(/\s+/g, ' ').trim();
+  });
+  check('the shut table lists the VENUE\'s drinks again', VENUE_LIST.every((v) => cleared.includes(v)) && !/Nothing set/.test(cleared), cleared.slice(0, 120));
+  const r5 = await launchAndRead();
+  check('the wire carries no list of its own', !('rewards' in r5.body) || r5.body.rewards === undefined, r5.wire);
+  check('and the room plays for the venue\'s list, not for nothing', VENUE_LIST.every((v) => r5.room.includes(v)), r5.room);
+
+  /*
+   * TYPING THE PRIZE LAUNCH ASKED FOR WAKES IT (Y1). With no venue the button
+   * reads "Pick a venue, or type what tonight pays above" — and stayed dead
+   * while you typed exactly that, until the table was shut. Nothing repaints
+   * on a keystroke (the caret), so only the button changes.
+   */
+  console.log('\nNO VENUE — typing a prize wakes Launch without shutting the table');
+  await again({ venue: false });
+  await tab('quiz');
+  check('a quiz taps in with no venue picked', await tap('madonna'));
+  const hollow = await goSays();
+  check('Launch is hollow and asks for a prize', hollow.off && /type what tonight pays/i.test(hollow.text), JSON.stringify(hollow));
+  await p.evaluate(async () => {
+    const head = document.querySelector('.lb-pz-head');
+    if (head.getAttribute('aria-expanded') !== 'true') head.click();
+    await new Promise((r) => setTimeout(r, 400));
+    const box = document.querySelector('.lb-pz-in');
+    box.value = 'A PINT FOR TYPING';
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 200));
+  });
+  const woke = await goSays();
+  check('Launch wakes as you type, with the table still open', !woke.off && /^Launch /.test(woke.text) && (await p.$eval('.lb-pz-head', (n) => n.getAttribute('aria-expanded'))) === 'true', JSON.stringify(woke));
+  await p.evaluate(async () => {
+    const box = document.querySelector('.lb-pz-in');
+    box.value = '';
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 200));
+  });
+  const hollowAgain = await goSays();
+  check('and clears the box: hollow again, same words', hollowAgain.off && /type what tonight pays/i.test(hollowAgain.text), JSON.stringify(hollowAgain));
+
   console.log('\nA DECK ON ITS OWN — one box, the card row inert, the panel names the game');
   await again();
   await tab('cards');
