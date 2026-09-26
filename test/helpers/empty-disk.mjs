@@ -54,7 +54,11 @@ export async function onAnEmptyDisk(run, { seedRepo, env = {} }) {
       }).then((r) => r.json().then((json) => ({ status: r.status, json })));
       const hostView = () => fetch(`${base}/api/state?role=host`, { headers: { Cookie: cookie } }).then((r) => r.json());
       const get = (route) => fetch(`${base}${route}`, { headers: { Cookie: cookie } });
-      await run({ repo, data, roomId: seeded.id, host, hostView, get });
+      const post = (route, body) => fetch(`${base}${route}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: cookie },
+        body: JSON.stringify(body || {}),
+      }).then((r) => r.json().then((json) => ({ status: r.status, json })));
+      await run({ repo, data, roomId: seeded.id, host, hostView, get, post });
     }, {
       hostKey: 'empty-disk-key',
       nodeArgs: ['--import', STUB],

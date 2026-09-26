@@ -35,13 +35,6 @@ export async function backupStatus() {
 
 
 /**
- * File a pack into the repository so it survives a restart.
- *
- * Never throws and never blocks what you were doing — a failed backup is
- * reported and moved on from, because losing the pack you just made because
- * the backup failed would be daft.
- */
-/**
  * Open a streaming progress response, and keep it open.
  *
  * Generation spends a minute or more inside one Claude call with nothing to
@@ -68,6 +61,7 @@ export function progressStream(res) {
   };
 }
 
+/** File one pack. Never throws and never blocks: a failed backup is reported and moved on from. */
 export async function backUp(relPath, contents, message, log = () => {}) {
   if (!githubConfigured()) {
     log(`not backed up — GitHub backup is not set up, so this will be lost when the app restarts`);
@@ -107,34 +101,6 @@ export async function backUpMany(files, message, log = () => {}) {
 }
 
 /**
- * Back up the no-repeats memory.
- *
- * It matters as much as the pack it came with. Without it the rule quietly
- * forgets everything on the next restart, and the app then cheerfully hands a
- * regular the same forty songs it gave them last month — with nothing on screen
- * to say anything went wrong.
- *
- * Every route that adds to the history calls this. Generating did; IMPORTING
- * DID NOT, which was invisible right up until importing became the main way
- * packs get made.
- *
- * Never throws: the pack is already saved by this point and a GitHub problem
- * must not turn a finished job into a failed one.
- */
-/**
- * Back up the invoice book.
- *
- * To the PRIVATE repository, never the main one. The main one is public, and
- * this file holds customer addresses and the host's own sort code and account
- * number — committing that to a public repo is not something you can undo,
- * because git history is forever. Same reasoning as the photos, same repo.
- *
- * There is no persistent disk on the free tier, so without this an invoice
- * survives exactly until the next deploy. That is why every route that changes
- * anything reports `backedUp` and the console says so out loud: an invoice you
- * think you have a record of and do not is worse than no record at all.
- */
-/**
  * The file one room's invoice book is backed up as.
  *
  * The house keeps the original name, so the backup Mark already has in the
@@ -161,7 +127,7 @@ export function invoiceBackupName(room) {
  * GitHub answers in well under a second and nothing changes.
  */
 export const BACKUP_WAIT_MS = Number(process.env.BACKUP_WAIT_MS) || 3_000;
-export async function within(promise, ms = BACKUP_WAIT_MS) {
+export async function within(promise, ms = BACKUP_WAIT_MS, what = '') {
   let timer;
   /*
    * **`late` IS NOT A FAILURE, AND IT IS MARKED SO IT CANNOT BE READ AS ONE.**
@@ -171,11 +137,20 @@ export async function within(promise, ms = BACKUP_WAIT_MS) {
    * `github-down.mjs` has measured a sign-in at one full timeout and a venue
    * save at two, so it is a normal bad morning rather than a rare one. Callers
    * that only ask `ok` are unchanged; `saidSo()` reads `late` and stays quiet.
+   *
+   * **BUT LATE AND THEN FAILED IS STILL A FAILURE**, and for six weeks after
+   * `saidSo()` was written nobody looked at the original promise again: a write
+   * that went late at three seconds and then got a 503 was never reported —
+   * the one class of failure a GitHub hang produces. So when the race is lost,
+   * the write itself reports when it settles, under `what`: landed stays
+   * silent, failed is said. `test/late-backup-said.test.js`.
    */
   const late = new Promise((resolve) => { timer = setTimeout(() => resolve({ ok: false, late: true, error: `still writing after ${ms}ms` }), ms); });
   if (timer.unref) timer.unref();
   try {
-    return await Promise.race([promise, late]);
+    const result = await Promise.race([promise, late]);
+    if (result && result.late && what) promise.then((r) => saidSo(what, r), (err) => saidSo(what, { ok: false, error: err.message }));
+    return result;
   } finally {
     clearTimeout(timer);
   }
@@ -218,10 +193,21 @@ function saidSo(what, result) {
   return result;
 }
 
+/** A backup a request waits `BACKUP_WAIT_MS` for, said if it fails — now or later. */
+async function saidWithin(what, promise) {
+  return saidSo(what, await within(promise, BACKUP_WAIT_MS, what));
+}
+
+/**
+ * The invoice book, to the PRIVATE repository and never the main one: it holds
+ * customer addresses and the host's own sort code, and git history is forever.
+ * Every route that changes it reports `backedUp`, because a record you think
+ * you have and do not is worse than none.
+ */
 export async function backUpInvoices(room) {
   if (!privateRepoConfigured()) return saidSo('the invoice book', { ok: false, error: 'no private repo set up' });
   try {
-    return saidSo('the invoice book', await within(putFile(invoiceBackupName(room), room.invoices.serialise(), 'Update invoices', 'private')));
+    return saidWithin('the invoice book', putFile(invoiceBackupName(room), room.invoices.serialise(), 'Update invoices', 'private'));
   } catch (err) {
     return saidSo('the invoice book', { ok: false, error: err.message });
   }
@@ -266,7 +252,7 @@ export async function backUpArchive(room) {
     return saidSo('a night', { ok: false, error: 'the past nights could not be read back first, so tonight was not written over them; it goes out when GitHub answers' });
   }
   try {
-    return saidSo('a night', await within(putFile(archiveBackupName(room), serialiseArchive(room.paths.archive), 'Update past nights', 'private')));
+    return saidWithin('a night', putFile(archiveBackupName(room), serialiseArchive(room.paths.archive), 'Update past nights', 'private'));
   } catch (err) {
     return saidSo('a night', { ok: false, error: err.message });
   }
@@ -547,7 +533,7 @@ export async function backUpCodes(serialised) {
 export async function backUpAccounts() {
   if (!privateRepoConfigured()) return saidSo('the accounts book', { ok: false, error: 'no private repo set up' });
   try {
-    return saidSo('the accounts book', await within(putFile('accounts.json', accounts.serialise(), 'Update accounts', 'private')));
+    return saidWithin('the accounts book', putFile('accounts.json', accounts.serialise(), 'Update accounts', 'private'));
   } catch (err) {
     return saidSo('the accounts book', { ok: false, error: err.message });
   }
@@ -1239,6 +1225,11 @@ export function backUpPropUse() {
   return propPush;
 }
 
+/**
+ * The no-repeats memory. EVERY route that adds to it calls this — importing
+ * did not, once, and a regular was handed last month's forty songs. Never
+ * throws: the pack is saved by now and GitHub must not fail a finished job.
+ */
 export async function backUpHistory(log = () => {}) {
   try {
     const historyFile = path.join(config.dataDir, 'track-history.json');
