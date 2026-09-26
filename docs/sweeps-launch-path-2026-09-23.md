@@ -49,6 +49,22 @@ tagged *(known)* where an agent re-confirmed them.
   and moved onto the tile with the card, count and lines when the row converts
   (`burst()`; `slotsFromSimple()` takes `night`).
   `typed-prizes-reach-the-room.mjs` drives all three ways, each fail-first.
+- **Oranges and yellows, started 26 September.** On the launch bar, each with
+  a guard act proven fail-first: O2 (a loaded show is every part as tiles;
+  Launch sends the tiles), O3 (a quiz's typed drinks follow the game, not its
+  first tile — `settleRunLists()`), O4 (every box cleared is the venue's list
+  again), O5 (a bingo alone redraws its shut table), O7 (a deck alone is not
+  music bingo; `KIND_NAMES`), O10 (the round ceiling on a drop onto an empty
+  tile), Y1 (typing a prize wakes Launch). Still to do on the bar: O1 (a
+  night key so "this one" compares the whole night), O9 (the console learns
+  the room changed: a running summary on the ready poll, a refresh on a
+  refused tap), and the rest of the bar yellows. The room batch (O11–O18,
+  the room yellows) and the server batch (O20–O26, the recovery and security
+  yellows) are being worked in worktrees under `.claude/worktrees/` on
+  `worktree-agent-*` branches; merge them onto `MusicQuizApp` when they
+  finish. CLAUDE.md still needs the rules from these commits written in (it is
+  at its byte budget, so each needs a trim): the bar plays EVERY part of a show
+  as tiles now, not one part with a "Then" line.
 - **R2** — fixed on 24 September: the projector payload names the question's
   POSITION (`/quiz-images/q/<round>/<question>`), and the server serves it
   only for a question the room has been asked (`Engine.pictureAsked()`: live
