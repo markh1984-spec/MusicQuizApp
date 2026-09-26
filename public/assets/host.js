@@ -1304,11 +1304,23 @@ function buildActions(s) {
    * the title says why rather than leaving somebody pressing it twice.
    */
   const atStart = s.phase === 'lobby';
+  /*
+   * THE TOOLTIP SAYS WHAT BACK ACTUALLY DOES, and that is two different
+   * things. It read *"Every score is kept, so this is the safe one"* at every
+   * phase, and at a question or a reveal it was false: Back steps to the
+   * PREVIOUS answer, and the question it steps back over is asked again by
+   * Next \u2014 so its points are wiped, exactly as Skip and Ask again wipe theirs.
+   * At a reveal it used to REOPEN the question, which is what Ask again is
+   * for; the engine no longer does that, and the words say which control
+   * does which. At a round board or a round intro nothing is wiped.
+   */
+  const backWhy = atStart
+    ? 'Nothing to go back to yet \u2014 the quiz has not started.'
+    : s.phase === 'question' || s.phase === 'reveal'
+      ? 'Back \u2014 to the previous answer. This question is asked again from the top, so its points are wiped. Ask again replays it instead.'
+      : 'Back \u2014 one step back. Nothing is wiped.';
   const back = node(`<button class="minor back-btn" aria-label="Back" ${atStart ? 'disabled' : ''}`
-    + ` title="${atStart
-      ? 'Nothing to go back to yet \u2014 the quiz has not started.'
-      : 'Back \u2014 one step back. Every score is kept, so this is the safe one.'}"`
-    + `>${backIcon}</button>`);
+    + ` title="${esc(backWhy)}">${backIcon}</button>`);
   back.addEventListener('click', () => act('back'));
   out.push(back);
 

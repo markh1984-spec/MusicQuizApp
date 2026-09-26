@@ -39,6 +39,11 @@ const KEY = 'host-controls';
 let fails = 0;
 const dead = [];
 const tiny = [];
+/** A named assertion, printed the way the rest of this file prints. */
+const ok = (cond, what, got = '') => {
+  if (!cond) fails += 1;
+  console.log(`  ${cond ? 'ok  ' : 'FAIL'} ${what}${cond || !got ? '' : ` — ${got}`}`);
+};
 
 /*
  * PRESSES THAT END THE NIGHT ARE NOT PROBED. Not because they are safe to
@@ -339,11 +344,34 @@ try {
      * round. A button that posts the right action for the wrong player reacts
      * perfectly and does neither — so each is checked where it lands.
      */
+    /*
+     * BACK AT A REVEAL SAYS WHAT IT DOES, AND DOES IT. The tooltip read
+     * *"Every score is kept, so this is the safe one"* at every phase while
+     * the engine REOPENED the question at a reveal, points wiped — Ask again
+     * wearing the arrow (launch-path sweep, 23 September 2026). Read off the
+     * real button: the title names the wipe and never claims the scores are
+     * kept, and pressing it steps BACK — from the first reveal to the round
+     * intro — rather than putting the question back up live.
+     */
+    if (!BINGO && phase === 'reveal') {
+      const at = await driveTo('reveal');
+      if (at !== 'reveal') ok(false, 'the night reaches a reveal for the Back check', at);
+      else {
+        const title = await page.evaluate(() => (document.querySelector('.actions .back-btn') || {}).getAttribute?.('title') || '');
+        ok(/asked again/i.test(title) && /wiped/i.test(title) && !/every score is kept/i.test(title),
+          'Back\'s tooltip at a reveal says the question is asked again and its points wiped', JSON.stringify(title));
+        const hit = await page.evaluate(() => { const b = document.querySelector('.actions .back-btn'); if (!b || b.disabled) return false; b.click(); return true; });
+        await page.waitForTimeout(800);
+        const v = await view();
+        ok(hit && v.phase === 'round_intro', 'Back from the first reveal steps back to the round intro, never reopening the question', `phase ${v.phase}`);
+        // The WALL's payload, not the host's: `hostView()` always carries the
+        // pointer's question as the read-ahead, and only the projector's
+        // payload says whether one is actually up.
+        const wall = (await J(`/api/state?role=screen&g=${encodeURIComponent(lastCode)}`)).body || {};
+        ok(!wall.question, 'and the question it stepped over is no longer on the wall', wall.question ? `phase ${wall.phase}, a question is up` : '');
+      }
+    }
     if (BINGO && phase === 'claim') {
-      const ok = (cond, what, got = '') => {
-        if (!cond) fails += 1;
-        console.log(`  ${cond ? 'ok  ' : 'FAIL'} ${what}${cond || !got ? '' : ` — ${got}`}`);
-      };
       let at = await driveTo('claim');
       const winner = lastPlayers[0];
       if (at !== 'claim') ok(false, 'a BINGO press puts a claim in front of the host', at);

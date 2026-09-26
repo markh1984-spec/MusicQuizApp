@@ -1993,9 +1993,17 @@ export class Engine {
     // away what the room just did. See `settlePhotoVote()`.
     this.settlePhotoVote();
     switch (s.phase) {
+      /*
+       * FROM A REVEAL, BACK STEPS TO THE PREVIOUS ANSWER — the same move as
+       * from a live question, below. It used to REOPEN the question, which is
+       * *Ask again*'s job wearing the arrow: one mis-tap and the room was
+       * re-answering a question it had just been shown the answer to, with the
+       * points it had earned wiped, under a tooltip calling this the safe one.
+       * Decided 26 September 2026: at a reveal the arrow goes back, never
+       * round again; the question being left is wiped exactly as it is from a
+       * live question, because Next brings it straight back.
+       */
       case PHASES.REVEAL:
-        // Back from a reveal reopens the same question, cleared, from the top.
-        return this.redoQuestion();
       case PHASES.QUESTION:
         // The usual reason for pressing Back here is pressing Next once too
         // often on the previous reveal. So go back to that reveal, with its

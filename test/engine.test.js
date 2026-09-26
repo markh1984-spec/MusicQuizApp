@@ -325,7 +325,52 @@ test('skipping the last question of a round goes to the round board', () => {
   assert.equal(engine.state.phase, PHASES.ROUND_BOARD);
 });
 
-test('going back from a reveal reopens the same question, cleared', () => {
+/*
+ * BACK FROM A REVEAL STEPS TO THE PREVIOUS ANSWER — it does not reopen the
+ * question the room has just been shown the answer to.
+ *
+ * Reopening it was *Ask again*'s job wearing the arrow: one mis-tap on the
+ * button whose tooltip called it "the safe one" put a question the room had
+ * just seen answered back up live, with every point it had earned wiped.
+ * Found in the launch-path sweep of 23 September 2026 and decided on the 26th:
+ * at a reveal, Back mirrors Back from a live question — to the previous
+ * question's answer — and the question being left is wiped exactly as it is
+ * there, because Next brings it straight back. *Ask again* is the control
+ * that replays this one. REVERSES the pinned test that asserted the reopen.
+ */
+test('going back from a reveal steps to the PREVIOUS answer, wiping the question it leaves', () => {
+  const { engine, at } = makeEngine();
+  const [a] = joinThree(engine);
+  toFirstQuestion(engine);
+  at(1_000);
+  engine.answer({ playerId: a.id, optionIndex: 1 });   // right on q1
+  engine.next(); // reveal q1
+  const afterOne = engine.state.players[a.id].score;
+  assert.ok(afterOne > 0);
+  engine.next(); // q2
+  at(3_000);
+  engine.answer({ playerId: a.id, optionIndex: 2 });   // right on q2
+  engine.next(); // reveal q2
+  assert.ok(engine.state.players[a.id].score > afterOne);
+
+  engine.back();
+  assert.equal(engine.state.phase, PHASES.REVEAL, 'Back at a reveal reopened the question — that is Ask again\'s job');
+  assert.equal(engine.state.questionIndex, 0);
+  assert.equal(engine.state.players[a.id].score, afterOne,
+    'the question being left is asked again by Next, so its points are wiped');
+  assert.equal(engine.state.answers[engine.answerKey(0, 1)], undefined,
+    '…and its answers, or the replay tells them they have already answered');
+  assert.equal(engine.state.question.closed, true);
+  assert.equal(engine.fastestFinger().name, 'Sofa King Good', 'the previous answer is shown intact');
+
+  // And the replay is a real question.
+  engine.next();
+  assert.equal(engine.state.phase, PHASES.QUESTION);
+  assert.equal(engine.state.questionIndex, 1);
+  assert.equal(engine.answer({ playerId: a.id, optionIndex: 2 }).ok, true);
+});
+
+test('…and from the reveal of a round\'s FIRST question it steps to the round intro, wiped', () => {
   const { engine, at } = makeEngine();
   const [a] = joinThree(engine);
   toFirstQuestion(engine);
@@ -333,9 +378,10 @@ test('going back from a reveal reopens the same question, cleared', () => {
   engine.answer({ playerId: a.id, optionIndex: 1 });
   engine.reveal();
   engine.back();
-  assert.equal(engine.state.phase, PHASES.QUESTION);
-  assert.equal(engine.state.questionIndex, 0);
+  assert.equal(engine.state.phase, PHASES.ROUND_INTRO);
   assert.equal(engine.state.players[a.id].score, 0);
+  assert.equal(engine.state.answers[engine.answerKey(0, 0)], undefined);
+  assert.equal(engine.state.question, null);
 });
 
 test('going back from a question returns to the previous reveal, scores intact', () => {
