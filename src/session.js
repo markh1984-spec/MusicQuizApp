@@ -52,13 +52,27 @@ import { lobbyGameFor } from '../public/assets/lobby-games.js';
  * `readPack` looks in their own library first and the catalogue second, so a
  * bare pack id still means one thing and every caller carries on passing one.
  */
+/*
+ * EVERY VOUCHER'S STANDING IS PART OF THE MILESTONE, ON BOTH ENGINES.
+ *
+ * A bar scan moved no milestone, so a redeem waited the debounce's 250ms while
+ * the ARCHIVE copy was written at once: a hard crash in that window came back
+ * with the live code unredeemed and the filed one redeemed, and the next scan
+ * paid the drink twice (O22, 23 September 2026 sweep). A drink leaving the bar
+ * moves the night forward as surely as a track called — and nobody can un-pour
+ * a pint any more than re-tick ten songs. A code minted, spent, put back or
+ * carried into the next part each change this string.
+ */
+const voucherMark = (s) => Object.values(s.vouchers || {})
+  .map((v) => `${v.code}${v.redeemedAt ? '!' : ''}${v.reinstated || ''}${v.carried ? '~' : ''}`).join(',');
+
 const LAUNCHERS = {
   quiz: {
     load: (config, id, paths) => readPack('quiz', id, { config, paths }).pack,
     list: (config, paths) => [...listQuizzes(config.quizDir), ...listOwn(paths).quizzes],
     make: (pack, opts) => new Engine({ quiz: pack, ...opts }),
     /** What counts as "worth writing to disk this instant". */
-    milestone: (s) => `${s.phase}:${s.roundIndex}:${s.questionIndex}:${Object.keys(s.players).length}`,
+    milestone: (s) => `${s.phase}:${s.roundIndex}:${s.questionIndex}:${Object.keys(s.players).length}:${voucherMark(s)}`,
     isOver: (s) => s.phase === PHASES.FINAL,
     empty: { id: 'empty', title: 'No quiz loaded', rounds: [] },
   },
@@ -76,7 +90,7 @@ const LAUNCHERS = {
       for (const p of Object.values(s.players)) {
         for (const m of p.marks) if (m) marks++;
       }
-      return `${s.phase}:${s.round}:${s.called.length}:${Object.keys(s.players).length}:${marks}`;
+      return `${s.phase}:${s.round}:${s.called.length}:${Object.keys(s.players).length}:${marks}:${voucherMark(s)}`;
     },
     isOver: (s) => s.phase === BINGO_PHASES.FINISHED,
     empty: { id: 'empty', title: 'No bingo pack loaded', tracks: [], cardSize: 4 },
