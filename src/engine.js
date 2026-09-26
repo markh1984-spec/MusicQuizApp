@@ -1748,7 +1748,9 @@ export class Engine {
      * projector, nothing to show the bar. The same three flags
      * `withdrawVouchersNoLongerOwed()` already leaves alone.
      */
-    const already = new Set(Object.values(s.vouchers).filter((v) => !v.carried && !v.funny && !v.draw).map((v) => v.winnerId));
+    const placings = Object.values(s.vouchers).filter((v) => !v.carried && !v.funny && !v.draw);
+    const already = new Set(placings.map((v) => v.winnerId));
+    const held = new Map(placings.map((v) => [v.winnerId, v]));
     for (const row of this.leaderboard()) {
       /*
        * POSITIONS, NOT THE TOP THREE ROWS. `rankPlayers` gives 1, 2, 2, 4 so
@@ -1787,7 +1789,22 @@ export class Engine {
       if (!(row.score > 0)) continue;
       const reward = rewards[row.position - 1];
       if (!reward) continue;
-      if (already.has(row.id)) continue;
+      if (already.has(row.id)) {
+        /*
+         * A PRIZE CHANGED AFTER IT WAS WON REACHES THE CODE ALREADY IN
+         * SOMEBODY'S HAND — bingo's `payWinnersOwed()` rule, arriving here.
+         * *Change the prizes* at the final scores minted nothing (the winner
+         * already held one) and rewrote nothing, so the phone went on saying
+         * the old drink and the bar read it off. Updated IN PLACE: the code
+         * they are holding stays the one that scans, never a second voucher.
+         * A REDEEMED one is left alone — the drink has gone, and rewriting
+         * what it said afterwards is editing history. `withdraw…()` above has
+         * already taken back anything whose place no longer matches.
+         */
+        const mine = held.get(row.id);
+        if (mine && !mine.redeemedAt && mine.reward !== reward) mine.reward = reward;
+        continue;
+      }
       let code = newVoucherCode();
       while (s.vouchers[code]) code = newVoucherCode();
       s.vouchers[code] = {
