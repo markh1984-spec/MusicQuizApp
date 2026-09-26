@@ -704,6 +704,9 @@ export class Session {
          */
         state.archivedAs = record.id;
         this.filedVouchers = JSON.stringify(state.vouchers || {});
+        // What was filed about how it ended, so the update branch below can
+        // tell a night that has moved on from one sitting on its scores.
+        this.filedParts = JSON.stringify(this.filedShape(results));
 
         /*
          * THE LEAGUE, WORKED OUT AFTER TONIGHT IS FILED — which is the whole
@@ -821,42 +824,18 @@ export class Session {
        * the file on every push — the same discipline the voucher check above
        * already follows.
        */
+      /*
+       * AND SO IS A ONE-GAME NIGHT PLAYED ON PAST A STOP. The quiz's own
+       * *Stop the quiz* files the evening exactly as bingo's Finish does, and
+       * Back undoes the phase — so a Stop after question one, a Back and the
+       * rest of the night left the record saying whoever led after one
+       * question had won (launch-path sweep, 23 September 2026). This branch
+       * only ever folded in a RUNNING ORDER's later part; the ordinary
+       * one-game night, which is most nights, went unrecorded. `filedShape()`
+       * now answers for both.
+       */
       const ended = this.launcher.isOver(state);
-      /*
-       * THE ENDING PART'S OWN RESULTS, then `scoresOfTheNight()` over the top.
-       *
-       * Both halves are needed and neither is enough. The ending part's
-       * `results()` is what carries a quiz's board and its `kind` — and
-       * `scoresOfTheNight()` deliberately returns `{}` when the part that
-       * ended IS the quiz, because there is then nothing to substitute. Patch
-       * with that alone and the record keeps the BINGO's leaderboard and
-       * `kind: 'bingo'`, which `league.js` drops on sight: the quiz would be
-       * filed and then ignored.
-       *
-       * **`kind` MOVES WITH THE BOARD** — the rule the running-order archive
-       * already follows, applied to the recovery path.
-       */
-      const endedResults = ended ? this.engine.results() : null;
-      /*
-       * AND A KEY WORTH NOTHING IS LEFT OUT RATHER THAN WRITTEN AS UNDEFINED.
-       *
-       * `updateArchivedNight()` spreads the patch over the record, so a key
-       * present-and-undefined DELETES a good value. The quiz's `results()`
-       * carries no `kind` where bingo's does — so naming the field blind
-       * replaced `kind: 'bingo'` with nothing at all, and a night with no kind
-       * is a night `league.js` and the report both read as neither game.
-       * `this.kind` is the session's own answer and is always set.
-       */
-      const onlyReal = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
-      const fuller = (ended && this.runningOrder)
-        ? onlyReal({
-          parts: this.describeOrderParts(this.runningOrder),
-          kind: endedResults.kind || this.kind,
-          leaderboard: endedResults.leaderboard,
-          questions: endedResults.questions,
-          ...this.scoresOfTheNight(endedResults),
-        })
-        : null;
+      const fuller = ended ? this.filedShape(this.engine.results()) : null;
       const fullerKey = fuller ? JSON.stringify(fuller) : '';
       const now = JSON.stringify(state.vouchers || {});
       if (now !== this.filedVouchers || (fullerKey && fullerKey !== this.filedParts)) {
@@ -1603,6 +1582,42 @@ export class Session {
       // `startOrderSegment`), and `called` is the track list of the part that
       // finished, which is a true thing about the evening either way.
     };
+  }
+
+  /**
+   * WHAT THE FILED NIGHT SHOULD SAY ABOUT HOW IT ENDED — the ending part's
+   * board, its recap and its finish time, and on a running order every part
+   * with `kind` moving with the board.
+   *
+   * THE ENDING PART'S OWN RESULTS, then `scoresOfTheNight()` over the top.
+   * Both halves are needed and neither is enough: the ending part's
+   * `results()` is what carries a quiz's board and its `kind`, and
+   * `scoresOfTheNight()` deliberately returns `{}` when the part that ended
+   * IS the quiz. Patch with that alone and a night that ended on the bingo
+   * keeps the BINGO's leaderboard and `kind: 'bingo'`, which `league.js`
+   * drops on sight.
+   *
+   * A KEY WORTH NOTHING IS LEFT OUT RATHER THAN WRITTEN AS UNDEFINED.
+   * `updateArchivedNight()` spreads the patch over the record, so a key
+   * present-and-undefined DELETES a good value. The quiz's `results()`
+   * carries no `kind` where bingo's does, so `kind` is only named on a
+   * running order — where `this.kind` is always set — and an ordinary
+   * one-game record gains no field it did not have.
+   *
+   * Compared as a string against what was last written, so a night sitting
+   * on its final scores does not rewrite the file on every push.
+   */
+  filedShape(results) {
+    const onlyReal = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
+    return onlyReal({
+      ...(this.runningOrder
+        ? { parts: this.describeOrderParts(this.runningOrder), kind: results.kind || this.kind }
+        : {}),
+      leaderboard: results.leaderboard,
+      questions: results.questions,
+      finishedAt: results.finishedAt,
+      ...this.scoresOfTheNight(results),
+    });
   }
 
   /**

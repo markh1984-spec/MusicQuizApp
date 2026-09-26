@@ -1669,11 +1669,29 @@ export class Engine {
    * properly with a winner rather than just stopping. It is archived on the
    * way, like any finished game.
    *
-   * Recoverable: Back from the final results returns to the round board, so a
-   * mis-tap is one press to undo.
+   * Recoverable: Back from the final results returns EXACTLY where Stop was
+   * pressed, so a mis-tap is one press to undo — see `stoppedFrom` below.
    */
   finish() {
     if (this.state.phase === PHASES.FINAL) return false;
+    /*
+     * WHERE THE NIGHT WAS WHEN STOP WAS PRESSED, so Back can put it back
+     * there. Back from the final used to land on the ROUND BOARD of whatever
+     * round the pointer was in, so a Stop after Q1 and a Back skipped the
+     * rest of that round — Next went to round two, and the questions the
+     * room never heard were never asked (launch-path sweep, 23 September
+     * 2026). The confirm promises *"Back undoes it"*; this is what makes
+     * that true. On the state, like everything else a restart must bring
+     * back. Only a Stop writes it: a final reached the ordinary way keeps
+     * Back going to the last round board, as it always has.
+     */
+    const s = this.state;
+    s.stoppedFrom = {
+      phase: s.phase,
+      roundIndex: s.roundIndex,
+      questionIndex: s.questionIndex,
+      question: s.question ? { ...s.question } : null,
+    };
     this.state.phase = PHASES.FINAL;
     this.state.finishedAt = this.now();
     this.state.question = null;
@@ -2072,13 +2090,60 @@ export class Engine {
         s.phase = PHASES.LOBBY;
         this.changed();
         return true;
-      case PHASES.FINAL:
-        s.phase = PHASES.ROUND_BOARD;
+      case PHASES.FINAL: {
         s.finishedAt = null;
+        /*
+         * A FINAL BEING UNDONE HAS PAID NOBODY. The codes it minted were for
+         * a night that has not finished — the early leader kept a live
+         * first-place code through the rest of the quiz, and the true final
+         * then paid the true winner beside it. Every unspent placing goes;
+         * a redeemed one, a `carried`, `draw` or `funny` one stays, as
+         * `withdrawVouchersNoLongerOwed()` already keeps them. The true final
+         * mints afresh.
+         */
+        this.withdrawUnspentPlacings();
+        /*
+         * BACK TO WHERE STOP WAS PRESSED — see `finish()`. A question that
+         * was live is put back live if its clock still has time on it, and
+         * revealed if the clock ran out while the winner slide was up, which
+         * is exactly what would have happened had Stop never been pressed.
+         */
+        const from = s.stoppedFrom;
+        delete s.stoppedFrom;
+        const phases = Object.values(PHASES);
+        if (from && phases.includes(from.phase) && from.phase !== PHASES.FINAL) {
+          s.phase = from.phase;
+          s.roundIndex = Number(from.roundIndex) || 0;
+          s.questionIndex = Number(from.questionIndex) || 0;
+          s.question = from.question ? { ...from.question } : null;
+          this.clampPointers();
+          if ((s.phase === PHASES.QUESTION || s.phase === PHASES.REVEAL) && !s.question) {
+            s.phase = PHASES.ROUND_INTRO;
+          }
+          if (s.phase === PHASES.QUESTION && this.isExpired()) return this.reveal();
+          this.changed();
+          return true;
+        }
+        s.phase = PHASES.ROUND_BOARD;
         this.changed();
         return true;
+      }
       default:
         return false;
+    }
+  }
+
+  /**
+   * TAKE BACK EVERY PLACING CODE NOBODY HAS SPENT — for a final that is being
+   * undone, where nobody is owed a place at all. The same three flags
+   * `withdrawVouchersNoLongerOwed()` leaves alone are left alone here, and so
+   * is a redeemed one: the drink is behind the bar and the record of it is the
+   * honest thing to keep.
+   */
+  withdrawUnspentPlacings() {
+    for (const [code, v] of Object.entries(this.state.vouchers || {})) {
+      if (v.draw || v.funny || v.carried || v.redeemedAt) continue;
+      delete this.state.vouchers[code];
     }
   }
 

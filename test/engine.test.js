@@ -138,10 +138,14 @@ test('the quiz can be stopped mid-round, with the scores intact and Back to undo
   // publish a bearer credential for every player in the room.
   assert.equal(engine.screenView().leaderboard[0].key, faceKey(a.id));
 
-  // Stopping twice does nothing, and Back is the way out of a mis-tap.
+  // Stopping twice does nothing, and Back is the way out of a mis-tap — back
+  // to the QUESTION that was up, clock and answers intact, not to a round
+  // board that skips the rest of the round. REVERSES the pinned ROUND_BOARD
+  // here (26 September 2026); test/stop-then-back.test.js has the rest.
   assert.equal(engine.finish(), false);
   assert.equal(engine.back(), true);
-  assert.equal(engine.state.phase, PHASES.ROUND_BOARD);
+  assert.equal(engine.state.phase, PHASES.QUESTION);
+  assert.equal(engine.state.questionIndex, 0);
   assert.equal(engine.state.players[a.id].score, scoreBefore);
 });
 

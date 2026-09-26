@@ -370,6 +370,33 @@ try {
         const wall = (await J(`/api/state?role=screen&g=${encodeURIComponent(lastCode)}`)).body || {};
         ok(!wall.question, 'and the question it stepped over is no longer on the wall', wall.question ? `phase ${wall.phase}, a question is up` : '');
       }
+      /*
+       * AND "STOP THE QUIZ — BACK UNDOES IT" IS TRUE. Stop after the first
+       * reveal filed the night and Back landed on the ROUND BOARD, so the rest
+       * of the round was never asked and the early leader kept a live
+       * first-place code (launch-path sweep, 23 September 2026). Stop is
+       * pressed over HTTP — the control is a one-way door this guard never
+       * presses by design — and Back on the real page must put the night
+       * back at that reveal with nobody holding a code for a night that has
+       * not finished. The title on the button says so.
+       */
+      const again = await driveTo('reveal');
+      if (again !== 'reveal') ok(false, 'the night reaches a reveal for the Stop-then-Back check', again);
+      else {
+        const stopped = await host('finish');
+        ok(stopped.status === 200 && (await view()).phase === 'final', 'Stop the quiz files the night early', `${stopped.status}`);
+        ok(((await view()).vouchers || []).some((v) => !v.redeemedAt), 'and the early leader holds a code', 'Stop paid nobody');
+        await page.goto(`${BASE}/host?key=${KEY}`, { waitUntil: 'load' });
+        await page.waitForTimeout(1200);
+        const title = await page.evaluate(() => (document.querySelector('.actions .back-btn') || {}).getAttribute?.('title') || '');
+        ok(/where you stopped/i.test(title) && /taken back/i.test(title),
+          'Back\'s tooltip at the final says it returns to where you stopped and takes the code back', JSON.stringify(title));
+        const hit = await page.evaluate(() => { const b = document.querySelector('.actions .back-btn'); if (!b || b.disabled) return false; b.click(); return true; });
+        await page.waitForTimeout(800);
+        const v = await view();
+        ok(hit && v.phase === 'reveal' && v.questionIndex === 0, 'Back from a Stop returns to the reveal it was pressed at, not a round board', `phase ${v.phase} q${v.questionIndex}`);
+        ok(!(v.vouchers || []).some((x) => !x.redeemedAt), 'and nobody holds a live code for a night that has not finished', `${(v.vouchers || []).length} codes`);
+      }
     }
     if (BINGO && phase === 'claim') {
       let at = await driveTo('claim');

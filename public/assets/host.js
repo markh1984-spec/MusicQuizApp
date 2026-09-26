@@ -1318,7 +1318,12 @@ function buildActions(s) {
     ? 'Nothing to go back to yet \u2014 the quiz has not started.'
     : s.phase === 'question' || s.phase === 'reveal'
       ? 'Back \u2014 to the previous answer. This question is asked again from the top, so its points are wiped. Ask again replays it instead.'
-      : 'Back \u2014 one step back. Nothing is wiped.';
+      : s.phase === 'final'
+        // A Stop is undone by this: back to where it was pressed, every
+        // score kept \u2014 and a prize code the night has not finished paying
+        // is taken back, so nobody walks to the bar with one.
+        ? 'Back \u2014 to where you stopped. Every score is kept; a prize code for a night that has not finished is taken back.'
+        : 'Back \u2014 one step back. Nothing is wiped.';
   const back = node(`<button class="minor back-btn" aria-label="Back" ${atStart ? 'disabled' : ''}`
     + ` title="${esc(backWhy)}">${backIcon}</button>`);
   back.addEventListener('click', () => act('back'));
