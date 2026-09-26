@@ -59,9 +59,17 @@ import { createHash } from 'node:crypto';
 export const DEFAULT_WINNERS = 3;
 export const MAX_WINNERS = 3;
 
-/** How many places tonight recognises, for a state of any age. */
+/**
+ * How many places tonight recognises, for a state of any age — and of either
+ * engine. A BINGO state's `winners` is `{ line, full }`, a different thing
+ * under the same name (see `session.launch()`), so a bingo part carries the
+ * NIGHT's number as `nightWinners` and this reads either: `nightWideOpts()`
+ * asks it at every part boundary, and a quiz after a bingo interlude used to
+ * come back to three places however many were chosen.
+ */
 export function winnersOf(state = {}) {
-  const n = Math.floor(Number(state.winners));
+  const raw = typeof state.winners === 'number' ? state.winners : state.nightWinners;
+  const n = Math.floor(Number(raw));
   return Number.isFinite(n) && n >= 1 && n <= MAX_WINNERS ? n : DEFAULT_WINNERS;
 }
 

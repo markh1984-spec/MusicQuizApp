@@ -1019,6 +1019,16 @@ export class Session {
      */
     if (winners && kind === 'quiz') {
       this.engine.state.winners = Math.max(1, Math.min(MAX_WINNERS, Math.floor(winners)));
+    } else if (winners) {
+      /*
+       * AND EVERY OTHER KIND CARRIES THE NIGHT'S NUMBER UNDER ITS OWN NAME.
+       * `nightWideOpts()` reads `winnersOf(state)` off the part that is
+       * ENDING, and a bingo state answered with the default — so on a
+       * bingo-then-quiz night asked for one winner, the quiz after the
+       * interlude drew a podium of three and paid three places. Bingo pays
+       * nothing by this number itself; it holds it for the quiz after it.
+       */
+      this.engine.state.nightWinners = Math.max(1, Math.min(MAX_WINNERS, Math.floor(winners)));
     }
 
     // How many prizes tonight, decided alongside the card shape and for the
