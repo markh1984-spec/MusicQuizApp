@@ -995,6 +995,15 @@ export class Engine {
      */
     if (!dealt && this.state.teamMode === 'random') return { ok: false, reason: 'random_teams' };
     /*
+     * AND NOT MID-QUESTION — the boundary `joinTeam()` keeps, refused here
+     * BEFORE the write. The caller made the team and then joined it, and only
+     * the join asked the phase: a name typed at question four came back
+     * `mid_question` with the team already in the state and on the picker
+     * (launch-path sweep, 23 September 2026). `dealt` stays the app's own way
+     * in — a latecomer joining mid-question still has to land somewhere.
+     */
+    if (!dealt && !TEAM_CHANGE_PHASES.has(this.state.phase)) return { ok: false, reason: 'mid_question' };
+    /*
      * AND THERE IS A CEILING. There was none at all: 1,200 teams in 1.3
      * seconds from one phone at the lobby, every SSE payload from 0.7KB to
      * 85KB, and a flush to disk on each one — at the exact moment sixty
