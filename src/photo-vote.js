@@ -166,7 +166,14 @@ function tally(v) {
  * venue never put up is the app writing a cheque somebody behind a bar has to
  * bounce. Silence beats a promise with a hole in it.
  */
-export function closeVote(state, { now, random = Math.random, reward = NO_PRIZE, venue = '', newCode = null } = {}) {
+/**
+ * @param {function(string): {id: string, name: string}} [owner]  who HOLDS a
+ *   drink won by a photograph's sender — the quiz engine hands over the
+ *   board row (`boardIdFor()`), so on a team night the whole table shares
+ *   the code exactly as it shares a placing; left out, the sender's own id
+ *   and name are used, which is what a bingo night and a DJ set want.
+ */
+export function closeVote(state, { now, random = Math.random, reward = NO_PRIZE, venue = '', newCode = null, owner = null } = {}) {
   const v = state.photoVote;
   if (!v) return { ok: false, reason: 'no_vote' };
   if (!v.open) return { ok: true, winner: v.winner };
@@ -228,10 +235,19 @@ export function closeVote(state, { now, random = Math.random, reward = NO_PRIZE,
     if (!state.vouchers) state.vouchers = {};
     let code = newCode();
     while (state.vouchers[code]) code = newCode();
+    /*
+     * MINTED TO WHOEVER HOLDS THE SENDER'S ROW. On a team night a phone only
+     * ever shows its TEAM's codes (`playerView()` matches `winnerId` against
+     * `boardIdFor()`), so a drink minted to the sender's own player id sat
+     * on the host's panel and on no phone at all — the winner the projector
+     * had just named had nothing to show the bar. The engine says who the
+     * row is; here it is one lookup and never a `kind`.
+     */
+    const holder = typeof owner === 'function' ? owner(pick.playerId) : null;
     state.vouchers[code] = {
       code,
-      winnerId: pick.playerId,
-      name: pick.teamName,
+      winnerId: (holder && holder.id) || pick.playerId,
+      name: (holder && holder.name) || pick.teamName,
       /*
        * NO PLACE, like the draw's — this person came nowhere near the podium
        * and `place || 1` downstream would tell them they had won the quiz, in

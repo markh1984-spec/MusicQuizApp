@@ -1405,6 +1405,17 @@ export class Engine {
       reward: this.photoVotePrize(),
       venue: this.state.venue || '',
       newCode: newVoucherCode,
+      /*
+       * THE DRINK GOES TO THE BOARD ROW — one entity per row, everywhere
+       * (`boardIdFor()`), exactly as a placing does. On a team night that is
+       * the sender's table, named as the room knows it; on an ordinary night
+       * the row IS the handset and nothing moves.
+       */
+      owner: (playerId) => {
+        const boardId = this.boardIdFor(playerId);
+        const row = this.leaderboard().find((r) => r.id === boardId);
+        return { id: boardId, name: row ? row.name : ((this.state.players[playerId] || {}).name || '') };
+      },
     });
     this.changed();
     return out;
@@ -3366,7 +3377,11 @@ export class Engine {
        * show the wrong prize on the one screen that names it.
        */
       const held = Object.values(s.vouchers).filter((v) => v.winnerId === this.boardIdFor(playerId));
-      const mine = held.find((v) => !v.carried) || held[0];
+      // AND A PLACING BEATS THE FUNNIEST-PHOTO DRINK for the headline card:
+      // the final slide is about the quiz that has just ended, and a table
+      // can hold both now. The wallet underneath still lists every code.
+      const mine = held.find((v) => !v.carried && !v.funny && !v.draw)
+        || held.find((v) => !v.carried) || held[0];
       if (mine) {
         view.voucher = {
           code: mine.code,
