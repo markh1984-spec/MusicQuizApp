@@ -156,3 +156,20 @@ test('GAME_KINDS and shelfOf cannot part company', async () => {
     assert.equal(state.shelfOf(k).length, 1, `${k} is on GAME_KINDS but has no shelf in shelfOf()`);
   }
 });
+
+/*
+ * AND EVERY KIND HAS A NAME — `KIND_NAMES` in `pack-look.js`, beside its edge
+ * colour. The running panel and Past gigs each asked `=== 'bingo' ? 'Music
+ * bingo' : 'Music quiz'`, so a deck of playing cards read "Music quiz" on
+ * both (the eighth kind test written when there were two games). A kind the
+ * console can launch and cannot name would print its id in front of the host.
+ */
+test('every GAME_KINDS entry has a name of its own, and a deck is not a music quiz', async () => {
+  const { KIND_NAMES, kindName } = await import('../public/assets/pack-look.js');
+  for (const kind of GAME_KINDS) {
+    assert.ok(KIND_NAMES[kind], `${kind} has no name in KIND_NAMES`);
+  }
+  assert.equal(kindName('cards'), 'Card bingo');
+  assert.notEqual(kindName('cards'), kindName('quiz'));
+  assert.equal(kindName('something-new'), 'something-new', 'an unnamed kind falls back to its id rather than a lie');
+});

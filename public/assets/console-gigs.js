@@ -1,5 +1,6 @@
 /** GIGS — the evidence: headcounts, what the room asked for, and nights run. */
 
+import { kindName } from './pack-look.js';
 import { binIcon, rotateIcon, starIcon, esc, node } from './client.js';
 import { galleryPath, nightSlug, venueSlug } from './slugs.js';
 import { library, me, nightBench, setGigsSeen, setNightDrag } from './console-state.js';
@@ -586,15 +587,14 @@ function gigRowMarkup(night, isSelected) {
  *
  * A running-order night — quiz, a bingo interlude, quiz again — is still one
  * archived record, so `night.games` has one entry for the whole evening. Its
- * own `title` names only the part that actually finished it; `parts`, when
- * present, is every part in order, and that is what gets shown instead —
- * otherwise the pack the room started on simply never appears here.
+ * own `title` names only the part that finished it; `parts`, when present, is
+ * every part in order and is what is shown — or the opening pack never appears.
  */
 function gameLabel(g) {
   if (Array.isArray(g.parts) && g.parts.length) {
-    return g.parts.map((p) => esc(p.title || (p.kind === 'bingo' ? 'Music bingo' : 'Music quiz'))).join(' → ');
+    return g.parts.map((p) => esc(p.title || kindName(p.kind || 'quiz'))).join(' → ');
   }
-  return esc(g.title || (g.kind === 'bingo' ? 'Music bingo' : 'Music quiz'));
+  return esc(g.title || kindName(g.kind || 'quiz'));
 }
 
 /**

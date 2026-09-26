@@ -202,6 +202,20 @@ const KIND_EDGE_FALLBACK = 'rgba(255, 255, 255, 0.35)';
 
 const EDGE_ALPHA = 0.85;
 
+/**
+ * WHAT A KIND IS CALLED, beside what colour its edge is — one place for both,
+ * so a fifth game adds two lines here and reads right everywhere at once.
+ * The running panel and Past gigs each asked `=== 'bingo' ? 'Music bingo' :
+ * 'Music quiz'`, so a deck of playing cards was "Card Bingo — Music quiz" on
+ * the panel and "Music quiz" in the archive (the eighth kind test written
+ * when there were two games). An unnamed kind falls back to its id.
+ */
+export const KIND_NAMES = { quiz: 'Music quiz', bingo: 'Music bingo', cards: 'Card bingo' };
+export function kindName(kind) {
+  const key = String(kind || '').toLowerCase();
+  return KIND_NAMES[key] || key;
+}
+
 /** The bottom edge for a game kind — 'quiz', 'bingo', or whatever comes next. */
 export function kindEdge(kind) {
   const hex = KIND_EDGE[String(kind || '').toLowerCase()];

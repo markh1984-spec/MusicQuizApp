@@ -29,7 +29,7 @@ import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, me, nightBench, packDra
 import { nowNextRows } from './console-venues.js';
 import { GAME_KINDS, TABS, can, doorNow, goTo, goToDoor, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone } from './console.js';
 import { clashTonight, nightKey, tonight, upcoming } from './diary.js';
-import { packLookAttrs, shortTitle, isBreakoutPack } from './pack-look.js';
+import { packLookAttrs, shortTitle, isBreakoutPack, kindName } from './pack-look.js';
 import { FEATURES } from './plans.js';
 import { itemsOf } from './show-parts.js';
 
@@ -900,16 +900,10 @@ export function launchBar() {
           <select class="screen-pick" data-pop>${screenOptions()}</select>
         </label>
         <!-- CARD AND PRIZES JOIN THE SAME ROW — asked for on 24 August 2026:
-             *"can we have all of these on the same lines"*. They had a row of
-             their own above the running order, which was one row spent on two
-             controls that are off on most nights.
-
-             They are still the only PACK-specific settings on a bar of
-             night-level ones, and that is the one thing this arrangement gives
-             up. It is worth it: they sit at the END of the row, after
-             everything about the evening, and the caption they used to carry
-             is now the reason IN the control - "Add a bingo game" - which is
-             the shape Launch already uses. -->
+             *"can we have all of these on the same lines"*. The only
+             PACK-specific settings on a bar of night-level ones, so they sit
+             at the END, and the caption they carried is now the reason IN the
+             control - "Add a bingo game" - which is Launch's own shape. -->
         <label class="pack-shape lb-set-card"><span class="set-word">Card</span>
           <select class="shape-pick" data-pop disabled></select>
         </label>
@@ -2054,7 +2048,10 @@ export function launchBar() {
     }
     const pack = lbPacks()[lbPicked];
     if (!pack) return null;
-    return { pack, kind: (pack.rounds || []).length ? 'quiz' : 'bingo', at: lbPicked, slot: null };
+    // NO ROUNDS IS NOT THEREFORE MUSIC BINGO — a deck has none. The kind is the
+    // shelf it was picked from (`lbGame`), never its shape: eighth kind-test sighting.
+    const kind = (pack.rounds || []).length ? 'quiz' : (lbGame && lbGame !== 'quiz' ? lbGame : 'bingo');
+    return { pack, kind, at: lbPicked, slot: null };
   }
 
   /**
@@ -2174,10 +2171,10 @@ export function launchBar() {
       const pack = anyPack(lbSlots[at].packId);
       return pack ? { pack, kind: 'bingo', at, slot: lbSlots[at] } : null;
     }
-    const packs = lbPacks();
-    const at = packs.findIndex((p) => !(p.rounds || []).length);
-    if (at < 0) return null;
-    return { pack: packs[at], kind: 'bingo', at, slot: null };
+    // No tiles: one pack, and only MUSIC bingo has a card — a deck stays inert.
+    const first = lbPacks()[0];
+    if (!first || (first.rounds || []).length || lbGame === 'cards') return null;
+    return { pack: first, kind: 'bingo', at: 0, slot: null };
   }
 
   /**
@@ -2288,8 +2285,9 @@ export function launchBar() {
     // an explicit press of THIS control clears it, so a typed count sticks.
     setPickedBingo(picked, { shape: JSON.parse(shapePick.value), prizes: 0 });
     paintPrizes();
-    // The tile shows its own shape, so it has to be redrawn with it.
-    if (lbSlots) paintOrder();
+    // The tile shows its own shape, so it is redrawn — and with NO tiles the
+    // shut table still must be: it listed five drinks while the wire sent two.
+    if (lbSlots) paintOrder(); else paintPrizeTable();
   });
   /*
    * THE PRIZE TABLE'S LISTENERS — `bindPrizeTable()` in `console-prizes.js`,
@@ -2307,7 +2305,7 @@ export function launchBar() {
 
   prizePick?.addEventListener('change', () => {
     setPickedBingo(bingoToSet(), { prizes: Number(prizePick.value) || 0 });
-    if (lbSlots) paintOrder();
+    if (lbSlots) paintOrder(); else paintPrizeTable();
   });
   lookPick?.addEventListener('change', (ev) => { night.look = ev.target.value; });
   lobbyGamePick?.addEventListener('change', (ev) => { night.lobbyGame = ev.target.value; });
@@ -4287,7 +4285,7 @@ export function nowPlaying(running) {
   const n = running.playerCount || 0;
   return {
     title: running.title || '',
-    kind: running.game === 'bingo' ? 'Music bingo' : 'Music quiz',
+    kind: kindName(running.game),
     // "2 in" rather than "2 playing" on the bar: it sits beside a door menu
     // rather than under a heading, so it has to read as a count at a glance.
     who: `${n} ${n === 1 ? 'player' : 'players'}`,

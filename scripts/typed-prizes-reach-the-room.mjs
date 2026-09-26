@@ -271,6 +271,50 @@ try {
   check('and the quiz part after it carries none', !('rewards' in ((r3.body.segments || [])[1] || {})), JSON.stringify((r3.body.segments || [])[1]).slice(0, 120));
   check('the room (on the bingo) plays for that one drink', r3.room.includes('THE ONE DRINK') && !VENUE_LIST.some((v) => r3.room.includes(v)), r3.room);
 
+  /*
+   * A DECK ON ITS OWN IS NOT MUSIC BINGO — the eighth kind test written when
+   * there were two games (O7 of the same sweep). `pickedPack()` read "no
+   * rounds, therefore bingo", so a deck alone lit the Card and Prizes row at
+   * 5x5 / 5, the table listed five line prizes for a one-line game, the full
+   * house paid the wrong drink and the running panel said "Card Bingo — Music
+   * quiz". And a bingo ALONE (O5): changing Card or Prizes redrew the tile row
+   * and never the shut table, which went on listing five drinks while the
+   * wire sent two.
+   */
+  console.log('\nA DECK ON ITS OWN — one box, the card row inert, the panel names the game');
+  await again();
+  await tab('cards');
+  check('the deck taps in on its own', await tap('deck'));
+  const deckRow = await p.evaluate(() => ({
+    card: document.querySelector('.shape-pick')?.disabled, cardSays: document.querySelector('.shape-pick option')?.textContent.trim(),
+    prizes: document.querySelector('.prize-pick')?.disabled,
+    boxes: (document.querySelector('.lb-prizes')?.innerText.match(/Each game|1st|2nd|3rd|4th|5th|a line|2 lines|full house/gi) || []).length,
+    ledger: document.querySelector('.lb-prizes')?.innerText.replace(/\s+/g, ' ').trim() || '',
+  }));
+  check('Card and Bingo prizes are inert for a deck', deckRow.card === true && deckRow.prizes === true, JSON.stringify(deckRow).slice(0, 160));
+  check('and the table has ONE box, not five line prizes', deckRow.boxes === 1 && !/full house|a line/i.test(deckRow.ledger), deckRow.ledger.slice(0, 120));
+  const r4 = await launchAndRead();
+  check('the wire names the game as cards', r4.body.game === 'cards' || (r4.body.segments || []).some((x) => x.kind === 'cards'), JSON.stringify(r4.body).slice(0, 120));
+  await p.goto(`${BASE}/console`, { waitUntil: 'load' });
+  await p.waitForTimeout(2500);
+  const panel = await p.evaluate(() => (document.querySelector('.doorhead')?.innerText || '').replace(/\s+/g, ' '));
+  check('the running panel calls it card bingo, never a music quiz', /card bingo/i.test(panel) && !/music quiz/i.test(panel), panel.slice(0, 160));
+
+  console.log('\nA BINGO ON ITS OWN — Prizes 5 → 2 redraws the SHUT table');
+  await again();
+  await tab('bingo');
+  check('a bingo taps in on its own', await tap('disco-funk'));
+  const before5 = await ledger();
+  await p.evaluate(async () => {
+    const count = document.querySelector('.prize-pick');
+    count.value = '2';
+    count.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 400));
+  });
+  const after2 = await ledger();
+  const chips = (after2.match(/\d+ lines|a line|full house/gi) || []).length;
+  check('the shut table lists two prizes, not the five it listed a moment ago', chips === 2, `${chips} listed — ${after2.slice(0, 120)} (was: ${before5.slice(0, 60)})`);
+
   check('nothing threw', errs.length === 0, errs.join(' | '));
 } finally {
   if (browser) await browser.close();
