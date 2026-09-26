@@ -652,7 +652,8 @@ export async function restoreFromBackup() {
       const text = saved.toString('utf8');
       JSON.parse(text); // refuse a corrupt backup rather than write it back
       fs.mkdirSync(config.dataDir, { recursive: true });
-      fs.writeFileSync(statsFile, text, 'utf8');
+      // The one name `library.js` files the counts under; `backUpLibraryStats()` reads the same.
+      fs.writeFileSync(path.join(config.dataDir, 'library-stats.json'), text, 'utf8');
       console.log('[library] restored play counts from the private repository');
     } catch (err) {
       console.warn('[library] could not restore play counts:', err.message);

@@ -13,10 +13,10 @@
  *     the assignment throws when the LINE runs, not when the file loads.
  *  3. Every route family the shell lists exists, and every family module is
  *     listed — named, never counted.
- *  4. A module that uses a name another module exports either defines it
- *     or imports it. `node --check` cannot see a ReferenceError that waits
- *     for a request; the first cut had three, all on routes the suite
- *     happened to press.
+ *  4. Every name a module uses is declared, imported or a global — `node
+ *     --check` cannot see a ReferenceError that waits for a request. The
+ *     first cut had three; the split's own `statsFile` and `readDraft` hid
+ *     from the first version of this check for a month (`test/scope.js`).
  *  5. Line budgets, so the shell stays a shell and no module grows back into
  *     the file it came from.
  */
@@ -28,6 +28,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { serverFiles } from './server-source.js';
+import { undeclaredNames } from './scope.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const files = serverFiles();
@@ -35,15 +36,6 @@ const byName = Object.fromEntries(files.map((f) => [f.name, f.src]));
 const modules = files.filter((f) => f.name.startsWith('src/http/'));
 
 const withoutComments = (src) => src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
-const withoutStrings = (src) => src.replace(/'(?:[^'\\\n]|\\.)*'/g, "''").replace(/"(?:[^"\\\n]|\\.)*"/g, '""');
-const DECL = /^(?:export )?(?:async function|function|class)\s+([A-Za-z_$][\w$]*)|^(?:export )?(?:const|let)\s+([A-Za-z_$][\w$]*)/gm;
-const declared = (src) => new Set([...src.matchAll(DECL)].map((m) => m[1] || m[2]));
-const exportedBy = (src) => {
-  const names = declared(src);
-  const clause = src.match(/^export \{ (.*?) \};/m);
-  if (clause) for (const n of clause[1].split(',')) names.add(n.trim());
-  return names;
-};
 const importedBy = (src) => {
   const names = new Set();
   for (const m of src.matchAll(/^import \{ ([^}]*) \} from/gm)) for (const n of m[1].split(',')) names.add(n.trim().split(' as ').pop());
@@ -89,16 +81,20 @@ test('every route family the shell lists exists, and every family module is list
   assert.equal(write[0], 'writeStripe', 'the Stripe webhook must be tried first — it needs the raw bytes');
 });
 
-test('a module that uses a module-level name defines it or imports it', () => {
-  const exported = Object.fromEntries(files.map((f) => [f.name, exportedBy(f.src)]));
-  const all = new Set(files.flatMap((f) => [...exported[f.name]]));
-  const TOKEN = /(?<![\w$.])[A-Za-z_$][\w$]*/g;
+/*
+ * EVERY NAME, NOT ONLY ONE SOME OTHER MODULE EXPORTS. The first version
+ * flagged a used name only when another module exported it, so `statsFile` —
+ * deleted in one commit, still written to in `restoreStats()` — was outside it
+ * for a month, and the play counts never came back on an empty disk. And its
+ * comment-stripping took a `/*` inside a STRING for a comment opener, which
+ * threw most of `write-invoices.js` away before it looked: `readDraft()` was
+ * used there with no import, and issuing an invoice answered 400. `test/scope.js`
+ * reads the code as code. A false positive is fixed there, never by naming it.
+ */
+test('a name a module uses is declared, imported, or a JavaScript global', () => {
   for (const f of files) {
-    const code = withoutStrings(withoutComments(f.src)).replace(/\.\.\./g, ' ');
-    const used = new Set(code.match(TOKEN) || []);
-    const have = new Set([...exported[f.name], ...importedBy(f.src)]);
-    const missing = [...used].filter((n) => all.has(n) && !have.has(n));
-    assert.deepEqual(missing, [], `${f.name} uses ${missing.join(', ')} without importing or defining it — a ReferenceError waiting for a request`);
+    const missing = undeclaredNames(f.src);
+    assert.deepEqual(missing, [], `${f.name} uses ${missing.join(', ')} without declaring or importing it — a ReferenceError waiting for a request`);
   }
 });
 
