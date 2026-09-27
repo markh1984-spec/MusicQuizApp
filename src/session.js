@@ -2118,7 +2118,19 @@ export class Session {
     });
     if (!door.ok) return { id: '', name: '', waiting: true, ahead: door.waiting };
 
-    const player = this.engine.join({ playerId, token, name });
+    /*
+     * THE SERVER MINTS IDS. `Engine.join()` honours an id it is handed for a
+     * NEW player — `seedCarriedPlayers()` needs that to re-seat a room across
+     * a part boundary — but that door was open to the phones: a join naming
+     * `RoboRobCraftedId01` with no token got exactly that id (launch-path
+     * sweep, 23 September 2026), and an id a phone can pick is one it can
+     * pick again, or guess. So a phone keeps the id it holds when this room
+     * KNOWS it (`ownsPlayer()` in `join()` still decides whether it may act
+     * as that player); one naming nobody here is a new player and gets a
+     * fresh id, whatever it sent — which `silentRejoin()` has always coped
+     * with, a stranded id being exactly the case it was written for.
+     */
+    const player = this.engine.join({ playerId: known ? playerId : '', token, name });
     if (stranded) {
       this.strandedPhones++;
       if (this.strandedPhones === 1) {
