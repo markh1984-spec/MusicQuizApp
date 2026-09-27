@@ -11,9 +11,18 @@
  * error, because the other device DID do it and the room is fine.
  *
  * A cursor is the things a MOVE changes and nothing a phone can change: the
- * phase, which question, whether it is revealed, which bingo round and stage,
- * how many tracks have been called. NOT the state version — that bumps on
- * every answer, and a Next after sixty answers is not stale.
+ * phase, which question, whether it is revealed, WHEN its clock started,
+ * which bingo round and stage, how many tracks have been called. NOT the
+ * state version — that bumps on every answer, and a Next after sixty answers
+ * is not stale.
+ *
+ * **THE CLOCK'S START IS IN IT BECAUSE ASK AGAIN CHANGES NOTHING ELSE.** A
+ * redo keeps the phase, the pointers and the un-revealed clock and hands out
+ * a fresh `startedAt` — so with the marker built from the first four, device
+ * one's Ask again, a phone's answer on the replay and device two's Ask again
+ * carrying the SAME stale marker all landed, and the replay's answers were
+ * wiped (launch-path sweep, 23 September 2026). A phone cannot move the
+ * clock, so it belongs here; `two-devices.mjs` presses the stale redo.
  *
  * Imported by `server.js` like `break-parts.js`: one definition, or the two
  * sides disagree about what "moved" means and every press is refused.
@@ -21,6 +30,7 @@
 export function hostCursor(view) {
   if (!view) return '';
   const q = view.question || {};
+  const clock = view.clock || {};
   const stage = view.stage || {};
   const called = Array.isArray(view.tracks) ? view.tracks.filter((t) => t.called).length : '';
   return [
@@ -28,6 +38,7 @@ export function hostCursor(view) {
     view.roundIndex ?? '',
     view.questionIndex ?? '',
     q.revealedAt ? 'r' : '',
+    clock.startedAt ?? '',
     view.round ?? '',
     stage.index ?? '',
     called,
