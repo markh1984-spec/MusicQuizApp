@@ -1,7 +1,7 @@
 /**
  * BACKUPS, RESTORES AND THE HELPERS THAT SAT BETWEEN THE TWO ROUTE HANDLERS. Moved whole from server.js — the backup/restore machinery (restoreOnce and the four ensure*Restored move together, with their Sets), and the domain helpers for invoices, owner money, adverts and pack liveness that were interleaved with them. Cut per function into their own homes when there is a reason to.
  */
-import { FEATURES, HOUSE, PHASES, accounts, backupPath, can, checkAccess, config, countOwn, deleteFile, dropNight, flagKey, fs, fullLibrary, getFile, githubConfigured, hooks, moderationConfigured, scorePhoto, setPhotoFlag, spendRecorder, isCleanForPublic, isComposed, leaguesRunning, listAdvertPacks, listArchive, loadQuiz, mergeGigs, packsRepoConfigured, path, paths, photoFolder, photosRepoConfigured, privateRepoConfigured, propUse, putFile, putFiles, readPack, readStats, statsReadable, reports, restoreArchive, rooms, safeAdvertFile, serialiseArchive, spend, suggestions, sameVenue, teamKey, toPence, totals, tryGetFile, tryListDir, venueKeyOf, venueKeysFor } from './context.js';
+import { FEATURES, HOUSE, PHASES, accounts, backupPath, can, checkAccess, config, countOwn, deleteFile, dropNight, flagKey, fs, fullLibrary, getFile, githubConfigured, hooks, moderationConfigured, scorePhoto, setPhotoFlag, spendRecorder, isCleanForPublic, leaguesRunning, listAdvertPacks, listArchive, loadQuiz, mergeGigs, packsRepoConfigured, path, paths, photoFolder, photosRepoConfigured, privateRepoConfigured, propUse, putFile, putFiles, readPack, readStats, statsReadable, reports, restoreArchive, rooms, safeAdvertFile, serialiseArchive, spend, suggestions, sameVenue, teamKey, toPence, totals, tryGetFile, tryListDir, venueKeyOf, venueKeysFor } from './context.js';
 import { whoIs } from './identity.js';
 import { pushState } from './views.js';
 
@@ -1257,24 +1257,11 @@ export async function backUpHistory(log = () => {}) {
 export function reloadPackEverywhere(id, { clamp = true } = {}) {
   let touched = 0;
   for (const room of rooms.all()) {
-    const { session } = room;
-    /*
-     * A COMPOSED NIGHT HAS NO FILE BEHIND IT, so it is skipped explicitly
-     * rather than relying on its id not matching. It cannot match — `safeId()`
-     * strips the character `COMPOSED_ID` starts with, so no pack on disk can
-     * be called it, and there is a test that says so. The check is here
-     * anyway because the cost of being wrong is the worst in the app: this
-     * function REPLACES a running game's pack from disk, so a collision would
-     * swap a room's quiz for something else at question four.
-     */
-    if (session.kind !== 'quiz' || isComposed(session.pack?.id) || session.pack?.id !== id) continue;
-    // Resolved against THIS room, so a quizmaster editing one of their own
-    // reloads theirs rather than blowing up looking for it in the catalogue.
-    session.pack = readPack('quiz', id, { config, paths: room.paths }).pack;
-    session.engine.quiz = session.pack;
-    if (clamp) session.engine.clampPointers();
-    session.engine.changed();
-    touched++;
+    // A COMPOSED NIGHT IS RECOMPOSED FROM ITS SOURCES, never matched by id —
+    // `~tonight` is not a file and cannot be (`safeId()` strips its first
+    // character). Resolved against THIS room, so a quizmaster editing one of
+    // their own reloads theirs rather than looking for it in the catalogue.
+    if (room.session.reloadPack(id, { clamp })) touched++;
   }
   return touched;
 }
@@ -1352,7 +1339,8 @@ export function nowNext(session) {
 
 export function packInUse(kind, id, onlyRoom = null) {
   const where = onlyRoom ? [onlyRoom] : rooms.all();
-  return where.some((r) => r.session.kind === kind && r.session.pack?.id === id);
+  // Played whole, a source of a composed night, or a part still queued — `sourcePacks()`.
+  return where.some((r) => r.session.usesPack(kind, id));
 }
 
 /**
@@ -1442,20 +1430,18 @@ export function packPlayState(kind, id, onlyRoom = null) {
    * `busy` is the standard the launch guard already uses: a game in progress,
    * OR a lobby with teams sitting in it who have typed their names.
    */
-  const rooms_ = where.filter((r) => r.session.kind === kind && r.session.pack?.id === id && r.busy);
+  const rooms_ = where.filter((r) => r.session.usesPack(kind, id) && r.busy);
   if (!rooms_.length) return { playing: 0, live: null, phase: '' };
-  // The first one is enough to point at a question. Two rooms on the same
-  // pack at the same second is possible and vanishingly rare, and naming one
+  // The first one on a question of THIS pack is enough to point at it —
+  // `liveQuestionIn()` answers in the pack's own coordinates, which on a
+  // composed night is the source's round rather than tonight's. Two rooms on
+  // the same pack at the same second is vanishingly rare, and naming one
   // question is more useful than naming none.
-  const first = rooms_.find((r) => r.session.engine?.state?.phase === PHASES.QUESTION) || rooms_[0];
-  const state = first.session.engine?.state || {};
-  const onQuestion = state.phase === PHASES.QUESTION;
+  const first = rooms_.find((r) => r.session.liveQuestionIn(kind, id)) || rooms_[0];
   return {
     playing: rooms_.length,
-    phase: state.phase || '',
-    live: onQuestion
-      ? { roundIndex: Number(state.roundIndex) || 0, questionIndex: Number(state.questionIndex) || 0 }
-      : null,
+    phase: (first.session.engine?.state || {}).phase || '',
+    live: first.session.liveQuestionIn(kind, id),
   };
 }
 

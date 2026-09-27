@@ -1627,6 +1627,85 @@ export class Session {
     return Boolean(this.runningOrder && this.orderPos < this.runningOrder.length - 1);
   }
 
+  // ---------------------------------------------- which packs tonight is made of
+
+  /**
+   * EVERY PACK TONIGHT DEPENDS ON, BY KIND — and a composed night names its
+   * sources rather than `~tonight`, which is not a file.
+   *
+   * `packInUse()`, `reloadPackEverywhere()` and `changesTheLiveQuestion()`
+   * all asked `session.pack.id === id`, so a night with a round unticked, two
+   * packs mixed or from a saved show — most nights — was invisible to all
+   * three: a source could be deleted under it with no warning (the next
+   * restart could not rebuild the order and threw the night away), and a
+   * correction saved mid-quiz never reached the room. Rule 11 did not hold
+   * live. (O20, 23 September 2026 sweep.) The parts of a running order still
+   * queued count too: a pack deleted between the quiz and the bingo is a
+   * Continue that throws in front of the room.
+   */
+  sourcePacks() {
+    const out = [];
+    const state = (this.engine && this.engine.state) || {};
+    if (this.pack && !isComposed(this.pack.id)) out.push({ kind: this.kind, id: this.pack.id });
+    for (const entry of (Array.isArray(state.order) ? state.order : [])) {
+      if (entry && entry.packId) out.push({ kind: 'quiz', id: String(entry.packId) });
+    }
+    for (const seg of (this.runningOrder || [])) {
+      if (!seg) continue;
+      if (seg.kind === 'quiz') for (const entry of (seg.order || [])) if (entry && entry.packId) out.push({ kind: 'quiz', id: String(entry.packId) });
+      else if (seg.packId) out.push({ kind: seg.kind, id: String(seg.packId) });
+    }
+    return out;
+  }
+
+  usesPack(kind, id) {
+    return this.sourcePacks().some((p) => p.kind === kind && p.id === id);
+  }
+
+  /**
+   * The question on the wall, in THIS PACK's own coordinates — or null when
+   * no question is up or the live round came out of a different pack. A
+   * composed night's `roundIndex` counts tonight's rounds; the editor's
+   * question is round N of the SOURCE, and `state.order[roundIndex]` says
+   * which round of which pack that is.
+   */
+  liveQuestionIn(kind, id) {
+    const state = (this.engine && this.engine.state) || {};
+    if (this.kind !== 'quiz' || kind !== 'quiz' || state.phase !== PHASES.QUESTION) return null;
+    const roundIndex = Number(state.roundIndex) || 0;
+    const questionIndex = Number(state.questionIndex) || 0;
+    if (!isComposed(this.pack && this.pack.id)) return this.pack && this.pack.id === id ? { roundIndex, questionIndex } : null;
+    const from = Array.isArray(state.order) ? state.order[roundIndex] : null;
+    if (!from || String(from.packId) !== id) return null;
+    return { roundIndex: Number(from.round) || 0, questionIndex };
+  }
+
+  /**
+   * A CORRECTION REACHES THE RUNNING GAME — the one copy of a pack in the
+   * whole system that can go stale (rule 11). A plain night re-reads its
+   * file; a composed night is recomposed from `state.order` through the SAME
+   * loader `boot()` uses, own-first and one file per catalogue pack. True
+   * when this room was playing the pack and now plays the corrected one.
+   */
+  reloadPack(id, { clamp = true } = {}) {
+    if (this.kind !== 'quiz' || !this.usesPack('quiz', id)) return false;
+    const composed = isComposed(this.pack && this.pack.id);
+    if (composed && !(Array.isArray(this.engine.state.order) && this.engine.state.order.some((o) => o && String(o.packId) === id))) return false;
+    try {
+      this.pack = composed
+        ? composeQuiz(this.engine.state.order, (pid) => LAUNCHERS.quiz.load(this.config, pid, this.paths))
+        : LAUNCHERS.quiz.load(this.config, id, this.paths);
+    } catch (err) {
+      // A source has gone since — the room keeps the quiz it is holding.
+      console.error(`[session] could not reload "${id}" into tonight's quiz: ${err.message}`);
+      return false;
+    }
+    this.engine.quiz = this.pack;
+    if (clamp) this.engine.clampPointers();
+    this.engine.changed();
+    return true;
+  }
+
   describeOrderParts(list) {
     return (list || []).map((seg) => {
       try {
