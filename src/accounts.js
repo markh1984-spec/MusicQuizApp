@@ -921,6 +921,27 @@ export class Accounts {
   }
 
   /**
+   * THE SAME SIGN-IN, WITH THE HASH OFF THE EVENT LOOP — what the route uses.
+   *
+   * `signIn()` above runs `scryptSync`, ~40ms with nothing else served: fine
+   * for a test, and for the one server every room shares it was a way to
+   * freeze every projector with a script of wrong passwords (O24, 23 September
+   * 2026 sweep). This one hashes in the thread pool and answers the same
+   * three ways: a session, null for a wrong password, null for an address
+   * nobody has — the last after burning the same time, so a missing address
+   * does not answer faster and give itself away.
+   */
+  async signInAsync(email, password) {
+    const account = this.byEmail(email);
+    if (!account) {
+      await verifyAsync(BURN, 'not-a-real-password-just-burning-the-same-time');
+      return null;
+    }
+    if (!(await verifyAsync(account, password))) return null;
+    return this.startSession(account);
+  }
+
+  /**
    * MINT A SESSION FOR AN ACCOUNT THAT HAS ALREADY PROVEN ITSELF.
    *
    * Lifted out of `signIn` when the magic link arrived, because a second way
@@ -1265,10 +1286,32 @@ export function verify(account, password) {
   } catch {
     return false;
   }
-  const stored = Buffer.from(account.hash, 'hex');
+  return sameHash(account.hash, attempt);
+}
+
+/** `verify()` with the hash computed in the thread pool rather than on the event loop. */
+export async function verifyAsync(account, password) {
+  if (!account || !account.hash || !account.salt) return false;
+  const params = account.scrypt || SCRYPT;
+  const attempt = await new Promise((resolve) => {
+    try {
+      crypto.scrypt(String(password ?? ''), account.salt, params.keylen || 64, params, (err, key) => resolve(err ? null : key));
+    } catch {
+      resolve(null);
+    }
+  });
+  return attempt ? sameHash(account.hash, attempt) : false;
+}
+
+function sameHash(hex, attempt) {
+  const stored = Buffer.from(hex, 'hex');
   if (stored.length !== attempt.length) return false;
   return crypto.timingSafeEqual(stored, attempt);
 }
+
+// A real hash to check a made-up password against, so an address nobody has
+// costs exactly what a wrong password costs. Made once, at load.
+const BURN = hashPassword('the-burn-account-password');
 
 /**
  * Short, but not guessable in a lifetime. Only the HASH of a token is stored,

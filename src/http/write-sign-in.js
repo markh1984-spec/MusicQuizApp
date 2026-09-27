@@ -3,14 +3,31 @@
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
 import { accounts, entitlements, magicEmail, path, resetEmail } from './context.js';
-import { readJson, sendJson } from './plumbing.js';
+import { readJson, sendJson, signInAllowed, signInSeat } from './plumbing.js';
 import { SESSION_COOKIE, cookie, cookieFor, postALink, refuseBreached } from './identity.js';
 import { backUpAccounts } from './helpers.js';
 
 export async function writeSignIn(req, res, url, route) {
   if (route === '/api/sign-in' && req.method === 'POST') {
     const body = await readJson(req);
-    const session = accounts.signIn(body.email, body.password);
+    /*
+     * THE DOOR COMES BEFORE THE HASH — see `SIGN_INS_PER_WINDOW`. A password
+     * check is ~40ms of scrypt, and it ran on the event loop with no limit:
+     * 120 wrong passwords from one script froze every room's projector and
+     * phones for five seconds. The hash is in the thread pool now
+     * (`signInAsync`), and a flood is refused before it costs anything.
+     */
+    if (!signInAllowed(req)) {
+      return sendJson(res, 429, { error: 'Too many sign-in attempts from here. Wait ten minutes, or ask for a sign-in link instead.' }), true;
+    }
+    const seat = signInSeat();
+    if (!seat) return sendJson(res, 429, { error: 'The sign-in desk is busy — try again in a moment.' }), true;
+    let session;
+    try {
+      session = await accounts.signInAsync(body.email, body.password);
+    } finally {
+      seat();
+    }
     // One message for a wrong password and for an address with no account —
     // otherwise this page will happily tell anybody who has an account here.
     if (!session) return sendJson(res, 401, { error: 'That email address and password do not match.' }), true;

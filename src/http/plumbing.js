@@ -110,23 +110,57 @@ export const SIGNUP_WINDOW_MS = 3_600_000;
 export const signupsSeen = new Map();
 
 export function signupAllowed(req) {
+  return allowedFrom(signupsSeen, req, SIGNUPS_PER_HOUR, SIGNUP_WINDOW_MS);
+}
+
+/*
+ * HOW MANY SIGN-IN ATTEMPTS ONE PLACE MAY MAKE, AND HOW MANY HASHES RUN AT ONCE.
+ *
+ * **SAFETY NUMBERS, like the one above.** A password check is ~40ms of scrypt,
+ * and with no door at all 120 wrong passwords from one script froze `/health`
+ * for five seconds — one server hosts every room, so that was every projector
+ * and every phone in every pub. Twenty attempts in ten minutes is far above a
+ * human who has forgotten a password (the sign-in link is one press away) and
+ * far below a script. The second number caps hashes in the thread pool at
+ * once, whatever address they claim: `x-forwarded-for` is spoofable, and the
+ * pool is what serves every static file. Refused BEFORE any hash runs, with a
+ * sentence — nobody signing in is mid-gig, so a 429 costs nobody a night.
+ */
+export const SIGN_INS_PER_WINDOW = 20;
+export const SIGN_IN_WINDOW_MS = 600_000;
+export const SIGN_INS_AT_ONCE = 8;
+export const signInsSeen = new Map();
+let signInsRunning = 0;
+
+export function signInAllowed(req) {
+  return allowedFrom(signInsSeen, req, SIGN_INS_PER_WINDOW, SIGN_IN_WINDOW_MS);
+}
+
+/** A seat at the sign-in desk, or null when the pool is full. Call what it returns when done. */
+export function signInSeat() {
+  if (signInsRunning >= SIGN_INS_AT_ONCE) return null;
+  signInsRunning += 1;
+  return () => { signInsRunning -= 1; };
+}
+
+function allowedFrom(seen, req, cap, windowMs) {
   const who = callerOf(req);
   const now = Date.now();
-  const recent = (signupsSeen.get(who) || []).filter((at) => now - at < SIGNUP_WINDOW_MS);
-  if (recent.length >= SIGNUPS_PER_HOUR) {
-    signupsSeen.set(who, recent);
+  const recent = (seen.get(who) || []).filter((at) => now - at < windowMs);
+  if (recent.length >= cap) {
+    seen.set(who, recent);
     return false;
   }
   recent.push(now);
-  signupsSeen.set(who, recent);
+  seen.set(who, recent);
   /*
    * AND THE MAP MAY NOT GROW WITH THE INTERNET. `rooms.get()` never evicting
    * turned an open URL into a memory leak once; a counter keyed on a spoofable
    * header is the same shape, so anything with nothing left in its window goes.
    */
-  if (signupsSeen.size > 5000) {
-    for (const [key, seen] of signupsSeen) {
-      if (!seen.some((at) => now - at < SIGNUP_WINDOW_MS)) signupsSeen.delete(key);
+  if (seen.size > 5000) {
+    for (const [key, at] of seen) {
+      if (!at.some((t) => now - t < windowMs)) seen.delete(key);
     }
   }
   return true;
