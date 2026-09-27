@@ -1751,9 +1751,23 @@ export class Session {
      * what lands, exactly as it always did.
      */
     const mine = Array.isArray(seg.rewards) ? { rewards: seg.rewards } : null;
-    const started = seg.kind !== 'quiz'
-      ? this.launch(seg.kind, seg.packId, { ...opts, ...mine, shape: seg.shape, prizes: seg.prizes, stages: seg.stages || null })
-      : this.launch('quiz', null, { ...opts, ...mine, order: seg.order });
+    let started;
+    try {
+      started = seg.kind !== 'quiz'
+        ? this.launch(seg.kind, seg.packId, { ...opts, ...mine, shape: seg.shape, prizes: seg.prizes, stages: seg.stages || null })
+        : this.launch('quiz', null, { ...opts, ...mine, order: seg.order });
+    } catch (err) {
+      /*
+       * A PACK GONE SINCE LAUNCH IS SAID IN WORDS. Every part is loaded before
+       * anything launches, so this is a pack removed mid-evening — and the
+       * loader's ENOENT carried a file path onto the control view as a 500. A
+       * quiz part already answered through `composeQuiz()`; the bingo part
+       * did not. `badRequest`, so the shell answers 400 and the night stays
+       * where it was: put the pack back and press again, or finish here.
+       */
+      const gone = err && err.code === 'ENOENT' && seg.kind !== 'quiz';
+      throw Object.assign(new Error(gone ? `There is no ${seg.kind} pack called ${seg.packId} any more.` : err.message), { badRequest: true });
+    }
     /*
      * `launch()` above just cleared all three of these (`runningOrder`,
      * `orderPos`, `carriedScores`) — right for an ORDINARY launch, wrong
