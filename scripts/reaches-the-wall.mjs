@@ -38,9 +38,15 @@ const { chromium } = playwright();
 
 import { startApp } from './helpers/live-app.mjs';
 import { playwright } from './helpers/playwright.mjs';
+import { decodePng, meanBrightness } from './helpers/png-pixels.mjs';
 
 const KEY = 'wallcheck';
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+/* A one-pixel PNG — enough for the store's sniff, and it goes up as a photo. */
+const PNG_DOT = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
 
 /*
  * The catalogue this writes to is a COPY — `live-app.mjs` gives every check
@@ -97,6 +103,38 @@ try {
   })).json();
   check('a phone is in the game', Boolean(joined.id), true);
 
+  /*
+   * ---- 0. a photo at the LOBBY never dims the join code
+   *
+   * *A big photo never dims the join code* is a decision in CLAUDE.md, and
+   * only `.join-corner` was ever lifted above the scrim — the lobby's own
+   * `.qr-panel` sat under it, measured at brightness 158 → 78 in the
+   * launch-path sweep of 23 September 2026. That is a code a phone camera
+   * cannot read, for four and a half seconds, every time somebody sends a
+   * photograph while the room is still joining. Measured off the PIXELS: the
+   * panel is in the document and hits `elementFromPoint()` either way.
+   */
+  const qrBox = await page.evaluate(() => {
+    const r = document.querySelector('.qr-panel img')?.getBoundingClientRect();
+    return r ? { x: r.left, y: r.top, width: r.width, height: r.height } : null;
+  });
+  check('the lobby has a QR panel', Boolean(qrBox), true);
+  if (qrBox) {
+    const clip = { x: Math.round(qrBox.x), y: Math.round(qrBox.y), width: Math.round(qrBox.width), height: Math.round(qrBox.height) };
+    const brightness = async () => meanBrightness(decodePng(await page.screenshot({ clip })));
+    const before = await brightness();
+    await fetch(`${BASE}/api/photo?playerId=${encodeURIComponent(joined.id)}`, {
+      method: 'POST', headers: { 'Content-Type': 'image/png' }, body: PNG_DOT,
+    });
+    await page.waitForTimeout(900);
+    check('a photo takes the middle of the lobby', await page.evaluate(() => Boolean(document.getElementById('photoBig'))), true);
+    const during = await brightness();
+    console.log(`        QR panel brightness ${before.toFixed(0)} before the photo, ${during.toFixed(0)} with it up`);
+    check('and the join code is not dimmed by it', during >= before * 0.95, true);
+    // Let it go before the rest of the drive, or it lands on the next check.
+    await page.waitForTimeout(5600);
+  }
+
   // ---- 1. a question corrected while it is on the screen
   await post('start', {});
   for (let i = 0; i < 8; i += 1) {
@@ -137,12 +175,8 @@ try {
   const atBoard = await (await fetch(`${BASE}/api/state?role=screen`)).json();
   check('the night reached a round board', atBoard.phase, 'round_board');
   if (atBoard.phase === 'round_board') {
-    const png = Buffer.from(
-      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
-      'base64',
-    );
     await fetch(`${BASE}/api/photo?playerId=${encodeURIComponent(joined.id)}`, {
-      method: 'POST', headers: { 'Content-Type': 'image/png' }, body: png,
+      method: 'POST', headers: { 'Content-Type': 'image/png' }, body: PNG_DOT,
     });
     await page.waitForTimeout(900);
     const up = await page.evaluate(() => Boolean(document.getElementById('photoBig')));

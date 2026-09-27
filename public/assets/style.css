@@ -6193,8 +6193,40 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
   place-items: center;
   pointer-events: none;
   z-index: 3;
-  background: radial-gradient(60% 60% at 50% 50%, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.35));
   animation: photo-big-fade 420ms ease;
+}
+/* THE SCRIM IS A LAYER OF ITS OWN, SO IT CAN STOP SHORT OF THE JOIN CODE.
+   It was this element's own background — the whole stage, edge to edge — and
+   *a big photo never dims the join code* only ever held at the round board,
+   whose `.join-corner` is lifted ABOVE it (z-index 4). The LOBBY's code is
+   `.qr-panel`, an ordinary child of the lobby card, and no z-index on it can
+   climb out of the card's own stacking context: measured in the launch-path
+   sweep of 23 September 2026, the code went from brightness 158 to 78 under
+   every photograph — unscannable for four and a half seconds, in the one
+   phase where the room is still joining. So the dimming is a `::before`
+   UNDER the polaroid (`z-index: -1` inside this element's own context, which
+   `position` plus `z-index: 3` makes), and beside a join code it ends where
+   the photo's own clearance does — the same measured `--photo-clear` the
+   padding uses, so the two cannot disagree. The gradient re-centres on the
+   band the photo sits in, which is where it wanted to be anyway.
+   `reaches-the-wall.mjs` reads the PIXELS: the panel is in the document and
+   answers `elementFromPoint()` whether it is dimmed or not. */
+.photo-big::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(60% 60% at 50% 50%, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.35));
+}
+.photo-big.beside-join::before {
+  right: var(--photo-clear, 17vw);
+  /* And it FADES into the band rather than stopping dead: the cut-off alone
+     draws a vertical seam down the stage, 35% black on one side and none on
+     the other, which reads as a projector fault. The mask is the finish and
+     the `right` is the guarantee — a browser that ignores the mask still
+     never dims the code, it only shows the seam. */
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 8vw), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 8vw), transparent);
 }
 /* WHEN THE JOIN CODE IS UP, THE PHOTO CENTRES BESIDE IT RATHER THAN UNDER IT.
    The two are on screen together for the whole of the lobby and every round
