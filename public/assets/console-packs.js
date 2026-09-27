@@ -1639,14 +1639,9 @@ export function wirePackActions(el, kind, pack) {
  * one of them and quietly rots in the other.
  */
 /**
- * THE ONE DANCE, whichever route is behind it — `doLaunch` and
- * `doLaunchOrder` both need it: put the button back as it was rather than as
- * the word "Launch", ask the server once, and on a 409 offer the one
- * deliberate second press that carries `replace`. One copy of that dance
- * rather than two, or it gets fixed in one caller and rots in the other.
- *
- * @param {function(boolean): object} bodyFor  the request body, given whether
- *   this is the deliberate second press (so it can add `replace: true` itself)
+ * THE ONE DANCE, whichever route is behind it: put the button back as it was,
+ * ask once, and on a 409 offer the one deliberate second press that carries
+ * `replace`. `bodyFor(replace)` builds the body for each press.
  */
 async function sendLaunch(url, bodyFor, button) {
     const send = (replace) => postJson(url, bodyFor(replace), { 'X-Host-Key': hostKey });
@@ -1705,78 +1700,47 @@ async function sendLaunch(url, bodyFor, button) {
  * field HERE as well as everywhere else, and prove it by reading the request
  * body out of a real browser rather than by reading the diff.
  */
-export async function doLaunch(kind, packId, { shape = null, prizes = 0, stages = null, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', rewards = null, order = null, breaks = {} }, button) {
-  return sendLaunch('/api/host/launch', (replace) => ({
-    game: kind, packId, shape, prizes, stages, winners, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
-    /*
-     * WHAT TONIGHT PAYS, when the host typed it into the prize table.
-     *
-     * NAMED HERE OR DROPPED IN SILENCE — this literal is a whitelist, and a
-     * field missing from it never reaches the server however carefully it was
-     * wired everywhere else. `winners` fell in exactly here: through the bar,
-     * `night`, both payload builders, the route, `session.launch()` and the
-     * show, and still arrived null because nobody named it in this object.
-     *
-     * `rewards` fell in too, the day the per-game prize table was built. On a
-     * MIXED night it was invisible, because a part's own list travels on its
-     * segment — so the browser drive that proved the feature used a quiz and a
-     * bingo and passed. On a ONE-GAME night, which is most nights:
-     *
-     *   - with a venue picked, the bar read "TYPED 1, TYPED 2, TYPED 3" and
-     *     the room played for the venue's list. The console and the big screen
-     *     disagreeing, silently, which this app has a rule against;
-     *   - with no venue, the typed prizes OPENED the launch gate
-     *     (`noPrizesReason()` accepts what was typed) and then went nowhere,
-     *     so the night launched with nothing to pay anybody — the exact
-     *     failure the whole feature was built to stop.
-     *
-     * `undefined` when nothing was typed, which `JSON.stringify` drops, so the
-     * server reads the venue record exactly as it always has.
-     */
-    ...(Array.isArray(rewards) ? { rewards } : {}),
-
-    /*
-     * WHAT HAPPENS IN THE GAPS. Sent on EVERY launch, including an empty one
-     * — a launch that left it out would inherit the previous night's plan,
-     * and the server reads a missing field as "clear it" for exactly that
-     * reason. An empty object is also the whole of an ordinary night, so
-     * this costs those nights two bytes and changes nothing they send.
-     */
-    breakPlan: breaks || {},
-    /*
-     * TONIGHT'S RUNNING ORDER, and only when there IS one.
-     *
-     * An ordinary launch sends no `order` at all rather than sending the
-     * chosen pack's own rounds spelled out — which would be the same night
-     * by a longer road, through code that did not exist last week, on the
-     * protected path. The server composes only when it is given something,
-     * so a night nobody has rearranged goes down exactly the route it
-     * always did.
-     */
-    ...(order && order.length ? { order } : {}),
-    ...(replace ? { replace: true } : {}),
-  }), button);
-}
-
-/**
- * Launch tonight as MORE THAN ONE GAME — the FIRST part of a running order,
- * quiz and bingo mixed. `segments` is `itemsOf(show)`'s own shape (see
- * `show-parts.js`). Every later part loads through `/api/host/advanceOrder`
- * from the control view, never through here.
+/*
+ * THE BODIES ARE BUILT BY PURE BUILDERS, EXPORTED, so the bar can key what
+ * Launch WOULD send (`launchKey()`, the live line's "this one") off the very
+ * object it sends — never a second list of fields.
+ *
+ * NAMED HERE OR DROPPED IN SILENCE — each literal is a whitelist, and a field
+ * missing from it never reaches the server however carefully it was wired
+ * everywhere else. `winners` fell in exactly here, then `rewards` — on a
+ * one-game night the bar read "TYPED 1, 2, 3" and the room played for the
+ * venue's list, and with no venue the typed prizes opened the launch gate and
+ * went nowhere. `rewards` is `undefined` when nothing was typed, which
+ * `JSON.stringify` drops, so the server reads the venue record as it always
+ * has. `breakPlan` is sent on EVERY launch, empty or not: a launch that left
+ * it out would inherit the last night's plan. `order` only when there IS one:
+ * an ordinary night goes down exactly the route it always did.
  */
-export async function doLaunchOrder(segments, { winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', rewards = null, breaks = {} }, button) {
-  return sendLaunch('/api/host/launchOrder', (replace) => ({
-    segments, winners, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
-    /*
-     * THE NIGHT-WIDE LIST, which the server deals across any part that brought
-     * none of its own. Named for the same reason as the ordinary launch above.
-     */
+export function launchBody(kind, packId, { shape = null, prizes = 0, stages = null, winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', rewards = null, order = null, breaks = {} }) {
+  return {
+    game: kind, packId, shape, prizes, stages, winners, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
     ...(Array.isArray(rewards) ? { rewards } : {}),
-    // Same rule as the ordinary launch — always sent, so a fresh night can
-    // never inherit the last one's plan.
     breakPlan: breaks || {},
-    ...(replace ? { replace: true } : {}),
-  }), button);
+    ...(order && order.length ? { order } : {}),
+  };
+}
+/** The FIRST part of a running order; every later part loads through /api/host/advanceOrder from the control view. */
+export function orderBody(segments, { winners = 0, look = '', questionSeconds = 0, lobbyGame = '', lobbySound = true, online = false, teamPlay = false, teamMode = 'assigned', venue = '', rewards = null, breaks = {} }) {
+  return {
+    segments, winners, look, questionSeconds, lobbyGame, lobbySound, online, teamPlay, teamMode, venue,
+    ...(Array.isArray(rewards) ? { rewards } : {}),   // the night-wide list, dealt across parts that brought none
+    breakPlan: breaks || {},
+  };
+}
+/** A plan is `{ url, body }` — what `launchPlan()` on the bar decided; this sends it. */
+export function sendPlan({ url, body }, button) {
+  return sendLaunch(url, (replace) => ({ ...body, ...(replace ? { replace: true } : {}) }), button);
+}
+export async function doLaunch(kind, packId, opts, button) {
+  return sendPlan({ url: '/api/host/launch', body: launchBody(kind, packId, opts) }, button);
+}
+export async function doLaunchOrder(segments, opts, button) {
+  return sendPlan({ url: '/api/host/launchOrder', body: orderBody(segments, opts) }, button);
 }
 
 /**

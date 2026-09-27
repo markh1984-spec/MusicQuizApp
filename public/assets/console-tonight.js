@@ -8,7 +8,9 @@ import { invoiceApi, openInvoiceForm, share } from './console-invoices.js';
 import {
   doLaunch, doLaunchOrder, freshLabel, freshness, lobbyGameOptions, lookOptions,
   playingOptions, screenOptions, shapeOptions,
+  launchBody, orderBody, sendPlan,
 } from './console-packs.js';
+import { launchKey } from './launch-key.js';
 import { ANY_LOBBY_GAME } from './lobby-games.js';
 import { packTitle, shelfFor } from './console-shows.js';
 import {
@@ -1401,6 +1403,33 @@ export function launchBar() {
     };
   }
 
+  /**
+   * WHAT LAUNCH WOULD SEND NOW — `{ url, body }`, or null with nothing to
+   * launch. ONE decision, used by the press AND by the live line, which keys
+   * this body (`launchKey()`) against what the server launched — so "this one"
+   * is true by construction. Once `lbSlots` exists it is the truth: a burst
+   * row that is still an ordinary night launches the ordinary way
+   * (`simpleNight()`), spelling its rounds out ONLY when some are missing; a
+   * mixed row is a running order. Breaks are pruned against what is sent.
+   */
+  function launchPlan() {
+    if (!currentPack) return null;
+    const simple = simpleNight(lbSlots || []);
+    const simplePack = simple ? anyPack(simple.packId) : null;
+    const segments = lbSlots && !simplePack ? segmentsFromSlots(lbSlots) : null;
+    if (segments) {
+      return { url: '/api/host/launchOrder', body: orderBody(segments, { ...nightOpts(), breaks: prunePlan(night.breaks, segments) }) };
+    }
+    const launchPack = simplePack || currentPack;
+    return { url: '/api/host/launch', body: launchBody(simplePack ? 'quiz' : gameOf().id, launchPack.id, {
+      ...nightOpts(), shape: night.shape, prizes: night.prizes, stages: night.stages || null,
+      order: simplePack
+        ? (simple.rounds.length === (launchPack.rounds || []).length ? null : simple.rounds.map((round) => ({ packId: simple.packId, round })))
+        : nightOrder(),
+      breaks: prunePlan(night.breaks, segmentsNow()),
+    }) };
+  }
+
   async function switchIfFree(pack, kind) {
     // THE QUIET LAUNCH ANSWERS TO THE PRIZE GATE TOO — a room joins what is on
     // the big screen, so a night with nobody to pay was up before Launch could
@@ -1510,61 +1539,9 @@ export function launchBar() {
        * whether it was there a moment ago.
        */
       window.open(screenLink(), 'quizscreen');
-      /*
-       * ONCE `lbSlots` EXISTS IT IS THE TRUTH FOR WHAT LAUNCHES, mixed or not
-       * — `currentPack`/`lbExtra` stop being updated the moment it does. A
-       * burst row that is still an ordinary night launches the ordinary way;
-       * `simpleNight()` carries that note, and without it bursting would move
-       * every gig onto the running-order route for a change to the layout.
-       */
-      const simple = simpleNight(lbSlots || []);
-      const simplePack = simple ? anyPack(simple.packId) : null;
-      const segments = lbSlots && !simplePack ? segmentsFromSlots(lbSlots) : null;
-      if (segments) {
-        await doLaunchOrder(segments, {
-          ...nightOpts(),
-          /*
-           * PRUNED AGAINST THE SEGMENTS BEING SENT, not against whatever the
-           * strip last drew. They are the same list in practice; sending a
-           * plan that names a break these segments do not have would be a
-           * setting with nowhere to land, and the server would drop it
-           * silently rather than say so.
-           */
-          breaks: prunePlan(night.breaks, segments),
-        }, button);
-        return;
-      }
-      // `pack`/`kind` come off `currentPack`/`gameOf()`, which stop being
-      // updated the moment slots exist — reading them here would launch the
-      // pack chosen BEFORE the row was built.
-      const launchPack = simplePack || pack;
-      const launchKind = simplePack ? 'quiz' : kind;
-      await doLaunch(launchKind, launchPack.id, {
-        // FROM `night`, not from the DOM — see the note where it is declared.
-        // Reading the one shared object rather than a dozen live selects is
-        // what survives a saved show restoring these fields directly
-        // (`loadShow()`) without a DOM element to read them back off.
-        ...nightOpts(),
-        shape: night.shape,
-        prizes: night.prizes,
-        stages: night.stages || null,
-        // Empty unless a second pack has actually been dropped in — see
-        // `lbExtra`. An ordinary night sends nothing at all and takes exactly
-        // the route it always did.
-        //
-        // A collapsed burst row spells its rounds out ONLY when some are
-        // missing, for that same reason: every round in order IS the ordinary
-        // night, and saying so the long way would put it through code that did
-        // not run last week.
-        order: simplePack
-          ? (simple.rounds.length === (launchPack.rounds || []).length
-            ? null
-            : simple.rounds.map((round) => ({ packId: simple.packId, round })))
-          : nightOrder(),
-        // See the running-order branch above: pruned against the night as it
-        // is, so nothing is sent that names a gap this night does not have.
-        breaks: prunePlan(night.breaks, segmentsNow()),
-      }, button);
+      const plan = launchPlan();
+      if (!plan) return;
+      await sendPlan(plan, button);
     };
 
     paintOrder();
@@ -1729,6 +1706,11 @@ export function launchBar() {
      * information somebody wants — it simply says it quietly.
      */
     const packDiffers = Boolean(currentPack) && currentPack.title !== title;
+    // THE WHOLE NIGHT, NOT THE TITLE — a round off, Winners 1, a prize typed
+    // after the tap reached nothing while the line still said "this one".
+    // The bar keys what it would send; the server keyed what it launched.
+    const plan = currentPack && !packDiffers ? launchPlan() : null;
+    const edited = Boolean(plan && running.launchKey && launchKey(plan.body) !== running.launchKey);
     /*
      * THE VENUE CAN DRIFT TOO, and it is the more dangerous of the two.
      *
@@ -1746,13 +1728,15 @@ export function launchBar() {
     const runVenue = String(running.venue || '').trim();
     const barVenue = String(lbVenue == null ? runVenue : lbVenue).trim();
     const venueDiffers = Boolean(lbVenue != null && barVenue.toLowerCase() !== runVenue.toLowerCase());
-    liveEl.classList.toggle('lb-warn', packDiffers || venueDiffers);
+    liveEl.classList.toggle('lb-warn', packDiffers || venueDiffers || edited);
     liveEl.textContent = !currentPack
       ? `On the big screen now: ${title}`
       : packDiffers
         ? `On the big screen now: ${title}`
       : venueDiffers
         ? `On the big screen now — this one, but filed under ${runVenue || 'nowhere'}. Launch again to move it.`
+      : edited
+        ? 'On the big screen now — this one, as it was. Launch to apply the changes'
         : 'On the big screen now — this one';
     // THE HREF IS PAINTED, NOT IN THE TEMPLATE — `linkTo()` carries the host
     // key. The WORDS come from `nowPlaying()`, the one place that decides them.
@@ -2321,6 +2305,9 @@ export function launchBar() {
   soundPick?.addEventListener('change', (ev) => { night.lobbySound = ev.target.value !== 'off'; });
   playPick?.addEventListener('change', (ev) => { night.playing = ev.target.value; });
   winnersPick?.addEventListener('change', (ev) => { night.winners = Number(ev.target.value) || 3; });
+  // ANY SETTING CHANGED IS A CHANGE TO THE NIGHT, and the live line compares
+  // the night — one delegated listener, after each control's own has written.
+  el.querySelector('.lb-set')?.addEventListener('change', () => { if (liveEl) paintLive(); });
 
   /*
    * THE BIG SCREEN IN THE GAPS — one choice written across every gap that HAS
@@ -2847,6 +2834,9 @@ export function launchBar() {
   }
 
   function paintOrder() {
+    // A ROW EMPTIED TILE BY TILE IS NO NIGHT — `currentPack` stayed set, so the
+    // live line went on saying "this one" about a night the bar no longer showed.
+    if (lbSlots && !lbSlots.some(Boolean)) { dropPack(0); return; }
     // Every gap there is NOW takes the night's screen choice — see
     // `applyGapScreen()` in `console-breaks.js`.
     applyGapScreen();
@@ -3243,6 +3233,7 @@ export function launchBar() {
     orderEl.replaceChildren(row);
     paintGo(packs);
     paintInTonight();
+    if (liveEl) paintLive();   // the row changed, so what Launch would send did
   }
 
   /**
@@ -3332,6 +3323,7 @@ export function launchBar() {
       goBtn.textContent = goBtn.dataset.label;
     }
     standDownWithoutPrizes();
+    if (liveEl) paintLive();   // a prize typed is a change to the night too
   }
 
   /* THE VENUE STAYS A BUTTON at the head of the bar and is READ here: it is

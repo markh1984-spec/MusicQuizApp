@@ -233,6 +233,7 @@ export async function getLibrary(req, res, url, route) {
         game: session.kind,
         packId: session.pack.id,
         title: session.pack.title,
+        launchKey: session.engine.state.launchKey || '',   // what was launched, keyed — see launch-key.js
         /*
          * DID SOMEBODY PUT THIS UP, or is it just the pack the server loaded
          * at boot? A room always has a game built, so `title` alone said a

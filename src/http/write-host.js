@@ -4,6 +4,7 @@
  */
 import { ANY_LOBBY_GAME, FEATURES, HOST_MOVES, MAX_ROUNDS, accounts, canPlayPack, comeBackFor, config, entitlements, flight, fullLibrary, hostCursor, isComposed, isOwnPack, isSting, listOwn, lobbyGameFor, lobbyGamesFor, packlessKind, pickIdeas, reports, wholePackKind } from './context.js';
 import { readJson, sendJson } from './plumbing.js';
+import { launchKey } from './context.js';
 import { packDating, photoLinkFor, roomForHost, whoIs } from './identity.js';
 import { allowed } from './gates.js';
 import { pushState, startIntroTrack } from './views.js';
@@ -29,15 +30,10 @@ export async function writeHost(req, res, url, route) {
       // left open across a deploy onto an empty disk launched with no prizes,
       // a raw ENOENT on an own pack, and filed tonight OVER the archive backup.
       await restoreForLaunch(room);
-      /*
-       * The one host action a lapsed subscription DOES stop.
-       *
-       * Everything else under /api/host/ is asked with `live` set, because a
-       * card that failed on Tuesday must not take the Next button away from
-       * somebody mid-round on Wednesday. Starting a brand new night is the
-       * other side of that line: it is not an interruption, it is a beginning,
-       * and it is exactly where "you need to sort the payment out" belongs.
-       */
+      // The one host action a lapsed subscription DOES stop: everything else
+      // here is asked with `live` set (a card that failed on Tuesday must not
+      // take Next away mid-round); a brand new night is a beginning, not an
+      // interruption, and is where "sort the payment out" belongs.
       // A quiz needs QUIZ; every other kind is a bingo of some sort and needs
       // BINGO. This read `=== 'bingo'`, so Card Bingo was gated on QUIZ.
       const wanted = String(body.game || 'quiz') === 'quiz' ? FEATURES.QUIZ : FEATURES.BINGO;
@@ -288,6 +284,7 @@ export async function writeHost(req, res, url, route) {
             .map((q) => q.title))
           : [];
         const started = session.launch(String(body.game || 'quiz'), String(body.packId), { shape, prizes, stages, winners, look, questionSeconds, lobbyGame, lobbyGames, lobbySound, league, online, teamPlay, teamMode, venue, venueId, rewards, venueLogo, comeBack, photoLink: photoLinkFor(req, url, venue), askForRounds, roundIdeas: askIdeas, order: wantedOrder, breakPlan: body.breakPlan || {} });
+        session.engine.state.launchKey = launchKey(body);   // what was launched, keyed off the body — the bar compares its own (launch-key.js)
         /*
          * AND IF A LAPSED SUBSCRIPTION GOT THROUGH, THIS IS THE NIGHT IT
          * SPENDS — stamped AFTER the launch, never before it.
@@ -489,6 +486,7 @@ export async function writeHost(req, res, url, route) {
            */
           breakPlan: body.breakPlan || {},
         });
+        session.engine.state.launchKey = launchKey(body);
         // A running order is a night like any other — see `launch` above.
         // Both routes spend it, or the composed half hands out an endless
         // grace; and both spend it only once the night is actually on.
