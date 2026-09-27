@@ -2031,7 +2031,20 @@ export class Session {
        */
       photoVoteClose: () => this.engine.closePhotoVote(),
       photoVoteDrop: () => this.engine.dropPhotoVote(),
-      resetAll: () => { this.joins.reset(); return this.engine.resetAll(); },
+      /*
+       * UNLAUNCH ENDS THE WHOLE EVENING. The engine goes back to a fresh lobby,
+       * but the order lived on the SESSION too — so the control view went on
+       * offering "Continue to the bingo" over a night nobody was running, and
+       * pressing it launched part two off the fresh state: no venue, no
+       * prizes, no look. A plain launch clears these for the same reason.
+       */
+      resetAll: () => {
+        this.joins.reset();
+        this.runningOrder = null;
+        this.orderPos = 0;
+        this.carriedScores = null;
+        return this.engine.resetAll();
+      },
       // "18 phones waiting to join — Let them in." One tap, and the number on
       // the button is what tells the host whether it is a room or mischief.
       letThemIn: () => { const done = this.joins.letThemIn(); this.engine.changed(); return done; },
