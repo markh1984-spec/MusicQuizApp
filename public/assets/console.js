@@ -351,15 +351,10 @@ async function hasAccounts() {
 }
 
 export async function load() {
-  // Who is this? Asked first, because it decides which tabs exist at all.
-  // A signed-in account needs no key; the key is the way in for anybody still
-  // using a `?key=` link from before there were accounts.
+  // Who is this? First, because it decides which tabs exist; the key is the way in for a `?key=` link.
   try {
-    // Asked WITH the key, or the answer is wrong in the one case that matters:
-    // signed in as the owner on the laptop you run gigs from. Without the key
-    // the server sees only the cookie, says "owner", and the page draws itself
-    // with no Launch button on any pack — while the API behind it would have
-    // let the key launch perfectly well.
+    // WITH the key: the owner on his gig laptop is "owner" by cookie alone,
+    // and the page then draws no Launch button the API would have allowed.
     const who = await (await fetch(keyed('/api/me'))).json();
     setMe(who.signedIn ? who.account : null);
     rights = menuRights(who);
@@ -392,10 +387,8 @@ export async function load() {
      * works — the key is in its URL, and using one deliberately still puts you
      * on it for that visit.
      */
-    // NOT `me.role` — with a key in play the server answers as the bootstrap
-    // identity, whose role is "quizmaster". `alsoSignedIn` is the cookie it
-    // found underneath, which is the thing that says an owner is really here.
-    // `keyInUrl` is the module-level one — the same question, asked once.
+    // NOT `me.role` — with a key the server answers as the bootstrap identity;
+    // `alsoSignedIn` is the cookie underneath, the thing that says owner.
     if (who.alsoSignedIn && who.alsoSignedIn.role === 'owner' && hostKey && !keyInUrl) {
       forgetKey();
       location.reload();
@@ -413,13 +406,9 @@ export async function load() {
 
   const res = await fetch(keyed('/api/library'));
   if (res.status === 401) {
-    // Nobody is signed in and the remembered key is no longer right. If there
-    // are accounts on this app, the sign-in page is the answer; if there are
-    // not, the key still is.
+    // The remembered key is wrong: with accounts, sign in; without, the key box.
     localStorage.removeItem('musicquiz.hostkey');
     if (me) { location.href = '/login?next=/console'; return; }
-    // No account and no working key. If this app has accounts on it at all,
-    // signing in is the answer; the key box only helps somebody who has one.
     if (await hasAccounts()) { location.href = '/login?next=/console'; return; }
     askForKey(hostKey ? 'That key was not accepted. It may have changed — check your host\u2019s startup log.' : '');
     return;
@@ -456,6 +445,17 @@ export async function load() {
   render();
   openRequestedRead();
   openRequestedSet();
+}
+
+// WHAT THE ROOM IS DOING NOW, ASKED AGAIN. The console has NO stream — every
+// push goes to the projector and the phones — so a night launched or ended
+// from another device was invisible to a console left open. The ready light's
+// poll calls this on a different night; so does a tap the server refused.
+export async function refreshLibrary() {
+  const res = await fetch(keyed('/api/library'));
+  if (!res.ok) return;
+  setLibrary(await res.json());
+  render();
 }
 
 /**

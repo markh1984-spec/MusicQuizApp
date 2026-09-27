@@ -66,7 +66,13 @@ export async function getLibrary(req, res, url, route) {
       if (c.role === 'screen') screens += 1;
       else if (c.role === 'player') phones += 1;
     }
-    return sendJson(res, 200, { screens, phones }), true;
+    // AND WHICH NIGHT IS UP — the console has no stream of its own, so this
+    // poll is how a console left open learns that another device launched, or
+    // ended, a night. The four fields that mean "a different night", never the
+    // phase or the count: a repaint while somebody types costs the caret.
+    const { session } = room;
+    const running = { launched: session.engine.state.launched !== false, game: session.kind, packId: session.pack.id, title: session.pack.title };
+    return sendJson(res, 200, { screens, phones, running }), true;
   }
 
   if (route === '/api/library') {

@@ -26,7 +26,7 @@
  */
 
 import { node } from './client.js';
-import { keyed, screenLink } from './console.js';
+import { keyed, refreshLibrary, screenLink } from './console.js';
 
 const POLL_MS = 5_000;
 
@@ -34,6 +34,7 @@ let latest = null;       // { screens, phones } from the last poll, or an error
 let current = null;      // the line on the page right now, if any
 let facts = null;        // what the builder was last handed, for a repaint
 let timer = null;
+let nightSeen = null;    // `launched|game|packId|title` from the last poll
 
 /**
  * Build the line. `prizesOk` is the console's own answer (it has the venue
@@ -95,6 +96,13 @@ function startPolling() {
     try {
       const res = await fetch(keyed('/api/host/ready'), { cache: 'no-store' });
       latest = res.ok ? await res.json() : { error: `HTTP ${res.status}` };
+      // A DIFFERENT NIGHT UP, OR NONE, IS A REPAINT — the console has no stream
+      // (see `refreshLibrary()`). The phase and the count are deliberately not
+      // in the key: a repaint while somebody types a prize costs the caret.
+      const r = latest.running;
+      const night = r ? `${r.launched}|${r.game}|${r.packId}|${r.title}` : null;
+      if (night && nightSeen && night !== nightSeen) refreshLibrary().catch(() => {});
+      if (night) nightSeen = night;
     } catch (err) {
       latest = { error: err.message || 'no reply' };
     }

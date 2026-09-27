@@ -27,7 +27,7 @@ import { bindPrizeTable, prizeNote, prizeParts, prizeTableInto, prizesTonight, v
 import { lastNightWarning, noPrizesReason, venuePrizeWarning } from './console-warnings.js'; import { readyLine } from './console-ready.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, me, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfOf, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
 import { nowNextRows } from './console-venues.js';
-import { GAME_KINDS, TABS, can, doorNow, goTo, goToDoor, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone } from './console.js';
+import { GAME_KINDS, TABS, can, doorNow, goTo, goToDoor, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone, refreshLibrary } from './console.js';
 import { clashTonight, nightKey, tonight, upcoming } from './diary.js';
 import { packLookAttrs, shortTitle, isBreakoutPack, kindName } from './pack-look.js';
 import { FEATURES } from './plans.js';
@@ -1433,9 +1433,11 @@ export function launchBar() {
       const res = await fetch(keyed('/api/library'));
       if (res.ok) setLibrary(await res.json());
       paintLive();
-    } catch {
+    } catch (err) {
       // 409 (a night is running) or anything else: the choice stays staged and
-      // paintLive says so. Never a dialog — Launch is where that is asked.
+      // paintLive says so. Never a dialog — Launch is where that is asked. But
+      // a refusal means a night this console did not know about, so it asks.
+      if (err && err.status === 409) { refreshLibrary().catch(() => {}); return; }
       paintLive();
     }
   }
