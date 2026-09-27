@@ -561,9 +561,25 @@ function screenKey(s) {
    * what the options SAY. Both are stable for the length of an ordinary
    * question, so this cannot rebuild a card mid-answer.
    */
+  /*
+   * AND THE VOTE IS PART OF THE FINGERPRINT — of every card that draws it,
+   * which since the launch-path sweep of 23 September 2026 is the reveal and
+   * the board as well as the waiting screens. It replaces nothing and ADDS a
+   * panel, so a key naming only the phase says "nothing changed" the moment
+   * four photographs go up, and the room is asked out loud to tap something
+   * that is not on their phones. Which one you PICKED is deliberately not in
+   * it: that is painted in place by the tap itself, and a rebuild per vote
+   * would drop the image you are looking at and reload four photographs on
+   * pub wifi. A question with its clock running never carries one — the
+   * engine refuses to open a vote over it and settles any open vote as the
+   * next question goes up — so on that card the suffix is all but always
+   * empty, and a vote opened in the seconds after the clock has run out only
+   * ever costs a rebuild of options that do not change.
+   */
+  const vote = s.photoVote ? (s.photoVote.open ? ':vote' : ':voted') : '';
   if (s.phase === 'question' || s.phase === 'reveal') {
     const started = (s.clock && s.clock.startedAt) || 0;
-    return `q:${s.roundIndex}:${s.questionIndex}:${s.phase}:${started}:${fingerprint(s.options)}`;
+    return `q:${s.roundIndex}:${s.questionIndex}:${s.phase}:${started}:${fingerprint(s.options)}${vote}`;
   }
   /*
    * AND THE LOBBY'S KEY CARRIES WHETHER THE PHOTO IS STILL OWED.
@@ -579,16 +595,6 @@ function screenKey(s) {
    * this phone standing the ask down — because either one changes what is on
    * the screen.
    */
-  /*
-   * AND THE VOTE IS PART OF THE FINGERPRINT TOO, for the identical reason —
-   * it replaces nothing and ADDS a panel, so a key naming only the phase and
-   * the gate says "nothing changed" the moment four photographs go up, and
-   * the room is asked out loud to tap something that is not on their phones.
-   * Which one you PICKED is deliberately not in it: that is painted in place
-   * by the tap itself, and a rebuild per vote would drop the image you are
-   * looking at and reload four photographs on pub wifi.
-   */
-  const vote = s.photoVote ? (s.photoVote.open ? ':vote' : ':voted') : '';
   return `${s.phase}:${s.roundIndex}${gateWanted(s) ? ':ask' : ''}${vote}`;
 }
 
@@ -1454,12 +1460,26 @@ function buildReveal(s) {
     ? `<div class="mini-row"><span class="pos">⚡</span><span>${esc(r.fastest.name)}</span><span class="score">${r.fastest.seconds.toFixed(1)}s</span></div>`
     : '';
 
-  return node(`
+  /*
+   * THE FUNNIEST PHOTOGRAPH, UNDER THE RESULT. The host may put four to the
+   * room at any moment without a clock on it — a reveal is one, and the
+   * "at a break" the panel is described as is a round board, which is the
+   * builder below. Both drew nothing (launch-path sweep, 23 September 2026):
+   * the card lived inside the waiting screen alone, so a vote opened at a
+   * board or a reveal reached every phone's payload and no phone's screen,
+   * while the host asked sixty people out loud to tap the one that made them
+   * laugh. Under the result rather than over it: what you scored is what you
+   * looked down for.
+   */
+  const el = node(`
     <div style="display:grid;gap:16px">
       ${resultCard}
       ${fastest ? `<div><div class="muted" style="font-size:13px;margin-bottom:6px">Fastest finger</div>${fastest}</div>` : ''}
+      ${photoVoteCard(s)}
     </div>
   `);
+  wirePhotoVote(el, postPhotoVote);
+  return el;
 }
 
 function buildBoard(s) {
@@ -1476,6 +1496,12 @@ function buildBoard(s) {
       ${isFinal && winner ? `<div class="result good"><div class="sub">Winner</div><div class="big">${esc(winner.name)}</div><div class="pts">${winner.score.toLocaleString('en-GB')}</div></div>` : ''}
       ${voucherCard(s)}
       ${wallet(s, s.voucher ? s.voucher.code : '')}
+      <!-- THE FUNNIEST PHOTOGRAPH, ABOVE THE STANDINGS — a round board is the
+           break the host actually opens it at, and until the launch-path
+           sweep of 23 September 2026 this builder did not draw it at all. It
+           is the thing just asked for out loud and it is over in a minute;
+           the scores are on the wall and stay on this phone underneath. -->
+      ${photoVoteCard(s)}
       ${askCard(s)}
       <div class="mini-board">
         ${rows.map((p) => `
@@ -1497,6 +1523,7 @@ function buildBoard(s) {
     </div>
   `);
   if (!isFinal) wireGapMenu(el, s);
+  wirePhotoVote(el, postPhotoVote);
   return el;
 }
 
