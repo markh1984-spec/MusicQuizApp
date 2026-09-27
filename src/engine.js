@@ -3607,6 +3607,14 @@ export class Engine {
      * could have found it.
      */
     view.photoSlide = { up: Boolean(s.photoSlide), link: String(s.photoLink || '') };
+    /*
+     * WHAT THIS GAP OFFERS THE PHONES — the same two answers `playerView()`
+     * sends, from the same `breakNow()`, so the host's prompt (`phonesAre()`)
+     * cannot describe a break the phones are not in. Absent outside a break,
+     * exactly as it is on the phone.
+     */
+    const gapNow = breakNow(s);
+    if (gapNow) view.gap = { photos: offersPhotos(gapNow), game: offersGame(gapNow) };
 
     if (q && round) {
       view.question = {

@@ -1895,6 +1895,11 @@ export class BingoGame {
      * Same field, same method, as `Engine.hostView()`'s own `view.rewards`.
      */
     view.rewards = this.rewardList();
+    // What this gap offers the phones, from the same `breakNow()` the card's
+    // own view reads — the quiz's twin, so the host's prompt is built from
+    // the phones' own facts on either engine. Absent outside a break.
+    const gapNow = breakNow(this.state);
+    if (gapNow) view.gap = { photos: offersPhotos(gapNow), game: offersGame(gapNow) };
     return view;
   }
 
