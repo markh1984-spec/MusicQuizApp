@@ -230,9 +230,9 @@ try {
   await p.waitForTimeout(500);
   await p.evaluate(() => document.querySelector('.lb-hit')?.click());
   await p.waitForTimeout(1000);
-  // A search pick does not BURST: one pack tile, where a shelf tap makes one per round.
+  // A search pick BURSTS like a tap now (Y10) — one tile per round, not one pack tile.
   const picked = await p.$$eval('.lb-tile.is-pack', (n) => n.map((t) => (t.innerText || '').replace(/\s+/g, ' ').trim()));
-  check('the search box picks the quiz as ONE tile, so the night has no slots', picked.length === 1 && /madonna/i.test(picked[0]), picked.join(' | ').slice(0, 80));
+  check(`the search box picks the quiz and it bursts like a tap (${picked.length} tiles)`, picked.length > 1, picked.join(' | ').slice(0, 80));
   const t2 = await typePrizes(TYPED);
   check(`the table takes the quiz's drinks (${t2.used} boxes)`, t2.ok && t2.used === 3, t2.why || `${t2.used}`);
   await tab('bingo');

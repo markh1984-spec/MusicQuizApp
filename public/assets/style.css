@@ -8531,16 +8531,6 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-tile.is-venue:hover { border-color: var(--hot); }
 .lb-tile.is-info.is-none .lb-tile-name { color: var(--ink-dim); }
 
-/* The runner-up pack, as a chip rather than a second gradient button — there
-   is one "press this" on a screen, and it is Launch. */
-.lb-why { margin-top: 6px; }
-/* The runner-up pack and Set it up, on one row — both are minor controls
-   answering "not this one" and "not like this", and stacked they read as two
-   separate steps. */
-.lb-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-.lb-row:empty { display: none; }
-.lb-alt[hidden] { display: none; }
-
 /* SET IT UP — everything a night needs that is not the pack itself. Shut by
    default: the common job is this pack, this pub, go, and a wall of dropdowns
    in front of that is the panic control defeating itself. */

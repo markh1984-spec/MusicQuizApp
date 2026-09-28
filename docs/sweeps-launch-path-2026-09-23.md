@@ -55,16 +55,30 @@ tagged *(known)* where an agent re-confirmed them.
   first tile — `settleRunLists()`), O4 (every box cleared is the venue's list
   again), O5 (a bingo alone redraws its shut table), O7 (a deck alone is not
   music bingo; `KIND_NAMES`), O10 (the round ceiling on a drop onto an empty
-  tile), Y1 (typing a prize wakes Launch). Still to do on the bar: O1 (a
-  night key so "this one" compares the whole night), O9 (the console learns
-  the room changed: a running summary on the ready poll, a refresh on a
-  refused tap), and the rest of the bar yellows. The room batch (O11–O18,
-  the room yellows) and the server batch (O20–O26, the recovery and security
-  yellows) are being worked in worktrees under `.claude/worktrees/` on
-  `worktree-agent-*` branches; merge them onto `MusicQuizApp` when they
-  finish. CLAUDE.md still needs the rules from these commits written in (it is
-  at its byte budget, so each needs a trim): the bar plays EVERY part of a show
-  as tiles now, not one part with a "Then" line.
+  tile), Y1 (typing a prize wakes Launch). Then, 27–28 September: O9 (the
+  console learns the room changed — `/api/host/ready` carries a running
+  summary and the poll refreshes the library on a change; a refused quiet tap
+  refreshes too; `console-learns-the-room.mjs`), O1 (`launch-key.js`, one
+  fingerprint of the launch body on the server and the bar, so "this one" on
+  the live line means THIS night; `live-line-tells-the-truth.mjs`), and the
+  bar yellows: a search pick bursts like a tap (typed-prizes act b), a loaded
+  show's Secs/Sound/Playing/Winners repaint at once — face as well as value
+  (tonight-resolves), Launch names the pack on a one-pack night, "Open the
+  projector" on the running panel, Unlaunch's tooltip says the scores go, a
+  tap on a round already in Tonight moves nothing (drag-check), and the dead
+  "Never played here" line and runner-up chip are deleted (measured: the line
+  was never un-hidden; the chip drew only after clearing the search box).
+  **The server batch (O20–O26) is on `MusicQuizApp`** — see the commits from
+  `0cbeb7b` to `4436b28`: play counts restored (`statsFile`), a real scope
+  pass (`test/scope.js`) that also found issuing an invoice had answered 400
+  since the split, late-then-failed backups said, voucher marks flushed at
+  once, a sign-in door and the hash off the event loop, composed nights naming
+  their sources, a deleted bingo part refused in words, Unlaunch clearing the
+  order, and a Content-Security-Policy with no inline script. The room batch
+  (O11–O18) is on `worktree-agent-adac48ab4101006c7`; merge it when it
+  finishes. CLAUDE.md still needs the rules from these commits written in (it
+  is at its byte budget, so each needs a trim): the bar plays EVERY part of a
+  show as tiles now, not one part with a "Then" line.
 - **R2** — fixed on 24 September: the projector payload names the question's
   POSITION (`/quiz-images/q/<round>/<question>`), and the server serves it
   only for a question the room has been asked (`Engine.pictureAsked()`: live

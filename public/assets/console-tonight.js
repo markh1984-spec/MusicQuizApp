@@ -6,7 +6,7 @@ import { bestBingoShape, esc, gripIcon, node, postJson } from './client.js';
 import { tonightsVenue } from './console-gigs.js';
 import { invoiceApi, openInvoiceForm, share } from './console-invoices.js';
 import {
-  doLaunch, doLaunchOrder, freshLabel, freshness, lobbyGameOptions, lookOptions,
+  doLaunch, doLaunchOrder, freshness, lobbyGameOptions, lookOptions,
   playingOptions, screenOptions, shapeOptions,
   launchBody, orderBody, sendPlan,
 } from './console-packs.js';
@@ -744,7 +744,7 @@ export function launchBar() {
                naming what it would stop, where it reads as a control over the
                whole panel. "Unlaunch" pairs with Launch without being told. -->
           <button class="minor danger lb-unlaunch" type="button"
-            title="Take it off the big screen and go back to waiting">Unlaunch</button>
+            title="Take it off the big screen and go back to waiting — the scores go with it">Unlaunch</button>
         </div>
         <div class="lb-doors"></div>
         <div class="lb-right">
@@ -793,18 +793,6 @@ export function launchBar() {
           <input class="lb-text" type="search" autocomplete="off" placeholder="Start typing a pack name…">
           <div class="lb-hits" hidden></div>
         </div>
-      </div>
-      <div class="tiny lb-why" hidden></div>
-      <!-- THE TWO SMALL BUTTONS SHARE A ROW. Launch keeps the full width
-           under them: it is the one "press this" on the section, and a
-           primary button squeezed in beside two minor ones stops looking
-           like one. -->
-      <!-- THE RUNNER-UP PACK. "Set it up" used to share this row and then
-           moved to its own tab; the settings are back on the bar itself now
-           (see .lb-set below), so what is left here is one chip answering
-           "not this one". -->
-      <div class="lb-row">
-        <div class="lb-alt" hidden></div>
       </div>
       <!-- THE WHOLE NIGHT'S OWN SETTINGS, ABOVE THE PACKS — asked for
            directly: *"settings that only apply to the night as a whole can
@@ -965,8 +953,6 @@ export function launchBar() {
   const gamePick = el.querySelector('.lb-game');
   const text = el.querySelector('.lb-text');
   const hits = el.querySelector('.lb-hits');
-  const alt = el.querySelector('.lb-alt');
-  const whyEl = el.querySelector('.lb-why');
   const where = el.querySelector('.lb-where');
   const venues = el.querySelector('.lb-venues');
   const venueList = el.querySelector('.lb-venue-list');
@@ -1074,7 +1060,7 @@ export function launchBar() {
     const dated = packs
       .filter((p) => { const f = freshness(p); return f.topical && !f.expired; })
       .sort((a, b) => freshness(a).until - freshness(b).until);
-    if (dated[0]) out.push({ pack: dated[0], why: freshLabel(dated[0]) });
+    if (dated[0]) out.push({ pack: dated[0] });
 
     /*
      * 2. The one THIS ROOM is least likely to have heard — never played here
@@ -1093,7 +1079,7 @@ export function launchBar() {
       .sort((a, b) => heardHere(a) - heardHere(b));
     for (const p of rest) {
       if (out.length >= 2) break;
-      out.push({ pack: p, why: whyFresh(p) });
+      out.push({ pack: p });
     }
     return out;
   }
@@ -1285,34 +1271,6 @@ export function launchBar() {
     if (ev.key === 'Escape' && lbVenueOpen) { toggleVenues(); where.focus(); }
   });
 
-  /*
-   * THE OTHER PACK WORTH OFFERING, as a chip rather than a second big button.
-   *
-   * There used to be two shortcut cards, both wearing the account's gradient,
-   * which is two "press this" buttons on one screen — and the second one was
-   * never the one you wanted more than half the time. The first pick is
-   * already in the box; this is the runner-up, one tap away, and it looks like
-   * what it is.
-   */
-  const paintAlt = () => {
-    /*
-     * "Typing" cannot be "the box has something in it" any more — the box
-     * ARRIVES holding tonight's pack. It means the box no longer says what is
-     * chosen, which is the moment somebody is browsing and a suggestion is in
-     * the way.
-     */
-    const typed = text.value.trim();
-    const browsing = Boolean(typed) && typed !== (currentPack && currentPack.title);
-    const picks = quickPicks(gameOf().packs);
-    const second = picks[1];
-    const showing = !browsing && second && second.pack.id !== (currentPack && currentPack.id);
-    alt.hidden = !showing;
-    alt.replaceChildren(...(showing ? [(() => {
-      const chip = node(`<button class="minor lb-alt-go" type="button">or ${esc(second.pack.title)}</button>`);
-      chip.addEventListener('click', () => pick(second.pack));
-      return chip;
-    })()] : []));
-  };
 
   /*
    * Matches on the TITLE only, unlike the pack-tab search which looks inside
@@ -1327,7 +1285,13 @@ export function launchBar() {
     hits.hidden = !list.length;
     hits.replaceChildren(...list.map((p) => {
       const row = node(`<button class="lb-hit" type="button">${esc(p.title)}</button>`);
-      row.addEventListener('click', () => pick(p));
+      // THE SAME PATH AS A TAP ON THE SHELF, so a pack from the box BURSTS
+      // into a tile per round like every other pack (it did not — one of the
+      // ways into R7). A different pack starts the night again, as pick() does.
+      row.addEventListener('click', () => {
+        if (currentPack && currentPack.id !== p.id) dropPack(0);
+        addPackToNight(p, gameOf().id);
+      });
       return row;
     }));
   };
@@ -1490,16 +1454,7 @@ export function launchBar() {
     }
     currentPack = pack;
     text.value = pack.title;
-    /*
-     * WHY THIS ONE, kept from the shortcut buttons it replaces. "Never played"
-     * and "Last played in March" are what make an offered pack trustworthy —
-     * without it the box just asserts a title and you have to go and check
-     * whether the room heard it a fortnight ago.
-     */
     if (liveEl) paintLive();
-    const why = (quickPicks(gameOf().packs).find((q) => q.pack.id === pack.id) || {}).why
-      || whyFresh(pack);
-    whyEl.textContent = why;
     hits.hidden = true;
     const kind = gameOf().id;
     const bingo = kind === 'bingo';
@@ -1552,7 +1507,7 @@ export function launchBar() {
     if (switching) switchIfFree(pack, kind);
   }
 
-  const onType = () => { paintHits(); paintAlt(); };
+  const onType = () => paintHits();
   text.addEventListener('input', onType);
   /*
    * The box arrives holding tonight's pack, so tapping it to search would
@@ -2252,13 +2207,17 @@ export function launchBar() {
   lookPick?.addEventListener('change', (ev) => { night.look = ev.target.value; });
   lobbyGamePick?.addEventListener('change', (ev) => { night.lobbyGame = ev.target.value; });
 
-  // SOUND AND PLAYING ARE NOT PACK-DEPENDENT, so they are set from `night`
-  // once here rather than on every `paintSettings()` — same as Seconds'
-  // own VALUE (only its disabled state is pack-dependent).
-  if (secondsPick) secondsPick.value = night.questionSeconds || '';
-  if (soundPick) soundPick.value = night.lobbySound ? 'on' : 'off';
-  if (playPick) playPick.value = night.playing || 'solo';
-  if (winnersPick) winnersPick.value = String(night.winners || 3);
+  // SOUND, PLAYING, SECONDS AND WINNERS ARE NOT PACK-DEPENDENT, so they are
+  // written from `night` here rather than on every `paintSettings()` — and
+  // AGAIN after a show is applied, which used to leave them on the defaults
+  // until the next redraw (only the disabled state of Seconds is per pack).
+  const paintNightPicks = () => {
+    if (secondsPick) secondsPick.value = night.questionSeconds || '';
+    if (soundPick) soundPick.value = night.lobbySound ? 'on' : 'off';
+    if (playPick) playPick.value = night.playing || 'solo';
+    if (winnersPick) winnersPick.value = String(night.winners || 3);
+  };
+  paintNightPicks();
   /**
    * THE ARROWS STEP FROM WHAT YOU CAN SEE, NOT FROM EMPTY — *"that field
    * displays 20 but on first click it goes to 5; it should go to 25 up and 15
@@ -2397,8 +2356,7 @@ export function launchBar() {
      * that can put a question on sixty phones in a pub is still on screen and
      * still changeable.
      */
-    for (const part of [el.querySelector('.lb-find'), whyEl, el.querySelector('.lb-row'),
-      chosen, venues, liveEl, orderEl]) {
+    for (const part of [el.querySelector('.lb-find'), chosen, venues, liveEl, orderEl]) {
       if (part) part.classList.toggle('lb-tucked', !tonightOpen);
     }
     shutWhat.hidden = tonightOpen;
@@ -2785,9 +2743,13 @@ export function launchBar() {
         return n === 1 ? one : `${n} ${many}`;
       })].filter(Boolean).join(' + ');
     goBtn.disabled = !parts;
-    goBtn.textContent = parts
-      ? `Launch tonight — ${says || `${parts} part${parts === 1 ? '' : 's'}`}`
-      : 'Tap a pack to launch';
+    // ONE PACK IS NAMED — "Launch tonight — 5 rounds" over a single quiz said
+    // less than the ordinary row it replaced, which named the pack.
+    const onlyPack = placed.length && placed.every((slot) => slot.kind === 'quiz' && slot.packId === placed[0].packId)
+      ? anyPack(placed[0].packId) : null;
+    goBtn.textContent = !parts ? 'Tap a pack to launch'
+      : onlyPack ? `Launch ${onlyPack.title}${rounds === roundsOf(onlyPack).length ? '' : ` — ${says}`}`
+      : `Launch tonight — ${says || `${parts} part${parts === 1 ? '' : 's'}`}`;
     // The button is set here as well as in `paintGo()`, so the gate is asked
     // here as well — see `standDownWithoutPrizes()`.
     standDownWithoutPrizes();
@@ -3528,6 +3490,11 @@ export function launchBar() {
       return;
     }
     if (!lbSlots) lbSlots = burst({ currentPack, lbExtra, lbOff, packOf: anyPack });
+    // ALREADY IN TONIGHT IS A NO-OP. A tap on a placed pack's round square
+    // used to MOVE that round to the end of the row — the first thing a
+    // thumb does on a card it recognises, reordering the night in silence.
+    // Moving a round is its TILE's drag; the shelf only ever ADDS.
+    if (lbSlots.some((s) => s && s.kind === 'quiz' && s.packId === round.packId && (s.rounds || []).includes(round.round))) return;
     const next = moveRoundToSlot(lbSlots, { packId: round.packId, round: round.round }, lbSlots.length);
     if (tooLong(next)) return;
     lbSlots = next;
@@ -3694,10 +3661,8 @@ export function launchBar() {
     currentPack = null;
     text.value = '';
     chosen.hidden = true;
-    whyEl.textContent = '';
     paintLive();
     paintSettings();
-    paintAlt();
   });
 
   const toggleFold = () => {
@@ -3827,7 +3792,7 @@ export function launchBar() {
        second time on the show — one truth, and this is a view of it. */
     night.gapScreen = screenOfPlan(night.breaks);
   }
-  if (showWanted) applyShow(showWanted);
+  if (showWanted) { applyShow(showWanted); paintNightPicks(); refreshPicks(el); }
   if (packWanted) {
     const want = packWanted;
     packWanted = null;
@@ -4082,23 +4047,7 @@ export function heardHereIsLocal() {
  * drifting apart — the launch bar's whole live-drift line exists for that —
  * so the two come from one place.
  */
-export function whyFresh(pack) {
-  const local = heardHereIsLocal();
-  const at = heardHere(pack);
-  if (!at) return local ? 'Never played here' : 'Never played';
-  return local ? `Last played here ${whenShort(at)}` : `Last played ${whenShort(at)}`;
-}
 
-function whenShort(at) {
-  const then = playedAt(at);
-  if (!then) return '';
-  const days = Math.floor((Date.now() - then) / 86400000);
-  if (days <= 0) return 'today';
-  if (days === 1) return 'yesterday';
-  if (days < 14) return `${days} days ago`;
-  if (days < 365) return new Date(then).toLocaleDateString('en-GB', { month: 'long' });
-  return 'over a year ago';
-}
 
 /*
  * A LOADED PACK IS NOT A NIGHT. A session always has a pack — `boot()` falls
@@ -4234,7 +4183,7 @@ export function runningPanel(running) {
         </div>
         <div class="running-links">
           <a class="go control-link" href="${linkTo('/host')}">${live ? 'Take control' : 'Open the controls'}</a>
-          <a class="minor" href="${screenLink()}" target="_blank" rel="noopener">Big screen</a>
+          <a class="minor" href="${screenLink()}" target="_blank" rel="noopener">Open the projector</a>
           ${running.finished ? '<button class="minor invoice-it" title="Bill for this one">Invoice this</button>' : ''}
           <button class="minor danger stop-running" title="Clear it and go back to waiting">Stop</button>
         </div>

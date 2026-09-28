@@ -193,9 +193,10 @@ test('console-state.js imports nothing, so state cannot be caught half-built', (
  * RAISED TO 3150 ON 23 AUGUST 2026, for per-venue play ranking: *"that's a
  * good order but it needs to be per venue as well — if you've done a quiz at
  * venue A and not at venue B recently then this needs to be factored in."*
- * Four small exported functions — `venueTonight()`, `heardHere()`,
- * `heardHereIsLocal()` and `whyFresh()` — plus `venueKeyNow()`, which mirrors
- * the server's `venueKeyOf()` in the browser.
+ * Three small exported functions — `venueTonight()`, `heardHere()` and
+ * `heardHereIsLocal()` — plus `venueKeyNow()`, which mirrors the server's
+ * `venueKeyOf()` in the browser. (`whyFresh()` was a fourth; it fed a line
+ * nothing ever un-hid and was deleted on 28 September 2026.)
  *
  * They are HERE rather than in a module of their own because three of them
  * read `lbVenue`, which is `launchBar()`'s own closure state and the same

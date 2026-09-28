@@ -368,7 +368,10 @@ team joining, a bingo track called, a bingo square marked). Only high-frequency 
 things are debounced.
 
 Bingo marks are immediate: a lost quiz answer is recoverable with Redo, but
-nobody can re-tap ten songs they heard half an hour ago.
+nobody can re-tap ten songs they heard half an hour ago. **A VOUCHER CHANGE
+FLUSHES AT ONCE TOO — `voucherMark()` is in BOTH milestones**: a redeem waited
+the debounce while the archive was written at once, and a crash in that window
+paid a drink twice.
 
 **AND A COMPOSED NIGHT CARRIES ITS OWN ORDER — `state.order`, written at
 launch.** Every night from a saved show, and every night with a round unticked
@@ -495,6 +498,12 @@ their IP and the owner cannot read or correct them — enforced by there being
 **no room parameter on any route**, so an owner's id resolves against the house
 room and finds nothing. High standards on what is sold, hands off what they
 wrote.
+
+**A COMPOSED NIGHT NAMES ITS SOURCES TO EVERY PACK CHECK** —
+`Session.sourcePacks()/usesPack()/liveQuestionIn()/reloadPack()`; `packInUse`,
+`packPlayState` and `reloadPackEverywhere` ask the session and hold no id of
+their own; a composed room is RECOMPOSED through the boot's loader and pushed;
+a part still queued counts.
 
 **If mix-and-match packs are ever built**, that creates the first thing this
 rule does not cover — the new pack is theirs rather than a copy of a master.
@@ -817,6 +826,19 @@ green. **Anything reading the server as text reads all of it** —
 read-only imports, the named lists, the budgets, and that every module-level
 name a module uses is imported or defined. [`docs/server-map.md`](docs/server-map.md).
 
+- **A NAME A MODULE USES IS DECLARED, IMPORTED OR A GLOBAL — `test/scope.js`.**
+  The old check saw only names another module EXPORTED and took a `/*` inside
+  a STRING as a comment: `statsFile` (play counts never restored) and
+  `readDraft` (issuing an invoice answered 400 since the split) hid for a
+  month. **A false positive is fixed by teaching the pass a declaration
+  shape, never by naming the identifier.**
+- **EVERY RESPONSE CARRIES ITS HEADERS THROUGH `secure()` in `plumbing.js`** —
+  a CSP with `script-src 'self'` and NO inline, so **NO INLINE `<script>` AND
+  NO INLINE `onerror=`/`onclick=`, EVER**: shared page code goes in
+  `page-shell.js`, a broken image is `client.js`'s one capture-phase listener.
+  `csp-clean.mjs` reads every screen's console. `style-src` keeps
+  `'unsafe-inline'` deliberately.
+
 ### CHANGING TAB DOES NOT MOVE THE PAGE
 
 `renderKeepingPlace()` in `console.js`. Tabs are one page with the middle
@@ -962,11 +984,10 @@ drink… perhaps you could let the crowd vote on their favourite as well?"*
   floor on how many are up.
 - **A TIE IS BROKEN AT RANDOM, ONCE, IN THE STATE.** **NOBODY VOTING IS NOT
   SOMEBODY WINNING.**
-- **SHARED, BECAUSE `engine-contract.test.js` FORCED THE DECISION** — a `kind`
-  gate would be *a kind test written when there were two games* for the fourth
-  time. **A DJ set mints no voucher.** `funny: true`/`place: null`, **skipped by
+- **SHARED BY ALL THREE ENGINES, never a `kind` gate. A DJ set mints no
+  voucher.** `funny: true`/`place: null`, **skipped by
   `withdrawVouchersNoLongerOwed()`**, **no `round` stamp** so bingo cannot hold
-  it back. **`pub-unchanged` says IDENTICAL and is silent about all of it.**
+  it back. **`pub-unchanged` is silent about all of it.**
 
 ### THE SECOND SCREEN — `/wall`, the photo code and the photographs, and nothing else
 
@@ -983,19 +1004,15 @@ and photo uploads."*
   `else`, the PHONE's.**
 - **A PAGE, NEVER A SECOND `/screen`** — every `role=screen` client gets the
   identical view. **AND IT TAKES NO SOUND**: `room.sting` stays `role ===
-  'screen'`, so the soundboard comes out of the one laptop wired to the PA.
+  'screen'` — the soundboard is the PA laptop's.
 - **A NEW TOP-LEVEL ROUTE GOES IN `RESERVED`** — *The Wall* is a pub name.
-- **IT NEEDS NO COOKIE, WHICH IS WHAT LETS IT RUN ON A SPARE LAPTOP** —
-  `second-laptop.mjs` drives a real `?g=` from a browser that has never seen the
-  app. **A mistyped code shows NOBODY's photographs.**
-- **TWO PROJECTOR WINDOWS ON ONE ROOM IS SUPPORTED — `two-screens.mjs`.**
-  **Every other screen guard runs on the HOST KEY, the HOUSE room with no join
-  code.** **`browser.newPage()` opens a fresh incognito context.**
+- **IT NEEDS NO COOKIE** — `second-laptop.mjs` drives a real `?g=` from a
+  fresh browser. **A mistyped code shows NOBODY's photographs.**
+- **TWO PROJECTOR WINDOWS ON ONE ROOM IS SUPPORTED — `two-screens.mjs`**, on
+  a real account; every other screen guard runs on the HOST KEY.
 - **`scrollHeight` IS A LIE ON ANY `body.screen` PAGE — a rule for the whole
-  repo.** `overflow: hidden` CLAMPS the document, so it reads 0 however far
-  content runs past the bottom. **Ask the ELEMENTS where they end**, and **fill
-  the grid first**. **A MEDIA QUERY ADDS NO SPECIFICITY** either — fourth
-  sighting. **Measure after.**
+  repo**: `overflow: hidden` CLAMPS the document. **Ask the ELEMENTS where they
+  end.** **A MEDIA QUERY ADDS NO SPECIFICITY** either. **Measure after.**
 
 - **AND `?photos=only` IS THE SAME SCREEN FOR A NIGHT WITH NO QUIZ —
   `photo-screen.mjs`.** *"A separate DJ QR code where literally its only
@@ -1048,13 +1065,11 @@ quiz… I click community and I've got the QR codes."*
   PHONES being offered*. **NO CODE AT ALL IS AN ERROR, not the house room** —
   this link is always HANDED over. **`whoIs()` READS THE HOST KEY BEFORE THE
   COOKIE**, so `?key=` plus a cookie is the HOUSE room, which has no code.
-- **AND A WAY IN FROM THE CAMERA ROLL, BESIDE THE SHUTTER.**
-  **`capture="environment"` IS A ONE-WAY DOOR**: an input carrying it never
-  offers the library, so a photo taken on the ordinary Camera app could not be
-  sent at all. **Not the turned-down second button, which was INSIDE the
-  sheet.** **ONE HANDLER, the SAME sheet**, or a picked photo skips the props
-  or is sized twice. **One at a time** — the props are per photograph; bulk is
-  `myPhotos()`, against a NAMED past night.
+- **AND A WAY IN FROM THE CAMERA ROLL, BESIDE THE SHUTTER** —
+  **`capture="environment"` IS A ONE-WAY DOOR** that never offers the library.
+  **ONE HANDLER, the SAME sheet**, or a picked photo skips the props or is
+  sized twice. **One at a time**; bulk is `myPhotos()`, against a NAMED past
+  night.
 - **NO SERVICE WORKER, EVER** — every push is a deploy, and a cached page is a
   control view running last week's code in front of a room.
 - **`snap` WENT IN `RESERVED` TOO** — that list has now paid three times.
@@ -1082,11 +1097,10 @@ nothing on it.
   anything else is how that sweep quietly stops sweeping.
 - **`/api/snap` RECORDS THE PROP TALLY TOO**, or `prop-use.js` measures the
   room rather than the app, in the table that decides which drawings to delete.
-- **`props-on-a-photo.mjs` RUNS `openCamera()`.** **`boundingBox()` IS
-  VIEWPORT-RELATIVE AND THE SHEET IS TALLER THAN A PHONE**: scroll each in
-  and re-measure.
-- **AND THE MOVE DELETED `const STORE_KEY`**, swallowed by `loadMe()`'s own
-  `try` — rule 5, live. Caught by `second-laptop.mjs` and nothing else.
+- **`props-on-a-photo.mjs` RUNS `openCamera()`; `boundingBox()` is
+  viewport-relative, so scroll each in and re-measure.**
+- **AND THE MOVE DELETED `const STORE_KEY`** — rule 5, live; caught by
+  `second-laptop.mjs` alone.
 
 ### A KIND TEST WRITTEN WHEN THERE WERE TWO GAMES — the FOURTH sighting, on the shelf
 
@@ -1120,16 +1134,15 @@ being a cheeky dickhead' and it appears on their bingo screen?"*, and
   `host-bingo.js` has a player panel of its OWN, so the quiz's copy left the
   host no way to send one **on the screen this was asked for**. A page module
   may not be imported by another page.
-- **THE BINGO LIST'S TWELVE GREW A WAY PAST IT** — **a cap with no way past it
-  is the only kind this app must not have.** **One ✉, never the quiz's whole
-  menu**: a bingo player has no score to nudge.
+- **THE BINGO LIST'S TWELVE GREW A WAY PAST IT** — *a cap with no way past it
+  is the only kind this app must not have.* **One ✉, never the quiz's whole
+  menu.**
 - **THE CARD NEEDS AN OPAQUE GROUND, AND `--panel` IS SIX PER CENT WHITE** —
   the bingo squares read straight through the words.
-- **AND EVERY HTTP CHECK PASSED WHILE NOTHING DREW IT.** `paintHostNote()` sat
-  in `draw()`'s `state.kicked` branch, which RETURNS, so it painted for a phone
-  that had been thrown out and for nothing else. **`a-word-in-your-ear.mjs` has
-  a REAL BROWSER leg now**, because *a test that the payload is right proves
-  nothing about whether anybody drew it.*
+- **AND EVERY HTTP CHECK PASSED WHILE NOTHING DREW IT** — `paintHostNote()`
+  sat in a branch that RETURNS. **`a-word-in-your-ear.mjs` has a REAL BROWSER
+  leg**: *a test that the payload is right proves nothing about whether anybody
+  drew it.*
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
@@ -1541,7 +1554,7 @@ now".
 - **CHOOSING DISPATCHES A REAL `change`.** Setting `.value` from script fires
   nothing: the picker looks like it worked and the launch sends the old value.
 - **ONE DOCUMENT LISTENER FOR ALL OF THEM** — the bar is rebuilt on every
-  state push, so per-render listeners leak with the room.
+  render, so per-render listeners leak with the room.
 - **WHICH WAY A MENU OPENS IS MEASURED**, or the rightmost hangs off.
 - **A FLOATING SHEET NEEDS AN OUTSIDE-CLICK CLOSE IT DID NOT NEED INLINE.**
   Left open, the venue sheet sits over the settings and swallows every click
@@ -2147,7 +2160,9 @@ Hung GitHub behind the real server and drove a night. Four things waited:
   `SHARED_KIND`**, or a warn with no room never reaches the Help tab.
 - **AND STILL WRITING IS NOT A FAILURE — `within()` marks it `late` and
   `saidSo()` stays silent on it**, or it warns about a night that WAS backed
-  up. **The guard has to SLOW the stub** (`GH_STUB_DELAY_MS`) or it passes with
+  up. **BUT LATE-THEN-FAILED IS STILL A FAILURE** — `within(promise, ms,
+  what)` hands the eventual answer to `saidSo()`: landed stays silent, failed
+  is said (`late-backup-said.test.js`, on the INVOICE BOOK's line by name). **The guard has to SLOW the stub** (`GH_STUB_DELAY_MS`) or it passes with
   the fault in. **AND `putFile()` RESOLVES `{ok:false}` AND NEVER REJECTS** — a
   bare `.catch()` cannot see a failed write.
 - **AND A LAUNCH BRINGS BACK WHAT IT READS AND WRITES — `restoreForLaunch()`,
@@ -3726,7 +3741,20 @@ just don't want to think, you want to get in and go and know it will work."*
   alone, and a Launch on every pack card besides.
 - **THE CONSOLE AND THE BIG SCREEN MUST AGREE, ALWAYS.** A choice STICKS, and
   `paintLive()` prints what is on the projector in gold when it differs from
-  what the bar is set to.
+  what the bar is set to. **"This one" is a FINGERPRINT — `launch-key.js`, one
+  function on the server (`state.launchKey`) and the bar (`launchPlan()`), so
+  the line says *as it was* only when Launch would send what launched.**
+  Comparing the TITLE let Winners 1 and a switched-off round reach nothing
+  under "this one". `live-line-tells-the-truth.mjs`.
+- **THE CONSOLE HAS NO STREAM, SO IT ASKS** — the ready poll carries
+  `running` and refreshes the library when it changes; a refused quiet tap
+  (409) refreshes too. A console left open across a launch from another device
+  described a night nobody was running. `console-learns-the-room.mjs`.
+- **A SEARCH PICK BURSTS LIKE A TAP; LAUNCH NAMES THE PACK ON A
+  ONE-PACK NIGHT; A TAP ON A ROUND ALREADY IN TONIGHT MOVES NOTHING** — the
+  shelf only ADDS, a round moves by its tile. **The "why" line and the
+  runner-up chip are DELETED**: the line was never un-hidden and the chip drew
+  only after clearing the box.
 - **A LOADED PACK IS NOT A NIGHT — `state.launched`, and Unlaunch is what it
   was for.** A room ALWAYS has a game built, so the live line named a quiz on a
   console nobody had touched and `resetAll()` built another lobby around the
@@ -3787,10 +3815,10 @@ having a nights section."*
 - **IT IS THE LAUNCH PAYLOAD WITH A NAME ON IT** — `tonightAsShow()` reads the
   SAME state the launch reads, or a show plays something other than what was on
   the bar.
-- **THE BAR PLAYS ONE PART AND SAYS WHAT FOLLOWS** (`paintThen()`). **The next
-  part LOADS, never launches** — only the person on the mic knows when the quiz
-  is done. **Picking a pack by hand clears `showRunning`**, or the bar describes
-  a night nobody is running.
+- **A LOADED SHOW IS EVERY PART AS TILES, AND LAUNCH SENDS THE TILES** (`paintThen()` is gone). A part's own card, count, lines
+  and drinks beat the show's. **Its Secs/Sound/Playing/Winners repaint at
+  once, FACE as well as value** — `refreshPicks(el)` takes the root; bare, it
+  is a no-op.
 - **IT STORES REFERENCES AND NEVER COPIES** — rule 11.
 - **IT IS NOT A GATE AND MUST NEVER BECOME ONE.** The launch re-checks the
   tier, the packs and the lobby game.
@@ -3828,7 +3856,9 @@ strand the phone's own — and the SCORE patched in for a quiz part only, held i
 pack in every part is loaded before ANY of them launches, or a deleted pack in
 part three throws in front of the room hours later. Two ways in: a saved
 SHOW's editor, or the Tonight row itself (`console-tonight-mix.js`/`-ui.js`;
-`lbSlots`, `null` on every ordinary night).
+`lbSlots`, `null` on every ordinary night). **Continue onto a pack deleted
+mid-evening is a 400 SENTENCE and the night stays; Unlaunch clears
+`runningOrder`, `orderPos` and `carriedScores`.**
 **[`docs/console.md`](docs/console.md)**.
 
 ### A PACK ARRIVES AS ITS ROUNDS — one tile each, and the launch collapses back
@@ -4312,34 +4342,21 @@ pay."*
   warn a seat whose parent had already spent the night. **It names what still
   works FIRST**, and **it is not red** — tonight runs.
 - **AND THE CONSOLE'S OWN GATE HAS TO AGREE WITH THE ROUTE'S —
-  `entitlements(account, { asIfPaying })`.** The route allowed the night and
-  every test passed, while `can()` reads `entitlements.features`, EMPTY on a
-  lapse — so `launchBar()` returned an empty div and **the console drew no
-  launch bar at all**. A grace nobody can press reads as the app being broken.
+  `entitlements(account, { asIfPaying })`.** `can()` read features EMPTY on a
+  lapse, so **the console drew no launch bar at all** on the grace night.
   **Only `held` and `on` take the substitute**: status and every `whyNot()`
-  reason read the REAL account, so capabilities open and the standing is told
-  straight. **Found by a browser agent taking the screenshot** — *a test that
-  the payload is right proves nothing about whether anybody drew it.*
-- **AND THE STAMP IS THE LAST THING ON THE ROUTE, NEVER THE FIRST.** Spent
-  before the pack check and the 409 it was spent by launches that never
-  happened — a pack since deleted, a prompt somebody cancelled, and worst
-  `switchIfFree()`, which fires a real launch and swallows the 409: **tapping
-  a pack tile on a Wednesday silently spent the Thursday**, which is exactly
-  the nasty shock this exists to prevent.
-- **AND A SEAT IS A PAID THING — `POST /api/group/seats` HAD NO GATE AND NO
-  CAP, WHICH WAS A WAY ROUND THE WHOLE SUBSCRIPTION.** A lapsed account added
-  a seat, read the reset link out of the reply, removed it — leaving an
-  ordinary `active` account — and launched. So the route asks for good
-  standing, and **`removeChild()` leaves `cancelled`**: a seat never paid for
-  anything, its standing was the parent's. It still destroys nothing and gets
-  the grace night like any lapse. **NOT a `FEATURES` flag** — which tier may
-  run a group is a pricing question nobody has answered. **`MAX_SEATS` is 50,
-  a SAFETY number like `MAX_TEAMS`.** See
+  reason read the REAL account.
+- **THE STAMP IS THE LAST THING ON THE ROUTE, NEVER THE FIRST** — spent before
+  the pack check and the 409, a tile tapped on a Wednesday (`switchIfFree()`
+  swallows the 409) silently spent the Thursday.
+- **A SEAT IS A PAID THING — `POST /api/group/seats` asks for good standing,
+  `MAX_SEATS` is 50 (a SAFETY number), and `removeChild()` leaves
+  `cancelled`**: a lapsed parent once added a seat, took its reset link, removed
+  it and launched on an `active` account. **NOT a `FEATURES` flag** — which
+  tier may run a group is unanswered.
   **[`docs/business/groups.md`](docs/business/groups.md)**.
-- **NONE OF IT CAN HAPPEN UNTIL A PROCESSOR IS WIRED.** `applyBilling()` alone
-  sets `past_due` and nothing calls it, so this is groundwork and
-  `test/last-night.test.js` seeds the state and asks over HTTP — the unit tests
-  only ask the BOOK, and the STAMP is the half they cannot see.
+- `test/last-night.test.js` seeds the state and asks over HTTP — the unit
+  tests only ask the BOOK, and the STAMP is the half they cannot see.
 
 ### STRIPE IS WIRED, AND IT IS THE ONLY THING THAT MAY MOVE A TIER
 
@@ -4370,12 +4387,9 @@ descriptor, the branding, the receipts and the payouts are all per account.
   SELLS; `console-subscribe.js` wires. **NO SUBSCRIBE BUTTON WHERE THERE IS NO
   LIVE PRICE** (`me.canBuy`): one that opens a 500 is worse than none at the
   moment somebody is trying to pay.
-- **A TRIAL IS NOT REVENUE.** `moneyTab()` folded `trialing` into `active`, so
-  the total and the "more than is coming in" flag were inflated by every free
-  trial; comped counted as paying AND as on-the-house in one sentence. **The
-  trial COUNT stays and NO FIGURE goes beside it** — that panel's rule is *what
-  HAS happened*, so a projection is out. **A trial that ran OUT is a job**,
-  nothing else telling them it ended.
+- **A TRIAL IS NOT REVENUE** — `moneyTab()` counts trials and puts NO FIGURE
+  beside them (*what HAS happened*, never a projection); comped is not paying.
+  **A trial that ran OUT is a job.**
 - **A LEGAL PAGE MAY NOT NAME A CONTROL THAT IS NOT THERE.** `refunds.html` said
   *"cancel from your account settings"*, where there is none — **the page somebody
   opens IN ORDER to stop paying**. `legal-pages.test.js` reads the button's label
@@ -4396,31 +4410,22 @@ descriptor, the branding, the receipts and the payouts are all per account.
   £20 would hand somebody fewer packs than £10.** `bought` only ADDS;
   **`packFilter()` is the one place either is consulted.** Its evergreen branch
   takes the union too — **what leaves anything to sell SILVER**, a TOPICAL pack.
-- **AND A £3 PACK MAY NOT BUY GOOD STANDING.** A purchase arrives as the SAME
-  event as a subscription with no tier price, so it read as `started` →
-  `active`. **`mode` splits them**, and **no mode at all still reads as a
-  subscription** or a replay stops granting a paid tier. **The grant does NOT go
-  through `applyBilling()`**, which stays a pure translation; **`grantPack()` is
-  the only writer and is IDEMPOTENT**, and a paid session with no account is
-  logged, never swallowed.
+- **A £3 PACK MAY NOT BUY GOOD STANDING** — `mode` splits a purchase from a
+  subscription (**no mode still reads as a subscription**, or a replay stops
+  granting a paid tier); **`grantPack()` is the only writer, IDEMPOTENT, and NOT
+  through `applyBilling()`**; a paid session with no account is logged.
 - **THE PACK PRICE IS `price_data` FROM `PACK_PENCE`, never a dashboard price** —
   one number, and the card prints the same one. **The id is validated against the
   CATALOGUE, never their own shelf** (which strips exactly what this sells), and
   **a pack they can already play is refused.** `buy-a-pack.mjs` presses it.
-- **AND THE RUNG YOU ARE ON IS ONLY "YOURS" WHILE SOMEBODY IS PAYING FOR IT.**
-  Rank alone meant an **expired trial** saw Bronze marked *"the one you are
-  on"* with **no Subscribe on it** while Silver and Gold were buyable — the
-  ladder failing the people furthest down the funnel, on the path every trial
-  takes. A live trial gets the button too: that is the CONVERSION moment.
-  **Somebody who has PAID BEFORE goes to the PORTAL, never a second Checkout**,
-  which would bill a `past_due` account twice. `buy-your-own-rung.mjs`.
-- **AN INVOICE LINE SPELLS ITS PRICE TWO WAYS AND THE OLD ONE IS GONE.** A line
-  carried a `price` OBJECT; current API versions have no `price` on it at all —
-  `pricing.price_details.price`, the id as a STRING. **Read both**: which
-  arrives is the ENDPOINT'S pinned version. **It fails SILENTLY and correctly**
-  — an unknown price rightly leaves the tier alone, so a tier CHANGE on
-  `invoice.paid` is dropped with nothing logged. **Every fixture used the old
-  spelling**, so the suite was green about a version Stripe no longer sends.
+- **THE RUNG YOU ARE ON IS "YOURS" ONLY WHILE SOMEBODY IS PAYING FOR IT** — an
+  expired trial saw Bronze with no Subscribe on it. A live trial gets the
+  button; **somebody who has PAID BEFORE goes to the PORTAL, never a second
+  Checkout.** `buy-your-own-rung.mjs`.
+- **AN INVOICE LINE SPELLS ITS PRICE TWO WAYS — read `price` AND
+  `pricing.price_details.price`** (which arrives is the endpoint's pinned
+  version). An unknown price leaves the tier alone SILENTLY, so **every fixture
+  must use the current spelling.**
 - **A PRETTY-PRINTED FIXTURE IS WHAT MAKES THE RAW-BYTES TEST REAL** — a body
   from `JSON.stringify(x)` survives parse-and-restringify unchanged, so the
   first version passed with the fault put back.
@@ -4448,6 +4453,11 @@ forgot his own: *"perhaps the login can just be a magic link instead?"*
   no provider, the identical reply either way and the throttle are each a
   decision, and two copies is one getting fixed.
 - **IT NEEDS `BREVO_API_KEY` OR `RESEND_API_KEY` AND SAYS SO.**
+- **SIGN-IN HAS A DOOR AND THE HASH IS OFF THE EVENT LOOP** — `signInAsync()`,
+  `signInAllowed()` (20 per address per ten minutes) and `signInSeat()` (8
+  hashes in the pool at once, whatever address is claimed — x-forwarded-for is
+  spoofable), SAFETY numbers refused 429 BEFORE any hash. 120 wrong passwords
+  froze `/health` for 4,939ms; 2ms now.
 - **AND THE MINIMUM IS EIGHT, BOUGHT WITH A BREACH CHECK — `src/breached.js`.**
   Ten pushed him off the password he would remember and onto one he forgot,
   which is what the link above exists to rescue. `Password1` is nine, so
@@ -4489,11 +4499,9 @@ anything. **Called from the webhook route**, never from `applyBilling()`.
   going to people who cannot act on it.
 - **AND NOT CONFIGURED MAY NOT BURN THE NOTICE** — with no provider the sweep
   stamps nothing, or the day a key is finally set nobody is ever told.
-- **IT IS AN AUTOMATIC SEND, AND THAT IS NOT A BREAK OF *do not build a send that
-  skips the reading*.** That rule is about the QUIZMASTER'S admin, where the risk
-  is naming the wrong headcount and a human must stay accountable. **There is
-  nothing here for a human to read and correct**: a trial ends on the 20th or it
-  does not.
+- **IT IS AN AUTOMATIC SEND, AND THAT IS NOT A BREAK OF *do not build a send
+  that skips the reading*** — there is nothing here for a human to read and
+  correct: a trial ends on the 20th or it does not.
 
 Full reasoning for both: **[`docs/business/plumbing.md`](docs/business/plumbing.md)**.
 

@@ -198,6 +198,27 @@ try {
   check('and nothing was lost on the way', await packs(), held);
 
   /*
+   * A TAP ON A ROUND THAT IS ALREADY IN TONIGHT CHANGES NOTHING. The shelf
+   * card of a placed pack keeps its round squares, and tapping one used to
+   * MOVE that round to the end of the row (the 23 September 2026 sweep) —
+   * the first thing a thumb does on a card it recognises, reordering the
+   * night in silence. Same path as the drop, so it is refused there.
+   */
+  const settled = await names();
+  const tapped = await page.evaluate(() => {
+    // ROUND ONE, NOT ROUND NOUGHT: the swap act above dragged the first tile
+    // — the first pack's round nought — to the END of the row, so tapping that
+    // one would move it to where it already is and prove nothing.
+    const dot = [...document.querySelectorAll('.pack-card.in-tonight .pack-rounds .lb-rd[data-round="1"]')].find((d) => d.getClientRects().length);
+    if (!dot) return false;
+    dot.click();
+    return true;
+  });
+  await wait(300);
+  check('a placed pack keeps a round square on its shelf card to tap', tapped ? 'yes' : 'no', 'yes');
+  check('and tapping a round already in Tonight moves nothing', await names(), settled);
+
+  /*
    * AND THE CONTROLS ON THOSE TILES ARE PRESSED, because nothing else in this
    * repo presses one.
    *

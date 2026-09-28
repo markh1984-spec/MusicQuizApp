@@ -161,7 +161,7 @@ try {
     const order = [0, 1, 2].map((round) => ({ packId: quiz.id, round }));
     const r = await fetch(`${b}/api/shows?key=${key}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'Two parts tonight', items: [{ kind: 'quiz', packId: quiz.id, order }, { kind: 'bingo', packId: bingo.id, prizes: 2 }] }),
+      body: JSON.stringify({ name: 'Two parts tonight', winners: 1, questionSeconds: 30, items: [{ kind: 'quiz', packId: quiz.id, order }, { kind: 'bingo', packId: bingo.id, prizes: 2 }] }),
     });
     const H = { 'Content-Type': 'application/json' };
     const mk = await fetch(`${b}/api/invoices/customers?key=${key}`, { method: 'POST', headers: H, body: JSON.stringify({ name: 'The Show Arms' }) });
@@ -181,6 +181,14 @@ try {
     await page.waitForTimeout(1500);
     const kinds = await page.evaluate(() => [...document.querySelectorAll('.lb-tiles .lb-tile.is-pack')].map((t) => (t.className.match(/is-(quiz|bingo|cards)/) || [])[1] || (t.innerText.includes('Round') ? 'quiz' : '?')));
     check(`  ...both parts are on the bar as tiles (${kinds.length})`, kinds.length >= 4, true);
+    // Y17: the night's own selects follow the show the moment it is loaded, not on the next redraw.
+    const picks = await page.evaluate(() => ({
+      winners: document.querySelector('.winners-pick')?.value,
+      secs: document.querySelector('.seconds-pick')?.value,
+      // THE FACE TOO: the popover skin repaints only when asked (`refreshPicks(el)`), and a select's value can be right under a face still saying 3.
+      face: (document.querySelector('.winners-pick')?.closest('.pick')?.querySelector('.pick-word')?.textContent || '').trim(),
+    }));
+    check(`  ...and Winners and Secs per Q show the show's own, on the face as well (${JSON.stringify(picks)})`, picks.winners === '1' && String(picks.secs) === '30' && picks.face === '1', true);
     await page.evaluate(async (v) => {
       document.querySelector('.lb-where')?.click();
       await new Promise((r) => setTimeout(r, 400));
