@@ -661,6 +661,7 @@ export async function restoreFromBackup() {
     // created lazily and this runs once at boot — see ensureInvoicesRestored.
     ensureInvoicesRestored(rooms.get(HOUSE)),
     ensureArchiveRestored(rooms.get(HOUSE)),
+    ensureAsksRestored(rooms.get(HOUSE)),
     restoreCodes(),
     restoreStats(),
   ].map((p) => p.catch((err) => console.warn('[restore] failed:', err.message))));
@@ -807,10 +808,26 @@ export function firstNameOf(account) {
  */
 export function backUpAsks(room) {
   if (!privateRepoConfigured()) return;
-  const name = room.id === HOUSE ? 'room-asks.json' : `rooms/${room.id}/room-asks.json`;
-  putFile(name, room.asks.serialise(), 'Update what the room asked for', 'private')
+  putFile(asksBackupName(room), room.asks.serialise(), 'Update what the room asked for', 'private')
     .then((r) => saidSo('what the room asked for', r))
     .catch((err) => saidSo('what the room asked for', { ok: false, error: err.message }));
+}
+
+const asksBackupName = (room) => (room.id === HOUSE ? 'room-asks.json' : `rooms/${room.id}/room-asks.json`);
+
+/** The other half, which never existed: once per room per boot, only into an EMPTY store. */
+export const asksRestored = new Set();
+export const asksInFlight = new Map();
+export async function ensureAsksRestored(room) {
+  await restoreOnce(asksRestored, asksInFlight, room.id, async () => {
+    if (!privateRepoConfigured() || !room.asks.isEmpty()) return true;
+    const read = await tryGetFile(asksBackupName(room), 'private');
+    if (!read.ok) { console.warn(`[asks] could not fetch the backup for ${room.id}:`, read.error); return false; }
+    if (!read.body) return true;
+    const result = room.asks.restore(read.body.toString('utf8'));
+    if (result.ok) console.log(`[asks] restored ${result.asks} ask(s) for ${room.id}`);
+    return true;
+  });
 }
 
 export function backUpSuggestions() {

@@ -132,6 +132,28 @@ export class RoomAsks {
     return JSON.stringify(this.data, null, 2) + '\n';
   }
 
+  /** Nothing asked yet, so a backup is worth restoring over it. */
+  isEmpty() {
+    return this.data.asks.length === 0;
+  }
+
+  /**
+   * Put a backup back, at boot on an empty disk. THE ROWS ARE TAKEN WHOLE —
+   * naming their fields is the whitelist trap: a field added later would be
+   * read back, dropped and saved as dropped on every deploy, in silence.
+   */
+  restore(json) {
+    try {
+      const parsed = JSON.parse(json);
+      if (!parsed || !Array.isArray(parsed.asks)) return { ok: false, reason: 'not an ask book' };
+      this.data = { asks: parsed.asks.filter((a) => a && typeof a === 'object') };
+      this.save();
+      return { ok: true, asks: this.data.asks.length };
+    } catch (err) {
+      return { ok: false, reason: err.message };
+    }
+  }
+
   /**
    * A VOTE for one of the three the app offered.
    *

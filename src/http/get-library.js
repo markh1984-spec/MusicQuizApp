@@ -6,7 +6,7 @@ import { CARD_SHAPES, FEATURES, LOOKS, MAX_OWN, PACK_PENCE, SCHEMES, artProvider
 import { sendJson } from './plumbing.js';
 import { brandForRoom, fullLibraryTier, onlyTheirPacks, roomForHost, roomIdFor, schemeForRoom, whoIs, withShop } from './identity.js';
 import { allowed, showsFor } from './gates.js';
-import { backupStatus, ensureAdvertsRestored, ensureArchiveRestored, ensureInvoicesRestored, ensureOwnPacksRestored, markHidden, nowNext, seesTheirLeague, seesTheirNights, unbilledFor } from './helpers.js';
+import { backupStatus, ensureAdvertsRestored, ensureArchiveRestored, ensureAsksRestored, ensureInvoicesRestored, ensureOwnPacksRestored, markHidden, nowNext, seesTheirLeague, seesTheirNights, unbilledFor } from './helpers.js';
 
 export async function getLibrary(req, res, url, route) {
   // ---- host-only reads
@@ -100,11 +100,12 @@ export async function getLibrary(req, res, url, route) {
     // nothing between them, and awaited one after another the console after a
     // deploy waited four GitHub round trips — or, with GitHub gone quiet, four
     // deadlines in a row before it drew anything. `scripts/github-down.mjs`.
-    const [, , , , backup] = await Promise.all([
+    const [, , , , , backup] = await Promise.all([
       ensureInvoicesRestored(libRoom),
       ensureOwnPacksRestored(libRoom),
       ensureArchiveRestored(libRoom),
       ensureAdvertsRestored(libRoom),
+      ensureAsksRestored(libRoom),
       // And whether the backup works at all, which is its own round trip.
       backupStatus(),
     ]);

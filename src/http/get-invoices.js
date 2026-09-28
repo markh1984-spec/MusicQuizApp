@@ -6,7 +6,7 @@ import { FEATURES, invoiceFilename, invoicePdf, suggestions } from './context.js
 import { secure, sendJson } from './plumbing.js';
 import { roomForHost, whoIs } from './identity.js';
 import { allowed } from './gates.js';
-import { accountRef, backUpSuggestions, ensureInvoicesRestored, invoiceState } from './helpers.js';
+import { accountRef, backUpSuggestions, ensureAsksRestored, ensureInvoicesRestored, invoiceState } from './helpers.js';
 
 export async function getInvoices(req, res, url, route) {
   /*
@@ -69,6 +69,7 @@ export async function getInvoices(req, res, url, route) {
     const me = whoIs(req, url);
     if (!me) return sendJson(res, 401, { error: 'Sign in first' }), true;
     const room = roomForHost(req, url);
+    await ensureAsksRestored(room);
     return sendJson(res, 200, {
       // Grouped: four people asking for reggae is one row with a 4 on it, not
       // four rows. That is what makes a Monday's worth of these one pass.
