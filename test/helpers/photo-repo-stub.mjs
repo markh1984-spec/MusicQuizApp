@@ -55,12 +55,15 @@ globalThis.fetch = async (input, init = {}) => {
   const url = typeof input === 'string' ? input : input.url;
   if (!url.startsWith('https://api.github.com/')) return real(input, init);
   if (DELAY) await hold();
-  const m = url.match(/\/repos\/[^/]+\/[^/]+\/contents\/([^?]*)/);
+  const m = url.match(/\/repos\/([^/]+\/[^/]+)\/contents\/([^?]*)/);
   if (!m) return new Response('{}', { status: 404 });
-  const p = decodeURI(m[1]);
+  const p = decodeURI(m[2]);
   const method = (init.method || 'GET').toUpperCase();
   const abs = full(p);
-  note(`${method} ${p}`);
+  // WHICH repository, as well as what: a write that goes to the public repo
+  // and a read that looks in the private one land in the same folder here,
+  // so only the log can tell them apart (`prop-tally-backup.test.js`).
+  note(`${method} ${m[1]} ${p}`);
 
   if (method === 'PUT' && REFUSE && fs.existsSync(REFUSE)) {
     return new Response('{"message":"stub refusing writes"}', { status: 503 });

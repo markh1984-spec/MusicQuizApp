@@ -1199,29 +1199,34 @@ export function readDraft(body = {}) {
 }
 
 /*
- * THE PROP TALLY, PUSHED — and without this the whole thing is pointless.
+ * THE PROP TALLY, PUSHED — the backup is not a safety net here, it is the
+ * storage: `data/` is wiped on every deploy and a counter that only lives
+ * there never reaches the threshold where its numbers mean anything.
  *
- * `data/` is wiped on every deploy and every push IS a deploy, so a counter
- * that only lives there would reset itself several times a week and never
- * reach the threshold where its numbers mean anything. The backup is not a
- * safety net here, it is the storage.
+ * TO THE PRIVATE REPOSITORY, WHICH IS WHERE `restoreFromBackup()` READS IT.
+ * It went to the PUBLIC app repo (the "Update prop use" commits) while the
+ * boot read `data/prop-use.json` from the private one — a read and a write
+ * that disagree about the store is invisible, and every deploy came back from
+ * a file the writer never touched. Owner data, so the private repo both ways
+ * (`test/prop-tally-backup.test.js`).
  *
  * Coalesced rather than pushed per photograph: sixty phones in a break would
- * otherwise be sixty GitHub calls against an hourly quota shared with the
- * packs, the accounts book and the photographs themselves.
+ * otherwise be sixty GitHub calls against a shared hourly quota.
  */
 export let propPush = null;
+export const PROP_PUSH_MS = Number(process.env.PROP_PUSH_MS) || 60_000;   // env: a seam for a check
 export function backUpPropUse() {
   if (propPush) return propPush;
   propPush = new Promise((resolve) => {
     setTimeout(async () => {
       propPush = null;
+      if (!privateRepoConfigured()) return resolve({ ok: false, error: 'no private repo set up' });
       try {
-        resolve(await backUp('data/prop-use.json', propUse.contents(), 'Update prop use', () => {}));
+        resolve(saidSo('the prop tally', await putFile('data/prop-use.json', propUse.contents(), 'Update prop use', 'private')));
       } catch (err) {
-        resolve({ ok: false, error: err.message });
+        resolve(saidSo('the prop tally', { ok: false, error: err.message }));
       }
-    }, 60_000).unref?.();
+    }, PROP_PUSH_MS).unref?.();
   });
   return propPush;
 }
