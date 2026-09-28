@@ -3322,12 +3322,14 @@ export class Engine {
      * person could leave their seat in — never during a live QUESTION, where
      * the screen is four options and twenty seconds.
      *
-     * **A REDEEMED ONE IS KEPT AND DRAWN AS A RECEIPT, not dropped.** The
-     * bingo card has said *"Collected — already redeemed. If that is wrong,
-     * ask the quizmaster"* since vouchers existed, and a code that vanishes
-     * the instant a barman scans it leaves the one person who needs to query
-     * it with nothing to point at. The two engines may not disagree about
-     * this.
+     * **A REDEEMED ONE IS STILL SENT, AND IT IS THE PHONE THAT STOPS DRAWING
+     * IT.** This used to say it was drawn as a receipt; it has not been since
+     * *My prizes* — a collected drink disappears from the phone and the phone
+     * forgets the code (`client.js`), because the host's panel and the filed
+     * night hold every voucher and a receipt nobody can spend only clutters
+     * the fold. It stays in the payload with `redeemedAt` on it so a phone
+     * that remembered the code across a reload learns to let it go. The two
+     * engines may not disagree about this.
      *
      * **`view.voucher` IS UNCHANGED** and still names the quiz's own prize at
      * the FINAL: that is the headline card on the last screen, and this is
