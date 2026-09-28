@@ -286,6 +286,14 @@ try {
   await desk.goto(`${BASE}/host?key=${KEY}${gq}`);
   await desk.waitForSelector('.votepanel', { timeout: 10000 }).catch(() => {});
   check('the control view draws the result', await desk.locator('.votepanel').count() === 1);
+  /*
+   * AND THE PRIZE PANEL SAYS WHAT THE DRINK IS FOR. It read "1st" for any
+   * voucher that was not second or third — this one, the draw's, a bingo
+   * card's fourth — so the host told the funniest table they had won the
+   * quiz (launch-path sweep, 23 September 2026).
+   */
+  const place = ((await desk.locator('.v-row .v-place').first().textContent().catch(() => '')) || '').trim();
+  check('and the prize panel says the drink is for the funniest photo, not "1st"', /funniest/i.test(place), place || 'no voucher row');
   const again = desk.locator('#voteAgain');
   check('with a way to run another one', await again.count() === 1);
   if (await again.count()) {

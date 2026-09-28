@@ -12,7 +12,7 @@
 
 import {
   esc, node, ServerClock, Live, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights,
-  rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote, playsACard, photoVotePanel, roundSaid,
+  rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote, playsACard, photoVotePanel, roundSaid, ordinal,
 } from './client.js';
 import { hostCursor } from './host-cursor.js';
 import { paintScheme } from './schemes.js';
@@ -406,6 +406,21 @@ function advertPanel(s) {
  * bar cannot reach us or somebody is working it, and both are worth knowing
  * before you tap it a fourth time.
  */
+/*
+ * WHAT A CODE IS FOR, IN THE HOST'S OWN WORDS. This read `1st` for anything
+ * that was not 2nd or 3rd (launch-path sweep, 23 September 2026) — so the
+ * funniest photograph's drink, the binned draw's leftover and a bingo card's
+ * fourth and fifth prizes all sat in the panel as first place, and the host
+ * read "first" off his screen to somebody who came ninth. The phone's own
+ * card already refuses that (`place || 1` is the fault this repo records
+ * there); this is the same rule on the other screen.
+ */
+function placeLabel(v) {
+  if (v.funny) return 'Funniest photo';
+  if (v.draw) return 'Draw';
+  return ordinal(v.place || 1);
+}
+
 function voucherPanel(s) {
   // Down the board, first place at the top — the order the room saw and the
   // order the host will read them out in.
@@ -420,7 +435,7 @@ function voucherPanel(s) {
         ${list.map((v) => `
           <div class="v-row ${v.redeemedAt ? 'is-spent' : ''}">
             <div class="v-row-who">
-              <span class="v-place v-place-${v.place || 1}">${v.place === 2 ? '2nd' : v.place === 3 ? '3rd' : '1st'}</span>
+              <span class="v-place v-place-${v.place || 1}">${placeLabel(v)}</span>
               <b>${esc(v.name)}</b>
               <span class="v-row-what">${esc(v.reward)}</span>
               <span class="v-row-code">${esc(v.code)}</span>
@@ -982,9 +997,8 @@ function prizeLine(s) {
     return '<div class="tiny" style="margin-top:4px">No prizes tonight'
       + ' \u2014 they come from the venue you pick when you launch.</div>';
   }
-  const places = ['1st', '2nd', '3rd'];
   return `<div class="tiny" style="margin-top:4px">Playing for: ${rewards
-    .map((r, i) => `<b>${esc(places[i] || `${i + 1}th`)}</b> ${esc(r)}`).join(' \u00b7 ')}</div>`;
+    .map((r, i) => `<b>${esc(ordinal(i + 1))}</b> ${esc(r)}`).join(' \u00b7 ')}</div>`;
 }
 
 /**

@@ -15,7 +15,7 @@
 
 import {
   esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam,
-  rememberRoom, noteDrinks, prizesShowing, prizesHead, wireDrinks, playsACard, photoVoteCard, wirePhotoVote, roundSaid,
+  rememberRoom, noteDrinks, prizesShowing, prizesHead, wireDrinks, playsACard, photoVoteCard, wirePhotoVote, roundSaid, ordinal,
 } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { buildDj, djKey, djHead } from './play-dj.js';
@@ -1827,12 +1827,6 @@ function voucherCardFor(v) {
       <div class="win-code">${esc(v.code)}</div>
       <p class="tiny">Show this at the bar. They scan it, you get it. It only works once.</p>
     </div>`;
-}
-
-function ordinal(n) {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
 // ------------------------------------------------------------------- timer
