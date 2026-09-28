@@ -12,7 +12,7 @@
 
 import {
   esc, node, ServerClock, Live, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights,
-  rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote, playsACard, photoVotePanel,
+  rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote, playsACard, photoVotePanel, roundSaid,
 } from './client.js';
 import { hostCursor } from './host-cursor.js';
 import { paintScheme } from './schemes.js';
@@ -335,11 +335,13 @@ function whereLabel(s) {
     case 'lobby': return 'Lobby — waiting to start';
     case 'rules': return 'The rules';
     // A breakout round is delivered like any other but scores nothing, so it
-    // does not claim a round number here either — same rule as the projector.
-    case 'round_intro': return s.roundType === 'breakout' ? 'Bonus round intro' : `Round ${s.scoreRoundNumber ?? s.roundIndex + 1} intro`;
-    case 'question': return `R${s.roundIndex + 1} Q${s.questionIndex + 1} — live`;
-    case 'reveal': return `R${s.roundIndex + 1} Q${s.questionIndex + 1} — revealed`;
-    case 'round_board': return s.roundType === 'breakout' ? 'Bonus round scores' : `Round ${s.scoreRoundNumber ?? s.roundIndex + 1} scores`;
+    // does not claim a round number here either — same rule as the projector,
+    // and the SAME WORDS (`roundSaid()`): the live and revealed lines printed
+    // the array position, one out from the wall after a bonus round.
+    case 'round_intro': return `${roundSaid(s)} intro`;
+    case 'question': return `${roundSaid(s, { short: true })} Q${s.questionIndex + 1} — live`;
+    case 'reveal': return `${roundSaid(s, { short: true })} Q${s.questionIndex + 1} — revealed`;
+    case 'round_board': return `${roundSaid(s)} scores`;
     case 'final': return 'Final results';
     default: return 'Control';
   }
@@ -511,7 +513,7 @@ function buildPanels(s) {
   // what to play before the question is even on screen.
   if (s.phase === 'round_intro' || s.phase === 'reveal' || s.phase === 'lobby') {
     const up = s.upcoming;
-    if (up && up.cue) panels.push(cuePanel(up.cue, `Coming up — R${up.roundIndex + 1} Q${up.questionIndex + 1}`, up.playlist));
+    if (up && up.cue) panels.push(cuePanel(up.cue, `Coming up — ${roundSaid(up, { short: true })} Q${up.questionIndex + 1}`, up.playlist));
   }
   if ((s.phase === 'question' || s.phase === 'reveal') && s.question && s.question.cue) {
     panels.push(cuePanel(s.question.cue, 'Play this now', s.question.playlist, s.introPlay));
@@ -664,7 +666,7 @@ function breakoutPanel(s, q) {
   const answers = s.breakoutAnswers || [];
   const el = node(`
     <div class="panel">
-      <h3>Round ${s.roundIndex + 1}, question ${s.questionIndex + 1} of ${s.questionCount} — breakout</h3>
+      <h3>${roundSaid(s)}, question ${s.questionIndex + 1} of ${s.questionCount} — breakout</h3>
       <p class="prompt">${esc(q.prompt)}</p>
       <div class="tiny" style="margin-bottom:8px;color:var(--cool)">No right answer — read the funny ones out.</div>
       <div class="keywho" id="breakoutList">
@@ -701,7 +703,7 @@ function questionPanel(s) {
   const rows = keyRows(q, tally);
   const el = node(`
     <div class="panel">
-      <h3>Round ${s.roundIndex + 1}, question ${s.questionIndex + 1} of ${s.questionCount} — answer key</h3>
+      <h3>${roundSaid(s)}, question ${s.questionIndex + 1} of ${s.questionCount} — answer key</h3>
       <p class="prompt">${esc(q.prompt)}</p>
       ${q.alphabet ? `<div class="answer-said"><span class="answer-letter">${esc(q.correctLetter || '?')}</span><span class="answer-words">${esc(q.answer || '')}</span></div>` : ''}
       ${q.pickCount > 1 ? `<div class="tiny" style="margin-bottom:8px;color:var(--cool)">They lock in ${q.pickCount} — part marks for getting some.</div>` : ''}
@@ -818,7 +820,7 @@ function nextUpPanel(s) {
   if (!up) return node('<div class="panel"><h3>Next up</h3><div class="tiny">Nothing queued.</div></div>');
   return node(`
     <div class="panel">
-      <h3>Next up — R${up.roundIndex + 1} Q${up.questionIndex + 1}</h3>
+      <h3>Next up — ${roundSaid(up, { short: true })} Q${up.questionIndex + 1}</h3>
       <p class="prompt">${esc(up.prompt)}</p>
       ${up.pickCount > 1 ? `<div class="tiny" style="margin-bottom:8px;color:var(--cool)">Pick ${up.pickCount}</div>` : ''}
       ${up.alphabet

@@ -1477,6 +1477,33 @@ function tierPreview(me, { hatIsOn = true, forgetKey = null } = {}) {
  * slides already use. No link means no QR and the line stands on its own: the
  * date is the half that matters and the scan is a bonus.
  */
+/**
+ * WHAT A SCREEN CALLS THE ROUND — "Round 2", or "Bonus round" for a breakout.
+ *
+ * ONE DEFINITION FOR THE PROJECTOR, THE PHONE AND THE CONTROL VIEW, because
+ * they disagreed (launch-path sweep, 23 September 2026). A breakout round is
+ * delivered like any other and scores nothing, so it is not one of the rounds
+ * the room is counting: the engine says so with `scoreRoundNumber`, and the
+ * projector's round intro read it. The host's status line, the answer key,
+ * the next-up panel and the phone's board heading all printed the raw array
+ * position — `roundIndex + 1` — so with a bonus round first the wall said
+ * *Round 1 of 2*, the host read *R2 Q1 — live* off his own screen and the
+ * phones said *After round 2*: three numbers for one round, and the host on
+ * the mic saying the third. It is the label only — `roundIndex` stays the
+ * position the engine navigates by.
+ *
+ * @param {object} r  anything carrying `roundType`, `scoreRoundNumber` and
+ *   `roundIndex` — a view, or the host's `upcoming`
+ * @param {object} [o]
+ * @param {boolean} [o.short]  "R2" / "Bonus", for the host's one-line status
+ */
+export function roundSaid(r, { short = false } = {}) {
+  if (!r) return '';
+  if (r.roundType === 'breakout') return short ? 'Bonus' : 'Bonus round';
+  const n = r.scoreRoundNumber ?? ((r.roundIndex ?? 0) + 1);
+  return short ? `R${n}` : `Round ${n}`;
+}
+
 export function comeBackBand(s) {
   if (!s.comeBack || !s.comeBack.text) return '';
   const { text, link } = s.comeBack;

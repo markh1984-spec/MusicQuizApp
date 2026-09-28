@@ -15,7 +15,7 @@
 
 import {
   esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam,
-  rememberRoom, noteDrinks, prizesShowing, prizesHead, wireDrinks, playsACard, photoVoteCard, wirePhotoVote,
+  rememberRoom, noteDrinks, prizesShowing, prizesHead, wireDrinks, playsACard, photoVoteCard, wirePhotoVote, roundSaid,
 } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { buildDj, djKey, djHead } from './play-dj.js';
@@ -1492,7 +1492,7 @@ function buildBoard(s) {
 
   const el = node(`
     <div style="display:grid;gap:16px">
-      <h2>${isFinal ? 'Final scores' : `After round ${s.roundIndex + 1}`}</h2>
+      <h2>${isFinal ? 'Final scores' : s.roundType === 'breakout' ? 'After the bonus round' : `After ${roundSaid(s).toLowerCase()}`}</h2>
       ${isFinal && winner ? `<div class="result good"><div class="sub">Winner</div><div class="big">${esc(winner.name)}</div><div class="pts">${winner.score.toLocaleString('en-GB')}</div></div>` : ''}
       ${voucherCard(s)}
       ${wallet(s, s.voucher ? s.voucher.code : '')}

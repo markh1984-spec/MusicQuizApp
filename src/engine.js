@@ -3758,6 +3758,9 @@ export class Engine {
       questionIndex: qi,
       roundTitle: round.title,
       roundType: round.type,
+      // The number a screen SAYS for that round — the next-up panel used to
+      // print the array position, which is one out after a bonus round.
+      scoreRoundNumber: this.scoringRoundNumber(ri),
       prompt: q.prompt,
       options: this.optionsFor(q, round),
       ...this.hostQuestionExtras(q, round, qi),
