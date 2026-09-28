@@ -6,8 +6,45 @@ import { timingSafeEqual } from './gates.js';
 
 // ----------------------------------------------------------------- helpers
 
+/*
+ * WHAT EVERY RESPONSE SAYS ABOUT ITSELF — one function, on every head this
+ * server writes (`send()`, `serveFile()`, the photo, PDF, stream and progress
+ * heads). There were no security headers at all: no policy behind the
+ * reflected XSS /qr.svg had, no `nosniff`, and /console — the page that
+ * drives Launch — could be framed by any site (O25, 23 September 2026
+ * sweep).
+ *
+ * THE DOCUMENT POLICY IS THE STRICTEST THE APP SATISFIES, FOUND BY AUDITING
+ * THE PAGES: `script-src 'self'` with no 'unsafe-inline' — the five inline
+ * module scripts moved to `/assets/page-shell.js` and the six inline
+ * `onerror=` handlers are one capture-phase listener in client.js — so an
+ * injected script cannot run. `style-src` keeps 'unsafe-inline' because the
+ * console, the phones and the projector build markup with `style=""` in
+ * hundreds of places, and an inline style cannot run script. Images and
+ * media are the app's own, data: or blob: (the camera, the logos, the QR);
+ * nothing loads from another host and nothing is fetched from one. An SVG —
+ * the QR codes, the favicon, the placeholders — is sandboxed with
+ * `script-src 'none'` wherever it is opened. `scripts/csp-clean.mjs` reads
+ * every screen's console for a violation; a policy that breaks the projector
+ * or a phone is worse than none.
+ */
+export const DOCUMENT_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'";
+export const IMAGE_CSP = "sandbox; script-src 'none'";
+export function secure(headers = {}) {
+  const type = String(headers['Content-Type'] || headers['content-type'] || '');
+  const out = { 'X-Content-Type-Options': 'nosniff', ...headers };
+  if (type.startsWith('text/html')) {
+    out['Content-Security-Policy'] = DOCUMENT_CSP;
+    out['X-Frame-Options'] = 'DENY';
+    out['Referrer-Policy'] = 'same-origin';
+  } else if (type.startsWith('image/svg')) {
+    out['Content-Security-Policy'] = IMAGE_CSP;
+  }
+  return out;
+}
+
 export function send(res, status, body, headers = {}) {
-  res.writeHead(status, { 'Cache-Control': 'no-store', ...headers });
+  res.writeHead(status, secure({ 'Cache-Control': 'no-store', ...headers }));
   res.end(body);
 }
 

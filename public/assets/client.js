@@ -1735,3 +1735,25 @@ export function fitWinner(cardEl) {
   // Never GROW past 1: a sparse night must look exactly as it always has.
   w.style.setProperty('--fit', String(Math.min(1, room / Math.max(1, need))));
 }
+
+/*
+ * A BROKEN IMAGE IS HANDLED HERE, NEVER BY AN INLINE `onerror` — the
+ * Content-Security-Policy on every page is `script-src 'self'`, which an
+ * inline handler is not (O25, 23 September 2026 sweep). `error` does not
+ * bubble, so this listens in the capture phase, once, on every page that
+ * imports this module. Guarded, because the suite imports it under Node.
+ */
+if (typeof document !== 'undefined') {
+  document.addEventListener('error', (e) => {
+    const img = e.target;
+    if (!(img instanceof HTMLImageElement)) return;
+    // The winner's card: no broken icon on the phone held up at the bar.
+    if (img.classList.contains('win-logo')) { img.remove(); return; }
+    // The projector's picture round: "Picture missing — read this one out".
+    const frame = img.closest('.zoom-frame');
+    if (frame) { frame.classList.add('no-image'); return; }
+    // The console's preview of a picture question.
+    const pic = img.closest('.pv-pic');
+    if (pic) pic.innerHTML = '<div class="pv-pic-none">No picture for this one yet.</div>';
+  }, true);
+}

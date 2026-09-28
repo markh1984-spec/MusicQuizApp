@@ -4,7 +4,7 @@
  */
 import { HOUSE, config, faviconSvg, fs, hub, path, rooms } from './context.js';
 import { selfTestResult } from '../self-test.js';
-import { send, sendJson } from './plumbing.js';
+import { secure, send, sendJson } from './plumbing.js';
 import { MIME, serveFile } from './static.js';
 import { roomForPhone } from './identity.js';
 
@@ -116,10 +116,10 @@ export async function getStaticFiles(req, res, url, route) {
     if (!full) return send(res, 404, 'Not found'), true;
     return fs.readFile(full, (err, data) => {
       if (err) return send(res, 404, 'Not found');
-      res.writeHead(200, {
+      res.writeHead(200, secure({
         'Content-Type': MIME[path.extname(full).toLowerCase()] || 'image/jpeg',
         'Cache-Control': 'public, max-age=3600',
-      });
+      }));
       res.end(data);
     }), true;
   }

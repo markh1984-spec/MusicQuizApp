@@ -205,7 +205,7 @@
              one of them had to be remembered twice. They come from
              public/assets/faq.js now — the one place any answer is written —
              and /faq draws the rest. -->
-        <div class="ld-faq" id="faqSlot"></div>
+        <div class="ld-faq" id="faqSlot" data-faq="home"></div>
         <p class="ld-section-lede" style="margin-top:18px">
           <a href="/faq">All the questions people ask</a></p>
         </div>
@@ -235,12 +235,6 @@
     </div>
   </footer>
 
-  <script type="module">
-    import { brandMark } from '/assets/client.js';
-    import { faqHtml } from '/assets/faq.js';
-    document.getElementById('brandSlot').innerHTML =
-      `${brandMark(28)}<span class="brand-name">Quizporium</span>`;
-    document.getElementById('faqSlot').innerHTML = faqHtml({ onlyHome: true });
-  </script>
+  <script type="module" src="/assets/page-shell.js"></script>
 </body>
 </html>

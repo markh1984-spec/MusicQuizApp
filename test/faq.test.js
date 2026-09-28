@@ -80,9 +80,13 @@ test('THE SALES PAGE AND THE CONSOLE BOTH DRAW IT, and neither types it out', ()
   const home = read('public/home.html');
   const faqPage = read('public/faq.html');
   const help = read('public/assets/console-account.js');
-
-  assert.ok(home.includes('faqHtml('), 'the sales page stopped drawing the shared list');
-  assert.ok(faqPage.includes('faqHtml('), '/faq stopped drawing the shared list');
+  // The pages draw it through ONE module, `page-shell.js` — an inline script
+  // is what the Content-Security-Policy on every document forbids — and each
+  // says on its slot which list it wants.
+  const shell = read('public/assets/page-shell.js');
+  assert.ok(shell.includes('faqHtml('), 'page-shell.js stopped drawing the shared list');
+  assert.ok(home.includes('/assets/page-shell.js') && home.includes('id="faqSlot" data-faq="home"'), 'the sales page stopped drawing the shared list');
+  assert.ok(faqPage.includes('/assets/page-shell.js') && faqPage.includes('id="faqSlot"'), '/faq stopped drawing the shared list');
   assert.ok(help.includes('faqPanelHtml('), 'the Help tab draws no answers at all');
 
   /*

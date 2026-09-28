@@ -3,7 +3,7 @@
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
 import { FEATURES, invoiceFilename, invoicePdf, suggestions } from './context.js';
-import { sendJson } from './plumbing.js';
+import { secure, sendJson } from './plumbing.js';
 import { roomForHost, whoIs } from './identity.js';
 import { allowed } from './gates.js';
 import { accountRef, backUpSuggestions, ensureInvoicesRestored, invoiceState } from './helpers.js';
@@ -36,11 +36,11 @@ export async function getInvoices(req, res, url, route) {
     const pdf = invoicePdf(invoice);
     // `inline` so tapping it on a phone opens a preview to check before
     // sending, rather than dropping a file into Downloads unseen.
-    res.writeHead(200, {
+    res.writeHead(200, secure({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `inline; filename="${invoiceFilename(invoice)}"`,
       'Cache-Control': 'no-store',
-    });
+    }));
     return res.end(pdf), true;
   }
 

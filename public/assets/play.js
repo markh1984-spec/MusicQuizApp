@@ -1766,7 +1766,7 @@ function voucherCardFor(v) {
   if (v.redeemedAt) {
     return `
       <div class="win-card win-spent">
-        ${v.logo ? `<img class="win-logo" alt="${esc(v.venue || '')}" src="${esc(v.logo)}" onerror="this.remove()">` : ''}
+        ${v.logo ? `<img class="win-logo" alt="${esc(v.venue || '')}" src="${esc(v.logo)}">` : ''}
         <div class="sub">Collected</div>
         <div class="win-what">${esc(v.reward)}</div>
         <p class="tiny">Already redeemed. If that is wrong, ask the quizmaster.</p>
@@ -1787,8 +1787,7 @@ function voucherCardFor(v) {
    * holding up to be served.
    */
   const logo = v.logo
-    ? `<img class="win-logo" alt="${esc(v.venue || '')}" src="${esc(v.logo)}"
-         onerror="this.remove()">`
+    ? `<img class="win-logo" alt="${esc(v.venue || '')}" src="${esc(v.logo)}">`
     : '';
   return `
     <div class="win-card place-${place}">

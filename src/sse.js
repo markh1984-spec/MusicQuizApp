@@ -24,6 +24,7 @@ export class Hub {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
+      'X-Content-Type-Options': 'nosniff',
       Connection: 'keep-alive',
       // Tells nginx-style proxies not to buffer us, which would otherwise
       // hold events back until the buffer filled — fatal for a live quiz.

@@ -239,8 +239,7 @@ function pictureFor(round, q) {
   return `
     <div class="pv-pic">
       <a href="${esc(src)}" target="_blank" rel="noopener" title="Open it full size">
-        <img class="pv-pic-img" src="${esc(src)}" alt="" loading="lazy"
-          onerror="this.closest('.pv-pic').innerHTML='&lt;div class=&quot;pv-pic-none&quot;&gt;No picture for this one yet.&lt;/div&gt;'">
+        <img class="pv-pic-img" src="${esc(src)}" alt="" loading="lazy">
       </a>
     </div>`;
 }

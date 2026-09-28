@@ -3,7 +3,7 @@
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
 import { COVER_PHOTOS, FEATURES, HOUSE, accounts, bookingOf, comeBackText, coverPhotos, galleryNumbers, galleryPhotosOf, isNightFolder, isPublished, leaguesByVenue, leaguesRunning, listArchive, listDirs, mergeGigs, nameDecisions, nextNightAt, photoDecisions, photoFolder, photoKey, photoPins, photosRepoConfigured, publicTable, publishedNights, publishedVenues, readableNight, rooms, safePhotoName, sameVenueSlug, showsOnGallery, teamKey, venueSlug } from './context.js';
-import { sendJson } from './plumbing.js';
+import { secure, sendJson } from './plumbing.js';
 import { galleryRoomFor, galleryRoomFrom, nightFiles, photoBytes, roomForHost, whoIs, whoseRoom } from './identity.js';
 import { allowed } from './gates.js';
 import { ensureArchiveRestored, ensureInvoicesRestored, venueOverlayFor } from './helpers.js';
@@ -522,7 +522,7 @@ export async function getGallery(req, res, url, route) {
      */
     const bytes = await photoBytes(`${photoFolder(galleryRoomId())}/${night}/${name}`);
     if (!bytes) return sendJson(res, 404, { error: 'Nothing here.' }), true;
-    res.writeHead(200, {
+    res.writeHead(200, secure({
       'Content-Type': name.endsWith('.png') ? 'image/png' : name.endsWith('.webp') ? 'image/webp' : 'image/jpeg',
       'Content-Length': bytes.length,
       /*
@@ -541,7 +541,7 @@ export async function getGallery(req, res, url, route) {
       // marketing value; a stranger's face turning up in a search is a
       // concrete cost, and it lands on the player rather than the business.
       'X-Robots-Tag': 'noindex, noimageindex',
-    });
+    }));
     return res.end(bytes), true;
   }
 
@@ -560,13 +560,13 @@ export async function getGallery(req, res, url, route) {
     const m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(overlay || '');
     if (!m) return sendJson(res, 404, { error: 'No frame.' }), true;
     const bytes = Buffer.from(m[2], 'base64');
-    res.writeHead(200, {
+    res.writeHead(200, secure({
       'Content-Type': m[1],
       'Content-Length': bytes.length,
       // A day, like the photographs beside it; a redesign reaches every gallery within it.
       'Cache-Control': 'public, max-age=86400',
       'X-Robots-Tag': 'noindex, noimageindex',
-    });
+    }));
     return res.end(bytes), true;
   }
 
@@ -582,14 +582,14 @@ export async function getGallery(req, res, url, route) {
       ? await photoBytes(`${photoFolder(galleryRoomFor(req, url))}/${night}/${name}`)
       : null;
     if (!bytes) return sendJson(res, 404, { error: 'No photo there.' }), true;
-    res.writeHead(200, {
+    res.writeHead(200, secure({
       'Content-Type': name.endsWith('.png') ? 'image/png' : name.endsWith('.webp') ? 'image/webp' : 'image/jpeg',
       'Content-Length': bytes.length,
       // A filed photo all but never changes — a quarter turn is the one edit
       // it takes — so a page of forty of them should not fetch forty every
       // time it opens. The console busts its own copy after a turn.
       'Cache-Control': 'private, max-age=86400',
-    });
+    }));
     return res.end(bytes), true;
   }
   return false;

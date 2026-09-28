@@ -1180,8 +1180,7 @@ function renderQuestionMedia(s, q) {
     return `
       <div class="zoom-stage">
         <div class="zoom-frame reveal-${esc(mode)}" id="zoomFrame">
-          <img class="zoom-img" id="zoomImg" src="${esc(q.image + roomQuery)}" alt="Mystery musician"
-               onerror="this.closest('.zoom-frame').classList.add('no-image')">
+          <img class="zoom-img" id="zoomImg" src="${esc(q.image + roomQuery)}" alt="Mystery musician">
           ${mode === 'pixelate' ? '<canvas class="pix-canvas" id="pixCanvas"></canvas>' : ''}
           ${mode === 'tiles' ? tileGrid(s) : ''}
           ${q.imageCaption ? `<div class="zoom-caption">${esc(q.imageCaption)}</div>` : ''}

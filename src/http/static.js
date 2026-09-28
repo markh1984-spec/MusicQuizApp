@@ -2,7 +2,7 @@
  * STATIC FILES — the MIME table and serveFile(). Moved whole from server.js.
  */
 import { fs, path } from './context.js';
-import { send } from './plumbing.js';
+import { secure, send } from './plumbing.js';
 
 export const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -53,12 +53,12 @@ export function serveFile(res, baseDir, relPath, { cache = false } = {}) {
       'Last-Modified': new Date(stat.mtimeMs).toUTCString(),
     };
     if (res.req && res.req.headers['if-none-match'] === tag) {
-      res.writeHead(304, headers);
+      res.writeHead(304, secure(headers));
       return res.end();
     }
     fs.readFile(full, (err, data) => {
       if (err) return send(res, 404, 'Not found');
-      res.writeHead(200, headers);
+      res.writeHead(200, secure(headers));
       res.end(data);
     });
   });

@@ -30,7 +30,7 @@
 
         <!-- Drawn from public/assets/faq.js, which is the one place any of
              these answers is written. See the note at the top of that file. -->
-        <div class="ld-faq" id="faqSlot"></div>
+        <div class="ld-faq" id="faqSlot" data-faq="all"></div>
 
         <p class="ld-legal-updated" style="margin-top:26px">Still stuck? The
           <a href="/login">Help tab</a> inside the app has the same answers and a
@@ -51,12 +51,6 @@
     </div>
   </footer>
 
-  <script type="module">
-    import { brandMark } from '/assets/client.js';
-    import { faqHtml } from '/assets/faq.js';
-    document.getElementById('brandSlot').innerHTML =
-      `${brandMark(28)}<span class="brand-name">Quizporium</span>`;
-    document.getElementById('faqSlot').innerHTML = faqHtml({});
-  </script>
+  <script type="module" src="/assets/page-shell.js"></script>
 </body>
 </html>
