@@ -10,13 +10,8 @@ import { backUpAccounts } from './helpers.js';
 export async function writeSignIn(req, res, url, route) {
   if (route === '/api/sign-in' && req.method === 'POST') {
     const body = await readJson(req);
-    /*
-     * THE DOOR COMES BEFORE THE HASH — see `SIGN_INS_PER_WINDOW`. A password
-     * check is ~40ms of scrypt, and it ran on the event loop with no limit:
-     * 120 wrong passwords from one script froze every room's projector and
-     * phones for five seconds. The hash is in the thread pool now
-     * (`signInAsync`), and a flood is refused before it costs anything.
-     */
+    // THE DOOR COMES BEFORE THE HASH — `SIGN_INS_PER_WINDOW` in plumbing.js says
+    // why. The hash itself is in the thread pool (`signInAsync`).
     if (!signInAllowed(req)) {
       return sendJson(res, 429, { error: 'Too many sign-in attempts from here. Wait ten minutes, or ask for a sign-in link instead.' }), true;
     }
@@ -41,26 +36,11 @@ export async function writeSignIn(req, res, url, route) {
       ...(secure ? ['Secure'] : []),
     ].join('; '));
     /*
-     * A SIGN-IN IS A THING TO BACK UP, and it was the one write that was not.
-     *
-     * A session is the SHA-256 of a token sitting in somebody's cookie, and it
-     * lives in `data/accounts.json` — which on a host with no permanent disk is
-     * empty again after every deploy. The accounts came back from the private
-     * repo, but the backup was pushed the last time an ACCOUNT changed, which
-     * is weeks before anybody signed in. So the cookie in the browser pointed
-     * at a token the restored file had never heard of, and the whole app
-     * answered 401 with nothing on screen saying why.
-     *
-     * It cost a live test mid-gig-day: a deploy landed between Launch and the
-     * first press on the control view, and every button came back "wrong host
-     * key" on a night that was running perfectly. `restore()` already keeps
-     * sessions deliberately, for exactly this reason — the backup simply never
-     * contained one.
-     *
-     * Awaited, because the whole point is that it is on disk in the repository
-     * before the browser has the cookie. It can never throw: `backUpAccounts()`
-     * catches everything and reports, so a GitHub having a bad morning makes a
-     * sign-in slower — by `BACKUP_WAIT_MS` at most — and never refuses one.
+     * A SIGN-IN IS A THING TO BACK UP — a session lives in `data/accounts.json`,
+     * and a deploy that restored a backup pushed before it signed everybody out
+     * mid-gig ("wrong host key" on every button). AWAITED, so it is in the
+     * repository before the browser has the cookie; it never throws, and a slow
+     * GitHub costs `BACKUP_WAIT_MS` at most, never a refusal.
      */
     await backUpAccounts();
     return sendJson(res, 200, {
