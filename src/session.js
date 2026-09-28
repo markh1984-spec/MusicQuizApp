@@ -1870,6 +1870,10 @@ export class Session {
     if (teams && Object.keys(teams).length) this.engine.state.teams = teams;
     if (carry && carry.length) this.seedCarriedPlayers(carry);
     this.engine.changed();
+    // THE ORDER GOES TO DISK THIS INSTANT. `launch()` flushed a state with no
+    // order on it; everything above went on through the debounce, so a crash
+    // in the next 250ms came back as a one-part night with part two gone.
+    this.store.flush();
     return started;
   }
 
