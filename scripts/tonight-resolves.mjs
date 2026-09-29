@@ -259,6 +259,35 @@ try {
    * The 400s this check causes ITSELF are the point of the launch probes
    * above — a pack id that does not exist. Anything else is a real error.
    */
+  /*
+   * LAUNCH DOES NOT MOVE UNDER THE THUMB WHEN THE FIRST PACK GOES IN. The
+   * prize table was absent on an empty bar and appeared with the first pack,
+   * 65px of it — present-and-inert now, with the reason on it.
+   */
+  {
+    const fresh = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    await fresh.goto(`${BASE}/console?key=${KEY}`, { waitUntil: 'load' });
+    await fresh.waitForSelector('.pack-card', { timeout: 20000 });
+    await fresh.waitForTimeout(800);
+    await fresh.evaluate(async () => {
+      for (let i = 0; i < 20; i += 1) {
+        const x = document.querySelector('.lb-tiles .lb-tile.is-pack .lb-x, .lb-tiles .lb-tile.is-pack [aria-label^="Take"]');
+        if (!x) break;
+        x.click();
+        await new Promise((r) => setTimeout(r, 200));
+      }
+    });
+    const goAt = () => fresh.evaluate(() => Math.round(document.querySelector('.lb-go').getBoundingClientRect().top + window.scrollY));
+    const before = await goAt();
+    const said = await fresh.evaluate(() => (document.querySelector('.lb-prizes')?.textContent || '').replace(/\s+/g, ' ').trim());
+    await fresh.evaluate(() => document.querySelector('.pack-card[data-pack]')?.click());
+    await fresh.waitForTimeout(1500);
+    const moved = (await goAt()) - before;
+    check(`the first pack in moves Launch less than 20px (${moved}px)`, moved < 20, true);
+    check(`  ...and the empty prize table says what it waits for (${said})`, /add a game/i.test(said), true);
+    await fresh.close();
+  }
+
   check('nothing threw', errors.filter((e) => !/favicon/i.test(e) && !/400 \(Bad Request\)/.test(e)), []);
 
   await browser.close();

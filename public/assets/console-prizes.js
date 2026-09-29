@@ -166,8 +166,14 @@ export function prizeNote(parts) {
 /** Draw the table into `box` — shut it is the ledger, open it is the editor. */
 export function prizeTableInto(box, parts, { open, venueName, venueList }) {
   if (!box) return;
-  if (!parts.length) { box.hidden = true; box.innerHTML = ''; return; }
   box.hidden = false;
+  /* PRESENT AND INERT, NEVER ABSENT — it appeared from nothing with the first
+     pack and moved Launch 65px under the thumb. The reason is on the control. */
+  if (!parts.length) {
+    box.innerHTML = `<button class="lb-pz-head" type="button" disabled aria-expanded="false">
+      <span class="lb-pz-lab">What they win</span><span class="lb-pz-line tiny">Add a game first</span></button>`;
+    return;
+  }
   const rows = parts.map((part, i) => {
     const n = part.pays;
     const list = part.list || [];
