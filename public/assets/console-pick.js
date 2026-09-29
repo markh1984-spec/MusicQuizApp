@@ -164,8 +164,16 @@ function enhance(select) {
      * hang off the side of the console.
      */
     menu.classList.remove('to-left');
+    menu.style.transform = '';
+    const edge = document.documentElement.clientWidth - 8;
+    if (menu.getBoundingClientRect().right > edge) menu.classList.add('to-left');
+    /*
+     * AND NEITHER SIDE MAY PUSH IT OFF THE OTHER. At 390px a menu is 80vw, so
+     * a picker mid-row overflowed the right, flipped, and hung 91px off the
+     * LEFT with every card shape cut off. Nudged back inside, whichever side.
+     */
     const box = menu.getBoundingClientRect();
-    if (box.right > document.documentElement.clientWidth - 8) menu.classList.add('to-left');
+    if (box.left < 8) menu.style.transform = `translateX(${Math.min(8 - box.left, Math.max(0, edge - box.right))}px)`;
   });
   paintOne(root);
 }
