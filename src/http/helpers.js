@@ -351,11 +351,8 @@ export async function ensureArchiveRestored(room) {
       console.warn(`[archive] could not fetch the backup for ${room.id}:`, read.error);
       return false;
     }
-    // MERGED, NEVER REFUSED — see `restoreArchive()`. And the direction a merge
-    // cannot take is taken here: a night the DISK holds that the backup never
-    // named (filed while GitHub was down) is pushed out now, so the two converge
-    // without another night being launched. Not awaited: it waits for THIS
-    // restore to be marked done.
+    // MERGED, NEVER REFUSED — `restoreArchive()`. A night the DISK holds that the
+    // backup never named is pushed out now, not awaited: it waits for THIS restore.
     const result = read.body
       ? restoreArchive(room.paths.archive, read.body.toString('utf8'))
       : { ok: true, nights: 0, unbacked: nightsOnDisk(room.paths.archive) };
@@ -606,14 +603,8 @@ export async function restoreFromBackup() {
     const result = store.restore(saved.toString('utf8'));
     if (result.ok) console.log(`[${name}] restored ${label(result)}`);
   };
-  /*
-   * The join codes, before anybody's phone arrives.
-   *
-   * This one has to be at BOOT rather than lazily, and that is the whole point:
-   * a phone scanning a printed QR is often the first thing to touch a room
-   * after a restart, and by then it is too late to discover the code should
-   * have been something else.
-   */
+  // The join codes: at BOOT, never lazily — a phone scanning a printed QR is
+  // often the first thing to touch a room after a restart.
   const restoreCodes = async () => {
     const read = await tryGetFile('room-codes.json', 'private');
     if (!read.ok) { unreachable = true; console.warn('[rooms] could not reach the join-code backup:', read.error); return; }
@@ -623,15 +614,9 @@ export async function restoreFromBackup() {
     // A code minted while the book was unreadable was held back (`backUpCodes`); the disk holds more: push it.
     if (result.ok && result.kept) backUpCodesSoon(JSON.stringify(rooms.codes, null, 2) + '\n');
   };
-  /*
-   * Play counts, and the same rule as everything else: only into an empty
-   * file. A disk that already has counts on it is ahead of any backup, and
-   * writing the backup over it would undo tonight's launches.
-   */
+  // Play counts: only into an empty file, or the backup undoes tonight's launches.
   const restoreStats = async () => {
-    // READABLE, NOT MERELY PRESENT: the guard was `existsSync`, which a
-    // TRUNCATED file satisfies — so the one state this rescues was the one it
-    // refused to act on, every boot, in silence. Reasoning in `library.js`.
+    // READABLE, NOT MERELY PRESENT — `existsSync` is satisfied by a TRUNCATED file (`library.js`).
     if (statsReadable(config.dataDir)) return;
     const saved = await getFile('library-stats.json', 'private');
     if (!saved) return;
@@ -647,29 +632,42 @@ export async function restoreFromBackup() {
     }
   };
 
+  /*
+   * WHAT THE DISK ALREADY HOLDS IS BOOTED FROM THE DISK, AND GITHUB IS ASKED
+   * AFTERWARDS. The code book and the house archive are MERGES, so they read
+   * GitHub on every boot — and with a disk attached they were the only reads
+   * left, costing every deploy a GitHub deadline of blank projector for an
+   * answer the disk already had. Only a book the disk does not hold makes
+   * `listen()` wait; a merge lands behind it and wins exactly as it did.
+   */
+  const house = rooms.get(HOUSE);   // every other room's books come back when its console first asks
+  const caught = (p) => p.catch((err) => console.warn('[restore] failed:', err.message));
+  const behind = [];
+  const before = [];
+  (Object.keys(rooms.codes).length ? behind : before).push(restoreCodes);
+  (nightsOnDisk(house.paths.archive) ? behind : before).push(() => ensureArchiveRestored(house));
   await Promise.all([
     restoreAccounts(),
     restoreStore('reports', reports, 'reports.json', (r) => `${r.reports} question report(s)`)(),
     restoreStore('suggestions', suggestions, 'suggestions.json', (r) => `${r.suggestions} suggestion(s)`)(),
     restoreStore('spend', spend, 'spend.json', (r) => `${r.rows} row(s) of what the AI has cost`)(),
-    // The prop tally. `data/` is wiped on every deploy, so without this it
-    // would reset several times a week and never reach the threshold where
-    // its numbers mean anything — the backup IS the storage here.
+    // The prop tally: the backup IS the storage, or it never reaches the threshold where its numbers mean anything.
     restoreStore('props', propUse, 'data/prop-use.json', (r) => `the tally for ${r.props} prop(s)`)(),
-    // The house invoice book and past nights. Every other room's come back
-    // the first time that quizmaster opens their console, because rooms are
-    // created lazily and this runs once at boot — see ensureInvoicesRestored.
-    ensureInvoicesRestored(rooms.get(HOUSE)),
-    ensureArchiveRestored(rooms.get(HOUSE)),
-    ensureAsksRestored(rooms.get(HOUSE)),
-    restoreCodes(),
+    ensureInvoicesRestored(house),
+    ensureAsksRestored(house),
     restoreStats(),
-  ].map((p) => p.catch((err) => console.warn('[restore] failed:', err.message))));
+    ...before.map((f) => f()),
+  ].map(caught));
 
-  if (unreachable) {
+  let retried = false;
+  const retry = () => {
+    if (retried) return;
+    retried = true;
     console.warn(`[restore] GitHub could not be reached — trying again in ${RESTORE_RETRY_MS / 1000}s`);
     setTimeout(() => { restoreFromBackup().catch(() => {}); }, RESTORE_RETRY_MS).unref();
-  }
+  };
+  if (unreachable) retry();
+  Promise.all(behind.map((f) => caught(f()))).then(() => { if (unreachable) retry(); });
 }
 /** How long to wait before asking GitHub again for a backup it could not hand over. */
 export const RESTORE_RETRY_MS = Number(process.env.RESTORE_RETRY_MS) || 60_000;   // env: a seam for a check
