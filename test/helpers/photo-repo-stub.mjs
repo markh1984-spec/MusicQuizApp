@@ -74,7 +74,12 @@ globalThis.fetch = async (input, init = {}) => {
   if (method === 'PUT') {
     const body = JSON.parse(init.body);
     fs.mkdirSync(path.dirname(abs), { recursive: true });
-    fs.writeFileSync(abs, Buffer.from(body.content, 'base64'));
+    // TEMP THEN RENAME, as GitHub is: a test reading the repo from its own
+    // process caught a truncated file mid-write under load and failed on
+    // "Unexpected end of JSON input" about a feature that works.
+    const tmp = `${abs}.${process.pid}.${Date.now()}.tmp`;
+    fs.writeFileSync(tmp, Buffer.from(body.content, 'base64'));
+    fs.renameSync(tmp, abs);
     return new Response(JSON.stringify({ content: { sha: 'x' } }), { status: 200 });
   }
   if (method === 'DELETE') {
@@ -84,7 +89,7 @@ globalThis.fetch = async (input, init = {}) => {
   if (!fs.existsSync(abs)) return new Response('{"message":"Not Found"}', { status: 404 });
   const st = fs.statSync(abs);
   if (st.isDirectory()) {
-    const items = fs.readdirSync(abs).map((n) => ({
+    const items = fs.readdirSync(abs).filter((n) => !n.endsWith('.tmp')).map((n) => ({
       name: n, path: `${p}/${n}`, sha: 'x', size: 1,
       type: fs.statSync(path.join(abs, n)).isDirectory() ? 'dir' : 'file',
     }));
