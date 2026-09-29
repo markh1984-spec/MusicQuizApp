@@ -120,11 +120,16 @@ try {
   /*
    * THE OTHER HALF, which must not be lost to the fix: once somebody HAS
    * launched a night and there are phones in it, a second launch still has to
-   * say what it is about to destroy.
+   * say what it is about to destroy — and leave those phones exactly as they
+   * were. Measured on the PHONES, never on a count: this used to join two
+   * fresh phones and call `playerCount === 2` "still in the room", which two
+   * re-minted strangers would satisfy just as well. The proof is that each
+   * phone's own id and token still name the same player afterwards.
    */
-  for (const name of ['Dave', 'The Quizzinators']) await joinAs(name, after.joinCode);
-  check('…and the phones are still in the room it replaced the lobby with',
-    (await running()).playerCount === 2, `${(await running()).playerCount} in the room`);
+  const phones = [];
+  for (const name of ['Dave', 'The Quizzinators']) phones.push((await joinAs(name, after.joinCode)).body || {});
+  check('two phones join the night somebody launched, each with an id and a token',
+    phones.every((p) => p.id && p.token), JSON.stringify(phones.map((p) => p.id)));
   const over = await call('/api/host/launch', {
     method: 'POST',
     headers: H(),
@@ -135,6 +140,18 @@ try {
   check('…and the refusal names the night and the count', over.status === 409
     && /MBC 5/.test((over.body || {}).error || '') && /2 playing/.test((over.body || {}).error || ''),
     (over.body || {}).error);
+  const back = [];
+  for (const p of phones) {
+    back.push((await call('/api/join', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: p.name, playerId: p.id, token: p.token, joinCode: after.joinCode }),
+    })).body || {});
+  }
+  const same = back.every((r, i) => r.id === phones[i].id && r.token === phones[i].token);
+  check('…and the phones are still in the room — the same ids and tokens, not two fresh ones',
+    same && (await running()).playerCount === 2,
+    `before ${JSON.stringify(phones.map((p) => p.id))}, after ${JSON.stringify(back.map((r) => r.id))}, ${(await running()).playerCount} in the room`);
 
   const replaced = await call('/api/host/launch', {
     method: 'POST',
