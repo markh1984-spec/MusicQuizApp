@@ -928,6 +928,19 @@ function playersPanel(s) {
     }
   });
 
+  /*
+   * THE HEADING SAYS "tap a name" AND THE NAME DID NOTHING — only the ···
+   * at the far end of the row opened the menu (launch-path sweep, 23
+   * September 2026). A control that needs explaining is wrong, and one whose
+   * explanation is false is worse. The whole row opens it now; the button
+   * keeps its own handler, so a press on it is not counted twice.
+   */
+  el.querySelectorAll('.prow').forEach((row) => {
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
+      openPlayerMenu(row.dataset.id, row.dataset.name);
+    });
+  });
   el.querySelectorAll('[data-act="menu"]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const row = btn.closest('.prow');

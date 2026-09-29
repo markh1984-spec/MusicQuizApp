@@ -449,6 +449,29 @@ try {
     }
   }
 
+  /*
+   * "TAP A NAME TO FIX A SCORE" — the heading over the playing list promises
+   * it, and only the ··· at the end of the row ever opened the menu
+   * (launch-path sweep, 23 September 2026). Pressed on the NAME, in a real
+   * browser, with a night that has phones in it.
+   */
+  if (!BINGO) {
+    const at = await driveTo('question');
+    if (at !== 'question') ok(false, 'a night with phones reaches a question for the tap-a-name check', at);
+    else {
+      const opened = await page.evaluate(async () => {
+        const nm = document.querySelector('.prow .nm');
+        if (!nm) return 'no player row';
+        const name = nm.closest('.prow').dataset.name;
+        nm.click();
+        await new Promise((r) => setTimeout(r, 300));
+        const menu = [...document.querySelectorAll('.panel h3')].find((h) => h.textContent.trim() === name);
+        return menu ? 'yes' : `no menu for ${name}`;
+      });
+      ok(opened === 'yes', 'tapping a NAME on the playing list opens that phone\'s menu, as the heading says', opened);
+    }
+  }
+
   console.log('');
   if (dead.length) {
     fails += dead.length;
