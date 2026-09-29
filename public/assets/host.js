@@ -255,9 +255,16 @@ function draw(next) {
    * correction as the projector's own pill, and it has to be made in both:
    * one screen saying it right does not make the other true.
    */
+  /*
+   * PHONES, NOT BOARD ROWS. On a team night `playerCount` is the number of
+   * TEAMS and `phoneCount` the handsets (sent only when the two differ) — so
+   * five phones dealt into two tables read "2 playing" here, on the line the
+   * host checks the room against (launch-path sweep, 23 September 2026).
+   */
+  const phones = state.phoneCount ?? state.playerCount;
   const inRoom = state.game === 'dj'
-    ? `${state.playerCount} ${state.playerCount === 1 ? 'phone' : 'phones'} in`
-    : `${state.playerCount} playing`;
+    ? `${phones} ${phones === 1 ? 'phone' : 'phones'} in`
+    : `${phones} playing`;
   connEl.textContent = state.joinCode ? `${inRoom} · code ${state.joinCode}` : inRoom;
   /*
    * THE FUNNIEST PHOTOGRAPH SITS WITH THE PHOTOGRAPHS, on all three control
@@ -689,7 +696,7 @@ function breakoutPanel(s, q) {
           ? answers.map((a) => `<span>${esc(a.name)}: ${esc(a.text)}</span>`).join('')
           : '<span class="tiny" style="opacity:.7">Nothing in yet.</span>'}
       </div>
-      <div class="tiny" style="margin-top:10px">${answers.length} of ${s.playerCount} answered</div>
+      <div class="tiny" style="margin-top:10px">${answers.length} of ${s.phoneCount ?? s.playerCount} answered</div>
       <button class="report-q" type="button">Something wrong with this one?</button>
     </div>
   `);
