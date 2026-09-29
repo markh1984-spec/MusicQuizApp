@@ -72,6 +72,7 @@ export async function runSelfTest({ config, port = 0, fetchImpl = globalThis.fet
         now,
         roomId: 'selftest',
         paths: { archive: path.join(tmp, 'archive') },
+        quiet: true,   // a throwaway room: its boot may not warn that a night was lost
       });
       session.boot();
       must(session.engine, 'no engine after boot');
@@ -134,7 +135,7 @@ export async function runSelfTest({ config, port = 0, fetchImpl = globalThis.fet
       const again = new Session({
         config: { ...config, dataDir: tmp },
         store: new Store(path.join(tmp, 'state.json')),
-        onPush: () => {}, onArchive: () => {}, now, roomId: 'selftest',
+        onPush: () => {}, onArchive: () => {}, now, roomId: 'selftest', quiet: true,
         paths: { archive: path.join(tmp, 'archive') },
       });
       again.boot();

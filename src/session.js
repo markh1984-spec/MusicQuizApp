@@ -357,10 +357,15 @@ export class Session {
    * @param {function(): void} opts.onPush   tell the live connections something changed
    * @param {function(): number} [opts.now]
    */
-  constructor({ config, store, onPush, onArchive = () => {}, now = () => Date.now(), roomId = HOUSE_ROOM, paths = {} }) {
+  constructor({ config, store, onPush, onArchive = () => {}, now = () => Date.now(), roomId = HOUSE_ROOM, paths = {}, quiet = false }) {
     this.config = config;
     this.store = store;
     this.onPush = onPush;
+    // A throwaway session (the boot self-test) says nothing about what its
+    // boot found: "STARTED FRESH — scores and teams are gone" is a real room's
+    // line, and one per deploy from a room nobody was in taught the flight
+    // recorder to cry wolf. A real room never sets this.
+    this.quiet = Boolean(quiet);
     /*
      * Told when a night has been filed, so somebody else can back it up.
      *
@@ -522,7 +527,9 @@ export class Session {
     this.orderPos = (this.runningOrder && typeof state.orderPos === 'number') ? state.orderPos : 0;
     this.carriedScores = (this.runningOrder && state.carriedScores) || null;
 
-    if (state) {
+    if (this.quiet) {
+      // The self-test's room: nothing was running and nothing is lost.
+    } else if (state) {
       const players = Object.keys(state.players || {}).length;
       console.log(`[session] restored ${kind} "${pack.title}" in progress: ${players} teams, phase ${state.phase}`);
     } else if (saved) {
