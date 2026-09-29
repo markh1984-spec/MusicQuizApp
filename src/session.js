@@ -402,10 +402,13 @@ export class Session {
     this.engine = null;
     this.lastMilestone = '';
     this.autoTimer = null;
-    // The vouchers as they were when the night was last written to the
+    // The vouchers as they were when THIS PROCESS last wrote the night to the
     // archive, so a prize redeemed at the bar afterwards updates the filed
-    // record and nothing else does. WHICH night was filed lives in the state
-    // (`archivedAs`), so a restart cannot file the same evening twice.
+    // record and nothing else does. NOT RESTORED — it is null after a restart
+    // (`build()` clears it), so the first change on a filed night writes one
+    // update whether or not a voucher moved; harmless, the patch being the
+    // same vouchers. WHICH night was filed lives in the state (`archivedAs`),
+    // so a restart cannot file the same evening twice.
     this.filedVouchers = null;
   }
 
@@ -428,9 +431,11 @@ export class Session {
    * whether it pinned one game or opened the list, and this must never
    * overwrite that.
    *
-   * **In memory only, deliberately** — no flush. It is DERIVED from the tier,
-   * so a restart works it out again; writing it would put a fact about the
-   * account into the file that records the night.
+   * **Not flushed on its own, but it does reach the disk**: it is written onto
+   * the engine's state, which the store carries whole on its next write, so a
+   * fact about the ACCOUNT rides in the file that records the night. Harmless
+   * because it is DERIVED from the tier and rewritten here on every console
+   * request — a restart works it out again the moment a console asks.
    */
   offerLobbyGames(ids) {
     const state = this.engine && this.engine.state;

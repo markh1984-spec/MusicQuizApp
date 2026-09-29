@@ -141,8 +141,10 @@ export class Engine {
       launched: false,
       roundIndex: 0,
       questionIndex: 0,
-      // Monotonic counter bumped on every change, so clients can spot a
-      // missed update and the screen can re-key its animations.
+      // Monotonic counter bumped on every change. Sent on every view and
+      // nothing in the browser reads it: a screen keys its cards on what they
+      // draw and a move carries the host CURSOR, never this. Its one reader is
+      // `say()`, which folds it into a chat message id.
       version: 0,
       question: null, // { startedAt, endsAt, seconds, closed }
       /*
