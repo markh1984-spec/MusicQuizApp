@@ -316,6 +316,14 @@ try {
      * through the real button, and the night must end.
      */
     if (BINGO && phase === 'playing') {
+      /*
+       * THE SAME CONTROL WEARS THE SAME LABEL ON BOTH ENGINES. The quiz's is
+       * "Change the prizes"; bingo's was a bare "Prizes" (launch-path sweep,
+       * 23 September 2026), the word the launch bar already uses for the
+       * card's stopping points.
+       */
+      ok(controls.some((c) => c.label === 'Change the prizes') && !controls.some((c) => c.label === 'Prizes'),
+        'the bingo control view says "Change the prizes", like the quiz\'s', controls.map((c) => c.label).join(' | '));
       const at = await driveTo('playing');
       if (at === 'playing') {
         const twice = await page.evaluate(async () => {

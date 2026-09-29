@@ -153,7 +153,10 @@ export function bingoActions(s, act, minor) {
   out.push(minor('Undo call', () => act('undoCall')));
   // Same control as the quiz's own — see the comment beside it in host.js.
   // One shared popover, one shared `setRewards` action, for either game.
-  out.push(minor('Prizes', () => rewardsEditorPopover(s, act)));
+  // The quiz's control is "Change the prizes" and this was "Prizes" — one
+  // word, and on this page the bar could already read *Prizes 5* on the
+  // launch bar. The same control wears the same label on both engines.
+  out.push(minor('Change the prizes', () => rewardsEditorPopover(s, act)));
   out.push(pressTwice(minor, 'newRound', 'New round', 'Press again — new cards', () => act('newRound')));
   out.push(minor('Console', () => { location.href = '/console' + location.search; }));
   /*
