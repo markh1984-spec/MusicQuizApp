@@ -42,6 +42,9 @@ const args = process.argv.slice(2);
 const full = args.includes('--full');
 const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
 const deployed = args.includes('--against') ? args[args.indexOf('--against') + 1] : 'origin/MusicQuizApp';
+// A REVIEWED, INTENDED payload change — passed to pub-unchanged as its own
+// `--ignore`, and NAMED on the verdict line so a pass never hides what it let by.
+const ignore = args.includes('--ignore') ? args[args.indexOf('--ignore') + 1] : '';
 
 /** The guards, in the order they run. `core` runs every Monday; the rest with --full. */
 export const GUARDS = [
@@ -140,7 +143,7 @@ async function main() {
     steps.push({ name: `pub-unchanged vs ${deployed}`, run: async () => {
       // Compare against what is LIVE. Fetch first, so the ref is today's.
       await sh('git', ['fetch', 'origin', 'MusicQuizApp']).catch(() => {});
-      return sh(process.execPath, ['scripts/pub-unchanged.mjs', deployed]);
+      return sh(process.execPath, ['scripts/pub-unchanged.mjs', deployed, ...(ignore ? ['--ignore', ignore] : [])]);
     } });
   }
   for (const g of GUARDS) {
@@ -166,7 +169,7 @@ async function main() {
     console.log(`DO NOT DEPLOY — ${failed.length} of ${results.length} failed in ${mins} min: ${failed.map((f) => f.name).join(', ')}`);
     process.exit(1);
   }
-  console.log(`SAFE TO DEPLOY — ${results.length} passed in ${mins} min. Push MusicQuizApp; Render deploys it.`);
+  console.log(`SAFE TO DEPLOY — ${results.length} passed in ${mins} min${ignore ? `, IGNORING payload fields: ${ignore}` : ''}. Push MusicQuizApp; Render deploys it.`);
 }
 
 /** Run a command, capture everything, never throw — a guard that crashes is a failure. */
