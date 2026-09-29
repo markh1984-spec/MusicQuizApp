@@ -1690,7 +1690,9 @@ What was there and where it went:
   because it is the FLOOR, not because it is the biggest**: levelling down
   would have broken the one control a touch-target audit had already fixed.
   **The shapes still differ** — the radius encodes what a control IS, and
-  flattening that would undo the GUI rules.
+  flattening that would undo the GUI rules. **Menu rows and the ready line's
+  link go to 44 on a TOUCHSCREEN only** (`any-pointer: coarse`) — a mouse
+  keeps the compact menus; **the tile × DRAWS 30 and TAKES 44**.
 - **A DESTRUCTIVE BUTTON KEEPS THE FACE AND THE 2px EDGE.** The one global
   `.danger` rule uses the `border` SHORTHAND, which overwrote all four sides —
   **the shorthand-beats-longhand trap, hit inside the rule that calls itself
@@ -3197,11 +3199,8 @@ been working: *"I realised adding too many things to the to-do list was
 actually the reason that everything got so big. So what we need to do is just
 build things, and then if we don't need them, we just delete them later."*
 
-**He is right, and the evidence is this repo's own history.** `TODO.md` had
-reached 124KB and its single largest entry — a 66KB quizmaster directory — is
-a thing nobody has ever built. **A list is where ideas go to be paid for
-repeatedly**: an entry costs context every session until somebody builds it or
-deletes it.
+**A list is where ideas go to be paid for repeatedly** — every session, until
+somebody builds it or deletes it.
 
 So, for anything the host asks for directly:
 
@@ -3272,15 +3271,13 @@ his oversight.
 it's probably a 3 and just ask."*** A large upside makes a 3 feel like a 2, so
 the effort spent arguing something is really a 2 IS the signal.
 
-**It caught its first case the moment it was written**: splitting this file was
-called a 1, when "restructures something you rely on" defines a 3. And
-**inventing a small job to round a session off is a 4** — doing nothing and
+**Inventing a small job to round a session off is a 4** — doing nothing and
 saying so is correct.
 
 ### Prefer the MECHANICAL transform to the model-mediated one
 
-Learned on 14 August 2026, splitting this file. **A 4,000-line move costs the
-same as a 40-line one when nothing reads the content.** When a job looks too
+**A 4,000-line move costs the same as a 40-line one when nothing reads the
+content.** When a job looks too
 big, ask **"is there a version a script does and I only supervise?"** —
 moving, renaming, extracting, counting and checking are; judgement is not.
 **A script cannot quietly reword something on the way through.** **A cleanup
@@ -3750,7 +3747,9 @@ just don't want to think, you want to get in and go and know it will work."*
   described a night nobody was running. `console-learns-the-room.mjs`.
 - **A SEARCH PICK BURSTS LIKE A TAP; LAUNCH NAMES THE PACK ON A
   ONE-PACK NIGHT; A TAP ON A ROUND ALREADY IN TONIGHT MOVES NOTHING** — the
-  shelf only ADDS, a round moves by its tile. **The "why" line and the
+  shelf only ADDS, a round moves by its tile. **AN EMPTY SLOT OPENS THE
+  SEARCH AND ITS PICK IS ADDED THERE** (`searchAddsAt`) — the search's own
+  pick still starts the night again. **The "why" line and the
   runner-up chip are DELETED**: the line was never un-hidden and the chip drew
   only after clearing the box.
 - **A LOADED PACK IS NOT A NIGHT — `state.launched`, and Unlaunch is what it
@@ -3775,9 +3774,9 @@ just don't want to think, you want to get in and go and know it will work."*
 - **Whose night it is, RANKED**: a date you typed, then whose usual night, then
   where you played last. **Two claims are NAMED, never left blank**
   (`clashTonight()`).
-- **It folds to a thin line that still says what it is set to**, in
-  `localStorage`; one row, no wrap, the middle ellipsised. **The heading does
-  not move when it folds** — a three-cell grid and a fold that says HIDE and
+- **It folds to its head, the ready light and LAUNCH** — tiles, settings and
+  prizes go, so a folded bar still launches (his pick, 29 Sept); in
+  `localStorage`. **The heading does not move when it folds** — a three-cell grid and a fold that says HIDE and
   SHOW at a fixed width.
 - **THE PACK CARDS NO LONGER LAUNCH; TONIGHT IS THE ONLY WAY IN.** **The
   guarantee was never a Launch on every card, it was that launching is one
@@ -4572,6 +4571,7 @@ node scripts/drinks-in-your-pocket.mjs  # is a drink they won ever off their pho
 node scripts/drinks-keep.mjs            # is the drink still there next week?
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break a pub night?
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
+node scripts/bar-layout.mjs             # words clear of the dial, Hide keeps Launch, 44px on touch
 node scripts/tonight-resolves.mjs       # does the bar offer real games, and find every pack?
 node scripts/community-bay.mjs          # does the Community bay still fit the frame?
 node scripts/console-frame.mjs          # is every Console control reachable?
