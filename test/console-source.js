@@ -45,9 +45,9 @@ export function consoleSource() {
  *
  * Strings are deliberately left alone: a route named in a fetch is a real use.
  */
-export const withoutComments = (src) => src
-  .replace(/\/\*[\s\S]*?\*\//g, ' ')
-  .replace(/^\s*\/\/.*$/gm, ' ');
+import { withoutComments } from './scope.js';
+
+export { withoutComments };
 
 /** Every console file, as code with the comments stripped. */
 export function consoleCode() {

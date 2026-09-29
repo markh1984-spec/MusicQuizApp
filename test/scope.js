@@ -41,6 +41,22 @@ const IDENT = /[A-Za-z_$][\w$]*/y;
  * regex literals `/x/`, template text goes and its `${…}` expressions stay.
  */
 export function codeOnly(src) {
+  return scan(src, false);
+}
+
+/**
+ * The source with only its COMMENTS taken out — strings, templates and regex
+ * literals kept whole. Two regexes did this job before, and the block one ran
+ * from any `/*` to the next `*​/`: a `/*` inside a STRING opened a "comment"
+ * that swallowed every line down to the next real one, so every grep built on
+ * it searched a file with its middle cut out. Same walk as `codeOnly()`, so
+ * the two can never disagree about where a string ends.
+ */
+export function withoutComments(src) {
+  return scan(src, true);
+}
+
+function scan(src, keep) {
   let out = '';
   let i = 0;
   const n = src.length;
@@ -58,12 +74,14 @@ export function codeOnly(src) {
     return true;
   };
   const skipString = (q) => {
+    const start = i;
     i += 1;
     while (i < n && src[i] !== q) { if (src[i] === '\\') i += 1; i += 1; }
     i += 1;
-    out += '""';
+    out += keep ? src.slice(start, i) : '""';
   };
   const skipRegex = () => {
+    const start = i;
     i += 1;
     let inClass = false;
     while (i < n) {
@@ -77,22 +95,23 @@ export function codeOnly(src) {
     }
     i += 1;
     while (i < n && /[a-z]/.test(src[i])) i += 1;
-    out += ' /0/ ';
+    out += keep ? src.slice(start, i) : ' /0/ ';
   };
   const template = () => {
     i += 1;
-    out += '""';
+    out += keep ? '`' : '""';
     while (i < n) {
       const c = src[i];
-      if (c === '\\') { i += 2; continue; }
-      if (c === '`') { i += 1; return; }
+      if (c === '\\') { if (keep) out += src.slice(i, i + 2); i += 2; continue; }
+      if (c === '`') { i += 1; if (keep) out += '`'; return; }
       if (c === '$' && src[i + 1] === '{') {
         i += 2;
-        out += '(';
+        out += keep ? '${' : '(';
         expression();
-        out += ')';
+        out += keep ? '}' : ')';
         continue;
       }
+      if (keep) out += c;
       i += 1;
     }
   };
