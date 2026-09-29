@@ -2075,12 +2075,36 @@ export function shapeFields({ rows, cols }) {
  * what makes them longer games than a 5×5 despite having one fewer square.
  */
 export const CARD_SHAPES = [
-  { rows: 3, cols: 3, prizes: 1 },
+  // THE DEFAULT CARD — `default: true`, read by the bar's `bestBingoShape()`
+  // through `library.cardShapes` and by `defaultCardFor()` here. See
+  // `DEFAULT_CARD` below.
+  { rows: 3, cols: 3, prizes: 1, default: true },
   { rows: 4, cols: 4, prizes: 2 },
   { rows: 5, cols: 5, prizes: 5 },
   { rows: 6, cols: 4, prizes: 4 },
   { rows: 8, cols: 3, prizes: 3 },
 ];
+
+/**
+ * MUSIC BINGO IS A 3×3 CARD WITH ONE PRIZE UNLESS SOMEBODY CHOOSES — the host,
+ * 29 September 2026: *"music bingo rounds are now 3 x 3 grids and a single
+ * prize per round"*, with packs of about twenty songs. It was the biggest card
+ * the track list could fill, a 5×5 paying five. Told the cost first: fewer
+ * calls land on each card (9 of 40 songs, 9 of 20 on his new packs). A bigger
+ * card is still one choice away on the Card picker.
+ *
+ * ONE default for the launch, the running order's deal and the bar — the bar
+ * reads `default: true` off `library.cardShapes`, so it can never show one card
+ * and launch another. A pack too short even for a 3×3 keeps its own shape,
+ * which validation already refuses loudly.
+ */
+export const DEFAULT_CARD = (({ rows, cols }) => ({ rows, cols }))(CARD_SHAPES.find((s) => s.default));
+
+/** The card a music bingo game gets when nobody chose one. */
+export function defaultCardFor(pack = {}) {
+  const count = Array.isArray(pack.tracks) ? pack.tracks.length : Number(pack.trackCount) || 0;
+  return count >= minimumTracks(DEFAULT_CARD) ? { ...DEFAULT_CARD } : cardShape(pack);
+}
 
 /**
  * How many prizes a shape starts on when nobody has chosen.

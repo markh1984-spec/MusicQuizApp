@@ -153,7 +153,7 @@ export async function generateBingoPack({
   config,
   theme,
   trackCount = 40,
-  cardSize = 4,
+  cardSize = 3,   // the default card, 3×3 (DEFAULT_CARD in bingo.js)
   avoidMonths = 3,
   id,
   title,

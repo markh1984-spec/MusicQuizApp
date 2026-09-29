@@ -22,7 +22,7 @@ export async function writeGenerate(req, res, url, route) {
         config,
         theme: String(body.theme || '').slice(0, 200),
         trackCount: Math.min(90, Math.max(9, Number(body.trackCount) || 40)),
-        cardSize: [3, 4, 5].includes(Number(body.cardSize)) ? Number(body.cardSize) : 4,
+        cardSize: [3, 4, 5].includes(Number(body.cardSize)) ? Number(body.cardSize) : 3,
         avoidMonths: Math.min(24, Math.max(0, Number(body.avoidMonths ?? 3))),
         log,
         // Filed against the pack id it is going to have, so a cost always has
@@ -430,7 +430,7 @@ export async function writeGenerate(req, res, url, route) {
         playlistUrl: String(body.playlistUrl || ''),
         text: String(body.text || ''),
         title: String(body.title || '').slice(0, 80) || undefined,
-        cardSize: [3, 4, 5].includes(Number(body.cardSize)) ? Number(body.cardSize) : 4,
+        cardSize: [3, 4, 5].includes(Number(body.cardSize)) ? Number(body.cardSize) : 3,
         avoidMonths: Math.min(24, Math.max(0, Number(body.avoidMonths ?? 0))),
         log,
       });

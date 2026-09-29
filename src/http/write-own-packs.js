@@ -240,7 +240,7 @@ export async function writeOwnPacks(req, res, url, route) {
         playlistUrl: String(body.playlistUrl || ''),
         text: String(body.text || ''),
         title: String(body.title || '').slice(0, 80) || undefined,
-        cardSize: [3, 4, 5].includes(Number(body.cardSize)) ? Number(body.cardSize) : 4,
+        cardSize: [3, 4, 5].includes(Number(body.cardSize)) ? Number(body.cardSize) : 3,
         log,
       });
       const backup = await backUpOwnPack(room, 'bingo', result.pack.id, JSON.stringify(result.pack, null, 2) + '\n');

@@ -19,8 +19,15 @@ import { bestBingoShape, bingoShapeLabel } from '../public/assets/client.js';
 const SHAPES = CARD_SHAPES.map((s) => ({ ...s, label: shapeLabel(s), minimum: minimumTracks(s) }));
 const find = (rows, cols) => SHAPES.find((s) => s.rows === rows && s.cols === cols);
 
-test('bestBingoShape: 40 tracks picks 5x5, the reported case', () => {
-  assert.deepEqual(bestBingoShape(SHAPES, 40), find(5, 5));
+test('bestBingoShape: the DEFAULT card wins when it fits — 3x3 since 29 Sept 2026', () => {
+  assert.deepEqual(bestBingoShape(SHAPES, 40), find(3, 3));
+});
+
+test('bestBingoShape: with no default named, 40 tracks picks 5x5, the reported case', () => {
+  // The biggest card that fits is the fallback for a list naming no default —
+  // the rule that fixed "a 40-track pack defaulted to 4x4".
+  const plain = SHAPES.map(({ default: _d, ...s }) => s);
+  assert.deepEqual(bestBingoShape(plain, 40), plain.find((s) => s.rows === 5 && s.cols === 5));
 });
 
 test('bestBingoShape: only enough for the smallest shape picks the smallest', () => {

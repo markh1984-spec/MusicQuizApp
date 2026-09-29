@@ -385,7 +385,7 @@ export function importPanel(gen, { own = false } = {}) {
         <button class="role-make" id="impGo">Import</button>
       </div>
       <div class="gen-opts">
-        <label>Card <select id="impSize"><option value="3">3×3</option><option value="4" selected>4×4</option><option value="5">5×5</option></select></label>
+        <label>Card <select id="impSize"><option value="3" selected>3×3</option><option value="4">4×4</option><option value="5">5×5</option></select></label>
         <label>Call it <input type="text" id="impTitle" placeholder="optional" style="width:150px"></label>
         ${own ? '' : '<label title="Off by default — you probably built this list on purpose."><input type="checkbox" id="impAvoid"> Skip songs played recently</label>'}
         <span class="tiny" id="impFit"></span>
@@ -417,9 +417,11 @@ export function importPanel(gen, { own = false } = {}) {
  * a dropdown you had to know to change, defaulting to the wrong answer for the
  * list in front of it.
  *
- * So it moves itself to the biggest card the list will carry, and says what it
- * did. Biggest rather than smallest because more squares is a longer game, and
- * a list of that size was written for a longer game.
+ * So it moves itself to a card the list will carry, and says what it did —
+ * THE DEFAULT CARD, 3×3, whenever the list fills one (the host's call, 29
+ * September 2026, with packs of about twenty songs; the launch deals 3×3 by
+ * default too). It was the biggest card the list would carry, which on a
+ * twenty-song Spotify link left the box on 4×4 and the import REFUSED.
  *
  * It stops adjusting the moment you touch the dropdown yourself. A control
  * that overrules you is worse than one that never helped.
@@ -446,7 +448,7 @@ function fitCardSize(panel) {
       note.innerHTML = `<b>${count} tracks — too few.</b> The smallest card (${smallest.size}×${smallest.size}) needs ${smallest.minimum}.`;
       return;
     }
-    const best = fits[fits.length - 1];
+    const best = fits.find((s) => s.size === 3) || fits[fits.length - 1];
     if (!yours) select.value = String(best.size);
     const named = fits.map((s) => `${s.size}×${s.size}`);
     const listed = named.length === 1 ? named[0] : `${named.slice(0, -1).join(', ')} or ${named[named.length - 1]}`;
@@ -537,7 +539,7 @@ export function generatePanel(gen) {
       </div>
       <div class="gen-opts">
         <label>Tracks <input type="number" id="genCount" value="40" min="16" max="90" style="width:64px"></label>
-        <label>Card <select id="genSize"><option value="3">3×3</option><option value="4" selected>4×4</option><option value="5">5×5</option></select></label>
+        <label>Card <select id="genSize"><option value="3" selected>3×3</option><option value="4">4×4</option><option value="5">5×5</option></select></label>
         <label>No repeats for
           <select id="genMonths">
             <option value="0">no limit</option>

@@ -99,7 +99,9 @@ export async function importBingoPack({
   playlistUrl = '',
   text = '',
   title,
-  cardSize = 4,
+  // 3, THE DEFAULT CARD (`DEFAULT_CARD`): a twenty-song playlist — the host's
+  // own size from 29 Sept 2026 — was refused against a 4×4's floor of 24.
+  cardSize = 3,
   avoidMonths = 0,
   resolve,
   log = () => {},

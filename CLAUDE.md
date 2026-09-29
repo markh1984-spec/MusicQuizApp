@@ -2408,6 +2408,9 @@ bingo winners on thursday didn't receive a QR code"*.
   `newRound()` clears `prizeWinners` and NOT `vouchers`. **AND "PAID" COMPARES
   THE WORDS.** **Updated in place, never a second voucher**, and **a REDEEMED
   one is left alone.**
+- **MUSIC BINGO IS 3×3 WITH ONE PRIZE UNLESS CHOSEN — `DEFAULT_CARD`/
+  `defaultCardFor()`** (his call, 29 Sept, ~20-song packs): the launch, the
+  deal, the bar and import all start there; **"drags" never on the default.**
 - **THE CARD SHAPE CHOOSES THE PRIZE COUNT, A NUMBER PER SHAPE RATHER THAN A
   FORMULA** — `defaultPrizes()`. **The table lives BESIDE the shape, never in
   the console**, and it is **clamped — and the picker CLAMPS too**, or the
@@ -2923,13 +2926,10 @@ feature row in the app:
 > "this gives me…" in a breath. Anything longer needs a reason.**
 
 
-**"Invoicing — bill a venue before you leave the car park"** is the shape.
-Not *"Bill for a night before you have left the car park, with your own
-details and the venue's kept from last time, and a PDF you can send from your
-phone"*, which is three facts nobody asked for yet.
+**"Invoicing — bill a venue before you leave the car park"** is the shape;
+three facts in one line is not.
 
-Three things fall out of it, and they are what make it a rule rather than a
-preference:
+Three things fall out of it:
 
 - **If the line will not fit, the NAME is wrong.** A feature needing two
   sentences to be understood is usually one that has not been named properly —

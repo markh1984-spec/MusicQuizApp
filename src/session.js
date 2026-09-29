@@ -18,7 +18,7 @@ import { sendNote, markNoteRead } from './notes.js';
 
 import { Engine, PHASES, MAX_WINNERS, winnersOf, isSafeId, ownsPlayer, newToken } from './engine.js';
 import { JoinGate } from './joins.js';
-import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes, maxLineStage, cardShape, defaultPrizes } from './bingo.js';
+import { BingoGame, BINGO_PHASES, normaliseBingoPack, validateBingoPack, shapeFields, stagePlan, maxPrizes, maxLineStage, cardShape, defaultCardFor, defaultPrizes } from './bingo.js';
 import { DjSet, DJ_PHASES } from './dj.js';
 // ONE cap on how many prizes a night can carry, shared with the venue record
 // that authors them — two copies of a number like this drift, and the one that
@@ -988,10 +988,14 @@ export class Session {
       ? composeQuiz(order, (id) => LAUNCHERS.quiz.load(this.config, id, this.paths))
       : LAUNCHERS[kind].load(this.config, packId, this.paths);
     const normalised = kind === 'bingo' ? normaliseBingoPack(pack, packId) : pack;
-    if (kind === 'bingo' && shape) {
-      const problems = validateBingoPack({ ...normalised, ...shapeFields(shape) });
+    // NO CARD CHOSEN IS THE DEFAULT CARD, never the pack's own leftover
+    // shape — `DEFAULT_CARD` in `bingo.js`, the one the bar shows (29 Sept
+    // 2026: a 3×3 paying one prize). MUSIC bingo only: a deck has no shape.
+    const card = kind === 'bingo' ? (shape || defaultCardFor(normalised)) : null;
+    if (card) {
+      const problems = validateBingoPack({ ...normalised, ...shapeFields(card) });
       if (problems.length) throw new Error(problems[0]);
-      Object.assign(normalised, shapeFields(shape));
+      Object.assign(normalised, shapeFields(card));
     }
     this.build(kind, normalised, null);
     /*
@@ -1059,8 +1063,11 @@ export class Session {
 
     // How many prizes tonight, decided alongside the card shape and for the
     // same reason: it is a decision about this evening, not about the pack.
-    if (kind === 'bingo' && prizes) {
-      const wanted = Math.max(1, Math.min(maxPrizes(this.engine.shape), Math.floor(prizes)));
+    // AND NOBODY CHOSE IS THE CARD'S OWN DEFAULT — `defaultPrizes()`, one on
+    // the default 3×3 — never the engine's built-in line-then-house, which
+    // paid two on every card a launch named no count for.
+    if (kind === 'bingo') {
+      const wanted = Math.max(1, Math.min(maxPrizes(this.engine.shape), Math.floor(prizes || defaultPrizes(this.engine.shape))));
       /*
        * AND WHICH LINES EACH ONE PAYS ON, when the host said — *"lines 2, 3
        * and full house"*. Checked here against THIS card, never trusted: a
@@ -1448,7 +1455,7 @@ export class Session {
          * launching the other is how a 5x5 came to be dealt a 4x4's share.
          */
         bingo: seg.kind === 'quiz' ? 0
-          : defaultPrizes(seg.shape || cardShape(packOfPart.get(seg) || {})),
+          : defaultPrizes(seg.shape || defaultCardFor(packOfPart.get(seg) || {})),
       })));
       list.forEach((seg, i) => { if (!Array.isArray(seg.rewards)) seg.rewards = dealt[i]; });
     }

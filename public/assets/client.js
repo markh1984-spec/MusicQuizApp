@@ -1683,6 +1683,12 @@ export const playsACard = (s) => Boolean(s) && (s.game === 'bingo' || s.game ===
 
 export function bestBingoShape(cardShapes, trackCount) {
   const usable = (cardShapes || []).filter((s) => trackCount >= s.minimum);
+  // THE DEFAULT CARD FIRST — `default: true` on the server's `CARD_SHAPES`,
+  // the same one its launch deals when nobody chose (a 3×3 paying one prize,
+  // 29 Sept 2026). The biggest card that fits is only the fallback now, for a
+  // list of shapes that names no default.
+  const chosen = usable.find((s) => s.default);
+  if (chosen) return chosen;
   const pick = usable.length ? usable : (cardShapes || []).slice(0, 1);
   return pick.reduce((best, s) => ((s.rows * s.cols > best.rows * best.cols) ? s : best), pick[0]) || null;
 }
@@ -1715,7 +1721,10 @@ export function bingoShapeLabel(shape, trackCount) {
   const squares = shape.rows * shape.cols;
   // Half is the line the host drew himself. At or above it a card keeps up
   // with the calls; below it most of what is played is on somebody else's.
-  const drags = squares * 2 < trackCount;
+  // NEVER ON THE DEFAULT CARD (his call, 30 Sept 2026): he chose the 3×3
+  // knowing it holds 9 of a twenty-song pack, and a default that warns about
+  // itself on every night is a warning nobody reads.
+  const drags = !shape.default && squares * 2 < trackCount;
   return `${line} · ${squares} of ${trackCount} songs on a card${drags ? ' — drags' : ''}`;
 }
 

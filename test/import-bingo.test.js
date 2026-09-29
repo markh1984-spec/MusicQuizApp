@@ -138,7 +138,9 @@ test('a list that only just fills the card is refused, not accepted', async () =
   // sixteen songs and the whole room would finish at once.
   const config = tempConfig();
   await assert.rejects(
-    () => importBingoPack({ config, text: songs(16), resolve: false }),
+    // A 4×4 NAMED: the default card is 3×3 since 29 Sept 2026 (its own floor
+    // of 14 is in default-card.test.js). The rule under test is the floor.
+    () => importBingoPack({ config, text: songs(16), cardSize: 4, resolve: false }),
     /at least 24 for cards to differ/,
   );
 });
@@ -159,13 +161,13 @@ test('the no-repeats rule applies to imports too, when asked for', async () => {
   recordUsed(config.dataDir, parseTrackList(songs(5)), { packId: 'last-month', at: lastMonth });
 
   await assert.rejects(
-    () => importBingoPack({ config, text: songs(24), avoidMonths: 3, resolve: false, now: () => at }),
+    () => importBingoPack({ config, text: songs(24), cardSize: 4, avoidMonths: 3, resolve: false, now: () => at }),
     /Only 19 usable tracks/,
   );
 
   // With more to draw on, the recent five are the ones left out.
   const { pack } = await importBingoPack({
-    config, text: songs(29), avoidMonths: 3, resolve: false, now: () => at,
+    config, text: songs(29), cardSize: 4, avoidMonths: 3, resolve: false, now: () => at,
   });
   assert.equal(pack.tracks.length, 24);
   assert.equal(pack.tracks.some((t) => t.title === 'Song 1'), false);
