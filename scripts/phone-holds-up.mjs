@@ -36,7 +36,7 @@ const KEY = 'phonecheck';
 const PHONE = { width: 390, height: 844 };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const { base: BASE, stop } = await startApp({ key: KEY });
+const { base: BASE, stop, restart } = await startApp({ key: KEY });
 
 let failures = 0;
 const check = (name, got, want) => {
@@ -107,6 +107,61 @@ try {
     /locked in/i.test(document.getElementById('pHint')?.textContent || ''));
   check('and a retry lands', landed, true);
   await page.close();
+
+  // ---- 1b. an answer the server TOOK, then lost to a crash
+  /*
+   * Answers are debounced to disk (rule 7), so a crash in the quarter-second
+   * after one lands comes back without it. The phone had its 200, painted
+   * "Locked in" and kept its pending choice — so it refused every tap for the
+   * rest of the question, the `paintUnlocked()` fault with the POST having
+   * SUCCEEDED (launch-path sweep, 23 September 2026). SIGKILL straight after
+   * the answer's reply, then read the phone once it has reconnected.
+   */
+  console.log('\nAND WHEN THE SERVER RESTARTS UNDER AN ANSWER\n');
+  const hostState = async () => (await fetch(`${BASE}/api/state?role=host`, { headers: { 'X-Host-Key': KEY } })).json();
+  const lostPhone = await browser.newPage({ viewport: PHONE });
+  lostPhone.on('pageerror', (e) => errors.push(String(e.message)));
+  await lostPhone.goto(`${BASE}/play`, { waitUntil: 'load' });
+  await lostPhone.waitForTimeout(1000);
+  await lostPhone.fill('#nameInput', 'Les Quizerables');
+  await lostPhone.click('#joinBtn');
+  await lostPhone.waitForTimeout(1200);
+  // A fresh question, with most of its twenty seconds still to run.
+  const before = await hostState();
+  await post('reveal', {});
+  await post('next', {});
+  let fresh = await hostState();
+  for (let i = 0; i < 6 && !(fresh.phase === 'question' && fresh.questionIndex !== before.questionIndex); i += 1) {
+    await post('next', {});
+    fresh = await hostState();
+  }
+  check('a fresh question is up for the crash leg', fresh.phase, 'question');
+  await lostPhone.waitForTimeout(1200);
+  const [reply] = await Promise.all([
+    lostPhone.waitForResponse((r) => r.url().includes('/api/answer')),
+    lostPhone.locator('.answer-btn').first().click(),
+  ]);
+  check('the answer is taken', reply.status(), 200);
+  const back = await restart({ hard: true });
+  check('the server comes back', back, true);
+  const afterCrash = await hostState();
+  check('and the crash really did lose the answer (the case this leg is for)',
+    afterCrash.phase === 'question' && (afterCrash.answeredCount || 0) === 0, true);
+  // The stream has to notice it dropped and come back.
+  await lostPhone.waitForFunction(() => {
+    const live = [...document.querySelectorAll('.answer-btn')].filter((b) => !b.disabled).length;
+    return live > 0;
+  }, null, { timeout: 15000 }).catch(() => {});
+  const lostAfter = await lostPhone.evaluate(() => ({
+    live: [...document.querySelectorAll('.answer-btn')].filter((b) => !b.disabled).length,
+    hint: document.getElementById('pHint')?.textContent || '',
+  }));
+  check('the buttons come back once the phone sees the server lost its answer', lostAfter.live > 0, true);
+  check('and it no longer tells them they are locked in', /locked in/i.test(lostAfter.hint), false);
+  await lostPhone.locator('.answer-btn').first().click({ timeout: 3000 }).catch(() => {});
+  await lostPhone.waitForTimeout(1200);
+  check('and a second tap lands on the restarted server', ((await hostState()).answeredCount || 0) >= 1, true);
+  await lostPhone.close();
 
   // ---- 2. reopening a phone while the door is held
   console.log('\nAND WHEN THE DOOR IS HELD\n');

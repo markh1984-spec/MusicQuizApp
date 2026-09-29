@@ -43,6 +43,27 @@ let state = null;
 let currentKey = null;
 let live = null;
 let pendingChoice = null; // shown immediately, before the server confirms
+/*
+ * AN ANSWER THE SERVER TOOK AND THEN LOST — which stream it landed on.
+ *
+ * Answers are debounced to disk (rule 7: a lost answer is recoverable with Ask
+ * again), so a crash in the quarter-second after one lands comes back without
+ * it. The phone had been told 200, painted "Locked in" and kept
+ * `pendingChoice`, so it refused every tap for the rest of the question — the
+ * `paintUnlocked()` fault again, with the POST having SUCCEEDED this time
+ * (launch-path sweep, 23 September 2026).
+ *
+ * A restart always drops the stream, so the loss is only ever discovered on a
+ * RECONNECTED one: `streamGen` counts the times the stream has come back, and
+ * an answer is only put back up when the state on a newer stream than the one
+ * it landed on says, about the same question with its clock still running,
+ * that nobody has it. A wifi blip is a reconnect too, and the server still
+ * holds the answer then, so nothing moves. The first state on a fresh stream is
+ * built after the reconnect, so no older push can race it.
+ */
+let streamGen = 0;
+let streamWasDown = false;
+let landed = null;
 
 /** Your name on the players' phones too — they are looking at it all night. */
 // The product half of the name, kept so the wordmark can be stacked. Set by
@@ -443,6 +464,7 @@ function draw(next) {
   if (key !== currentKey) {
     currentKey = key;
     pendingChoice = null;
+    landed = null;
     bodyEl.replaceChildren(buildScreen(state));
     wireAsk();
   } else {
@@ -1273,6 +1295,7 @@ async function lockIn(optionIndexes) {
   if (navigator.vibrate) navigator.vibrate(24);
   try {
     await postJson('/api/answer', { playerId: me.id, token: me.token, optionIndexes, joinCode: roomCode() });
+    landed = { key: currentKey, gen: streamGen };
   } catch {
     pendingChoice = null;
     paintUnlocked();
@@ -1301,6 +1324,7 @@ async function choose(optionIndex) {
   if (navigator.vibrate) navigator.vibrate(18);
   try {
     await postJson('/api/answer', { playerId: me.id, token: me.token, optionIndex, joinCode: roomCode() });
+    landed = { key: currentKey, gen: streamGen };
   } catch {
     pendingChoice = null;
     paintUnlocked();
@@ -1407,6 +1431,19 @@ function updateScreen(s) {
   // A breakout box locks itself the moment it is submitted — see
   // `buildBreakoutAnswers` — and there is no option grid here to repaint.
   if (s.breakout) return;
+
+  // THE SERVER CAME BACK WITHOUT THE ANSWER IT HAD TAKEN — see `landed`.
+  // Only on a newer stream, only while the clock still runs, and only when the
+  // state says nobody has it: every other case leaves the paint alone.
+  if (landed && landed.key === currentKey && streamGen > landed.gen
+      && !s.yourAnswer && !(s.clock && s.clock.closed)) {
+    landed = null;
+    pendingChoice = null;
+    paintUnlocked();
+    const hint = document.getElementById('pHint');
+    if (hint) hint.textContent = 'The quiz restarted and lost that — tap again';
+    return;
+  }
 
   if (s.multi) {
     const locked = s.yourAnswer ? s.yourAnswer.optionIndexes : pendingChoice;
@@ -1863,6 +1900,8 @@ requestAnimationFrame(tick);
 
 function setStatus(status) {
   const online = status === 'online';
+  if (!online) streamWasDown = true;
+  else if (streamWasDown) { streamWasDown = false; streamGen += 1; }
   statusDot.classList.toggle('off', !online);
   statusText.textContent = online ? 'Connected' : 'Reconnecting…';
 }
