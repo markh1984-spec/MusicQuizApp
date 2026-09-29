@@ -3,14 +3,25 @@
  *
  * The last slide of the night was clipping at BOTH ends — "Tonight's winner"
  * off the top and the comeback QR sliced in half off the bottom — on any night
- * that had a draw and a comeback, and far worse with a league table as well.
- * At every resolution, for as long as both features had existed, with nobody
- * reporting it. It was found by measuring for something else.
+ * that had a comeback, and far worse with a league table as well. At every
+ * resolution, for as long as both features had existed, with nobody reporting
+ * it. It was found by measuring for something else.
  *
  * Nothing in `npm test` can see this: the markup is correct, the payload is
  * correct, every unit test passes, and the fault is entirely in how tall the
- * result is against the box it sits in. So this drives a real browser, builds
- * the winner card out of the REAL stylesheet, and measures the rendered boxes.
+ * result is against the box it sits in. So this plays REAL nights to the final
+ * and measures the real projector, `/screen`, in a real browser.
+ *
+ * **IT PLAYS THE NIGHT; IT DOES NOT TYPE THE CARD.** It used to build the
+ * winner card by hand — its own podium, its own draw band, its own fourth
+ * place — and measure THAT. The card drifted away from it: the draw was binned
+ * on 21 September and fourth place came off the podium, and the guard went on
+ * measuring a slide no projector draws any more (launch-path sweep, 23
+ * September 2026). Worse, the page it built called `fitWinner()` ITSELF, so
+ * deleting the projector's own call left every check green while every real
+ * final ran unscaled. **A guard that builds the thing it guards is testing its
+ * own copy** — so the card, the band order, the topbar and the call that fits
+ * them are all the projector's now, because it is the projector.
  *
  * **IT MEASURES THE CHILDREN'S BOUNDING RECTS, NOT `scrollHeight`** — on a grid
  * with `place-content: center` that value clamps to the container, so it reads
@@ -18,205 +29,273 @@
  *
  *   node scripts/final-fits.mjs
  */
-import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { toSvg } from '../src/qrcode.js';
+import { startApp } from './helpers/live-app.mjs';
 import { playwright } from './helpers/playwright.mjs';
 
 const { chromium } = playwright();
 
-const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
+/*
+ * FOUR PUBS, because the bands under the podium are decided by the VENUE: a
+ * usual night and a link put the comeback slide up, and a second night in the
+ * season puts the league table up. Two are new tonight and two have a night
+ * filed LAST WEEK — a league counts EVENINGS, so two nights played by this
+ * script on one day are one night and would never draw a table.
+ */
+const QUIET = 'The Quiet Arms';
+const TAP = 'The Station Tap, Wokingham';
+const QUIET_REGULAR = 'The Old Regular';
+const TAP_REGULAR = 'The Crown, Twyford';
+const SEASON = ['Quizteama Aguilera And Sons', 'Les Quizerables', 'The Quizzly Bears', 'Norfolk Enchants',
+  'Universally Challenged', 'Agatha Quiztie', 'Quiz Team Aguilera', 'The Brews Brothers'];
+
+const KEY = 'final-fits';
+const { base: B, stop, data: DATA } = await startApp({
+  key: KEY,
+  // The house room files its nights in `data/archive/`. A night keyed by the
+  // venue's NAME alone matches tonight's by `sameVenue()`, which is how every
+  // night filed before venue ids existed is read.
+  seed(dir) {
+    const archive = path.join(dir, 'archive');
+    fs.mkdirSync(archive, { recursive: true });
+    // A NUMBER, as `archiveResults()` files it — `nightDay()` reads no
+    // ISO string, so a night seeded as one is silently not a night. And a DAY
+    // APART, for the reason `clearToday()` gives below.
+    const DAY = 24 * 60 * 60 * 1000;
+    for (const [n, venueName] of [QUIET_REGULAR, TAP_REGULAR].entries()) {
+      const lastWeek = Date.now() - (7 + n) * DAY;
+      const id = `last-week-${venueName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+      fs.writeFileSync(path.join(archive, `${id}.json`), JSON.stringify({
+        id, kind: 'quiz', quizTitle: 'Last week', archivedAt: lastWeek, venue: venueName,
+        leaderboard: SEASON.map((name, i) => ({ id: `p${i}`, name, position: i + 1, score: 4000 - i * 300 })),
+      }, null, 2));
+    }
+  },
+});
 
 let bad = 0;
 const check = (what, ok, note = '') => {
   if (!ok) bad += 1;
   console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${what}${note ? `  — ${note}` : ''}`);
 };
-
-/*
- * THE PAGE IS SERVED, NOT `setContent`-ed, and that is not a detail: an
- * `about:blank` document taints every canvas, and the canvas is how the check
- * below proves the QR actually PAINTED rather than merely being in the layout.
- */
-let servePage = () => '';
-const srv = http.createServer((q, r) => {
-  const u = new URL(q.url, 'http://x');
-  if (u.pathname === '/night') {
-    r.writeHead(200, { 'Content-Type': 'text/html' });
-    return r.end(servePage());
-  }
-  if (u.pathname === '/qr.svg') {
-    r.writeHead(200, { 'Content-Type': 'image/svg+xml' });
-    return r.end(toSvg('https://example.test/x', { margin: 2, dark: '#0b0b12', light: '#ffffff' }));
-  }
-  const f = path.join(ROOT, u.pathname);
-  if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end(); }
-  /*
-   * A MODULE HAS TO BE SERVED AS JAVASCRIPT. Everything that was not a
-   * stylesheet went out as `text/plain`, and a browser refuses a module with
-   * the wrong MIME type — silently, as a network-level refusal rather than a
-   * script error. That is why this page could only ever run a RETYPED copy of
-   * `fitWinner()`: the real one could not be imported at all.
-   */
-  const type = u.pathname.endsWith('.css') ? 'text/css'
-    : /\.m?js$/.test(u.pathname) ? 'text/javascript'
-      : u.pathname.endsWith('.svg') ? 'image/svg+xml' : 'text/plain';
-  r.writeHead(200, { 'Content-Type': type });
-  r.end(fs.readFileSync(f));
-});
-// PORT 0, AND READ BACK WHAT WAS BOUND. It was a fixed 8971, so a second run —
-// or anything else that happened to hold it — died on EADDRINUSE.
-await new Promise((r) => srv.listen(0, '127.0.0.1', r));
-const PORT = srv.address().port;
-
-/*
- * A LONG TEAM NAME ON PURPOSE. Names are capped at 28 characters and carry no
- * spaces if somebody decides they do not, and the winner's own name is what
- * sets how wide the slide is.
- */
-const podium = `
-  <div class="kicker">Tonight&rsquo;s winner</div>
-  <h1 class="grad-text">Quizteama Aguilera</h1>
-  <div class="score">4,820 points</div>
-  <div class="runners">
-    ${[1, 2, 3].map((i) => `<div class="runner place-${i}"><span class="rplace">${i}</span>
-      <span class="rname">Les Quizerables ${i}</span><span class="rscore">4,${i}20</span></div>`).join('')}
-  </div>
-  <div class="alsoran"><span>4. The Quizzly Bears &mdash; 3,980</span></div>`;
-const dip = `<div class="dip"><div class="dip-label">And the draw goes to</div>
-  <div class="dip-name">Norfolk Enchants</div>
-  <div class="dip-note">drawn from 14 still playing at the last question</div></div>`;
-const comeback = `<div class="comeback has-qr"><div class="cb-words">
-  <div class="cb-line">Back here Thursday 27th</div>
-  <div class="cb-note">Scan for what else is on</div></div>
-  <div class="cb-qr"><img src="/qr.svg"></div></div>`;
-const league = `<div class="lgb"><div class="lgb-label">The league after tonight</div>
-  <div class="lgb-rows">${[1, 2, 3, 4, 5].map((i) => `<div class="lgb-row${i === 1 ? ' lgb-top' : ''}">
-    <span class="lgb-pos">${i}</span><span class="lgb-name">Team number ${i}</span>
-    <span class="lgb-pts">${40 - i * 3}</span></div>`).join('')}</div>
-  <div class="lgb-note">17 teams &middot; 9 nights &middot; best six finishes, plus one a night</div></div>`;
-
-// Every combination a real night can produce, worst last.
-const NIGHTS = {
-  'podium only': podium,
-  'and a draw': podium + `<div class="endband">${dip}</div>`,
-  'and a comeback': podium + `<div class="endband">${comeback}</div>`,
-  'draw + comeback': podium + `<div class="endband">${dip}${comeback}</div>`,
-  'league + comeback': podium + league + `<div class="endband">${comeback}</div>`,
-  'draw + league + comeback': podium + league + `<div class="endband">${dip}${comeback}</div>`,
+const H = { 'content-type': 'application/json', 'X-Host-Key': KEY };
+const J = async (route, opts = {}) => {
+  const r = await fetch(B + route, opts);
+  let body; try { body = await r.json(); } catch { body = null; }
+  return { status: r.status, body };
 };
+const host = (action, body = {}) => J(`/api/host/${action}`, { method: 'POST', headers: H, body: JSON.stringify(body) });
+const hostView = async () => (await J('/api/state?role=host', { headers: H })).body;
+
+async function venue(name, details) {
+  const made = await J('/api/invoices/customers', { method: 'POST', headers: H, body: JSON.stringify({ name }) });
+  const rec = ((made.body || {}).customers || []).find((c) => c.name === name);
+  if (!rec) throw new Error(`could not make the venue ${name}: ${JSON.stringify(made.body).slice(0, 160)}`);
+  if (details) await J(`/api/invoices/customers/${rec.id}/rewards`, { method: 'PUT', headers: H, body: JSON.stringify(details) });
+}
+await venue(QUIET, { rewards: ['A pint', 'A half', 'A packet of crisps'] });
+await venue(TAP, { rewards: ['A pint', 'A half', 'A packet of crisps'], usualNight: 'thu', link: 'https://example.test/whats-on' });
+await venue(QUIET_REGULAR, { rewards: ['A pint', 'A half', 'A packet of crisps'] });
+await venue(TAP_REGULAR, { rewards: ['A pint', 'A half', 'A packet of crisps'], usualNight: 'thu', link: 'https://example.test/whats-on' });
+
+/*
+ * A LONG TEAM NAME ON PURPOSE, and it WINS. Names are capped at 28 characters
+ * and carry no spaces if somebody decides they do not, and the winner's own
+ * name is what sets how wide the slide is.
+ */
+const TEAMS = SEASON.slice(0, 4);
+// How often each table gets it right: first every time, the last never.
+const RIGHT = [() => true, (n) => n % 3 !== 0, (n) => n % 2 === 0, () => false];
+const phones = TEAMS.map((name) => ({ name, id: '', token: '' }));
+
+/*
+ * ONE ROUND A NIGHT. The final is what is measured, and four nights of a
+ * whole pack would spend minutes answering questions nobody looks at. A
+ * one-round night is a composed night, which files like any other — and the
+ * filed nights are what the league is read from.
+ */
+const lib = (await J('/api/library', { headers: H })).body;
+const pack = (lib.quizzes || [])
+  .filter((q) => ((q.rounds || [])[0] || {}).type === 'text')
+  .sort((a, b) => ((a.rounds[0].questions || []).length || 99) - ((b.rounds[0].questions || []).length || 99))[0];
+if (!pack) throw new Error('no quiz pack opening on a general knowledge round');
+
+/*
+ * ONE PUB AN EVENING, as it is for a real quizmaster. Everything here is
+ * played on one day, and `mergeGigs()` folds a day into one evening — four
+ * pubs on it is a night with no venue (`venueMixed`), which the league
+ * rightly refuses to count. So the nights this script filed earlier TODAY are
+ * cleared before the next; last week's, seeded above, stay.
+ */
+function clearToday() {
+  const archive = path.join(DATA, 'archive');
+  for (const file of fs.existsSync(archive) ? fs.readdirSync(archive) : []) {
+    if (!file.startsWith('last-week-')) fs.rmSync(path.join(archive, file), { force: true });
+  }
+}
+
+async function launchNight(venueName) {
+  clearToday();
+  const go = await host('launch', { game: 'quiz', packId: pack.id, order: [{ packId: pack.id, round: 0 }], venue: venueName, replace: true });
+  if (go.status !== 200) throw new Error(`launch at ${venueName}: ${go.status} ${JSON.stringify(go.body).slice(0, 160)}`);
+}
+
+async function playNight(venueName) {
+  for (const p of phones) {
+    const j = await J('/api/join', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: p.name, ...(p.id ? { playerId: p.id, token: p.token } : {}) }) });
+    p.id = j.body.id || j.body.playerId || p.id;
+    p.token = j.body.token || p.token;
+  }
+  let asked = 0;
+  for (let i = 0; i < 400; i += 1) {
+    const v = await hostView();
+    if (v.phase === 'final') return v;
+    if (v.phase === 'question' && v.question && !(v.clock && v.clock.closed)) {
+      asked += 1;
+      const q = v.question;
+      await Promise.all(phones.map((p, k) => {
+        const right = RIGHT[k](asked);
+        const pick = right ? q.correctIndex : (q.correctIndex + 1) % Math.max(2, (q.options || []).length);
+        return J('/api/answer', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ playerId: p.id, token: p.token, optionIndex: pick }) });
+      }));
+      await host('reveal');
+      continue;
+    }
+    await host('next');
+  }
+  throw new Error(`the night at ${venueName} never reached the final`);
+}
+
 // 4:3 is in here deliberately — plenty of pub projectors still are.
 const SIZES = [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }, { width: 1024, height: 768 }];
 
-const browser = await chromium.launch();
-for (const size of SIZES) {
-  console.log(`\n${size.width}x${size.height}`);
-  for (const [name, body] of Object.entries(NIGHTS)) {
-    const page = await browser.newPage({ viewport: size });
-    /*
-     * THE PAGE IMPORTS THE PROJECTOR'S OWN `fitWinner()`.
-     *
-     * It used to RETYPE it into a `page.evaluate` below, under a comment
-     * saying it was "the real `fitWinner()`, run the way the projector runs
-     * it" — so deleting the projector's copy outright and renaming `.endband`
-     * left all eighteen of these checks green. A guard that reimplements the
-     * thing it guards is testing its own arithmetic.
-     *
-     * `fitWinner` moved to `client.js` for this: that file has no page and no
-     * boot code, so importing it here cannot start somebody else's projector.
-     */
-    servePage = () => `<!doctype html><html><head>
-      <link rel="stylesheet" href="/assets/style.css"></head>
-      <body class="screen"><div class="stage">
-        <header class="topbar"><div class="titles"><span class="title">The 1980s Pop Music Quiz</span></div>
-          <div class="right"><span class="pill">Results</span><span class="pill">18 playing</span></div></header>
-        <main id="card" class="card"><div class="winner">${body}</div></main>
-      </div>
-      <script type="module">
-        import { fitWinner } from '/assets/client.js';
-        window.__fitWinner = fitWinner;
-      </script></body></html>`;
-    await page.goto(`http://127.0.0.1:${PORT}/night`, { waitUntil: 'networkidle' });
+// Every combination a real night can produce, in the order that builds them.
+const NIGHTS = [
+  { name: 'podium only', venue: QUIET, league: false, comeback: false },
+  { name: 'podium + comeback', venue: TAP, league: false, comeback: true },
+  { name: 'league + comeback', venue: TAP_REGULAR, league: true, comeback: true },
+  { name: 'podium + league', venue: QUIET_REGULAR, league: true, comeback: false },
+];
 
-    // The projector's own function, imported — not a copy of it.
-    await page.waitForFunction(() => typeof window.__fitWinner === 'function');
-    const scale = await page.evaluate(() => {
-      const cardEl = document.querySelector('main.card');
-      window.__fitWinner(cardEl);
-      return Number(getComputedStyle(document.querySelector('.winner')).getPropertyValue('--fit')) || 1;
-    });
-    await page.waitForTimeout(60);
-
-    const m = await page.evaluate(() => {
-      const w = document.querySelector('.winner');
-      const box = document.querySelector('main.card').getBoundingClientRect();
-      const kids = [...w.children];
-      const top = Math.min(...kids.map((n) => n.getBoundingClientRect().top));
-      const bottom = Math.max(...kids.map((n) => n.getBoundingClientRect().bottom));
-      const qr = document.querySelector('.cb-qr');
-      const kicker = document.querySelector('.kicker').getBoundingClientRect();
-      return {
-        over: Math.round(Math.max(0, box.top - top) + Math.max(0, bottom - box.bottom)),
-        kickerIn: kicker.top >= box.top - 1,
-        qrIn: !qr || (qr.getBoundingClientRect().bottom <= box.bottom + 1
-          && qr.getBoundingClientRect().top >= box.top - 1),
-        qrPx: qr ? Math.round(qr.getBoundingClientRect().width) : 0,
-      };
-    });
-
-    /*
-     * AND THE QR HAS TO HAVE ACTUALLY PAINTED.
-     *
-     * Every other measurement here is about POSITION — where the box is, how
-     * big it is, whether it is inside the card. A QR that is perfectly placed
-     * and blank passes all of them, and "it is in the document" versus
-     * "somebody can see it" is the distinction this repo has now been bitten by
-     * four times. `toSvg()` returns an SVG with a viewBox and no intrinsic
-     * size, so `naturalWidth` is 0 even when it is fine — the only honest test
-     * is to draw it and count the dark pixels.
-     */
-    const painted = await page.evaluate(() => {
-      const el = document.querySelector('.cb-qr img');
-      if (!el) return -1;
-      const c = document.createElement('canvas');
-      c.width = 200; c.height = 200;
-      const x = c.getContext('2d');
-      x.fillStyle = '#fff'; x.fillRect(0, 0, 200, 200);
-      x.drawImage(el, 0, 0, 200, 200);
-      const d = x.getImageData(0, 0, 200, 200).data;
-      let dark = 0;
-      for (let i = 0; i < d.length; i += 4) if (d[i] < 100) dark += 1;
-      return dark;
-    });
-    if (painted !== -1) {
-      check('  …and the QR is really drawn, not just placed', painted > 2000,
-        `${painted} dark pixels of 40000`);
-    }
-    /*
-     * AND AN ORDINARY 16:9 NIGHT MUST NOT NEED SCALING AT ALL.
-     *
-     * "Nothing is cut" is satisfied by the backstop alone — so on its own it
-     * would go green with the side-by-side row deleted, quietly shrinking every
-     * full night to 0.86 and the comeback QR with it. This is the assertion
-     * that holds the other half of the fix in place. 4:3 is exempt: there it
-     * genuinely has to shrink, and a threshold that is wrong on one screen is a
-     * check somebody turns off.
-     */
-    if (size.height / size.width < 0.7 && name === 'draw + comeback') {
-      check('  …and it needed no shrinking to do it', scale === 1,
-        `scale ${scale.toFixed(2)} — under 1 means the bands are stacked again`);
-    }
-    check(`${name}`, m.over === 0 && m.kickerIn && m.qrIn,
-      `${m.over ? `${m.over}px cut off` : 'nothing cut'}`
-      + `${m.kickerIn ? '' : ', kicker gone'}${m.qrIn ? '' : ', QR sliced'}`
-      + ` · scale ${scale.toFixed(2)}${m.qrPx ? `, QR ${m.qrPx}px` : ''}`);
-    await page.close();
-  }
+/*
+ * TWO PROJECTORS PER SIZE, because the final is reached two ways and they fit
+ * differently. One is up all night and is handed the final by a push, which is
+ * the ordinary evening. The other is OPENED at the final — the laptop that
+ * reloaded, the host who put the projector up late — and there the card is
+ * still running its entrance animation when `fitWinner()` measures it, which
+ * is the case the old hand-built card could never have shown.
+ */
+async function openProjector(size) {
+  const page = await browser.newPage({ viewport: size });
+  await page.goto(`${B}/screen`, { waitUntil: 'load' });
+  return page;
 }
-await browser.close();
-srv.close();
+
+const browser = await chromium.launch();
+try {
+  for (const night of NIGHTS) {
+    await launchNight(night.venue);
+    // Navigate fresh per size — resizing one page in a loop is
+    // non-deterministic here (see CLAUDE.md, the console's polish pass).
+    const allNight = [];
+    for (const size of SIZES) allNight.push({ size, how: 'up all night', page: await openProjector(size) });
+    await playNight(night.venue);
+    console.log(`\n${night.name} — ${night.venue}`);
+    const atTheFinal = [];
+    for (const size of SIZES) atTheFinal.push({ size, how: 'opened at the final', page: await openProjector(size) });
+    for (const { size, how, page } of [...allNight, ...atTheFinal]) {
+      await page.waitForSelector('#card .winner .kicker', { timeout: 10_000 });
+      // The projector fits the card a frame after it draws, and the QR has to
+      // arrive before it can be measured as painted.
+      await page.waitForFunction(() => {
+        const img = document.querySelector('.cb-qr img');
+        return !img || img.complete;
+      }, null, { timeout: 10_000 }).catch(() => {});
+      await page.waitForTimeout(400);
+
+      const m = await page.evaluate(() => {
+        const w = document.querySelector('#card .winner');
+        const box = document.querySelector('#card').getBoundingClientRect();
+        const kids = [...w.children].filter((n) => n.getClientRects().length);
+        const top = Math.min(...kids.map((n) => n.getBoundingClientRect().top));
+        const bottom = Math.max(...kids.map((n) => n.getBoundingClientRect().bottom));
+        const qr = document.querySelector('.cb-qr');
+        const kicker = document.querySelector('.kicker').getBoundingClientRect();
+        return {
+          scale: Number(getComputedStyle(w).getPropertyValue('--fit')) || 1,
+          over: Math.round(Math.max(0, box.top - top) + Math.max(0, bottom - box.bottom)),
+          kickerIn: kicker.top >= box.top - 1,
+          league: Boolean(document.querySelector('.lgb')),
+          comeback: Boolean(document.querySelector('.comeback')),
+          qrIn: !qr || (qr.getBoundingClientRect().bottom <= box.bottom + 1
+            && qr.getBoundingClientRect().top >= box.top - 1),
+          qrPx: qr ? Math.round(qr.getBoundingClientRect().width) : 0,
+        };
+      });
+
+      // The combination named is the one measured, or a pass says nothing.
+      const label = `${size.width}x${size.height} ${how}`;
+      check(`${label}  the slide carries what this night should`, m.league === night.league && m.comeback === night.comeback,
+        `league ${m.league ? 'up' : 'absent'}, comeback ${m.comeback ? 'up' : 'absent'}`);
+
+      /*
+       * AND THE QR HAS TO HAVE ACTUALLY PAINTED.
+       *
+       * Every other measurement here is about POSITION — where the box is, how
+       * big it is, whether it is inside the card. A QR that is perfectly placed
+       * and blank passes all of them, and "it is in the document" versus
+       * "somebody can see it" is the distinction this repo has now been bitten
+       * by four times. `toSvg()` returns an SVG with a viewBox and no intrinsic
+       * size, so `naturalWidth` is 0 even when it is fine — the only honest
+       * test is to draw it and count the dark pixels. Same origin, so the
+       * canvas is not tainted.
+       */
+      if (night.comeback) {
+        const painted = await page.evaluate(() => {
+          const el = document.querySelector('.cb-qr img');
+          if (!el) return -1;
+          const c = document.createElement('canvas');
+          c.width = 200; c.height = 200;
+          const x = c.getContext('2d');
+          x.fillStyle = '#fff'; x.fillRect(0, 0, 200, 200);
+          x.drawImage(el, 0, 0, 200, 200);
+          const d = x.getImageData(0, 0, 200, 200).data;
+          let dark = 0;
+          for (let i = 0; i < d.length; i += 4) if (d[i] < 100) dark += 1;
+          return dark;
+        });
+        check(`${label}  …and the QR is really drawn, not just placed`, painted > 2000, `${painted} dark pixels of 40000`);
+      }
+      /*
+       * THERE WAS AN ASSERTION HERE THAT A 16:9 NIGHT NEEDED NO SHRINKING, and
+       * it is gone because what it held is gone. It kept the draw and the
+       * comeback SIDE BY SIDE rather than stacked; the draw was binned on 21
+       * September, so the end band holds one thing and there is nothing left
+       * to stack. Its 1.00 was also measured on the hand-built stage — the
+       * real projector's card is shorter, and a podium with a comeback under
+       * it fits at 0.96 on a real 1280x720, which is the backstop doing its
+       * job rather than a fault.
+       *
+       * AND ONE PIXEL IS NOT A CUT. `fitWinner()` makes the content exactly
+       * as tall as the card, so a centred result lands on half pixels at
+       * both ends; the kicker, the thing a real cut takes first, is checked
+       * on its own.
+       */
+      check(`${label}  nothing cut`, m.over <= 1 && m.kickerIn && m.qrIn,
+        `${m.over ? `${m.over}px cut off` : 'nothing cut'}`
+        + `${m.kickerIn ? '' : ', kicker gone'}${m.qrIn ? '' : ', QR sliced'}`
+        + ` · scale ${m.scale.toFixed(2)}${m.qrPx ? `, QR ${m.qrPx}px` : ''}`);
+      await page.close();
+    }
+  }
+} catch (err) {
+  bad += 1;
+  console.log(`threw: ${err.message}`);
+} finally {
+  await browser.close().catch(() => {});
+  await stop();
+}
 
 console.log(bad ? `\n${bad} FAILED` : '\nThe last slide of the night fits, on every screen.');
 process.exit(bad ? 1 : 0);

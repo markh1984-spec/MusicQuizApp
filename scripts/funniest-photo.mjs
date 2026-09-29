@@ -286,6 +286,14 @@ try {
   await desk.goto(`${BASE}/host?key=${KEY}${gq}`);
   await desk.waitForSelector('.votepanel', { timeout: 10000 }).catch(() => {});
   check('the control view draws the result', await desk.locator('.votepanel').count() === 1);
+  /*
+   * AND THE PRIZE PANEL SAYS WHAT THE DRINK IS FOR. It read "1st" for any
+   * voucher that was not second or third — this one, the draw's, a bingo
+   * card's fourth — so the host told the funniest table they had won the
+   * quiz (launch-path sweep, 23 September 2026).
+   */
+  const place = ((await desk.locator('.v-row .v-place').first().textContent().catch(() => '')) || '').trim();
+  check('and the prize panel says the drink is for the funniest photo, not "1st"', /funniest/i.test(place), place || 'no voucher row');
   const again = desk.locator('#voteAgain');
   check('with a way to run another one', await again.count() === 1);
   if (await again.count()) {
@@ -299,6 +307,8 @@ try {
       await desk.locator('.vote-thumb').count() >= 4);
     const go = desk.locator('#voteOpen');
     check('the button is off until two are picked', await go.isDisabled());
+    const goBox = await go.boundingBox().catch(() => null);
+    check('and it is on the 44px touch floor', Boolean(goBox) && goBox.height >= 44, JSON.stringify(goBox));
     await desk.locator('.vote-thumb').nth(0).click();
     await desk.locator('.vote-thumb').nth(1).click();
     check('and it NAMES the prize once it is on',
@@ -347,6 +357,65 @@ try {
   const overQuestion = await host('/api/host/photoVoteOpen', { ids: photoIds });
   check('a vote is refused over a live question', overQuestion.status === 400,
     `got ${overQuestion.status} ${JSON.stringify(overQuestion.body)}`);
+
+  /* ------------------ AND AT A REVEAL AND A ROUND BOARD, WHERE IT IS PRESSED */
+
+  /*
+   * The card lived inside the WAITING screen alone (launch-path sweep, 23
+   * September 2026), so a vote opened at a round board — the break the host's
+   * panel is described as being for — or at a reveal reached every phone's
+   * PAYLOAD and no phone's SCREEN, while sixty people were asked out loud to
+   * tap the one that made them laugh. The lobby half of this guard could not
+   * see it: it never left the lobby. A test that the payload is right proves
+   * nothing about whether anybody drew it.
+   */
+  const drive = async (target, limit = 400) => {
+    let st = await hostState();
+    for (let i = 0; i < limit && st.phase !== target; i += 1) {
+      await host('/api/host/next', {});
+      st = await hostState();
+    }
+    return st.phase;
+  };
+  const drawnOnPhone = async () => {
+    await phone.waitForSelector('.vote-pic', { timeout: 8000 }).catch(() => {});
+    return phone.locator('.vote-pic').count();
+  };
+  const goneFromPhone = async () => {
+    await phone.waitForSelector('.vote-pic', { state: 'detached', timeout: 8000 }).catch(() => {});
+    return phone.locator('.vote-pic').count();
+  };
+
+  check('the quiz reaches a reveal', await drive('reveal') === 'reveal');
+  const atReveal = await host('/api/host/photoVoteOpen', { ids: photoIds });
+  check('four photographs go to the room at a REVEAL', atReveal.status === 200, JSON.stringify(atReveal.body));
+  check('and the phone draws them under its result', await drawnOnPhone() === 4,
+    'the payload carried four and the reveal card drew none of them');
+  await host('/api/host/photoVoteDrop', {});
+  check('and they come down when the vote is dropped', await goneFromPhone() === 0,
+    'a card key that does not name the vote never rebuilds');
+
+  check('the quiz reaches a round board', await drive('round_board') === 'round_board');
+  const atBoard = await host('/api/host/photoVoteOpen', { ids: photoIds });
+  check('four photographs go to the room at a ROUND BOARD, the break this is for',
+    atBoard.status === 200, JSON.stringify(atBoard.body));
+  check('and the phone draws them over the standings', await drawnOnPhone() === 4,
+    'the payload carried four and the board drew none of them');
+  if (await phone.locator('.vote-pic').count() === 4) {
+    await phone.locator('.vote-pic').nth(1).click();
+    await phone.waitForTimeout(500);
+    check('and a tap at the board reaches the server',
+      ((((await hostState()).photoVote || {}).cast) || 0) >= 1,
+      'the tile lit and nothing was sent');
+  }
+  await host('/api/host/photoVoteDrop', {});
+
+  check('the quiz reaches the final', await drive('final') === 'final');
+  const atFinal = await host('/api/host/photoVoteOpen', { ids: photoIds });
+  check('four photographs go to the room at the FINAL', atFinal.status === 200, JSON.stringify(atFinal.body));
+  check('and the phone draws them under the winner', await drawnOnPhone() === 4,
+    'the payload carried four and the final board drew none of them');
+  await host('/api/host/photoVoteDrop', {});
 
   check('nothing threw on the phone', boom.length === 0, boom.join(' | '));
   check('nothing threw on the control view', deskBoom.length === 0, deskBoom.join(' | '));

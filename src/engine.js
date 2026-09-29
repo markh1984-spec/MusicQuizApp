@@ -59,9 +59,17 @@ import { createHash } from 'node:crypto';
 export const DEFAULT_WINNERS = 3;
 export const MAX_WINNERS = 3;
 
-/** How many places tonight recognises, for a state of any age. */
+/**
+ * How many places tonight recognises, for a state of any age — and of either
+ * engine. A BINGO state's `winners` is `{ line, full }`, a different thing
+ * under the same name (see `session.launch()`), so a bingo part carries the
+ * NIGHT's number as `nightWinners` and this reads either: `nightWideOpts()`
+ * asks it at every part boundary, and a quiz after a bingo interlude used to
+ * come back to three places however many were chosen.
+ */
 export function winnersOf(state = {}) {
-  const n = Math.floor(Number(state.winners));
+  const raw = typeof state.winners === 'number' ? state.winners : state.nightWinners;
+  const n = Math.floor(Number(raw));
   return Number.isFinite(n) && n >= 1 && n <= MAX_WINNERS ? n : DEFAULT_WINNERS;
 }
 
@@ -989,6 +997,15 @@ export class Engine {
      */
     if (!dealt && this.state.teamMode === 'random') return { ok: false, reason: 'random_teams' };
     /*
+     * AND NOT MID-QUESTION — the boundary `joinTeam()` keeps, refused here
+     * BEFORE the write. The caller made the team and then joined it, and only
+     * the join asked the phase: a name typed at question four came back
+     * `mid_question` with the team already in the state and on the picker
+     * (launch-path sweep, 23 September 2026). `dealt` stays the app's own way
+     * in — a latecomer joining mid-question still has to land somewhere.
+     */
+    if (!dealt && !TEAM_CHANGE_PHASES.has(this.state.phase)) return { ok: false, reason: 'mid_question' };
+    /*
      * AND THERE IS A CEILING. There was none at all: 1,200 teams in 1.3
      * seconds from one phone at the lobby, every SSE payload from 0.7KB to
      * 85KB, and a flush to disk on each one — at the exact moment sixty
@@ -1407,6 +1424,17 @@ export class Engine {
       reward: this.photoVotePrize(),
       venue: this.state.venue || '',
       newCode: newVoucherCode,
+      /*
+       * THE DRINK GOES TO THE BOARD ROW — one entity per row, everywhere
+       * (`boardIdFor()`), exactly as a placing does. On a team night that is
+       * the sender's table, named as the room knows it; on an ordinary night
+       * the row IS the handset and nothing moves.
+       */
+      owner: (playerId) => {
+        const boardId = this.boardIdFor(playerId);
+        const row = this.leaderboard().find((r) => r.id === boardId);
+        return { id: boardId, name: row ? row.name : ((this.state.players[playerId] || {}).name || '') };
+      },
     });
     this.changed();
     return out;
@@ -1671,11 +1699,29 @@ export class Engine {
    * properly with a winner rather than just stopping. It is archived on the
    * way, like any finished game.
    *
-   * Recoverable: Back from the final results returns to the round board, so a
-   * mis-tap is one press to undo.
+   * Recoverable: Back from the final results returns EXACTLY where Stop was
+   * pressed, so a mis-tap is one press to undo — see `stoppedFrom` below.
    */
   finish() {
     if (this.state.phase === PHASES.FINAL) return false;
+    /*
+     * WHERE THE NIGHT WAS WHEN STOP WAS PRESSED, so Back can put it back
+     * there. Back from the final used to land on the ROUND BOARD of whatever
+     * round the pointer was in, so a Stop after Q1 and a Back skipped the
+     * rest of that round — Next went to round two, and the questions the
+     * room never heard were never asked (launch-path sweep, 23 September
+     * 2026). The confirm promises *"Back undoes it"*; this is what makes
+     * that true. On the state, like everything else a restart must bring
+     * back. Only a Stop writes it: a final reached the ordinary way keeps
+     * Back going to the last round board, as it always has.
+     */
+    const s = this.state;
+    s.stoppedFrom = {
+      phase: s.phase,
+      roundIndex: s.roundIndex,
+      questionIndex: s.questionIndex,
+      question: s.question ? { ...s.question } : null,
+    };
     this.state.phase = PHASES.FINAL;
     this.state.finishedAt = this.now();
     this.state.question = null;
@@ -1732,7 +1778,9 @@ export class Engine {
      * projector, nothing to show the bar. The same three flags
      * `withdrawVouchersNoLongerOwed()` already leaves alone.
      */
-    const already = new Set(Object.values(s.vouchers).filter((v) => !v.carried && !v.funny && !v.draw).map((v) => v.winnerId));
+    const placings = Object.values(s.vouchers).filter((v) => !v.carried && !v.funny && !v.draw);
+    const already = new Set(placings.map((v) => v.winnerId));
+    const held = new Map(placings.map((v) => [v.winnerId, v]));
     for (const row of this.leaderboard()) {
       /*
        * POSITIONS, NOT THE TOP THREE ROWS. `rankPlayers` gives 1, 2, 2, 4 so
@@ -1771,7 +1819,22 @@ export class Engine {
       if (!(row.score > 0)) continue;
       const reward = rewards[row.position - 1];
       if (!reward) continue;
-      if (already.has(row.id)) continue;
+      if (already.has(row.id)) {
+        /*
+         * A PRIZE CHANGED AFTER IT WAS WON REACHES THE CODE ALREADY IN
+         * SOMEBODY'S HAND — bingo's `payWinnersOwed()` rule, arriving here.
+         * *Change the prizes* at the final scores minted nothing (the winner
+         * already held one) and rewrote nothing, so the phone went on saying
+         * the old drink and the bar read it off. Updated IN PLACE: the code
+         * they are holding stays the one that scans, never a second voucher.
+         * A REDEEMED one is left alone — the drink has gone, and rewriting
+         * what it said afterwards is editing history. `withdraw…()` above has
+         * already taken back anything whose place no longer matches.
+         */
+        const mine = held.get(row.id);
+        if (mine && !mine.redeemedAt && mine.reward !== reward) mine.reward = reward;
+        continue;
+      }
       let code = newVoucherCode();
       while (s.vouchers[code]) code = newVoucherCode();
       s.vouchers[code] = {
@@ -1995,9 +2058,17 @@ export class Engine {
     // away what the room just did. See `settlePhotoVote()`.
     this.settlePhotoVote();
     switch (s.phase) {
+      /*
+       * FROM A REVEAL, BACK STEPS TO THE PREVIOUS ANSWER — the same move as
+       * from a live question, below. It used to REOPEN the question, which is
+       * *Ask again*'s job wearing the arrow: one mis-tap and the room was
+       * re-answering a question it had just been shown the answer to, with the
+       * points it had earned wiped, under a tooltip calling this the safe one.
+       * Decided 26 September 2026: at a reveal the arrow goes back, never
+       * round again; the question being left is wiped exactly as it is from a
+       * live question, because Next brings it straight back.
+       */
       case PHASES.REVEAL:
-        // Back from a reveal reopens the same question, cleared, from the top.
-        return this.redoQuestion();
       case PHASES.QUESTION:
         // The usual reason for pressing Back here is pressing Next once too
         // often on the previous reveal. So go back to that reveal, with its
@@ -2066,13 +2137,60 @@ export class Engine {
         s.phase = PHASES.LOBBY;
         this.changed();
         return true;
-      case PHASES.FINAL:
-        s.phase = PHASES.ROUND_BOARD;
+      case PHASES.FINAL: {
         s.finishedAt = null;
+        /*
+         * A FINAL BEING UNDONE HAS PAID NOBODY. The codes it minted were for
+         * a night that has not finished — the early leader kept a live
+         * first-place code through the rest of the quiz, and the true final
+         * then paid the true winner beside it. Every unspent placing goes;
+         * a redeemed one, a `carried`, `draw` or `funny` one stays, as
+         * `withdrawVouchersNoLongerOwed()` already keeps them. The true final
+         * mints afresh.
+         */
+        this.withdrawUnspentPlacings();
+        /*
+         * BACK TO WHERE STOP WAS PRESSED — see `finish()`. A question that
+         * was live is put back live if its clock still has time on it, and
+         * revealed if the clock ran out while the winner slide was up, which
+         * is exactly what would have happened had Stop never been pressed.
+         */
+        const from = s.stoppedFrom;
+        delete s.stoppedFrom;
+        const phases = Object.values(PHASES);
+        if (from && phases.includes(from.phase) && from.phase !== PHASES.FINAL) {
+          s.phase = from.phase;
+          s.roundIndex = Number(from.roundIndex) || 0;
+          s.questionIndex = Number(from.questionIndex) || 0;
+          s.question = from.question ? { ...from.question } : null;
+          this.clampPointers();
+          if ((s.phase === PHASES.QUESTION || s.phase === PHASES.REVEAL) && !s.question) {
+            s.phase = PHASES.ROUND_INTRO;
+          }
+          if (s.phase === PHASES.QUESTION && this.isExpired()) return this.reveal();
+          this.changed();
+          return true;
+        }
+        s.phase = PHASES.ROUND_BOARD;
         this.changed();
         return true;
+      }
       default:
         return false;
+    }
+  }
+
+  /**
+   * TAKE BACK EVERY PLACING CODE NOBODY HAS SPENT — for a final that is being
+   * undone, where nobody is owed a place at all. The same three flags
+   * `withdrawVouchersNoLongerOwed()` leaves alone are left alone here, and so
+   * is a redeemed one: the drink is behind the bar and the record of it is the
+   * honest thing to keep.
+   */
+  withdrawUnspentPlacings() {
+    for (const [code, v] of Object.entries(this.state.vouchers || {})) {
+      if (v.draw || v.funny || v.carried || v.redeemedAt) continue;
+      delete this.state.vouchers[code];
     }
   }
 
@@ -3206,12 +3324,14 @@ export class Engine {
      * person could leave their seat in — never during a live QUESTION, where
      * the screen is four options and twenty seconds.
      *
-     * **A REDEEMED ONE IS KEPT AND DRAWN AS A RECEIPT, not dropped.** The
-     * bingo card has said *"Collected — already redeemed. If that is wrong,
-     * ask the quizmaster"* since vouchers existed, and a code that vanishes
-     * the instant a barman scans it leaves the one person who needs to query
-     * it with nothing to point at. The two engines may not disagree about
-     * this.
+     * **A REDEEMED ONE IS STILL SENT, AND IT IS THE PHONE THAT STOPS DRAWING
+     * IT.** This used to say it was drawn as a receipt; it has not been since
+     * *My prizes* — a collected drink disappears from the phone and the phone
+     * forgets the code (`client.js`), because the host's panel and the filed
+     * night hold every voucher and a receipt nobody can spend only clutters
+     * the fold. It stays in the payload with `redeemedAt` on it so a phone
+     * that remembered the code across a reload learns to let it go. The two
+     * engines may not disagree about this.
      *
      * **`view.voucher` IS UNCHANGED** and still names the quiz's own prize at
      * the FINAL: that is the headline card on the last screen, and this is
@@ -3278,7 +3398,11 @@ export class Engine {
        * show the wrong prize on the one screen that names it.
        */
       const held = Object.values(s.vouchers).filter((v) => v.winnerId === this.boardIdFor(playerId));
-      const mine = held.find((v) => !v.carried) || held[0];
+      // AND A PLACING BEATS THE FUNNIEST-PHOTO DRINK for the headline card:
+      // the final slide is about the quiz that has just ended, and a table
+      // can hold both now. The wallet underneath still lists every code.
+      const mine = held.find((v) => !v.carried && !v.funny && !v.draw)
+        || held.find((v) => !v.carried) || held[0];
       if (mine) {
         view.voucher = {
           code: mine.code,
@@ -3487,6 +3611,14 @@ export class Engine {
      * could have found it.
      */
     view.photoSlide = { up: Boolean(s.photoSlide), link: String(s.photoLink || '') };
+    /*
+     * WHAT THIS GAP OFFERS THE PHONES — the same two answers `playerView()`
+     * sends, from the same `breakNow()`, so the host's prompt (`phonesAre()`)
+     * cannot describe a break the phones are not in. Absent outside a break,
+     * exactly as it is on the phone.
+     */
+    const gapNow = breakNow(s);
+    if (gapNow) view.gap = { photos: offersPhotos(gapNow), game: offersGame(gapNow) };
 
     if (q && round) {
       view.question = {
@@ -3630,6 +3762,9 @@ export class Engine {
       questionIndex: qi,
       roundTitle: round.title,
       roundType: round.type,
+      // The number a screen SAYS for that round — the next-up panel used to
+      // print the array position, which is one out after a bonus round.
+      scoreRoundNumber: this.scoringRoundNumber(ri),
       prompt: q.prompt,
       options: this.optionsFor(q, round),
       ...this.hostQuestionExtras(q, round, qi),

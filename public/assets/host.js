@@ -12,7 +12,7 @@
 
 import {
   esc, node, ServerClock, Live, postJson, brandLink, binIcon, paintNav, paintIdentity, menuRights,
-  rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote, playsACard, photoVotePanel,
+  rewardsEditorPopover, joinQueuePanel, noteMark, askAndSendNote, playsACard, photoVotePanel, roundSaid, ordinal,
 } from './client.js';
 import { hostCursor } from './host-cursor.js';
 import { paintScheme } from './schemes.js';
@@ -255,9 +255,16 @@ function draw(next) {
    * correction as the projector's own pill, and it has to be made in both:
    * one screen saying it right does not make the other true.
    */
+  /*
+   * PHONES, NOT BOARD ROWS. On a team night `playerCount` is the number of
+   * TEAMS and `phoneCount` the handsets (sent only when the two differ) — so
+   * five phones dealt into two tables read "2 playing" here, on the line the
+   * host checks the room against (launch-path sweep, 23 September 2026).
+   */
+  const phones = state.phoneCount ?? state.playerCount;
   const inRoom = state.game === 'dj'
-    ? `${state.playerCount} ${state.playerCount === 1 ? 'phone' : 'phones'} in`
-    : `${state.playerCount} playing`;
+    ? `${phones} ${phones === 1 ? 'phone' : 'phones'} in`
+    : `${phones} playing`;
   connEl.textContent = state.joinCode ? `${inRoom} · code ${state.joinCode}` : inRoom;
   /*
    * THE FUNNIEST PHOTOGRAPH SITS WITH THE PHOTOGRAPHS, on all three control
@@ -335,11 +342,13 @@ function whereLabel(s) {
     case 'lobby': return 'Lobby — waiting to start';
     case 'rules': return 'The rules';
     // A breakout round is delivered like any other but scores nothing, so it
-    // does not claim a round number here either — same rule as the projector.
-    case 'round_intro': return s.roundType === 'breakout' ? 'Bonus round intro' : `Round ${s.scoreRoundNumber ?? s.roundIndex + 1} intro`;
-    case 'question': return `R${s.roundIndex + 1} Q${s.questionIndex + 1} — live`;
-    case 'reveal': return `R${s.roundIndex + 1} Q${s.questionIndex + 1} — revealed`;
-    case 'round_board': return s.roundType === 'breakout' ? 'Bonus round scores' : `Round ${s.scoreRoundNumber ?? s.roundIndex + 1} scores`;
+    // does not claim a round number here either — same rule as the projector,
+    // and the SAME WORDS (`roundSaid()`): the live and revealed lines printed
+    // the array position, one out from the wall after a bonus round.
+    case 'round_intro': return `${roundSaid(s)} intro`;
+    case 'question': return `${roundSaid(s, { short: true })} Q${s.questionIndex + 1} — live`;
+    case 'reveal': return `${roundSaid(s, { short: true })} Q${s.questionIndex + 1} — revealed`;
+    case 'round_board': return `${roundSaid(s)} scores`;
     case 'final': return 'Final results';
     default: return 'Control';
   }
@@ -404,6 +413,21 @@ function advertPanel(s) {
  * bar cannot reach us or somebody is working it, and both are worth knowing
  * before you tap it a fourth time.
  */
+/*
+ * WHAT A CODE IS FOR, IN THE HOST'S OWN WORDS. This read `1st` for anything
+ * that was not 2nd or 3rd (launch-path sweep, 23 September 2026) — so the
+ * funniest photograph's drink, the binned draw's leftover and a bingo card's
+ * fourth and fifth prizes all sat in the panel as first place, and the host
+ * read "first" off his screen to somebody who came ninth. The phone's own
+ * card already refuses that (`place || 1` is the fault this repo records
+ * there); this is the same rule on the other screen.
+ */
+function placeLabel(v) {
+  if (v.funny) return 'Funniest photo';
+  if (v.draw) return 'Draw';
+  return ordinal(v.place || 1);
+}
+
 function voucherPanel(s) {
   // Down the board, first place at the top — the order the room saw and the
   // order the host will read them out in.
@@ -418,7 +442,7 @@ function voucherPanel(s) {
         ${list.map((v) => `
           <div class="v-row ${v.redeemedAt ? 'is-spent' : ''}">
             <div class="v-row-who">
-              <span class="v-place v-place-${v.place || 1}">${v.place === 2 ? '2nd' : v.place === 3 ? '3rd' : '1st'}</span>
+              <span class="v-place v-place-${v.place || 1}">${placeLabel(v)}</span>
               <b>${esc(v.name)}</b>
               <span class="v-row-what">${esc(v.reward)}</span>
               <span class="v-row-code">${esc(v.code)}</span>
@@ -511,7 +535,7 @@ function buildPanels(s) {
   // what to play before the question is even on screen.
   if (s.phase === 'round_intro' || s.phase === 'reveal' || s.phase === 'lobby') {
     const up = s.upcoming;
-    if (up && up.cue) panels.push(cuePanel(up.cue, `Coming up — R${up.roundIndex + 1} Q${up.questionIndex + 1}`, up.playlist));
+    if (up && up.cue) panels.push(cuePanel(up.cue, `Coming up — ${roundSaid(up, { short: true })} Q${up.questionIndex + 1}`, up.playlist));
   }
   if ((s.phase === 'question' || s.phase === 'reveal') && s.question && s.question.cue) {
     panels.push(cuePanel(s.question.cue, 'Play this now', s.question.playlist, s.introPlay));
@@ -664,7 +688,7 @@ function breakoutPanel(s, q) {
   const answers = s.breakoutAnswers || [];
   const el = node(`
     <div class="panel">
-      <h3>Round ${s.roundIndex + 1}, question ${s.questionIndex + 1} of ${s.questionCount} — breakout</h3>
+      <h3>${roundSaid(s)}, question ${s.questionIndex + 1} of ${s.questionCount} — breakout</h3>
       <p class="prompt">${esc(q.prompt)}</p>
       <div class="tiny" style="margin-bottom:8px;color:var(--cool)">No right answer — read the funny ones out.</div>
       <div class="keywho" id="breakoutList">
@@ -672,7 +696,7 @@ function breakoutPanel(s, q) {
           ? answers.map((a) => `<span>${esc(a.name)}: ${esc(a.text)}</span>`).join('')
           : '<span class="tiny" style="opacity:.7">Nothing in yet.</span>'}
       </div>
-      <div class="tiny" style="margin-top:10px">${answers.length} of ${s.playerCount} answered</div>
+      <div class="tiny" style="margin-top:10px">${answers.length} of ${s.phoneCount ?? s.playerCount} answered</div>
       <button class="report-q" type="button">Something wrong with this one?</button>
     </div>
   `);
@@ -701,7 +725,7 @@ function questionPanel(s) {
   const rows = keyRows(q, tally);
   const el = node(`
     <div class="panel">
-      <h3>Round ${s.roundIndex + 1}, question ${s.questionIndex + 1} of ${s.questionCount} — answer key</h3>
+      <h3>${roundSaid(s)}, question ${s.questionIndex + 1} of ${s.questionCount} — answer key</h3>
       <p class="prompt">${esc(q.prompt)}</p>
       ${q.alphabet ? `<div class="answer-said"><span class="answer-letter">${esc(q.correctLetter || '?')}</span><span class="answer-words">${esc(q.answer || '')}</span></div>` : ''}
       ${q.pickCount > 1 ? `<div class="tiny" style="margin-bottom:8px;color:var(--cool)">They lock in ${q.pickCount} — part marks for getting some.</div>` : ''}
@@ -818,7 +842,7 @@ function nextUpPanel(s) {
   if (!up) return node('<div class="panel"><h3>Next up</h3><div class="tiny">Nothing queued.</div></div>');
   return node(`
     <div class="panel">
-      <h3>Next up — R${up.roundIndex + 1} Q${up.questionIndex + 1}</h3>
+      <h3>Next up — ${roundSaid(up, { short: true })} Q${up.questionIndex + 1}</h3>
       <p class="prompt">${esc(up.prompt)}</p>
       ${up.pickCount > 1 ? `<div class="tiny" style="margin-bottom:8px;color:var(--cool)">Pick ${up.pickCount}</div>` : ''}
       ${up.alphabet
@@ -904,6 +928,19 @@ function playersPanel(s) {
     }
   });
 
+  /*
+   * THE HEADING SAYS "tap a name" AND THE NAME DID NOTHING — only the ···
+   * at the far end of the row opened the menu (launch-path sweep, 23
+   * September 2026). A control that needs explaining is wrong, and one whose
+   * explanation is false is worse. The whole row opens it now; the button
+   * keeps its own handler, so a press on it is not counted twice.
+   */
+  el.querySelectorAll('.prow').forEach((row) => {
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
+      openPlayerMenu(row.dataset.id, row.dataset.name);
+    });
+  });
   el.querySelectorAll('[data-act="menu"]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const row = btn.closest('.prow');
@@ -980,9 +1017,8 @@ function prizeLine(s) {
     return '<div class="tiny" style="margin-top:4px">No prizes tonight'
       + ' \u2014 they come from the venue you pick when you launch.</div>';
   }
-  const places = ['1st', '2nd', '3rd'];
   return `<div class="tiny" style="margin-top:4px">Playing for: ${rewards
-    .map((r, i) => `<b>${esc(places[i] || `${i + 1}th`)}</b> ${esc(r)}`).join(' \u00b7 ')}</div>`;
+    .map((r, i) => `<b>${esc(ordinal(i + 1))}</b> ${esc(r)}`).join(' \u00b7 ')}</div>`;
 }
 
 /**
@@ -1304,11 +1340,28 @@ function buildActions(s) {
    * the title says why rather than leaving somebody pressing it twice.
    */
   const atStart = s.phase === 'lobby';
+  /*
+   * THE TOOLTIP SAYS WHAT BACK ACTUALLY DOES, and that is two different
+   * things. It read *"Every score is kept, so this is the safe one"* at every
+   * phase, and at a question or a reveal it was false: Back steps to the
+   * PREVIOUS answer, and the question it steps back over is asked again by
+   * Next \u2014 so its points are wiped, exactly as Skip and Ask again wipe theirs.
+   * At a reveal it used to REOPEN the question, which is what Ask again is
+   * for; the engine no longer does that, and the words say which control
+   * does which. At a round board or a round intro nothing is wiped.
+   */
+  const backWhy = atStart
+    ? 'Nothing to go back to yet \u2014 the quiz has not started.'
+    : s.phase === 'question' || s.phase === 'reveal'
+      ? 'Back \u2014 to the previous answer. This question is asked again from the top, so its points are wiped. Ask again replays it instead.'
+      : s.phase === 'final'
+        // A Stop is undone by this: back to where it was pressed, every
+        // score kept \u2014 and a prize code the night has not finished paying
+        // is taken back, so nobody walks to the bar with one.
+        ? 'Back \u2014 to where you stopped. Every score is kept; a prize code for a night that has not finished is taken back.'
+        : 'Back \u2014 one step back. Nothing is wiped.';
   const back = node(`<button class="minor back-btn" aria-label="Back" ${atStart ? 'disabled' : ''}`
-    + ` title="${atStart
-      ? 'Nothing to go back to yet \u2014 the quiz has not started.'
-      : 'Back \u2014 one step back. Every score is kept, so this is the safe one.'}"`
-    + `>${backIcon}</button>`);
+    + ` title="${esc(backWhy)}">${backIcon}</button>`);
   back.addEventListener('click', () => act('back'));
   out.push(back);
 

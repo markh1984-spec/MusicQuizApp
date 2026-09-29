@@ -39,6 +39,11 @@ const KEY = 'host-controls';
 let fails = 0;
 const dead = [];
 const tiny = [];
+/** A named assertion, printed the way the rest of this file prints. */
+const ok = (cond, what, got = '') => {
+  if (!cond) fails += 1;
+  console.log(`  ${cond ? 'ok  ' : 'FAIL'} ${what}${cond || !got ? '' : ` — ${got}`}`);
+};
 
 /*
  * PRESSES THAT END THE NIGHT ARE NOT PROBED. Not because they are safe to
@@ -263,6 +268,28 @@ try {
       if (!ok) fails += 1;
       console.log(`  ${ok ? 'ok  ' : 'FAIL'} after the first win the button reads "${label.trim()}"`);
     }
+    /*
+     * THE PRIZE SHEET SAYS WHAT ITS SAVE DOES. The button's tooltip was put
+     * right when both engines began paying anybody already owed; the sheet it
+     * opens went on saying *"one already given stays as it was"* — the line a
+     * host reads while looking at a winner's blank phone, telling them the fix
+     * will not reach it (launch-path sweep, 23 September 2026). Opened through
+     * the real button, on both engines.
+     */
+    if (phase === 'lobby') {
+      const says = await page.evaluate(async () => {
+        const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === 'Change the prizes');
+        if (!b) return null;
+        b.click();
+        await new Promise((r) => setTimeout(r, 300));
+        const sheet = document.querySelector('.rw-pop');
+        const text = sheet ? sheet.innerText.replace(/\s+/g, ' ') : '';
+        if (sheet) sheet.querySelector('#rwClose').click();
+        return text;
+      });
+      ok(says !== null && /already won/i.test(says) && !/already given stays|next prize handed out/i.test(says),
+        'the prize sheet says a code already won changes with it', says === null ? 'no Change the prizes button' : says.slice(0, 200));
+    }
     const controls = await controlsHere();
     let pressed = 0;
     for (const c of controls) {
@@ -311,6 +338,14 @@ try {
      * through the real button, and the night must end.
      */
     if (BINGO && phase === 'playing') {
+      /*
+       * THE SAME CONTROL WEARS THE SAME LABEL ON BOTH ENGINES. The quiz's is
+       * "Change the prizes"; bingo's was a bare "Prizes" (launch-path sweep,
+       * 23 September 2026), the word the launch bar already uses for the
+       * card's stopping points.
+       */
+      ok(controls.some((c) => c.label === 'Change the prizes') && !controls.some((c) => c.label === 'Prizes'),
+        'the bingo control view says "Change the prizes", like the quiz\'s', controls.map((c) => c.label).join(' | '));
       const at = await driveTo('playing');
       if (at === 'playing') {
         const twice = await page.evaluate(async () => {
@@ -339,11 +374,61 @@ try {
      * round. A button that posts the right action for the wrong player reacts
      * perfectly and does neither — so each is checked where it lands.
      */
+    /*
+     * BACK AT A REVEAL SAYS WHAT IT DOES, AND DOES IT. The tooltip read
+     * *"Every score is kept, so this is the safe one"* at every phase while
+     * the engine REOPENED the question at a reveal, points wiped — Ask again
+     * wearing the arrow (launch-path sweep, 23 September 2026). Read off the
+     * real button: the title names the wipe and never claims the scores are
+     * kept, and pressing it steps BACK — from the first reveal to the round
+     * intro — rather than putting the question back up live.
+     */
+    if (!BINGO && phase === 'reveal') {
+      const at = await driveTo('reveal');
+      if (at !== 'reveal') ok(false, 'the night reaches a reveal for the Back check', at);
+      else {
+        const title = await page.evaluate(() => (document.querySelector('.actions .back-btn') || {}).getAttribute?.('title') || '');
+        ok(/asked again/i.test(title) && /wiped/i.test(title) && !/every score is kept/i.test(title),
+          'Back\'s tooltip at a reveal says the question is asked again and its points wiped', JSON.stringify(title));
+        const hit = await page.evaluate(() => { const b = document.querySelector('.actions .back-btn'); if (!b || b.disabled) return false; b.click(); return true; });
+        await page.waitForTimeout(800);
+        const v = await view();
+        ok(hit && v.phase === 'round_intro', 'Back from the first reveal steps back to the round intro, never reopening the question', `phase ${v.phase}`);
+        // The WALL's payload, not the host's: `hostView()` always carries the
+        // pointer's question as the read-ahead, and only the projector's
+        // payload says whether one is actually up.
+        const wall = (await J(`/api/state?role=screen&g=${encodeURIComponent(lastCode)}`)).body || {};
+        ok(!wall.question, 'and the question it stepped over is no longer on the wall', wall.question ? `phase ${wall.phase}, a question is up` : '');
+      }
+      /*
+       * AND "STOP THE QUIZ — BACK UNDOES IT" IS TRUE. Stop after the first
+       * reveal filed the night and Back landed on the ROUND BOARD, so the rest
+       * of the round was never asked and the early leader kept a live
+       * first-place code (launch-path sweep, 23 September 2026). Stop is
+       * pressed over HTTP — the control is a one-way door this guard never
+       * presses by design — and Back on the real page must put the night
+       * back at that reveal with nobody holding a code for a night that has
+       * not finished. The title on the button says so.
+       */
+      const again = await driveTo('reveal');
+      if (again !== 'reveal') ok(false, 'the night reaches a reveal for the Stop-then-Back check', again);
+      else {
+        const stopped = await host('finish');
+        ok(stopped.status === 200 && (await view()).phase === 'final', 'Stop the quiz files the night early', `${stopped.status}`);
+        ok(((await view()).vouchers || []).some((v) => !v.redeemedAt), 'and the early leader holds a code', 'Stop paid nobody');
+        await page.goto(`${BASE}/host?key=${KEY}`, { waitUntil: 'load' });
+        await page.waitForTimeout(1200);
+        const title = await page.evaluate(() => (document.querySelector('.actions .back-btn') || {}).getAttribute?.('title') || '');
+        ok(/where you stopped/i.test(title) && /taken back/i.test(title),
+          'Back\'s tooltip at the final says it returns to where you stopped and takes the code back', JSON.stringify(title));
+        const hit = await page.evaluate(() => { const b = document.querySelector('.actions .back-btn'); if (!b || b.disabled) return false; b.click(); return true; });
+        await page.waitForTimeout(800);
+        const v = await view();
+        ok(hit && v.phase === 'reveal' && v.questionIndex === 0, 'Back from a Stop returns to the reveal it was pressed at, not a round board', `phase ${v.phase} q${v.questionIndex}`);
+        ok(!(v.vouchers || []).some((x) => !x.redeemedAt), 'and nobody holds a live code for a night that has not finished', `${(v.vouchers || []).length} codes`);
+      }
+    }
     if (BINGO && phase === 'claim') {
-      const ok = (cond, what, got = '') => {
-        if (!cond) fails += 1;
-        console.log(`  ${cond ? 'ok  ' : 'FAIL'} ${what}${cond || !got ? '' : ` — ${got}`}`);
-      };
       let at = await driveTo('claim');
       const winner = lastPlayers[0];
       if (at !== 'claim') ok(false, 'a BINGO press puts a claim in front of the host', at);
@@ -383,6 +468,29 @@ try {
           `phase ${hv.phase}, ${(pv.vouchers || []).length} codes`);
         ok(!(hv.claimsWaiting || []).length, 'and the claim leaves the waiting panel');
       }
+    }
+  }
+
+  /*
+   * "TAP A NAME TO FIX A SCORE" — the heading over the playing list promises
+   * it, and only the ··· at the end of the row ever opened the menu
+   * (launch-path sweep, 23 September 2026). Pressed on the NAME, in a real
+   * browser, with a night that has phones in it.
+   */
+  if (!BINGO) {
+    const at = await driveTo('question');
+    if (at !== 'question') ok(false, 'a night with phones reaches a question for the tap-a-name check', at);
+    else {
+      const opened = await page.evaluate(async () => {
+        const nm = document.querySelector('.prow .nm');
+        if (!nm) return 'no player row';
+        const name = nm.closest('.prow').dataset.name;
+        nm.click();
+        await new Promise((r) => setTimeout(r, 300));
+        const menu = [...document.querySelectorAll('.panel h3')].find((h) => h.textContent.trim() === name);
+        return menu ? 'yes' : `no menu for ${name}`;
+      });
+      ok(opened === 'yes', 'tapping a NAME on the playing list opens that phone\'s menu, as the heading says', opened);
     }
   }
 

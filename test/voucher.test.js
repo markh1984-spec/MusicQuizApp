@@ -139,15 +139,28 @@ test('an unknown code is refused without saying anything about the night', () =>
  * do it. A second code minted for the same winner leaves the first one in
  * somebody's hand looking perfectly valid.
  */
-test('going back and forward again does not mint a second code', () => {
-  const { engine } = withGame({ reward: 'A free drink' });
-  engine.join({ name: 'Rob' });
+/*
+ * BACK OFF THE FINAL TAKES THE CODE BACK — REVERSES the pinned test that kept
+ * it (26 September 2026). A final that is undone is a night that has not
+ * finished, so nobody is owed a place yet: the early leader's code stops
+ * scanning the moment Back is pressed, and the true final mints afresh. The
+ * old worry — two live codes for one winner — cannot happen, because the
+ * first is gone rather than live beside the second. (The old test joined a
+ * phone that scored nothing, so it compared an empty list with itself.)
+ */
+test('going back off the final takes the code back, and forward again mints afresh', () => {
+  const { engine, plays } = withGame({ reward: 'A free drink' });
+  plays('Rob', 100);
   engine.finish();
-  const first = Object.keys(engine.state.vouchers);
+  const [first] = Object.keys(engine.state.vouchers);
+  assert.ok(first, 'the winner was paid');
   engine.back();
+  assert.deepEqual(Object.keys(engine.state.vouchers), [],
+    'a live code for a night that has not finished');
   engine.finish();
-  assert.deepEqual(Object.keys(engine.state.vouchers), first,
-    'the winner is holding a code that is no longer the live one');
+  const now = Object.keys(engine.state.vouchers);
+  assert.equal(now.length, 1, 'one live code for one winner');
+  assert.notEqual(now[0], first, 'the code the undone final minted is gone, not live beside the new one');
 });
 
 test('a TEAM gets one voucher between them, not one each', () => {

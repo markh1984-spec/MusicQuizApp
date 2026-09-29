@@ -15,7 +15,7 @@
 
 import {
   esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam,
-  rememberRoom, noteDrinks, prizesShowing, prizesHead, wireDrinks, playsACard, photoVoteCard, wirePhotoVote,
+  rememberRoom, noteDrinks, prizesShowing, prizesHead, wireDrinks, playsACard, photoVoteCard, wirePhotoVote, roundSaid, ordinal,
 } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { buildDj, djKey, djHead } from './play-dj.js';
@@ -43,6 +43,27 @@ let state = null;
 let currentKey = null;
 let live = null;
 let pendingChoice = null; // shown immediately, before the server confirms
+/*
+ * AN ANSWER THE SERVER TOOK AND THEN LOST — which stream it landed on.
+ *
+ * Answers are debounced to disk (rule 7: a lost answer is recoverable with Ask
+ * again), so a crash in the quarter-second after one lands comes back without
+ * it. The phone had been told 200, painted "Locked in" and kept
+ * `pendingChoice`, so it refused every tap for the rest of the question — the
+ * `paintUnlocked()` fault again, with the POST having SUCCEEDED this time
+ * (launch-path sweep, 23 September 2026).
+ *
+ * A restart always drops the stream, so the loss is only ever discovered on a
+ * RECONNECTED one: `streamGen` counts the times the stream has come back, and
+ * an answer is only put back up when the state on a newer stream than the one
+ * it landed on says, about the same question with its clock still running,
+ * that nobody has it. A wifi blip is a reconnect too, and the server still
+ * holds the answer then, so nothing moves. The first state on a fresh stream is
+ * built after the reconnect, so no older push can race it.
+ */
+let streamGen = 0;
+let streamWasDown = false;
+let landed = null;
 
 /** Your name on the players' phones too — they are looking at it all night. */
 // The product half of the name, kept so the wordmark can be stacked. Set by
@@ -443,6 +464,7 @@ function draw(next) {
   if (key !== currentKey) {
     currentKey = key;
     pendingChoice = null;
+    landed = null;
     bodyEl.replaceChildren(buildScreen(state));
     wireAsk();
   } else {
@@ -523,7 +545,15 @@ function paintCameraButton(s) {
    * that buys a request — so a floating duplicate would be the two-controls-
    * for-one-job fault this rule already names, with the worse one floating.
    */
-  const menuIsUp = s.phase === 'lobby' || s.phase === 'round_board' || s.game === 'dj';
+  /*
+   * THE MENU IS UP AT THE RULES AND A ROUND INTRO TOO — every waiting screen
+   * draws the Send-a-photo row, not only the lobby and a board. The floating
+   * camera stood down for those two and floated over the other two, so at
+   * the rules slide a phone held a 📷 in the corner AND a "Send a photo" row
+   * an inch above it (launch-path sweep, 23 September 2026): two controls for
+   * one job, which is how somebody ends up using the worse one out of habit.
+   */
+  const menuIsUp = ['lobby', 'rules', 'round_intro', 'round_board'].includes(s.phase) || s.game === 'dj';
   const wanted = Boolean(gapWants(s).photos && s.you && s.phase !== 'question' && !menuIsUp);
   let btn = document.getElementById('cameraBtn');
   if (!wanted) {
@@ -561,9 +591,25 @@ function screenKey(s) {
    * what the options SAY. Both are stable for the length of an ordinary
    * question, so this cannot rebuild a card mid-answer.
    */
+  /*
+   * AND THE VOTE IS PART OF THE FINGERPRINT — of every card that draws it,
+   * which since the launch-path sweep of 23 September 2026 is the reveal and
+   * the board as well as the waiting screens. It replaces nothing and ADDS a
+   * panel, so a key naming only the phase says "nothing changed" the moment
+   * four photographs go up, and the room is asked out loud to tap something
+   * that is not on their phones. Which one you PICKED is deliberately not in
+   * it: that is painted in place by the tap itself, and a rebuild per vote
+   * would drop the image you are looking at and reload four photographs on
+   * pub wifi. A question with its clock running never carries one — the
+   * engine refuses to open a vote over it and settles any open vote as the
+   * next question goes up — so on that card the suffix is all but always
+   * empty, and a vote opened in the seconds after the clock has run out only
+   * ever costs a rebuild of options that do not change.
+   */
+  const vote = s.photoVote ? (s.photoVote.open ? ':vote' : ':voted') : '';
   if (s.phase === 'question' || s.phase === 'reveal') {
     const started = (s.clock && s.clock.startedAt) || 0;
-    return `q:${s.roundIndex}:${s.questionIndex}:${s.phase}:${started}:${fingerprint(s.options)}`;
+    return `q:${s.roundIndex}:${s.questionIndex}:${s.phase}:${started}:${fingerprint(s.options)}${vote}`;
   }
   /*
    * AND THE LOBBY'S KEY CARRIES WHETHER THE PHOTO IS STILL OWED.
@@ -579,16 +625,6 @@ function screenKey(s) {
    * this phone standing the ask down — because either one changes what is on
    * the screen.
    */
-  /*
-   * AND THE VOTE IS PART OF THE FINGERPRINT TOO, for the identical reason —
-   * it replaces nothing and ADDS a panel, so a key naming only the phase and
-   * the gate says "nothing changed" the moment four photographs go up, and
-   * the room is asked out loud to tap something that is not on their phones.
-   * Which one you PICKED is deliberately not in it: that is painted in place
-   * by the tap itself, and a rebuild per vote would drop the image you are
-   * looking at and reload four photographs on pub wifi.
-   */
-  const vote = s.photoVote ? (s.photoVote.open ? ':vote' : ':voted') : '';
   return `${s.phase}:${s.roundIndex}${gateWanted(s) ? ':ask' : ''}${vote}`;
 }
 
@@ -1259,6 +1295,7 @@ async function lockIn(optionIndexes) {
   if (navigator.vibrate) navigator.vibrate(24);
   try {
     await postJson('/api/answer', { playerId: me.id, token: me.token, optionIndexes, joinCode: roomCode() });
+    landed = { key: currentKey, gen: streamGen };
   } catch {
     pendingChoice = null;
     paintUnlocked();
@@ -1287,6 +1324,7 @@ async function choose(optionIndex) {
   if (navigator.vibrate) navigator.vibrate(18);
   try {
     await postJson('/api/answer', { playerId: me.id, token: me.token, optionIndex, joinCode: roomCode() });
+    landed = { key: currentKey, gen: streamGen };
   } catch {
     pendingChoice = null;
     paintUnlocked();
@@ -1394,6 +1432,19 @@ function updateScreen(s) {
   // `buildBreakoutAnswers` — and there is no option grid here to repaint.
   if (s.breakout) return;
 
+  // THE SERVER CAME BACK WITHOUT THE ANSWER IT HAD TAKEN — see `landed`.
+  // Only on a newer stream, only while the clock still runs, and only when the
+  // state says nobody has it: every other case leaves the paint alone.
+  if (landed && landed.key === currentKey && streamGen > landed.gen
+      && !s.yourAnswer && !(s.clock && s.clock.closed)) {
+    landed = null;
+    pendingChoice = null;
+    paintUnlocked();
+    const hint = document.getElementById('pHint');
+    if (hint) hint.textContent = 'The quiz restarted and lost that — tap again';
+    return;
+  }
+
   if (s.multi) {
     const locked = s.yourAnswer ? s.yourAnswer.optionIndexes : pendingChoice;
     if (Array.isArray(locked)) paintLocked(locked);
@@ -1454,12 +1505,26 @@ function buildReveal(s) {
     ? `<div class="mini-row"><span class="pos">⚡</span><span>${esc(r.fastest.name)}</span><span class="score">${r.fastest.seconds.toFixed(1)}s</span></div>`
     : '';
 
-  return node(`
+  /*
+   * THE FUNNIEST PHOTOGRAPH, UNDER THE RESULT. The host may put four to the
+   * room at any moment without a clock on it — a reveal is one, and the
+   * "at a break" the panel is described as is a round board, which is the
+   * builder below. Both drew nothing (launch-path sweep, 23 September 2026):
+   * the card lived inside the waiting screen alone, so a vote opened at a
+   * board or a reveal reached every phone's payload and no phone's screen,
+   * while the host asked sixty people out loud to tap the one that made them
+   * laugh. Under the result rather than over it: what you scored is what you
+   * looked down for.
+   */
+  const el = node(`
     <div style="display:grid;gap:16px">
       ${resultCard}
       ${fastest ? `<div><div class="muted" style="font-size:13px;margin-bottom:6px">Fastest finger</div>${fastest}</div>` : ''}
+      ${photoVoteCard(s)}
     </div>
   `);
+  wirePhotoVote(el, postPhotoVote);
+  return el;
 }
 
 function buildBoard(s) {
@@ -1472,10 +1537,16 @@ function buildBoard(s) {
 
   const el = node(`
     <div style="display:grid;gap:16px">
-      <h2>${isFinal ? 'Final scores' : `After round ${s.roundIndex + 1}`}</h2>
+      <h2>${isFinal ? 'Final scores' : s.roundType === 'breakout' ? 'After the bonus round' : `After ${roundSaid(s).toLowerCase()}`}</h2>
       ${isFinal && winner ? `<div class="result good"><div class="sub">Winner</div><div class="big">${esc(winner.name)}</div><div class="pts">${winner.score.toLocaleString('en-GB')}</div></div>` : ''}
       ${voucherCard(s)}
       ${wallet(s, s.voucher ? s.voucher.code : '')}
+      <!-- THE FUNNIEST PHOTOGRAPH, ABOVE THE STANDINGS — a round board is the
+           break the host actually opens it at, and until the launch-path
+           sweep of 23 September 2026 this builder did not draw it at all. It
+           is the thing just asked for out loud and it is over in a minute;
+           the scores are on the wall and stay on this phone underneath. -->
+      ${photoVoteCard(s)}
       ${askCard(s)}
       <div class="mini-board">
         ${rows.map((p) => `
@@ -1497,6 +1568,7 @@ function buildBoard(s) {
     </div>
   `);
   if (!isFinal) wireGapMenu(el, s);
+  wirePhotoVote(el, postPhotoVote);
   return el;
 }
 
@@ -1801,12 +1873,6 @@ function voucherCardFor(v) {
     </div>`;
 }
 
-function ordinal(n) {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
 // ------------------------------------------------------------------- timer
 
 function tick() {
@@ -1833,6 +1899,8 @@ requestAnimationFrame(tick);
 
 function setStatus(status) {
   const online = status === 'online';
+  if (!online) streamWasDown = true;
+  else if (streamWasDown) { streamWasDown = false; streamGen += 1; }
   statusDot.classList.toggle('off', !online);
   statusText.textContent = online ? 'Connected' : 'Reconnecting…';
 }

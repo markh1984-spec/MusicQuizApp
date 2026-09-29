@@ -46,20 +46,45 @@ test('setRewards changes what a voucher issued AFTER it says', () => {
   assert.equal(voucher.reward, 'A £20 bar tab', 'the voucher should carry the CHANGED prize, not the launch-time one');
 });
 
-test('a voucher already issued is not rewritten by a later change', () => {
+/*
+ * A VOUCHER ALREADY IN SOMEBODY'S HAND IS REWRITTEN WHEN THE PRIZE CHANGES —
+ * REVERSES the pinned test that stood here (26 September 2026), and it is
+ * the bingo engine's own rule arriving on the quiz: `payWinnersOwed()` has
+ * compared the WORDS since a live night, updated in place, never a second
+ * voucher, a redeemed one left alone. The quiz's copy did not, so *Change
+ * the prizes* at the final scores — the one control for "the landlord
+ * changed his mind" — changed nothing on the winner's phone, and the bar
+ * read the old drink off it (launch-path sweep, 23 September 2026). The two
+ * engines may not disagree about this.
+ */
+test('a voucher already issued IS rewritten by a later change — the code stays, the words move', () => {
   const engine = new Engine({ quiz: QUIZ, now: () => Date.parse('2026-08-20T21:00:00.000Z') });
   engine.state.rewards = ['A bottle of wine'];
   const rob = engine.join({ name: 'Rob' });
   // A row that scored nothing is not paid — see `issueVouchers()`.
   engine.state.players[rob.id].score = 100;
   engine.finish();
-  const before = engine.playerView(rob.id).voucher.reward;
+  const before = engine.playerView(rob.id).voucher;
+  assert.equal(before.reward, 'A bottle of wine');
 
   engine.setRewards(['Something else entirely']);
 
-  const after = engine.playerView(rob.id).voucher.reward;
-  assert.equal(before, 'A bottle of wine');
-  assert.equal(after, 'A bottle of wine', 'an already-issued voucher must not change under somebody holding it');
+  const after = engine.playerView(rob.id).voucher;
+  assert.equal(after.code, before.code, 'the code they are holding is the one that scans');
+  assert.equal(after.reward, 'Something else entirely', 'the prize was changed under the winner and the phone went on saying the old one');
+  assert.equal(Object.values(engine.state.vouchers).length, 1, 'never a second voucher');
+});
+
+test('…but a code already spent at the bar keeps the words it was spent for', () => {
+  const engine = new Engine({ quiz: QUIZ, now: () => Date.parse('2026-08-20T21:00:00.000Z') });
+  engine.state.rewards = ['A bottle of wine'];
+  const rob = engine.join({ name: 'Rob' });
+  engine.state.players[rob.id].score = 100;
+  engine.finish();
+  const [code] = Object.keys(engine.state.vouchers);
+  engine.redeemVoucher(code, { by: 'scan' });
+  engine.setRewards(['Something else entirely']);
+  assert.equal(engine.state.vouchers[code].reward, 'A bottle of wine', 'the drink has gone; rewriting what it said is editing history');
 });
 
 test('setRewards rejects non-array input rather than corrupting state', () => {

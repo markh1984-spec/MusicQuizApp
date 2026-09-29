@@ -16,8 +16,14 @@ before this there was no way to end a night early except pressing onwards
 through every remaining question.
 
 It keeps every score and clears the scoreboard and advert flags, and `back()`
-from FINAL returns to the round board — so a mis-tap on the host's phone is one
-press to undo. That is why it is not a reset.
+from FINAL returns EXACTLY where Stop was pressed (`state.stoppedFrom`) — so a
+mis-tap on the host's phone is one press to undo. That is why it is not a
+reset. It used to return to the round board, which skipped the rest of the
+round the Stop had interrupted (launch-path sweep, 23 September 2026). A final
+being undone also takes back every unspent placing code — nobody is owed a
+place on a night that has not finished — and the filed night is UPDATED at the
+true final, the same path bingo's mis-pressed Finish takes, so one evening is
+one row with the real board on it.
 
 ## THREE WAYS TO PLAY A NIGHT — individual, they pick, dealt at random
 

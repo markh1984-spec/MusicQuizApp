@@ -339,6 +339,38 @@ test('and the app can still deal itself a team on a random night', () => {
 });
 
 /*
+ * AND NOT MID-QUESTION EITHER — the refusal before the write, again.
+ *
+ * `joinTeam()` refuses a change outside `TEAM_CHANGE_PHASES`; `makeTeam()`
+ * never asked, so `session.run('team')` MADE the team and then had the join
+ * refused `mid_question` — with the name already in the state and on the
+ * projector's picker (launch-path sweep, 23 September 2026). The same shape
+ * as the random-night refusal above, and it belongs in the same place.
+ */
+test('A PHONE CANNOT NAME A TEAM MID-QUESTION — and that refusal comes before the write too', () => {
+  const engine = engineOn({ teamPlay: true, teamMode: 'assigned' });
+  engine.join({ name: 'Rob' });
+  engine.start();
+  while (engine.state.phase !== 'question') engine.next();
+  const before = Object.keys(engine.state.teams || {}).length;
+
+  const made = engine.makeTeam('Latecomers');
+  assert.equal(made.ok, false);
+  assert.equal(made.reason, 'mid_question');
+  assert.equal(Object.keys(engine.state.teams || {}).length, before,
+    'the team was written before the refusal');
+});
+
+test('…while the app dealing a latecomer in mid-question still may', () => {
+  const engine = randomTeams();
+  engine.join({ name: 'Rob' });
+  engine.start();
+  while (engine.state.phase !== 'question') engine.next();
+  const late = engine.join({ name: 'Late' });
+  assert.ok(engine.state.players[late.id].teamId, 'a phone joining at question four still has to land somewhere');
+});
+
+/*
  * A TEAM IS SETTLED AT A BOUNDARY — the old rule left three moments open.
  *
  * Scores are AVERAGED, so a table that sheds its weakest phone at the reveal

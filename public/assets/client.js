@@ -964,12 +964,22 @@ export function rewardsEditorPopover(s, act) {
    * come back to change a prize later in the night.
    */
   document.querySelectorAll('.rw-pop').forEach((old) => old.remove());
+  /*
+   * THE LINE UNDER THE HEADING SAYS WHAT SAVE DOES — and for weeks it said the
+   * opposite: *"one already given stays as it was"*. Both engines pay anybody
+   * already owed now (`setRewards()`), updating a code in place unless the bar
+   * has scanned it, and the button's own tooltip was put right when they
+   * changed. This sentence was not, so a host looking at a winner's blank
+   * phone read that the one control which fixes it would not reach them
+   * (launch-path sweep, 23 September 2026). `host-controls.mjs` opens the
+   * real sheet and reads it.
+   */
   const rows = (s.rewards && s.rewards.length ? s.rewards : ['']).slice();
   const el = node(`
     <div class="panel rw-pop" style="position:fixed;left:12px;right:12px;bottom:150px;z-index:40;max-width:696px;margin:0 auto;background:#161626;max-height:60vh;overflow:auto">
       <h3>Prizes</h3>
       <div class="tiny" style="margin-bottom:10px">What tonight is playing for — 1st, then 2nd, then 3rd.
-        Changes apply to the next prize handed out; one already given stays as it was.</div>
+        A code already won changes with it, unless the bar has scanned it.</div>
       <div class="rw-rows"></div>
       <button class="minor" type="button" style="margin-top:6px" id="rwAdd">+ Add a prize</button>
       <div class="row" style="margin-top:14px;gap:8px">
@@ -1477,6 +1487,40 @@ function tierPreview(me, { hatIsOn = true, forgetKey = null } = {}) {
  * slides already use. No link means no QR and the line stands on its own: the
  * date is the half that matters and the scan is a bonus.
  */
+/**
+ * WHAT A SCREEN CALLS THE ROUND — "Round 2", or "Bonus round" for a breakout.
+ *
+ * ONE DEFINITION FOR THE PROJECTOR, THE PHONE AND THE CONTROL VIEW, because
+ * they disagreed (launch-path sweep, 23 September 2026). A breakout round is
+ * delivered like any other and scores nothing, so it is not one of the rounds
+ * the room is counting: the engine says so with `scoreRoundNumber`, and the
+ * projector's round intro read it. The host's status line, the answer key,
+ * the next-up panel and the phone's board heading all printed the raw array
+ * position — `roundIndex + 1` — so with a bonus round first the wall said
+ * *Round 1 of 2*, the host read *R2 Q1 — live* off his own screen and the
+ * phones said *After round 2*: three numbers for one round, and the host on
+ * the mic saying the third. It is the label only — `roundIndex` stays the
+ * position the engine navigates by.
+ *
+ * @param {object} r  anything carrying `roundType`, `scoreRoundNumber` and
+ *   `roundIndex` — a view, or the host's `upcoming`
+ * @param {object} [o]
+ * @param {boolean} [o.short]  "R2" / "Bonus", for the host's one-line status
+ */
+/** 1st, 2nd, 3rd, 4th… — one spelling for the phone and the control view. */
+export function ordinal(n) {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+export function roundSaid(r, { short = false } = {}) {
+  if (!r) return '';
+  if (r.roundType === 'breakout') return short ? 'Bonus' : 'Bonus round';
+  const n = r.scoreRoundNumber ?? ((r.roundIndex ?? 0) + 1);
+  return short ? `R${n}` : `Round ${n}`;
+}
+
 export function comeBackBand(s) {
   if (!s.comeBack || !s.comeBack.text) return '';
   const { text, link } = s.comeBack;
@@ -1721,6 +1765,17 @@ export function bingoShapeLabel(shape, trackCount) {
  *
  * It takes the card element rather than closing over one, and that is the only
  * difference from the version that sat in `screen.js`.
+ *
+ * **AND IT MEASURES IN THE CARD'S OWN UNITS, NOT THE SCREEN'S.** A bounding
+ * rect includes every ancestor's transform, and the card itself arrives on
+ * `cardIn` — `scale(0.995)` easing to none over 320ms. This runs a frame in, so
+ * a projector OPENED at the final (a laptop that reloaded, a projector put up
+ * late) measured its content half a per cent short, fitted to that, and then
+ * grew past the card as the animation finished: "Tonight's winner" lost 3-5px
+ * off the top at every size (launch-path sweep, 23 September 2026; measured by
+ * `final-fits.mjs` once it played real nights). The card's rect against its
+ * own layout height IS that scale, so dividing by it is exact at any frame of
+ * the animation and 1 when nothing is running.
  */
 export function fitWinner(cardEl) {
   const w = cardEl && cardEl.querySelector('.winner');
@@ -1731,7 +1786,8 @@ export function fitWinner(cardEl) {
   if (!room || !kids.length) return;
   const top = Math.min(...kids.map((n) => n.getBoundingClientRect().top));
   const bottom = Math.max(...kids.map((n) => n.getBoundingClientRect().bottom));
-  const need = bottom - top;
+  const drawnAt = cardEl.offsetHeight ? cardEl.getBoundingClientRect().height / cardEl.offsetHeight : 1;
+  const need = (bottom - top) / (drawnAt > 0 ? drawnAt : 1);
   // Never GROW past 1: a sparse night must look exactly as it always has.
   w.style.setProperty('--fit', String(Math.min(1, room / Math.max(1, need))));
 }

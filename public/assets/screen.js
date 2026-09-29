@@ -10,7 +10,7 @@
  * simply does not put it in this payload.
  */
 
-import { comeBackBand, esc, fitWinner, node, ServerClock, Live, brandMark, brandWords, roomCode, roomParam, playsACard } from './client.js';
+import { comeBackBand, esc, fitWinner, node, ServerClock, Live, brandMark, brandWords, roomCode, roomParam, playsACard, roundSaid } from './client.js';
 import { bingoCard, bingoTopbar } from './screen-bingo.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
@@ -720,7 +720,7 @@ function renderScoreboard(s) {
   const rows = all.slice(0, 10);
   const more = all.length - rows.length;
   const where = s.phase === 'reveal' || s.phase === 'question'
-    ? `after ${s.questionIndex + 1} question${s.questionIndex === 0 ? '' : 's'} of round ${s.roundIndex + 1}`
+    ? `after ${s.questionIndex + 1} question${s.questionIndex === 0 ? '' : 's'} of ${s.roundType === 'breakout' ? 'the bonus round' : roundSaid(s).toLowerCase()}`
     : 'so far';
   return node(`
     <div class="board">

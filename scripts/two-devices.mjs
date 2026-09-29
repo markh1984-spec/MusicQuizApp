@@ -70,6 +70,28 @@ try {
   v = await hv();
   check('answers do not move the cursor', hostCursor(v) === hostCursor(await hv()));
 
+  /*
+   * ---- HTTP: a stale ASK AGAIN is refused. The cursor named the phase, the
+   * pointers and the reveal — none of which a redo changes — so device one's
+   * Ask again, a phone's answer on the replay and device two's Ask again with
+   * the SAME marker all landed, and the replay's answers were wiped
+   * (launch-path sweep, 23 September 2026). A redo is a new clock, and the
+   * clock's start is in the marker now.
+   */
+  v = await hv();
+  if (v.phase !== 'question') { await host('next'); v = await hv(); }
+  check('a question is up for the Ask again check', v.phase === 'question', v.phase);
+  const eve = (await J('/api/join', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: 'Eve', joinCode: code }) })).body;
+  const answer = () => J('/api/answer', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ playerId: eve.id, token: eve.token, joinCode: code, optionIndex: 0 }) });
+  const staleRedo = hostCursor(v);
+  await answer();
+  const r1 = await host('redo', { seen: staleRedo });
+  check('the first Ask again lands', r1.status === 200, `${r1.status}`);
+  await answer();
+  const r2 = await host('redo', { seen: staleRedo });
+  check('a second Ask again on the same stale cursor is REFUSED — the replay\'s answers are not wiped twice', r2.status === 409, `${r2.status}`);
+  check('…and the answer on the replay stands', ((await hv()).answeredCount || 0) === 1, `${(await hv()).answeredCount || 0} answered`);
+
   // ---- the browser: two control views, one big button, pressed together
   browser = await chromium.launch();
   const ctx = await browser.newContext();
