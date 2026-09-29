@@ -523,7 +523,15 @@ function paintCameraButton(s) {
    * that buys a request — so a floating duplicate would be the two-controls-
    * for-one-job fault this rule already names, with the worse one floating.
    */
-  const menuIsUp = s.phase === 'lobby' || s.phase === 'round_board' || s.game === 'dj';
+  /*
+   * THE MENU IS UP AT THE RULES AND A ROUND INTRO TOO — every waiting screen
+   * draws the Send-a-photo row, not only the lobby and a board. The floating
+   * camera stood down for those two and floated over the other two, so at
+   * the rules slide a phone held a 📷 in the corner AND a "Send a photo" row
+   * an inch above it (launch-path sweep, 23 September 2026): two controls for
+   * one job, which is how somebody ends up using the worse one out of habit.
+   */
+  const menuIsUp = ['lobby', 'rules', 'round_intro', 'round_board'].includes(s.phase) || s.game === 'dj';
   const wanted = Boolean(gapWants(s).photos && s.you && s.phase !== 'question' && !menuIsUp);
   let btn = document.getElementById('cameraBtn');
   if (!wanted) {

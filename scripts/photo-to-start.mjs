@@ -191,6 +191,17 @@ try {
   check('and at kick-off it is gone, sent one or not',
     await fresh.locator('.photo-gate').count() === 0,
     'the gate outlived the lobby — a phone can be locked out of a question');
+  /*
+   * ONE CAMERA, NOT TWO. The rules slide is a waiting screen with its own
+   * "Send a photo" row, and the floating 📷 used to float over it as well
+   * (launch-path sweep, 23 September 2026) — the two-controls-for-one-job
+   * fault the button's own comment names, on the phase every night passes
+   * through.
+   */
+  const rulesRow = await fresh.locator('.wait-menu .wait-photo').count();
+  const rulesBtn = await fresh.locator('#cameraBtn').count();
+  check('at the rules the waiting screen offers the photo row and the floating camera stands down',
+    rulesRow === 1 && rulesBtn === 0, `row ${rulesRow}, floating button ${rulesBtn}`);
 
   check('nothing threw on the phone', boom.length === 0, boom.join(' | '));
 } finally {
