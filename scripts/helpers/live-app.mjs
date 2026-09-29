@@ -63,7 +63,7 @@ import { bootApp, safeEnv, stopped } from '../../test/helpers/live-server.mjs';
  */
 export async function startApp({ key = 'live-app-key', seed, env = {}, nodeArgs = [] } = {}) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), 'live-app-'));
-  const seeded = seed ? seed(data) : undefined;
+  const seeded = seed ? await seed(data) : undefined;   // AWAITED: an async seed writes after the spawn otherwise
   /*
    * ONE ENVIRONMENT, BUILT ONCE — `safeEnv()`: its own data directory, its own
    * adverts folder, and a COPY of the catalogue, because `QUIZ_DIR`/`BINGO_DIR`

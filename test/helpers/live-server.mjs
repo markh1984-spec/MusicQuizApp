@@ -209,7 +209,7 @@ function catalogueCopy(dir, name) {
 
 export async function withServer(run, { seed, hostKey = 'live-test-key', env = {}, nodeArgs = [] } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'live-server-'));
-  const seeded = seed ? seed(dir) : undefined;
+  const seeded = seed ? await seed(dir) : undefined;   // AWAITED: an async seed writes after the spawn otherwise
   let child = null;
   try {
     /*
