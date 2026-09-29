@@ -8113,6 +8113,14 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
  * which made that one tile taller than the rest of the running order.
  */
 .lb-tile .lb-rounds { padding-right: 40px; }
+/* AND THE ROUND-TYPE WORDS WRAP BEFORE IT — they ran under the dial at every
+   width ("Pick them all", "First letter"). The host's pick of three, 29 Sept
+   2026: words kept, no height. 44 rather than the ticks' exact 40, so a line
+   of text does not end flush against a button. Only on a tile that HAS a
+   dial: the last round has no gap after it and keeps its full line.
+   HYPHENATED, because at 1000px "knowledge" alone is wider than what is left
+   and one unbreakable word overflows its padding straight under the dial. */
+.lb-tile:has(> .gap-dial) .lb-tile-sub { padding-right: 44px; hyphens: auto; }
 /* The word beside the doors dial in the head. The dial alone would be a
    symbol with nothing saying which gap it belongs to — every other one is
    sitting on the pack it acts on, and this one is not. */

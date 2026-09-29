@@ -72,6 +72,7 @@ export const GUARDS = [
   { name: 'tonight-resolves',      core: true,  why: 'does the bar offer real games, and find every pack?' },
   { name: 'console-frame',         core: true,  why: 'is every Console control reachable?' },
   { name: 'pickers-fit',           core: true,  why: 'does every launch-bar dropdown open inside the window, on a phone too?' },
+  { name: 'bar-layout',            core: true,  why: 'no words under a dial, Hide keeps Launch, an empty slot opens the search, 44px on touch' },
   { name: 'console-controls',      core: true,  why: 'and does pressing one do what it says?' },
   { name: 'two-screens',           core: true,  why: 'two outputs, a real account, quiz -> bingo' },
   { name: 'a-word-in-your-ear',    core: true,  why: 'does a message reach one phone and no other?' },
