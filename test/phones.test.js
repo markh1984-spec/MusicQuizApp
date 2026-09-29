@@ -14,6 +14,28 @@ import assert from 'node:assert/strict';
 import { PHASES } from '../src/engine.js';
 import { BINGO_PHASES } from '../src/bingo.js';
 import { phonesAre } from '../public/assets/phones.js';
+import { breakNow, offersGame, offersPhotos } from '../public/assets/break-parts.js';
+
+/*
+ * THE HOST'S VIEW AS THE SERVER SENDS IT on a night nobody configured: the
+ * camera switch up (`photos.enabled` is on every host view — it IS the kill
+ * switch), and `gap` built from the same `breakNow()` both engines build it
+ * from, which puts one on the lobby and a round board and nowhere else.
+ *
+ * A bare `{ phase }` is a view the server never sends. It read as "photos on"
+ * while the prompt ignored the switch, and as "photos off" once it began
+ * reading it — so these three tests went red on the change that made the
+ * prompt tell the truth, pinning a state no host can be in.
+ */
+function night(phase, extra = {}) {
+  const state = { phase, ...extra };
+  const gapNow = breakNow(state);
+  return {
+    ...state,
+    photos: { enabled: true },
+    ...(gapNow ? { gap: { photos: offersPhotos(gapNow), game: offersGame(gapNow) } } : {}),
+  };
+}
 
 test('EVERY QUIZ PHASE SAYS SOMETHING', () => {
   for (const phase of Object.values(PHASES)) {
@@ -35,7 +57,7 @@ test('a quiz phase and the same-named bingo phase do not say the same thing', ()
   // They are genuinely different rooms: one is holding a card all night, the
   // other is answering four options. A line that said "Waiting" for both would
   // be true and useless.
-  assert.notEqual(phonesAre({ phase: 'lobby' }), phonesAre({ game: 'bingo', phase: 'lobby' }));
+  assert.notEqual(phonesAre(night('lobby')), phonesAre(night('lobby', { game: 'bingo' })));
 });
 
 test('A PROJECTOR FLAG IS NOT ON THE PHONES, so the prompt keeps describing the phase', () => {
@@ -67,8 +89,8 @@ test('A PROJECTOR FLAG IS NOT ON THE PHONES, so the prompt keeps describing the 
 test('the lobby says there is a game, because that is the thing worth saying', () => {
   // The one phase where the game is the PRIMARY thing on a phone — the same
   // split already recorded: the game before the quiz, photos between rounds.
-  assert.match(phonesAre({ phase: 'lobby' }), /game/i);
-  assert.match(phonesAre({ game: 'bingo', phase: 'lobby' }), /game/i);
+  assert.match(phonesAre(night('lobby')), /game/i);
+  assert.match(phonesAre(night('lobby', { game: 'bingo' })), /game/i);
 });
 
 test('the phases that carry the photo card say so, and the others do not', () => {
@@ -77,12 +99,19 @@ test('the phases that carry the photo card say so, and the others do not', () =>
    * has to match what the phone is really offering. A question is the one
    * moment the app deliberately keeps the room looking UP.
    */
-  for (const phase of ['round_intro', 'round_board', 'final']) {
-    assert.match(phonesAre({ phase }), /photos/i, `${phase} did not mention photos`);
+  /*
+   * AND A REVEAL IS ONE OF THEM — REVERSES this test's last line, which said
+   * a reveal offered no photos. The phone floats its camera at every phase
+   * but a question and the four waiting screens (which draw a Send-a-photo
+   * row instead) — `wanted` in `play.js` — so a reveal has had a 📷 on every
+   * phone all along, and a host told otherwise was told less than the room
+   * holds. The prompt reads the same switch the phone does now.
+   */
+  for (const phase of ['round_intro', 'round_board', 'final', 'reveal']) {
+    assert.match(phonesAre(night(phase)), /photos/i, `${phase} did not mention photos`);
   }
-  assert.doesNotMatch(phonesAre({ phase: 'question' }), /photos/i,
+  assert.doesNotMatch(phonesAre(night('question')), /photos/i,
     'the host was told to ask for photos during a question');
-  assert.doesNotMatch(phonesAre({ phase: 'reveal' }), /photos/i);
 });
 
 test('it says nothing rather than guessing when there is no state', () => {
