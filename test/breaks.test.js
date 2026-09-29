@@ -84,8 +84,8 @@ test('breakFor is total — rubbish, gaps and missing plans all resolve', () => 
   assert.deepEqual(breakFor(null, 'p0:r1'), { ...DEFAULTS.round, id: 'p0:r1' });
   assert.deepEqual(breakFor({}, 'p0:lobby'), { ...DEFAULTS.lobby, id: 'p0:lobby' });
   // A half-set entry keeps the default for the half it does not name.
-  assert.deepEqual(breakFor({ 'p0:r1': { phone: PHONE.NOTHING } }, 'p0:r1'),
-    { id: 'p0:r1', phone: PHONE.NOTHING, screen: DEFAULTS.round.screen });
+  assert.deepEqual(breakFor({ 'p0:r1': { phone: PHONE.BOTH } }, 'p0:r1'),
+    { id: 'p0:r1', phone: PHONE.BOTH, screen: DEFAULTS.round.screen });
   // And a value that is not one of ours is not honoured.
   assert.equal(breakFor({ 'p0:r1': { screen: 'sudo' } }, 'p0:r1').screen, DEFAULTS.round.screen);
 });
@@ -99,11 +99,11 @@ test('cleanPlan drops rubbish ids AND anything that only restates a default', ()
    */
   const plan = cleanPlan({
     'p0:lobby': { phone: PHONE.BOTH, screen: SCREEN.SCORES },
-    'p0:r1': { phone: PHONE.GAME, screen: SCREEN.ADVERTS },
-    'drop table': { phone: PHONE.GAME },
-    'p99999:r0': { phone: PHONE.GAME },
+    'p0:r1': { phone: PHONE.BOTH, screen: SCREEN.ADVERTS },
+    'drop table': { phone: PHONE.BOTH },
+    'p99999:r0': { phone: PHONE.BOTH },
   });
-  assert.deepEqual(plan, { 'p0:r1': { phone: PHONE.GAME, screen: SCREEN.ADVERTS } });
+  assert.deepEqual(plan, { 'p0:r1': { phone: PHONE.BOTH, screen: SCREEN.ADVERTS } });
   assert.deepEqual(cleanPlan(null), {});
   assert.deepEqual(cleanPlan('nope'), {});
 });
@@ -143,7 +143,7 @@ test('THE PAYLOAD GUARD: a seed reaches a phone only at a break that offers a ga
     'a round board does not, unless it was asked to');
 
   // A round board that WAS asked to.
-  engine.state.breakPlan = { 'p0:r0': { phone: PHONE.GAME, screen: SCREEN.SCORES } };
+  engine.state.breakPlan = { 'p0:r0': { phone: PHONE.BOTH, screen: SCREEN.SCORES } };
   assert.ok(engine.playerView(player.id).gameSeed, 'and does when the break says so');
 
   // A question, whatever the plan says. This is the one that matters.
@@ -183,7 +183,7 @@ test('THE BOARD GUARD DID NOT MOVE — the arcade board stays at the lobby', () 
   assert.ok((engine.screenView().arcade || []).length, 'the lobby draws it');
 
   engine.state.phase = 'round_board';
-  engine.state.breakPlan = { 'p0:r0': { phone: PHONE.GAME, screen: SCREEN.SCORES } };
+  engine.state.breakPlan = { 'p0:r0': { phone: PHONE.BOTH, screen: SCREEN.SCORES } };
   assert.equal(engine.screenView().arcade, undefined,
     'a break with a game on it still does not put the arcade board on the projector');
 });

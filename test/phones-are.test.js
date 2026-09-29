@@ -123,13 +123,15 @@ test('hostView carries the gap the phones are offered, resolved from the same br
     ],
   };
   const engine = new Engine({ quiz, now: () => 1_700_000_000_000 });
+  // 'nothing' is a RETIRED state and reads as the camera — every break keeps
+  // it since 29 September 2026 (`break-photos.test.js`).
   engine.state.breakPlan = { 'p0:r0': { phone: 'nothing', screen: 'scores' } };
   const p = engine.join({ name: 'Rob' });
   engine.start();
   while (engine.state.phase !== PHASES.ROUND_BOARD) engine.next();
   const host = engine.hostView();
   assert.deepEqual(host.gap, engine.playerView(p.id).gap, 'the host and the phone read different breaks');
-  assert.equal(host.gap.photos, false);
+  assert.equal(host.gap.photos, true);
   assert.equal(host.gap.game, false);
   assert.equal(engine.hostView().gap && engine.state.phase, PHASES.ROUND_BOARD);
   engine.next();                                   // a round intro is not a break

@@ -445,8 +445,7 @@ side and refused rather than trimmed, or somebody covers the board and scores.
 
 ### 11. A CORRECTION TO A DISTRIBUTED PACK REACHES EVERY COPY — because there are no copies
 
-Stated by the host on 14 August 2026 as a standing rule for everything he
-generates: *"if someone tells me a question is wrong or the answer is wrong it
+His standing rule (14 August 2026) for everything he generates: *"if someone tells me a question is wrong or the answer is wrong it
 must update the library and all copies everywhere"*, and *"I must maintain high
 standards for the things I am distributing to them."*
 
@@ -1831,10 +1830,10 @@ symbol you click to cycle… in the bottom right of the pack ONCE LOADED."*
   thirteen-round night launched as twelve with **nothing said anywhere**.
   Measured against the SEGMENTS (`longestQuiz()`), never the tiles. **The server
   still slices**: a refusal costs the night.
-- **📵 RATHER THAN A DOT for "nothing on the phones".** Asked outright — *"what
-  does this mean? the . ?"* — which is the *clarity beats everything* test
-  failing. The other three states are pictures; punctuation on a button reads
-  as a control that failed to load.
+- **THE CAMERA IS IN EVERY BREAK — the dial is 📷 or 📷🕹️, nothing else**
+  (his call, 29 Sept: the photos ARE the marketing). 🕹️-only and 📵 are gone
+  and a plan saying them reads as 📷🕹️ / 📷. **Do not add a state that takes
+  the camera away**; the kill switch is the only way to stop photos.
 - **THE DRAGS ON THE TONIGHT ROW ARE IN
   [`docs/console/drag.md`](docs/console/drag.md) NOW — read it before touching
   a drag handler.** Not to be undone: **the pack lifts from its GRIP and a

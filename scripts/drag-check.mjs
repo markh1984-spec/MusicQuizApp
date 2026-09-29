@@ -288,8 +288,11 @@ try {
     check('and only the tile you pressed', moved(first, second), 1);
     await press();
     const third = await faces();
-    const stepped = moved(second, third) === 1 && third[at] !== first[at];
-    check('a second press moves it on again', stepped ? 'changed' : `stuck on ${third[at]}`, 'changed');
+    // TWO STOPS SINCE 29 SEPT 2026 — photos, then photos and the game (the
+    // camera is in every break) — so a second press moves it again and lands
+    // back where it started. Still proves it STEPS rather than sets once.
+    const stepped = moved(second, third) === 1 && third[at] === first[at];
+    check('a second press moves it on again, back round to the start', stepped ? 'changed' : `stuck on ${third[at]}`, 'changed');
   }
 
   check('no console errors', errors.join(' | ') || 'none', 'none');

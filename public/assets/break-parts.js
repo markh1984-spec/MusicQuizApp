@@ -71,17 +71,31 @@
  * what the PHONES do and the projector goes on saying how to join.
  */
 
-/** What the phones are offered in a gap. */
+/**
+ * What the phones are offered in a gap — and THE CAMERA IS IN EVERY ONE.
+ *
+ * The host, 29 September 2026: *"between rounds people were uploading photos
+ * — I want the photo upload to continue, as that's a key part of the
+ * marketing process going forward."* Two of the four states took the camera
+ * away — the game only, and nothing — so one stray press on a dial stopped
+ * the photographs a night's marketing is made of. So the dial chooses only
+ * whether the lobby game comes WITH the camera. The host's kill switch still
+ * stops photos outright; that is a safety control, not a plan.
+ */
 export const PHONE = {
-  /** The camera only — what a round board has always done. */
+  /** The camera — what a round board has always done. */
   PHOTOS: 'photos',
-  /** The arcade game only. */
-  GAME: 'game',
-  /** Both, photos first — what the lobby has always done. */
+  /** The camera and the arcade game, photos first — what the lobby has always done. */
   BOTH: 'both',
-  /** Neither. A phone in a pocket is a room looking up. */
-  NOTHING: 'nothing',
 };
+
+/*
+ * A PLAN OR A SAVED SHOW STILL SAYING A REMOVED STATE reads as the nearest one
+ * that keeps the camera: the game-only break keeps its game, the empty one
+ * gets the camera. Never refused — a show saved last month must still load.
+ */
+const RETIRED_PHONE = { game: PHONE.BOTH, nothing: PHONE.PHOTOS };
+const phoneOf = (want, base) => (Object.values(PHONE).includes(want) ? want : RETIRED_PHONE[want] || base);
 
 /** What the projector shows in a gap. Never at the lobby — see above. */
 export const SCREEN = {
@@ -120,14 +134,12 @@ export const DEFAULTS = {
 
 /** Whether a break's phone setting offers the arcade game. */
 export function offersGame(brk) {
-  const want = (brk || {}).phone;
-  return want === PHONE.GAME || want === PHONE.BOTH;
+  return phoneOf((brk || {}).phone, '') === PHONE.BOTH;
 }
 
-/** Whether a break's phone setting offers the camera. */
+/** Whether a break offers the camera — every break does (see `PHONE`). */
 export function offersPhotos(brk) {
-  const want = (brk || {}).phone;
-  return want === PHONE.PHOTOS || want === PHONE.BOTH;
+  return Boolean(brk);
 }
 
 /** Whether a break's screen setting shows the scores. */
@@ -185,7 +197,7 @@ export function breakFor(plan, id) {
   if (!set) return { ...base, id };
   return {
     id,
-    phone: Object.values(PHONE).includes(set.phone) ? set.phone : base.phone,
+    phone: phoneOf(set.phone, base.phone),
     screen: Object.values(SCREEN).includes(set.screen) ? set.screen : base.screen,
   };
 }
@@ -207,7 +219,7 @@ export function cleanPlan(raw) {
     if (!/^p\d{1,2}:(lobby|r\d{1,2})$/.test(id)) continue;
     if (!set || typeof set !== 'object') continue;
     const base = id.endsWith(':lobby') ? DEFAULTS.lobby : DEFAULTS.round;
-    const phone = Object.values(PHONE).includes(set.phone) ? set.phone : base.phone;
+    const phone = phoneOf(set.phone, base.phone);
     const screen = Object.values(SCREEN).includes(set.screen) ? set.screen : base.screen;
     if (phone === base.phone && screen === base.screen) continue;
     out[id] = { phone, screen };

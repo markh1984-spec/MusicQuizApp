@@ -47,20 +47,7 @@ import {
 /** What each phone setting looks like on the dial, and reads as out loud. */
 export const PHONE_SAYS = {
   [PHONE.BOTH]: { icon: '📷🕹️', words: 'Photos and the game' },
-  [PHONE.PHOTOS]: { icon: '📷', words: 'Photos only' },
-  [PHONE.GAME]: { icon: '🕹️', words: 'The game only' },
-  /*
-   * 📵 RATHER THAN A DOT, and the dot is why this comment exists. Asked
-   * outright on 24 August 2026 — *"what does this mean? the . ?"* — which is
-   * this project's own test failing: if a control needs explaining, the
-   * control is wrong.
-   *
-   * The other three states are PICTURES of what the phones get. "Nothing" had
-   * no picture, so it got punctuation, and punctuation on a button reads as a
-   * control that failed to load rather than as a state. The no-phones sign is
-   * the one symbol that says "nothing on the phones" without a caption.
-   */
-  [PHONE.NOTHING]: { icon: '📵', words: 'Nothing' },
+  [PHONE.PHOTOS]: { icon: '📷', words: 'Photos' },
 };
 
 /**
@@ -88,14 +75,12 @@ export function breaksOf(segments) {
 }
 
 /**
- * THE ORDER THE DIAL GOES ROUND, and it is not the order the enum declares.
- *
- * It starts where a round board already is (photos), then adds the game, then
- * both, then nothing — each step giving the phones MORE than the last until
- * the last one takes it all away. A dial whose steps are not on a scale is a
- * dial you have to memorise; this one you can reason about after one press.
+ * THE ORDER THE DIAL GOES ROUND — the camera, then the camera and the game.
+ * It had four stops and two of them took the camera away; the host kept the
+ * photos in every break on 29 September 2026 (see `PHONE` in
+ * `break-parts.js`). 🕹️-only and 📵 went with them.
  */
-const PHONE_CYCLE = [PHONE.PHOTOS, PHONE.GAME, PHONE.BOTH, PHONE.NOTHING];
+const PHONE_CYCLE = [PHONE.PHOTOS, PHONE.BOTH];
 
 /**
  * A GAP SET BY CYCLING A SYMBOL, ON THE THING THE GAP FOLLOWS.
