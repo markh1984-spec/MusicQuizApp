@@ -330,6 +330,18 @@ try {
   });
   const woke = await goSays();
   check('Launch wakes as you type, with the table still open', !woke.off && /^Launch /.test(woke.text) && (await p.$eval('.lb-pz-head', (n) => n.getAttribute('aria-expanded'))) === 'true', JSON.stringify(woke));
+  // AND THE WARNING AGREES WITH THE GATE. Shut, the table repaints the bar:
+  // a prize typed for tonight is somebody to pay, so nothing may still say
+  // "the winners get no voucher" beside a ready line saying "prizes set".
+  const said = await p.evaluate(async () => {
+    document.querySelector('.lb-pz-head').click();
+    await new Promise((r) => setTimeout(r, 400));
+    const text = [...document.querySelectorAll('.lb-say')].filter((n) => n.getClientRects().length).map((n) => n.textContent.replace(/\s+/g, ' ').trim()).join(' | ');
+    document.querySelector('.lb-pz-head').click();
+    await new Promise((r) => setTimeout(r, 400));
+    return text;
+  });
+  check('and no warning says the winners get no voucher once a prize is typed', !/no voucher/i.test(said), said.slice(0, 160));
   await p.evaluate(async () => {
     const box = document.querySelector('.lb-pz-in');
     box.value = '';

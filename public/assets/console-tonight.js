@@ -3317,7 +3317,7 @@ export function launchBar() {
   // Taken out as a seam rather than paying the line cap a fifth time, which is
   // what `console-breaks.js` did before it. They are handed what they need so
   // that module stays a leaf.
-  const prizeWarning = () => venuePrizeWarning(venueNow(), library.venueRecords);
+  const prizeWarning = () => venuePrizeWarning(venueNow(), library.venueRecords, prizesNow());
 
   /*
    * A PACK — OR NOW A SINGLE ROUND — DROPPED ON THE STRIP JOINS THE NIGHT.

@@ -68,7 +68,10 @@ export function lastNightWarning(me) {
  * **SILENT WHEN THERE IS NOTHING WRONG** — a night whose prizes are right
  * gains nothing from being told so, and *space is at a premium*.
  */
-export function venuePrizeWarning(name, venueRecords) {
+export function venuePrizeWarning(name, venueRecords, typedTonight = null) {
+  // WHAT WAS TYPED FOR TONIGHT PAYS TOO, as `noPrizesReason()` already says —
+  // or this read "the winners get no voucher" beside "prizes set".
+  if (Array.isArray(typedTonight) && typedTonight.some((r) => String(r || '').trim())) return null;
   if (prizesOn(name, venueRecords).length) return null;
   return node(`<div class="lb-say lb-say-none">No venue prizes set${
     name ? '' : ' — no venue picked'}, so the winners get no voucher to scan${
