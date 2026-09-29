@@ -109,11 +109,13 @@ async function handleWrite(req, res, url, route) {
 // ------------------------------------------------------------------ startup
 
 /*
- * Read the backups back before anything else happens.
+ * Read back the books the disk does NOT hold before anything else happens.
  *
  * Before listening rather than after: a request that arrives in the gap would
  * be told there are no accounts, and the login page would offer to set the app
- * up from scratch on a server that already has subscribers.
+ * up from scratch on a server that already has subscribers. A book the disk
+ * already holds is booted from the disk; GitHub's copy is merged behind
+ * `listen()`, never waited for — `restoreFromBackup()`.
  */
 await restoreFromBackup();
 
