@@ -2364,7 +2364,14 @@ export function launchBar() {
      * that can put a question on sixty phones in a pub is still on screen and
      * still changeable.
      */
-    for (const part of [el.querySelector('.lb-find'), chosen, venues, liveEl, orderEl]) {
+    /*
+     * AND THE SETTINGS AND THE PRIZES FOLD WITH THE TILES — it kept them, so
+     * Hide saved a third of the bar (424 -> 315px) and left the row nobody
+     * changes mid-evening. The host's pick, 29 September 2026: fold those too
+     * and KEEP LAUNCH, with the name line and the ready light, so a folded bar
+     * still launches what its line names (424 -> 184px).
+     */
+    for (const part of [el.querySelector('.lb-find'), chosen, venues, liveEl, orderEl, el.querySelector('.lb-set-night'), el.querySelector('.lb-prizes')]) {
       if (part) part.classList.toggle('lb-tucked', !tonightOpen);
     }
     shutWhat.hidden = tonightOpen;
