@@ -1710,11 +1710,10 @@ space where possible."* Four placements and one real bug:
 - **AND THE PANEL NO LONGER PRINTS ITS HEADING TWICE** — `running.at` repeats
   the `h3` at the lobby, so it is dropped when it only repeats.
 - **KEEPING A NIGHT IS A NIGHT-LEVEL QUESTION, so it moved into the head**
-  beside the venue. **The label has to outrank the adjacency**: a show never
-  keeps the venue, so "Save" alone beside a venue picker says the opposite of
-  what it does — the words stay *"for another night"*. **The label is written by
+  beside the venue. **The label is "Save" and its TOOLTIP says the venue is
+  never kept** — a show is a template. **The label is written by
   `paintSettings()`, not the markup**; editing the template changes nothing and
-  was shipped once. **Left as "Save".**
+  was shipped once.
 - **THE REASON A CONTROL IS OFF GOES ON THE CONTROL** — *"Nothing in Tonight
   to keep yet"* floated beside a greyed button; it is ON the button now.
 - **A BIGGER TARGET IS NOT A HITTABLE ONE.** The tile's × grew to 30px and the

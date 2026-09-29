@@ -3855,7 +3855,7 @@ export function launchBar() {
  * `launchBar()`. Calling it from here was a `ReferenceError` the moment
  * anybody pressed Save, thrown before the `try` that would have caught it, so
  * the button did nothing at all: no prompt, no request, no error on screen.
- * **`Save for another night` is the only thing that creates a show**, so
+ * **Save (on the bar's head) is the only thing that creates a show**, so
  * "Prepare a night" became a tab nothing could be put into and every
  * running-order feature was unreachable — with `node --check` happy, 1,684
  * tests green and five browser guards passing.
