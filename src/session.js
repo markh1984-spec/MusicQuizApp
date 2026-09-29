@@ -30,7 +30,7 @@ import { MAX_REWARDS } from './invoices.js';
  * the launch deals by, so the bar and the room cannot disagree about what
  * tonight is playing for.
  */
-import { checkStages, dealPrizes, paysOf, prizesAsked } from '../public/assets/prize-parts.js';
+import { checkStages, dealPrizes, laterQuiz, paysOf, prizesAsked, typedQuizRewards } from '../public/assets/prize-parts.js';
 import { listQuizzes } from './quizzes.js';
 import { listBingoPacks, recordLaunch, archiveResults, updateArchivedNight, listArchive, HOUSE_ROOM } from './library.js';
 import { mergeGigs, sameVenue } from './past-gigs.js';
@@ -1435,6 +1435,9 @@ export class Session {
      * Dealt by what each part PAYS, known at launch and unmoved by a tie or a
      * silent room. ONLY THE PARTS THAT BROUGHT NOTHING TAKE FROM THE DEAL.
      */
+    // What was TYPED for the quiz, read before the deal fills the gaps — see
+    // `typedQuizRewards()`: it may sit on the first stretch alone.
+    const quizTyped = typedQuizRewards(list);
     if (list.length > 1 && list.some((seg) => !Array.isArray(seg.rewards))) {
       const dealt = dealPrizes(opts.rewards || [], list.map((seg) => paysOf(seg, {
         winners: opts.winners,
@@ -1449,6 +1452,13 @@ export class Session {
       })));
       list.forEach((seg, i) => { if (!Array.isArray(seg.rewards)) seg.rewards = dealt[i]; });
     }
+    /*
+     * AND EVERY STRETCH OF THE QUIZ CARRIES THE QUIZ'S ONE LIST — it is one
+     * competition (`laterQuiz()` below), so the room is told the same prizes
+     * at every stretch's lobby and the last stretch pays what was typed on
+     * the first.
+     */
+    if (quizTyped) list.forEach((seg) => { if (!wholePackKind(seg.kind)) seg.rewards = quizTyped.slice(); });
     return this.startOrderSegment(list, 0, opts, null);
   }
 
@@ -1502,7 +1512,16 @@ export class Session {
      * so the winner sees their drink at the moment they won it, and can go to
      * the bar during the bingo rather than queueing with everybody at eleven.
      */
-    if (typeof this.engine.issueVouchers === 'function') this.engine.issueVouchers();
+    /*
+     * …BUT ONLY AT THE QUIZ'S LAST STRETCH — the host, 29 September 2026:
+     * *"the bingo rounds are separate so they should pay at the end of each
+     * round then the quiz winners paid at the end of the last quiz round."*
+     * Paid at every boundary on the running total, quiz → bingo → quiz put
+     * the quiz's first drink on the table twice, the leader at the break and
+     * again at the end. A quiz BEFORE a closing bingo is still paid here, as
+     * it ends — that is the fault above, which this must not bring back.
+     */
+    if (typeof this.engine.issueVouchers === 'function' && !laterQuiz(list, this.orderPos)) this.engine.issueVouchers();
     const opts = nightWideOpts(this.engine.state);
     /*
      * THE RUNNING SCORE ONLY EXISTS ON A QUIZ ENGINE'S PLAYERS. Bingo has

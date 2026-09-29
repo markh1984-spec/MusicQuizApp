@@ -91,6 +91,39 @@ export function dealPrizes(list, pays) {
   });
 }
 
+/*
+ * THE QUIZ IS ONE COMPETITION, HOWEVER MANY STRETCHES THE BINGO CUTS IT INTO.
+ *
+ * The host, 29 September 2026: *"the bingo rounds are separate so they should
+ * pay at the end of each round then the quiz winners paid at the end of the
+ * last quiz round."* The running score already added up across a bingo
+ * interlude; the prizes paid at every quiz boundary on that total, so
+ * quiz → bingo → quiz put the quiz's first drink on the table twice.
+ *
+ * **HERE, BECAUSE BOTH SIDES HAVE TO GIVE THE SAME ANSWER** — the server
+ * decides who is paid and the bar draws one Quiz row for it.
+ */
+const isQuizPart = (part) => Boolean(part) && (!part.kind || part.kind === 'quiz');
+
+/** Is the part at `at` followed by more of the quiz? Then it pays nothing yet. */
+export function laterQuiz(parts, at) {
+  return (Array.isArray(parts) ? parts : []).slice(at + 1).some(isQuizPart);
+}
+
+/**
+ * The list the quiz pays with when somebody TYPED one — the latest stretch's
+ * own, walking back, so a list typed on the first stretch before the bingo
+ * and a second stretch were added is not lost to the venue's. Null when none
+ * was typed: a BINGO part's list is never the quiz's.
+ */
+export function typedQuizRewards(parts) {
+  const list = Array.isArray(parts) ? parts : [];
+  for (let i = list.length - 1; i >= 0; i -= 1) {
+    if (isQuizPart(list[i]) && Array.isArray(list[i].rewards)) return list[i].rewards;
+  }
+  return null;
+}
+
 /**
  * THE NIGHT'S DRINKS, AS A REMINDER — NEVER A LIMIT.
  *

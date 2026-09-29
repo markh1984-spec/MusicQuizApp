@@ -2601,6 +2601,11 @@ the prizes."*
   AGAIN; A STAGE THE LIST NEVER COVERED IS A FREE LINE** — `rewardFor(prize,
   stage)`, both callers pass the stage. **A NIGHT'S TOTAL IS A REMINDER,
   NEVER A LIMIT** — `nightReminder()`, extra rounds SAID, never counted.
+- **THE QUIZ IS ONE GAME HOWEVER MANY STRETCHES — it pays ONCE, at its LAST
+  quiz part (`laterQuiz()`), on the running total; bingo pays per game. One
+  Quiz row on the table, one typed list across every stretch
+  (`typedQuizRewards()`).** REVERSES paying at every boundary (his call, 29
+  Sept): the leader at the break was paid twice. `quiz-pays-once.test.js`.
 - **A SCORE FIXED AT THE FINAL MOVES THE DRINKS — `adjustScore()`. EVERY SCORE
   WRITE GOES THROUGH `bumpScore()` / `setScore()`** (`test/score-writes.test.js`).
 - **A CODE STAYS ON THE PHONE UNTIL THE BAR SCANS IT — `view.vouchers` on the
@@ -2770,8 +2775,7 @@ in a 900px window, and a real wheel moved nothing.
 
 ### CAPITALS ARE FOR EMPHASIS, NOT FOR LABELLING
 
-Set by the host on 14 August 2026, and it is a BRAND decision rather than a
-taste one: *"the way I'm building this app, it needs to be as soft and
+A BRAND decision, not a taste one: *"the way I'm building this app, it needs to be as soft and
 friendly as possible… some people interpret capital letters as shouting."*
 
 **A heading is told apart by BRIGHTNESS, not by being shouted.** Full `--ink`
@@ -2924,9 +2928,6 @@ feature row in the app:
 > **A title that names the thing, and one short line that finishes the sentence
 > "this gives me…" in a breath. Anything longer needs a reason.**
 
-It came from the ladder: fourteen features with three sentences each is a
-wall, and a wall gets scrolled past — so the page whose whole job is to say
-what you get was saying nothing.
 
 **"Invoicing — bill a venue before you leave the car park"** is the shape.
 Not *"Bill for a night before you have left the car park, with your own
@@ -3224,7 +3225,6 @@ ideas.** An idea nobody is building this month belongs in `docs/`, or nowhere.
 
 ### Which accounts a change is FOR — the words to take literally
 
-Set by the host on 14 August 2026, so a request never has to say it twice.
 **Take these literally** — the fourth is what most changes actually mean:
 
 | He says | It applies to |
@@ -3287,8 +3287,7 @@ sessions, never within one.
 ### "GSD mode" — Get Shit Done
 
 **If he types `GSD mode`, switch to it and STAY in it until the to-do list is
-done or he says otherwise.** He is at the laptop knocking through a list, so
-every extra word is in the way: **open with the numbered to-do list itself**,
+done or he says otherwise.** Every extra word is in the way: **open with the numbered to-do list itself**,
 minimum context, **URLs always as clickable links**, a link rather than a
 question, YES or NO where possible, one line per step. **Argue in normal mode,
 not in GSD mode** — the rules that stop things going wrong still apply, in one

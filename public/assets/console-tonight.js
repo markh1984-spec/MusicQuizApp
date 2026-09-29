@@ -2031,8 +2031,11 @@ export function launchBar() {
     // so the night launched with nobody to pay (O4). Absent is the venue's deal.
     if (part.at < 0) { night.rewards = clean.length ? clean : undefined; return; }
     const next = lbSlots.slice();
-    const { rewards: _was, ...rest } = next[part.at];
-    next[part.at] = clean.length ? { ...rest, rewards: clean } : rest;
+    // EVERY STRETCH OF A SPLIT QUIZ (`ats`) — it is one list; see `prizeParts()`.
+    for (const at of part.ats || [part.at]) {
+      const { rewards: _was, ...rest } = next[at];
+      next[at] = clean.length ? { ...rest, rewards: clean } : rest;
+    }
     lbSlots = next;
   }
 

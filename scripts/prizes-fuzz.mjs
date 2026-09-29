@@ -340,6 +340,13 @@ try {
   for (let i = 0; i < 40; i += 1) { const hv = await hostView(); if (hv.phase === 'question') { await phoneDo('answer', rp[0], rcode, { optionIndex: hv.question.correctIndex ?? 0 }); await host('reveal'); } if (hv.runningOrder && hv.phase === 'round_board') break; await host('next'); }
   await host('advanceOrder');
   const hvb = await hostView();
+  // THE QUIZ PAYS ONCE, AT ITS LAST ROUND (the host, 29 Sept 2026) — the
+  // leader at the break used to be handed the quiz's drink here, and again
+  // at the end.
+  // EVERY code, carried or not: a quiz drink minted at the boundary arrives
+  // in the bingo marked `carried`, and `vouchersOf()` would not see it.
+  const atBreak = Object.values(hvb.vouchers || {});
+  check('nothing is paid for the quiz at the break', atBreak.length === 0, JSON.stringify(atBreak.map((v) => v.reward)));
   let bingoWon = false;
   for (const t of hvb.tracks || []) {
     await host('call', { trackId: t.id });
@@ -376,8 +383,8 @@ try {
    * guard that pins an order nothing promises is a guard that goes red about
    * nothing, which is how a suite teaches you to ignore it.
    */
-  check('each part paid its first place off the TOP of the list, per game',
-    [...words].sort().join(' | ') === 'A pint | A pint | A pint', JSON.stringify(words));
+  check('the bingo and the quiz each paid first place off the TOP of the list — the quiz ONCE',
+    [...words].sort().join(' | ') === 'A pint | A pint', JSON.stringify(words));
   const daveAll = await phoneCodes(rp[0], rcode);
   check("Dave's phone shows every drink he won tonight, quiz and bingo", daveAll.length === all.filter((v) => v.winnerId === rp[0].id).length, `${daveAll.length} on the phone vs ${all.filter((v) => v.winnerId === rp[0].id).length} owed`);
   // The archive holds the codes: redeem the quiz drink through the bar and the

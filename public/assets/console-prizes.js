@@ -36,7 +36,7 @@
  */
 import { bestBingoShape, esc } from './client.js';
 import { partsOfSlots } from './console-tonight-mix.js';
-import { FULL_HOUSE, checkStages, dealPrizes, defaultStages, moveStage, nightReminder, paysOf, stageChoices, stageWord } from './prize-parts.js';
+import { FULL_HOUSE, checkStages, dealPrizes, defaultStages, moveStage, nightReminder, paysOf, stageChoices, stageWord, typedQuizRewards } from './prize-parts.js';
 
 /*
  * CARD BINGO'S ONE BOX PAYS EVERY GAME, SO IT SAYS SO. A deck pays a prize a
@@ -109,10 +109,25 @@ export function prizeParts({ slots, night, picked, packOf, cardShapes = [], venu
     stages: Array.isArray(night.stages) ? night.stages : null,
     rewards: Array.isArray(night.rewards) ? night.rewards : null,
   }] : []);
-  const parts = raw.map((part) => ({
+  const priced = raw.map((part) => ({
     ...part,
     pays: paysOf(part, { winners, bingo: part.kind === 'quiz' ? 0 : shapePrizes(part) }),
   }));
+  /*
+   * ONE QUIZ ROW, HOWEVER MANY STRETCHES THE BINGO CUTS IT INTO — the quiz is
+   * one competition and pays once, at its last round (`laterQuiz()` in
+   * `prize-parts.js`, the host's call of 29 September 2026). A row per
+   * stretch counted its drinks twice in the reminder and let one stretch be
+   * typed differently from another. The row sits where the quiz STARTS, IS
+   * the stretch that pays (`at`), and a write lands on every stretch
+   * (`ats`), so what is typed survives a stretch being taken out.
+   */
+  const quizAts = priced.filter((part) => part.kind === 'quiz').map((part) => part.at);
+  const parts = quizAts.length < 2 ? priced : priced
+    .filter((part, i) => part.kind !== 'quiz' || i === priced.findIndex((q) => q.kind === 'quiz'))
+    .map((part) => (part.kind !== 'quiz' ? part : {
+      ...part, at: quizAts[quizAts.length - 1], ats: quizAts, rewards: typedQuizRewards(priced),
+    }));
   /*
    * AND WHAT IS NOT TYPED YET IS SHOWN AS THE VENUE WOULD DEAL IT — the same
    * deal `launchRunningOrder()` does on the server, off the same function, so

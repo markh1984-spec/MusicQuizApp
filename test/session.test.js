@@ -217,16 +217,14 @@ test('quiz -> bingo -> quiz: the same team keeps its identity and its score acro
     const claim = claimNow(it.session.engine, id);
     assert.ok(claim.valid, 'the bingo interlude needs a real win to prove prizes are separate');
     /*
-     * TWO VOUCHERS HERE NOW, AND THAT IS THE CHANGE: the quiz part paid its
-     * own winner as it ended (`advanceOrder()`), so its trophy is already on
-     * the phone and marked `carried`, and the bingo has just minted the NEXT
-     * drink on the list beside it.
+     * ONE VOUCHER HERE — THE BINGO'S — REVERSED on 29 September 2026. It was
+     * two: the quiz part paid its winner as it ended, and the leader at the
+     * break then won the quiz's drink AGAIN at the end. The host: the quiz
+     * pays once, at its last round (`laterQuiz()` in `prize-parts.js`).
      */
     const inBingoNow = Object.values(it.session.engine.state.vouchers);
-    assert.equal(inBingoNow.length, 2, 'the quiz part paid at its boundary and the bingo at its claim');
-    assert.equal(inBingoNow.filter((v) => v.carried).length, 1, "the quiz's own is carried");
-    assert.deepEqual(inBingoNow.map((v) => v.reward).sort(), ['A medal', 'A trophy'],
-      'the bingo started again at the top of the list instead of taking the next drink');
+    assert.equal(inBingoNow.length, 1, 'the quiz paid at the break, before the quiz was over');
+    assert.deepEqual(inBingoNow.map((v) => v.reward), ['A medal'], 'the bingo pays its own list');
 
     it.session.advanceOrder();
     assert.equal(it.session.kind, 'quiz');
@@ -259,9 +257,9 @@ test('quiz -> bingo -> quiz: the same team keeps its identity and its score acro
      * below by counting the ones that are not carried.
      */
     const beforeTheEnd = Object.values(it.session.engine.state.vouchers || {});
-    assert.equal(beforeTheEnd.length, 2, "the earlier parts' vouchers were destroyed by a part boundary");
-    assert.equal(beforeTheEnd.filter((v) => v.carried).length, 2,
-      'both have to be marked, or they block the last part from paying out');
+    assert.equal(beforeTheEnd.length, 1, "the bingo's voucher was destroyed by a part boundary");
+    assert.equal(beforeTheEnd.filter((v) => v.carried).length, 1,
+      'it has to be marked, or it blocks the last part from paying out');
     assert.equal(beforeTheEnd.filter((v) => !v.carried).length, 0,
       "the LAST part has not paid yet — it has not reached its own ending");
 
@@ -269,9 +267,11 @@ test('quiz -> bingo -> quiz: the same team keeps its identity and its score acro
     assert.equal(it.session.engine.state.phase, 'final');
     const atTheEnd = Object.values(it.session.engine.state.vouchers);
     assert.equal(atTheEnd.filter((v) => !v.carried).length, 1, 'the last part was not paid at the true end');
-    assert.equal(atTheEnd.length, 3, 'and both earlier drinks are still live at the bar');
-    assert.deepEqual(atTheEnd.map((v) => v.reward).sort(), ['A medal', 'A mug', 'A trophy'],
-      'three parts, three different drinks, in the order the venue listed them');
+    assert.equal(atTheEnd.length, 2, 'and the bingo drink is still live at the bar');
+    // THE QUIZ IS ONE LIST: two stretches typed differently pay the LATEST
+    // stretch's own (`typedQuizRewards()`); the bar writes one list to both.
+    assert.deepEqual(atTheEnd.map((v) => v.reward).sort(), ['A medal', 'A mug'],
+      'the bingo paid its drink and the quiz paid once, off its last stretch');
     // The same person won both, which is exactly the case the `carried` flag
     // exists for: the old idempotency check would have refused the second.
     assert.equal(new Set(atTheEnd.map((v) => v.winnerId)).size, 1);
