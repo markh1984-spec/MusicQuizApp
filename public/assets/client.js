@@ -1755,6 +1755,17 @@ export function bingoShapeLabel(shape, trackCount) {
  *
  * It takes the card element rather than closing over one, and that is the only
  * difference from the version that sat in `screen.js`.
+ *
+ * **AND IT MEASURES IN THE CARD'S OWN UNITS, NOT THE SCREEN'S.** A bounding
+ * rect includes every ancestor's transform, and the card itself arrives on
+ * `cardIn` — `scale(0.995)` easing to none over 320ms. This runs a frame in, so
+ * a projector OPENED at the final (a laptop that reloaded, a projector put up
+ * late) measured its content half a per cent short, fitted to that, and then
+ * grew past the card as the animation finished: "Tonight's winner" lost 3-5px
+ * off the top at every size (launch-path sweep, 23 September 2026; measured by
+ * `final-fits.mjs` once it played real nights). The card's rect against its
+ * own layout height IS that scale, so dividing by it is exact at any frame of
+ * the animation and 1 when nothing is running.
  */
 export function fitWinner(cardEl) {
   const w = cardEl && cardEl.querySelector('.winner');
@@ -1765,7 +1776,8 @@ export function fitWinner(cardEl) {
   if (!room || !kids.length) return;
   const top = Math.min(...kids.map((n) => n.getBoundingClientRect().top));
   const bottom = Math.max(...kids.map((n) => n.getBoundingClientRect().bottom));
-  const need = bottom - top;
+  const drawnAt = cardEl.offsetHeight ? cardEl.getBoundingClientRect().height / cardEl.offsetHeight : 1;
+  const need = (bottom - top) / (drawnAt > 0 ? drawnAt : 1);
   // Never GROW past 1: a sparse night must look exactly as it always has.
   w.style.setProperty('--fit', String(Math.min(1, room / Math.max(1, need))));
 }
