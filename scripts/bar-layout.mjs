@@ -139,6 +139,39 @@ try {
     check(`at ${width}px, nothing threw`, errors.length === 0, errors.join(' | '));
     await close();
   }
+
+  console.log('\n4 · A THUMB GETS 44px, A MOUSE KEEPS THE COMPACT BAR');
+  // Menu rows were 34px tall, the ready line's "open it" 42x16 and a tile's
+  // x 30x30. The host's pick, 29 Sept: 44px on a touchscreen only — the
+  // laptop is driven with a mouse and keeps its compact menus — and the x's
+  // tap area grows invisibly everywhere.
+  for (const [width, touch] of [[390, true], [1280, false]]) {
+    const { page, errors, close } = await barWith('1980s-pop-music', { width, touch });
+    const coarse = await page.evaluate(() => matchMedia('(any-pointer: coarse)').matches);
+    const x = await page.evaluate(() => {
+      const b = document.querySelector('.lb-tile-off');
+      b.scrollIntoView({ block: 'center' });
+      const r = b.getBoundingClientRect();
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const on = (px, py) => Boolean(document.elementFromPoint(px, py)?.closest('.lb-tile-off'));
+      let w = 0, h = 0;
+      for (let d = -40; d <= 40; d += 1) { if (on(cx + d, cy)) w += 1; if (on(cx, cy + d)) h += 1; }
+      return { w, h, drawn: Math.round(r.width) };
+    });
+    check(`at ${width}px${touch ? ' (touch)' : ''}, a tile's x takes a press across 44x44 (drawn ${x.drawn}px)`, x.w >= 44 && x.h >= 44, JSON.stringify(x));
+    const link = await page.evaluate(() => { const a = document.querySelector('.lb-ready a'); if (!a) return null; const r = a.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; });
+    await page.evaluate(() => document.querySelector('.launchbar .pick-face')?.click());
+    await wait(400);
+    const rows = await page.evaluate(() => [...document.querySelectorAll('.pick-menu:not([hidden]) .pick-opt')].map((n) => Math.round(n.getBoundingClientRect().height)));
+    if (touch) {
+      check(`at ${width}px on a touchscreen (coarse pointer: ${coarse}), every menu row is at least 44px`, coarse && rows.length > 0 && rows.every((hh) => hh >= 44), JSON.stringify(rows));
+      check(`at ${width}px on a touchscreen, "open it" is a 44px target`, Boolean(link) && link.h >= 44, JSON.stringify(link));
+    } else {
+      check(`at ${width}px with a mouse, the menus stay compact (${rows[0]}px rows)`, !coarse && rows.length > 0 && rows.every((hh) => hh < 44), JSON.stringify(rows));
+    }
+    check(`at ${width}px, nothing threw`, errors.length === 0, errors.join(' | '));
+    await close();
+  }
 } finally {
   if (browser) await browser.close();
   await stop();

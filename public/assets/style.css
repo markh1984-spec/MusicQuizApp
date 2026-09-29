@@ -7483,6 +7483,14 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
    which means "press this". */
 .pick-opt.is-on { background: rgba(255, 46, 136, 0.16); background: color-mix(in srgb, var(--hot) 18%, transparent); }
 .pick-opt:disabled { opacity: 0.45; cursor: default; }
+/* A THUMB GETS 44px — the touch floor — and a mouse keeps the compact
+   menu. The host's pick, 29 Sept 2026: the console is driven from a laptop,
+   where 44px rows make every menu a third taller for no reason, and from a
+   phone, where 34px rows are a mis-tap in a dark pub. `any-pointer`, so a
+   touchscreen laptop counts as a thumb. */
+@media (any-pointer: coarse) {
+  .pick-opt { padding-top: 14px; padding-bottom: 14px; }
+}
 
 /* Two digits. It was a fifth of the bar. */
 .lb-set-night .seconds-pick { width: 72px; }
@@ -8253,6 +8261,16 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
 .lb-ready-ok b { color: var(--good, #3ddc84); }
 .lb-ready-down b { color: var(--bad); }
 .lb-ready a { color: inherit; text-decoration: underline; }
+/* On a touchscreen "open it" was a 42x16 underline — the one thing to do
+   about a projector that is not up. An ordinary button there, pill-shaped
+   because it sits inside a sentence; a mouse keeps the plain link. */
+@media (any-pointer: coarse) {
+  .lb-ready a {
+    display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; margin: 2px 0;
+    border: 1px solid rgba(255, 255, 255, 0.22); border-bottom: 2px solid var(--hot);
+    border-radius: 999px; text-decoration: none; font-weight: 700;
+  }
+}
 
 .lb-tile {
   position: relative; display: flex; flex-direction: column; justify-content: flex-end;
@@ -8451,6 +8469,12 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   background: rgba(0, 0, 0, 0.28); color: var(--ink-dim);
   font-size: 17px; line-height: 1; cursor: pointer;
 }
+/* AND IT TAKES A PRESS ACROSS 44x44 WHILE STILL DRAWING 30 — a bigger drawn
+   disc would sit on the pack name, which is the fault this control's z-index
+   note records. The reach is invisible and centred; the host's pick, 29 Sept
+   2026. 8px, not 7: an absolute child is placed from the PADDING box, inside
+   the 1px border, so 7 measured 42. */
+.lb-tile-off::before { content: ''; position: absolute; inset: -8px; border-radius: 999px; }
 .lb-tile-off:hover, .lb-tile-off:focus-visible {
   color: var(--bad); border-color: var(--bad); background: rgba(255, 77, 94, 0.16);
 }
