@@ -40,6 +40,7 @@
  */
 
 import { validateQuiz } from './quizzes.js';
+import { cleanRoundSet } from '../public/assets/round-set.js';
 
 /**
  * The id a composed night carries. Reserved: see the note above on why it
@@ -108,7 +109,21 @@ export function composeQuiz(order = [], load) {
     if (!round) throw new Error(`${pack.title || packId} has no round ${Number(entry.round) + 1}.`);
     // Deep, because the engine writes to what it is handed and these objects
     // are the same ones every other caller of `readPack` is holding.
-    rounds.push(JSON.parse(JSON.stringify(round)));
+    const copy = JSON.parse(JSON.stringify(round));
+    /*
+     * AND TONIGHT'S OWN SETTINGS FOR IT — the host's clock, and a picture
+     * round's reveal (`round-set.js`, 29 September 2026). The host's reveal
+     * is for the whole ROUND, so a question's own is taken off the copy, or
+     * the one question the pack author dressed differently ignores the
+     * choice. Nothing here touches the file: it is a copy, as above.
+     */
+    const set = cleanRoundSet(entry);
+    if (set.questionSeconds) copy.questionSeconds = set.questionSeconds;
+    if (set.reveal && copy.type === 'image') {
+      copy.reveal = set.reveal;
+      for (const q of copy.questions || []) delete q.reveal;
+    }
+    rounds.push(copy);
     from.push(pack);
   }
 

@@ -12495,7 +12495,9 @@ body.dj .head .score { color: var(--ink); }
  * It sits ABOVE the tiles, where the break strip went, because the band
  * directly above Launch is kept clear.
  */
-.lb-prizes { margin: 10px 0 2px; min-width: 0; }
+/* "Each round" (`console-round-set.js`) wears the prize table's look under its
+   OWN head and pick classes — that table's listeners key on its own. */
+.lb-prizes, .lb-rounds-set { margin: 10px 0 2px; min-width: 0; }
 /*
  * 44px, THE TOUCH FLOOR — and it had to be said explicitly.
  *
@@ -12506,7 +12508,7 @@ body.dj .head .score { color: var(--ink); }
  * same rule the launch row's own controls follow and for the same reason — a
  * thumb, in a dark pub, ten minutes before a gig.
  */
-.lb-pz-head {
+.lb-pz-head, .lb-rs-head {
   display: flex; gap: 10px; align-items: center; flex-wrap: wrap; width: 100%;
   min-height: 44px;
   background: none; border: 0; padding: 0; margin: 0;
@@ -12549,7 +12551,7 @@ body.dj .head .score { color: var(--ink); }
    width of the box under it, so a bingo prize is one column of two controls.
    The full house is SAID rather than offered: it is the one prize nobody
    chooses, because the night ends on the whole card. */
-.lb-pz-stage { width: 150px; height: 44px; }
+.lb-pz-stage, .lb-rs-pick { width: 150px; height: 44px; }
 .lb-pz-stage-said { min-height: 44px; display: flex; align-items: center; color: var(--ink); font-weight: 800; }
 /* ON A PHONE THE BOXES TAKE THE WIDTH — 150px each wraps into a ragged grid
    below 560, and a prize is a sentence rather than a word. */
@@ -12557,7 +12559,7 @@ body.dj .head .score { color: var(--ink); }
   .lb-pz-row { flex-direction: column; align-items: stretch; }
   .lb-pz-box { width: 100%; }
   .lb-pz-in { width: 100%; }
-  .lb-pz-stage { width: 100%; }
+  .lb-pz-stage, .lb-rs-pick { width: 100%; }
 }
 
 /* THE PHOTO SCREEN, beside the code it puts up — Community > Photos.

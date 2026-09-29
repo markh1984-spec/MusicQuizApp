@@ -147,6 +147,18 @@ const ROUND_WORD = {
   breakout: 'Bonus round',
 };
 
+/**
+ * A ROUND'S NAME WITHOUT ITS "Round One — " — the Tonight tile's rule, and the
+ * "Each round" fold's, from one function so the two cannot drift: the
+ * numbering is the running order's job, and on a pack's own title it is what
+ * gets clipped instead of the half that tells rounds apart.
+ */
+export function roundTitle(title, i) {
+  const written = String(title || '').trim();
+  const trimmed = written.replace(/^round\s+\S+\s*[—–-]\s*/i, '').trim();
+  return trimmed || written || `Round ${i + 1}`;
+}
+
 /** What a round type is called, for a tooltip and a screen reader. */
 export function roundWord(type) {
   return ROUND_WORD[String(type || '').toLowerCase()] || 'Round';

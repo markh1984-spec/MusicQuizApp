@@ -10,7 +10,7 @@
 import { esc, node, gripIcon, bestBingoShape } from './client.js';
 import { packWord } from './console.js';
 import { library } from './console-state.js';
-import { packLookAttrs, shortTitle, isBreakoutPack, roundGlyph, roundWord } from './pack-look.js';
+import { packLookAttrs, shortTitle, isBreakoutPack, roundGlyph, roundTitle, roundWord } from './pack-look.js';
 import {
   addBingoSlot, addQuizPackSlot, hasPack, homeSlotIndex, moveRoundToSlot, swapSlots,
   offRoundsFor, removeSlot, toggleRoundOff,
@@ -413,8 +413,6 @@ export function renderSlots(slots, {
    * the pack IS what the tile is.
    */
   function roundName(pack, i) {
-    const round = (pack.rounds || [])[i];
-    const written = String((round && round.title) || '').trim();
     /*
      * THE "ROUND ONE — " IS TRIMMED OFF, for the same reason `shortTitle()`
      * trims a trailing "Quiz" from a pack: the tile already says which
@@ -427,9 +425,10 @@ export function renderSlots(slots, {
      * Falls back to what was written, then to the position, so a round titled
      * only "Round Two" still says something rather than going blank — the same
      * fallback `shortTitle()` makes when its trim empties a name.
+     * ONE function now, `roundTitle()` in `pack-look.js` — the "Each round"
+     * fold names rounds too, and the two must not drift.
      */
-    const trimmed = written.replace(/^round\s+\S+\s*[—–-]\s*/i, '').trim();
-    return trimmed || written || `Round ${i + 1}`;
+    return roundTitle(((pack.rounds || [])[i] || {}).title, i);
   }
 
   /**

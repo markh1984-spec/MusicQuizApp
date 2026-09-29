@@ -71,9 +71,8 @@ Two games so far:
 
 ## The words: OWNER, PARENT, CHILD — and owner is not a synonym for parent
 
-Settled on 14 August 2026, because the host proposed a shared vocabulary and
-one word in it would have undone the distinction drawn the message before:
-*"parent accounts are owner accounts and child accounts are sub-accounts."*
+Settled 14 August 2026: one word in a proposed vocabulary would have undone
+the distinction: *"parent accounts are owner accounts and child accounts are sub-accounts."*
 
 **Parent and owner must stay different words, and this is the whole reason the
 group work is safe.** "Owner" already means the APP owner — one account,
@@ -688,7 +687,7 @@ already what most of the app is.
 
 ### NOTHING CLICKABLE IS A FLAT GREY BOX, AND NOTHING IS SQUARE
 
-Two constraints, set by the host on 14 August 2026 in his own words: *"I
+Two constraints, in his own words: *"I
 absolutely hate square corners… reasonably rounded so it doesn't appear square
 or too sharp"*, and *"I never want anything that's being clicked to just be a
 boring grey box."*
@@ -2778,11 +2777,7 @@ A BRAND decision, not a taste one: *"the way I'm building this app, it needs to 
 friendly as possible… some people interpret capital letters as shouting."*
 
 **A heading is told apart by BRIGHTNESS, not by being shouted.** Full `--ink`
-against `--ink-dim` body text, one rung up the ladder, heavy. Capitals plus
-dim grey was doing that job with the two weakest tools available — and the
-tell was what the headings actually said: *"Nothing here is being saved
-permanently"* is a sentence, and a sentence in capitals is somebody raising
-their voice at you about your own backups.
+against `--ink-dim` body text, one rung up the ladder, heavy.
 
 **Where something genuinely IS the emphasis, capitals are right and stay** —
 his own example, and he is correct: *"tonight's winner, I think, is all
@@ -3250,9 +3245,8 @@ them, when it should not.
 
 ### What Claude may do on its own — four categories
 
-Set by the host on 14 August 2026, about CLAUDE'S OWN self-directed work —
-tooling, agents, process — not about product features, which are asked for in
-the ordinary way.
+About CLAUDE'S OWN self-directed work — tooling, agents, process — never
+product features.
 
 | | Do what? |
 |---|---|
@@ -3297,7 +3291,7 @@ and every session was paying for it.
 
 ### THE PROTECTED SURFACE — what must not break, and what may
 
-Stated by the host on 14 August 2026, on a gig day: *"The thing that needs to
+His words on a gig day: *"The thing that needs to
 be stable and definitely working is the quiz launch capability for pubs.
 Everything else that changes doesn't affect me tonight."*
 
@@ -3760,6 +3754,12 @@ just don't want to think, you want to get in and go and know it will work."*
   SERVER decides — the launch call without `replace` answers 409 when
   `session.inProgress()`. A 409 is SILENT here. A re-render is not somebody
   choosing a pack (`quiet`), and what is running is READ BACK.
+- **A ROUND CARRIES ITS OWN SECONDS AND PICTURE REVEAL — "Each round"
+  (`console-round-set.js`), on the round's REFERENCE (`round-set.js`: `{packId,
+  round, questionSeconds, reveal}`)** through Launch, a show and `state.order`;
+  `composeQuiz()` applies them. **Its own `lb-rs-*` classes** — the prize
+  table's listeners key on `lb-pz-head`/`lb-pz-stage`. Game sound stays
+  night-wide: it is the lobby game's. `round-settings-reach-the-room.mjs`.
 - **IN THE ROOM / ONLINE is a switch in the head** — a setting whose wrong
   value ruins the night belongs where it is read. **BOTH halves wear the same
   lit treatment**, never the gradient (Launch keeps that). Shut, the line still

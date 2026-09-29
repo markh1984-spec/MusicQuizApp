@@ -26,6 +26,8 @@ import {
 import { checkStages, dealPrizes, paysOf, prizesAsked, stageWord } from './prize-parts.js';
 import { renderSlots } from './console-tonight-mix-ui.js';
 import { bindPrizeTable, prizeNote, prizeParts, prizeTableInto, prizesTonight, venueRewards } from './console-prizes.js';
+import { bindRoundSet, roundSetInto, roundSetRows } from './console-round-set.js';
+import { cleanRoundSet, roundKey, withRoundSet } from './round-set.js';
 import { lastNightWarning, noPrizesReason, venuePrizeWarning } from './console-warnings.js'; import { readyLine } from './console-ready.js';
 import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, me, nightBench, packDrag, setBench, setBook, setLibrary, setNightBench, setPackDrag, setShelfRoundDrag, setShowDrag, setVenueDrag, shelfOf, shelfRoundDrag, showDrag, venueDrag } from './console-state.js';
 import { nowNextRows } from './console-venues.js';
@@ -67,6 +69,10 @@ let currentPack = null;
 export const night = {
   look: '',
   questionSeconds: 0,
+  // A ROUND'S OWN CLOCK AND REVEAL — `{ 'pack#round': { questionSeconds,
+  // reveal } }`, empty meaning every round plays as the night is set
+  // (`round-set.js`, the "Each round" fold).
+  roundSet: {},
   // OPEN CHOICE IS THE NIGHT'S DEFAULT. Empty already means "use the default
   // game", so the sentinel has to be set HERE as well as drawn on the picker
   // or the control says one thing and the launch sends another.
@@ -211,6 +217,7 @@ let lbSlots = null;
  * reasoning as the soundboard panel and the *My prizes* fold.
  */
 let prizeTableOpen = false;
+let roundSetOpen = false;
 
 /**
  * IS THIS PACK ALREADY IN TONIGHT? — asked by the SHELF as it draws itself
@@ -925,6 +932,7 @@ export function launchBar() {
            NOTE: no backticks in here. This is a template literal, and a stray
            one made the whole console a syntax error once — twice now. -->
       <div class="lb-prizes"></div>
+      <div class="lb-rounds-set" hidden></div>
       <div class="lb-order" hidden></div>
       <div class="lb-chosen" hidden></div>
       <!-- KEEP THE WHOLE EVENING — the way a saved night is built, and it
@@ -1407,15 +1415,19 @@ export function launchBar() {
     if (!currentPack) return null;
     const simple = simpleNight(lbSlots || []);
     const simplePack = simple ? anyPack(simple.packId) : null;
-    const segments = lbSlots && !simplePack ? segmentsFromSlots(lbSlots) : null;
+    const segments = lbSlots && !simplePack ? segmentsNow() : null;
     if (segments) {
       return { url: '/api/host/launchOrder', body: orderBody(segments, { ...nightOpts(), breaks: prunePlan(night.breaks, segments) }) };
     }
     const launchPack = simplePack || currentPack;
+    // A ROUND WITH ITS OWN SETTINGS IS SPELLED OUT, even on an ordinary night:
+    // the reference is what carries them (`round-set.js`).
+    const spelled = simplePack ? withRoundSet(simple.rounds.map((round) => ({ packId: simple.packId, round })), night.roundSet) : null;
+    const anySet = Boolean(spelled && spelled.some((e) => e.questionSeconds || e.reveal));
     return { url: '/api/host/launch', body: launchBody(simplePack ? 'quiz' : gameOf().id, launchPack.id, {
       ...nightOpts(), shape: night.shape, prizes: night.prizes, stages: night.stages || null,
       order: simplePack
-        ? (simple.rounds.length === (launchPack.rounds || []).length ? null : simple.rounds.map((round) => ({ packId: simple.packId, round })))
+        ? (simple.rounds.length === (launchPack.rounds || []).length && !anySet ? null : spelled)
         : nightOrder(),
       breaks: prunePlan(night.breaks, segmentsNow()),
     }) };
@@ -1912,6 +1924,7 @@ export function launchBar() {
      * not in three change handlers.
      */
     paintPrizeTable();
+    paintRoundSet();
     if (setSave) {
       // Mirrors the exact check `paintMixedOrder()` uses for the Launch
       // button itself — "anything to keep" and "anything to launch" have to
@@ -2089,6 +2102,18 @@ export function launchBar() {
     });
   }
 
+  /*
+   * "EACH ROUND" — and a round that has left tonight takes its setting with it,
+   * or it comes back to life the day that round is put in again (the break
+   * plan's own pruning rule).
+   */
+  function paintRoundSet() {
+    const segments = segmentsNow();
+    const here = new Set(segments.flatMap((seg) => (seg.kind === 'quiz' ? seg.order || [] : [])).map((e) => roundKey(e.packId, e.round)));
+    for (const key of Object.keys(night.roundSet || {})) if (!here.has(key)) delete night.roundSet[key];
+    roundSetInto(el.querySelector('.lb-rounds-set'), roundSetRows(segments, night.roundSet, anyPack, night.questionSeconds), { open: roundSetOpen });
+  }
+
   function bingoToSet() {
     const picked = pickedPack();
     if (picked && picked.kind === 'bingo') return picked;
@@ -2221,6 +2246,16 @@ export function launchBar() {
    * bound once on the panel. The open flag and the repaints stay HERE, because
    * they are this bar's: a module may not assign to a binding it imports.
    */
+  bindRoundSet(el, {
+    onToggle: () => { roundSetOpen = !roundSetOpen; paintRoundSet(); },
+    onSet: (key, what, value) => {
+      const now = { ...(night.roundSet[key] || {}) };
+      if (what === 'reveal') now.reveal = value; else now.questionSeconds = Number(value) || 0;
+      const clean = cleanRoundSet(now);
+      if (Object.keys(clean).length) night.roundSet[key] = clean; else delete night.roundSet[key];
+      paintLive();
+    },
+  });
   bindPrizeTable(el, {
     partsNow,
     setPartRewards,
@@ -2394,7 +2429,7 @@ export function launchBar() {
      * and KEEP LAUNCH, with the name line and the ready light, so a folded bar
      * still launches what its line names (424 -> 184px).
      */
-    for (const part of [el.querySelector('.lb-find'), chosen, venues, liveEl, orderEl, el.querySelector('.lb-set-night'), el.querySelector('.lb-prizes')]) {
+    for (const part of [el.querySelector('.lb-find'), chosen, venues, liveEl, orderEl, el.querySelector('.lb-set-night'), el.querySelector('.lb-prizes'), el.querySelector('.lb-rounds-set')]) {
       if (part) part.classList.toggle('lb-tucked', !tonightOpen);
     }
     shutWhat.hidden = tonightOpen;
@@ -2809,7 +2844,9 @@ export function launchBar() {
    */
   function segmentsNow() {
     const slots = lbSlots || slotsFromSimple({ currentPack, lbExtra, lbOff, packOf, night });
-    return segmentsFromSlots(slots);
+    // A ROUND'S OWN SETTINGS JOIN HERE, the seam Launch, the live line and a
+    // saved show all read (`withRoundSet()`).
+    return segmentsFromSlots(slots).map((seg) => (seg.kind === 'quiz' ? { ...seg, order: withRoundSet(seg.order, night.roundSet) } : seg));
   }
 
   /**
@@ -3749,12 +3786,18 @@ export function launchBar() {
     // A pack that has gone is dropped here because `loadShow()` has already
     // said so in a banner above the bar — `render()` builds that first.
     const slots = [];
+    const roundSet = {};
     for (const item of items) {
       if (item.kind === 'quiz') {
         const rounds = (item.order && item.order.length)
           ? item.order.filter((r) => anyPack(r.packId))
           : roundsOf(anyPack(item.packId) || {});
-        for (const r of rounds) slots.push({ kind: 'quiz', packId: r.packId, rounds: [r.round] });
+        for (const r of rounds) {
+          slots.push({ kind: 'quiz', packId: r.packId, rounds: [r.round] });
+          // A round's own clock and reveal come back with it (`round-set.js`).
+          const own = cleanRoundSet(r);
+          if (Object.keys(own).length) roundSet[roundKey(r.packId, r.round)] = own;
+        }
         continue;
       }
       if (!anyPack(item.packId)) continue;
@@ -3781,6 +3824,7 @@ export function launchBar() {
     lbPicked = 0;
     forgetTyped();
     lbSlots = slots;
+    night.roundSet = roundSet;
     /*
      * THE VENUE IS LEFT OPEN, whatever the show carries — see the note on
      * `tonightAsShow()`. Loading a saved night leaves `lbVenue` alone, so

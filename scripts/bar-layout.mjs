@@ -101,9 +101,9 @@ try {
       go.scrollIntoView({ block: 'center' });
       const b = go.getBoundingClientRect();
       const hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
-      return { settings: seen('.lb-set-night'), prizes: seen('.lb-prizes'), tiles: seen('.lb-order'), launch: Boolean(hit && hit.closest('.lb-go')), h: Math.round(document.querySelector('.launchbar').getBoundingClientRect().height) };
+      return { settings: seen('.lb-set-night'), prizes: seen('.lb-prizes'), rounds: seen('.lb-rounds-set'), tiles: seen('.lb-order'), launch: Boolean(hit && hit.closest('.lb-go')), h: Math.round(document.querySelector('.launchbar').getBoundingClientRect().height) };
     });
-    check(`at ${width}px, shut hides the tiles, settings and prizes (${openH} -> ${shut.h}px)`, !shut.settings && !shut.prizes && !shut.tiles, JSON.stringify(shut));
+    check(`at ${width}px, shut hides the tiles, settings, prizes and "Each round" (${openH} -> ${shut.h}px)`, !shut.settings && !shut.prizes && !shut.rounds && !shut.tiles, JSON.stringify(shut));
     check(`at ${width}px, and Launch is still there to press`, shut.launch);
     const asked = page.waitForRequest((r) => r.url().includes('/api/host/launch') && r.method() === 'POST', { timeout: 5000 }).then(() => true, () => false);
     await page.evaluate(() => document.querySelector('.lb-go').click());

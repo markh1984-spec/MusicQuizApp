@@ -65,6 +65,7 @@ import path from 'node:path';
 import { MAX_ROUNDS } from './running-order.js';
 import { itemsOf } from '../public/assets/show-parts.js';
 import { checkStages, prizesAsked } from '../public/assets/prize-parts.js';
+import { cleanRoundSet } from '../public/assets/round-set.js';
 
 /*
  * WHICH LINES PAY, KEPT ONLY WHILE IT STILL FITS THE PRIZE COUNT BESIDE IT.
@@ -145,7 +146,10 @@ function normaliseItem(raw = {}) {
   const kind = SHOW_KINDS.includes(raw.kind) ? raw.kind : 'quiz';
   const order = (kind === 'quiz' && Array.isArray(raw.order))
     ? raw.order
-      .map((r) => ({ packId: String((r && r.packId) || ''), round: Number(r && r.round) }))
+      // A ROUND'S OWN CLOCK AND REVEAL RIDE ON ITS REFERENCE (`round-set.js`)
+      // — named here, or the whitelist drops them the way it once dropped
+      // `questionSeconds` off the show itself.
+      .map((r) => ({ packId: String((r && r.packId) || ''), round: Number(r && r.round), ...cleanRoundSet(r) }))
       .filter((r) => r.packId && Number.isInteger(r.round) && r.round >= 0)
       /*
        * THE SAME CEILING THE LAUNCH ENFORCES, imported rather than written out
