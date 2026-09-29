@@ -30,7 +30,7 @@ import { MAX_REWARDS } from './invoices.js';
  * the launch deals by, so the bar and the room cannot disagree about what
  * tonight is playing for.
  */
-import { checkStages, dealPrizes, paysOf } from '../public/assets/prize-parts.js';
+import { checkStages, dealPrizes, paysOf, prizesAsked } from '../public/assets/prize-parts.js';
 import { listQuizzes } from './quizzes.js';
 import { listBingoPacks, recordLaunch, archiveResults, updateArchivedNight, listArchive, HOUSE_ROOM } from './library.js';
 import { mergeGigs, sameVenue } from './past-gigs.js';
@@ -229,7 +229,7 @@ function normaliseSegments(segments) {
       const shape = s.shape && Number(s.shape.rows) && Number(s.shape.cols)
         ? { rows: Number(s.shape.rows), cols: Number(s.shape.cols) }
         : null;
-      const prizes = Math.max(0, Math.min(5, Number(s.prizes) || 0));
+      const prizes = prizesAsked(s.prizes);
       // Which lines pay: carried as sent and CHECKED at the part's own launch,
       // against the card that part is played on — see `launch()`.
       const stages = Array.isArray(s.stages) ? s.stages.slice(0, 5) : null;

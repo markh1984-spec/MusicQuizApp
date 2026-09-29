@@ -52,6 +52,24 @@
  */
 
 /**
+ * HOW MANY PRIZES ONE BINGO GAME MAY CARRY. The one number: the launch route,
+ * the running-order path, a saved show, `maxPrizes()` and the console all
+ * clamp through `prizesAsked()`, so a change here reaches every one of them.
+ * It was written out five times before, and two of the five had drifted apart
+ * in shape (0..5 at the route, 1..card at the session) before they had in value.
+ */
+export const MAX_PRIZES = 5;
+
+/**
+ * What the host asked for, as a count: 0 means nobody chose and the card
+ * decides (`defaultPrizes()`); anything past the cap is the cap; nonsense and
+ * negatives are 0. The SAME answer wherever a `prizes` field is read.
+ */
+export function prizesAsked(raw) {
+  return Math.max(0, Math.min(MAX_PRIZES, Math.floor(Number(raw)) || 0));
+}
+
+/**
  * Deal a venue's list to each of the night's parts — every one FROM THE TOP.
  *
  * @param {string[]} list   the venue's prizes, in the order they go out

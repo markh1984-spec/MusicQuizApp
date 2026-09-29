@@ -64,7 +64,7 @@ import path from 'node:path';
 
 import { MAX_ROUNDS } from './running-order.js';
 import { itemsOf } from '../public/assets/show-parts.js';
-import { checkStages } from '../public/assets/prize-parts.js';
+import { checkStages, prizesAsked } from '../public/assets/prize-parts.js';
 
 /*
  * WHICH LINES PAY, KEPT ONLY WHILE IT STILL FITS THE PRIZE COUNT BESIDE IT.
@@ -181,7 +181,7 @@ function normaliseItem(raw = {}) {
     && Number(raw.shape.rows) && Number(raw.shape.cols)
     ? { rows: Number(raw.shape.rows), cols: Number(raw.shape.cols) }
     : null;
-  const prizes = kind === 'bingo' ? Math.max(0, Math.min(5, Number(raw.prizes) || 0)) : 0;
+  const prizes = kind === 'bingo' ? prizesAsked(raw.prizes) : 0;
   const stages = prizes ? savedStages(raw, prizes) : null;
   return {
     kind,
@@ -245,7 +245,7 @@ export function normalise(raw = {}, now = Date.now()) {
   const shape = raw.shape && Number(raw.shape.rows) && Number(raw.shape.cols)
     ? { rows: Number(raw.shape.rows), cols: Number(raw.shape.cols) }
     : null;
-  const prizes = Math.max(0, Math.min(5, Number(raw.prizes) || 0));
+  const prizes = prizesAsked(raw.prizes);
   const stages = prizes ? savedStages(raw, prizes) : null;
 
   return {

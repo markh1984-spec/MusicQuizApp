@@ -9,6 +9,7 @@ import { packDating, photoLinkFor, roomForHost, whoIs } from './identity.js';
 import { allowed } from './gates.js';
 import { pushState, startIntroTrack } from './views.js';
 import { backUpLibraryStats, backUpReports, restoreForLaunch, seesTheirLeague } from './helpers.js';
+import { prizesAsked } from '../../public/assets/prize-parts.js';
 
 export async function writeHost(req, res, url, route) {
   if (route.startsWith('/api/host/') && req.method === 'POST') {
@@ -112,7 +113,7 @@ export async function writeHost(req, res, url, route) {
         const shape = body.shape && Number(body.shape.rows) && Number(body.shape.cols)
           ? { rows: Number(body.shape.rows), cols: Number(body.shape.cols) }
           : null;
-        const prizes = Math.max(0, Math.min(5, Number(body.prizes) || 0));
+        const prizes = prizesAsked(body.prizes);   // the one cap, shared with the running order and the console
         // Which lines each prize pays on, when the host said. Passed through as
         // sent: `session.launch()` checks it against the card actually dealt,
         // which is the only place that knows it.

@@ -23,7 +23,7 @@ import { cleanTeamName, faceKey, isSafeId, newId, newToken, newVoucherCode, owns
 import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
 import { breakNow, offersGame, offersPhotos } from '../public/assets/break-parts.js';
-import { FULL_HOUSE, defaultStages, stageWord } from '../public/assets/prize-parts.js';
+import { FULL_HOUSE, MAX_PRIZES, defaultStages, stageWord } from '../public/assets/prize-parts.js';
 
 import { noteForPlayer, notesForHost } from './notes.js';
 import { castVote, closeVote, dropVote, openVote, voteForHost, voteForPlayer, voteForScreen } from './photo-vote.js';
@@ -115,7 +115,7 @@ export function maxLineStage(shape) {
 const CLOSE_ENOUGH_TO_HOLD_BACK = 3;
 
 export function maxPrizes(shape) {
-  return Math.max(1, Math.min(5, cardLines(shape).length));
+  return Math.max(1, Math.min(MAX_PRIZES, cardLines(shape).length));
 }
 
 /** "a line", "3 lines", "a full house" — one wording, used on every screen. */
