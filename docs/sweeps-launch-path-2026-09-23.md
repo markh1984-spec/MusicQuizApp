@@ -83,10 +83,12 @@ tagged *(known)* where an agent re-confirmed them.
   "Launch again" while a venue change moves the night, the Card menu inside
   the window at 390px — `pickers-fit.mjs` — and "What they win" present on an
   empty bar). Reviewed and left as correct: removing one of two bingo tiles
-  leaves the settings row on the only bingo left. **Waiting on the host (UI
-  forks):** the gap dial over the tile's round-type line, what Hide folds,
-  dead "+" tiles once a pack is in, and sub-44px targets (menu rows 34px, the
-  tile × 30px, "open it" 42×16). The room batch (O11–O18 and every room yellow)
+  leaves the settings row on the only bingo left. **The four UI forks, chosen
+  by the host on 29 September and fixed:** the round-type words wrap before
+  the gap dial; Hide folds the tiles, settings and prizes and keeps Launch; an
+  empty slot opens the search and adds its pick there; menu rows and "open it"
+  are 44px on a touchscreen, and the tile × takes 44 while drawing 30 —
+  `bar-layout.mjs`. The room batch (O11–O18 and every room yellow)
   is merged onto `MusicQuizApp` — Back at a reveal steps back, Stop then Back
   restores, the server mints player ids, one `roundSaid()`, a lost answer puts
   the buttons back, `final-fits.mjs` plays real nights (and found
