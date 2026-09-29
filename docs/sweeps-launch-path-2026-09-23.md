@@ -86,8 +86,11 @@ tagged *(known)* where an agent re-confirmed them.
   leaves the settings row on the only bingo left. **Waiting on the host (UI
   forks):** the gap dial over the tile's round-type line, what Hide folds,
   dead "+" tiles once a pack is in, and sub-44px targets (menu rows 34px, the
-  tile × 30px, "open it" 42×16). The room batch (O11–O18) is on
-  `worktree-agent-adac48ab4101006c7`; merge it when it finishes. CLAUDE.md still needs the rules from these commits written in (it
+  tile × 30px, "open it" 42×16). The room batch (O11–O18 and every room yellow)
+  is merged onto `MusicQuizApp` — Back at a reveal steps back, Stop then Back
+  restores, the server mints player ids, one `roundSaid()`, a lost answer puts
+  the buttons back, `final-fits.mjs` plays real nights (and found
+  `fitWinner()` measuring mid-animation). CLAUDE.md still needs the rules from these commits written in (it
   is at its byte budget, so each needs a trim): the bar plays EVERY part of a
   show as tiles now, not one part with a "Then" line.
 - **R2** — fixed on 24 September: the projector payload names the question's

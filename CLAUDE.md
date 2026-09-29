@@ -352,12 +352,15 @@ issued. A bare join box with the name gone reads as being thrown out.
 The catch's comment said the buttons come back on the next update; nothing did
 that, `updateScreen()` only ever PAINTING a choice. One dropped POST cost that
 team the whole question **and told them they had answered it**. A `.picked`
-tick is left alone on a multi round, so one tap re-sends.
+tick is left alone on a multi round, so one tap re-sends. **AND ONE THE SERVER
+TOOK AND LOST TO A CRASH PUTS THEM BACK TOO** (`landed`/`streamGen` in
+`play.js`), only on a reconnected stream while the clock runs.
 
 ### 6. Bingo cards cannot be regenerated
 The card is built server-side on join and stored against the player. There is
 **no endpoint that issues a new card** and no card-generating code on the
-phone. Refresh, reopen, clear the browser, rejoin — same card. Do not add a
+phone. Refresh, reopen, rejoin with the phone's stored id — same card; a
+browser wiped of it is a new player, and **the SERVER mints every id**. Do not add a
 "new card" feature; the host asked for this explicitly to stop cheating.
 `newRound()` is the only thing that reissues, and it does everyone at once.
 
@@ -537,7 +540,7 @@ opening a second file.
 - **A VENUE'S LOGO GOES ON THE WINNER'S VOUCHER, and nowhere else** — **THE WORDS STAY THE PRIZE**, in text underneath. **Never an image with the prize written inside it.** **NOT on the projector, and that is BYTES rather than secrecy.**
 - **The room is told what it is playing for**
 - **SECOND AND THIRD ARE A PODIUM, not a caption** — **and the podium is the TOP THREE. Do not put a fourth back.**
-- **A BIG PHOTO NEVER DIMS THE JOIN CODE** — the corner sits ABOVE the photo, and the photo centres in the space BESIDE it (`padding-right` on the grid).
+- **A BIG PHOTO NEVER DIMS THE JOIN CODE** — the corner sits ABOVE the photo, the photo centres BESIDE it, and **the scrim is a layer that stops short of the code.**
 - **A photo gets the MIDDLE of the screen, not a thumbnail** — **the tilt never lands near straight**: a side is picked, 2.5° to 7° off it.
 - **Speed scoring is FLAT — 10 points a second, and it stays that way** — **Do not re-propose this.**
 - **The phone shows the answers as the projector does**
@@ -977,6 +980,8 @@ drink… perhaps you could let the crowd vote on their favourite as well?"*
 - **A FLAG, NOT A PHASE (rule 9) — BUT A MOVE SETTLES IT RATHER THAN CLEARING
   IT.** **`start()` was the move missing the call**; `advanceOrder()` settles
   first.
+- **DRAWN WHEREVER A PHONE HAS ROOM** — waiting, a reveal, a board, the
+  final; **the drink goes to the winning TABLE.**
 - **NO RUNNING TALLY ON THE WALL** — structural, `voteForScreen()` never builds
   the field. **Nor the CODE, nor any sender's player id, on any wire** (rule 3)
   — the guard sweeps the WHOLE payload.
@@ -1448,10 +1453,10 @@ rule 1 says is a rename rather than an argument:
   `Edit` — the first was the only control naming the projector that does not
   ACT on it, six inches from *Scores to the room* which does; the second was a
   bare verb whose object lived in a tooltip a phone never shows.
-- **`Change the prizes`**, and its tooltip no longer says *"takes effect from
-  the next prize onward"* — that was true once and is the reason both engines
-  were changed to pay anybody already owed. It told a host looking at a blank
-  winner's phone that the one control which fixes it would not help.
+- **`Change the prizes`**, on BOTH control views, and its sheet says **a code
+  already won changes with it unless the bar has scanned it**. The host's
+  panel names each code by `placeLabel()` — the funny drink, the draw, 4th —
+  never "1st" for all of them.
 - **AND THE NINE LAUNCH-BAR LABELS ARE NOT SHOUTED.** `text-transform:
   uppercase` on `.pack-shape` fought sentence-case markup, so the diff looked
   right on either side. Capitals are for emphasis; the rule names three
@@ -2192,7 +2197,7 @@ Hung GitHub behind the real server and drove a night. Four things waited:
 the laptop at once was two questions gone. **A MOVE sent with `seen` is
 refused (409, with the FRESH view) when the cursor has moved on; one sent
 without is never refused.** **The cursor is what a MOVE changes, never
-`version`.** `two-devices.mjs` presses both; **`wifi-blip.mjs` drops each
+`version`** — and Ask again moves it (the clock's start is in the marker). `two-devices.mjs` presses both; **`wifi-blip.mjs` drops each
 screen's network in turn and checks it against a twin that stayed online.**
 
 ### THE READY LINE IS A LIGHT, NEVER A GATE — `console-ready.js`
@@ -2652,8 +2657,9 @@ All four are ordinary presses, none of them throws, and each is on the path a
 gig actually takes.
 
 - **BACK WIPES THE QUESTION IT IS LEAVING**, exactly as `Skip` and `Ask again`
-  do — one act from three directions, and Back was the one that did not: two
-  tables kept points and the bonus for a question never played.
+  do. **BACK AT A REVEAL STEPS BACK, NEVER RE-ASKS — Ask again is the reopen**;
+  Stop then Back returns where you stopped, takes the codes back and updates
+  the filed night.
 - **A PRIZE NO LONGER OWED IS TAKEN BACK — unless it has been SPENT.**
   `issueVouchers()` only topped up, so four ordinary presses left three live
   top-prize codes on a night with two winners. **A redeemed, `draw` or
@@ -2697,7 +2703,9 @@ symptoms, all live for any team night and none of them throwing.
   THE TEAM'S SCORE IS FROZEN FOR THE LENGTH OF A QUESTION TOO**: an average
   built from live scores is the `scoreBefore` leak wearing an average.
 - **THE HOST'S PLAYING PANEL LISTS PHONES, because that is what its controls
-  act on** — a `team:` id made every control answer `{ok:false}` in silence.
+  act on** — a `team:` id made every control answer `{ok:false}` in silence;
+  **it prints `phoneCount ?? playerCount` wherever it says phones, and the
+  whole row opens the menu.**
   **The ordinary night's rows are untouched, with a test pinning the field
   list.**
 - **AND THE HOST IS TOLD WHO THE ROOM KNOWS — `whoIsThat()`.** **The handset is
@@ -3096,7 +3104,8 @@ costs.
 - **ONE CAMERA PHOTO STARTS THE NIGHT — `photoGate()` in `play.js`.** Asked for
   against *sending it is the consent*: **REVERSED knowingly**, entry being free.
   **AWKWARD, NEVER IMPOSSIBLE** — the way past is a plain line at the 44px
-  floor. **IT OWNS THE LOBBY, NOTHING ELSE.** **`camera` via
+  floor. **IT OWNS THE LOBBY, NOTHING ELSE**, and **the floating 📷 stands down
+  wherever the waiting menu already offers a photo.** **`camera` via
   `looksCameraTaken()`, which UNDER-counts and cannot OVER-count.** **The answer
   is the SERVER'S (`photoDone`), the skip the PHONE'S**, and **it is in the
   lobby's CARD KEY** — fifth sighting; without it the skip drew and did nothing.
@@ -3270,23 +3279,13 @@ saying so is correct.
 
 ### Prefer the MECHANICAL transform to the model-mediated one
 
-Learned on 14 August 2026, splitting this file, and it generalises well past
-documentation.
-
-It was called impossible in one session and then done in one: the wrong
-assumption was that every section had to be read and written out again. **A
-4,000-line move costs the same as a 40-line one when nothing reads the
-content** — a script moving whole sections by line number.
-
-So when a job looks too big, ask **"is there a version a script does and I only
-supervise?"** Moving, renaming, reordering, extracting, counting and checking
-all are. Judgement — which rule matters, what a control should be called — is
-not, and should stay slow. **A script cannot quietly reword something on the
-way through**: the hand-written half was the expensive part AND the only part
-that could have lost a rule.
-
-**And a cleanup frees nothing in the session that performs it** — this file was
-already loaded. Tidying compounds across sessions, never within one.
+Learned on 14 August 2026, splitting this file. **A 4,000-line move costs the
+same as a 40-line one when nothing reads the content.** When a job looks too
+big, ask **"is there a version a script does and I only supervise?"** —
+moving, renaming, extracting, counting and checking are; judgement is not.
+**A script cannot quietly reword something on the way through.** **A cleanup
+frees nothing in the session that performs it** — tidying compounds across
+sessions, never within one.
 
 ### "GSD mode" — Get Shit Done
 
@@ -3602,14 +3601,10 @@ Full reasoning: **[`docs/generation.md`](docs/generation.md)**.
 
 ### EVERY INTRO CUE IN THE LIBRARY HAD NO `spotifyUri`, SO THE AUTO-PLAY HAD NEVER FIRED
 
-`scripts/recue-all.mjs`. `startIntroTrack()` returns early on a cue with no
-uri, so **270 cues across every catalogue pack put the question up and played
-silence** — nothing thrown, nothing logged. **IT WALKS THE PACKS THROUGH
-`recueQuiz()` — do not write a second "find the track"**, or the console and
-the room disagree about which record is playing. **Handed the version on disk
-as `previous`**, so it only ever fills GAPS. **RUN IT LOCALLY AND COMMIT** —
-`quizDir` is the repository's own folder, so a write on Render is gone at the
-next deploy. **The misses are NAMED**, for a human, before a gig.
+`scripts/recue-all.mjs` — 270 cues played silence. **IT WALKS THE PACKS
+THROUGH `recueQuiz()` — do not write a second "find the track".** It only
+fills GAPS, **RUN IT LOCALLY AND COMMIT** (a write on Render is gone at the
+next deploy), and the misses are NAMED.
 
 ### THE PICTURES BUTTON SAYS HOW MUCH OF ROUND 2 IS DRAWN
 
@@ -3636,7 +3631,8 @@ in a night with no effect on scores, teams or tokens.
 - **THE COUNT IS WHAT SCORES** — `scoringRoundNumber()`/`scoringRoundCount()`
   exclude it, so "Round 2 of 2" stays true with a breakout between them; every
   screen says "Bonus round" instead. `roundIndex`/`roundCount` are UNCHANGED —
-  only what a screen SAYS moved.
+  only what a screen SAYS moved, **through ONE `roundSaid()` on every screen**
+  (`round-numbers.mjs`).
 - Claude can write these too (`roundBriefsFor('breakout')`), checking pass
   skipped — there is no answer for a fact-checker to check.
 
@@ -4682,6 +4678,10 @@ account is in [`docs/checks.md`](docs/checks.md):**
   are 124px in 114px of inner width. **ONE ROW, NEVER WRAPPING** — so **24px on
   the SHELF card only**; the 28px rule is the Tonight tile's, where a tick is a
   SWITCH, and is untouched.
+- **`final-fits.mjs` PLAYS REAL NIGHTS TO THE FINAL, never a hand-built
+  card** — the old one passed while `fitWinner()` measured mid-`cardIn` and a
+  projector opened at the final cut 3–5px off *Tonight's winner*. **It measures
+  in the card's own units.**
 - **A TEST THAT NEVER RUNS THE ARTEFACT PROVES NOTHING ABOUT IT.** Reading
   `server.js` as a string to check a route exists is how a broken Launch reached
   the live app, 1,150 tests green.
@@ -4737,14 +4737,9 @@ pub wifi, a projector, and the photo round trip.
 
 ## The host key rotates on every deploy unless HOST_KEY is set
 
-This locked him out of his own console, on his phone, the first time he went
-to make an account.
-
 `hostKey()` in `src/config.js` uses `HOST_KEY` when set, and otherwise
-**invents one and writes it to `data/`** — empty again after every deploy. So
-each deploy silently hands out a different key and every
-bookmark stops working, with nothing on screen saying why. The startup
-banner now says so (`hostKeyIsTemporary()`).
+**invents one and writes it to `data/`**, so every deploy breaks every
+bookmark in silence. The startup banner says so (`hostKeyIsTemporary()`).
 
 **If he says his bookmark stopped working, this is why.** The current key is in
 the Render startup banner on the `Host key:` line. The fix is the `HOST_KEY` environment
