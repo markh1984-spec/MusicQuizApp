@@ -328,11 +328,11 @@ track becomes recognisable.** That is the question's difficulty and it is the
 round. A famous four-note opening should be answerable faster than a track
 that takes a bar to declare itself.
 
-**DO NOT "fix" this by giving the intro round a longer clock.**
-`questionSeconds` is overridable per round and 25 seconds looks like it
-absorbs the dead air. It does not: scoring is the base plus seconds-remaining
-times ten, so a longer round is a round worth MORE points — the reveal-curve
-fault again, introduced deliberately this time.
+**A longer intro clock is not the dead-air fix.** `questionSeconds` is
+overridable per round and 25 seconds looks like it absorbs the dead air. Since
+29 September 2026 speed points scale to the clock (`speedPoints()`), so a
+longer round is no longer worth MORE points — but every second of silence at
+the front still costs the same share of them. Skipping the silence is the fix.
 
 Five things that are load-bearing:
 

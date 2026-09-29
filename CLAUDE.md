@@ -542,7 +542,7 @@ opening a second file.
 - **SECOND AND THIRD ARE A PODIUM, not a caption** — **and the podium is the TOP THREE. Do not put a fourth back.**
 - **A BIG PHOTO NEVER DIMS THE JOIN CODE** — the corner sits ABOVE the photo, the photo centres BESIDE it, and **the scrim is a layer that stops short of the code.**
 - **A photo gets the MIDDLE of the screen, not a thumbnail** — **the tilt never lands near straight**: a side is picked, 2.5° to 7° off it.
-- **Speed scoring is FLAT — 10 points a second, and it stays that way** — **Do not re-propose this.**
+- **Speed scoring tops out at 200 a question, SCALED to its clock — 10 a second at 20s** — `speedPoints()`. **Do not re-propose a curve.**
 - **The phone shows the answers as the projector does**
 - **…except the alphabet round, which is 5 across on the phone and 9 on the projector**
 - **An alphabet answer may never begin with "The", "A" or "An"** — **Do not soften it to a warning.**
@@ -3195,8 +3195,7 @@ costs.
 
 ### BUILD IT, DO NOT LIST IT — and configure it afterwards
 
-Set by the host on 17 August 2026, and it is a correction to how this repo had
-been working: *"I realised adding too many things to the to-do list was
+The host, 17 August 2026: *"I realised adding too many things to the to-do list was
 actually the reason that everything got so big. So what we need to do is just
 build things, and then if we don't need them, we just delete them later."*
 
@@ -3542,8 +3541,8 @@ becomes recognisable is the question's difficulty and must never be trimmed.**
   `0:00`, because only somebody who has LISTENED knows where the audio begins.
 - **The editor echoes what it understood on every keystroke.** The control
   view prints the offset only when there IS one.
-- **DO NOT "fix" this by giving the intro round a longer clock** — a longer
-  round is a round worth MORE points, which is the same fault deliberately.
+- **A LONGER INTRO CLOCK IS NOT THE DEAD-AIR FIX** — speed scales now, so it
+  pays no more, but it still charges for the silence. Skip the silence.
 - **AND A QUESTION WITH NO `spotifyUri` MUST CLEAR THE LAST ONE'S FAILURE
   NOTICE.** `room.introPlay` was only ever written inside the play's own
   `then()`, so a cue with no uri returned before it and left the previous

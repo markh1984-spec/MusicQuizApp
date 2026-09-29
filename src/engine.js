@@ -23,7 +23,7 @@
 
 import {
   scoreAnswer, scoreMultiAnswer, responseSeconds, rankPlayers, teamScores,
-  POINTS_CORRECT, POINTS_PER_WHOLE_SECOND, POINTS_FIRST_CORRECT,
+  POINTS_CORRECT, POINTS_PER_WHOLE_SECOND, POINTS_FIRST_CORRECT, SPEED_MAX, STANDARD_SECONDS,
 } from './scoring.js';
 import { ALPHABET, answerLetter, answerLetterIndex, revealMode } from './quizzes.js';
 import * as chat from './chat.js';
@@ -473,9 +473,10 @@ export class Engine {
   /*
    * A ROUND'S OWN OVERRIDE STILL WINS OVER THE NIGHT'S. `docs/engine.md`
    * already warns against giving the intro round a longer clock to "absorb
-   * the dead air" — scoring is the base plus seconds-remaining times ten, so
-   * a longer round is a round worth MORE points, silently. That is exactly
-   * why a round-level `questionSeconds` exists at all: a pack author's
+   * the dead air". Speed points SCALE to the clock now (`speedPoints()`, 29
+   * Sept 2026), so a longer round is no longer worth more — but it still
+   * makes the room wait through the silence. A round-level `questionSeconds`
+   * is a deliberate choice for THAT round: a pack author's
    * deliberate choice for THAT round. `state.questionSeconds` — the host's
    * choice for tonight, set once at launch — only replaces the PACK'S OWN
    * default, never a round that was authored with its own number.
@@ -2382,9 +2383,12 @@ export class Engine {
     // The bonus goes to the first CORRECT answer, so a fast wrong guess
     // cannot take it off the player who actually knew.
     const isFirstCorrect = correct && !Object.values(answers).some((a) => a.correct);
+    // THE QUESTION'S OWN CLOCK SCALES THE SPEED POINTS — every question tops
+    // out at the same 200 whatever its seconds (`speedPoints()`, 29 Sept 2026).
+    const seconds = s.question.seconds;
     const points = isMulti
-      ? scoreMultiAnswer({ gotRight, totalCorrect: right.size, answeredAt: at, endsAt: s.question.endsAt, isFirstCorrect })
-      : scoreAnswer({ correct, answeredAt: at, endsAt: s.question.endsAt, isFirstCorrect });
+      ? scoreMultiAnswer({ gotRight, totalCorrect: right.size, answeredAt: at, endsAt: s.question.endsAt, isFirstCorrect, seconds })
+      : scoreAnswer({ correct, answeredAt: at, endsAt: s.question.endsAt, isFirstCorrect, seconds });
     const responseMs = Math.max(0, at - s.question.startedAt);
 
     answers[playerId] = {
@@ -2711,9 +2715,18 @@ export class Engine {
    * back.
    */
   rulesView() {
+    /*
+     * "+10 A SECOND" IS ONLY TRUE AT 20 SECONDS — speed points scale to the
+     * clock (`speedPoints()`, 29 Sept 2026), so a night with any other clock
+     * says the MOST it pays instead. Every round, because a round's own
+     * seconds beat the night's.
+     */
+    const standard = (this.quiz.rounds || []).every((_, ri) => this.questionSeconds(ri) === STANDARD_SECONDS);
     const scoring = [
       { big: `${POINTS_CORRECT}`, text: 'for a correct answer' },
-      { big: `+${POINTS_PER_WHOLE_SECOND}`, text: 'for every whole second left on the clock — answer fast' },
+      standard
+        ? { big: `+${POINTS_PER_WHOLE_SECOND}`, text: 'for every whole second left on the clock — answer fast' }
+        : { big: `+${SPEED_MAX}`, text: 'at most for speed — it counts down with the clock, so answer fast' },
       { big: `+${POINTS_FIRST_CORRECT}`, text: 'for the first correct answer in' },
     ];
 

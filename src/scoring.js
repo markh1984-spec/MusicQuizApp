@@ -4,7 +4,9 @@
  *
  * The rules, exactly as specified:
  *   - 100 points for a correct answer
- *   - plus 10 points for every WHOLE second left on the clock when they answered
+ *   - plus speed points for every WHOLE second left on the clock when they
+ *     answered — 10 a second on a 20-second question, and SCALED on any
+ *     other length so every question tops out at the same 200 (`speedPoints()`)
  *   - plus a 100 point bonus for the FIRST CORRECT answer of that question
  *
  * A fast wrong answer must never take the first-correct bonus, otherwise
@@ -14,6 +16,27 @@
 export const POINTS_CORRECT = 100;
 export const POINTS_PER_WHOLE_SECOND = 10;
 export const POINTS_FIRST_CORRECT = 100;
+/*
+ * SPEED POINTS SCALE TO THE CLOCK — the host, 29 September 2026, when seconds
+ * per ROUND arrived: at a flat ten a second a 30-second intros round was worth
+ * half as much speed again as a 20-second one. *"Just divide the time into
+ * smaller chunks so its 200 points over 30 seconds = 6.66 points per
+ * second."* REVERSES "speed scoring is flat — 10 points a second", on his
+ * word. Every pack on disk is 20 seconds, where the answer is unchanged.
+ */
+export const STANDARD_SECONDS = 20;
+export const SPEED_MAX = POINTS_PER_WHOLE_SECOND * STANDARD_SECONDS;
+
+/**
+ * The speed half of a score: `SPEED_MAX` over the question's own clock,
+ * counted in whole seconds left and rounded once. With no clock length (an
+ * answer recorded before it was passed) it is ten a second, as it was.
+ */
+export function speedPoints(answeredAt, endsAt, seconds) {
+  const left = wholeSecondsRemaining(answeredAt, endsAt);
+  if (!(seconds > 0)) return POINTS_PER_WHOLE_SECOND * left;
+  return Math.round((SPEED_MAX * Math.min(left, seconds)) / seconds);
+}
 
 /**
  * Whole seconds left on the clock at the moment the answer landed.
@@ -33,13 +56,14 @@ export function wholeSecondsRemaining(answeredAt, endsAt) {
  * @param {number}  a.answeredAt     server timestamp (ms) the answer landed
  * @param {number}  a.endsAt         server timestamp (ms) the clock runs out
  * @param {boolean} a.isFirstCorrect is this the first correct answer of the question
+ * @param {number}  [a.seconds]      the question's own clock, which scales the speed points
  * @returns {number} points, always an integer >= 0
  */
-export function scoreAnswer({ correct, answeredAt, endsAt, isFirstCorrect = false }) {
+export function scoreAnswer({ correct, answeredAt, endsAt, isFirstCorrect = false, seconds }) {
   if (!correct) return 0;
   return (
     POINTS_CORRECT +
-    POINTS_PER_WHOLE_SECOND * wholeSecondsRemaining(answeredAt, endsAt) +
+    speedPoints(answeredAt, endsAt, seconds) +
     (isFirstCorrect ? POINTS_FIRST_CORRECT : 0)
   );
 }
@@ -65,10 +89,10 @@ export function scoreAnswer({ correct, answeredAt, endsAt, isFirstCorrect = fals
  * @param {boolean} a.isFirstCorrect  first player to get the whole set
  * @returns {number} points, always an integer >= 0
  */
-export function scoreMultiAnswer({ gotRight, totalCorrect, answeredAt, endsAt, isFirstCorrect = false }) {
+export function scoreMultiAnswer({ gotRight, totalCorrect, answeredAt, endsAt, isFirstCorrect = false, seconds }) {
   if (!(totalCorrect > 0) || !(gotRight > 0)) return 0;
   const share = Math.min(1, gotRight / totalCorrect);
-  const earned = POINTS_CORRECT + POINTS_PER_WHOLE_SECOND * wholeSecondsRemaining(answeredAt, endsAt);
+  const earned = POINTS_CORRECT + speedPoints(answeredAt, endsAt, seconds);
   return Math.round(share * earned) + (share === 1 && isFirstCorrect ? POINTS_FIRST_CORRECT : 0);
 }
 
