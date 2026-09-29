@@ -111,6 +111,34 @@ try {
     check(`at ${width}px, nothing threw`, errors.length === 0, errors.join(' | '));
     await close();
   }
+
+  console.log('\n3 · AN EMPTY SLOT OPENS THE SEARCH, AND WHAT YOU PICK IS ADDED');
+  // Once a pack was in, the empty squares were drop targets only: a dashed
+  // "+" with a pointer cursor that did nothing when tapped, and HTML5 drag
+  // never fires on a phone. The host's pick, 29 Sept: a tap opens the same
+  // search an empty night opens, and a pick ADDS to the night.
+  for (const width of [1280, 390]) {
+    const { page, errors, close } = await barWith('2006', { width });
+    const before = await page.evaluate(() => ({
+      empties: document.querySelectorAll('.lb-tile.mix-drop').length,
+      buttons: [...document.querySelectorAll('.lb-tile.mix-drop')].filter((n) => n.tagName === 'BUTTON').length,
+      said: [...document.querySelectorAll('.lb-tile.mix-drop')].map((n) => (n.textContent || '').replace(/\s+/g, ' ').trim()),
+    }));
+    check(`at ${width}px, ${before.empties} empty slots, every one a button`, before.empties > 0 && before.buttons === before.empties, JSON.stringify(before));
+    check(`at ${width}px, the first says "Tap to add" and the rest do not`, /Tap to add/.test(before.said[0] || '') && before.said.slice(1).every((t) => !/Tap to add/.test(t)), JSON.stringify(before.said));
+    await page.locator('.lb-tile.mix-drop').first().click();
+    await wait(400);
+    const opened = await page.evaluate(() => ({ find: Boolean(document.querySelector('.lb-find')?.getClientRects().length), focused: document.activeElement?.classList.contains('lb-text') }));
+    check(`at ${width}px, tapping it opens the pack search, ready to type`, opened.find && opened.focused, JSON.stringify(opened));
+    await page.evaluate(() => { const t = document.querySelector('.lb-text'); t.value = 'madonna'; t.dispatchEvent(new Event('input', { bubbles: true })); });
+    await wait(400);
+    await page.evaluate(() => document.querySelector('.lb-hit')?.click());
+    await wait(1200);
+    const after = await page.evaluate(() => [...document.querySelectorAll('.lb-tile.is-pack')].map((n) => n.getAttribute('title') || ''));
+    check(`at ${width}px, the pick is ADDED — both packs are in the night`, after.some((t) => /2006/.test(t)) && after.some((t) => /madonna/i.test(t)), JSON.stringify(after));
+    check(`at ${width}px, nothing threw`, errors.length === 0, errors.join(' | '));
+    await close();
+  }
 } finally {
   if (browser) await browser.close();
   await stop();

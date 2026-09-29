@@ -8508,6 +8508,9 @@ body.wearing-hat .topbar { border-bottom-color: rgba(255, 210, 63, 0.5); }
   border: 2px dashed var(--panel-line); background: none; color: var(--ink-dim);
   font-weight: 800; cursor: pointer;
 }
+/* And it answers a pointer like the empty night's does, because it is a
+   button now: a tap opens the pack search (29 Sept 2026). */
+.lb-tile.mix-drop:hover, .lb-tile.mix-drop:focus-visible { border-color: var(--hot); color: var(--ink); outline: none; }
 .lb-tile.mix-drop.drop-here { border-color: var(--hot); color: var(--ink); background: rgba(255, 46, 136, 0.08); }
 /* The ORDINARY row's empty slot lights the same way, because it now takes the
    same thing. It had no dragover of its own at all, so nothing happened as a

@@ -1286,6 +1286,15 @@ export function launchBar() {
    * contents here would put four packs under "198" because one of them has a
    * question about 1984.
    */
+  /* WHERE A PICK FROM THE SEARCH GOES when an empty slot opened it — the
+     slot's index, or null for the ordinary "this is tonight's pack". */
+  let searchAddsAt = null;
+  const openSearchToAdd = (at) => {
+    searchAddsAt = at;
+    const find = el.querySelector('.lb-find');
+    find.hidden = false;
+    text.focus();
+  };
   const paintHits = () => {
     const q = text.value.trim().toLowerCase();
     const list = q ? gameOf().packs.filter((p) => (p.title || '').toLowerCase().includes(q)).slice(0, 6) : [];
@@ -1296,6 +1305,17 @@ export function launchBar() {
       // into a tile per round like every other pack (it did not — one of the
       // ways into R7). A different pack starts the night again, as pick() does.
       row.addEventListener('click', () => {
+        // OPENED FROM AN EMPTY SLOT, A PICK IS ADDED THERE — the slot said
+        // "Tap to add", and starting the night again would throw away every
+        // tile already in it.
+        if (searchAddsAt !== null) {
+          const at = searchAddsAt;
+          searchAddsAt = null;
+          text.value = '';
+          el.querySelector('.lb-find').hidden = true;
+          addPackToNight(p, gameOf().id, at);
+          return;
+        }
         if (currentPack && currentPack.id !== p.id) dropPack(0);
         addPackToNight(p, gameOf().id);
       });
@@ -2700,6 +2720,7 @@ export function launchBar() {
       refuse: tooLong,   // a drop on an EMPTY tile went round the round ceiling
       picked: lbPicked,
       onPick: (at) => { lbPicked = at; paintOrder(); },
+      onEmptyTap: openSearchToAdd,
     });
     paintGaps();
     /* THE DIAL GOES ON A MIXED TILE TOO, added after `renderSlots()` built
@@ -3097,6 +3118,7 @@ export function launchBar() {
          * `pick()`, so the two cannot drift.
          */
         const find = el.querySelector('.lb-find');
+        searchAddsAt = null;
         find.hidden = !find.hidden;
         if (!find.hidden) text.focus();
       });

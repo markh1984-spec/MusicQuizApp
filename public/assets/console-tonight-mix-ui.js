@@ -47,6 +47,8 @@ export function renderSlots(slots, {
   // fourteen tiles and the server sliced it to twelve with nothing said.
   refuse = () => false,
   picked = -1, onPick = () => {},
+  // A TAP ON AN EMPTY SLOT — the bar opens its pack search, adding at `at`.
+  onEmptyTap = () => {},
 }) {
   const el = node('<div class="lb-tiles"></div>');
   let roundDrag = null; // { packId, round } while a round dot is being lifted
@@ -361,30 +363,29 @@ export function renderSlots(slots, {
   }
 
   /*
-   * AN EMPTY SLOT IS A DROP TARGET, NOT A BUTTON — and it used to say it was.
+   * AN EMPTY SLOT IS A BUTTON NOW, BECAUSE IT DOES SOMETHING — a tap opens the
+   * same pack search an empty night opens, and what is picked there is ADDED.
    *
-   * It carried `role="button"` and `tabindex="0"`, so it was announced as a
-   * control and could be tabbed to and pressed with Enter — and pressing it
-   * did nothing at all, on a mouse, a keyboard and by construction on a
-   * touchscreen, because a slot has no tap action to have. The rule this file
-   * already follows is that a tile lights up ONLY where the drop will be
-   * taken, precisely so a control never promises something it will not do;
-   * announcing an inert square as a button is that promise made in words.
+   * It was a drop target only, and said so on purpose: it had carried
+   * `role="button"` while pressing it did nothing, and announcing an inert
+   * square as a button is a promise made in words. But the square still drew
+   * a "+" and a pointer, so it went on making that promise in pictures, and
+   * a phone — where HTML5 drag never fires — had no way to use it at all.
+   * *Every drag needs its tap.* The host's pick, 29 September 2026: make it
+   * do what it looks like, rather than make it look like less.
    *
-   * The way a slot is filled without a drag is unchanged and is on the PACK
-   * CARD: tapping one puts it in the next free slot, which is the half that
-   * works on a phone where HTML5 drag never fires at all.
-   *
-   * The label goes on the element instead, so a screen reader still says what
-   * the square is for rather than nothing.
+   * THE FIRST EMPTY SLOT SAYS "Tap to add"; the others keep the "+". Six
+   * identical instructions is not teaching — the empty night's own rule.
    */
-  function emptyTile(at) {
+  function emptyTile(at, first) {
     const tile = node(`
-      <div class="lb-tile mix-drop" aria-label="Slot ${at + 1} — drop a round or a pack here"
-           title="Drop a round or a pack here">
+      <button class="lb-tile mix-drop" type="button" aria-label="Slot ${at + 1} — tap to add a pack, or drop a round here"
+           title="Tap to add a pack, or drop a round here">
         <span class="lb-tile-n is-empty">${at + 1}</span>
         <span class="lb-drop-plus" aria-hidden="true">+</span>
-      </div>`);
+        ${first ? '<span class="tiny">Tap to add</span>' : ''}
+      </button>`);
+    tile.addEventListener('click', () => onEmptyTap(at));
     wireDropTarget(tile, at);
     return tile;
   }
@@ -504,6 +505,7 @@ export function renderSlots(slots, {
     return tile;
   }
 
-  shown.forEach((slot, at) => el.appendChild(slot ? filledTile(slot, at) : emptyTile(at)));
+  const firstEmpty = shown.findIndex((slot) => !slot);
+  shown.forEach((slot, at) => el.appendChild(slot ? filledTile(slot, at) : emptyTile(at, at === firstEmpty)));
   return el;
 }
