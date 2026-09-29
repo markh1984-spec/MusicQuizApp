@@ -39,6 +39,9 @@ try {
   const mk = await (await fetch(`${BASE}/api/invoices/customers`, { method: 'POST', headers: H, body: JSON.stringify({ name: 'The Honest Arms' }) })).json();
   const venue = (mk.customers || []).find((c) => c.name === 'The Honest Arms');
   if (venue) await fetch(`${BASE}/api/invoices/customers/${encodeURIComponent(venue.id)}/rewards`, { method: 'PUT', headers: H, body: JSON.stringify({ rewards: ['Pint', 'Half', 'Crisps'], usualNight: 'thu' }) });
+  const mk2 = await (await fetch(`${BASE}/api/invoices/customers`, { method: 'POST', headers: H, body: JSON.stringify({ name: 'The Other Arms' }) })).json();
+  const other = (mk2.customers || []).find((c) => c.name === 'The Other Arms');
+  if (other) await fetch(`${BASE}/api/invoices/customers/${encodeURIComponent(other.id)}/rewards`, { method: 'PUT', headers: H, body: JSON.stringify({ rewards: ['Wine'] }) });
 
   browser = await chromium.launch();
   const context = await browser.newContext({ viewport: { width: 1400, height: 1000 } });
@@ -73,6 +76,24 @@ try {
   await wait(2500);
   const up = await line();
   check('the line says this one after the tap', /this one$/.test(up.text) && !up.warn, JSON.stringify(up));
+
+  console.log('\nANOTHER PUB PICKED OVER AN EMPTY NIGHT — it moves, and the line says so');
+  // Nobody has joined, so chooseVenue() relaunches quietly under the new pub.
+  // The line must then read "this one", never "filed under The Honest Arms".
+  await p.evaluate(async (v) => {
+    document.querySelector('.lb-where')?.click();
+    await new Promise((r) => setTimeout(r, 400));
+    [...document.querySelectorAll('.lb-venues button')].find((x) => x.textContent.includes(v))?.click();
+  }, 'The Other Arms');
+  // SAMPLED WHILE IT MOVES, not only after: for three quarters of a second
+  // the new bar read the old pub and told the host to Launch again.
+  const seen = [];
+  for (let i = 0; i < 12; i += 1) { await wait(250); const l = await line(); if (l.warn) seen.push(`${(i + 1) * 250}ms: ${l.text}`); }
+  check('no moment while it moves tells the host to Launch again', seen.length === 0, seen[0] || '');
+  const roomVenue = ((await (await fetch(`${BASE}/api/library`, { headers: H })).json()).running || {}).venue || '';
+  const moved = await line();
+  check('the room moved to the other pub', roomVenue === 'The Other Arms', roomVenue);
+  check('and the line says this one, not "filed under" the old pub', /this one$/.test(moved.text) && !moved.warn, JSON.stringify(moved));
 
   console.log('\nWINNERS 1 AFTER THE TAP — the room has not moved');
   const keyBefore = await keyUp();

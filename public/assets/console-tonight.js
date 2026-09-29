@@ -23,7 +23,7 @@ import {
  * venue's list by the same two functions, so the bar and the room cannot
  * disagree about what tonight is playing for.
  */
-import { checkStages, dealPrizes, paysOf, stageWord } from './prize-parts.js';
+import { checkStages, dealPrizes, paysOf, prizesAsked, stageWord } from './prize-parts.js';
 import { renderSlots } from './console-tonight-mix-ui.js';
 import { bindPrizeTable, prizeNote, prizeParts, prizeTableInto, prizesTonight, venueRewards } from './console-prizes.js';
 import { lastNightWarning, noPrizesReason, venuePrizeWarning } from './console-warnings.js'; import { readyLine } from './console-ready.js';
@@ -150,6 +150,9 @@ let tonightOpen = localStorage.getItem(TONIGHT_STORE) !== '0';
  */
 let lbVenue = null;
 let lbVenueOpen = false;
+// THE PUB A QUIET RELAUNCH IS MOVING THE NIGHT TO, while it is in flight — so
+// the line does not say "Launch again to move it" about a move under way.
+let venueMoving = null;
 
 /*
  * IN THE ROOM, OR ONLINE — up in the head, beside the venue.
@@ -1223,7 +1226,11 @@ export function launchBar() {
     paintOrder();
     const running = (library && library.running) || {};
     if (currentPack && running.packId === currentPack.id) {
-      switchIfFree(currentPack, gameOf().id);
+      // The render below builds a NEW bar before the relaunch answers, so its
+      // answer landed on the old, detached one; the new bar read the old pub
+      // and told the host to Launch again. Held while it moves, then redrawn.
+      venueMoving = lbVenue;
+      switchIfFree(currentPack, gameOf().id).finally(() => { venueMoving = null; renderKeepingPlace(); });
     }
     /*
      * AND THE SHELF BELOW, which is now RANKED on this answer.
@@ -1682,7 +1689,8 @@ export function launchBar() {
      */
     const runVenue = String(running.venue || '').trim();
     const barVenue = String(lbVenue == null ? runVenue : lbVenue).trim();
-    const venueDiffers = Boolean(lbVenue != null && barVenue.toLowerCase() !== runVenue.toLowerCase());
+    const venueDiffers = Boolean(lbVenue != null && barVenue.toLowerCase() !== runVenue.toLowerCase()
+      && !(venueMoving != null && venueMoving === lbVenue));
     liveEl.classList.toggle('lb-warn', packDiffers || venueDiffers || edited);
     liveEl.textContent = !currentPack
       ? `On the big screen now: ${title}`
@@ -3723,7 +3731,7 @@ export function launchBar() {
          only the show-level pair, which is what it played. A deck takes neither. */
       const bingo = item.kind === 'bingo';
       const shape = bingo ? (item.shape || show.shape) : null;
-      const prizes = bingo ? Math.max(0, Math.min(5, Number(item.prizes) || Number(show.prizes) || 0)) : 0;
+      const prizes = bingo ? prizesAsked(Number(item.prizes) || show.prizes) : 0;
       const lines = bingo ? (Number(item.prizes) ? item.stages : show.stages) : null;
       slots.push({
         kind: item.kind,
@@ -3774,7 +3782,7 @@ export function launchBar() {
     const wantShape = show.shape;
     night.shape = (wantShape && wantShape.rows && wantShape.cols)
       ? { rows: Number(wantShape.rows), cols: Number(wantShape.cols) } : null;
-    night.prizes = Math.max(0, Math.min(5, Number(show.prizes) || 0));
+    night.prizes = prizesAsked(show.prizes);
     night.stages = Array.isArray(show.stages) && show.stages.length === night.prizes ? show.stages.slice() : null;
     /*
      * WHAT HAPPENS IN THE GAPS — restored, and it is one of the things a show
