@@ -3817,8 +3817,7 @@ having a nights section."*
   the bar.
 - **A LOADED SHOW IS EVERY PART AS TILES, AND LAUNCH SENDS THE TILES** (`paintThen()` is gone). A part's own card, count, lines
   and drinks beat the show's. **Its Secs/Sound/Playing/Winners repaint at
-  once, FACE as well as value** — `refreshPicks(el)` takes the root; bare, it
-  is a no-op.
+  once** (`paintNightPicks()`).
 - **IT STORES REFERENCES AND NEVER COPIES** — rule 11.
 - **IT IS NOT A GATE AND MUST NEVER BECOME ONE.** The launch re-checks the
   tier, the packs and the lobby game.

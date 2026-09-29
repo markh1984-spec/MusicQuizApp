@@ -82,6 +82,13 @@ try {
   const named = await page.evaluate(() => import('/assets/console.js')
     .then((m) => [...(m.GAME_KINDS || [])].sort()).catch(() => ['COULD NOT READ GAME_KINDS']));
   check('the game picker offers exactly the console\'s own GAME_KINDS', kinds.sort(), named);
+  // AND ITS NAME DOES NOT COUNT THEM. "Quiz or bingo" over three games named
+  // two, on the picker that exists to choose between all of them.
+  const said = await page.evaluate(() => {
+    const sel = document.querySelector('.launchbar select.lb-game');
+    return sel ? `${sel.getAttribute('aria-label')} | ${sel.title}` : '';
+  });
+  check(`  ...and its name does not say "quiz or bingo" (${said})`, /quiz or (the )?bingo/i.test(said), false);
 
   /*
    * AND EVERY ONE OF THEM IS ASKED OF THE SERVER, rather than trusted to a
@@ -187,8 +194,10 @@ try {
       secs: document.querySelector('.seconds-pick')?.value,
       // THE FACE TOO: the popover skin repaints only when asked (`refreshPicks(el)`), and a select's value can be right under a face still saying 3.
       face: (document.querySelector('.winners-pick')?.closest('.pick')?.querySelector('.pick-word')?.textContent || '').trim(),
+      // What the face SHOULD read: the chosen option's own (short) label.
+      want: (() => { const o = document.querySelector('.winners-pick')?.selectedOptions[0]; return o ? (o.dataset.short || o.textContent).trim() : ''; })(),
     }));
-    check(`  ...and Winners and Secs per Q show the show's own, on the face as well (${JSON.stringify(picks)})`, picks.winners === '1' && String(picks.secs) === '30' && picks.face === '1', true);
+    check(`  ...and Winners and Secs per Q show the show's own, on the face as well (${JSON.stringify(picks)})`, picks.winners === '1' && String(picks.secs) === '30' && picks.face === picks.want, true);
     await page.evaluate(async (v) => {
       document.querySelector('.lb-where')?.click();
       await new Promise((r) => setTimeout(r, 400));

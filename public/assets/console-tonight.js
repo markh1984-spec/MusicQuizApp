@@ -786,7 +786,7 @@ export function launchBar() {
            HTML5 drag does not fire on touch AT ALL, so a drag-only bar is a
            dead panel on a phone: tapping the dotted cutout opens this. -->
       <div class="lb-find" hidden>
-        ${games.length > 1 ? `<select class="lb-game" aria-label="Quiz or bingo" title="What you are running tonight — a quiz or the bingo">
+        ${games.length > 1 ? `<select class="lb-game" aria-label="Which game" title="Which game you are running tonight">
           ${games.map((g) => `<option value="${esc(g.id)}">${esc(g.label)}</option>`).join('')}
         </select>` : ''}
         <div class="lb-search">
