@@ -1141,15 +1141,38 @@ export class Accounts {
       // than the grant having one fixed end whatever they do.
       expiresAt: new Date(at + span * 60_000).toISOString(),
       log: (account.support && account.support.log) || [],
+      // Who has come in stays across a confirm ("still need help") and is
+      // dropped by a fresh open, so a new grant is a new arrival.
+      inside: this.supportOpen(id) ? (account.support.inside || '') : '',
     };
     this.save();
     return safe(account);
   }
 
+  /**
+   * WHO IS INSIDE ON THIS GRANT — so an arrival is checked against the room
+   * and written to the log ONCE, whether the button or a hand-set cookie
+   * brought it. On the grant rather than in memory: the door shutting clears
+   * it, and a restart does not turn a session already inside into a second
+   * arrival. Empty once the door is shut or the grant has run out.
+   */
+  inside(id) {
+    const account = this.find(id);
+    return (this.supportOpen(id) && account.support.inside) || '';
+  }
+
+  markInside(id, who) {
+    const account = this.find(id);
+    if (!account || !account.support) return false;
+    account.support.inside = String(who || '');
+    this.save();
+    return true;
+  }
+
   closeSupport(id) {
     const account = this.find(id);
     if (!account || !account.support) return null;
-    account.support = { ...account.support, expiresAt: new Date(this.now()).toISOString() };
+    account.support = { ...account.support, expiresAt: new Date(this.now()).toISOString(), inside: '' };
     this.save();
     return safe(account);
   }

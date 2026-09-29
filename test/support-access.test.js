@@ -161,8 +161,14 @@ test('server.js has no way into an account except your own or an open door', () 
   const server = serverSource();
   const branch = server.match(/const mine = hat[\s\S]{0,600}?\n\s*if \(hat &&[^\n]*\)/);
   assert.ok(branch, 'the acting branch in whoIs has been restructured — re-read this test');
-  assert.match(branch[0], /accounts\.supportOpen\(hat\.id\)/,
+  // Somebody else's account goes THROUGH THE DOOR — `enterSupport()`, the one
+  // way in for the button and a cookie alike — and the door checks the grant
+  // before anything else.
+  assert.match(branch[0], /enterSupport\(account, hat\)/,
     'support access is not checked on the way in');
+  const door = server.slice(server.indexOf('function enterSupport('), server.indexOf('function leaveSupport('));
+  assert.match(door, /^\s*if \(!accounts\.supportOpen\(them\.id\)\)/m,
+    'enterSupport() does not check the grant first');
   assert.match(branch[0], /hat\.ownedBy === account\.id/,
     'the own-hat check has gone, so any owner could act as anyone');
 });

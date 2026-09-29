@@ -2,9 +2,9 @@
  * WRITE ROUTES — owner. Moved whole out of `handleWrite()` in server.js;
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
-import { FEATURES, TIERS, accounts, photosRepoConfigured, randomBytes, reports, rooms, spend } from './context.js';
+import { FEATURES, TIERS, accounts, photosRepoConfigured, randomBytes, reports, spend } from './context.js';
 import { isHostKey, readJson, sendJson } from './plumbing.js';
-import { ACTING_COOKIE, SESSION_COOKIE, TIER_COOKIE, cookie, cookieFor, refuseBreached, roomForHost } from './identity.js';
+import { ACTING_COOKIE, SESSION_COOKIE, TIER_COOKIE, cookie, cookieFor, enterSupport, leaveSupport, refuseBreached, roomForHost } from './identity.js';
 import { allowed } from './gates.js';
 import { pushState } from './views.js';
 import { backUpAccounts, backUpReports, backUpSpend, subscriberList, within } from './helpers.js';
@@ -40,6 +40,7 @@ export async function writeOwner(req, res, url, route) {
     const body = await readJson(req);
 
     if (body.on === false) {
+      leaveSupport(cookie(req, ACTING_COOKIE));
       // Both cookies. A preview tier left behind would silently apply the next
       // time the hat went on, which is exactly the kind of thing that has you
       // hunting for a bug in the app rather than in your own session.
@@ -85,27 +86,11 @@ export async function writeOwner(req, res, url, route) {
       if (!them || them.role !== 'quizmaster') {
         return sendJson(res, 404, { error: 'No such quizmaster.' }), true;
       }
-      if (!accounts.supportOpen(them.id)) {
-        return sendJson(res, 403, {
-          error: 'They have not let you in. Ask them to switch support access on from their account page — it is theirs to grant and it expires on its own.',
-        }), true;
-      }
-      /*
-       * `busy`, not `live` — and the difference is forty people.
-       *
-       * `live` means "past the lobby", so a room with forty players sitting in
-       * a lobby with their team names typed in did not count as a night in
-       * progress and support access was let straight in. The launch guard uses
-       * the opposite standard (any joined player counts, lobby or not), and two
-       * guards with two definitions of "somebody is mid-night" is how one of
-       * them quietly becomes wrong.
-       */
-      if (rooms.get(them.id).busy) {
-        return sendJson(res, 409, {
-          error: 'They have a game up with people in it. Support access waits until the night is over — going in mid-round is one mis-tap from ending it.',
-        }), true;
-      }
-      accounts.noteSupport(them.id, `${me.name || me.email} came in`);
+      // The grant, the room and the "came in" line — `enterSupport()`, which a
+      // hand-set cookie goes through as well. `busy`, not `live`: forty people
+      // in a lobby are a night in progress, the launch guard's own standard.
+      const entry = enterSupport(me, them);
+      if (!entry.ok) return sendJson(res, entry.status, { error: entry.error }), true;
       await backUpAccounts();
       res.setHeader('Set-Cookie', cookieFor(req, ACTING_COOKIE, them.id));
       return sendJson(res, 200, {

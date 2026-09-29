@@ -142,7 +142,8 @@ export function whoIs(req, url) {
      * `test/support-access.test.js` is named after it.
      */
     const mine = hat && hat.ownedBy === account.id;
-    const invited = hat && accounts.supportOpen(hat.id);
+    // Somebody else's: THROUGH THE DOOR, cookie or button alike — see `enterSupport()`.
+    const invited = hat && hat.role === 'quizmaster' && !mine && enterSupport(account, hat).ok;
     if (hat && hat.role === 'quizmaster' && (mine || invited)) {
       const wearing = {
         ...hat,
@@ -197,6 +198,36 @@ export function whoIs(req, url) {
     }
   }
   return effective(account);
+}
+
+/**
+ * COMING IN THROUGH A SUBSCRIBER'S DOOR IS ONE FUNCTION, whether the support
+ * button knocked or a cookie did. The button checked the grant, refused a
+ * room with people in it and wrote "<owner> came in"; a hand-set `mmm_acting`
+ * cookie skipped the room and the line, `whoIs()` checking the grant alone.
+ * Every arrival is the same three steps now, and an arrival is ONCE per
+ * grant (`accounts.inside()`): the cookie the button issued is not a second
+ * one, and neither is the next request. A refusal is worded for the button,
+ * which answers it; on the cookie path the hat simply stays off.
+ */
+export function enterSupport(me, them) {
+  if (!accounts.supportOpen(them.id)) {
+    return { ok: false, status: 403, error: 'They have not let you in. Ask them to switch support access on from their account page — it is theirs to grant and it expires on its own.' };
+  }
+  if (accounts.inside(them.id) === me.id) return { ok: true, again: true };
+  // `busy`, not `live` — forty people in a lobby are a night in progress.
+  if (rooms.get(them.id).busy) {
+    return { ok: false, status: 409, error: 'They have a game up with people in it. Support access waits until the night is over — going in mid-round is one mis-tap from ending it.' };
+  }
+  accounts.noteSupport(them.id, `${me.name || me.email} came in`);
+  accounts.markInside(them.id, me.id);
+  backUpAccounts().catch(() => {});   // the log is the promise; a late backup is said elsewhere
+  return { ok: true };
+}
+
+/** The hat comes off on purpose: the next time in, by button or by hand, is a new arrival. */
+export function leaveSupport(themId) {
+  if (themId) accounts.markInside(themId, '');
 }
 
 /**
