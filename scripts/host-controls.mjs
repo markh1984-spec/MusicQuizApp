@@ -268,6 +268,28 @@ try {
       if (!ok) fails += 1;
       console.log(`  ${ok ? 'ok  ' : 'FAIL'} after the first win the button reads "${label.trim()}"`);
     }
+    /*
+     * THE PRIZE SHEET SAYS WHAT ITS SAVE DOES. The button's tooltip was put
+     * right when both engines began paying anybody already owed; the sheet it
+     * opens went on saying *"one already given stays as it was"* — the line a
+     * host reads while looking at a winner's blank phone, telling them the fix
+     * will not reach it (launch-path sweep, 23 September 2026). Opened through
+     * the real button, on both engines.
+     */
+    if (phase === 'lobby') {
+      const says = await page.evaluate(async () => {
+        const b = [...document.querySelectorAll('button')].find((x) => x.textContent.trim() === 'Change the prizes');
+        if (!b) return null;
+        b.click();
+        await new Promise((r) => setTimeout(r, 300));
+        const sheet = document.querySelector('.rw-pop');
+        const text = sheet ? sheet.innerText.replace(/\s+/g, ' ') : '';
+        if (sheet) sheet.querySelector('#rwClose').click();
+        return text;
+      });
+      ok(says !== null && /already won/i.test(says) && !/already given stays|next prize handed out/i.test(says),
+        'the prize sheet says a code already won changes with it', says === null ? 'no Change the prizes button' : says.slice(0, 200));
+    }
     const controls = await controlsHere();
     let pressed = 0;
     for (const c of controls) {

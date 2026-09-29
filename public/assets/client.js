@@ -964,12 +964,22 @@ export function rewardsEditorPopover(s, act) {
    * come back to change a prize later in the night.
    */
   document.querySelectorAll('.rw-pop').forEach((old) => old.remove());
+  /*
+   * THE LINE UNDER THE HEADING SAYS WHAT SAVE DOES — and for weeks it said the
+   * opposite: *"one already given stays as it was"*. Both engines pay anybody
+   * already owed now (`setRewards()`), updating a code in place unless the bar
+   * has scanned it, and the button's own tooltip was put right when they
+   * changed. This sentence was not, so a host looking at a winner's blank
+   * phone read that the one control which fixes it would not reach them
+   * (launch-path sweep, 23 September 2026). `host-controls.mjs` opens the
+   * real sheet and reads it.
+   */
   const rows = (s.rewards && s.rewards.length ? s.rewards : ['']).slice();
   const el = node(`
     <div class="panel rw-pop" style="position:fixed;left:12px;right:12px;bottom:150px;z-index:40;max-width:696px;margin:0 auto;background:#161626;max-height:60vh;overflow:auto">
       <h3>Prizes</h3>
       <div class="tiny" style="margin-bottom:10px">What tonight is playing for — 1st, then 2nd, then 3rd.
-        Changes apply to the next prize handed out; one already given stays as it was.</div>
+        A code already won changes with it, unless the bar has scanned it.</div>
       <div class="rw-rows"></div>
       <button class="minor" type="button" style="margin-top:6px" id="rwAdd">+ Add a prize</button>
       <div class="row" style="margin-top:14px;gap:8px">
