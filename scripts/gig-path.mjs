@@ -288,7 +288,21 @@ try {
    */
   check('there is a Back button to press', Boolean(await con.$('.back-btn')));
   await con.locator('.back-btn').click();
-  check('Back returns to the question', await until('question'), `phase is ${await phase()}`);
+  /*
+   * BACK AT A REVEAL STEPS BACK OVER THE QUESTION, NEVER REOPENS IT — the
+   * decision of 26 September. It used to put the question the room had just
+   * seen the answer to back up live, wiping what it scored, under a tooltip
+   * calling it the safe one; *Ask again* is the reopen now, and Back steps to
+   * the previous answer, or to the round intro on a round's first question,
+   * which is where this night is. This check pinned the old reopen and went red
+   * the day that changed, which is what it is for.
+   *
+   * Next brings the question straight back, so the crash below is still
+   * mid-question.
+   */
+  check('Back steps back over the question, to the round intro', await until('round_intro'), `phase is ${await phase()}`);
+  await drive();
+  check('and Next brings the question straight back', await until('question'), `phase is ${await phase()}`);
 
   // ---- 5. crash recovery --------------------------------------------------
   console.log('\n5. A SIGKILL MID-QUESTION\n');
