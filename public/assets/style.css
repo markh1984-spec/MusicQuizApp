@@ -4342,8 +4342,16 @@ input.pv-round-name:focus { outline: none; border-color: var(--hot); background:
 /* One tap from the cue to the track, so there is nothing to search for while
    a room waits. Host view only — the room never sees these. */
 .cue-links { display: flex; gap: 8px; margin-top: 11px; }
+/* ON THE 44px TOUCH FLOOR — measured at 41px (launch-path sweep, 23
+   September 2026), on the link the host presses to start a record while a
+   room waits. A thumb that misses looks like a link that is dead. */
 .cue-open {
   flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 44px;
   text-align: center;
   padding: 11px 12px;
   border-radius: var(--r-field);
@@ -12220,6 +12228,10 @@ body.dj .head .score { color: var(--ink); }
 
 /* ---- the host's end. A grid of everything sent, four pickable, then a tally. */
 .votepanel { display: grid; gap: 10px; }
+/* "Put it to the room" measured 118x21 on the control view (launch-path
+   sweep, 23 September 2026) — the one press that opens a vote, at a break,
+   with a thumb. The floor is 44px everywhere else on this page. */
+.votepanel .go { min-height: 44px; }
 .vote-pick {
   display: grid; gap: 6px; max-height: 240px; overflow-y: auto;
   grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));

@@ -68,7 +68,12 @@ try {
   if (!pack) throw new Error('no quiz pack with more than one round');
   // The bonus round FIRST, so every counting round after it is a round whose
   // position and whose number differ — the case the labels got wrong.
-  const order = [{ packId: 'bonus-bits', round: 0 }, { packId: pack.id, round: 0 }, { packId: pack.id, round: 1 }];
+  // An intro round LAST, so the control view draws its "Coming up" cue panel
+  // for a round that is not the first — and its Open this track link.
+  const intro = (lib.quizzes || []).find((q) => q.id === 'intros-2006')
+    || (lib.quizzes || []).find((q) => ((q.rounds || [])[0] || {}).type === 'intro');
+  const order = [{ packId: 'bonus-bits', round: 0 }, { packId: pack.id, round: 0 }, { packId: pack.id, round: 1 },
+    ...(intro ? [{ packId: intro.id, round: 0 }] : [])];
   const go = await host('launch', { game: 'quiz', packId: pack.id, order, venue: 'The Crown', replace: true });
   check('a night launches with a bonus round first', go.status === 200, JSON.stringify(go.body).slice(0, 160));
 
@@ -121,7 +126,7 @@ try {
 
   /* ------------------------------------------------ the first counting round */
   v = await drive('round_intro');
-  check('the wall introduces the next round as Round 1', /Round 1 of 2/i.test(await wallSays()), await wallSays());
+  check('the wall introduces the next round as Round 1', new RegExp(`Round 1 of ${order.length - 1}(?!\\d)`, 'i').test(await wallSays()), await wallSays());
   said = await where();
   check('and the host\'s status line agrees', /^Round 1 intro/.test(said), said);
   up = await heading(desk, /next up/i);
@@ -146,6 +151,21 @@ try {
   check('the phone\'s board says "After round 1"', board === 'After round 1', board);
   said = await where();
   check('and the host\'s status line says "Round 1 scores"', /^Round 1 scores/.test(said), said);
+
+  /* ------------------------ the intro round's cue panel, and its link's size */
+  check('an intro round is in the night', Boolean(intro), 'no intro pack in the catalogue copy');
+  if (intro) {
+    let hv = await hostView();
+    for (let i = 0; i < 120 && !(hv.phase === 'round_intro' && hv.roundType === 'intro'); i += 1) {
+      await host('next');
+      hv = await hostView();
+    }
+    await settle();
+    const cue = await heading(desk, /coming up/i);
+    check('the coming-up cue panel numbers the intro round as the wall does — R3', /\bR3 Q1\b/.test(cue), cue);
+    const link = await desk.locator('.cue-open').first().boundingBox().catch(() => null);
+    check('and its Open this track link is on the 44px touch floor', Boolean(link) && link.height >= 44, JSON.stringify(link));
+  }
 
   check('nothing threw on any screen', boom.length === 0, boom.join(' | '));
 } finally {

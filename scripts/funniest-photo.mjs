@@ -307,6 +307,8 @@ try {
       await desk.locator('.vote-thumb').count() >= 4);
     const go = desk.locator('#voteOpen');
     check('the button is off until two are picked', await go.isDisabled());
+    const goBox = await go.boundingBox().catch(() => null);
+    check('and it is on the 44px touch floor', Boolean(goBox) && goBox.height >= 44, JSON.stringify(goBox));
     await desk.locator('.vote-thumb').nth(0).click();
     await desk.locator('.vote-thumb').nth(1).click();
     check('and it NAMES the prize once it is on',
