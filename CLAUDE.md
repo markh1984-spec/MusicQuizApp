@@ -1398,6 +1398,10 @@ would be noise, never when the ACT is dull.**
 credential and rode out on every `/api/me`; `/api/calendar/link` hands it
 over.
 
+**SOMEBODY ELSE'S ACCOUNT IS ENTERED THROUGH `enterSupport()` ALONE, cookie or
+button** — grant, busy check, "came in", once per grant. A hand-set
+`mmm_acting` skipped the room and the line.
+
 ### TWO MORE WHITELISTS THAT DROPPED WHAT THEY DID NOT NAME
 
 The trap this file already records for `accounts.create()`, `shows.js` and
@@ -1996,20 +2000,12 @@ sections?"* `bayRail()` / `bayColumns()` / `bayHead()`, drawn by Post gig
   meant pressing its heading put it straight back. **A control that does nothing
   when pressed is worse than the problem it was avoiding**, so `holdsPicked` is
   a DEFAULT. **The folds live in a module Map keyed by rail AND group.**
-- **THE FOUR-A-GROUP CAP IS GONE, WHICH REVERSES THE HOST'S OWN NUMBER — on
-  his own say-so, three times.** *"There's 4 galleries but it's showing 6"*,
-  then *"missing the 13th, 20th and 27th August"*, then — once the heading had
-  been taught to say `4 of 6` — *"still says 4 of 6"*. **MAKING THE COUNT
-  HONEST DID NOT MAKE THE CAP RIGHT**: a number admitting it hides two still
-  hides two, and *"Older nights are in Past gigs below"* sends somebody
-  elsewhere for a night that was on screen a moment ago. `PACK_SHELF`'s
-  decision again. **THE RAIL SCROLLS**, which is the test this app applies to
-  every cap. **Two hundred nights at one pub wants a FOLD or a search, never a
-  number that drops the end off the list.**
-- **AND WHILE THE CAP EXISTED THE PICKED ROW ATE ONE.** It overwrote the LAST
-  row inside the cap rather than being appended, so opening an older night
-  silently DELETED a newer one — his 27th. **The heading is built from the
-  list it sits over**, never a second guess at its length.
+- **THE FOUR-A-GROUP CAP IS GONE, on the host's own say-so, three times** —
+  **making the count honest did not make the cap right**: a number admitting
+  it hides two still hides two. **THE RAIL SCROLLS.** **Two hundred nights at
+  one pub wants a FOLD or a search, never a number that drops the end off the
+  list.** **The heading is built from the list it sits over** — the cap's
+  picked row once overwrote a newer night.
 - **NO `title` ANYWHERE IN THE RAIL — the names WRAP instead.** A native
   tooltip is an unstyled box landing over the rows beneath it.
 - **`.bay-rail > * { flex: 0 0 auto }` IS LOAD-BEARING.** A flex column shrinks
@@ -2153,6 +2149,10 @@ Hung GitHub behind the real server and drove a night. Four things waited:
   `ok: false`** — `within()`; the write still finishes.
 - **A FAILED LIBRARY RESTORE BACKS OFF A MINUTE** (`restoreOnce`) — never
   latched as empty, never retried per request.
+- **A BOOK THE DISK ALREADY HOLDS NEVER MAKES `listen()` WAIT** — GitHub's
+  copy is merged BEHIND it (`restoreFromBackup()`), the printed code still
+  winning the code book and the disk the archive; 4.3s of hung GitHub at boot
+  is 0.3s now. `boot-does-not-wait-on-github.test.js`.
 - **AND A BACKUP THAT FAILED SAYS SO — `saidSo()` in `http/helpers.js`.** Six
   weeks of nights, venues and join codes went nowhere, every backup fired and
   forgotten. **THE BACKUP IS THE DATA.** **`backup` is a
@@ -2222,7 +2222,8 @@ it straight away"* — after a launch that would not go took an hour to diagnose
 - **THE SERVER PLAYS A NIGHT AGAINST ITSELF A SECOND AFTER LISTEN** —
   `src/self-test.js`, a throwaway `Session` on a temp disk: launch, a
   question, rule 1, a reload, its own pages over HTTP. **Never a real room,
-  never a throw** — `selfTest` on `/health` and in the recorder.
+  never a throw** — `selfTest` on `/health` and in the recorder. **`quiet:
+  true` is the self-test's alone**, or every boot said a night was lost.
 - **IT IS READ ON THE HELP TAB WITH A COPY BUTTON** — `console-flight.js`, a
   leaf. **The pasted text IS the bug report.**
 - **AND THE OWNER READS ANY ACCOUNT'S RECORD — `/api/flight?account=…`, the
@@ -2436,6 +2437,8 @@ Settled 22 September 2026, and he was right for a reason he had not seen.
 - **`DEFAULT_BINGO_PRIZES = 2` IS GONE** — a prize table in the BROWSER, applied
   only when a bingo pack became a slot, so on a mixed night a 5x5 said "2
   prizes" and launched five. `prizes: 0` = nobody chose; the SHAPE answers.
+  **THE CAP IS `MAX_PRIZES`/`prizesAsked()` in `prize-parts.js`, never a
+  literal at a clamp** — the route said 5 and the session another number.
 - **NOTHING REPAINTS ON BLUR — LOAD-BEARING.** `change` fires on the blur a
   MOUSEDOWN causes; a repaint there detached the pressed element and the
   browser dispatched NO click. Launch was dead on the first press after typing
@@ -2472,10 +2475,8 @@ Settled 22 September 2026, and he was right for a reason he had not seen.
   written as `undefined`** — the patch is spread over the record, so naming a
   field blind deletes a good value; the quiz's `results()` carries no `kind`
   where bingo's does.
-- **THE ARCHIVE IS WRITTEN TEMP+RENAME LIKE EVERYTHING ELSE.**
-  `updateArchivedNight()` TRUNCATES a filed night and runs every time the bar
-  scans a QR; `listArchive()` wraps each file in its own `try`, so a torn one
-  is not an error anybody sees — it is a night that silently stopped existing.
+- **THE ARCHIVE IS WRITTEN TEMP+RENAME LIKE EVERYTHING ELSE** — a torn file
+  is a night that silently stopped existing (`listArchive()` skips it).
 - **AND THE DJ DESK SETS `res.flightRoom`** — its 409s and 404s filed under
   nobody, so a set that would not take a press wrote nothing the host could
   copy off the Help tab. **`removeIdle` answers `{ok, removed}` on all three
@@ -3381,6 +3382,8 @@ lobby the server built by itself.
   **AND ITS FIRST VERSION PASSED ON THE HOST KEY**, whose house room has no
   join code, so every phone landed there by the *no code at all* fallback. **A
   real signed-in quizmaster, and `joinCode` is the field `play.js` posts.**
+  **It counts the SAME ids and tokens surviving, never a headcount** — two
+  re-minted strangers made "2 in the room" pass.
 
 ### "Sweep mode" — find everything, change nothing
 
@@ -4685,7 +4688,8 @@ account is in [`docs/checks.md`](docs/checks.md):**
 - **A GREP WITH THE COMMENTS LEFT IN GOES GREEN THE BETTER A FILE IS
   DOCUMENTED.** Deleting the `/api/past-gigs` gate and leaving a comment saying
   `FEATURES.PAST_GIGS` kept `gates.test.js` 22/22. Every such search goes through
-  `withoutComments()`, and the claims that matter are FIRED too.
+  `withoutComments()` — **`scope.js`'s walker, never a regex**: a `/*` in a
+  string ate the file — and the claims that matter are FIRED too.
 - **`kill()` SENDS A SIGNAL AND WAITS FOR NOTHING — `stopped()` in
   `test/helpers/live-server.mjs`, and EVERY spawner calls it.** Kill the app and
   delete its `DATA_DIR` on the NEXT LINE and it is still flushing: **ENOTEMPTY

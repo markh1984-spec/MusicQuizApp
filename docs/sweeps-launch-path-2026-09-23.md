@@ -74,9 +74,20 @@ tagged *(known)* where an agent re-confirmed them.
   since the split, late-then-failed backups said, voucher marks flushed at
   once, a sign-in door and the hash off the event loop, composed nights naming
   their sources, a deleted bingo part refused in words, Unlaunch clearing the
-  order, and a Content-Security-Policy with no inline script. The room batch
-  (O11–O18) is on `worktree-agent-adac48ab4101006c7`; merge it when it
-  finishes. CLAUDE.md still needs the rules from these commits written in (it
+  order, and a Content-Security-Policy with no inline script. **29 September**: the
+  recovery and security yellows (self-test quiet, after-a-deploy counts the
+  same phones, one `MAX_PRIZES`, boot not waiting on GitHub for a book the disk
+  holds, three comments, `withoutComments()` walking strings, the acting cookie
+  through `enterSupport()`, the awaited seed) and more bar yellows (the prize
+  warning counts typed prizes, "Which game", Save's CLAUDE.md line, no false
+  "Launch again" while a venue change moves the night, the Card menu inside
+  the window at 390px — `pickers-fit.mjs` — and "What they win" present on an
+  empty bar). Reviewed and left as correct: removing one of two bingo tiles
+  leaves the settings row on the only bingo left. **Waiting on the host (UI
+  forks):** the gap dial over the tile's round-type line, what Hide folds,
+  dead "+" tiles once a pack is in, and sub-44px targets (menu rows 34px, the
+  tile × 30px, "open it" 42×16). The room batch (O11–O18) is on
+  `worktree-agent-adac48ab4101006c7`; merge it when it finishes. CLAUDE.md still needs the rules from these commits written in (it
   is at its byte budget, so each needs a trim): the bar plays EVERY part of a
   show as tiles now, not one part with a "Then" line.
 - **R2** — fixed on 24 September: the projector payload names the question's
