@@ -476,12 +476,15 @@ function votePanel(s) {
 function photoPanel(s) {
   const info = s.photos;
   if (!info) return [];
+  // THE SWITCH NAMES WHAT IT SWITCHES — "Switch off" sat a row from Finish on
+  // the bingo view and was read as switching the GAME off (1 October 2026),
+  // its heading scrolled out of sight. "Photos off" says it on its own.
 
   const el = node(`
     <div class="panel photos ${info.enabled ? '' : 'off'}">
       <div class="photo-head">
         <h3>Photos on the big screen</h3>
-        <button class="minor ${info.enabled ? 'danger' : ''}" data-a="toggle">${info.enabled ? 'Switch off' : 'Switch on'}</button>
+        <button class="minor ${info.enabled ? 'danger' : ''}" data-a="toggle">${info.enabled ? 'Photos off' : 'Photos on'}</button>
       </div>
       <div class="tiny">${info.enabled
         ? `${info.count} up. They go straight to the screen — tap the bin on one to delete it.`

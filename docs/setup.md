@@ -1094,7 +1094,7 @@ in about a second with their team name under it.
 **There is no approval step**, by your own decision — say "no naughtiness" over
 the mic. What you have instead, on your control view:
 
-- **Switch off** — stops new ones AND takes the existing ones off the screen.
+- **Photos off** — stops new ones AND takes the existing ones off the screen.
   You can still see them, so you can bin the offending one.
 - **Tap any photo** to bin just that one.
 - **Clear all photos** when the night is over.
