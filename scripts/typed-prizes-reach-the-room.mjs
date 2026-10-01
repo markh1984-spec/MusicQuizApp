@@ -66,13 +66,19 @@ try {
   await p.fill('input[type=password]', 'quizmaster passphrase');
   await p.evaluate(() => document.querySelector('form')?.requestSubmit());
   await p.waitForTimeout(2500);
-  await p.evaluate(async ({ venue, list }) => {
+  /* A USUAL NIGHT THAT IS NEVER TONIGHT. It said 'thu', so every Thursday
+   * the console picked The Typed Arms by itself (whose usual night it is) and
+   * NO VENUE below had a venue — the guard failed one day in seven, on the
+   * day it is run before a gig. Three days on is neither today nor the night
+   * still rolling until 6am. */
+  const usualNight = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][(new Date().getDay() + 3) % 7];
+  await p.evaluate(async ({ venue, list, usualNight }) => {
     const H = { 'Content-Type': 'application/json' };
     const mk = await fetch('/api/invoices/customers', { method: 'POST', headers: H, body: JSON.stringify({ name: venue }) });
     const c = ((await mk.json()).customers || []).find((x) => x.name === venue);
     await fetch(`/api/invoices/customers/${encodeURIComponent(c.id)}/rewards`, { method: 'PUT', headers: H,
-      body: JSON.stringify({ rewards: list, usualNight: 'thu' }) });
-  }, { venue: VENUE, list: VENUE_LIST });
+      body: JSON.stringify({ rewards: list, usualNight }) });
+  }, { venue: VENUE, list: VENUE_LIST, usualNight });
   await p.reload({ waitUntil: 'load' });
   await p.waitForSelector('.pack-card', { timeout: 20000 });
   await p.evaluate(async (v) => {

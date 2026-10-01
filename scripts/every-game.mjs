@@ -238,7 +238,10 @@ try {
   await host('start');
   const hvb = await hostView();
   const byTitle = new Map((hvb.tracks || []).map((t) => [t.title, t.id]));
-  check('the host holds the call sheet', byTitle.size >= 40, `${byTitle.size} tracks`);
+  // Every song in the pack, however many — the MBC packs were halved to ~20
+  // on 1 October 2026, and this said ">= 40" about a list that was right.
+  const packSongs = JSON.parse(fs.readFileSync(new URL('../bingo/mbc-5a.json', import.meta.url), 'utf8')).tracks.length;
+  check('the host holds the call sheet', byTitle.size === packSongs, `${byTitle.size} of ${packSongs} tracks`);
   // Call Dave's card in order, marking as we go, until the first prize is claimable.
   let winner = null; let calls = 0;
   for (const sq of bv.card) {
