@@ -88,6 +88,8 @@ export const paths = {
   // per room: a suggestion is about the APP, which everybody shares, and the
   // owner reads them as one list.
   suggestions: path.join(config.dataDir, 'suggestions.json'),
+  // A pub's staff, signed in to that pub's photographs only — `src/gallery-logins.js`.
+  galleryLogins: path.join(config.dataDir, 'gallery-logins.json'),
   // What the AI has cost, written down as it happens — the number the whole
   // tier structure is built on, and until now it existed nowhere.
   spend: path.join(config.dataDir, 'spend.json'),

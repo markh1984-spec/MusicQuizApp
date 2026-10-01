@@ -218,6 +218,8 @@ export const RESERVED = [
   // `snap` is the bar staff's camera — same reasoning as `wall` above, and
   // "The Snap" is as plausible a pub name as any on this list.
   'snap',
+  // A pub's staff, signed in to that pub's photographs (`src/http/venue-photos.js`).
+  'venue-photos', 'venue-photo',
 ];
 
 /**

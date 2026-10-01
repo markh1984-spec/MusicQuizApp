@@ -149,6 +149,7 @@ import { findScheme, DEFAULT_SCHEME, SCHEMES } from '../../public/assets/schemes
 // The logo, shared with the browser so the tab icon and the on-screen mark are
 // one drawing rather than two that look alike today.
 import { faviconSvg } from '../../public/assets/brandmark.js';
+import { GalleryLogins } from '../gallery-logins.js';
 
 export const hooks = {};
 
@@ -159,6 +160,8 @@ export const accounts = new Accounts(paths.accounts);
 // per-room: the packs are shared, so a fault Rob finds is a fault in the pack.
 export const reports = new Reports(paths.reports);
 export const suggestions = new Suggestions(paths.suggestions);
+// A pub's staff logins — their OWN book, so no route resolving an account can see one.
+export const galleryLogins = new GalleryLogins(paths.galleryLogins);
 /*
  * What Claude and OpenAI have actually cost.
  *

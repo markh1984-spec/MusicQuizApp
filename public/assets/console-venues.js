@@ -1,5 +1,6 @@
 /** Venues — the rooms you play, their prizes, their logo and their adverts. */
 
+import { venueLoginsInto } from './console-venue-logins.js';
 import { esc, node, postJson } from './client.js';
 import { field, invoiceApi, sheet } from './console-invoices.js';
 import { headcountBlock, leagueBlock } from './console-gigs.js';
@@ -486,6 +487,9 @@ export function venuesSection() {
                   ${v.hasOverlay ? '<button class="minor danger v-over-off">Remove</button>' : ''}
                 </span>
               </div>
+              <!-- WHO AT THE PUB MAY SAVE ITS PHOTOS — console-venue-logins.js
+                   fills this, or takes it away on an account that has none. -->
+              <div class="venue-logins" data-venue="${esc(v.id)}"></div>
 `}
               ${brandOnly ? '' : `
               ${advertsForVenue(v.name)}
@@ -542,6 +546,8 @@ export function venuesSection() {
         if (again) { again.focus(); again.setSelectionRange(again.value.length, again.value.length); }
       });
     }
+
+    for (const slot of el.querySelectorAll('.venue-logins')) venueLoginsInto(slot);
 
     for (const card of el.querySelectorAll('.venue-card')) {
       // `?.` because behind the Console door the name is a span with nothing to

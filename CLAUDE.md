@@ -210,16 +210,12 @@ There is no such thing as buying round two of somebody else's quiz.
 
 ### What each AI actually makes
 
-Precision here matters because it decides who pays for what:
+It decides who pays for what:
 
-- **Claude writes a whole quiz** — every round in it, questions and answers,
-  then checks its own work. Owner only.
-- **Claude writes a whole bingo game** — the track list. Owner only, and these
-  days usually done in a browser and pasted into Import.
-- **OpenAI draws pictures for the picture ROUND of a quiz.** It writes nothing.
-  It does not generate a round and it certainly does not generate a quiz — it
-  takes questions that already exist and draws a portrait for each. That is why
-  it is `owner.artwork` and priced separately from `owner.generate`.
+- **Claude writes a whole quiz** (and checks it) **or a whole bingo game's
+  track list** (usually pasted into Import). Owner only.
+- **The picture ROUND's portraits are DRAWN, never written** — for questions
+  that already exist. `owner.artwork`, priced apart from `owner.generate`.
 
 ---
 
@@ -1078,6 +1074,14 @@ quiz… I click community and I've got the QR codes."*
 - **`snap` WENT IN `RESERVED` TOO** — that list has now paid three times.
 
 Full reasoning for all three: **[`docs/gigs/photos-on-the-night.md`](docs/gigs/photos-on-the-night.md)**.
+
+### A PUB'S STAFF SEE THAT PUB'S PHOTOS AND NOTHING ELSE — `/venue-photos`
+
+`src/gallery-logins.js`, `src/http/venue-photos.js`, `pub-staff-gallery.mjs`.
+**THEIR OWN BOOK AND COOKIE, NEVER THE ACCOUNTS BOOK** — a role there is
+gated route by route, and the first one forgotten hands a barmaid a console. **Do not move them into accounts.** A
+username and a password he sets (they may change it); every photo from their
+pub's nights; his account only (`isHostsRoom()`), on Community › Venues.
 
 ### THE CAMERA SHEET IS ONE FILE AND BOTH CAMERAS OPEN IT — `camera-sheet.js`
 
@@ -3596,12 +3600,10 @@ next deploy), and the misses are NAMED.
 
 ### THE PICTURES BUTTON SAYS HOW MUCH OF ROUND 2 IS DRAWN
 
-`pictureLabel()` in `console-packs.js`, off `art` from `imageStatus()`. The
-answer existed and cost a press per pack. **`imageDir` IS AN OPTIONAL ARGUMENT
-TO `listQuizzes()` AND THE LAUNCH PATH MUST NOT PASS ONE** — a stat per picture
-question is work on the protected surface bought for a badge on a shelf. **The
-reason a control is ON goes on the control**, so it is the existing button
-saying more rather than a second badge. **A placeholder counts as NOT drawn.**
+`pictureLabel()`, off `imageStatus()`'s `art`. **`imageDir` IS OPTIONAL TO
+`listQuizzes()` AND THE LAUNCH PATH MUST NOT PASS ONE** — a stat per picture
+question on the protected surface, for a badge. The existing button says
+more; no second badge. **A placeholder counts as NOT drawn.**
 
 ### The breakout round — a laugh, not a question, and it scores nothing
 
