@@ -2457,8 +2457,8 @@ Settled 22 September 2026, and he was right for a reason he had not seen.
   A TAP over a launched night with phones does not move the projector (a
   silent 409, by design); the live line names the wall and **Launch asks, then
   replaces.** Reads as "the console isn't changing state" and is correct. **The
-  venue is DERIVED (usual night), never remembered** — without one, Launch
-  stands down for want of prizes after every restart.
+  venue is DERIVED (usual night) or kept until 6am** — without one, Launch
+  stands down for want of prizes.
 
 ### THE CONTROL VIEW, FINISHED — the phones' prompt, and a recoverable Finish
 
@@ -3765,9 +3765,8 @@ just don't want to think, you want to get in and go and know it will work."*
   lit treatment**, never the gradient (Launch keeps that). Shut, the line still
   says "Online".
 - **The venue is chosen HERE and on the Venues shelf, nowhere else** — both go
-  through `chooseVenue()`. **Neither the venue nor online is remembered on the
-  device**: both are facts about one evening, and a remembered one files next
-  Tuesday under last Thursday's pub.
+  through `chooseVenue()`. **The venue is kept UNTIL 6AM (`tonight-venue.js`)**
+  — a fact about one evening, kept for one; **online is never remembered**.
 - **Whose night it is, RANKED**: a date you typed, then whose usual night, then
   where you played last. **Two claims are NAMED, never left blank**
   (`clashTonight()`).
@@ -4569,6 +4568,7 @@ node scripts/drinks-keep.mjs            # is the drink still there next week?
 node scripts/pub-unchanged.mjs HEAD~1 --ignore online   # did I break a pub night?
 node scripts/drag-check.mjs             # Tonight's drags, with a REAL browser drag
 node scripts/bar-layout.mjs             # words clear of the dial, Hide keeps Launch, 44px on touch
+node scripts/pub-stays-tonight.mjs      # does tonight's pub survive a reload?
 node scripts/tonight-resolves.mjs       # does the bar offer real games, and find every pack?
 node scripts/community-bay.mjs          # does the Community bay still fit the frame?
 node scripts/console-frame.mjs          # is every Console control reachable?

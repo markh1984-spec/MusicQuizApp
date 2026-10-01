@@ -33,6 +33,7 @@ import { BENCH_STORE, NIGHT_BENCH_STORE, bench, library, me, nightBench, packDra
 import { nowNextRows } from './console-venues.js';
 import { GAME_KINDS, TABS, can, doorNow, goTo, goToDoor, hostKey, keyInUrl, keyed, linkTo, load, packWord, render, renderKeepingPlace, screenLink, showDone, refreshLibrary } from './console.js';
 import { clashTonight, nightKey, tonight, upcoming } from './diary.js';
+import { rememberVenue, rememberedVenue } from './tonight-venue.js';
 import { packLookAttrs, shortTitle, isBreakoutPack, kindName } from './pack-look.js';
 import { FEATURES } from './plans.js';
 import { itemsOf } from './show-parts.js';
@@ -149,12 +150,13 @@ let tonightOpen = localStorage.getItem(TONIGHT_STORE) !== '0';
  *
  * `null` means "nobody has chosen", which is not the same as "nowhere" — it is
  * what lets the app keep offering tonight's own answer (`tonightsVenue()`)
- * while a pick, once made, sticks through every re-render. It is deliberately
- * NOT remembered on the device like the fold state: the venue is a fact about
- * one evening, and a remembered one would file next Tuesday's night under last
- * Thursday's pub.
+ * while a pick, once made, sticks through every re-render. **REMEMBERED UNTIL
+ * 6AM AND NO LONGER** (`tonight-venue.js`, the host's call on 1 October 2026):
+ * the venue is a fact about one evening, so it is kept for exactly one — a
+ * reload between games no longer files the next under no pub, and next
+ * Tuesday's night still cannot land under last Thursday's.
  */
-let lbVenue = null;
+let lbVenue = rememberedVenue(localStorage);
 let lbVenueOpen = false;
 // THE PUB A QUIET RELAUNCH IS MOVING THE NIGHT TO, while it is in flight — so
 // the line does not say "Launch again to move it" about a move under way.
@@ -1216,6 +1218,7 @@ export function launchBar() {
    */
   function chooseVenue(name) {
     lbVenue = String(name || '');
+    rememberVenue(localStorage, lbVenue);
     lbVenueOpen = false;
     venues.hidden = true;
     where.setAttribute('aria-expanded', 'false');

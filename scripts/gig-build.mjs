@@ -74,6 +74,7 @@ export const GUARDS = [
   { name: 'pickers-fit',           core: true,  why: 'does every launch-bar dropdown open inside the window, on a phone too?' },
   { name: 'round-settings-reach-the-room', core: true, why: "does a round's own seconds and reveal reach the room, and does Save keep them?" },
   { name: 'bar-layout',            core: true,  why: 'no words under a dial, Hide keeps Launch, an empty slot opens the search, 44px on touch' },
+  { name: 'pub-stays-tonight',     core: true,  why: 'tonight\'s pub survives a reload between games and is gone by 6am' },
   { name: 'console-controls',      core: true,  why: 'and does pressing one do what it says?' },
   { name: 'two-screens',           core: true,  why: 'two outputs, a real account, quiz -> bingo' },
   { name: 'a-word-in-your-ear',    core: true,  why: 'does a message reach one phone and no other?' },
