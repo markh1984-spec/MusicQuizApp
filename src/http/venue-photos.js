@@ -18,7 +18,7 @@
  */
 import { HOUSE, accounts, config, galleryLogins, isNightFolder, listArchive, listDirs, mergeGigs, photoFolder, photosRepoConfigured, privateRepoConfigured, putFile, rooms, safePhotoName, sameVenue } from './context.js';
 import { readJson, secure, sendJson, signInAllowed, signInSeat } from './plumbing.js';
-import { brandForRoom, cookie, cookieFor, nightFiles, photoBytes, refuseBreached, roomForHost, whoIs } from './identity.js';
+import { brandForRoom, cookie, cookieFor, gigRoomsOf, nightFiles, photoBytes, refuseBreached, roomForHost, whoIs } from './identity.js';
 import { ensureArchiveRestored, ensureInvoicesRestored, galleryRoomOf, publicRoomId, within } from './helpers.js';
 import { serveFile } from './static.js';
 import { GALLERY_COOKIE } from '../gallery-logins.js';
@@ -33,15 +33,13 @@ function backUpLogins() {
 const isHostsRoom = (roomId) => roomId === HOUSE || roomId === publicRoomId();
 
 /**
- * Where a login's pub lives. The host's nights are filed under BOTH hats — the
- * house room and his own quizmaster room, which is the one the photographs
- * are kept in — so both archives are read, as `gigRoomsFor()` does for him.
+ * Where a login's pub lives — `gigRoomsOf()`, the one definition Past gigs
+ * uses. The host's nights are filed under BOTH hats, so a login made on
+ * either reads from the house room, whose rooms are both of his.
  */
 function placeOf(login) {
-  const own = isHostsRoom(login.roomId);
-  const galleryId = own ? publicRoomId() : galleryRoomOf(login.roomId);
-  const ids = own ? [...new Set([publicRoomId(), HOUSE])] : [...new Set([login.roomId, galleryId])];
-  return { galleryId, archiveRooms: ids.map((id) => rooms.get(id)), venueRoom: rooms.get(login.roomId) };
+  const from = isHostsRoom(login.roomId) ? HOUSE : login.roomId;
+  return { galleryId: galleryRoomOf(from), gigRooms: gigRoomsOf(from), venueRoom: rooms.get(login.roomId) };
 }
 
 // The nights are read once a minute per pub, not once per photograph.
@@ -50,11 +48,11 @@ async function nightsFor(login) {
   const key = `${login.roomId}|${login.venueId}`;
   const held = nightsHeld.get(key);
   if (held && held.at > Date.now() - 60_000) return held.nights;
-  const { galleryId, archiveRooms } = placeOf(login);
-  for (const room of archiveRooms) await ensureArchiveRestored(room);
+  const { galleryId, gigRooms } = placeOf(login);
+  for (const room of gigRooms) await ensureArchiveRestored(room);
   const folders = photosRepoConfigured() ? await listDirs(photoFolder(galleryId), 'photos') : [];
   const pub = { venue: login.venue, venueId: login.venueId };
-  const nights = mergeGigs(archiveRooms.flatMap((room) => listArchive(room.paths.archive)), folders.map((f) => f.name))
+  const nights = mergeGigs(gigRooms.flatMap((room) => listArchive(room.paths.archive)), folders.map((f) => f.name))
     .filter((n) => n.hasPhotos && sameVenue(n, pub))
     .map((n) => n.night)
     .sort((a, b) => b.localeCompare(a));

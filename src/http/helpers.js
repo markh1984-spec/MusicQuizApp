@@ -646,11 +646,13 @@ export async function restoreFromBackup() {
   const before = [];
   (Object.keys(rooms.codes).length ? behind : before).push(restoreCodes);
   (nightsOnDisk(house.paths.archive) ? behind : before).push(() => ensureArchiveRestored(house));
+  // A pub's staff logins are never on the launch path, and an EMPTY book is the
+  // ordinary state — so they come back BEHIND listen(), never before it.
+  behind.push(restoreStore('gallery logins', galleryLogins, 'gallery-logins.json', (r) => `${r.logins} pub staff login(s)`));
   await Promise.all([
     restoreAccounts(),
     restoreStore('reports', reports, 'reports.json', (r) => `${r.reports} question report(s)`)(),
     restoreStore('suggestions', suggestions, 'suggestions.json', (r) => `${r.suggestions} suggestion(s)`)(),
-    restoreStore('gallery logins', galleryLogins, 'gallery-logins.json', (r) => `${r.logins} pub staff login(s)`)(),
     restoreStore('spend', spend, 'spend.json', (r) => `${r.rows} row(s) of what the AI has cost`)(),
     // The prop tally: the backup IS the storage, or it never reaches the threshold where its numbers mean anything.
     restoreStore('props', propUse, 'data/prop-use.json', (r) => `the tally for ${r.props} prop(s)`)(),

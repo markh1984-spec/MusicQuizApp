@@ -645,8 +645,13 @@ export function galleryRoomFor(req, url) {
  */
 export function gigRoomsFor(req, url) {
   const here = roomForHost(req, url);
-  const galleryId = galleryRoomFor(req, url);
-  return galleryId === here.id ? [here] : [here, rooms.get(galleryId)];
+  return gigRoomsOf(here.id, here);
+}
+
+/** The same rooms for a room id, when there is no request to read — a pub's staff login (`venue-photos.js`). */
+export function gigRoomsOf(roomId, here = rooms.get(roomId)) {
+  const galleryId = galleryRoomOf(roomId);
+  return galleryId === roomId ? [here] : [here, rooms.get(galleryId)];
 }
 
 /**
