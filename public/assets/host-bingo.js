@@ -132,7 +132,16 @@ export function bingoActions(s, act, minor) {
    * games, so only these two are branched.
    */
   const deck = s.game === 'cards';
-  const primaryLabel = s.phase === 'lobby'
+  /*
+   * FINISHED SAYS FINISHED. Off a live night, 1 October 2026: *"the orange
+   * bar doesn't work but the red button does after two presses."* It did
+   * work — the status line read "Bingo — finished" — but this button went on
+   * saying *Finish the game*, lit, so the press looked dead and the host
+   * reached for the red Finish below it. Present and inert, the reason on it.
+   */
+  const finished = s.phase === 'finished' && !continuing;   // a mis-pressed Finish mid-order keeps its Continue
+  const primaryLabel = finished ? 'Game finished'
+    : s.phase === 'lobby'
     ? (deck ? 'Start — then turn your first card' : 'Start — then call your first track')
     : s.win
       ? (stage.last
@@ -140,7 +149,7 @@ export function bingoActions(s, act, minor) {
         : playOn)
       : (deck ? 'Turn the cards above' : 'Tap a track above as you play it');
 
-  const primary = node(`<button class="primary" ${!s.win && s.phase !== 'lobby' ? 'disabled' : ''}>${esc(primaryLabel)}</button>`);
+  const primary = node(`<button class="primary" ${finished || (!s.win && s.phase !== 'lobby') ? 'disabled' : ''}>${esc(primaryLabel)}</button>`);
   primary.addEventListener('click', () => {
     if (s.phase === 'lobby') act('start');
     else if (s.win) {
@@ -186,9 +195,12 @@ export function bingoActions(s, act, minor) {
    * Back does not undo an archive; this one has no such promise to break, so
    * the honest fix is to say what happens rather than to take the hatch away.
    */
-  out.push(pressTwice(minor, 'finish', 'Finish',
+  const finish = pressTwice(minor, 'finish', 'Finish',
     continuing ? 'Press again — ends the whole night' : 'Press again to finish',
-    () => act('finish'), true));
+    () => act('finish'), true);
+  // Nothing left to finish: inert like the button above, never gone.
+  finish.disabled = finished;
+  out.push(finish);
 
   return out;
 }
