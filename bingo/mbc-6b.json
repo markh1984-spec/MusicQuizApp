@@ -1,0 +1,139 @@
+{
+  "id": "mbc-6b",
+  "kind": "bingo",
+  "title": "MBC 6b - 2000s & 2010s",
+  "subtitle": "Two decades of chart and indie, one chorus each",
+  "cardRows": 3,
+  "cardCols": 3,
+  "cardSize": 3,
+  "notes": "Written 22 September 2026 for the Station Tap. Chorus-first picks: every one lands on its own within a few seconds to a half-listening room. Checked against every other pack in bingo/ — nothing here is a repeat except Wild, which is also in MBC 5 and was asked for by name. Split from MBC 6 on 1 October 2026 into two ~20-song games for a 3×3 card: every other song, so each half spans the whole pack and no artist is in a half twice. Its other half is MBC 6a.",
+  "createdAt": "2026-09-22T00:00:00.000Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "One Kiss",
+      "artist": "Calvin Harris",
+      "year": 2018
+    },
+    {
+      "id": "t2",
+      "title": "Sweet but Psycho",
+      "artist": "Ava Max",
+      "year": 2018
+    },
+    {
+      "id": "t3",
+      "title": "New Rules",
+      "artist": "Dua Lipa",
+      "year": 2017
+    },
+    {
+      "id": "t4",
+      "title": "Sorry",
+      "artist": "Justin Bieber",
+      "year": 2015
+    },
+    {
+      "id": "t5",
+      "title": "Stay With Me",
+      "artist": "Sam Smith",
+      "year": 2014
+    },
+    {
+      "id": "t6",
+      "title": "Budapest",
+      "artist": "George Ezra",
+      "year": 2014
+    },
+    {
+      "id": "t7",
+      "title": "Thinking Out Loud",
+      "artist": "Ed Sheeran",
+      "year": 2014
+    },
+    {
+      "id": "t8",
+      "title": "Ho Hey",
+      "artist": "The Lumineers",
+      "year": 2012
+    },
+    {
+      "id": "t9",
+      "title": "Pompeii",
+      "artist": "Bastille",
+      "year": 2013
+    },
+    {
+      "id": "t10",
+      "title": "Dance Monkey",
+      "artist": "Tones and I",
+      "year": 2019
+    },
+    {
+      "id": "t11",
+      "title": "We Found Love",
+      "artist": "Rihanna",
+      "year": 2011
+    },
+    {
+      "id": "t12",
+      "title": "I Gotta Feeling",
+      "artist": "The Black Eyed Peas",
+      "year": 2009
+    },
+    {
+      "id": "t13",
+      "title": "Dakota",
+      "artist": "Stereophonics",
+      "year": 2005
+    },
+    {
+      "id": "t14",
+      "title": "I Predict a Riot",
+      "artist": "Kaiser Chiefs",
+      "year": 2004
+    },
+    {
+      "id": "t15",
+      "title": "Rule the World",
+      "artist": "Take That",
+      "year": 2007
+    },
+    {
+      "id": "t16",
+      "title": "Beautiful Day",
+      "artist": "U2",
+      "year": 2000
+    },
+    {
+      "id": "t17",
+      "title": "Yellow",
+      "artist": "Coldplay",
+      "year": 2000
+    },
+    {
+      "id": "t18",
+      "title": "Poker Face",
+      "artist": "Lady Gaga",
+      "year": 2008
+    },
+    {
+      "id": "t19",
+      "title": "Murder on the Dancefloor",
+      "artist": "Sophie Ellis-Bextor",
+      "year": 2001
+    },
+    {
+      "id": "t20",
+      "title": "Unwritten",
+      "artist": "Natasha Bedingfield",
+      "year": 2004
+    },
+    {
+      "id": "t21",
+      "title": "American Boy",
+      "artist": "Estelle",
+      "year": 2008
+    }
+  ]
+}

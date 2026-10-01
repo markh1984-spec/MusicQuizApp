@@ -1,0 +1,133 @@
+{
+  "id": "mbc-5b",
+  "kind": "bingo",
+  "title": "MBC 5b - UK Chart",
+  "subtitle": "40 tracks. Tap them as you hear them.",
+  "cardRows": 3,
+  "cardCols": 3,
+  "cardSize": 3,
+  "notes": "UK chart pop, R&B and dance, 2000-2019. Written to sit beside MBC 3 and MBC 4 without repeating either. Split from MBC 5 on 1 October 2026 into two ~20-song games for a 3×3 card: every other song, so each half spans the whole pack and no artist is in a half twice. Its other half is MBC 5a.",
+  "createdAt": "2026-09-17T18:00:00.000Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "7 Days",
+      "artist": "Craig David",
+      "year": 2000
+    },
+    {
+      "id": "t2",
+      "title": "Bonkers",
+      "artist": "Dizzee Rascal, Armand Van Helden",
+      "year": 2009
+    },
+    {
+      "id": "t3",
+      "title": "Someone Like You",
+      "artist": "Adele",
+      "year": 2011
+    },
+    {
+      "id": "t4",
+      "title": "Price Tag",
+      "artist": "Jessie J, B.o.B",
+      "year": 2011
+    },
+    {
+      "id": "t5",
+      "title": "Hot Right Now",
+      "artist": "DJ Fresh, Rita Ora",
+      "year": 2012
+    },
+    {
+      "id": "t6",
+      "title": "Dance with Me Tonight",
+      "artist": "Olly Murs",
+      "year": 2011
+    },
+    {
+      "id": "t7",
+      "title": "What Makes You Beautiful",
+      "artist": "One Direction",
+      "year": 2011
+    },
+    {
+      "id": "t8",
+      "title": "Feel So Close",
+      "artist": "Calvin Harris",
+      "year": 2011
+    },
+    {
+      "id": "t9",
+      "title": "Anything Could Happen",
+      "artist": "Ellie Goulding",
+      "year": 2012
+    },
+    {
+      "id": "t10",
+      "title": "Next to Me",
+      "artist": "Emeli Sande",
+      "year": 2012
+    },
+    {
+      "id": "t11",
+      "title": "Wings",
+      "artist": "Little Mix",
+      "year": 2012
+    },
+    {
+      "id": "t12",
+      "title": "Feel the Love",
+      "artist": "Rudimental, John Newman",
+      "year": 2012
+    },
+    {
+      "id": "t13",
+      "title": "Latch",
+      "artist": "Disclosure, Sam Smith",
+      "year": 2012
+    },
+    {
+      "id": "t14",
+      "title": "Love Me Again",
+      "artist": "John Newman",
+      "year": 2013
+    },
+    {
+      "id": "t15",
+      "title": "Symphony",
+      "artist": "Clean Bandit, Zara Larsson",
+      "year": 2017
+    },
+    {
+      "id": "t16",
+      "title": "I Got U",
+      "artist": "Duke Dumont, Jax Jones",
+      "year": 2014
+    },
+    {
+      "id": "t17",
+      "title": "King",
+      "artist": "Years & Years",
+      "year": 2015
+    },
+    {
+      "id": "t18",
+      "title": "You Don’t Know Me",
+      "artist": "Jax Jones, RAYE",
+      "year": 2016
+    },
+    {
+      "id": "t19",
+      "title": "Don’t Call Me Up",
+      "artist": "Mabel",
+      "year": 2019
+    },
+    {
+      "id": "t20",
+      "title": "Wild",
+      "artist": "Jessie J, Big Sean, Dizzee Rascal",
+      "year": 2013
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "id": "mbc-5a",
+  "kind": "bingo",
+  "title": "MBC 5a - UK Chart",
+  "subtitle": "40 tracks. Tap them as you hear them.",
+  "cardRows": 3,
+  "cardCols": 3,
+  "cardSize": 3,
+  "notes": "UK chart pop, R&B and dance, 2000-2019. Written to sit beside MBC 3 and MBC 4 without repeating either. Split from MBC 5 on 1 October 2026 into two ~20-song games for a 3×3 card: every other song, so each half spans the whole pack and no artist is in a half twice. Its other half is MBC 5b.",
+  "createdAt": "2026-09-17T18:00:00.000Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Fill Me In",
+      "artist": "Craig David",
+      "year": 2000
+    },
+    {
+      "id": "t2",
+      "title": "Rehab",
+      "artist": "Amy Winehouse",
+      "year": 2006
+    },
+    {
+      "id": "t3",
+      "title": "Rolling in the Deep",
+      "artist": "Adele",
+      "year": 2010
+    },
+    {
+      "id": "t4",
+      "title": "Pass Out",
+      "artist": "Tinie Tempah",
+      "year": 2010
+    },
+    {
+      "id": "t5",
+      "title": "R.I.P.",
+      "artist": "Rita Ora, Tinie Tempah",
+      "year": 2012
+    },
+    {
+      "id": "t6",
+      "title": "Changed the Way You Kiss Me",
+      "artist": "Example",
+      "year": 2011
+    },
+    {
+      "id": "t7",
+      "title": "Troublemaker",
+      "artist": "Olly Murs, Flo Rida",
+      "year": 2012
+    },
+    {
+      "id": "t8",
+      "title": "Story of My Life",
+      "artist": "One Direction",
+      "year": 2013
+    },
+    {
+      "id": "t9",
+      "title": "Sweet Nothing",
+      "artist": "Calvin Harris, Florence Welch",
+      "year": 2012
+    },
+    {
+      "id": "t10",
+      "title": "Burn",
+      "artist": "Ellie Goulding",
+      "year": 2013
+    },
+    {
+      "id": "t11",
+      "title": "Read All About It, Pt. III",
+      "artist": "Emeli Sande",
+      "year": 2012
+    },
+    {
+      "id": "t12",
+      "title": "Black Magic",
+      "artist": "Little Mix",
+      "year": 2015
+    },
+    {
+      "id": "t13",
+      "title": "Waiting All Night",
+      "artist": "Rudimental, Ella Eyre",
+      "year": 2013
+    },
+    {
+      "id": "t14",
+      "title": "La La La",
+      "artist": "Naughty Boy, Sam Smith",
+      "year": 2013
+    },
+    {
+      "id": "t15",
+      "title": "Rather Be",
+      "artist": "Clean Bandit, Jess Glynne",
+      "year": 2014
+    },
+    {
+      "id": "t16",
+      "title": "Nobody to Love",
+      "artist": "Sigma",
+      "year": 2014
+    },
+    {
+      "id": "t17",
+      "title": "Hold My Hand",
+      "artist": "Jess Glynne",
+      "year": 2015
+    },
+    {
+      "id": "t18",
+      "title": "Never Forget You",
+      "artist": "MNEK, Zara Larsson",
+      "year": 2015
+    },
+    {
+      "id": "t19",
+      "title": "2002",
+      "artist": "Anne-Marie",
+      "year": 2018
+    },
+    {
+      "id": "t20",
+      "title": "Ladbroke Grove",
+      "artist": "AJ Tracey",
+      "year": 2019
+    }
+  ]
+}

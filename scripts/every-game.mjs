@@ -226,7 +226,7 @@ try {
 
   // ============================================================ MUSIC BINGO
   section('3. MUSIC BINGO');
-  const mb = await host('launch', { game: 'bingo', packId: 'mbc-5', shape: { rows: 3, cols: 3 }, prizes: 2, ...night });
+  const mb = await host('launch', { game: 'bingo', packId: 'mbc-5a', shape: { rows: 3, cols: 3 }, prizes: 2, ...night });
   check('music bingo launches on a 3x3 with two prizes', mb.status === 200, JSON.stringify(mb.body).slice(0, 120));
   const code3 = (await running()).joinCode;
   const bp = await joinAll(code3, ['Dave', 'Sue', 'Table Six']);
@@ -318,7 +318,7 @@ try {
   section('6. QUIZ → BINGO → QUIZ, ONE SCORE');
   const ro = await host('launchOrder', { segments: [
     { kind: 'quiz', order: [{ packId: '1980s-pop-music', round: 0 }] },
-    { kind: 'bingo', packId: 'mbc-4', shape: { rows: 3, cols: 3 }, prizes: 1 },
+    { kind: 'bingo', packId: 'mbc-4a', shape: { rows: 3, cols: 3 }, prizes: 1 },
     { kind: 'quiz', order: [{ packId: '1980s-pop-music', round: 1 }] },
   ], ...night });
   check('a three-part running order launches', ro.status === 200, JSON.stringify(ro.body).slice(0, 120));

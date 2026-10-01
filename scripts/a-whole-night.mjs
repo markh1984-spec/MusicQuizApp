@@ -74,10 +74,10 @@ try {
   const tab = async (id) => { await bar.evaluate((t) => document.querySelector(`[data-tab="${t}"]`)?.click(), id); await wait(700); };
   const tap = async (sel) => { await bar.evaluate((s) => document.querySelector(s)?.click(), sel); await wait(1200); };
   await tab('quiz'); await tap('.pack-card[data-pack="2006"] .pack-rounds .lb-rd[data-round="0"]');
-  await tab('bingo'); await tap('.pack-card[data-pack="mbc-4"]');
+  await tab('bingo'); await tap('.pack-card[data-pack="mbc-4a"]');
   await tab('cards'); await tap('.pack-card[data-pack]');
   await tab('quiz'); await tap('.pack-card[data-pack="2006"] .pack-rounds .lb-rd[data-round="1"]');
-  await tab('bingo'); await tap('.pack-card[data-pack="mbc-5"]');
+  await tab('bingo'); await tap('.pack-card[data-pack="mbc-5a"]');
   await tab('cards'); await tap('.pack-card[data-pack]');
   const row = await bar.evaluate(() => [...document.querySelectorAll('.lb-tiles .lb-tile.is-pack')].map((t) => (t.getAttribute('title') || '').slice(0, 40)));
   check('six tiles, in the order they were added', row.length === 6, JSON.stringify(row));

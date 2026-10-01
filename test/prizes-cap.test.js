@@ -72,14 +72,14 @@ test('a plain launch and a running order accept and refuse the same prize counts
     for (const prizes of [7, 99, 5, 3, 1, 2.7, 'abc', -2]) {
       const plain = await fetch(`${base}/api/host/launch`, {
         method: 'POST', headers: H,
-        body: JSON.stringify({ game: 'bingo', packId: 'mbc-5', shape, prizes, replace: true, venue: 'The Crown', breakPlan: {} }),
+        body: JSON.stringify({ game: 'bingo', packId: 'eighties-bingo', shape, prizes, replace: true, venue: 'The Crown', breakPlan: {} }),
       });
       assert.equal(plain.status, 200, `launch with prizes ${prizes}: ${await plain.text()}`);
       const viaLaunch = stagesOnDisk();
 
       const order = await fetch(`${base}/api/host/launchOrder`, {
         method: 'POST', headers: H,
-        body: JSON.stringify({ segments: [{ kind: 'bingo', packId: 'mbc-5', shape, prizes }], replace: true, venue: 'The Crown', breakPlan: {} }),
+        body: JSON.stringify({ segments: [{ kind: 'bingo', packId: 'eighties-bingo', shape, prizes }], replace: true, venue: 'The Crown', breakPlan: {} }),
       });
       assert.equal(order.status, 200, `running order with prizes ${prizes}: ${await order.text()}`);
       const viaOrder = stagesOnDisk();

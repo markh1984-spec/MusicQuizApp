@@ -204,7 +204,7 @@ try {
   section('J. MUSIC BINGO — stages against the card, one prize each');
   await setRewards(['A pint', 'A half', 'Crisps', 'A shot', 'A hug']);
   const bingoRun = async (shape, prizes, names) => {
-    const go = await host('launch', { game: 'bingo', packId: 'mbc-5', shape, prizes, ...night() });
+    const go = await host('launch', { game: 'bingo', packId: 'eighties-bingo', shape, prizes, ...night() });
     if (go.status !== 200) return { go };
     const code = (await running()).joinCode;
     const phones = await joinAll(code, names);
@@ -330,7 +330,7 @@ try {
   await setRewards(['A pint', 'A half', 'Crisps', 'A shot', 'A cola']);
   const ro = await host('launchOrder', { segments: [
     { kind: 'quiz', order: [{ packId: '1980s-pop-music', round: 0 }] },
-    { kind: 'bingo', packId: 'mbc-4', shape: { rows: 3, cols: 3 }, prizes: 1 },
+    { kind: 'bingo', packId: 'mbc-4a', shape: { rows: 3, cols: 3 }, prizes: 1 },
     { kind: 'quiz', order: [{ packId: '1980s-pop-music', round: 1 }] },
   ], winners: 2, ...night() });
   check('the order launches', ro.status === 200, JSON.stringify(ro.body).slice(0, 100));

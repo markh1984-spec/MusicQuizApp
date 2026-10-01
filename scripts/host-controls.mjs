@@ -162,7 +162,7 @@ try {
     const phase = target === 'claim' ? 'won' : target;
     await host('launch', {
       game: BINGO ? 'bingo' : 'quiz',
-      packId: BINGO ? 'mbc-6' : '2000s-2010s-mixed',
+      packId: BINGO ? 'mbc-6a' : '2000s-2010s-mixed',
       venue: 'The Probe Arms',
       rewards: ['A pint', 'A half', 'A shot'],
       prizes: 3,

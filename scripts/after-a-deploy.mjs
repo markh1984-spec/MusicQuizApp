@@ -109,12 +109,12 @@ try {
   const tap = await call('/api/host/launch', {
     method: 'POST',
     headers: H(),
-    body: JSON.stringify({ game: 'bingo', packId: 'mbc-5', venue: 'The Station Tap, Wokingham', shape: { rows: 5, cols: 5 }, prizes: 5, breakPlan: {} }),
+    body: JSON.stringify({ game: 'bingo', packId: 'eighties-bingo', venue: 'The Station Tap, Wokingham', shape: { rows: 5, cols: 5 }, prizes: 5, breakPlan: {} }),
   });
   check('tapping a pack puts it on the big screen', tap.status === 200,
     tap.status === 409 ? `409 — ${(tap.body || {}).error}` : `status ${tap.status}`);
   const after = await running();
-  check('…and the room really is on it now', after.packId === 'mbc-5' && after.launched === true,
+  check('…and the room really is on it now', after.packId === 'eighties-bingo' && after.launched === true,
     `room is on "${after.title}", launched ${after.launched}`);
 
   /*
@@ -133,12 +133,12 @@ try {
   const over = await call('/api/host/launch', {
     method: 'POST',
     headers: H(),
-    body: JSON.stringify({ game: 'bingo', packId: 'mbc-4', venue: 'The Station Tap, Wokingham', prizes: 5, breakPlan: {} }),
+    body: JSON.stringify({ game: 'bingo', packId: 'mbc-4a', venue: 'The Station Tap, Wokingham', prizes: 5, breakPlan: {} }),
   });
   check('a night somebody DID launch still says what would be lost', over.status === 409,
     `status ${over.status}`);
   check('…and the refusal names the night and the count', over.status === 409
-    && /MBC 5/.test((over.body || {}).error || '') && /2 playing/.test((over.body || {}).error || ''),
+    && /1980s Music Bingo/.test((over.body || {}).error || '') && /2 playing/.test((over.body || {}).error || ''),
     (over.body || {}).error);
   const back = [];
   for (const p of phones) {
@@ -156,7 +156,7 @@ try {
   const replaced = await call('/api/host/launch', {
     method: 'POST',
     headers: H(),
-    body: JSON.stringify({ game: 'bingo', packId: 'mbc-4', replace: true, venue: 'The Station Tap, Wokingham', prizes: 5, breakPlan: {} }),
+    body: JSON.stringify({ game: 'bingo', packId: 'mbc-4a', replace: true, venue: 'The Station Tap, Wokingham', prizes: 5, breakPlan: {} }),
   });
   check('…and a second, deliberate press still gets through', replaced.status === 200);
 

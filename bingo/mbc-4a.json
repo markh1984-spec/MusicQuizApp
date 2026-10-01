@@ -1,0 +1,139 @@
+{
+  "id": "mbc-4a",
+  "kind": "bingo",
+  "title": "MBC 4a - 2010s",
+  "subtitle": "42 tracks. Tap them as you hear them.",
+  "cardRows": 3,
+  "cardCols": 3,
+  "cardSize": 3,
+  "notes": "Imported from a pasted track list. Split from MBC 4 on 1 October 2026 into two ~20-song games for a 3×3 card: every other song, so each half spans the whole pack and no artist is in a half twice. Its other half is MBC 4b.",
+  "createdAt": "2026-08-06T03:07:21.408Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Fireflies",
+      "artist": "Owl City",
+      "year": 2009
+    },
+    {
+      "id": "t2",
+      "title": "Levitating (feat. DaBaby)",
+      "artist": "Dua Lipa, DaBaby",
+      "year": 2020
+    },
+    {
+      "id": "t3",
+      "title": "Blank Space (Taylor's Version)",
+      "artist": "Taylor Swift",
+      "year": 2023
+    },
+    {
+      "id": "t4",
+      "title": "Wrecking Ball",
+      "artist": "Miley Cyrus",
+      "year": 2013
+    },
+    {
+      "id": "t5",
+      "title": "Sorry Not Sorry",
+      "artist": "Demi Lovato",
+      "year": 2017
+    },
+    {
+      "id": "t6",
+      "title": "Side To Side",
+      "artist": "Ariana Grande, Nicki Minaj",
+      "year": 2016
+    },
+    {
+      "id": "t7",
+      "title": "Señorita",
+      "artist": "Shawn Mendes, Camila Cabello",
+      "year": 2019
+    },
+    {
+      "id": "t8",
+      "title": "Sucker",
+      "artist": "Jonas Brothers",
+      "year": 2019
+    },
+    {
+      "id": "t9",
+      "title": "Blinding Lights",
+      "artist": "The Weeknd",
+      "year": 2020
+    },
+    {
+      "id": "t10",
+      "title": "Roses",
+      "artist": "The Chainsmokers, ROZES",
+      "year": 2015
+    },
+    {
+      "id": "t11",
+      "title": "Cheerleader",
+      "artist": "OMI, felix jaehn",
+      "year": 2015
+    },
+    {
+      "id": "t12",
+      "title": "Drop It Like It's Hot",
+      "artist": "Snoop Dogg, Pharrell Williams",
+      "year": 2004
+    },
+    {
+      "id": "t13",
+      "title": "Grillz",
+      "artist": "Nelly, Paul Wall, Ali & Gipp",
+      "year": 2005
+    },
+    {
+      "id": "t14",
+      "title": "Stronger",
+      "artist": "Kanye West",
+      "year": 2007
+    },
+    {
+      "id": "t15",
+      "title": "Points of Authority / 99 Problems / One Step Closer",
+      "artist": "JAŸ-Z, Linkin Park",
+      "year": 2004
+    },
+    {
+      "id": "t16",
+      "title": "Stan",
+      "artist": "Eminem, Dido",
+      "year": 2000
+    },
+    {
+      "id": "t17",
+      "title": "SICKO MODE",
+      "artist": "Travis Scott",
+      "year": 2018
+    },
+    {
+      "id": "t18",
+      "title": "No Role Modelz",
+      "artist": "J. Cole",
+      "year": 2014
+    },
+    {
+      "id": "t19",
+      "title": "Bodak Yellow",
+      "artist": "Cardi B",
+      "year": 2018
+    },
+    {
+      "id": "t20",
+      "title": "High Hopes",
+      "artist": "Panic! At The Disco",
+      "year": 2018
+    },
+    {
+      "id": "t21",
+      "title": "Sunflower",
+      "artist": "Post Malone, Swae Lee",
+      "year": 2018
+    }
+  ]
+}

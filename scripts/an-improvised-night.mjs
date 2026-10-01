@@ -187,7 +187,7 @@ try {
   console.log('\n2 · CLEARED, THEN MUSIC BINGO');
   await stopNight();
   await freshBar();
-  await tab('bingo'); await tap('.pack-card[data-pack="mbc-4"]');
+  await tab('bingo'); await tap('.pack-card[data-pack="mbc-4a"]');
   const b2 = await launch();
   check('Launch sends music bingo on the 3×3 default', b2 && b2.game === 'bingo' && b2.shape && b2.shape.rows === 3, JSON.stringify(b2 && b2.shape));
   await wait(3000);

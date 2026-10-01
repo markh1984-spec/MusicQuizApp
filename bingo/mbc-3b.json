@@ -1,0 +1,158 @@
+{
+  "id": "mbc-3b",
+  "kind": "bingo",
+  "title": "MBC 3b - 2000s",
+  "subtitle": "42 tracks. Tap them as you hear them.",
+  "cardSize": 3,
+  "notes": "Imported from a pasted track list. Split from MBC 3 on 1 October 2026 into two ~20-song games for a 3×3 card: every other song, so each half spans the whole pack and no artist is in a half twice. Its other half is MBC 3a.",
+  "createdAt": "2026-08-06T03:05:30.989Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Bleeding Love",
+      "artist": "Leona Lewis",
+      "year": 2007,
+      "spotifyUri": "spotify:track:6LtPIXlIzPOTF8vTecYjRe"
+    },
+    {
+      "id": "t2",
+      "title": "Irreplaceable",
+      "artist": "Beyoncé",
+      "year": 2007,
+      "spotifyUri": "spotify:track:6RX5iL93VZ5fKmyvNXvF1r"
+    },
+    {
+      "id": "t3",
+      "title": "Whenever, Wherever",
+      "artist": "Shakira",
+      "year": 2001,
+      "spotifyUri": "spotify:track:2lnzGkdtDj5mtlcOW2yRtG"
+    },
+    {
+      "id": "t4",
+      "title": "Sk8er Boi",
+      "artist": "Avril Lavigne",
+      "year": 2002,
+      "spotifyUri": "spotify:track:00Mb3DuaIH1kjrwOku9CGU"
+    },
+    {
+      "id": "t5",
+      "title": "Beautiful",
+      "artist": "Christina Aguilera",
+      "year": 2002,
+      "spotifyUri": "spotify:track:3TCauNPqFiniaYHBvEVoHG"
+    },
+    {
+      "id": "t6",
+      "title": "E.T.",
+      "artist": "Katy Perry, Kanye West",
+      "year": 2012,
+      "spotifyUri": "spotify:track:36ux3YuUsGTWPT8fXclS45"
+    },
+    {
+      "id": "t7",
+      "title": "Grenade",
+      "artist": "Bruno Mars",
+      "year": 2010,
+      "spotifyUri": "spotify:track:4lLtanYk6tkMvooU0tWzG8"
+    },
+    {
+      "id": "t8",
+      "title": "On The Floor",
+      "artist": "Jennifer Lopez, Pitbull",
+      "year": 2011,
+      "spotifyUri": "spotify:track:3C0nOe05EIt1390bVABLyN"
+    },
+    {
+      "id": "t9",
+      "title": "Chandelier",
+      "artist": "Sia",
+      "year": 2014,
+      "spotifyUri": "spotify:track:4VrWlk8IQxevMvERoX08iC"
+    },
+    {
+      "id": "t10",
+      "title": "No Air (feat. Chris Brown)",
+      "artist": "Jordin Sparks, Chris Brown",
+      "year": 2007,
+      "spotifyUri": "spotify:track:1jUA4rb6ZCv4gby4YU53xq"
+    },
+    {
+      "id": "t11",
+      "title": "Bootylicious",
+      "artist": "Destiny's Child",
+      "year": 2001,
+      "spotifyUri": "spotify:track:41nT1Sp6ChR65FbsdLlFHW"
+    },
+    {
+      "id": "t12",
+      "title": "Ms. Jackson",
+      "artist": "Outkast",
+      "year": 2000,
+      "spotifyUri": "spotify:track:0I3q5fE6wg7LIfHGngUTnV"
+    },
+    {
+      "id": "t13",
+      "title": "So What",
+      "artist": "P!nk",
+      "year": 2008,
+      "spotifyUri": "spotify:track:0JiY190vktuhSGN6aqJdrt"
+    },
+    {
+      "id": "t14",
+      "title": "Buttons - Music Video Edit",
+      "artist": "The Pussycat Dolls, Snoop Dogg",
+      "year": 2025,
+      "spotifyUri": "spotify:track:7gbBw0S8FEVstZByLSaXTf"
+    },
+    {
+      "id": "t15",
+      "title": "Clint Eastwood",
+      "artist": "Gorillaz, Del The Funky Homosapien",
+      "year": 2001,
+      "spotifyUri": "spotify:track:1RKUoGiLEbcXN4GY4spQDx"
+    },
+    {
+      "id": "t16",
+      "title": "Numb",
+      "artist": "Linkin Park",
+      "year": 2003,
+      "spotifyUri": "spotify:track:2nLtzopw4rPReszdYBJU6h"
+    },
+    {
+      "id": "t17",
+      "title": "American Idiot",
+      "artist": "Green Day",
+      "year": 2004,
+      "spotifyUri": "spotify:track:6nTiIhLmQ3FWhvrGafw2zj"
+    },
+    {
+      "id": "t18",
+      "title": "Are You Gonna Be My Girl",
+      "artist": "Jet",
+      "year": 2003,
+      "spotifyUri": "spotify:track:72zZfHPYx43shcP3eKkYi5"
+    },
+    {
+      "id": "t19",
+      "title": "Somebody Told Me",
+      "artist": "The Killers",
+      "year": 2004,
+      "spotifyUri": "spotify:track:3twNvmDtFQtAd5gMKedhLD"
+    },
+    {
+      "id": "t20",
+      "title": "Take Me Out",
+      "artist": "Franz Ferdinand",
+      "year": 2004,
+      "spotifyUri": "spotify:track:20I8RduZC2PWMWTDCZuuAN"
+    },
+    {
+      "id": "t21",
+      "title": "Feel It Still",
+      "artist": "Portugal. The Man",
+      "year": 2017,
+      "spotifyUri": "spotify:track:6QgjcU0zLnzq5OrUoSZ3OK"
+    }
+  ]
+}

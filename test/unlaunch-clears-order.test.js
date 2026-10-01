@@ -36,7 +36,7 @@ test('Unlaunch mid-order leaves no part queued and no venue to lose', async () =
 
     const launched = await host('launchOrder', {
       replace: true, venue: 'The Undo Arms', rewards: ['A pint'],
-      segments: [{ kind: 'quiz', order: [{ packId: '1980s-pop-music', round: 0 }] }, { kind: 'bingo', packId: 'mbc-5' }],
+      segments: [{ kind: 'quiz', order: [{ packId: '1980s-pop-music', round: 0 }] }, { kind: 'bingo', packId: 'mbc-5a' }],
     });
     assert.equal(launched.status, 200, `the running order would not launch: ${JSON.stringify(launched.json)}`);
     assert.equal((await hostView()).runningOrder.total, 2);

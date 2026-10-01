@@ -1,0 +1,139 @@
+{
+  "id": "mbc-4b",
+  "kind": "bingo",
+  "title": "MBC 4b - 2010s",
+  "subtitle": "42 tracks. Tap them as you hear them.",
+  "cardRows": 3,
+  "cardCols": 3,
+  "cardSize": 3,
+  "notes": "Imported from a pasted track list. Split from MBC 4 on 1 October 2026 into two ~20-song games for a 3×3 card: every other song, so each half spans the whole pack and no artist is in a half twice. Its other half is MBC 4a.",
+  "createdAt": "2026-08-06T03:07:21.408Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Where Have You Been",
+      "artist": "Rihanna",
+      "year": 2011
+    },
+    {
+      "id": "t2",
+      "title": "Don't Start Now",
+      "artist": "Dua Lipa",
+      "year": 2019
+    },
+    {
+      "id": "t3",
+      "title": "I Knew You Were Trouble.",
+      "artist": "Taylor Swift",
+      "year": 2012
+    },
+    {
+      "id": "t4",
+      "title": "We Can't Stop",
+      "artist": "Miley Cyrus",
+      "year": 2013
+    },
+    {
+      "id": "t5",
+      "title": "Confident",
+      "artist": "Demi Lovato",
+      "year": 2015
+    },
+    {
+      "id": "t6",
+      "title": "Break Free",
+      "artist": "Ariana Grande, Zedd",
+      "year": 2014
+    },
+    {
+      "id": "t7",
+      "title": "There's Nothing Holdin' Me Back",
+      "artist": "Shawn Mendes",
+      "year": 2017
+    },
+    {
+      "id": "t8",
+      "title": "Cake By The Ocean",
+      "artist": "DNCE",
+      "year": 2016
+    },
+    {
+      "id": "t9",
+      "title": "The Hills",
+      "artist": "The Weeknd",
+      "year": 2015
+    },
+    {
+      "id": "t10",
+      "title": "Don't Let Me Down",
+      "artist": "The Chainsmokers, Daya",
+      "year": 2016
+    },
+    {
+      "id": "t11",
+      "title": "Rude",
+      "artist": "MAGIC!",
+      "year": 2014
+    },
+    {
+      "id": "t12",
+      "title": "Get Low",
+      "artist": "Lil Jon & The East Side Boyz, Ying Yang Twins",
+      "year": 2002
+    },
+    {
+      "id": "t13",
+      "title": "Ridin'",
+      "artist": "Chamillionaire, Krayzie Bone",
+      "year": 2005
+    },
+    {
+      "id": "t14",
+      "title": "Good Life",
+      "artist": "Kanye West, T-Pain",
+      "year": 2007
+    },
+    {
+      "id": "t15",
+      "title": "The Real Slim Shady",
+      "artist": "Eminem",
+      "year": 2000
+    },
+    {
+      "id": "t16",
+      "title": "Hotline Bling",
+      "artist": "Drake",
+      "year": 2016
+    },
+    {
+      "id": "t17",
+      "title": "Alright",
+      "artist": "Kendrick Lamar",
+      "year": 2015
+    },
+    {
+      "id": "t18",
+      "title": "Panda",
+      "artist": "Desiigner",
+      "year": 2016
+    },
+    {
+      "id": "t19",
+      "title": "Truth Hurts",
+      "artist": "Lizzo",
+      "year": 2023
+    },
+    {
+      "id": "t20",
+      "title": "Say So",
+      "artist": "Doja Cat",
+      "year": 2019
+    },
+    {
+      "id": "t21",
+      "title": "Shallow",
+      "artist": "Lady Gaga, Bradley Cooper",
+      "year": 2018
+    }
+  ]
+}

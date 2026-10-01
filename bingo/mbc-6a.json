@@ -1,0 +1,139 @@
+{
+  "id": "mbc-6a",
+  "kind": "bingo",
+  "title": "MBC 6a - 2000s & 2010s",
+  "subtitle": "Two decades of chart and indie, one chorus each",
+  "cardRows": 3,
+  "cardCols": 3,
+  "cardSize": 3,
+  "notes": "Written 22 September 2026 for the Station Tap. Chorus-first picks: every one lands on its own within a few seconds to a half-listening room. Checked against every other pack in bingo/ — nothing here is a repeat except Wild, which is also in MBC 5 and was asked for by name. Split from MBC 6 on 1 October 2026 into two ~20-song games for a 3×3 card: every other song, so each half spans the whole pack and no artist is in a half twice. Its other half is MBC 6b.",
+  "createdAt": "2026-09-22T00:00:00.000Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Wild",
+      "artist": "Jessie J",
+      "year": 2013
+    },
+    {
+      "id": "t2",
+      "title": "Summer",
+      "artist": "Calvin Harris",
+      "year": 2014
+    },
+    {
+      "id": "t3",
+      "title": "Don't Call Me Up",
+      "artist": "Mabel",
+      "year": 2019
+    },
+    {
+      "id": "t4",
+      "title": "Break My Heart",
+      "artist": "Dua Lipa",
+      "year": 2020
+    },
+    {
+      "id": "t5",
+      "title": "Love Yourself",
+      "artist": "Justin Bieber",
+      "year": 2015
+    },
+    {
+      "id": "t6",
+      "title": "Money on My Mind",
+      "artist": "Sam Smith",
+      "year": 2014
+    },
+    {
+      "id": "t7",
+      "title": "Shotgun",
+      "artist": "George Ezra",
+      "year": 2018
+    },
+    {
+      "id": "t8",
+      "title": "Galway Girl",
+      "artist": "Ed Sheeran",
+      "year": 2017
+    },
+    {
+      "id": "t9",
+      "title": "Riptide",
+      "artist": "Vance Joy",
+      "year": 2013
+    },
+    {
+      "id": "t10",
+      "title": "Counting Stars",
+      "artist": "OneRepublic",
+      "year": 2013
+    },
+    {
+      "id": "t11",
+      "title": "Shout Out to My Ex",
+      "artist": "Little Mix",
+      "year": 2016
+    },
+    {
+      "id": "t12",
+      "title": "Only Girl (In The World)",
+      "artist": "Rihanna",
+      "year": 2010
+    },
+    {
+      "id": "t13",
+      "title": "Naive",
+      "artist": "The Kooks",
+      "year": 2006
+    },
+    {
+      "id": "t14",
+      "title": "Ruby",
+      "artist": "Kaiser Chiefs",
+      "year": 2007
+    },
+    {
+      "id": "t15",
+      "title": "Grace Kelly",
+      "artist": "Mika",
+      "year": 2007
+    },
+    {
+      "id": "t16",
+      "title": "Patience",
+      "artist": "Take That",
+      "year": 2006
+    },
+    {
+      "id": "t17",
+      "title": "Viva La Vida",
+      "artist": "Coldplay",
+      "year": 2008
+    },
+    {
+      "id": "t18",
+      "title": "Bring Me to Life",
+      "artist": "Evanescence",
+      "year": 2003
+    },
+    {
+      "id": "t19",
+      "title": "Just Dance",
+      "artist": "Lady Gaga",
+      "year": 2008
+    },
+    {
+      "id": "t20",
+      "title": "Can't Get You Out of My Head",
+      "artist": "Kylie Minogue",
+      "year": 2001
+    },
+    {
+      "id": "t21",
+      "title": "Mercy",
+      "artist": "Duffy",
+      "year": 2008
+    }
+  ]
+}

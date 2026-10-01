@@ -163,8 +163,8 @@ async function drive({ kind, tab, packSel, title, thenTab, thenSel, thenTitle })
   }
 }
 
-await drive({ kind: 'cards', tab: 'card', packSel: '.pack-card', title: 'Card Bingo', thenTab: 'music bingo', thenSel: '.pack-card[data-pack="mbc-6"]', thenTitle: 'MBC 6 - 2000s & 2010s' });
-await drive({ kind: 'bingo', tab: 'music bingo', packSel: '.pack-card[data-pack="mbc-6"]', title: 'MBC 6 - 2000s & 2010s', thenTab: 'card', thenSel: '.pack-card', thenTitle: 'Card Bingo' });
+await drive({ kind: 'cards', tab: 'card', packSel: '.pack-card', title: 'Card Bingo', thenTab: 'music bingo', thenSel: '.pack-card[data-pack="mbc-6a"]', thenTitle: 'MBC 6a - 2000s & 2010s' });
+await drive({ kind: 'bingo', tab: 'music bingo', packSel: '.pack-card[data-pack="mbc-6a"]', title: 'MBC 6a - 2000s & 2010s', thenTab: 'card', thenSel: '.pack-card', thenTitle: 'Card Bingo' });
 
 console.log(fails ? `\n${fails} FAILED — a deploy with the disk does not leave the host able to launch` : '\nA night survives a deploy with the disk, and the host can still replace it.');
 process.exit(fails ? 1 : 0);

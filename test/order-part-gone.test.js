@@ -38,14 +38,14 @@ test('Continue onto a bingo pack that has since been deleted answers a sentence,
 
     const launched = await host('launchOrder', {
       replace: true,
-      segments: [{ kind: 'quiz', order: [{ packId: '1980s-pop-music', round: 0 }] }, { kind: 'bingo', packId: 'mbc-5' }],
+      segments: [{ kind: 'quiz', order: [{ packId: '1980s-pop-music', round: 0 }] }, { kind: 'bingo', packId: 'mbc-5a' }],
     });
     assert.equal(launched.status, 200, `the running order would not launch: ${JSON.stringify(launched.json)}`);
     const before = await hostView();
     assert.equal(before.runningOrder && before.runningOrder.total, 2);
 
     // The evening's bingo pack goes, from the catalogue copy this app reads.
-    const file = path.join(dir, 'bingo', 'mbc-5.json');
+    const file = path.join(dir, 'bingo', 'mbc-5a.json');
     assert.ok(fs.existsSync(file), 'the test does not know where the catalogue copy is');
     fs.unlinkSync(file);
 
@@ -53,7 +53,7 @@ test('Continue onto a bingo pack that has since been deleted answers a sentence,
     assert.notEqual(pressed.status, 500, `Continue answered 500: ${JSON.stringify(pressed.json)}`);
     assert.equal(pressed.status, 400, `expected a refusal in words, got ${pressed.status}: ${JSON.stringify(pressed.json)}`);
     assert.doesNotMatch(String(pressed.json.error || ''), /ENOENT|\//, `a file path reached the control view: ${pressed.json.error}`);
-    assert.match(String(pressed.json.error || ''), /no bingo pack called mbc-5 any more/i);
+    assert.match(String(pressed.json.error || ''), /no bingo pack called mbc-5a any more/i);
 
     const after = await hostView();
     assert.equal(after.game, 'quiz', 'the night moved off the quiz');

@@ -55,7 +55,7 @@ const argOf = (name, fallback) => {
 
 const KEY = 'rehearse-tonight';
 const QUIZ = argOf('quiz', '2000s-2010s-mixed');
-const BINGO = argOf('bingo', 'mbc-6');
+const BINGO = argOf('bingo', 'mbc-6a');
 const CARDS = argOf('cards', 'deck');   // 'off' skips the card-bingo leg
 const VENUE = argOf('venue', 'The Rehearsal Arms');
 const DRINKS = ['A pint', 'A house double', 'A glass of wine', 'A bottle of beer', 'A soft drink', 'A shot'];
@@ -313,7 +313,11 @@ try {
       if (cj && cj.pending) cj = ((await host('approveClaim', { playerId: p.id })).body || {}).ok || {};
       if (cj && (cj.prize || cj.valid)) claimed += 1;
     }
-    if (claimed >= 1 || called > 30) break;
+    /* NO CAP BUT THE CALL SHEET. It stopped at thirty, which a 4×4 line
+     * always beat; a 3×3 is a full house or nothing (29 September 2026), and
+     * five phones on a forty-song pack need 33–38 calls — so the music bingo
+     * "failed" in a room that was simply still playing. */
+    if (claimed >= 1) break;
   }
   check('tracks are called and a prize is claimed', claimed >= 1, `${called} called, ${claimed} claimed`);
   const allv = await vouchers();
@@ -610,7 +614,7 @@ try {
           for (const p of crowd) {
             if (await marks(p)) { claimed += 1; break; }
           }
-          if (claimed >= 1 || called > 30) break;
+          if (claimed >= 1) break;   // the call sheet is the cap — see the first leg
         }
         check('the music bingo calls and pays', called > 0 && claimed >= 1,
           `${called} called, ${claimed} claimed`);
