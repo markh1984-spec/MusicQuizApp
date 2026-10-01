@@ -934,7 +934,14 @@ export function launchBar() {
            NOTE: no backticks in here. This is a template literal, and a stray
            one made the whole console a syntax error once — twice now. -->
       <div class="lb-prizes"></div>
-      <div class="lb-rounds-set" hidden></div>
+      <!-- CLEAR THE BAR, at the right of the Each round line: beside the tiles
+           it empties and away from Unlaunch, which acts on the big screen (his
+           pick, 1 October 2026). It empties TONIGHT only; what is on the
+           projector stays there until the next Launch. -->
+      <div class="lb-rs-row">
+        <div class="lb-rounds-set" hidden></div>
+        <button class="minor lb-clear" type="button">Clear the bar</button>
+      </div>
       <div class="lb-order" hidden></div>
       <div class="lb-chosen" hidden></div>
       <!-- KEEP THE WHOLE EVENING — the way a saved night is built, and it
@@ -2115,6 +2122,11 @@ export function launchBar() {
     const here = new Set(segments.flatMap((seg) => (seg.kind === 'quiz' ? seg.order || [] : [])).map((e) => roundKey(e.packId, e.round)));
     for (const key of Object.keys(night.roundSet || {})) if (!here.has(key)) delete night.roundSet[key];
     roundSetInto(el.querySelector('.lb-rounds-set'), roundSetRows(segments, night.roundSet, anyPack, night.questionSeconds), { open: roundSetOpen });
+    // CLEAR, present and inert on an empty bar with the reason on it.
+    const clear = el.querySelector('.lb-clear');
+    const empty = !currentPack && !(lbSlots && lbSlots.some(Boolean));
+    clear.disabled = empty;
+    clear.textContent = empty ? 'Nothing to clear' : 'Clear the bar';
   }
 
   function bingoToSet() {
@@ -2432,7 +2444,7 @@ export function launchBar() {
      * and KEEP LAUNCH, with the name line and the ready light, so a folded bar
      * still launches what its line names (424 -> 184px).
      */
-    for (const part of [el.querySelector('.lb-find'), chosen, venues, liveEl, orderEl, el.querySelector('.lb-set-night'), el.querySelector('.lb-prizes'), el.querySelector('.lb-rounds-set')]) {
+    for (const part of [el.querySelector('.lb-find'), chosen, venues, liveEl, orderEl, el.querySelector('.lb-set-night'), el.querySelector('.lb-prizes'), el.querySelector('.lb-rs-row')]) {
       if (part) part.classList.toggle('lb-tucked', !tonightOpen);
     }
     shutWhat.hidden = tonightOpen;
@@ -2635,6 +2647,31 @@ export function launchBar() {
     lbExtra.splice(at - 1, 1);
     paintOrder();
   }
+
+  /*
+   * CLEAR THE BAR — every tile, what was typed for them and each round's own
+   * settings, the same reset loading a show or changing game does. The pub,
+   * the night's settings and the big screen are left alone: the game up there
+   * stays until the next Launch, so a mis-tap costs nothing in front of the
+   * room (his call, 1 October 2026: *"clear the launch bar and do a new game
+   * even if I already played one"*).
+   */
+  function clearBar() {
+    currentPack = null;
+    lbExtra = [];
+    lbOff = new Set();
+    lbSlots = null;
+    lbPicked = 0;
+    forgetTyped();
+    night.roundSet = {};
+    roundSetOpen = false;
+    searchAddsAt = null;
+    chosen.hidden = true;
+    text.value = '';
+    paintOrder();
+    paintLive();
+  }
+  el.querySelector('.lb-clear').addEventListener('click', clearBar);
 
   /** Reorder. Moving something into first place makes it the night's pack. */
   function movePack(from, to) {

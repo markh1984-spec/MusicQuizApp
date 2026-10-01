@@ -12498,6 +12498,11 @@ body.dj .head .score { color: var(--ink); }
 /* "Each round" (`console-round-set.js`) wears the prize table's look under its
    OWN head and pick classes — that table's listeners key on its own. */
 .lb-prizes, .lb-rounds-set { margin: 10px 0 2px; min-width: 0; }
+/* Clear the bar shares the Each round line, at its right end; the ledger
+   gives ground, the button never wraps. */
+.lb-rs-row { display: flex; align-items: center; gap: 10px; margin: 10px 0 2px; min-width: 0; }
+.lb-rs-row > .lb-rounds-set { margin: 0; flex: 1 1 auto; }
+.lb-clear { flex: 0 0 auto; margin-left: auto; white-space: nowrap; }
 /*
  * 44px, THE TOUCH FLOOR — and it had to be said explicitly.
  *

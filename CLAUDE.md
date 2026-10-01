@@ -3740,9 +3740,9 @@ just don't want to think, you want to get in and go and know it will work."*
   ONE-PACK NIGHT; A TAP ON A ROUND ALREADY IN TONIGHT MOVES NOTHING** — the
   shelf only ADDS, a round moves by its tile. **AN EMPTY SLOT OPENS THE
   SEARCH AND ITS PICK IS ADDED THERE** (`searchAddsAt`) — the search's own
-  pick still starts the night again. **The "why" line and the
-  runner-up chip are DELETED**: the line was never un-hidden and the chip drew
-  only after clearing the box.
+  pick still starts the night again. **CLEAR (`clearBar()`) empties Tonight
+  alone** — the pub and the big screen stay. **The "why" line and the
+  runner-up chip are DELETED.**
 - **A LOADED PACK IS NOT A NIGHT — `state.launched`, and Unlaunch is what it
   was for.** A room ALWAYS has a game built, so the live line named a quiz on a
   console nobody had touched and `resetAll()` built another lobby around the
