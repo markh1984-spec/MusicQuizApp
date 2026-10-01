@@ -250,8 +250,13 @@ function framedBox(pw, ph, frame) {
   return { w, h, dx: Math.round((w - dw) / 2), dy: Math.round((h - dh) / 2), dw, dh };
 }
 
-/** The photograph at its own size, with the frame and the mark on it. */
-async function stamped(img, words, overlay) {
+/**
+ * The photograph at its own size, with the frame and the mark on it, as a
+ * CANVAS — the one drawing both the square save and the Story are built from,
+ * so a Story can never carry a frame the square would not. `framed` says which
+ * branding it got: the venue's frame, or the app's mark.
+ */
+async function stampedCanvas(img, words, overlay) {
   const pw = img.naturalWidth;
   const ph = img.naturalHeight;
   // The frame is loaded BEFORE the canvas is sized, because its shape is what
@@ -286,12 +291,94 @@ async function stamped(img, words, overlay) {
   if (frame) ctx.drawImage(frame, 0, 0, box.w, box.h);
   // AWAITED, never fired-and-checked — see `loadMark()`.
   else stampMark(ctx, box.w, box.h, words, await loadMark());
+  return { canvas, framed: Boolean(frame) };
+}
+
+/** A canvas as the JPEG that leaves. */
+function jpeg(canvas) {
   return new Promise((resolve) => {
     // 0.92 rather than the 0.85 an upload uses: this one is going onto a
     // Facebook page that will compress it again, and the two stack.
     if (canvas.toBlob) canvas.toBlob(resolve, 'image/jpeg', 0.92);
     else resolve(null);
   });
+}
+
+async function stamped(img, words, overlay) {
+  return jpeg((await stampedCanvas(img, words, overlay)).canvas);
+}
+
+/**
+ * AN INSTAGRAM STORY — 1080 x 1920, the host's pick of three layouts on
+ * 1 October 2026: **the poster**. The framed photograph at the top and, under
+ * it, *Quiz night* and when the next one is (`story-line.js`), because every
+ * Story a pub posts is an advert for the next night.
+ *
+ * **EVERYTHING THAT MATTERS SITS BETWEEN `safeTop` AND `safeBottom`** — above
+ * and below them Instagram draws its own profile bar and reply box over the
+ * picture. **The ground is the app's own `--bg` with a wash of the
+ * quizmaster's colour**, at the one angle every gradient here uses, so a Story
+ * looks like the night it came from. **The name goes under the words only when
+ * a venue frame carried the branding** — with no frame the photograph already
+ * wears the mark, and saying it twice is what the frame rule above refuses.
+ */
+export const STORY = { w: 1080, h: 1920, safeTop: 250, safeBottom: 1580 };
+
+export async function storyBlob(src, { words = '', overlay = '', line = '', headline = 'Quiz night' } = {}) {
+  const { canvas: framed, framed: hasFrame } = await stampedCanvas(await loadPhoto(src), words, overlay);
+  const c = document.createElement('canvas');
+  c.width = STORY.w;
+  c.height = STORY.h;
+  const ctx = c.getContext('2d');
+  let hot = '#ff3d8b';
+  let font = 'system-ui, sans-serif';
+  try {
+    const css = getComputedStyle(document.documentElement);
+    hot = css.getPropertyValue('--hot').trim() || hot;
+    font = getComputedStyle(document.body).fontFamily || font;
+  } catch { /* the defaults draw */ }
+  ctx.fillStyle = MOUNT;
+  ctx.fillRect(0, 0, STORY.w, STORY.h);
+  // 120deg, the app's one angle: from the top left, fading to the ground.
+  const wash = ctx.createLinearGradient(0, 0, STORY.w * 0.6, STORY.h * 0.75);
+  wash.addColorStop(0, hot);
+  wash.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.globalAlpha = 0.28;
+  ctx.fillStyle = wash;
+  ctx.fillRect(0, 0, STORY.w, STORY.h);
+  ctx.globalAlpha = 1;
+
+  // The words first, so the picture is sized to leave them room.
+  const brand = hasFrame ? String(words || '').trim() : '';
+  const block = 130 + (line ? 90 : 0) + (brand ? 80 : 0);
+  const room = STORY.safeBottom - 40 - STORY.safeTop - 20 - block;
+  const scale = Math.min(960 / framed.width, room / framed.height);
+  const fw = Math.round(framed.width * scale);
+  const fh = Math.round(framed.height * scale);
+  const fy = STORY.safeTop + 20;
+  ctx.drawImage(framed, Math.round((STORY.w - fw) / 2), fy, fw, fh);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  let y = fy + fh + 130;
+  ctx.fillStyle = hot;
+  ctx.font = `800 92px ${font}`;
+  ctx.fillText(headline, STORY.w / 2, y, 980);
+  if (line) {
+    y += 90;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `600 56px ${font}`;
+    ctx.fillText(line, STORY.w / 2, y, 980);
+  }
+  if (brand) {
+    y += 80;
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `600 40px ${font}`;
+    ctx.fillText(brand, STORY.w / 2, y, 980);
+    ctx.globalAlpha = 1;
+  }
+  return jpeg(c);
 }
 
 /**
@@ -330,7 +417,15 @@ export async function framedBlob(src, { words = '', overlay = '' } = {}) {
 }
 
 export async function savePhoto(src, { words = '', filename = 'photo.jpg', overlay = '', share = true } = {}) {
-  const blob = await framedBlob(src, { words, overlay });
+  return saveBlob(await framedBlob(src, { words, overlay }), filename, share);
+}
+
+/** The Story, saved the same way the square is. */
+export async function saveStory(src, { words = '', filename = 'story.jpg', overlay = '', line = '', share = true } = {}) {
+  return saveBlob(await storyBlob(src, { words, overlay, line }), filename, share);
+}
+
+async function saveBlob(blob, filename, share) {
   if (!blob) return false;
 
   const file = new File([blob], filename, { type: 'image/jpeg' });

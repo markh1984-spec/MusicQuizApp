@@ -116,6 +116,7 @@ export const GUARDS = [
   { name: 'rude-photo',            core: true, why: 'is a rude photo flagged, sorted to the front and marked?' },
   { name: 'venue-frame',           core: true, why: 'does the venue frame replace the app mark, not sit under it?' },
   { name: 'gallery-frame',         core: true,  why: 'is the venue frame on the public gallery, on screen and in the save?' },
+  { name: 'save-for-instagram',    core: true,  why: 'do the square and the Story both save from the console, the Story 1080x1920 and clear of Instagram\'s strips?' },
   { name: 'photos-in-a-bucket',    core: false, why: 'the gallery off an object store — and does the bin mean it?' },
   { name: 'star-means-public',     core: false, why: 'does starring publish it, and does the socials post kit work?' },
   { name: 'second-screen',         core: false, why: 'the second display: the code and the photos' },

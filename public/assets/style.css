@@ -10509,8 +10509,10 @@ body.gallery { padding: 0; }
    pill (`gal-save community-save`) and, until the row existed, it borrowed the
    PLACEMENT off `.gal-save` as well — so moving the pin onto the row silently
    dropped that button into the flow of the console's overlay. Named here
-   instead: one rule, two callers, nothing to keep in step. */
-.gal-acts, .gal-save.community-save {
+   instead: one rule, two callers, nothing to keep in step. AND THE CONSOLE
+   NOW USES THE ROW TOO — two saves (square and Story) each pinned to one spot
+   lay on top of each other. */
+.gal-acts {
   position: absolute; z-index: 1;
   left: 50%; transform: translateX(-50%);
   bottom: max(18px, calc(env(safe-area-inset-bottom) + 10px));
