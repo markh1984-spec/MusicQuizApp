@@ -146,6 +146,9 @@ try {
    * the old typed one. Three ways in, each driven exactly as the sweep found it.
    */
   const again = async ({ venue = true } = {}) => {
+    /* NO VENUE IS A FRESH EVENING — tonight's pick is kept until 6am now
+       (`tonight-venue.js`), so a reload alone no longer drops it. */
+    if (!venue) await p.evaluate(() => localStorage.removeItem('musicquiz.tonightvenue'));
     // Launch lands on /host; the next act starts from the console.
     await p.goto(`${BASE}/console`, { waitUntil: 'load' });
     await p.waitForTimeout(2500);
