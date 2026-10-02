@@ -50,6 +50,7 @@ import { writeEditor } from './src/http/write-editor.js';
 import { writeGenerate } from './src/http/write-generate.js';
 import { writeBingoPacks } from './src/http/write-bingo-packs.js';
 import { getVenuePhotos, writeVenuePhotos } from './src/http/venue-photos.js';
+import { getVideos, writeVideos, startVideoSweep } from './src/http/videos.js';
 
 // ------------------------------------------------------------------ routing
 
@@ -93,8 +94,8 @@ const server = http.createServer(async (req, res) => {
  * because it needs the raw bytes, and `report.pdf` is matched before the
  * `/api/past-gigs/` prefix.
  */
-const GET_ROUTES = [getVenuePhotos, getPages, getStaticFiles, getQrAndVouchers, getStream, getInfo, getMe, getLibrary, getPacks, getInvoices, getPastGigs, getGallery, getRest];
-const WRITE_ROUTES = [writeStripe, writePhotos, writeShows, writePastGigs, writeSignIn, writeVenuePhotos, writeMeAndSignup, writeSuggestions, writeGroup, writeSettings, writeInvoices, writeVoucher, writePlayers, writeOwnPacks, writeOwner, writeDj, writeHost, writeEditor, writeGenerate, writeBingoPacks];
+const GET_ROUTES = [getVenuePhotos, getVideos, getPages, getStaticFiles, getQrAndVouchers, getStream, getInfo, getMe, getLibrary, getPacks, getInvoices, getPastGigs, getGallery, getRest];
+const WRITE_ROUTES = [writeStripe, writePhotos, writeShows, writePastGigs, writeSignIn, writeVenuePhotos, writeVideos, writeMeAndSignup, writeSuggestions, writeGroup, writeSettings, writeInvoices, writeVoucher, writePlayers, writeOwnPacks, writeOwner, writeDj, writeHost, writeEditor, writeGenerate, writeBingoPacks];
 
 async function handleGet(req, res, url, route) {
   for (const family of GET_ROUTES) if (await family(req, res, url, route)) return true;
@@ -179,6 +180,8 @@ server.listen(config.port, () => {
 
   // AND RETRY ANY PHOTOGRAPH THAT DID NOT REACH THE STORE — see `startPhotoSweep()`.
   startPhotoSweep();
+  // AND CLEAR UNUSED VIDEOS AFTER THIRTY DAYS — see `sweepVideos()`.
+  startVideoSweep();
 
   /*
    * THE FLIGHT RECORDER SEES THE BOOT, then the server plays a night against

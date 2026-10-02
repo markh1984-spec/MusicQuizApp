@@ -43,6 +43,7 @@ import {
 } from './client.js';
 import { paintScheme } from './schemes.js';
 import { openCameraSheet } from './camera-sheet.js';
+import { openVideoRecorder } from './video-recorder.js';
 
 const cardEl = document.getElementById('card');
 
@@ -90,9 +91,25 @@ function build() {
         Choose one you already took
         <input type="file" accept="image/*" hidden>
       </label>
+      <button class="snap-pick snap-video" type="button" hidden>Record a video — up to 15 seconds</button>
       <div class="tiny snap-said" id="snapSaid">${esc(said)}</div>
       <div class="snap-shots" id="snapShots"></div>
     </div>`));
+
+  /*
+   * A VIDEO FROM THE BAR'S CAMERA TOO — the app's own recorder, fifteen
+   * seconds (`video-recorder.js`). Shown only once the server says video is
+   * on (`/api/video/ok`): never a button that fails. Never on the big screen.
+   */
+  const vid = cardEl.querySelector('.snap-video');
+  fetch(`/api/video/ok${roomParam('?')}`).then((r) => r.json()).then((got) => { if (got && got.ok) vid.hidden = false; }).catch(() => {});
+  vid.addEventListener('click', () => openVideoRecorder({
+    note: 'Kept for the night\'s socials — never on the big screen.',
+    async send(blob, type) {
+      const res = await fetch(`/api/snap-video${roomParam('?')}`, { method: 'POST', headers: { 'Content-Type': type }, body: blob });
+      return res.json().catch(() => ({ ok: false }));
+    },
+  }));
 
   const input = cardEl.querySelector('.snap-take input');
   const label = cardEl.querySelector('.snap-take');

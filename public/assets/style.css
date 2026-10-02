@@ -10587,6 +10587,36 @@ body.gallery { padding: 0; }
 .vp-opt-story .vp-prev { height: min(62vh, 640px, calc((100vw - 38px) / 2 * 16 / 9)); aspect-ratio: 9 / 16; }
 .vp-share, .vp-close { min-height: 44px; min-width: 120px; }
 .vp-share:disabled { opacity: 0.5; cursor: default; }
+/* THE APP'S OWN VIDEO RECORDER (`video-recorder.js`) — full screen, the
+   camera in the middle, one round button. The dot is red because a record
+   button is red everywhere in the world; it turns into a stop square. */
+.vr-sheet {
+  position: fixed; inset: 0; z-index: 70;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: max(12px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+  background: var(--bg, #07070e); color: var(--ink);
+}
+.vr-head { display: flex; align-items: center; justify-content: space-between; font-size: 18px; }
+.vr-close { min-width: 44px; min-height: 44px; border: 0; background: none; color: var(--ink-dim); font-size: 20px; cursor: pointer; }
+.vr-note { margin: 0; color: var(--ink-dim); }
+.vr-stage { position: relative; flex: 1 1 auto; min-height: 0; display: grid; place-items: center; border-radius: var(--r-card); overflow: hidden; background: #000; }
+.vr-stage video { width: 100%; height: 100%; object-fit: contain; }
+.vr-count {
+  position: absolute; top: 12px; right: 14px; min-width: 52px; text-align: center;
+  font: 800 30px/1.4 var(--ui, system-ui), sans-serif; color: #fff;
+  background: rgba(0, 0, 0, 0.55); border-radius: var(--r-pill); padding: 0 12px;
+}
+.vr-said { margin: 0; min-height: 1.3em; text-align: center; color: var(--ink-dim); }
+.vr-acts { display: flex; align-items: center; justify-content: center; gap: 18px; min-height: 76px; }
+.vr-acts .gal-save { min-height: 44px; min-width: 96px; }
+.vr-rec {
+  width: 72px; height: 72px; border-radius: 50%; border: 4px solid #fff; background: none;
+  display: grid; place-items: center; cursor: pointer; padding: 0;
+}
+.vr-rec span { width: 52px; height: 52px; border-radius: 50%; background: #ff3b30; transition: all 160ms ease; }
+.vr-rec.on span { width: 28px; height: 28px; border-radius: 6px; }
+.vr-rec:disabled { opacity: 0.4; cursor: default; }
+@media (prefers-reduced-motion: reduce) { .vr-rec span { transition: none; } }
 /* Gallery logins on a Community venue card. */
 .venue-logins-in {
   display: grid; gap: 10px; margin: 12px 0; padding: 12px;

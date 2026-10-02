@@ -220,6 +220,8 @@ export const RESERVED = [
   'snap',
   // A pub's staff, signed in to that pub's photographs (`src/http/venue-photos.js`).
   'venue-photos', 'venue-photo',
+  // Fifteen seconds from a phone (`src/http/videos.js`).
+  'past-video', 'venue-video',
 ];
 
 /**

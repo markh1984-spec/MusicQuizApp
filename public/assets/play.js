@@ -20,6 +20,7 @@ import {
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { buildDj, djKey, djHead } from './play-dj.js';
 import { openCameraSheet } from './camera-sheet.js';
+import { openVideoRecorder } from './video-recorder.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
 import { paintChatButton } from './chat.js';
@@ -763,8 +764,55 @@ function wirePhotoGate(el, s) {
   });
 }
 
+/*
+ * A VIDEO, BESIDE THE PHOTO — fifteen seconds in the app's own recorder
+ * (`video-recorder.js`; the host's call, 2 October 2026). Offered only where a
+ * photo is, and only once the server says video is switched on (`/api/video/ok`,
+ * asked ONCE per page — never a field on the game's payload). Until then there
+ * is no row, never a row that fails.
+ */
+let videoOk = false;
+let videoAsked = false;
+const VIDEO_ROW = `<button class="wait-item wait-video" type="button">
+        <span class="wait-item-icon" aria-hidden="true">🎥</span>
+        <span class="wait-item-what">
+          <b>Send a video</b>
+          <span class="tiny">Up to 15 seconds, for the night's socials — never on the big screen</span>
+        </span>
+      </button>`;
+
+function askVideoOk() {
+  if (videoAsked) return;
+  videoAsked = true;
+  fetch(`/api/video/ok${roomParam('?')}`).then((r) => r.json()).then((got) => {
+    if (!got || !got.ok) return;
+    videoOk = true;
+    // A menu already drawn gets its row now rather than at the next push.
+    for (const photo of document.querySelectorAll('.wait-menu .wait-photo')) {
+      if (photo.parentElement.querySelector('.wait-video')) continue;
+      const row = node(VIDEO_ROW);
+      row.addEventListener('click', openVideo);
+      photo.after(row);
+    }
+  }).catch(() => { videoAsked = false; });
+}
+
+function openVideo() {
+  if (!me) return;
+  openVideoRecorder({
+    note: 'It may be used to promote the night. Never on the big screen.',
+    async send(blob, type) {
+      const res = await fetch(`/api/video?playerId=${encodeURIComponent(me.id)}${roomParam()}`, {
+        method: 'POST', headers: { 'Content-Type': type }, body: blob,
+      });
+      return res.json().catch(() => ({ ok: false }));
+    },
+  });
+}
+
 function gapMenu(s, { photosFirst }) {
   const wants = gapWants(s);
+  if (wants.photos) askVideoOk();
   const photo = wants.photos ? `      <button class="wait-item wait-photo" type="button">
         <span class="wait-item-icon" aria-hidden="true">📷</span>
         <span class="wait-item-what">
@@ -772,7 +820,7 @@ function gapMenu(s, { photosFirst }) {
           <span class="tiny">On the big screen tonight — and this night’s photo
             page if your quizmaster shares it</span>
         </span>
-      </button>` : '';
+      </button>${videoOk ? VIDEO_ROW : ''}` : '';
   // `arcadeCard` hides itself when there is no seed, and a break that offers
   // no game is sent no seed — so the two halves of the decision cannot come
   // apart even if this line were wrong.
@@ -783,6 +831,7 @@ function gapMenu(s, { photosFirst }) {
 
 function wireGapMenu(el, s) {
   el.querySelector('.wait-photo')?.addEventListener('click', openCamera);
+  el.querySelector('.wait-video')?.addEventListener('click', openVideo);
   wireArcade(el, s, postArcadeScore);
 }
 
