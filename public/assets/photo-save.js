@@ -425,7 +425,8 @@ export async function saveStory(src, { words = '', filename = 'story.jpg', overl
   return saveBlob(await storyBlob(src, { words, overlay, line }), filename, share);
 }
 
-async function saveBlob(blob, filename, share) {
+/** Share or save bytes already drawn — a preview's own blob, so what is sent IS what was shown. */
+export async function saveBlob(blob, filename, share = true) {
   if (!blob) return false;
 
   const file = new File([blob], filename, { type: 'image/jpeg' });

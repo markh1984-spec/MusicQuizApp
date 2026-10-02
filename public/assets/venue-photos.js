@@ -14,7 +14,7 @@
  */
 import { esc, node, postJson } from './client.js';
 import { paintScheme } from './schemes.js';
-import { saveName, savePhoto, saveStory } from './photo-save.js';
+import { framedBlob, saveBlob, saveName, storyBlob } from './photo-save.js';
 
 const body = document.getElementById('vpBody');
 const title = document.getElementById('vpTitle');
@@ -126,37 +126,76 @@ async function frameOnce() {
   return frame;
 }
 
+/*
+ * A PHOTO OPENS INTO ITS TWO INSTAGRAM SHAPES — the host's call, 2 October
+ * 2026: *"each photo opened out into the instagram story/square options on
+ * click, then just have a share button on each."* Both are DRAWN here, frame
+ * and name on, so what is shown is exactly what goes — and the button shares
+ * those same bytes rather than drawing again.
+ *
+ * **"SHARE" ONLY WHERE THERE IS A SHARE SHEET.** A laptop with none gets the
+ * file in Downloads, and a button saying Share there would be a control
+ * reporting something it did not do — so it says Download.
+ */
+function canShareFiles() {
+  try {
+    return Boolean(navigator.canShare && navigator.canShare({ files: [new File([new Blob(['x'])], 'x.jpg', { type: 'image/jpeg' })] }));
+  } catch {
+    return false;
+  }
+}
+
 function openBig(me, night, photo, at) {
-  const big = node(`<div class="gal-big" role="dialog" aria-label="Photo"><div class="gal-big-pic"><img src="${esc(photo.url)}" alt=""></div></div>`);
-  const row = node('<div class="gal-acts"></div>');
-  row.addEventListener('click', (ev) => ev.stopPropagation());
-  const filename = saveName(me.venue, night, at + 1, '');
-  const control = (idle, run) => {
-    const b = node(`<button class="gal-save" type="button">${esc(idle)}</button>`);
-    b.addEventListener('click', async () => {
-      if (b.disabled) return;
-      b.disabled = true;
-      b.textContent = 'Saving…';
-      try {
-        const went = await run(await frameOnce());
-        b.textContent = went === false ? 'Nothing was saved' : 'Saved';
-      } catch {
-        b.textContent = 'That would not save — try again';
-      }
-      setTimeout(() => { b.textContent = idle; b.disabled = false; }, 2400);
-    });
-    row.appendChild(b);
-  };
-  control('Save square', (overlay) => savePhoto(photo.url, { words: me.brand, filename, overlay }));
-  control('Save as a Story', (overlay) => saveStory(photo.url, {
-    words: me.brand, overlay, line: me.line, filename: filename.replace(/\.jpg$/, '-story.jpg'),
-  }));
-  big.querySelector('.gal-big-pic').appendChild(row);
-  big.addEventListener('click', () => big.remove());
-  document.addEventListener('keydown', function esc2(ev) {
-    if (ev.key === 'Escape') { big.remove(); document.removeEventListener('keydown', esc2); }
-  });
+  const verb = canShareFiles() ? 'Share' : 'Download';
+  const big = node(`<div class="vp-big" role="dialog" aria-label="Save this photo for Instagram">
+      <div class="vp-pair">
+        <figure class="vp-opt vp-opt-square"><div class="vp-prev"><span class="muted">Making the square…</span></div>
+          <figcaption>Instagram post — square</figcaption>
+          <button class="gal-save vp-share" type="button" disabled>${verb}</button></figure>
+        <figure class="vp-opt vp-opt-story"><div class="vp-prev"><span class="muted">Making the Story…</span></div>
+          <figcaption>Instagram Story</figcaption>
+          <button class="gal-save vp-share" type="button" disabled>${verb}</button></figure>
+      </div>
+      <button class="gal-save vp-close" type="button">Close</button>
+    </div>`);
+  const urls = [];
+  const close = () => { big.remove(); urls.forEach((u) => URL.revokeObjectURL(u)); document.removeEventListener('keydown', onKey); };
+  const onKey = (ev) => { if (ev.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  big.addEventListener('click', (ev) => { if (ev.target === big || ev.target.closest('.vp-close')) close(); });
   document.body.appendChild(big);
+
+  const filename = saveName(me.venue, night, at + 1, '');
+  const fill = async (fig, draw, name) => {
+    const prev = fig.querySelector('.vp-prev');
+    const btn = fig.querySelector('.vp-share');
+    let blob;
+    try {
+      blob = await draw();
+    } catch {
+      blob = null;
+    }
+    if (!blob) { prev.replaceChildren(node('<span class="muted">That one would not draw — close and try again.</span>')); return; }
+    const url = URL.createObjectURL(blob);
+    urls.push(url);
+    prev.replaceChildren(node(`<img alt="" src="${url}">`));
+    btn.disabled = false;
+    btn.addEventListener('click', async () => {
+      if (btn.dataset.busy) return;
+      btn.dataset.busy = '1';
+      try {
+        const went = await saveBlob(blob, name, true);
+        btn.textContent = went === false ? 'Nothing was sent' : (verb === 'Share' ? 'Shared' : 'Saved');
+      } catch {
+        btn.textContent = 'That did not go — try again';
+      }
+      setTimeout(() => { btn.textContent = verb; delete btn.dataset.busy; }, 2400);
+    });
+  };
+  frameOnce().then((overlay) => Promise.all([
+    fill(big.querySelector('.vp-opt-square'), () => framedBlob(photo.url, { words: me.brand, overlay }), filename),
+    fill(big.querySelector('.vp-opt-story'), () => storyBlob(photo.url, { words: me.brand, overlay, line: me.line }), filename.replace(/\.jpg$/, '-story.jpg')),
+  ]));
 }
 
 function passwordPanel() {

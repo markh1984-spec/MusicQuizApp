@@ -153,20 +153,32 @@ try {
   check('and the pictures load', loaded);
   await shot(p, 'staff-signed-in.png');
   await p.locator('.vp-night .gal-shot').first().click();
-  await wait(700);
-  const btns = await p.$$eval('.gal-big .gal-save', (b) => b.map((x) => x.textContent.trim()));
+  // A PHOTO OPENS INTO ITS TWO INSTAGRAM SHAPES, each drawn, each with its own
+  // button (2 October 2026). Headless Chromium has no share sheet, so the
+  // button must say Download — "Share" there would be a lie.
+  await p.waitForFunction(() => document.querySelectorAll('.vp-big .vp-prev img').length === 2, null, { timeout: 15000 }).catch(() => {});
+  const opened = await p.evaluate(() => [...document.querySelectorAll('.vp-big .vp-opt')].map((f) => {
+    const img = f.querySelector('.vp-prev img');
+    const box = f.querySelector('.vp-prev').getBoundingClientRect();
+    return { caption: f.querySelector('figcaption').textContent.trim(), button: f.querySelector('.vp-share').textContent.trim(),
+      off: f.querySelector('.vp-share').disabled, w: img ? img.naturalWidth : 0, h: img ? img.naturalHeight : 0,
+      shownW: Math.round(box.width), shownH: Math.round(box.height), right: Math.round(box.right) };
+  }));
   await shot(p, 'staff-photo-open.png');
-  check('an opened photo offers the square and the Story', JSON.stringify(btns) === JSON.stringify(['Save square', 'Save as a Story']), JSON.stringify(btns));
+  check('an opened photo shows its square and its Story, drawn', opened.length === 2
+    && opened[0].w === opened[0].h && opened[0].w > 0 && opened[1].w === 1080 && opened[1].h === 1920, JSON.stringify(opened));
+  check('each with its own button, and it says what it will do here', opened.every((o) => o.button === 'Download' && !o.off), JSON.stringify(opened.map((o) => o.button)));
+  check('both previews fit a phone, side by side', opened.every((o) => o.right <= 390 && o.shownW > 100), JSON.stringify(opened.map((o) => [o.shownW, o.shownH, o.right])));
   const measure = async (dl) => {
     const to = join(repo, `dl-${Date.now()}.jpg`); await dl.saveAs(to);
     return p.evaluate(async (b64) => { const i = new Image(); await new Promise((r) => { i.onload = r; i.src = `data:image/jpeg;base64,${b64}`; }); return [i.naturalWidth, i.naturalHeight]; }, readFileSync(to).toString('base64'));
   };
-  for (const [label, want] of [['Save square', (w, h) => w === h], ['Save as a Story', (w, h) => w === 1080 && h === 1920]]) {
+  for (const [which, want] of [['.vp-opt-square', (w, h) => w === h], ['.vp-opt-story', (w, h) => w === 1080 && h === 1920]]) {
     const dl = p.waitForEvent('download', { timeout: 15000 }).catch(() => null);
-    await p.locator('.gal-big .gal-save', { hasText: label }).click();
+    await p.locator(`.vp-big ${which} .vp-share`).click();
     const got = await dl;
     const size = got ? await measure(got) : null;
-    check(`${label} saves the right shape`, size && want(...size), JSON.stringify(size));
+    check(`${which === '.vp-opt-square' ? 'the square' : 'the Story'} downloads the right shape`, size && want(...size), JSON.stringify(size));
     await wait(2600);
   }
   await p.keyboard.press('Escape');
