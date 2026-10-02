@@ -14,7 +14,7 @@
  * app's ground behind it), the Story is `storyBlob()`'s poster, everything
  * inside Instagram's strips (`STORY`).
  */
-import { STORY, frameImage, markImage, stampMark } from './photo-save.js';
+import { STORY, frameImage, markImage, stampMark, storyTop, storyWordsHeight } from './photo-save.js';
 
 const MOUNT = '#07070e';
 
@@ -74,8 +74,11 @@ export async function remakeVideo({ src, shape = 'square', words = '', overlay =
   canvas.width = story ? STORY.w : 1080;
   canvas.height = story ? STORY.h : 1080;
   const ctx = canvas.getContext('2d');
-  // The square: where the clip and its frame go on either canvas.
-  const sq = story ? { x: 60, y: STORY.safeTop + 20, size: 960 } : { x: 0, y: 0, size: 1080 };
+  // The square: where the clip and its frame go on either canvas — on a
+  // Story, centred with its words exactly as the photograph's is (`storyTop`).
+  const sq = story
+    ? { x: 60, y: storyTop(960 + storyWordsHeight(line, frame && words)), size: 960 }
+    : { x: 0, y: 0, size: 1080 };
 
   const draw = () => {
     if (story) {
@@ -86,6 +89,12 @@ export async function remakeVideo({ src, shape = 'square', words = '', overlay =
       wash.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.globalAlpha = 0.28;
       ctx.fillStyle = wash;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const foot = ctx.createLinearGradient(canvas.width, canvas.height, canvas.width * 0.45, canvas.height * 0.55);
+      foot.addColorStop(0, hot);
+      foot.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalAlpha = 0.16;
+      ctx.fillStyle = foot;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.globalAlpha = 1;
     }

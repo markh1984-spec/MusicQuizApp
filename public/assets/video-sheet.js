@@ -23,7 +23,10 @@ function canShareFiles() {
 }
 
 export function openVideoSheet({ src, words = '', line = '', overlay = async () => '', venue = '', night = '', share = true, onSaved = () => {} }) {
-  const verb = share && canShareFiles() ? 'Share' : 'Download';
+  // SHARE ON A PHONE, DOWNLOAD ON A LAPTOP — a Mac has a share sheet too, and
+  // there the file belongs in Downloads (2 October 2026).
+  const onAPhone = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+  const verb = share && onAPhone && canShareFiles() ? 'Share' : 'Download';
   const can = canRemakeVideo();
   const sheet = node(`<div class="vp-big" role="dialog" aria-label="Save this video for Instagram">
       <div class="vp-pair">

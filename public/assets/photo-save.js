@@ -334,6 +334,22 @@ async function stamped(img, words, overlay) {
  */
 export const STORY = { w: 1080, h: 1920, safeTop: 250, safeBottom: 1580 };
 
+/** How tall the words under a Story's picture are, to the last line's foot. */
+export function storyWordsHeight(line, brand) {
+  return 130 + (line ? 90 : 0) + (brand ? 80 : 0) + 24;
+}
+
+/**
+ * WHERE A STORY'S PICTURE-AND-WORDS BLOCK STARTS — centred on the canvas, so
+ * the poster does not sit high over an empty third (*"UI looks a bit
+ * fucked"*, 2 October 2026), and never into the strips Instagram draws over.
+ * One answer for the photograph and the video.
+ */
+export function storyTop(blockHeight) {
+  const centred = Math.round((STORY.h - blockHeight) / 2);
+  return Math.max(STORY.safeTop + 20, Math.min(centred, STORY.safeBottom - blockHeight));
+}
+
 export async function storyBlob(src, { words = '', overlay = '', line = '', headline = 'Quiz night' } = {}) {
   const { canvas: framed, framed: hasFrame } = await stampedCanvas(await loadPhoto(src), words, overlay);
   const c = document.createElement('canvas');
@@ -356,16 +372,24 @@ export async function storyBlob(src, { words = '', overlay = '', line = '', head
   ctx.globalAlpha = 0.28;
   ctx.fillStyle = wash;
   ctx.fillRect(0, 0, STORY.w, STORY.h);
+  // And a quieter one rising from the foot, where Instagram's reply box sits:
+  // the strip kept clear reads as the design rather than as a gap.
+  const foot = ctx.createLinearGradient(STORY.w, STORY.h, STORY.w * 0.45, STORY.h * 0.55);
+  foot.addColorStop(0, hot);
+  foot.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.globalAlpha = 0.16;
+  ctx.fillStyle = foot;
+  ctx.fillRect(0, 0, STORY.w, STORY.h);
   ctx.globalAlpha = 1;
 
   // The words first, so the picture is sized to leave them room.
   const brand = hasFrame ? String(words || '').trim() : '';
-  const block = 130 + (line ? 90 : 0) + (brand ? 80 : 0);
-  const room = STORY.safeBottom - 40 - STORY.safeTop - 20 - block;
+  const block = storyWordsHeight(line, brand);
+  const room = STORY.safeBottom - STORY.safeTop - 20 - block;
   const scale = Math.min(960 / framed.width, room / framed.height);
   const fw = Math.round(framed.width * scale);
   const fh = Math.round(framed.height * scale);
-  const fy = STORY.safeTop + 20;
+  const fy = storyTop(fh + block);
   ctx.drawImage(framed, Math.round((STORY.w - fw) / 2), fy, fw, fh);
 
   ctx.textAlign = 'center';

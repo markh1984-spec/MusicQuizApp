@@ -40,7 +40,10 @@ function canShareFiles() {
  * @param {boolean} o.share     offer the share sheet where there is one
  */
 export function openInstagramSheet({ src, words = '', line = '', overlay = async () => '', filename = 'photo.jpg', share = true }) {
-  const verb = share && canShareFiles() ? 'Share' : 'Download';
+  // SHARE ON A PHONE, DOWNLOAD ON A LAPTOP — a Mac has a share sheet too, and
+  // there the file belongs in Downloads (2 October 2026).
+  const onAPhone = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+  const verb = share && onAPhone && canShareFiles() ? 'Share' : 'Download';
   const sheet = node(`<div class="vp-big" role="dialog" aria-label="Save this photo for Instagram">
       <div class="vp-pair">
         <figure class="vp-opt vp-opt-square"><div class="vp-prev"><span class="muted">Making the square…</span></div>

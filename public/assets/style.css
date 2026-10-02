@@ -10571,8 +10571,16 @@ body.gallery { padding: 0; }
   /* SOLID — at 94% the grid's tiles showed through as ghost boxes round the previews. */
   background: var(--bg, #07070e); overflow-y: auto;
 }
-.vp-pair { display: flex; gap: 14px; align-items: flex-end; justify-content: center; max-width: 100%; }
-.vp-opt { margin: 0; display: grid; gap: 8px; justify-items: center; min-width: 0; }
+/* A GRID: the two pictures meet through their MIDDLES, and the captions and
+   buttons share one line under both. Lined up by their feet the square
+   floated low over an empty band; by their middles alone the two buttons
+   sat at different heights. */
+.vp-pair {
+  display: grid; grid-template-rows: auto auto auto; grid-auto-flow: column;
+  column-gap: 18px; row-gap: 8px; justify-content: center; align-items: center; max-width: 100%;
+}
+.vp-opt { display: contents; }
+.vp-opt > * { justify-self: center; }
 .vp-opt figcaption { font-weight: 700; font-size: 14px; color: var(--ink); text-align: center; }
 .vp-prev {
   display: grid; place-items: center; overflow: hidden;
@@ -10583,8 +10591,8 @@ body.gallery { padding: 0; }
 }
 .vp-prev img, .vp-prev video { width: 100%; height: 100%; object-fit: contain; display: block; }
 .vp-prev .muted { padding: 10px; text-align: center; font-size: 13px; }
-.vp-opt-square .vp-prev { width: min(36vh, 360px, calc((100vw - 38px) / 2)); aspect-ratio: 1; }
-.vp-opt-story .vp-prev { height: min(62vh, 640px, calc((100vw - 38px) / 2 * 16 / 9)); aspect-ratio: 9 / 16; }
+.vp-opt-square .vp-prev { width: min(34vh, 340px, calc((100vw - 42px) / 2)); aspect-ratio: 1; }
+.vp-opt-story .vp-prev { height: min(60vh, 600px, calc((100vw - 42px) / 2 * 16 / 9)); aspect-ratio: 9 / 16; }
 .vp-share, .vp-close { min-height: 44px; min-width: 120px; }
 .vp-share:disabled { opacity: 0.5; cursor: default; }
 /* THE APP'S OWN VIDEO RECORDER (`video-recorder.js`) — full screen, the
