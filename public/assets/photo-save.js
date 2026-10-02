@@ -294,6 +294,16 @@ async function stampedCanvas(img, words, overlay) {
   return { canvas, framed: Boolean(frame) };
 }
 
+/** The quizmaster's mark, loaded — for a video drawn frame by frame (`video-export.js`). */
+export function markImage() {
+  return loadMark();
+}
+
+/** The venue's frame as an image, or null — the same loader the photographs use. */
+export function frameImage(overlay) {
+  return loadFrame(overlay);
+}
+
 /** A canvas as the JPEG that leaves. */
 function jpeg(canvas) {
   return new Promise((resolve) => {
@@ -429,7 +439,7 @@ export async function saveStory(src, { words = '', filename = 'story.jpg', overl
 export async function saveBlob(blob, filename, share = true) {
   if (!blob) return false;
 
-  const file = new File([blob], filename, { type: 'image/jpeg' });
+  const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
   /*
    * SHARE SHEET OR STRAIGHT TO DOWNLOADS. On a phone the share sheet is the
    * right thing — there is no Downloads folder to root around in. On the

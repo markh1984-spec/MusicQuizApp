@@ -16,6 +16,7 @@ import { esc, node, postJson } from './client.js';
 import { paintScheme } from './schemes.js';
 import { saveName } from './photo-save.js';
 import { openInstagramSheet } from './instagram-sheet.js';
+import { openVideoSheet } from './video-sheet.js';
 
 const body = document.getElementById('vpBody');
 const title = document.getElementById('vpTitle');
@@ -103,6 +104,7 @@ function show(me) {
           shot.addEventListener('click', () => openBig(me, night, p, at));
           return shot;
         }));
+        videosFor(me, night, fold);
       } catch {
         loaded = false;
         grid.replaceChildren(node('<p class="muted">Those would not load — open the night again.</p>'));
@@ -125,6 +127,33 @@ async function frameOnce() {
     frame = '';
   }
   return frame;
+}
+
+/*
+ * THE NIGHT'S VIDEOS, under its photographs — each plays where it sits and
+ * opens into the same two shapes, made with the frame recorded in
+ * (`video-sheet.js`). A save keeps the clip from the thirty-day clear-out.
+ */
+async function videosFor(me, night, fold) {
+  let got;
+  try {
+    got = await (await fetch(`/api/venue-photos/videos/${encodeURIComponent(night)}`)).json();
+  } catch {
+    return;
+  }
+  const list = (got && got.videos) || [];
+  if (!list.length) return;
+  const box = node(`<div class="cvideos"><h3 class="vp-sub">Videos</h3><div class="cvideo-strip"></div></div>`);
+  for (const v of list) {
+    const tile = node(`<figure class="cvideo"><video preload="metadata" playsinline controls src="${esc(v.url)}"></video>
+        <figcaption><button class="gal-save" type="button">Save for Instagram</button></figcaption></figure>`);
+    tile.querySelector('button').addEventListener('click', () => openVideoSheet({
+      src: v.url, words: me.brand, line: me.line, overlay: frameOnce, venue: me.venue, night, share: true,
+      onSaved: () => postJson('/api/venue-photos/video-saved', { night, name: v.name }).catch(() => {}),
+    }));
+    box.querySelector('.cvideo-strip').appendChild(tile);
+  }
+  fold.appendChild(box);
 }
 
 /** A tapped photo opens into its Instagram square and Story — `instagram-sheet.js`. */

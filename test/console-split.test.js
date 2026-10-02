@@ -479,6 +479,13 @@ const BUDGET = {
    */
   'console-tonight.js': 4440, 'console.js': 2000, 'console-packs.js': 1890,
   'console-account.js': 1620, 'console-community.js': 1620,
+  /*
+   * `console-gigs.js` 1600 -> 1620 on 2 October 2026, AFTER the seam was taken:
+   * a night's videos are their own module (`console-videos.js`, its setup
+   * moved in there too) and this file gained the two lines that call it, from
+   * a file already sitting at 1600.
+   */
+  'console-gigs.js': 1620,
 };
 const DEFAULT_BUDGET = 1600;
 

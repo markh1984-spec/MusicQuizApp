@@ -1083,6 +1083,15 @@ gated route by route, and the first one forgotten hands a barmaid a console. **D
 username and a password he sets (they may change it); every photo from their
 pub's nights; his account only (`isHostsRoom()`), on Community › Venues.
 
+### VIDEO — the app's recorder, the bucket, 30 days
+
+`src/videos.js`, `src/http/videos.js`, `video-recorder.js`, `video-export.js`.
+**720p, fifteen seconds, the app's OWN recorder, never a file input**;
+**the object store or nothing** (GitHub keeps every byte); **never on the big
+screen, and the kill switch stops it**; **cleared thirty days after its night
+unless starred or saved, videos only (`isVideoName()`)**; **the watermark is
+RECORDED IN** (`remakeVideo()`).
+
 ### THE CAMERA SHEET IS ONE FILE AND BOTH CAMERAS OPEN IT — `camera-sheet.js`
 
 *"can I have the googly eyes etc. functionality in both pls"* — `/snap` posted
@@ -1111,14 +1120,10 @@ nothing on it.
 
 ### A KIND TEST WRITTEN WHEN THERE WERE TWO GAMES — the FOURTH sighting, on the shelf
 
-- **A PACK CARD'S LINE READ `quiz ? questions : tracks`, so a deck of playing
-  cards said "52 tracks".** Named per kind now (`UNIT` in `console-packs.js`),
-  **with an unnamed kind falling back to its track count** so a fifth game reads
-  as it always would rather than printing `undefined`.
-- **AND `shortTitle()` TRIMMED *Card Bingo* TO "Card"** — a deck is the one
-  pack whose name IS the game's. **`GAME_WORDS` is NAMED, never derived from the
-  shape**: *leave at least two words* was measured against the real library and
-  breaks "Madonna", "Metallica", "2006" and "1980s".
+- **A PACK CARD'S UNIT IS NAMED PER KIND (`UNIT`)**, an unnamed kind falling
+  back to its track count — a deck said "52 tracks".
+- **`GAME_WORDS` IS NAMED, never derived** — `shortTitle()` trimmed *Card
+  Bingo* to "Card"; *leave two words* breaks "Madonna" and "2006".
 - **CARD BINGO'S TAB IS CONSOLE-ONLY AND THAT STANDS** — no generator, no
   editor, no pack file, so a Workshop shelf holds one card with nothing to do.
 
@@ -1169,8 +1174,7 @@ night* three rows up, 19px.
   anywhere."* On the Console a venue's name is a SPAN, a tap PICKING the pub for
   tonight — so the card stated a fact it gave no way to change. **"Do it over
   there" must be a link to there.**
-- **BOTH ARE 22px NOW, and MEASURE AFTER** — the first fix read 24px off a
-  generic `h2` rule, a third number rather than the ladder's.
+- **BOTH ARE 22px — MEASURE AFTER**; a generic `h2` rule once made it 24.
 
 ### THE CONSOLE'S POLISH PASS — the rules from one sweep, 25 August 2026
 
@@ -4036,9 +4040,8 @@ Taking the rail off left the bench 142px of content in a 362px bay.
 - **NEITHER `auto` NOR THE ROW'S HEIGHT MAY DECIDE IT.** An `auto` track sizes
   to MAX-CONTENT — the pack's NAME — so a long title made a tall square.
   **Width-first has one answer at every size.**
-- **THE BUTTONS KEEP THEIR OWN SIZE**, **never one 800px-wide button**: *a
-  button's width should say how big the action is*. **As many columns as there
-  are buttons**, or the packs with no picture round leave a hole.
+- **THE BUTTONS KEEP THEIR OWN SIZE**, never one 800px-wide button; **as many
+  columns as there are buttons**.
 
 ### A PACK WEARS ITS OWN SUBJECT
 

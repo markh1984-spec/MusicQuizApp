@@ -23,6 +23,9 @@ import { ensureArchiveRestored, ensureInvoicesRestored, galleryRoomOf, publicRoo
 import { serveFile } from './static.js';
 import { GALLERY_COOKIE } from '../gallery-logins.js';
 import { checkPassword } from '../accounts.js';
+import { nightVideos, serveVideo, setKept } from './videos.js';
+import { isVideoName } from '../videos.js';
+import * as videoStore from '../r2.js';
 import { storyLine } from '../../public/assets/story-line.js';
 
 function backUpLogins() {
@@ -136,6 +139,24 @@ export async function getVenuePhotos(req, res, url, route) {
     return res.end(bytes), true;
   }
 
+  // THEIR NIGHT'S VIDEOS — `src/http/videos.js` serves, this decides whose.
+  if (route.startsWith('/api/venue-photos/videos/')) {
+    const login = signedIn(req);
+    if (!login) return sendJson(res, 401, { signedIn: false }), true;
+    const night = decodeURIComponent(route.slice('/api/venue-photos/videos/'.length));
+    if (!isNightFolder(night) || !(await nightsFor(login)).includes(night)) return sendJson(res, 404, { error: 'No night of yours with that date.' }), true;
+    if (!videoStore.configured()) return sendJson(res, 200, { videos: [] }), true;
+    const videos = await nightVideos(placeOf(login).galleryId, night);
+    return sendJson(res, 200, { videos: videos.map((v) => ({ name: v.name, url: `/venue-video/${night}/${v.name}` })) }), true;
+  }
+  if (route.startsWith('/venue-video/')) {
+    const login = signedIn(req);
+    if (!login) return sendJson(res, 401, { signedIn: false }), true;
+    const [night, name, ...rest] = route.slice('/venue-video/'.length).split('/').map(decodeURIComponent);
+    if (rest.length || !isNightFolder(night) || !(await nightsFor(login)).includes(night)) return sendJson(res, 404, { error: 'No video there.' }), true;
+    return serveVideo(req, res, placeOf(login).galleryId, night, name), true;
+  }
+
   // THE HOST'S SIDE — the logins a pub has, for its card on the Venues tab.
   if (route === '/api/venue-logins') {
     const me = whoIs(req, url);
@@ -172,6 +193,18 @@ export async function writeVenuePhotos(req, res, url, route) {
     res.setHeader('Set-Cookie', cookieFor(req, GALLERY_COOKIE, '', 0));
     await backUpLogins();
     return sendJson(res, 200, { ok: true }), true;
+  }
+
+  // A STAFF SAVE IS A USE — it keeps the clip from the thirty-day clear-out.
+  if (route === '/api/venue-photos/video-saved' && req.method === 'POST') {
+    const login = signedIn(req);
+    if (!login) return sendJson(res, 401, { signedIn: false }), true;
+    const body = await readJson(req);
+    const night = String(body.night || '');
+    const name = String(body.name || '');
+    if (!isNightFolder(night) || !isVideoName(name) || !(await nightsFor(login)).includes(night)) return sendJson(res, 404, { error: 'No video like that.' }), true;
+    const done = await setKept(placeOf(login).galleryId, night, name, 'saved');
+    return sendJson(res, done.ok ? 200 : 500, done.ok ? { ok: true } : { error: 'Not kept — try again.' }), true;
   }
 
   if (route === '/api/venue-photos/password' && req.method === 'POST') {

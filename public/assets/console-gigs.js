@@ -10,6 +10,7 @@ import { tonight } from './diary.js';
 import { venuePicker } from './console-night-venue.js';
 import { loadPhoto } from './photo-save.js';
 import { showcaseInto, framedSaveInto } from './console-photo-export.js';
+import { videosInto } from './console-videos.js';
 
 /*
  * WHICH VENUE CARD IS OPEN — module-level, same as `openVenue` in
@@ -1365,6 +1366,10 @@ export async function nightPhotos(body, night, opts = {}) {
   settled = true;
   layout();
   body.appendChild(grid);
+  // AND THE NIGHT'S VIDEOS UNDER THEM (`console-videos.js`), their place held
+  // now: they arrive after the controls below are drawn.
+  const videoSlot = body.appendChild(node('<div class="cvideo-slot"></div>'));
+  videosInto(videoSlot, night, { keyed }).catch(() => {});
 
   /*
    * ---- BIN EVERYTHING THAT IS NOT ON THE GALLERY ------------------------

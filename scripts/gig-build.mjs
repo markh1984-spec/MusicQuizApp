@@ -118,6 +118,8 @@ export const GUARDS = [
   { name: 'gallery-frame',         core: true,  why: 'is the venue frame on the public gallery, on screen and in the save?' },
   { name: 'save-for-instagram',    core: true,  why: 'do the square and the Story both save from the console, the Story 1080x1920 and clear of Instagram\'s strips?' },
   { name: 'pub-staff-gallery',     core: true,  why: 'a pub\'s staff sign in to that pub\'s photos only, save square and Story, change their password, and reach nothing else' },
+  { name: 'video-from-a-phone',    core: true,  why: 'a phone records fifteen seconds from its menu, it lands in the bucket, the refusals hold, and unused clips go after thirty days' },
+  { name: 'video-for-instagram',   core: false, why: 'a video is remade square and Story with the frame in it, from the console and the staff page, and a save keeps it' },
   { name: 'photos-in-a-bucket',    core: false, why: 'the gallery off an object store — and does the bin mean it?' },
   { name: 'star-means-public',     core: false, why: 'does starring publish it, and does the socials post kit work?' },
   { name: 'second-screen',         core: false, why: 'the second display: the code and the photos' },
