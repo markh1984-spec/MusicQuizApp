@@ -75,6 +75,9 @@ export async function getVenuePhotos(req, res, url, route) {
     const login = signedIn(req);
     if (!login) return sendJson(res, 401, { signedIn: false }), true;
     res.flightRoom = login.roomId;
+    // The host sees when they last looked (`seen()` writes at most every ten
+    // minutes); the backup is not waited for — this is a page opening.
+    if (galleryLogins.seen(login)) backUpLogins().catch(() => {});
     const { galleryId } = placeOf(login);
     const owner = accounts.find(galleryId);
     const rec = await venueRecord(login);
@@ -205,6 +208,20 @@ export async function writeVenuePhotos(req, res, url, route) {
     }
     const backup = await backUpLogins();
     return sendJson(res, 200, { ok: true, login: made, backedUp: Boolean(backup && backup.ok) }), true;
+  }
+
+  // A NEW PASSWORD FROM THE HOST — a typo at creation, or a lost phone.
+  if (route.startsWith('/api/venue-logins/') && route.endsWith('/password') && req.method === 'PUT') {
+    const me = whoIs(req, url);
+    const room = me ? roomForHost(req, url) : null;
+    if (!room || !isHostsRoom(room.id)) return sendJson(res, 403, { error: 'Pub logins are only on the host\'s own account for now.' }), true;
+    const id = decodeURIComponent(route.slice('/api/venue-logins/'.length, -'/password'.length));
+    const body = await readJson(req);
+    try { checkPassword(body.password); } catch (err) { return sendJson(res, 400, { error: err.message }), true; }
+    if (await refuseBreached(res, body.password)) return true;
+    if (!galleryLogins.setPassword(id, room.id, String(body.password || ''))) return sendJson(res, 404, { error: 'No login like that on your account.' }), true;
+    const backup = await backUpLogins();
+    return sendJson(res, 200, { ok: true, backedUp: Boolean(backup && backup.ok) }), true;
   }
 
   if (route.startsWith('/api/venue-logins/') && req.method === 'DELETE') {

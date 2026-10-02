@@ -31,6 +31,28 @@ export function venueLoginsInto(slot) {
   })();
 }
 
+/*
+ * WHEN THEY ACTUALLY USE IT — the host, 2 October 2026: *"a little panel that
+ * tells me when evie or tabby actually login."* The sign-in and the last time
+ * the page was opened, which matters more: a session lasts thirty days.
+ */
+function when(iso) {
+  const t = new Date(iso);
+  if (Number.isNaN(t.getTime())) return '';
+  const clock = t.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const day = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const ago = Math.round((day(new Date()) - day(t)) / 86_400_000);
+  if (ago === 0) return `today ${clock}`;
+  if (ago === 1) return `yesterday ${clock}`;
+  return `${t.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}, ${clock}`;
+}
+
+function activity(l) {
+  if (!l.lastSignIn) return 'Not signed in yet';
+  const looked = l.lastSeen && l.lastSeen !== l.lastSignIn ? ` · last looked ${when(l.lastSeen)}` : '';
+  return `Signed in ${when(l.lastSignIn)}${looked}`;
+}
+
 function paint(slot, venueId, logins, said = '') {
   const address = `${location.origin}/venue-photos`;
   slot.replaceChildren(node(`
@@ -40,12 +62,15 @@ function paint(slot, venueId, logins, said = '') {
         to save this pub's photos, square or Story, with your name on them. They see this pub's nights and
         nothing else, and can change their own password.</span></p>
       <div class="vl-list">${logins.length
-    ? logins.map((l) => `<div class="vl-row" data-id="${esc(l.id)}"><span class="vl-name">${esc(l.username)}</span>
-          <button class="minor danger vl-off" type="button">Remove</button></div>`).join('')
+    ? logins.map((l) => `<div class="vl-row" data-id="${esc(l.id)}">
+          <span class="vl-who"><span class="vl-name">${esc(l.username)}</span>
+            <span class="tiny vl-when">${esc(activity(l))}</span></span>
+          <span class="vl-acts"><button class="minor vl-new" type="button">New password</button>
+          <button class="minor danger vl-off" type="button">Remove</button></span></div>`).join('')
     : '<div class="tiny">No logins for this pub yet.</div>'}</div>
       <form class="vl-add">
-        <input class="vl-user" type="text" placeholder="Username, e.g. Tabby" autocomplete="off" autocapitalize="none" maxlength="30" aria-label="Username">
-        <input class="vl-pass" type="text" placeholder="Their password, 8 or more" autocomplete="off" autocapitalize="none" maxlength="200" aria-label="Their password">
+        <input class="vl-user" type="text" placeholder="Username, e.g. Tabby" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="30" aria-label="Username">
+        <input class="vl-pass" type="text" placeholder="Their password, 8 or more" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="200" aria-label="Their password">
         <button class="role-make" type="submit">Add login</button>
       </form>
       <div class="tiny vl-said" role="status">${esc(said)}</div>
@@ -69,6 +94,35 @@ function paint(slot, venueId, logins, said = '') {
       btn.disabled = false;
     }
   });
+
+  // A NEW PASSWORD, set by the host — opens a box under the name.
+  for (const btn of slot.querySelectorAll('.vl-new')) {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('.vl-row');
+      if (row.nextElementSibling && row.nextElementSibling.classList.contains('vl-set')) { row.nextElementSibling.remove(); return; }
+      const name = row.querySelector('.vl-name').textContent;
+      const box = node(`<form class="vl-add vl-set">
+          <input type="text" placeholder="New password for ${esc(name)}, 8 or more" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="200" aria-label="New password for ${esc(name)}">
+          <button class="minor" type="submit">Set it</button></form>`);
+      box.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const said = slot.querySelector('.vl-said');
+        try {
+          const r = await fetch(`/api/venue-logins/${encodeURIComponent(row.dataset.id)}/password`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: box.querySelector('input').value }),
+          });
+          const got = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(got.error || 'That would not change — try again.');
+          box.remove();
+          said.textContent = `New password set for ${name}. They are signed out everywhere until they use it.`;
+        } catch (err) {
+          said.textContent = err.message;
+        }
+      });
+      row.after(box);
+      box.querySelector('input').focus();
+    });
+  }
 
   // Removing ends their sign-in everywhere, so it takes two presses.
   for (const off of slot.querySelectorAll('.vl-off')) {

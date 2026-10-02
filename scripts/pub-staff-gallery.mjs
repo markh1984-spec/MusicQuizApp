@@ -110,6 +110,10 @@ try {
   }
   const listed = await con.$$eval('.venue-card.open .vl-name', (n) => n.map((x) => x.textContent.trim()));
   check('both are listed on the card', listed.includes('Tabby') && listed.includes('Evie'), JSON.stringify(listed));
+  const before = await con.$$eval('.venue-card.open .vl-row', (rs) => rs.map((r) => r.textContent.replace(/\s+/g, ' ').trim()));
+  check('each says it has not been used yet', before.every((t) => /Not signed in yet/.test(t)), JSON.stringify(before));
+  const noAutocorrect = await con.$$eval('.venue-card.open .vl-add input', (is) => is.every((i) => i.getAttribute('autocorrect') === 'off' && i.getAttribute('spellcheck') === 'false'));
+  check('autocorrect and spell-check are off on the password box (a phone turned one password into another)', noAutocorrect);
   await shot(con, 'logins-on-the-card.png', '.venue-card.open');
   const said = await con.$eval('.venue-card.open .vl-said', (n) => n.textContent.trim());
   check('it says it was added', /Added Evie/.test(said), said);
@@ -211,13 +215,31 @@ try {
   const newPw = await fetch(`${B}/api/venue-photos/sign-in`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'Tabby', password: 'a brand new password' }) });
   check('the new one does', newPw.status === 200, String(newPw.status));
 
-  console.log('\nTHE HOST REMOVES HER');
+  console.log('\nTHE HOST SEES WHEN SHE USED IT, AND SETS EVIE A NEW PASSWORD');
   await con.reload({ waitUntil: 'load' });
   await wait(1800);
   await con.evaluate(() => document.querySelector('[data-tab="venues"]')?.click());
   await wait(1200);
   const isOpen = await con.locator('.venue-card.open .vl-row').count();
   if (!isOpen) { await con.evaluate((name) => [...document.querySelectorAll('button.venue-name')].find((b) => b.textContent.includes(name))?.click(), TAP); await wait(1200); }
+  const tabbyRow = (await con.locator('.venue-card.open .vl-row', { hasText: 'Tabby' }).textContent()).replace(/\s+/g, ' ');
+  check('Tabby\'s row says she signed in today', /Signed in today \d\d:\d\d/.test(tabbyRow), tabbyRow);
+  const evieRow = (await con.locator('.venue-card.open .vl-row', { hasText: 'Evie' }).textContent()).replace(/\s+/g, ' ');
+  check('Evie\'s still says not yet', /Not signed in yet/.test(evieRow), evieRow);
+  await shot(con, 'logins-activity.png', '.venue-card.open .venue-logins-in');
+  await con.locator('.venue-card.open .vl-row', { hasText: 'Evie' }).locator('.vl-new').click();
+  await wait(300);
+  await con.fill('.venue-card.open .vl-set input', 'evie second password');
+  await con.click('.venue-card.open .vl-set button');
+  await wait(1200);
+  check('the card says the new password is set', /New password set for Evie/.test(await con.$eval('.venue-card.open .vl-said', (n) => n.textContent)));
+  const evieOld = await fetch(`${B}/api/venue-photos/sign-in`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'Evie', password: 'evie test password' }) });
+  const evieNew = await fetch(`${B}/api/venue-photos/sign-in`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'Evie', password: 'evie second password' }) });
+  check('Evie\'s old password stops working and the new one works', evieOld.status === 401 && evieNew.status === 200, `${evieOld.status} / ${evieNew.status}`);
+  const otherSets = await fetch(`${B}/api/venue-logins/x/password`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Cookie: other }, body: JSON.stringify({ password: 'a long enough one' }) });
+  check('another quizmaster cannot set one', otherSets.status === 403, String(otherSets.status));
+
+  console.log('\nTHE HOST REMOVES HER');
   const row = con.locator('.venue-card.open .vl-row', { hasText: 'Tabby' }).locator('.vl-off');
   await row.click(); await wait(200); await row.click(); await wait(1200);
   check('removed from the card', !(await con.$$eval('.venue-card.open .vl-name', (n) => n.map((x) => x.textContent.trim()))).includes('Tabby'));

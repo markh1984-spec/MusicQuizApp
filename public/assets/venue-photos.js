@@ -45,7 +45,7 @@ function signInForm(said = '') {
   who.hidden = true;
   const form = node(`
     <form class="vp-form" autocomplete="on">
-      <label>Username<input type="text" name="username" autocomplete="username" autocapitalize="none" required></label>
+      <label>Username<input type="text" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></label>
       <label>Password<input type="password" name="password" autocomplete="current-password" required></label>
       <button class="primary" type="submit">Sign in</button>
       <p class="vp-said" role="status">${esc(said)}</p>

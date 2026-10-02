@@ -10596,6 +10596,9 @@ body.gallery { padding: 0; }
 .vl-list { display: grid; gap: 6px; }
 .vl-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .vl-name { font-weight: 700; }
+.vl-who { display: grid; gap: 2px; min-width: 0; }
+.vl-when { color: var(--ink-dim); }
+.vl-acts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .vl-add { display: flex; flex-wrap: wrap; gap: 8px; }
 .vl-add input { flex: 1 1 160px; min-width: 0; min-height: 44px; }
 .vl-add button, .vl-row button { min-height: 44px; }

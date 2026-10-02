@@ -79,3 +79,31 @@ test('a backup only ever restores into an empty book', () => {
   b.create({ ...PUB, username: 'Tabby', password: 'a long enough one' });
   assert.equal(b.restore(text).ok, false, 'a book with logins in it wins over the backup');
 });
+
+test('a sign-in and a visit are written down, a visit at most every ten minutes', async () => {
+  let now = Date.parse('2026-10-02T14:00:00Z');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gallery-logins-'));
+  const b = new GalleryLogins(path.join(dir, 'g.json'), { now: () => now });
+  const made = b.create({ ...PUB, username: 'Tabby', password: 'a long enough one' });
+  assert.equal(made.lastSignIn, undefined, 'never signed in yet');
+  const s = await b.signIn('Tabby', 'a long enough one');
+  assert.equal(b.list(PUB.roomId)[0].lastSignIn, '2026-10-02T14:00:00.000Z');
+  now += 5 * 60_000;
+  assert.equal(b.seen(b.who(s.token)), false, 'five minutes on is not written');
+  now += 6 * 60_000;
+  assert.equal(b.seen(b.who(s.token)), true);
+  assert.equal(b.list(PUB.roomId)[0].lastSeen, '2026-10-02T14:11:00.000Z');
+  assert.equal(b.list(PUB.roomId)[0].hash, undefined);
+});
+
+test('the quizmaster sets a new password, and whoever had the old one is out', async () => {
+  const { b } = book();
+  const made = b.create({ ...PUB, username: 'Tabby', password: 'the first password' });
+  const s = await b.signIn('Tabby', 'the first password');
+  assert.equal(b.setPassword(made.id, 'somebody-else', 'the second password'), false);
+  assert.throws(() => b.setPassword(made.id, PUB.roomId, 'short'), /at least 8/);
+  assert.equal(b.setPassword(made.id, PUB.roomId, 'the second password'), true);
+  assert.equal(b.who(s.token), null, 'signed out everywhere');
+  assert.equal(await b.signIn('Tabby', 'the first password'), null);
+  assert.ok(await b.signIn('Tabby', 'the second password'));
+});

@@ -86,7 +86,14 @@ export class GalleryLogins {
 
   /** What a quizmaster's console may see of a login — never the hash. */
   static safe(login) {
-    return { id: login.id, username: login.username, venueId: login.venueId, venue: login.venue, createdAt: login.createdAt };
+    return {
+      id: login.id, username: login.username, venueId: login.venueId, venue: login.venue, createdAt: login.createdAt,
+      // WHEN THEY ACTUALLY USE IT — asked for by the host, 2 October 2026: a
+      // panel that says when Evie or Tabby sign in. A session lasts thirty
+      // days, so the sign-in alone goes quiet; `lastSeen` is the page opening.
+      ...(login.lastSignIn ? { lastSignIn: login.lastSignIn } : {}),
+      ...(login.lastSeen ? { lastSeen: login.lastSeen } : {}),
+    };
   }
 
   list(roomId, venueId) {
@@ -132,6 +139,8 @@ export class GalleryLogins {
     if (!login || !ok) return null;
     const token = crypto.randomBytes(32).toString('base64url');
     const now = this.now();
+    login.lastSignIn = new Date(now).toISOString();
+    login.lastSeen = login.lastSignIn;
     this.data.sessions = this.data.sessions.filter((s) => s.expires > now);
     this.data.sessions.push({ hash: sha(token), loginId: login.id, expires: now + SESSION_DAYS * 86_400_000 });
     this.save();
@@ -144,6 +153,34 @@ export class GalleryLogins {
     const hash = sha(token);
     const s = this.data.sessions.find((x) => x.hash === hash && x.expires > this.now());
     return s ? this.find(s.loginId) : null;
+  }
+
+  /**
+   * A login opened the page. Written at most every ten minutes — a staff
+   * member scrolling a night must not rewrite and back up the book per
+   * photo. Answers whether it wrote.
+   */
+  seen(login, everyMs = 10 * 60_000) {
+    const now = this.now();
+    if (login.lastSeen && now - Date.parse(login.lastSeen) < everyMs) return false;
+    login.lastSeen = new Date(now).toISOString();
+    this.save();
+    return true;
+  }
+
+  /**
+   * The quizmaster sets a new password for a login — a typo at creation, or
+   * a phone lost behind the bar. Every session that login holds ends: whoever
+   * had the old one is out.
+   */
+  setPassword(id, roomId, password) {
+    const login = this.find(id);
+    if (!login || login.roomId !== roomId) return false;
+    checkPassword(password);
+    Object.assign(login, hashPassword(password));
+    this.data.sessions = this.data.sessions.filter((x) => x.loginId !== id);
+    this.save();
+    return true;
   }
 
   signOut(token) {
