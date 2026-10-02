@@ -14,7 +14,8 @@
  */
 import { esc, node, postJson } from './client.js';
 import { paintScheme } from './schemes.js';
-import { framedBlob, saveBlob, saveName, storyBlob } from './photo-save.js';
+import { saveName } from './photo-save.js';
+import { openInstagramSheet } from './instagram-sheet.js';
 
 const body = document.getElementById('vpBody');
 const title = document.getElementById('vpTitle');
@@ -126,76 +127,17 @@ async function frameOnce() {
   return frame;
 }
 
-/*
- * A PHOTO OPENS INTO ITS TWO INSTAGRAM SHAPES — the host's call, 2 October
- * 2026: *"each photo opened out into the instagram story/square options on
- * click, then just have a share button on each."* Both are DRAWN here, frame
- * and name on, so what is shown is exactly what goes — and the button shares
- * those same bytes rather than drawing again.
- *
- * **"SHARE" ONLY WHERE THERE IS A SHARE SHEET.** A laptop with none gets the
- * file in Downloads, and a button saying Share there would be a control
- * reporting something it did not do — so it says Download.
- */
-function canShareFiles() {
-  try {
-    return Boolean(navigator.canShare && navigator.canShare({ files: [new File([new Blob(['x'])], 'x.jpg', { type: 'image/jpeg' })] }));
-  } catch {
-    return false;
-  }
-}
-
+/** A tapped photo opens into its Instagram square and Story — `instagram-sheet.js`. */
 function openBig(me, night, photo, at) {
-  const verb = canShareFiles() ? 'Share' : 'Download';
-  const big = node(`<div class="vp-big" role="dialog" aria-label="Save this photo for Instagram">
-      <div class="vp-pair">
-        <figure class="vp-opt vp-opt-square"><div class="vp-prev"><span class="muted">Making the square…</span></div>
-          <figcaption>Instagram post — square</figcaption>
-          <button class="gal-save vp-share" type="button" disabled>${verb}</button></figure>
-        <figure class="vp-opt vp-opt-story"><div class="vp-prev"><span class="muted">Making the Story…</span></div>
-          <figcaption>Instagram Story</figcaption>
-          <button class="gal-save vp-share" type="button" disabled>${verb}</button></figure>
-      </div>
-      <button class="gal-save vp-close" type="button">Close</button>
-    </div>`);
-  const urls = [];
-  const close = () => { big.remove(); urls.forEach((u) => URL.revokeObjectURL(u)); document.removeEventListener('keydown', onKey); };
-  const onKey = (ev) => { if (ev.key === 'Escape') close(); };
-  document.addEventListener('keydown', onKey);
-  big.addEventListener('click', (ev) => { if (ev.target === big || ev.target.closest('.vp-close')) close(); });
-  document.body.appendChild(big);
-
-  const filename = saveName(me.venue, night, at + 1, '');
-  const fill = async (fig, draw, name) => {
-    const prev = fig.querySelector('.vp-prev');
-    const btn = fig.querySelector('.vp-share');
-    let blob;
-    try {
-      blob = await draw();
-    } catch {
-      blob = null;
-    }
-    if (!blob) { prev.replaceChildren(node('<span class="muted">That one would not draw — close and try again.</span>')); return; }
-    const url = URL.createObjectURL(blob);
-    urls.push(url);
-    prev.replaceChildren(node(`<img alt="" src="${url}">`));
-    btn.disabled = false;
-    btn.addEventListener('click', async () => {
-      if (btn.dataset.busy) return;
-      btn.dataset.busy = '1';
-      try {
-        const went = await saveBlob(blob, name, true);
-        btn.textContent = went === false ? 'Nothing was sent' : (verb === 'Share' ? 'Shared' : 'Saved');
-      } catch {
-        btn.textContent = 'That did not go — try again';
-      }
-      setTimeout(() => { btn.textContent = verb; delete btn.dataset.busy; }, 2400);
-    });
-  };
-  frameOnce().then((overlay) => Promise.all([
-    fill(big.querySelector('.vp-opt-square'), () => framedBlob(photo.url, { words: me.brand, overlay }), filename),
-    fill(big.querySelector('.vp-opt-story'), () => storyBlob(photo.url, { words: me.brand, overlay, line: me.line }), filename.replace(/\.jpg$/, '-story.jpg')),
-  ]));
+  openInstagramSheet({
+    src: photo.url,
+    words: me.brand,
+    line: me.line,
+    overlay: frameOnce,
+    filename: saveName(me.venue, night, at + 1, ''),
+    // These are phones: the share sheet is how a picture reaches Instagram.
+    share: true,
+  });
 }
 
 function passwordPanel() {

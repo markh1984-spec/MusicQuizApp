@@ -10577,6 +10577,9 @@ body.gallery { padding: 0; }
 .vp-prev {
   display: grid; place-items: center; overflow: hidden;
   background: var(--panel); border-radius: var(--r-card);
+  /* An edge, so a file's own dark mount does not melt into the sheet and
+     make the square look shorter than the square it is. */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22);
 }
 .vp-prev img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .vp-prev .muted { padding: 10px; text-align: center; font-size: 13px; }

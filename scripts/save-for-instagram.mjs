@@ -94,8 +94,17 @@ try {
   await wait(2500);
   await page.locator('.doorhead .cphoto').first().click();
   await wait(800);
+  // ONE BUTTON ON THE ENLARGED PHOTO, AND IT OPENS THE SIDE-BY-SIDE SHEET
+  // (2 October 2026) — the square and the Story drawn, a Download under each.
   const controls = await page.$$eval('.community-big .gal-save', (bs) => bs.map((b) => b.textContent.trim()));
-  check('the enlarged photo offers the square and the Story', controls.includes('Save with the venue frame') && controls.includes('Save as a Story'), JSON.stringify(controls));
+  check('the enlarged photo offers one Save for Instagram', JSON.stringify(controls) === '["Save for Instagram"]', JSON.stringify(controls));
+  await page.locator('.community-big .gal-save', { hasText: 'Save for Instagram' }).click();
+  await page.waitForFunction(() => document.querySelectorAll('.vp-big .vp-prev img').length === 2, null, { timeout: 15000 }).catch(() => {});
+  const sheet = await page.$$eval('.vp-big .vp-opt', (fs) => fs.map((f) => ({ cap: f.querySelector('figcaption').textContent.trim(), btn: f.querySelector('.vp-share').textContent.trim() })));
+  check('it opens the square and the Story side by side, Download under each (the console is the laptop)',
+    sheet.length === 2 && sheet.every((x) => x.btn === 'Download'), JSON.stringify(sheet));
+  check('and the enlarged photo is still there underneath', await page.locator('.community-big').count() === 1);
+  if (process.env.SHOT_DIR) await page.screenshot({ path: join(process.env.SHOT_DIR, 'console-instagram-sheet.png') });
 
   // Read a downloaded JPEG back in the page and measure it.
   const measure = async (file) => page.evaluate(async (b64) => {
@@ -118,18 +127,18 @@ try {
     return { w: c.width, h: c.height, top, bottom, whiteBelow, blueAbove, band };
   }, readFileSync(file).toString('base64'));
 
-  const press = async (label) => {
+  const press = async (which) => {
     const dl = page.waitForEvent('download', { timeout: 15000 }).catch(() => null);
-    await page.locator('.community-big .gal-save', { hasText: label }).click();
+    await page.locator(`.vp-big ${which} .vp-share`).click();
     const got = await dl;
     if (!got) return null;
-    const to = join(repo, `${label.replace(/\W+/g, '-')}.jpg`);
+    const to = join(repo, `${which.replace(/\W+/g, '-')}.jpg`);
     await got.saveAs(to);
     return { name: got.suggestedFilename(), file: to };
   };
 
   console.log('\nTHE SQUARE');
-  const sq = await press('Save with the venue frame');
+  const sq = await press('.vp-opt-square');
   check('it downloads', Boolean(sq), String(sq && sq.name));
   if (sq) {
     const m = await measure(sq.file);
@@ -138,7 +147,7 @@ try {
   await wait(2800);
 
   console.log('\nTHE STORY');
-  const st = await press('Save as a Story');
+  const st = await press('.vp-opt-story');
   check('it downloads, named as a Story', Boolean(st) && /-story\.jpg$/.test(st.name), String(st && st.name));
   if (st) {
     const m = await measure(st.file);

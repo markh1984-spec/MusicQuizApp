@@ -31,7 +31,8 @@ import { node, esc } from './client.js';
 import { library, me } from './console-state.js';
 import { captionFor } from './insta-caption.js';
 import { upcoming } from './diary.js';
-import { savePhoto, saveStory, saveName } from './photo-save.js';
+import { savePhoto, saveName } from './photo-save.js';
+import { openInstagramSheet } from './instagram-sheet.js';
 import { storyLine } from './story-line.js';
 import { invoiceApi } from './console-invoices.js';
 
@@ -79,76 +80,31 @@ export async function venueFrame(venueName, records) {
  */
 export function framedSaveInto(into, url, night, records) {
   const venue = (night && night.venue) || '';
-  const words = String((me && (me.brand || me.name)) || '');
-  const filename = saveName(venue, (night && night.night) || '', 0, '');
   /*
-   * TWO SHAPES FOR INSTAGRAM, ONE CONTROL EACH — the square for the feed and
-   * the Story (1080 x 1920, the poster layout he picked on 1 October 2026),
-   * from ONE framed drawing in `photo-save.js`. Same wiring for both: the
-   * frame fetched on the press, the button saying which it did.
-   */
-  /*
-   * ONE PINNED ROW HOLDS BOTH — the public page's `.gal-acts`. Each button
-   * pinning ITSELF (`community-save`) put the second exactly on top of the
-   * first, which then took no press at all.
+   * ONE BUTTON THAT OPENS THE SQUARE AND THE STORY SIDE BY SIDE — the same
+   * sheet a pub's staff get (`instagram-sheet.js`; *"give my console the same
+   * side-by-side view too"*, 2 October 2026). The ENLARGED photo stays as it
+   * was: it is how a photo is judged before it is lit, and a framed preview
+   * hides its edges. **`share: false`** — the console is the laptop, and its
+   * saves go straight to Downloads.
    */
   const row = node('<div class="gal-acts"></div>');
   row.addEventListener('click', (ev) => ev.stopPropagation());
-  into.appendChild(row);
-  const control = (idle, run) => {
-    const b = node(`<span class="gal-save" role="button" tabindex="0">${esc(idle)}</span>`);
-    const go = async (ev) => {
-      // The picture itself closes on a click; the button inside it must not.
-      ev.stopPropagation();
-      if (b.dataset.busy) return;
-      b.dataset.busy = '1';
-      b.textContent = 'Saving…';
-      let overlay = '';
-      try {
-        overlay = await venueFrame(venue, records);
-      } catch { /* unframed beats nothing */ }
-      /*
-       * IT SAYS WHICH IT DID. A photograph that saves without the frame looks
-       * identical to one that saved with a frame nobody set up, and the second
-       * is a thing to go and fix on the Venues tab — so the button names it
-       * rather than leaving somebody to wonder why Instagram looks plain.
-       */
-      b.textContent = overlay ? 'Saving with the frame…' : 'Saving — no frame on this pub…';
-      try {
-        const went = await run(overlay);
-        /*
-         * `false` means nothing actually left — a share sheet somebody
-         * dismissed, or a browser that can do neither. Saying "Saved" there is
-         * this repo's commonest fault: a control reporting a success it did
-         * not have.
-         */
-        b.textContent = went === false ? 'Nothing was saved' : 'Saved';
-      } catch {
-        b.textContent = 'That would not save — try again';
-      }
-      setTimeout(() => {
-        b.textContent = idle;
-        delete b.dataset.busy;
-      }, 2600);
-    };
-    b.addEventListener('click', go);
-    b.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Enter' || ev.key === ' ') go(ev);
+  const b = node('<button class="gal-save" type="button">Save for Instagram</button>');
+  b.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    openInstagramSheet({
+      src: url,
+      words: String((me && (me.brand || me.name)) || ''),
+      line: storyLine(venue, { venues: records, bookings: (library && library.bookings) || [] }),
+      overlay: () => venueFrame(venue, records),
+      filename: saveName(venue, (night && night.night) || '', 0, ''),
+      share: false,
     });
-    row.appendChild(b);
-    return b;
-  };
-
-  // The console is a laptop — straight to Downloads, not the share sheet.
-  const square = control('Save with the venue frame', (overlay) => savePhoto(url, { words, filename, overlay, share: false }));
-  control('Save as a Story', (overlay) => saveStory(url, {
-    words,
-    overlay,
-    filename: filename.replace(/\.jpg$/, '-story.jpg'),
-    line: storyLine(venue, { venues: records, bookings: (library && library.bookings) || [] }),
-    share: false,
-  }));
-  return square;
+  });
+  row.appendChild(b);
+  into.appendChild(row);
+  return b;
 }
 
 
