@@ -10659,6 +10659,8 @@ body.gallery { padding: 0; }
 .vl-add input { flex: 1 1 160px; min-width: 0; min-height: 44px; }
 .vl-add button, .vl-row button { min-height: 44px; }
 .vl-game { min-height: 44px; }
+.vl-hero { min-height: 44px; width: 11em; }
+.vl-hero:disabled { opacity: 0.5; }
 /* THE STAFF GAMES — Blockyard and Walkies, one on a login (`staff-games.js`).
    One sheet for both, over the whole page, the picture filling what is left. */
 .toy-sheet {

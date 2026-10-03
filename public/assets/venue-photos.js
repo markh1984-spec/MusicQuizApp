@@ -91,7 +91,7 @@ function show(me) {
     play.addEventListener('click', async () => {
       try {
         const mod = await import(game.module);
-        mod[game.open]({ who: me.username });
+        mod[game.open]({ who: me.username, hero: me.hero || '' });
       } catch {
         play.textContent = 'That would not open — reload and try again';
       }

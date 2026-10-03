@@ -95,6 +95,7 @@ export class GalleryLogins {
       ...(login.lastSignIn ? { lastSignIn: login.lastSignIn } : {}),
       ...(login.lastSeen ? { lastSeen: login.lastSeen } : {}),
       ...(login.game ? { game: login.game } : {}),
+      ...(login.hero ? { hero: login.hero } : {}),
     };
   }
 
@@ -197,6 +198,24 @@ export class GalleryLogins {
     if (game && !staffGame(game)) throw new Error('There is no game called that.');
     if (game) login.game = game;
     else delete login.game;
+    this.save();
+    return true;
+  }
+
+  /**
+   * WHAT THEIR CHARACTER IS CALLED — typed by the host, *"StEvie (with the
+   * capital E)"*, so the case is kept exactly. It is the login's DATA, never
+   * the game's: the shipped games name nobody, and a pun on a famous one lives
+   * here, on one person's record, where it belongs.
+   */
+  setHero(id, roomId, name) {
+    const login = this.find(id);
+    if (!login || login.roomId !== roomId) return false;
+    const clean = String(name || '').trim().replace(/\s+/g, ' ');
+    if (clean.length > 20) throw new Error('A name needs to be 20 characters or fewer.');
+    if (clean && !/^[\p{L}\p{N} '.-]+$/u.test(clean)) throw new Error('A name can only use letters, numbers, spaces and dashes.');
+    if (clean) login.hero = clean;
+    else delete login.hero;
     this.save();
     return true;
   }

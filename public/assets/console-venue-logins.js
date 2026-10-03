@@ -68,6 +68,9 @@ function paint(slot, venueId, logins, said = '') {
             <span class="tiny vl-when">${esc(activity(l))}</span></span>
           <span class="vl-acts"><select class="vl-game" aria-label="Game on ${esc(l.username)}'s page">
             <option value="">No game</option>${STAFF_GAMES.map((g) => `<option value="${g.id}"${l.game === g.id ? ' selected' : ''}>${esc(g.name)}</option>`).join('')}</select>
+          <input class="vl-hero" type="text" maxlength="20" value="${esc(l.hero || '')}" placeholder="Character's name"
+            aria-label="What ${esc(l.username)}'s character is called" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+            ${l.game ? '' : 'disabled title="Pick a game first"'}>
           <button class="minor vl-new" type="button">New password</button>
           <button class="minor danger vl-off" type="button">Remove</button></span></div>`).join('')
     : '<div class="tiny">No logins for this pub yet.</div>'}</div>
@@ -144,6 +147,27 @@ function paint(slot, venueId, logins, said = '') {
         paint(slot, venueId, logins, game ? `${name} has a Play ${game.name} button on their page now.` : `No game on ${name}'s page now.`);
       } catch (err) {
         pick.disabled = false;
+        slot.querySelector('.vl-said').textContent = err.message;
+      }
+    });
+  }
+
+  // WHAT THEIR CHARACTER IS CALLED — kept exactly as typed ("StEvie"), which is
+  // why the box takes no autocorrect: a phone would make it "Stevie".
+  for (const box of slot.querySelectorAll('.vl-hero')) {
+    box.addEventListener('change', async () => {
+      const row = box.closest('.vl-row');
+      const name = row.querySelector('.vl-name').textContent;
+      try {
+        const r = await fetch(`/api/venue-logins/${encodeURIComponent(row.dataset.id)}/game`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ hero: box.value }),
+        });
+        const got = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(got.error || 'That would not change — try again.');
+        const login = logins.find((l) => l.id === row.dataset.id);
+        if (login) { if (got.hero) login.hero = got.hero; else delete login.hero; }
+        paint(slot, venueId, logins, got.hero ? `${name}'s character is called ${got.hero}.` : `${name}'s character has no name now.`);
+      } catch (err) {
         slot.querySelector('.vl-said').textContent = err.message;
       }
     });

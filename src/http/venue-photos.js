@@ -93,6 +93,7 @@ export async function getVenuePhotos(req, res, url, route) {
       scheme: (owner && owner.scheme) || '',
       hasFrame: Boolean(rec && rec.overlay),
       ...(login.game ? { game: login.game } : {}),
+      ...(login.hero ? { hero: login.hero } : {}),
       line: storyLine(login.venue, {
         venues: rec ? [{ name: rec.name, usualNight: rec.usualNight || '' }] : [],
         bookings: venueRoom.invoices.bookings || [],
@@ -265,12 +266,18 @@ export async function writeVenuePhotos(req, res, url, route) {
     if (!room || !isHostsRoom(room.id)) return sendJson(res, 403, { error: 'Pub logins are only on the host\'s own account for now.' }), true;
     const id = decodeURIComponent(route.slice('/api/venue-logins/'.length, -'/game'.length));
     const body = await readJson(req);
-    const game = String(body.game || '');
-    let done;
-    try { done = galleryLogins.setGame(id, room.id, game); } catch (err) { return sendJson(res, 400, { error: err.message }), true; }
+    // The game, the character's name, or both — whichever the body names.
+    let done = true;
+    try {
+      if ('game' in body) done = galleryLogins.setGame(id, room.id, String(body.game || ''));
+      if (done && 'hero' in body) done = galleryLogins.setHero(id, room.id, body.hero);
+    } catch (err) {
+      return sendJson(res, 400, { error: err.message }), true;
+    }
     if (!done) return sendJson(res, 404, { error: 'No login like that on your account.' }), true;
     await backUpLogins();
-    return sendJson(res, 200, { ok: true, game }), true;
+    const login = galleryLogins.find(id);
+    return sendJson(res, 200, { ok: true, game: login.game || '', hero: login.hero || '' }), true;
   }
 
   if (route.startsWith('/api/venue-logins/') && req.method === 'DELETE') {

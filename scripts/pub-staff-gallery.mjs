@@ -253,6 +253,17 @@ try {
   await con.locator('.venue-card.open .vl-row', { hasText: 'Tabby' }).locator('.vl-game').selectOption('walkies');
   await wait(1200);
   check('Tabby\'s says Walkies, and Evie\'s did not move', await gameOf('Tabby') === 'walkies' && await gameOf('Evie') === 'blockyard');
+  const heroBox = (who) => con.locator('.venue-card.open .vl-row', { hasText: who }).locator('.vl-hero');
+  check('the name box takes no autocorrect — a phone would turn StEvie into Stevie',
+    await heroBox('Evie').getAttribute('autocorrect') === 'off' && await heroBox('Evie').getAttribute('spellcheck') === 'false');
+  await heroBox('Evie').fill('StEvie');
+  await heroBox('Evie').press('Tab');
+  await wait(1200);
+  check('Evie\'s character is StEvie, capital E kept', await heroBox('Evie').inputValue() === 'StEvie'
+    && /called StEvie/.test(await con.$eval('.venue-card.open .vl-said', (n) => n.textContent)), await heroBox('Evie').inputValue());
+  await heroBox('Tabby').fill('Luna');
+  await heroBox('Tabby').press('Tab');
+  await wait(1200);
   await shot(con, 'logins-games.png', '.venue-card.open .venue-logins-in');
   const otherGame = await fetch(`${B}/api/venue-logins/x/game`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Cookie: other }, body: JSON.stringify({ game: 'walkies' }) });
   check('another quizmaster cannot choose one', otherGame.status === 403, String(otherGame.status));
@@ -287,7 +298,7 @@ try {
   // No more taps: the dog walks into whatever comes first.
   await p.waitForFunction(() => /best|Good dog/.test(document.querySelector('.toy-said')?.textContent || ''), null, { timeout: 30000 }).catch(() => {});
   const over = (await p.$eval('.toy-said', (n) => n.textContent)).trim();
-  check('the walk ends at the first thing it meets, and says the score', /A new best: \d+/.test(over), over);
+  check('the walk ends at the first thing it meets, and says the score — to the dog, by name', /A new best: \d+\. Good dog, Luna\./.test(over), over);
   await wait(800);
   await shot(p, 'walkies-woof.png');
   check('the best is kept on her phone', Number(await p.evaluate(() => localStorage.getItem('musicquiz.walkies.tabby'))) > 0);
@@ -307,6 +318,7 @@ try {
   await ev.click('#vpWho .vp-play');
   await ev.waitForSelector('.toy-sheet canvas', { timeout: 10000 }).catch(() => {});
   await wait(900);
+  check('and she is playing as StEvie', (await ev.getAttribute('.toy-sheet', 'aria-label')) === 'Blockyard, playing as StEvie');
   // PAINTED AND MOVING ARE TWO QUESTIONS, and a canvas answers neither by existing.
   const picture = () => ev.evaluate(() => {
     const c = document.querySelector('.toy-canvas');

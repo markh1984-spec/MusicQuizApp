@@ -16,7 +16,8 @@
  * keeping it there costs the server nothing. **A frame delta never moves the
  * miner** — a capped accumulator of fixed steps, as every game here does.
  */
-import { node } from './client.js';
+import { esc, node } from './client.js';
+import { nameTag } from './toy-tag.js';
 import {
   AIR, BLOCKS, BRICK, BEDROCK, COAL, EARTH, GEM, GLASS, GOLD, GRASS, H, LEAVES, LOG, PLANKS, RECIPES, SAND, STONE, W,
   dig, get, inReach, jump, load, make, makeWorld, overlapsPlayer, place, rng, save, spawn, step,
@@ -135,7 +136,7 @@ const PICK_ICON = '<svg class="by-swatch" viewBox="0 0 16 16" aria-hidden="true"
  * Open the game over the page. `who` names the save, so two logins on one
  * phone keep two worlds.
  */
-export function openBlockyard({ who = 'you' } = {}) {
+export function openBlockyard({ who = 'you', hero = '' } = {}) {
   if (document.querySelector('.toy-sheet')) return null;
   const key = `musicquiz.blockyard.${String(who).toLowerCase()}`;
   let state = null;
@@ -148,7 +149,7 @@ export function openBlockyard({ who = 'you' } = {}) {
   const tex = {};
   for (const b of BLOCKS) if (b.id !== AIR) tex[b.id] = texture(b.id);
 
-  const sheet = node(`<div class="toy-sheet" role="dialog" aria-label="Blockyard">
+  const sheet = node(`<div class="toy-sheet" role="dialog" aria-label="Blockyard${hero ? `, playing as ${esc(hero)}` : ''}">
       <div class="toy-top"><b class="toy-name">Blockyard</b>
         <span class="tiny toy-said" role="status">Tap a block to dig it. Tap further off to walk.</span>
         <button class="gal-save by-make-btn" type="button" aria-expanded="false">Make</button>
@@ -287,6 +288,7 @@ export function openBlockyard({ who = 'you' } = {}) {
       }
     }
     drawMiner(g, (p.x - 0.5) * T - cx, (p.y - MINER_ROWS / 8) * T - cy, T, p.facing, p.y > world.surface[Math.floor(p.x)] + 3);
+    nameTag(g, hero, p.x * T - cx, (p.y - MINER_ROWS / 8) * T - cy - 4, cssW);
     const mark = flash && flash.until > performance.now() ? flash : hover;
     if (mark) {
       g.lineWidth = 2;

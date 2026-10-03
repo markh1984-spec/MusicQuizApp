@@ -125,3 +125,15 @@ test('a game is chosen per login, by the room that made it, and absent unless ch
   assert.ok(b.setGame(evie.id, PUB.roomId, ''));
   assert.equal('game' in b.find(evie.id), false, 'none is absent, not empty');
 });
+
+test('a character\'s name is kept exactly as typed, capitals and all, and nonsense is refused', () => {
+  const { b } = book();
+  const evie = b.create({ ...PUB, username: 'Evie', password: 'a long enough one' });
+  assert.ok(b.setHero(evie.id, PUB.roomId, '  StEvie  '));
+  assert.equal(b.list(PUB.roomId)[0].hero, 'StEvie', 'the capital E survives');
+  assert.throws(() => b.setHero(evie.id, PUB.roomId, '<script>'), /letters, numbers/);
+  assert.throws(() => b.setHero(evie.id, PUB.roomId, 'x'.repeat(21)), /20 characters/);
+  assert.equal(b.setHero(evie.id, 'another-room', 'Nope'), false);
+  assert.ok(b.setHero(evie.id, PUB.roomId, ''));
+  assert.equal('hero' in b.find(evie.id), false);
+});

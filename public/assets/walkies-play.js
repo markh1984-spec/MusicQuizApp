@@ -9,7 +9,8 @@
  * **A frame delta never moves the dog** — fixed steps from a capped
  * accumulator, as every game here does.
  */
-import { node } from './client.js';
+import { esc, node } from './client.js';
+import { nameTag } from './toy-tag.js';
 import { DOG, jump, newWalk, score, step } from './walkies.js';
 
 const DT = 1 / 60;
@@ -27,64 +28,100 @@ function roundRect(g, x, y, w, h, r) {
   g.closePath();
 }
 
-/** A scruffy tan terrier with a red collar, facing right. `x, y` is where its paws meet the ground. */
+/**
+ * A German Shepherd and Husky cross, facing right — the host's call for
+ * Tabby (3 October 2026): the shepherd's dark saddle over tan, the husky's
+ * white face mask, ice-blue eyes and a bushy tail curled over the back, and
+ * the upright ears they both have. `x, y` is where its paws meet the ground.
+ */
+const COAT = { tan: '#c98f52', saddle: '#2e2d33', cream: '#f3ece0', leg: '#d4a26a', mask: '#3a3940', eye: '#8fd3f4' };
+
 function drawDog(g, x, y, u, t, running, inAir) {
-  const leg = (lx, phase) => {
+  const at = (dx, dy) => [x + dx * u, y - dy * u];
+  const blob = (dx, dy, rx, ry, colour) => {
+    g.fillStyle = colour;
+    g.beginPath();
+    g.ellipse(x + dx * u, y - dy * u, rx * u, ry * u, 0, 0, Math.PI * 2);
+    g.fill();
+  };
+  const leg = (lx, phase, colour) => {
     const swing = inAir ? 0.12 : running ? Math.sin(t * 18 + phase) * 0.14 : 0;
-    g.strokeStyle = '#a86d38';
+    g.strokeStyle = colour;
     g.lineWidth = 0.13 * u;
     g.lineCap = 'round';
     g.beginPath();
-    g.moveTo(x + lx * u, y - 0.36 * u);
-    g.lineTo(x + (lx + swing) * u, y - (inAir ? 0.12 : 0.04) * u);
+    g.moveTo(...at(lx, 0.38));
+    g.lineTo(...at(lx + swing, inAir ? 0.12 : 0.04));
     g.stroke();
   };
-  leg(0.32, 0); leg(0.42, Math.PI); leg(0.82, Math.PI); leg(0.92, 0);
-  // the tail, wagging
-  const wag = Math.sin(t * 14) * 0.25;
-  g.strokeStyle = '#c98a4b';
-  g.lineWidth = 0.11 * u;
+  // the far legs a shade darker, so four read as four
+  leg(0.42, Math.PI, '#b8854f'); leg(0.92, 0, '#b8854f');
+  // the tail: a husky's bushy curl over the back, dark above, white beneath
+  const wag = Math.sin(t * 12) * 0.08;
+  g.lineCap = 'round';
+  g.strokeStyle = COAT.saddle;
+  g.lineWidth = 0.2 * u;
   g.beginPath();
-  g.moveTo(x + 0.2 * u, y - 0.6 * u);
-  g.quadraticCurveTo(x + 0.02 * u, y - (0.8 + wag) * u, x + (0.06 + wag * 0.4) * u, y - 1.0 * u);
+  g.moveTo(...at(0.22, 0.62));
+  g.bezierCurveTo(...at(-0.05, 0.85 + wag), ...at(0.05, 1.12 + wag), ...at(0.38, 1.0 + wag));
   g.stroke();
-  // body and chest
-  g.fillStyle = '#c98a4b';
-  roundRect(g, x + 0.15 * u, y - 0.78 * u, 0.9 * u, 0.44 * u, 0.2 * u);
-  g.fill();
-  g.fillStyle = '#f4ead8';
-  roundRect(g, x + 0.72 * u, y - 0.62 * u, 0.3 * u, 0.28 * u, 0.12 * u);
-  g.fill();
-  // head, muzzle and nose
-  g.fillStyle = '#c98a4b';
+  g.strokeStyle = COAT.cream;
+  g.lineWidth = 0.09 * u;
   g.beginPath();
-  g.arc(x + 1.05 * u, y - 0.92 * u, 0.25 * u, 0, Math.PI * 2);
+  g.moveTo(...at(0.16, 0.72));
+  g.bezierCurveTo(...at(0.0, 0.86 + wag), ...at(0.08, 1.04 + wag), ...at(0.34, 0.96 + wag));
+  g.stroke();
+  // body: tan, the dark saddle across the back, a cream belly and chest
+  g.fillStyle = COAT.tan;
+  roundRect(g, x + 0.12 * u, y - 0.8 * u, 0.98 * u, 0.46 * u, 0.21 * u);
   g.fill();
-  g.fillStyle = '#f4ead8';
-  roundRect(g, x + 1.12 * u, y - 0.9 * u, 0.3 * u, 0.17 * u, 0.08 * u);
+  g.fillStyle = COAT.saddle;
+  roundRect(g, x + 0.18 * u, y - 0.82 * u, 0.7 * u, 0.24 * u, 0.12 * u);
   g.fill();
-  g.fillStyle = '#2a1d14';
+  blob(0.62, 0.38, 0.3, 0.07, COAT.cream);
+  blob(0.98, 0.52, 0.15, 0.17, COAT.cream);
+  leg(0.32, 0, COAT.leg); leg(0.82, Math.PI, COAT.leg);
+  // the head: the dark cap and the white mask, a longer shepherd's muzzle
+  blob(1.06, 0.95, 0.25, 0.24, COAT.mask);
+  blob(1.1, 0.88, 0.2, 0.15, COAT.cream);
+  g.fillStyle = COAT.cream;
+  roundRect(g, x + 1.12 * u, y - 0.95 * u, 0.36 * u, 0.15 * u, 0.07 * u);
+  g.fill();
+  g.fillStyle = COAT.mask;
+  roundRect(g, x + 1.14 * u, y - 1.02 * u, 0.24 * u, 0.08 * u, 0.04 * u);
+  g.fill();
+  g.fillStyle = '#1d1b20';
   g.beginPath();
-  g.arc(x + 1.42 * u, y - 0.86 * u, 0.06 * u, 0, Math.PI * 2);
+  g.arc(...at(1.47, 0.89), 0.06 * u, 0, Math.PI * 2);
   g.fill();
+  // ice-blue eye, white brow spot over it
+  blob(1.11, 1.06, 0.045, 0.035, COAT.cream);
+  blob(1.12, 0.99, 0.05, 0.05, COAT.eye);
+  blob(1.13, 0.99, 0.022, 0.022, '#1d1b20');
+  // two upright ears, tilted back a touch in the air
+  const tilt = inAir ? 0.06 : running ? Math.sin(t * 18) * 0.015 : 0;
+  for (const [ex, colour] of [[0.92, '#26252b'], [1.04, COAT.mask]]) {
+    g.fillStyle = colour;
+    g.beginPath();
+    g.moveTo(...at(ex, 1.1));
+    g.lineTo(...at(ex + 0.07 - tilt, 1.42));
+    g.lineTo(...at(ex + 0.15, 1.1));
+    g.closePath();
+    g.fill();
+  }
+  g.fillStyle = '#e8c9b4';
   g.beginPath();
-  g.arc(x + 1.1 * u, y - 1.0 * u, 0.04 * u, 0, Math.PI * 2);
+  g.moveTo(...at(1.08, 1.13));
+  g.lineTo(...at(1.11 - tilt, 1.33));
+  g.lineTo(...at(1.15, 1.13));
+  g.closePath();
   g.fill();
-  // the floppy ear, flapping when it runs
-  const flap = inAir ? -0.25 : running ? Math.sin(t * 18) * 0.12 : 0;
-  g.fillStyle = '#8a5528';
-  g.save();
-  g.translate(x + 0.95 * u, y - 1.1 * u);
-  g.rotate(0.5 + flap);
-  roundRect(g, -0.07 * u, 0, 0.16 * u, 0.32 * u, 0.08 * u);
-  g.fill();
-  g.restore();
   // red collar and a gold tag
   g.fillStyle = '#e0403a';
-  g.fillRect(x + 0.88 * u, y - 0.8 * u, 0.1 * u, 0.24 * u);
+  g.fillRect(x + 0.9 * u, y - 0.82 * u, 0.1 * u, 0.24 * u);
   g.fillStyle = '#f2c23a';
   g.beginPath();
-  g.arc(x + 0.95 * u, y - 0.55 * u, 0.05 * u, 0, Math.PI * 2);
+  g.arc(...at(0.96, 0.56), 0.05 * u, 0, Math.PI * 2);
   g.fill();
 }
 
@@ -153,7 +190,7 @@ function drawBone(g, cx, cy, u) {
   }
 }
 
-export function openWalkies({ who = 'you' } = {}) {
+export function openWalkies({ who = 'you', hero = '' } = {}) {
   if (document.querySelector('.toy-sheet')) return null;
   const key = `musicquiz.walkies.${String(who).toLowerCase()}`;
   let best = 0;
@@ -161,7 +198,7 @@ export function openWalkies({ who = 'you' } = {}) {
   let walk = newWalk(Math.floor(Math.random() * 1e9));
   let endedAt = 0;
 
-  const sheet = node(`<div class="toy-sheet" role="dialog" aria-label="Walkies">
+  const sheet = node(`<div class="toy-sheet" role="dialog" aria-label="Walkies${hero ? `, playing as ${esc(hero)}` : ''}">
       <div class="toy-top"><b class="toy-name">Walkies</b>
         <button class="gal-save toy-close" type="button">Close</button>
         <span class="tiny toy-said" role="status">Tap to jump. Tap again in the air for one more hop.</span></div>
@@ -263,6 +300,7 @@ export function openWalkies({ who = 'you' } = {}) {
       drawThing(g, o, sx, gy, u);
     }
     drawDog(g, SEE_BEHIND * u, gy - walk.h * u, u, walk.t, walk.started && !walk.over, !walk.onGround);
+    nameTag(g, hero, (SEE_BEHIND + 1.0) * u, gy - (walk.h + 1.5) * u, cssW);
 
     // the score, top left; the best, top right
     g.fillStyle = 'rgba(8, 8, 14, 0.55)';
@@ -321,7 +359,7 @@ export function openWalkies({ who = 'you' } = {}) {
         if (got > best) {
           best = got;
           try { localStorage.setItem(key, String(best)); } catch { /* the phone forgets */ }
-          said.textContent = `A new best: ${got}. Good dog.`;
+          said.textContent = `A new best: ${got}. Good dog${hero ? `, ${hero}` : ''}.`;
         } else said.textContent = `${got} — best is ${best}.`;
       }
       acc -= DT;
