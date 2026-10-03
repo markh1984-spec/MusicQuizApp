@@ -15,7 +15,10 @@
  * A LEAF: it is handed an empty slot and fills it.
  */
 import { esc, node, postJson } from './client.js';
-import { STAFF_GAMES } from './staff-games.js';
+import { STAFF_GAMES, staffGame } from './staff-games.js';
+
+/** What the name box is for, said above it: a dog in Walkies, a character otherwise. */
+const named = (game) => (staffGame(game) || { named: 'character' }).named;
 
 export function venueLoginsInto(slot) {
   const venueId = slot.dataset.venue;
@@ -68,9 +71,10 @@ function paint(slot, venueId, logins, said = '') {
             <span class="tiny vl-when">${esc(activity(l))}</span></span>
           <span class="vl-acts"><select class="vl-game" aria-label="Game on ${esc(l.username)}'s page">
             <option value="">No game</option>${STAFF_GAMES.map((g) => `<option value="${g.id}"${l.game === g.id ? ' selected' : ''}>${esc(g.name)}</option>`).join('')}</select>
-          <input class="vl-hero" type="text" maxlength="20" value="${esc(l.hero || '')}" placeholder="Character's name"
-            aria-label="What ${esc(l.username)}'s character is called" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-            ${l.game ? '' : 'disabled title="Pick a game first"'}>
+          <label class="vl-hero-l"><span class="tiny vl-hero-w">${named(l.game) === 'dog' ? 'Dog\'s name' : 'Character\'s name'}</span>
+          <input class="vl-hero" type="text" maxlength="20" value="${esc(l.hero || '')}" placeholder="${named(l.game) === 'dog' ? 'Dog\'s name' : 'Character\'s name'}"
+            aria-label="What ${esc(l.username)}'s ${named(l.game)} is called" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+            ${l.game ? '' : 'disabled title="Pick a game first"'}></label>
           <button class="minor vl-new" type="button">New password</button>
           <button class="minor danger vl-off" type="button">Remove</button></span></div>`).join('')
     : '<div class="tiny">No logins for this pub yet.</div>'}</div>
@@ -166,7 +170,9 @@ function paint(slot, venueId, logins, said = '') {
         if (!r.ok) throw new Error(got.error || 'That would not change — try again.');
         const login = logins.find((l) => l.id === row.dataset.id);
         if (login) { if (got.hero) login.hero = got.hero; else delete login.hero; }
-        paint(slot, venueId, logins, got.hero ? `${name}'s character is called ${got.hero}.` : `${name}'s character has no name now.`);
+        const login2 = logins.find((l) => l.id === row.dataset.id);
+        const what = named(login2 && login2.game);
+        paint(slot, venueId, logins, got.hero ? `${name}'s ${what} is called ${got.hero}.` : `${name}'s ${what} has no name now.`);
       } catch (err) {
         slot.querySelector('.vl-said').textContent = err.message;
       }

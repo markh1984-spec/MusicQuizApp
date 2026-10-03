@@ -267,6 +267,9 @@ try {
   await wait(1200);
   check('Evie\'s character is StEvie, capital E kept', await heroBox('Evie').inputValue() === 'StEvie'
     && /called StEvie/.test(await con.$eval('.venue-card.open .vl-said', (n) => n.textContent)), await heroBox('Evie').inputValue());
+  check('Tabby\'s box says it is the DOG\'s name — the walker is her, already named',
+    (await con.locator('.venue-card.open .vl-row', { hasText: 'Tabby' }).locator('.vl-hero-w').textContent()).trim() === 'Dog\'s name'
+    && (await con.locator('.venue-card.open .vl-row', { hasText: 'Evie' }).locator('.vl-hero-w').textContent()).trim() === 'Character\'s name');
   await heroBox('Tabby').fill('Luna');
   await heroBox('Tabby').press('Tab');
   await wait(1200);
