@@ -1110,13 +1110,13 @@ screen, and the kill switch stops it**; **cleared thirty days after its night
 unless starred or saved, videos only (`isVideoName()`)**; **the watermark is
 RECORDED IN** (`remakeVideo()`).
 
-### BLOCKYARD — a dig-and-build game on ONE staff login, switched per person
+### A GAME ON ONE STAFF LOGIN — Blockyard, Walkies, chosen per person
 
-`blockyard.js` (the rules, pure), `blockyard-play.js`, **Game: on/off** on a
-login's row. **OURS FROM THE NAME DOWN** — no other game's name, characters or
-textures; the app is SOLD (`blockyard.test.js` reads for the words). **A TREE
-IS WALKED PAST.** **The world lives on her phone.** **The canvas re-measures on
-every resize** — a stretched one puts every tap a row off.
+`staff-games.js` (the list the server checks), `blockyard.js`/`walkies.js`
+(pure rules), a picker per login. **OURS FROM THE NAME DOWN** — no other
+game's names or characters; the app is SOLD (a test reads for the words). **Every Walkies gap can be jumped**, tested. **Scores and worlds
+live on the phone.** **A canvas re-measures on every resize** — a stretched one
+puts every tap a row off.
 
 ### THE CAMERA SHEET IS ONE FILE AND BOTH CAMERAS OPEN IT — `camera-sheet.js`
 

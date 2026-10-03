@@ -15,6 +15,7 @@
  * A LEAF: it is handed an empty slot and fills it.
  */
 import { esc, node, postJson } from './client.js';
+import { STAFF_GAMES } from './staff-games.js';
 
 export function venueLoginsInto(slot) {
   const venueId = slot.dataset.venue;
@@ -65,8 +66,8 @@ function paint(slot, venueId, logins, said = '') {
     ? logins.map((l) => `<div class="vl-row" data-id="${esc(l.id)}">
           <span class="vl-who"><span class="vl-name">${esc(l.username)}</span>
             <span class="tiny vl-when">${esc(activity(l))}</span></span>
-          <span class="vl-acts"><button class="minor vl-game${l.game ? ' is-on' : ''}" type="button" aria-pressed="${l.game ? 'true' : 'false'}"
-            title="A little dig-and-build game on their page">Game: ${l.game ? 'on' : 'off'}</button>
+          <span class="vl-acts"><select class="vl-game" aria-label="Game on ${esc(l.username)}'s page">
+            <option value="">No game</option>${STAFF_GAMES.map((g) => `<option value="${g.id}"${l.game === g.id ? ' selected' : ''}>${esc(g.name)}</option>`).join('')}</select>
           <button class="minor vl-new" type="button">New password</button>
           <button class="minor danger vl-off" type="button">Remove</button></span></div>`).join('')
     : '<div class="tiny">No logins for this pub yet.</div>'}</div>
@@ -126,23 +127,23 @@ function paint(slot, venueId, logins, said = '') {
     });
   }
 
-  // BLOCKYARD ON ONE LOGIN — the host's gift, per person (3 October 2026).
-  for (const btn of slot.querySelectorAll('.vl-game')) {
-    btn.addEventListener('click', async () => {
-      const row = btn.closest('.vl-row');
-      const on = btn.getAttribute('aria-pressed') !== 'true';
+  // A GAME ON ONE LOGIN — the host's gift, per person (`staff-games.js`).
+  for (const pick of slot.querySelectorAll('.vl-game')) {
+    pick.addEventListener('change', async () => {
+      const row = pick.closest('.vl-row');
       const name = row.querySelector('.vl-name').textContent;
-      btn.disabled = true;
+      const game = STAFF_GAMES.find((g) => g.id === pick.value);
+      pick.disabled = true;
       try {
         const r = await fetch(`/api/venue-logins/${encodeURIComponent(row.dataset.id)}/game`, {
-          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on }),
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ game: pick.value }),
         });
         if (!r.ok) throw new Error('That would not change — try again.');
         const login = logins.find((l) => l.id === row.dataset.id);
-        if (login) login.game = on;
-        paint(slot, venueId, logins, on ? `${name} has a Play Blockyard button on their page now.` : `The game is off for ${name}.`);
+        if (login) { if (game) login.game = game.id; else delete login.game; }
+        paint(slot, venueId, logins, game ? `${name} has a Play ${game.name} button on their page now.` : `No game on ${name}'s page now.`);
       } catch (err) {
-        btn.disabled = false;
+        pick.disabled = false;
         slot.querySelector('.vl-said').textContent = err.message;
       }
     });

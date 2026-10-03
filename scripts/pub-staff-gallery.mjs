@@ -242,20 +242,56 @@ try {
   const otherSets = await fetch(`${B}/api/venue-logins/x/password`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Cookie: other }, body: JSON.stringify({ password: 'a long enough one' }) });
   check('another quizmaster cannot set one', otherSets.status === 403, String(otherSets.status));
 
-  console.log('\nTHE HOST SWITCHES THE GAME ON FOR EVIE, AND ONLY EVIE');
-  const gameLabel = async (who) => (await con.locator('.venue-card.open .vl-row', { hasText: who }).locator('.vl-game').textContent()).trim();
-  check('both start with the game off', await gameLabel('Evie') === 'Game: off' && await gameLabel('Tabby') === 'Game: off');
-  await con.locator('.venue-card.open .vl-row', { hasText: 'Evie' }).locator('.vl-game').click();
+  console.log('\nTHE HOST GIVES EVIE BLOCKYARD AND TABBY WALKIES');
+  const gameOf = async (who) => con.locator('.venue-card.open .vl-row', { hasText: who }).locator('.vl-game').inputValue();
+  check('both start with no game', await gameOf('Evie') === '' && await gameOf('Tabby') === '');
+  await con.locator('.venue-card.open .vl-row', { hasText: 'Evie' }).locator('.vl-game').selectOption('blockyard');
   await wait(1200);
-  check('Evie\'s switch says on, and the card says what it did', await gameLabel('Evie') === 'Game: on'
-    && /Play Blockyard button/.test(await con.$eval('.venue-card.open .vl-said', (n) => n.textContent)), await gameLabel('Evie'));
-  check('Tabby\'s is still off', await gameLabel('Tabby') === 'Game: off');
-  await shot(con, 'logins-game-on.png', '.venue-card.open .venue-logins-in');
-  const otherGame = await fetch(`${B}/api/venue-logins/x/game`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Cookie: other }, body: JSON.stringify({ on: true }) });
-  check('another quizmaster cannot switch it', otherGame.status === 403, String(otherGame.status));
+  check('Evie\'s says Blockyard, and the card says what it did', await gameOf('Evie') === 'blockyard'
+    && /Play Blockyard button/.test(await con.$eval('.venue-card.open .vl-said', (n) => n.textContent)), await gameOf('Evie'));
+  check('Tabby\'s is still none', await gameOf('Tabby') === '');
+  await con.locator('.venue-card.open .vl-row', { hasText: 'Tabby' }).locator('.vl-game').selectOption('walkies');
+  await wait(1200);
+  check('Tabby\'s says Walkies, and Evie\'s did not move', await gameOf('Tabby') === 'walkies' && await gameOf('Evie') === 'blockyard');
+  await shot(con, 'logins-games.png', '.venue-card.open .venue-logins-in');
+  const otherGame = await fetch(`${B}/api/venue-logins/x/game`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Cookie: other }, body: JSON.stringify({ game: 'walkies' }) });
+  check('another quizmaster cannot choose one', otherGame.status === 403, String(otherGame.status));
+  const tabbyId = await con.locator('.venue-card.open .vl-row', { hasText: 'Tabby' }).getAttribute('data-id');
+  const madeUp = await fetch(`${B}/api/venue-logins/${tabbyId}/game`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Cookie: cookie }, body: JSON.stringify({ game: 'not-a-game' }) });
+  check('a game that does not exist is refused', madeUp.status === 400, String(madeUp.status));
+
+  console.log('\nTABBY PLAYS WALKIES');
   await p.reload({ waitUntil: 'load' });
   await wait(1200);
-  check('Tabby\'s page has no game on it', await p.locator('.vp-play').count() === 0);
+  check('Tabby\'s page has Play Walkies, and no Blockyard', (await p.locator('#vpWho .vp-play').textContent()).trim() === 'Play Walkies');
+  await p.click('#vpWho .vp-play');
+  await p.waitForSelector('.toy-sheet canvas', { timeout: 10000 }).catch(() => {});
+  await wait(700);
+  const park = () => p.evaluate(() => {
+    const c = document.querySelector('.toy-canvas');
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    const seen = new Set();
+    let sum = 0;
+    for (let i = 0; i < d.length; i += 4 * 37) { seen.add((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]); sum = (sum * 31 + d[i] + d[i + 1] * 7 + d[i + 2] * 13) >>> 0; }
+    return { colours: seen.size, sum };
+  });
+  const still = await park();
+  await wait(500);
+  check('the park draws, and nothing moves before the first tap', still.colours > 25 && (await park()).sum === still.sum, JSON.stringify(still));
+  await shot(p, 'walkies-start.png');
+  const wk = await p.locator('.toy-canvas').boundingBox();
+  await p.mouse.click(wk.x + wk.width / 2, wk.y + wk.height / 2);
+  await wait(600);
+  check('a tap starts the walk and the park slides by', (await park()).sum !== still.sum);
+  await shot(p, 'walkies-running.png');
+  // No more taps: the dog walks into whatever comes first.
+  await p.waitForFunction(() => /best|Good dog/.test(document.querySelector('.toy-said')?.textContent || ''), null, { timeout: 30000 }).catch(() => {});
+  const over = (await p.$eval('.toy-said', (n) => n.textContent)).trim();
+  check('the walk ends at the first thing it meets, and says the score', /A new best: \d+/.test(over), over);
+  await wait(800);
+  await shot(p, 'walkies-woof.png');
+  check('the best is kept on her phone', Number(await p.evaluate(() => localStorage.getItem('musicquiz.walkies.tabby'))) > 0);
+  await p.click('.toy-close');
 
   const evPhone = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const ev = await evPhone.newPage();
@@ -269,11 +305,11 @@ try {
   check('Evie\'s page has Play Blockyard', await ev.locator('#vpWho .vp-play').count() === 1);
   await shot(ev, 'evie-signed-in.png');
   await ev.click('#vpWho .vp-play');
-  await ev.waitForSelector('.by-sheet canvas', { timeout: 10000 }).catch(() => {});
+  await ev.waitForSelector('.toy-sheet canvas', { timeout: 10000 }).catch(() => {});
   await wait(900);
   // PAINTED AND MOVING ARE TWO QUESTIONS, and a canvas answers neither by existing.
   const picture = () => ev.evaluate(() => {
-    const c = document.querySelector('.by-canvas');
+    const c = document.querySelector('.toy-canvas');
     const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
     const seen = new Set();
     let sum = 0;
@@ -284,10 +320,10 @@ try {
   check('the game draws a world — sky, ground and a miner — not a blank box', first.colours > 25, JSON.stringify(first));
   // The block under the miner's feet: the view is centred on the miner.
   const T = Math.max(22, Math.min(48, Math.floor(Math.min(first.w / 15, first.h / 10))));
-  const box = await ev.locator('.by-canvas').boundingBox();
+  const box = await ev.locator('.toy-canvas').boundingBox();
   await ev.mouse.click(box.x + first.w / 2, box.y + first.h / 2 + 0.9 * T + 0.5 * T);
   await wait(900);
-  const saidNow = (await ev.$eval('.by-said', (n) => n.textContent)).trim();
+  const saidNow = (await ev.$eval('.toy-said', (n) => n.textContent)).trim();
   const slots = await ev.$$eval('.by-slot', (n) => n.map((x) => x.getAttribute('aria-label')));
   check('a tap on the ground digs it into the bag', /^\+1 /.test(saidNow) && slots.length === 2, `${saidNow} ${JSON.stringify(slots)}`);
   const second = await picture();
@@ -299,9 +335,9 @@ try {
   // world's shape: tapping them puts the block under their feet.
   await ev.mouse.click(box.x + first.w / 2, box.y + first.h / 2);
   await wait(700);
-  const placed = (await ev.$eval('.by-said', (n) => n.textContent)).trim();
+  const placed = (await ev.$eval('.toy-said', (n) => n.textContent)).trim();
   check('a block put under the miner\'s feet goes down and lifts them out of the hole', /^0 [a-z]+ left\.$/.test(placed), placed);
-  await ev.click('.by-close');
+  await ev.click('.toy-close');
   await wait(400);
   const kept = await ev.evaluate(() => localStorage.getItem('musicquiz.blockyard.evie'));
   check('closing keeps the world on her phone', Boolean(kept && kept.length > 1000));
@@ -309,7 +345,7 @@ try {
   await wait(900);
   const again = await ev.$$eval('.by-slot', (n) => n.length);
   check('and opening it again brings the same world and bag back', again >= 1 && (await picture()).colours > 25);
-  await ev.click('.by-close');
+  await ev.click('.toy-close');
 
   console.log('\nTHE HOST REMOVES HER');
   const row = con.locator('.venue-card.open .vl-row', { hasText: 'Tabby' }).locator('.vl-off');

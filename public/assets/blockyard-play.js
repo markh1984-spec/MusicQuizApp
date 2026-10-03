@@ -136,7 +136,7 @@ const PICK_ICON = '<svg class="by-swatch" viewBox="0 0 16 16" aria-hidden="true"
  * phone keep two worlds.
  */
 export function openBlockyard({ who = 'you' } = {}) {
-  if (document.querySelector('.by-sheet')) return null;
+  if (document.querySelector('.toy-sheet')) return null;
   const key = `musicquiz.blockyard.${String(who).toLowerCase()}`;
   let state = null;
   try { state = load(localStorage.getItem(key) || ''); } catch { /* a private window plays a fresh world */ }
@@ -148,18 +148,18 @@ export function openBlockyard({ who = 'you' } = {}) {
   const tex = {};
   for (const b of BLOCKS) if (b.id !== AIR) tex[b.id] = texture(b.id);
 
-  const sheet = node(`<div class="by-sheet" role="dialog" aria-label="Blockyard">
-      <div class="by-top"><b class="by-name">Blockyard</b>
-        <span class="tiny by-said" role="status">Tap a block to dig it. Tap further off to walk.</span>
+  const sheet = node(`<div class="toy-sheet" role="dialog" aria-label="Blockyard">
+      <div class="toy-top"><b class="toy-name">Blockyard</b>
+        <span class="tiny toy-said" role="status">Tap a block to dig it. Tap further off to walk.</span>
         <button class="gal-save by-make-btn" type="button" aria-expanded="false">Make</button>
-        <button class="gal-save by-close" type="button">Close</button></div>
+        <button class="gal-save toy-close" type="button">Close</button></div>
       <div class="by-make" hidden></div>
-      <canvas class="by-canvas"></canvas>
+      <canvas class="toy-canvas"></canvas>
       <div class="by-bar" role="toolbar" aria-label="What to use"></div>
     </div>`);
   const canvas = sheet.querySelector('canvas');
   const g = canvas.getContext('2d');
-  const said = sheet.querySelector('.by-said');
+  const said = sheet.querySelector('.toy-said');
   const bar = sheet.querySelector('.by-bar');
   const makeBox = sheet.querySelector('.by-make');
   let tool = 'pick';
@@ -387,7 +387,7 @@ export function openBlockyard({ who = 'you' } = {}) {
     if (sizer) sizer.disconnect();
     sheet.remove();
   }
-  sheet.querySelector('.by-close').addEventListener('click', close);
+  sheet.querySelector('.toy-close').addEventListener('click', close);
 
   document.body.appendChild(sheet);
   paintBar();

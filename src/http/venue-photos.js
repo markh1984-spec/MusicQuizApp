@@ -92,7 +92,7 @@ export async function getVenuePhotos(req, res, url, route) {
       brand: brandForRoom(rooms.get(galleryId)),
       scheme: (owner && owner.scheme) || '',
       hasFrame: Boolean(rec && rec.overlay),
-      ...(login.game ? { game: true } : {}),
+      ...(login.game ? { game: login.game } : {}),
       line: storyLine(login.venue, {
         venues: rec ? [{ name: rec.name, usualNight: rec.usualNight || '' }] : [],
         bookings: venueRoom.invoices.bookings || [],
@@ -258,16 +258,19 @@ export async function writeVenuePhotos(req, res, url, route) {
     return sendJson(res, 200, { ok: true, backedUp: Boolean(backup && backup.ok) }), true;
   }
 
-  // THE GAME ON ONE LOGIN — Blockyard, switched by the host per person.
+  // THE GAME ON ONE LOGIN — chosen by the host per person (`staff-games.js`).
   if (route.startsWith('/api/venue-logins/') && route.endsWith('/game') && req.method === 'PUT') {
     const me = whoIs(req, url);
     const room = me ? roomForHost(req, url) : null;
     if (!room || !isHostsRoom(room.id)) return sendJson(res, 403, { error: 'Pub logins are only on the host\'s own account for now.' }), true;
     const id = decodeURIComponent(route.slice('/api/venue-logins/'.length, -'/game'.length));
     const body = await readJson(req);
-    if (!galleryLogins.setGame(id, room.id, body.on === true)) return sendJson(res, 404, { error: 'No login like that on your account.' }), true;
+    const game = String(body.game || '');
+    let done;
+    try { done = galleryLogins.setGame(id, room.id, game); } catch (err) { return sendJson(res, 400, { error: err.message }), true; }
+    if (!done) return sendJson(res, 404, { error: 'No login like that on your account.' }), true;
     await backUpLogins();
-    return sendJson(res, 200, { ok: true, game: body.on === true }), true;
+    return sendJson(res, 200, { ok: true, game }), true;
   }
 
   if (route.startsWith('/api/venue-logins/') && req.method === 'DELETE') {

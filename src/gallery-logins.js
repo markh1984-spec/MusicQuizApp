@@ -31,6 +31,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { checkPassword, hashPassword, verifyAsync } from './accounts.js';
+import { staffGame } from '../public/assets/staff-games.js';
 
 export const GALLERY_COOKIE = 'mqz_gallery';
 const SESSION_DAYS = 30;
@@ -93,7 +94,7 @@ export class GalleryLogins {
       // days, so the sign-in alone goes quiet; `lastSeen` is the page opening.
       ...(login.lastSignIn ? { lastSignIn: login.lastSignIn } : {}),
       ...(login.lastSeen ? { lastSeen: login.lastSeen } : {}),
-      ...(login.game ? { game: true } : {}),
+      ...(login.game ? { game: login.game } : {}),
     };
   }
 
@@ -185,14 +186,16 @@ export class GalleryLogins {
   }
 
   /**
-   * A GAME ON ONE LOGIN — the host's gift, switched per person on the venue
-   * card (3 October 2026). Absent unless switched on, so every other login's
-   * record is byte-for-byte what it was.
+   * A GAME ON ONE LOGIN — the host's gift, chosen per person on the venue
+   * card (3 October 2026): an id off `staff-games.js`, or '' for none. Absent
+   * unless chosen, so every other login's record is byte-for-byte what it was.
+   * An id not on the list is refused, never stored.
    */
-  setGame(id, roomId, on) {
+  setGame(id, roomId, game) {
     const login = this.find(id);
     if (!login || login.roomId !== roomId) return false;
-    if (on) login.game = true;
+    if (game && !staffGame(game)) throw new Error('There is no game called that.');
+    if (game) login.game = game;
     else delete login.game;
     this.save();
     return true;

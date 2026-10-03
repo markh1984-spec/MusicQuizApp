@@ -17,6 +17,7 @@ import { paintScheme } from './schemes.js';
 import { saveName } from './photo-save.js';
 import { openInstagramSheet } from './instagram-sheet.js';
 import { openVideoSheet } from './video-sheet.js';
+import { staffGame } from './staff-games.js';
 
 const body = document.getElementById('vpBody');
 const title = document.getElementById('vpTitle');
@@ -82,14 +83,15 @@ function show(me) {
     signInForm('Signed out.');
   });
   who.append(pw, out);
-  // A GAME ON THIS LOGIN, when the host has switched it on — `blockyard-play.js`,
-  // fetched only when pressed, so nobody else's page carries a byte of it.
-  if (me.game) {
-    const play = node('<button class="gal-save vp-play" type="button">Play Blockyard</button>');
+  // A GAME ON THIS LOGIN, when the host has chosen one — `staff-games.js`,
+  // its code fetched only when pressed, so nobody else's page carries a byte.
+  const game = staffGame(me.game);
+  if (game) {
+    const play = node(`<button class="gal-save vp-play" type="button">Play ${esc(game.name)}</button>`);
     play.addEventListener('click', async () => {
       try {
-        const { openBlockyard } = await import('./blockyard-play.js');
-        openBlockyard({ who: me.username });
+        const mod = await import(game.module);
+        mod[game.open]({ who: me.username });
       } catch {
         play.textContent = 'That would not open — reload and try again';
       }
