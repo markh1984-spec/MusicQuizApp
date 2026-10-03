@@ -584,12 +584,9 @@ opening a second file.
 
 ## The GUI rules — what a control looks like is decided by what it DOES
 
-Settled because the host was about to design the interface once per feature:
-*"I want to make sure that when I build future features, I'm not designing the
-GUI after every feature."* Right to stop and do it once — measured first, the
-same primary gradient appeared **72 times at four different angles**, and there
-were **eight different corner radii**. The system existed in his head and
-drifted on screen.
+Settled once so it is not redesigned per feature (*"I'm not designing the GUI
+after every feature"*) — measured first: one gradient at four angles, eight
+corner radii.
 
 ### Five roles, and every control is exactly one of them
 
@@ -685,19 +682,9 @@ tokens even though the hex matches: two jobs, not one colour.
 pill. Nothing else. Purely mechanical, no judgement calls, and it is most of
 why things looked slightly off.
 
-**THE NUMBERS MOVED TO MATCH THE APP, not the other way round.** They were
-written as 6/12/999 and the app never followed it — measured on 14 August
-2026, the sheet used **10px fifty times, 14px twenty-two, 12px twenty-three,
-6px five**, plus twenty-three strays at 2, 4, 7, 8, 9, 11, 16, 18, 20 and 26.
-So `--r-field: 6px` was a token almost nothing used and cards were split
-between two values. That is not a system with exceptions; it is a rule nobody
-was applying.
-
-Both fixes were rendered side by side on the real controls before choosing —
-tightening every field to 6px makes the buttons visibly harder than the cards
-holding them, which is the wrong direction for an app whose stated brand is
-soft and friendly. Adopting 10/14 is also the smaller change, because it is
-already what most of the app is.
+**THE NUMBERS MOVED TO MATCH THE APP** — 10 and 14 were what the sheet
+already used (measured 14 August 2026), and 6px fields render harder than the
+cards holding them. **Do not tighten the fields to 6px.**
 
 ### NOTHING CLICKABLE IS A FLAT GREY BOX, AND NOTHING IS SQUARE
 
@@ -1112,11 +1099,10 @@ RECORDED IN** (`remakeVideo()`).
 
 ### A GAME ON ONE STAFF LOGIN — Blockyard, Walkies, chosen per person
 
-`staff-games.js` (the list the server checks), `blockyard.js`/`walkies.js`
+`staff-games.js` (the one list), `blockyard.js`/`walkies.js`
 (pure rules), a picker per login. **OURS FROM THE NAME DOWN** — no other
 game's names or characters; the app is SOLD (a test reads for the words). **Every Walkies gap can be jumped**, tested. **Scores and worlds
-live on the phone.** **A canvas re-measures on every resize** — a stretched one
-puts every tap a row off.
+live on the phone.** **A canvas re-measures on every resize.**
 
 ### THE CAMERA SHEET IS ONE FILE AND BOTH CAMERAS OPEN IT — `camera-sheet.js`
 
