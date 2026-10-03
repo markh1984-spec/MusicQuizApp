@@ -230,6 +230,35 @@ function drawArch(g, sx, gy, u, name) {
   fitText(g, name, sx + span / 2 + 0.08 * u, gy - 2.64 * u, span + 0.5 * u, Math.round(0.32 * u));
 }
 
+/**
+ * A CAT'S NAME, BIG AND WHITE, pointing down at the cat — the host: the names
+ * are the joke, and the small dark tag was hard to read going past at speed.
+ */
+function catTag(g, name, cx, bottom, u) {
+  const px = Math.max(17, Math.round(0.46 * u));
+  g.font = `800 ${px}px system-ui, sans-serif`;
+  const w = g.measureText(name).width + px * 0.9;
+  const h = px * 1.45;
+  const x = cx - w / 2;
+  const y = bottom - h - px * 0.35;
+  g.fillStyle = '#ffffff';
+  roundRect(g, x, y, w, h, h / 2);
+  g.fill();
+  g.beginPath();
+  g.moveTo(cx - px * 0.3, y + h - 1);
+  g.lineTo(cx, y + h + px * 0.35);
+  g.lineTo(cx + px * 0.3, y + h - 1);
+  g.fill();
+  g.strokeStyle = '#2a2a33';
+  g.lineWidth = 2;
+  roundRect(g, x, y, w, h, h / 2);
+  g.stroke();
+  g.fillStyle = '#1b1b22';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillText(name, cx, y + h / 2 + 1);
+}
+
 function drawThing(g, o, sx, gy, u) {
   const w = o.w * u;
   const h = o.h * u;
@@ -433,7 +462,7 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
       const sx = (o.x - left) * u;
       if (sx + o.w * u < 0 || sx > cssW) continue;
       drawThing(g, o, sx, gy, u);
-      if (o.name) nameTag(g, o.name, sx + (o.w * u) / 2, gy - (o.h + 0.12) * u, cssW);
+      if (o.name) catTag(g, o.name, sx + (o.w * u) / 2, gy - (o.h + 0.05) * u, u);
     }
     // THE WALKER, ON THE LEAD — feet where the dog's were (`walkerHeight`).
     const moving = walk.started && !walk.over;
@@ -451,21 +480,26 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
     nameTag(g, walker, wx, gy - (wh + 1.68) * u, cssW);
     nameTag(g, hero, (SEE_BEHIND + 1.1) * u, gy - (walk.h + 1.5) * u, cssW);
     // +10 FLOATS UP OFF EVERY BONE THE DOG GETS, so what a bone is worth is
-    // said at the moment it is earned.
+    // said at the moment it is earned — and a cat cleared is SHOUTED, by name.
     const now = performance.now();
-    pops = pops.filter((pp) => now - pp.at < 900);
+    pops = pops.filter((pp) => now - pp.at < (pp.cat ? 1400 : 900));
     for (const pp of pops) {
-      const k = (now - pp.at) / 900;
+      const k = (now - pp.at) / (pp.cat ? 1400 : 900);
       g.globalAlpha = 1 - k * k;
-      g.font = `800 ${Math.round(0.5 * u)}px system-ui, sans-serif`;
       g.textAlign = 'center';
       g.textBaseline = 'middle';
-      g.lineWidth = 4;
+      g.lineWidth = 5;
+      g.lineJoin = 'round';
       g.strokeStyle = '#3a2410';
       const py = gy - (pp.h + k * 1.2) * u;
-      g.strokeText('+10', (SEE_BEHIND + 2.4) * u, py);
-      g.fillStyle = '#ffd23f';
-      g.fillText('+10', (SEE_BEHIND + 2.4) * u, py);
+      const px = pp.cat ? cssW * 0.55 : (SEE_BEHIND + 2.4) * u;
+      const size = pp.cat ? Math.max(26, Math.round(0.8 * u)) : Math.round(0.5 * u);
+      // a cat's name shouts across the sky, and fits the screen whatever it is
+      g.font = `800 ${size}px system-ui, sans-serif`;
+      if (pp.cat) while (g.measureText(pp.text).width > cssW - 24 && parseInt(g.font, 10) > 14) g.font = `800 ${parseInt(g.font.split(' ')[1], 10) - 2}px system-ui, sans-serif`;
+      g.strokeText(pp.text, px, py);
+      g.fillStyle = pp.cat ? '#ffffff' : '#ffd23f';
+      g.fillText(pp.text, px, py);
       g.globalAlpha = 1;
     }
 
@@ -555,7 +589,14 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
       const was = walk.over;
       const bonesBefore = walk.bones;
       step(walk, DT);
-      if (walk.bones > bonesBefore) pops.push({ at: performance.now(), h: walk.h + 0.9 }); // in front of the dog, clear of its name
+      if (walk.bones > bonesBefore) pops.push({ at: performance.now(), h: walk.h + 0.9, text: '+10' }); // in front of the dog, clear of its name
+      // A CAT CLEARED: the moment its far side is behind the dog's tail.
+      for (const o of walk.things) {
+        if (o.name && !o.cleared && !walk.over && o.x + o.w < walk.x + 0.15) {
+          o.cleared = true;
+          pops.push({ at: performance.now(), h: 3.3, text: `Jumped ${o.name}!`, cat: true });
+        }
+      }
       if (walk.over && !was) {
         endedAt = performance.now();
         const got = score(walk);
