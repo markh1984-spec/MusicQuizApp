@@ -11,10 +11,11 @@
  */
 import { esc, node } from './client.js';
 import { nameTag } from './toy-tag.js';
-import { DOG, jump, newWalk, score, step } from './walkies.js';
+import { DOG, LEAD, jump, newWalk, score, step, walkerHeight } from './walkies.js';
 
 const DT = 1 / 60;
-const SEE_BEHIND = 1.5;
+/** Where the dog runs, metres from the left — room behind it for the walker. */
+const SEE_BEHIND = 2.3;
 
 /* ---- the drawings, all of them ours ---- */
 
@@ -125,6 +126,61 @@ function drawDog(g, x, y, u, t, running, inAir) {
   g.fill();
 }
 
+/**
+ * The person on the other end of the lead, facing right: a ponytail, a purple
+ * hoodie, jeans and trainers. Their name is the login's own, on a tag above.
+ * `cx, y` is the middle of their feet on the ground. Answers where the hand is.
+ */
+function drawWalker(g, cx, y, u, t, running, inAir) {
+  const at = (dx, dy) => [cx + dx * u, y - dy * u];
+  const stroke = (colour, width, from, to) => {
+    g.strokeStyle = colour;
+    g.lineWidth = width * u;
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(...at(...from));
+    g.lineTo(...at(...to));
+    g.stroke();
+  };
+  const swing = inAir ? 0.16 : running ? Math.sin(t * 13) * 0.2 : 0;
+  // legs and trainers, the far one a shade darker
+  stroke('#2a4068', 0.14, [0, 0.82], [-swing, inAir ? 0.16 : 0.06]);
+  stroke('#34507e', 0.14, [0, 0.82], [swing, inAir ? 0.2 : 0.06]);
+  for (const [fx, fy] of [[-swing, inAir ? 0.12 : 0.03], [swing, inAir ? 0.16 : 0.03]]) {
+    g.fillStyle = '#f4f4f6';
+    g.beginPath();
+    g.ellipse(cx + (fx + 0.06) * u, y - fy * u, 0.11 * u, 0.05 * u, 0, 0, Math.PI * 2);
+    g.fill();
+  }
+  // the far arm swinging, the hoodie, the near arm out to the lead
+  stroke('#5f3ba8', 0.11, [0, 1.22], [-0.12 - swing * 0.4, 0.98]);
+  g.fillStyle = '#7a4fd0';
+  roundRect(g, cx - 0.17 * u, y - 1.32 * u, 0.34 * u, 0.54 * u, 0.12 * u);
+  g.fill();
+  stroke('#7a4fd0', 0.11, [0.06, 1.22], [0.3, 1.02]);
+  g.fillStyle = '#f1c8a0';
+  g.beginPath();
+  g.arc(...at(0.32, 1.02), 0.05 * u, 0, Math.PI * 2);
+  g.fill();
+  // head, hair and a bouncing ponytail
+  g.beginPath();
+  g.arc(...at(0.03, 1.46), 0.14 * u, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = '#6b4024';
+  g.beginPath();
+  g.arc(...at(0.0, 1.5), 0.145 * u, Math.PI * 0.95, Math.PI * 2.05);
+  g.fill();
+  const bob = running ? Math.sin(t * 13) * 0.04 : 0;
+  g.beginPath();
+  g.ellipse(cx - 0.17 * u, y - (1.38 + bob) * u, 0.07 * u, 0.15 * u, 0.5, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = '#2a1d14';
+  g.beginPath();
+  g.arc(...at(0.1, 1.46), 0.02 * u, 0, Math.PI * 2);
+  g.fill();
+  return at(0.32, 1.02);
+}
+
 function drawThing(g, o, sx, gy, u) {
   const w = o.w * u;
   const h = o.h * u;
@@ -191,6 +247,8 @@ function drawBone(g, cx, cy, u) {
 }
 
 export function openWalkies({ who = 'you', hero = '' } = {}) {
+  // The walker is the login: their own username on the tag, never one written here.
+  const walker = who === 'you' ? '' : String(who);
   if (document.querySelector('.toy-sheet')) return null;
   const key = `musicquiz.walkies.${String(who).toLowerCase()}`;
   let best = 0;
@@ -218,9 +276,9 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
     canvas.width = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // About nine and a half metres across: still half a second's warning at
-    // full pelt, and a dog big enough to see on a phone held upright.
-    u = Math.max(30, Math.min(cssW / 9.5, cssH / 6));
+    // About ten and a half metres across: the walker behind, still half a
+    // second's warning at full pelt in front, and a dog big enough to see.
+    u = Math.max(30, Math.min(cssW / 10.5, cssH / 6));
   }
 
   function draw() {
@@ -299,8 +357,21 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
       if (sx + o.w * u < 0 || sx > cssW) continue;
       drawThing(g, o, sx, gy, u);
     }
-    drawDog(g, SEE_BEHIND * u, gy - walk.h * u, u, walk.t, walk.started && !walk.over, !walk.onGround);
-    nameTag(g, hero, (SEE_BEHIND + 1.0) * u, gy - (walk.h + 1.5) * u, cssW);
+    // THE WALKER, ON THE LEAD — feet where the dog's were (`walkerHeight`).
+    const moving = walk.started && !walk.over;
+    const wh = walkerHeight(walk);
+    const wx = (SEE_BEHIND - LEAD + 0.52) * u;
+    const hand = drawWalker(g, wx, gy - wh * u, u, walk.t, moving, wh > 0.02);
+    const collar = [(SEE_BEHIND + 0.95) * u, gy - (walk.h + 0.7) * u];
+    g.strokeStyle = '#1f6fb2';
+    g.lineWidth = Math.max(2, 0.04 * u);
+    g.beginPath();
+    g.moveTo(...hand);
+    g.quadraticCurveTo((hand[0] + collar[0]) / 2, Math.max(hand[1], collar[1]) + 0.25 * u, ...collar);
+    g.stroke();
+    drawDog(g, SEE_BEHIND * u, gy - walk.h * u, u, walk.t, moving, !walk.onGround);
+    nameTag(g, walker, wx, gy - (wh + 1.68) * u, cssW);
+    nameTag(g, hero, (SEE_BEHIND + 1.1) * u, gy - (walk.h + 1.5) * u, cssW);
 
     // the score, top left; the best, top right
     g.fillStyle = 'rgba(8, 8, 14, 0.55)';

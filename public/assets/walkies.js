@@ -3,7 +3,8 @@
  * 3 October 2026: *"can Tabby have a game that is dog themed?"*).
  *
  * One tap jumps, a second tap in the air hops again once; bins, benches,
- * puddles and the odd cat end the walk, and bones are worth having. **Our own
+ * puddles and the odd cat end the walk, and bones are worth having. The
+ * person on the other end of the lead goes where the dog went. **Our own
  * dog, drawn here, nobody famous** — this app is SOLD, the lobby games' legal
  * line, and `test/walkies.test.js` reads this file and its page for the names.
  *
@@ -39,8 +40,28 @@ export function newWalk(seed = 1) {
   return {
     seed, r: rng(seed), x: 0, h: 0, vy: 0, onGround: true, hops: 1,
     speed: START_SPEED, t: 0, bones: 0, over: false, started: false,
-    things: [], treats: [], nextAt: 14,
+    things: [], treats: [], nextAt: 14, trail: [{ x: 0, h: 0 }],
   };
+}
+
+/** How far behind the dog the walker runs, on the lead. */
+export const LEAD = 1.1;
+
+/**
+ * THE WALKER'S FEET FOLLOW THE DOG'S, PLACE FOR PLACE — wherever the dog was
+ * at this spot on the path, the walker is now. So whatever the dog cleared,
+ * the walker clears, and nobody ever runs through a bench. Read off `trail`.
+ */
+export function walkerHeight(walk) {
+  const at = walk.x - LEAD;
+  const t = walk.trail;
+  for (let i = t.length - 1; i > 0; i--) {
+    if (t[i - 1].x <= at && at <= t[i].x) {
+      const span = t[i].x - t[i - 1].x || 1;
+      return t[i - 1].h + (t[i].h - t[i - 1].h) * ((at - t[i - 1].x) / span);
+    }
+  }
+  return 0;
 }
 
 /** Room to land and take off again, growing with the speed. */
@@ -83,6 +104,8 @@ export function step(walk, dt = 1 / 60) {
   walk.vy -= GRAVITY * dt;
   walk.h += walk.vy * dt;
   if (walk.h <= 0) { walk.h = 0; walk.vy = 0; walk.onGround = true; walk.hops = 1; }
+  walk.trail.push({ x: walk.x, h: walk.h });
+  while (walk.trail.length > 2 && walk.trail[1].x < walk.x - LEAD - 1) walk.trail.shift();
   lay(walk);
   if (hitThing(walk)) { walk.over = true; return walk; }
   const d = dogBox(walk);

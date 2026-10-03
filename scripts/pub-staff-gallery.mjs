@@ -230,12 +230,18 @@ try {
   const evieRow = (await con.locator('.venue-card.open .vl-row', { hasText: 'Evie' }).textContent()).replace(/\s+/g, ' ');
   check('Evie\'s still says not yet', /Not signed in yet/.test(evieRow), evieRow);
   await shot(con, 'logins-activity.png', '.venue-card.open .venue-logins-in');
-  await con.locator('.venue-card.open .vl-row', { hasText: 'Evie' }).locator('.vl-new').click();
-  await wait(300);
-  await con.fill('.venue-card.open .vl-set input', 'evie second password');
-  await con.click('.venue-card.open .vl-set button');
-  await wait(1200);
-  check('the card says the new password is set', /New password set for Evie/.test(await con.$eval('.venue-card.open .vl-said', (n) => n.textContent)));
+  // THE CONSOLE CAN REDRAW THE CARD UNDER A HALF-TYPED BOX — a library
+  // refresh rebuilds it — so wait for each piece rather than for a guessed
+  // time, and if the box went before it was sent, open it and send again.
+  const setEvie = async () => {
+    await con.locator('.venue-card.open .vl-row', { hasText: 'Evie' }).locator('.vl-new').click();
+    await con.waitForSelector('.venue-card.open .vl-set input', { timeout: 5000 }).catch(() => {});
+    await con.fill('.venue-card.open .vl-set input', 'evie second password').catch(() => {});
+    await con.click('.venue-card.open .vl-set button', { timeout: 5000 }).catch(() => {});
+    return con.waitForFunction(() => /New password set for Evie/.test(document.querySelector('.venue-card.open .vl-said')?.textContent || ''), null, { timeout: 8000 }).then(() => true, () => false);
+  };
+  const setOk = (await setEvie()) || (await setEvie());
+  check('the card says the new password is set', setOk);
   const evieOld = await fetch(`${B}/api/venue-photos/sign-in`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'Evie', password: 'evie test password' }) });
   const evieNew = await fetch(`${B}/api/venue-photos/sign-in`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'Evie', password: 'evie second password' }) });
   check('Evie\'s old password stops working and the new one works', evieOld.status === 401 && evieNew.status === 200, `${evieOld.status} / ${evieNew.status}`);

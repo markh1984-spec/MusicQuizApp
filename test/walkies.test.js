@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { DOG, hitThing, jump, newWalk, score, step } from '../public/assets/walkies.js';
+import { DOG, LEAD, THINGS, hitThing, jump, newWalk, score, step, walkerHeight } from '../public/assets/walkies.js';
 
 /** A player with a simple rule: jump when the next thing is this many seconds away. */
 function playFor(seed, seconds, lead) {
@@ -82,4 +82,25 @@ test('the game names nobody else\'s dog or game', () => {
     const text = fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
     assert.doesNotMatch(text, /snoopy|scooby|pluto|gromit|bluey|paw patrol|nintendogs|lassie|clifford|goofy|\bodie\b|minecraft|mojang/i, file);
   }
+});
+
+test('the walker on the lead goes where the dog went, so never through a bench', () => {
+  for (const seed of [1, 4, 42]) {
+    const w = newWalk(seed);
+    w.started = true;
+    let lowest = Infinity;
+    for (let i = 0; i < 60 * 40; i++) {
+      const ahead = w.things.find((o) => o.x + o.w > w.x);
+      if (ahead && w.onGround && ahead.x - (w.x + DOG.w) < w.speed * 0.12 + 0.2) jump(w);
+      step(w);
+      // the walker's feet, a little narrower than the dog's box, against every thing
+      const feet = { l: w.x - LEAD + 0.3, r: w.x - LEAD + 0.75, b: walkerHeight(w) };
+      for (const o of w.things) {
+        if (feet.r > o.x + 0.05 && feet.l < o.x + o.w - 0.05) lowest = Math.min(lowest, feet.b - o.h);
+      }
+    }
+    assert.equal(w.over, false);
+    assert.ok(lowest > -0.05, `seed ${seed}: the walker's feet went ${lowest.toFixed(2)} into something`);
+  }
+  assert.ok(THINGS.bench.h > 0);
 });
