@@ -106,7 +106,10 @@ try {
     await con.fill('.venue-card.open .vl-user', user);
     await con.fill('.venue-card.open .vl-pass', pass);
     await con.click('.venue-card.open .vl-add button');
-    await wait(1200);
+    // WAIT FOR THE REDRAW, NEVER A GUESS AT HOW LONG IT TAKES: on a busy
+    // machine the second name was typed into a form the first one's redraw
+    // then replaced, and the click sent it empty.
+    await con.waitForFunction((u) => (document.querySelector('.venue-card.open .vl-said')?.textContent || '').includes(`Added ${u}`), user, { timeout: 15000 }).catch(() => {});
   }
   const listed = await con.$$eval('.venue-card.open .vl-name', (n) => n.map((x) => x.textContent.trim()));
   check('both are listed on the card', listed.includes('Tabby') && listed.includes('Evie'), JSON.stringify(listed));
@@ -238,6 +241,75 @@ try {
   check('Evie\'s old password stops working and the new one works', evieOld.status === 401 && evieNew.status === 200, `${evieOld.status} / ${evieNew.status}`);
   const otherSets = await fetch(`${B}/api/venue-logins/x/password`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Cookie: other }, body: JSON.stringify({ password: 'a long enough one' }) });
   check('another quizmaster cannot set one', otherSets.status === 403, String(otherSets.status));
+
+  console.log('\nTHE HOST SWITCHES THE GAME ON FOR EVIE, AND ONLY EVIE');
+  const gameLabel = async (who) => (await con.locator('.venue-card.open .vl-row', { hasText: who }).locator('.vl-game').textContent()).trim();
+  check('both start with the game off', await gameLabel('Evie') === 'Game: off' && await gameLabel('Tabby') === 'Game: off');
+  await con.locator('.venue-card.open .vl-row', { hasText: 'Evie' }).locator('.vl-game').click();
+  await wait(1200);
+  check('Evie\'s switch says on, and the card says what it did', await gameLabel('Evie') === 'Game: on'
+    && /Play Blockyard button/.test(await con.$eval('.venue-card.open .vl-said', (n) => n.textContent)), await gameLabel('Evie'));
+  check('Tabby\'s is still off', await gameLabel('Tabby') === 'Game: off');
+  await shot(con, 'logins-game-on.png', '.venue-card.open .venue-logins-in');
+  const otherGame = await fetch(`${B}/api/venue-logins/x/game`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Cookie: other }, body: JSON.stringify({ on: true }) });
+  check('another quizmaster cannot switch it', otherGame.status === 403, String(otherGame.status));
+  await p.reload({ waitUntil: 'load' });
+  await wait(1200);
+  check('Tabby\'s page has no game on it', await p.locator('.vp-play').count() === 0);
+
+  const evPhone = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const ev = await evPhone.newPage();
+  ev.on('pageerror', (e) => errors.push(`game: ${String(e.message).slice(0, 140)}`));
+  await ev.goto(`${B}/venue-photos`, { waitUntil: 'load' });
+  await wait(600);
+  await ev.fill('input[name=username]', 'Evie');
+  await ev.fill('input[name=password]', 'evie second password');
+  await ev.click('.vp-form button');
+  await wait(1800);
+  check('Evie\'s page has Play Blockyard', await ev.locator('#vpWho .vp-play').count() === 1);
+  await shot(ev, 'evie-signed-in.png');
+  await ev.click('#vpWho .vp-play');
+  await ev.waitForSelector('.by-sheet canvas', { timeout: 10000 }).catch(() => {});
+  await wait(900);
+  // PAINTED AND MOVING ARE TWO QUESTIONS, and a canvas answers neither by existing.
+  const picture = () => ev.evaluate(() => {
+    const c = document.querySelector('.by-canvas');
+    const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+    const seen = new Set();
+    let sum = 0;
+    for (let i = 0; i < d.length; i += 4 * 37) { seen.add((d[i] << 16) | (d[i + 1] << 8) | d[i + 2]); sum = (sum * 31 + d[i] + d[i + 1] * 7 + d[i + 2] * 13) >>> 0; }
+    return { colours: seen.size, sum, w: c.clientWidth, h: c.clientHeight };
+  });
+  const first = await picture();
+  check('the game draws a world — sky, ground and a miner — not a blank box', first.colours > 25, JSON.stringify(first));
+  // The block under the miner's feet: the view is centred on the miner.
+  const T = Math.max(22, Math.min(48, Math.floor(Math.min(first.w / 15, first.h / 10))));
+  const box = await ev.locator('.by-canvas').boundingBox();
+  await ev.mouse.click(box.x + first.w / 2, box.y + first.h / 2 + 0.9 * T + 0.5 * T);
+  await wait(900);
+  const saidNow = (await ev.$eval('.by-said', (n) => n.textContent)).trim();
+  const slots = await ev.$$eval('.by-slot', (n) => n.map((x) => x.getAttribute('aria-label')));
+  check('a tap on the ground digs it into the bag', /^\+1 /.test(saidNow) && slots.length === 2, `${saidNow} ${JSON.stringify(slots)}`);
+  const second = await picture();
+  check('and the picture changes — the hole, and the miner dropping into it', second.sum !== first.sum);
+  await shot(ev, 'blockyard-phone.png');
+  await ev.click('.by-slot:not([data-tool="pick"])');
+  // THE MINER THEMSELVES — they dropped into the hole and the view followed,
+  // so the middle of the picture is the one spot that does not depend on the
+  // world's shape: tapping them puts the block under their feet.
+  await ev.mouse.click(box.x + first.w / 2, box.y + first.h / 2);
+  await wait(700);
+  const placed = (await ev.$eval('.by-said', (n) => n.textContent)).trim();
+  check('a block put under the miner\'s feet goes down and lifts them out of the hole', /^0 [a-z]+ left\.$/.test(placed), placed);
+  await ev.click('.by-close');
+  await wait(400);
+  const kept = await ev.evaluate(() => localStorage.getItem('musicquiz.blockyard.evie'));
+  check('closing keeps the world on her phone', Boolean(kept && kept.length > 1000));
+  await ev.click('#vpWho .vp-play');
+  await wait(900);
+  const again = await ev.$$eval('.by-slot', (n) => n.length);
+  check('and opening it again brings the same world and bag back', again >= 1 && (await picture()).colours > 25);
+  await ev.click('.by-close');
 
   console.log('\nTHE HOST REMOVES HER');
   const row = con.locator('.venue-card.open .vl-row', { hasText: 'Tabby' }).locator('.vl-off');

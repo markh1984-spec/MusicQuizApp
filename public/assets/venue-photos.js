@@ -82,6 +82,21 @@ function show(me) {
     signInForm('Signed out.');
   });
   who.append(pw, out);
+  // A GAME ON THIS LOGIN, when the host has switched it on — `blockyard-play.js`,
+  // fetched only when pressed, so nobody else's page carries a byte of it.
+  if (me.game) {
+    const play = node('<button class="gal-save vp-play" type="button">Play Blockyard</button>');
+    play.addEventListener('click', async () => {
+      try {
+        const { openBlockyard } = await import('./blockyard-play.js');
+        openBlockyard({ who: me.username });
+      } catch {
+        play.textContent = 'That would not open — reload and try again';
+      }
+    });
+    who.prepend(play);
+    who.prepend(who.querySelector('.tiny'));
+  }
 
   if (!me.nights.length) {
     body.replaceChildren(node('<p class="muted">No photos from your nights yet. They appear here the day after a quiz.</p>'));

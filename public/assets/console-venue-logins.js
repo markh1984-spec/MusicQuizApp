@@ -65,7 +65,9 @@ function paint(slot, venueId, logins, said = '') {
     ? logins.map((l) => `<div class="vl-row" data-id="${esc(l.id)}">
           <span class="vl-who"><span class="vl-name">${esc(l.username)}</span>
             <span class="tiny vl-when">${esc(activity(l))}</span></span>
-          <span class="vl-acts"><button class="minor vl-new" type="button">New password</button>
+          <span class="vl-acts"><button class="minor vl-game${l.game ? ' is-on' : ''}" type="button" aria-pressed="${l.game ? 'true' : 'false'}"
+            title="A little dig-and-build game on their page">Game: ${l.game ? 'on' : 'off'}</button>
+          <button class="minor vl-new" type="button">New password</button>
           <button class="minor danger vl-off" type="button">Remove</button></span></div>`).join('')
     : '<div class="tiny">No logins for this pub yet.</div>'}</div>
       <form class="vl-add">
@@ -121,6 +123,28 @@ function paint(slot, venueId, logins, said = '') {
       });
       row.after(box);
       box.querySelector('input').focus();
+    });
+  }
+
+  // BLOCKYARD ON ONE LOGIN — the host's gift, per person (3 October 2026).
+  for (const btn of slot.querySelectorAll('.vl-game')) {
+    btn.addEventListener('click', async () => {
+      const row = btn.closest('.vl-row');
+      const on = btn.getAttribute('aria-pressed') !== 'true';
+      const name = row.querySelector('.vl-name').textContent;
+      btn.disabled = true;
+      try {
+        const r = await fetch(`/api/venue-logins/${encodeURIComponent(row.dataset.id)}/game`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on }),
+        });
+        if (!r.ok) throw new Error('That would not change — try again.');
+        const login = logins.find((l) => l.id === row.dataset.id);
+        if (login) login.game = on;
+        paint(slot, venueId, logins, on ? `${name} has a Play Blockyard button on their page now.` : `The game is off for ${name}.`);
+      } catch (err) {
+        btn.disabled = false;
+        slot.querySelector('.vl-said').textContent = err.message;
+      }
     });
   }
 

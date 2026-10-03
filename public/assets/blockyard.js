@@ -1,0 +1,345 @@
+/**
+ * BLOCKYARD — a side-on block world to dig through and build in, for one
+ * staff login (the host, 3 October 2026: a little blocky dig-and-build game in
+ * Evie's account).
+ *
+ * **OUR OWN GAME, OUR OWN DRAWINGS, OUR OWN NAME.** The genre — a grid of
+ * blocks you dig up and put back — belongs to nobody; somebody else's name,
+ * characters and block artwork do. This app is SOLD, which is the lobby
+ * games' legal line exactly, and `test/blockyard.test.js` reads this file and
+ * its page for the words that would cross it.
+ *
+ * This half is the RULES and nothing else — no page, no canvas, no storage —
+ * so every one of them is testable in node: the world it makes from a seed,
+ * what digging gives you, where a block may go, how the miner walks, falls and
+ * hops up a step. `blockyard-play.js` draws it and takes the taps.
+ *
+ * Coordinates are in BLOCKS, `x` to the right and `y` DOWN (a row number). The
+ * miner stands with their feet at `p.y`; their box is 0.6 wide and 1.8 tall.
+ */
+
+export const W = 96;
+export const H = 48;
+
+export const AIR = 0;
+export const BLOCKS = [
+  { id: 0, name: 'Air' },
+  { id: 1, name: 'Grass', drops: 2 },
+  { id: 2, name: 'Earth' },
+  { id: 3, name: 'Stone' },
+  { id: 4, name: 'Log', passable: true },
+  { id: 5, name: 'Leaves', passable: true },
+  { id: 6, name: 'Sand' },
+  { id: 7, name: 'Coal' },
+  { id: 8, name: 'Gold' },
+  { id: 9, name: 'Gem' },
+  { id: 10, name: 'Planks' },
+  { id: 11, name: 'Glass' },
+  { id: 12, name: 'Brick' },
+  { id: 13, name: 'Bedrock', fixed: true },
+];
+export const GRASS = 1;
+export const EARTH = 2;
+export const STONE = 3;
+export const LOG = 4;
+export const LEAVES = 5;
+export const SAND = 6;
+export const COAL = 7;
+export const GOLD = 8;
+export const GEM = 9;
+export const PLANKS = 10;
+export const GLASS = 11;
+export const BRICK = 12;
+export const BEDROCK = 13;
+
+/** What can be made from what — one tap each, nothing to learn. */
+export const RECIPES = [
+  { id: 'planks', makes: PLANKS, count: 4, from: LOG, need: 1, label: '1 log → 4 planks' },
+  { id: 'glass', makes: GLASS, count: 1, from: SAND, need: 1, label: '1 sand → 1 glass' },
+  { id: 'brick', makes: BRICK, count: 1, from: STONE, need: 2, label: '2 stone → 1 brick' },
+];
+
+export const REACH = 4.5;
+const HALF = 0.3;
+const TALL = 1.8;
+const GRAVITY = 30;
+const FALL_MAX = 20;
+const WALK = 4.5;
+/** A jump clears a step of one block and not two: v²/2g = 1.5 blocks. */
+const JUMP = Math.sqrt(2 * GRAVITY * 1.5);
+const EPS = 1e-4;
+
+/** A small seeded generator, so one seed is one world on every phone. */
+export function rng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export function get(world, x, y) {
+  if (x < 0 || x >= world.w) return BEDROCK;
+  if (y < 0) return AIR;
+  if (y >= world.h) return BEDROCK;
+  return world.cells[y * world.w + x];
+}
+
+export function set(world, x, y, id) {
+  if (x < 0 || x >= world.w || y < 0 || y >= world.h) return;
+  world.cells[y * world.w + x] = id;
+}
+
+/**
+ * What the miner cannot walk through. A TREE IS WALKED PAST, NOT INTO: side
+ * on, a trunk is a wall five blocks high across the only path there is, and
+ * the first thing anybody does is walk left. So a log and its leaves are
+ * scenery to the feet — still dug, still built against.
+ */
+export const solid = (id) => id !== AIR && !BLOCKS[id].passable;
+
+/** Rolling ground from a seed: a few points joined smoothly, a little roughness on top. */
+function heights(r, w) {
+  const knots = Array.from({ length: Math.ceil(w / 8) + 2 }, () => r());
+  const bumps = Array.from({ length: Math.ceil(w / 3) + 2 }, () => r());
+  const smooth = (pts, step, x) => {
+    const i = Math.floor(x / step);
+    const f = (x / step) - i;
+    const k = (1 - Math.cos(f * Math.PI)) / 2;
+    return pts[i] * (1 - k) + pts[i + 1] * k;
+  };
+  const h = Array.from({ length: w }, (_, x) => {
+    const n = (smooth(knots, 8, x) - 0.5) * 12 + (smooth(bumps, 3, x) - 0.5) * 3;
+    return Math.max(9, Math.min(25, Math.round(16 + n)));
+  });
+  // NEVER MORE THAN ONE BLOCK BETWEEN NEIGHBOURS — the miner hops one and a
+  // walk across open ground must never stop at a cliff nobody dug.
+  for (let pass = 0; pass < 2; pass++) {
+    for (let x = 1; x < w; x++) h[x] = Math.max(h[x - 1] - 1, Math.min(h[x - 1] + 1, h[x]));
+    for (let x = w - 2; x >= 0; x--) h[x] = Math.max(h[x + 1] - 1, Math.min(h[x + 1] + 1, h[x]));
+  }
+  return h;
+}
+
+/**
+ * A whole world from a seed — the same seed is always the same world.
+ * `surface[x]` is the row the ground starts on, kept so the picture can tell
+ * open sky from a cave.
+ */
+export function makeWorld(seed = 1) {
+  const r = rng(seed);
+  const world = { w: W, h: H, seed, cells: new Uint8Array(W * H) };
+  const surface = heights(r, W);
+  for (let x = 0; x < W; x++) {
+    const top = surface[x];
+    const beach = top >= 22;
+    for (let y = top; y < H; y++) {
+      let id = STONE;
+      if (y === top) id = beach ? SAND : GRASS;
+      else if (y <= top + 3) id = beach && y <= top + 1 ? SAND : EARTH;
+      set(world, x, y, id);
+    }
+    set(world, x, H - 1, BEDROCK);
+    if (r() < 0.5) set(world, x, H - 2, BEDROCK);
+  }
+  // Caves: a few wandering tunnels, never through the bedrock.
+  for (let n = 0; n < 7; n++) {
+    let cx = 4 + r() * (W - 8);
+    let cy = surface[Math.floor(cx)] + 7 + r() * 14;
+    let dir = r() * Math.PI * 2;
+    for (let s = 0; s < 45; s++) {
+      const rad = 0.8 + r() * 0.9;
+      for (let y = Math.floor(cy - rad); y <= cy + rad; y++) {
+        for (let x = Math.floor(cx - rad); x <= cx + rad; x++) {
+          if (y >= H - 3 || y < 0 || (x - cx) ** 2 + (y - cy) ** 2 > rad * rad) continue;
+          if (y > surface[Math.max(0, Math.min(W - 1, x))] + 3) set(world, x, y, AIR);
+        }
+      }
+      dir += (r() - 0.5) * 0.9;
+      cx = Math.max(2, Math.min(W - 3, cx + Math.cos(dir)));
+      cy = Math.max(surface[Math.floor(cx)] + 5, Math.min(H - 5, cy + Math.sin(dir) * 0.6));
+    }
+  }
+  // What is worth digging for — rarer the deeper it gets.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (get(world, x, y) !== STONE) continue;
+      const deep = y - surface[x];
+      const roll = r();
+      if (deep > 22 && roll < 0.012) set(world, x, y, GEM);
+      else if (deep > 14 && roll < 0.03) set(world, x, y, GOLD);
+      else if (deep > 4 && roll < 0.07) set(world, x, y, COAL);
+    }
+  }
+  // Trees on the grass, never two on top of each other.
+  let last = -10;
+  for (let x = 3; x < W - 3; x++) {
+    const top = surface[x];
+    if (get(world, x, top) !== GRASS || x - last < 5 || r() > 0.2) continue;
+    last = x;
+    const tall = 4 + Math.floor(r() * 2);
+    for (let i = 1; i <= tall; i++) set(world, x, top - i, LOG);
+    const crown = top - tall;
+    for (let y = crown - 2; y <= crown + 1; y++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        if (Math.abs(dx) === 2 && (y === crown - 2 || y === crown + 1)) continue;
+        if (get(world, x + dx, y) === AIR) set(world, x + dx, y, LEAVES);
+      }
+    }
+  }
+  world.surface = surface;
+  return world;
+}
+
+/** The miner, standing on the ground in the middle of the world. */
+export function spawn(world) {
+  const x = Math.floor(world.w / 2);
+  const top = (col) => { let y = 0; while (y < world.h && !solid(get(world, col, y))) y++; return y; };
+  return { x: x + 0.5, y: top(x), vx: 0, vy: 0, onGround: true, targetX: null, facing: 1, held: 0 };
+}
+
+function hits(world, left, top, right, bottom) {
+  for (let y = Math.floor(top); y <= Math.floor(bottom - EPS); y++) {
+    for (let x = Math.floor(left); x <= Math.floor(right - EPS); x++) {
+      if (solid(get(world, x, y))) return true;
+    }
+  }
+  return false;
+}
+
+const boxHits = (world, p, dx = 0, dy = 0) => hits(world, p.x - HALF + dx, p.y - TALL + dy, p.x + HALF + dx, p.y + dy);
+
+export const overlapsPlayer = (p, x, y) =>
+  x + 1 > p.x - HALF && x < p.x + HALF && y + 1 > p.y - TALL && y < p.y;
+
+/** Is the middle of block (x, y) within arm's length of the miner? */
+export function inReach(p, x, y) {
+  const dx = x + 0.5 - p.x;
+  const dy = y + 0.5 - (p.y - TALL / 2);
+  return dx * dx + dy * dy <= REACH * REACH;
+}
+
+export function jump(p) {
+  if (p.onGround) { p.vy = -JUMP; p.onGround = false; }
+}
+
+/**
+ * One tick of the miner. Walks towards `targetX`, hops a one-block step on its
+ * own, stops at a wall of two, falls, lands. Pure in the world and the miner.
+ */
+export function step(world, p, dt = 1 / 60) {
+  if (p.held) {
+    // A key held down on a laptop: walk while it is held.
+    p.vx = p.held * WALK;
+    p.facing = p.held;
+    p.targetX = null;
+  } else if (p.targetX !== null && p.targetX !== undefined) {
+    const dx = p.targetX - p.x;
+    if (Math.abs(dx) < 0.08) { p.vx = 0; p.targetX = null; }
+    else { p.vx = Math.sign(dx) * WALK; p.facing = Math.sign(dx); }
+  } else p.vx = 0;
+
+  // A step up of one block is hopped; two is a wall.
+  if (p.vx !== 0 && p.onGround) {
+    const ahead = Math.sign(p.vx) * 0.12;
+    if (boxHits(world, p, ahead, 0) && !boxHits(world, p, ahead, -1.05) && !boxHits(world, p, 0, -1.05)) jump(p);
+  }
+
+  p.vy = Math.min(FALL_MAX, p.vy + GRAVITY * dt);
+
+  const x0 = p.x;
+  p.x = Math.max(HALF, Math.min(world.w - HALF, p.x + p.vx * dt));
+  if (boxHits(world, p)) {
+    p.x = x0;
+    // Still on the ground means it did not hop this: a wall, so stop asking.
+    if (p.onGround) p.targetX = null;
+    p.vx = 0;
+  }
+
+  const y0 = p.y;
+  p.y += p.vy * dt;
+  if (boxHits(world, p)) {
+    if (p.vy > 0) p.y = Math.floor(p.y);
+    else p.y = Math.floor(p.y - TALL) + 1 + TALL;
+    if (boxHits(world, p)) p.y = y0;
+    p.vy = 0;
+  }
+  p.onGround = boxHits(world, p, 0, 0.02);
+  if (p.y > world.h) { p.y = world.h; p.vy = 0; }
+  return p;
+}
+
+/** Dig a block out, into the bag. Answers what was got, or null. */
+export function dig(world, bag, p, x, y) {
+  const id = get(world, x, y);
+  if (id === AIR || BLOCKS[id].fixed || !inReach(p, x, y)) return null;
+  set(world, x, y, AIR);
+  const got = BLOCKS[id].drops || id;
+  bag[got] = (bag[got] || 0) + 1;
+  return got;
+}
+
+/**
+ * Put a block from the bag down. It needs an empty space within reach, touching
+ * another block (nothing floats), and not where the miner is standing — except
+ * straight underneath them, which lifts them up a block: the way out of a pit.
+ * Answers why not, or '' when it went down.
+ */
+export function place(world, bag, p, x, y, id) {
+  if (!(bag[id] > 0)) return 'none';
+  if (x < 0 || x >= world.w || y < 0 || y >= world.h) return 'edge';
+  if (get(world, x, y) !== AIR) return 'full';
+  if (!inReach(p, x, y)) return 'far';
+  if (overlapsPlayer(p, x, y)) {
+    const under = Math.floor(p.y) - 1;
+    if (y !== under || !p.onGround || boxHits(world, p, 0, -1)) return 'you';
+    set(world, x, y, id);
+    p.y -= 1;
+    p.vy = 0;
+    if (boxHits(world, p)) { set(world, x, y, AIR); p.y += 1; return 'you'; }
+    bag[id] -= 1;
+    return '';
+  }
+  const touching = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => get(world, x + dx, y + dy) !== AIR);
+  if (!touching) return 'float';
+  set(world, x, y, id);
+  bag[id] -= 1;
+  return '';
+}
+
+export function make(bag, recipeId) {
+  const r = RECIPES.find((x) => x.id === recipeId);
+  if (!r || !((bag[r.from] || 0) >= r.need)) return false;
+  bag[r.from] -= r.need;
+  bag[r.makes] = (bag[r.makes] || 0) + r.count;
+  return true;
+}
+
+/** A world and a bag as one string, for `localStorage`. */
+export function save(world, bag, p) {
+  let bin = '';
+  for (let i = 0; i < world.cells.length; i++) bin += String.fromCharCode(world.cells[i]);
+  return JSON.stringify({ v: 1, seed: world.seed, w: world.w, h: world.h, surface: world.surface, cells: btoa(bin), bag, at: { x: p.x, y: p.y } });
+}
+
+/** The other way. A file that will not read answers null — a fresh world, not a crash. */
+export function load(text) {
+  try {
+    const d = JSON.parse(text);
+    if (d.v !== 1 || d.w !== W || d.h !== H) return null;
+    const bin = atob(d.cells);
+    if (bin.length !== W * H) return null;
+    const cells = new Uint8Array(W * H);
+    for (let i = 0; i < cells.length; i++) cells[i] = Math.min(BLOCKS.length - 1, bin.charCodeAt(i));
+    const world = { w: W, h: H, seed: d.seed, cells, surface: Array.isArray(d.surface) ? d.surface : Array(W).fill(16) };
+    const bag = {};
+    for (const [k, v] of Object.entries(d.bag || {})) if (BLOCKS[k] && v > 0) bag[k] = Math.floor(v);
+    const p = { x: Number(d.at && d.at.x) || W / 2, y: Number(d.at && d.at.y) || 0, vx: 0, vy: 0, onGround: false, targetX: null, facing: 1, held: 0 };
+    return { world, bag, p };
+  } catch {
+    return null;
+  }
+}

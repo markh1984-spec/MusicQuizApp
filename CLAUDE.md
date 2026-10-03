@@ -1110,6 +1110,14 @@ screen, and the kill switch stops it**; **cleared thirty days after its night
 unless starred or saved, videos only (`isVideoName()`)**; **the watermark is
 RECORDED IN** (`remakeVideo()`).
 
+### BLOCKYARD — a dig-and-build game on ONE staff login, switched per person
+
+`blockyard.js` (the rules, pure), `blockyard-play.js`, **Game: on/off** on a
+login's row. **OURS FROM THE NAME DOWN** — no other game's name, characters or
+textures; the app is SOLD (`blockyard.test.js` reads for the words). **A TREE
+IS WALKED PAST.** **The world lives on her phone.** **The canvas re-measures on
+every resize** — a stretched one puts every tap a row off.
+
 ### THE CAMERA SHEET IS ONE FILE AND BOTH CAMERAS OPEN IT — `camera-sheet.js`
 
 *"can I have the googly eyes etc. functionality in both pls"* — `/snap` posted
@@ -4046,20 +4054,14 @@ I think about it."* The reason written for the cap had expired twice over.
   sometimes two rows is what makes a drag target unlearnable.
 - **AND THE LABELS NAME THE TAP.** *"Drag a pack in to launch"* named the one
   input a phone does not have. **The drag stays the fast path and is not
-  advertised** — it is found by trying it, which is how a drag always is.
+  advertised.**
 
 ### THE WORKSHOP BENCH FILLS ITS BAY — one pack, big, and what you do to it
 
-Taking the rail off left the bench 142px of content in a 362px bay.
-
-- **THE PACK IS A SQUARE POSTER, AND THE SQUARE COMES FROM A COLUMN WIDTH.**
-  **`--bench-poster`, two numbers like `--bay-h`** — the bay less the head, the
-  pack-actions row and the gap.
-- **NEITHER `auto` NOR THE ROW'S HEIGHT MAY DECIDE IT.** An `auto` track sizes
-  to MAX-CONTENT — the pack's NAME — so a long title made a tall square.
-  **Width-first has one answer at every size.**
-- **THE BUTTONS KEEP THEIR OWN SIZE**, never one 800px-wide button; **as many
-  columns as there are buttons**.
+- **A SQUARE POSTER SIZED FROM A COLUMN WIDTH — `--bench-poster`, two numbers
+  like `--bay-h`. NEVER `auto` or the row's height**: an `auto` track sizes to
+  the pack's NAME, so a long title made a tall square.
+- **THE BUTTONS KEEP THEIR OWN SIZE**, a column each — never one 800px button.
 
 ### A PACK WEARS ITS OWN SUBJECT
 
@@ -4107,9 +4109,7 @@ Launch, and nine identical cards make that a reading task.
   `.lb-tile.is-pack` named in its rule** — **a shorthand `border` lower in the
   sheet beats a longhand `border-bottom` higher up, and nothing throws.**
 - **CARTOON FIGURES WERE TRIED AND DO NOT READ — do not re-propose them
-  without new evidence.** At the real card size a whole person is a blob.
-  **And never a named person** — this app is sold, and a decoration is a far
-  weaker case for a likeness than a picture round.
+  without new evidence.** **And never a named person** — this app is sold.
 
 Full reasoning: **[`docs/console.md`](docs/console.md)**.
 

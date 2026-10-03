@@ -93,6 +93,7 @@ export class GalleryLogins {
       // days, so the sign-in alone goes quiet; `lastSeen` is the page opening.
       ...(login.lastSignIn ? { lastSignIn: login.lastSignIn } : {}),
       ...(login.lastSeen ? { lastSeen: login.lastSeen } : {}),
+      ...(login.game ? { game: true } : {}),
     };
   }
 
@@ -179,6 +180,20 @@ export class GalleryLogins {
     checkPassword(password);
     Object.assign(login, hashPassword(password));
     this.data.sessions = this.data.sessions.filter((x) => x.loginId !== id);
+    this.save();
+    return true;
+  }
+
+  /**
+   * A GAME ON ONE LOGIN — the host's gift, switched per person on the venue
+   * card (3 October 2026). Absent unless switched on, so every other login's
+   * record is byte-for-byte what it was.
+   */
+  setGame(id, roomId, on) {
+    const login = this.find(id);
+    if (!login || login.roomId !== roomId) return false;
+    if (on) login.game = true;
+    else delete login.game;
     this.save();
     return true;
   }

@@ -10658,6 +10658,38 @@ body.gallery { padding: 0; }
 .vl-add { display: flex; flex-wrap: wrap; gap: 8px; }
 .vl-add input { flex: 1 1 160px; min-width: 0; min-height: 44px; }
 .vl-add button, .vl-row button { min-height: 44px; }
+.vl-game.is-on { border-color: var(--hot); color: var(--ink); background: rgba(255, 61, 139, 0.14); background: color-mix(in srgb, var(--hot) 16%, transparent); }
+/* BLOCKYARD — the dig-and-build game on one staff login (`blockyard-play.js`).
+   Over the whole page, the picture filling what the bar and the top leave. */
+.by-sheet {
+  position: fixed; inset: 0; z-index: 80; background: var(--bg);
+  display: flex; flex-direction: column;
+}
+.by-top {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
+}
+.by-name { font-size: var(--fs-head); color: var(--ink); margin-right: auto; }
+/* The message takes its own line under the buttons, so Close never wraps. */
+.by-said { order: 3; flex: 1 1 100%; min-width: 0; min-height: 1.3em; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.by-make { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 12px 8px; }
+.by-make .gal-save:disabled { opacity: 0.45; cursor: default; }
+.by-canvas { flex: 1 1 0; min-height: 0; width: 100%; display: block; touch-action: none; cursor: crosshair; }
+.by-bar {
+  display: flex; gap: 6px; align-items: center; overflow-x: auto; min-height: 68px; box-sizing: border-box;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+}
+.by-slot {
+  position: relative; flex: 0 0 auto; width: 52px; height: 52px;
+  display: grid; place-items: center; border-radius: var(--r-field);
+  border: 1px solid var(--panel-line); border-bottom: 2px solid var(--hot);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)), var(--panel);
+  color: var(--ink); cursor: pointer;
+}
+.by-slot.is-on { outline: 2px solid var(--hot); outline-offset: 1px; }
+.by-swatch { width: 28px; height: 28px; image-rendering: crisp-edges; image-rendering: pixelated; }
+.by-n { position: absolute; right: 4px; bottom: 2px; font-size: 11px; font-weight: 700; color: var(--ink); }
+.by-empty { color: var(--ink-dim); padding-left: 4px; }
 /* THE LINK, WHEN THE CLIPBOARD REFUSED. Only ever drawn by that fallback, and
    as wide as the row allows so the whole address is selectable rather than a
    sentence telling somebody to copy a URL that can carry a console key. */

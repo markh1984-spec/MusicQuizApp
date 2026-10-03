@@ -107,3 +107,18 @@ test('the quizmaster sets a new password, and whoever had the old one is out', a
   assert.equal(await b.signIn('Tabby', 'the first password'), null);
   assert.ok(await b.signIn('Tabby', 'the second password'));
 });
+
+test('the game is switched per login, by the room that made it, and absent unless on', () => {
+  const { b } = book();
+  const evie = b.create({ ...PUB, username: 'Evie', password: 'a long enough one' });
+  const tabby = b.create({ ...PUB, username: 'Tabby', password: 'a long enough one' });
+  assert.equal(evie.game, undefined);
+  assert.equal(b.setGame(evie.id, 'another-room', true), false, 'another room cannot reach her');
+  assert.ok(b.setGame(evie.id, PUB.roomId, true));
+  const list = b.list(PUB.roomId);
+  assert.equal(list.find((l) => l.id === evie.id).game, true);
+  assert.equal(list.find((l) => l.id === tabby.id).game, undefined, 'only the one switched on');
+  assert.equal(new GalleryLogins(b.file).find(evie.id).game, true, 'kept on disk');
+  assert.ok(b.setGame(evie.id, PUB.roomId, false));
+  assert.equal('game' in b.find(evie.id), false, 'off is absent, not false');
+});
