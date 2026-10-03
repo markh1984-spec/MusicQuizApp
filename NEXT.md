@@ -2,8 +2,8 @@
 
 ## Waiting on Mark
 
-- **Set the staff games** — on the pub's card (Community › Venues), pick each staff login's game and type their character's name. Live from 3 Oct 2026.
-- **Share the games page with the staff, if wanted** — it is private to you until shared: https://claude.ai/artifact/X7i1vFN2uewVhca5ZSS6Ve (3 Oct 2026).
+- **Change the Walkies login's name box to the dog's name** — it says the walker's own name; the box is labelled "Dog's name" now (3 Oct 2026).
+- **Share the games page, if wanted** — private until shared from its Share menu: https://claude.ai/artifact/X7i1vFN2uewVhca5ZSS6Ve (3 Oct 2026).
 - **Send the Story frame artwork** — the square frame and the two logos, so Story exports get a frame of their own (since 2 Oct 2026).
 - **Decide: do phone videos ever go on the big screen?** — "ask me tomorrow" (since 1 Oct 2026).
 - **Yes or no: a "Make the Spotify playlist" button on bingo packs** — offered 2 Oct 2026.
