@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { ARRIVING, DOG, LEAD, PLACES, THINGS, WALK_LENGTH, hitThing, jump, metresLeft, newWalk, score, step, walkerHeight } from '../public/assets/walkies.js';
+import { ARRIVING, CAT_NAMES, DOG, LEAD, PLACES, THINGS, WALK_LENGTH, hitThing, jump, metresLeft, newWalk, score, step, walkerHeight } from '../public/assets/walkies.js';
 
 /** A player with a simple rule: jump when the next thing is this many seconds away. */
 function playFor(seed, seconds, lead) {
@@ -115,4 +115,32 @@ test('the walker on the lead goes where the dog went, so never through a bench',
     assert.ok(lowest > -0.05, `seed ${seed}: the walker's feet went ${lowest.toFixed(2)} into something`);
   }
   assert.ok(THINGS.bench.h > 0);
+});
+
+test('every cat has a name off the list, picked at random, and a crash into one says who', () => {
+  const w = playFor(6, 90, 0.12);
+  // Float over a few whole parks and collect every cat met, before it is tidied away.
+  const seen = new Set();
+  for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+    const walk = newWalk(seed);
+    walk.started = true;
+    for (let i = 0; i < 60 * 40; i++) {
+      walk.h = 3;
+      walk.vy = 0;
+      step(walk);
+      for (const o of walk.things) if (o.kind === 'cat') seen.add(o);
+    }
+  }
+  const all = [...seen];
+  assert.ok(all.length > 5, `${all.length} cats`);
+  assert.ok(all.every((c) => CAT_NAMES.includes(c.name)), 'every cat is named off the list');
+  assert.ok(new Set(all.map((c) => c.name)).size >= 3, 'and not all the same name');
+  assert.equal(w.things.filter((o) => o.kind !== 'cat').some((o) => o.name), false, 'only cats have names');
+  // walk straight into the first cat
+  const crash = newWalk(1);
+  crash.started = true;
+  crash.things = [{ kind: 'cat', x: 3, w: 0.9, h: 0.8, name: 'April' }];
+  crash.nextAt = Infinity;
+  for (let i = 0; i < 120 && !crash.over; i++) step(crash);
+  assert.equal(crash.hit && crash.hit.name, 'April');
 });

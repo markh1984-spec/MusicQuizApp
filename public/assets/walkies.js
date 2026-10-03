@@ -37,6 +37,12 @@ export const THINGS = {
 const KINDS = Object.keys(THINGS);
 
 /**
+ * THE CATS HAVE NAMES — one each, at random, off this list (the host,
+ * 3 October 2026). Edit the list to change them; nothing else reads it.
+ */
+export const CAT_NAMES = ['Josh', 'Rish', 'April', 'George', 'Jason'];
+
+/**
  * WHERE EACH WALK IS GOING — somewhere in Wokingham, picked at random (the
  * host, 3 October 2026: *"can walkies end with various Wokingham locations —
  * station tap, den 42 etc?"*). Real places named as places, nothing more: a
@@ -93,6 +99,7 @@ function lay(walk) {
   while (walk.nextAt < walk.x + AHEAD && walk.nextAt < WALK_LENGTH - 12) {
     const kind = KINDS[Math.floor(walk.r() * KINDS.length)];
     const thing = { kind, x: walk.nextAt, ...THINGS[kind] };
+    if (kind === 'cat') thing.name = CAT_NAMES[Math.floor(walk.r() * CAT_NAMES.length)];
     walk.things.push(thing);
     const gap = gapFor(walk.speed) + walk.r() * walk.speed * 0.8;
     // A bone in most gaps, up where a jump goes.
@@ -130,7 +137,8 @@ export function step(walk, dt = 1 / 60) {
   while (walk.trail.length > 2 && walk.trail[1].x < walk.x - LEAD - 1) walk.trail.shift();
   lay(walk);
   if (walk.x >= WALK_LENGTH) { walk.over = true; walk.arrived = true; return walk; }
-  if (hitThing(walk)) { walk.over = true; return walk; }
+  const hit = hitThing(walk);
+  if (hit) { walk.over = true; walk.hit = hit; return walk; }
   const d = dogBox(walk);
   walk.treats = walk.treats.filter((b) => {
     const got = d.r > b.x - 0.3 && d.l < b.x + 0.3 && d.b < b.h + 0.25 && d.t > b.h - 0.25;

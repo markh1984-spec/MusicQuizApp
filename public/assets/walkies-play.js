@@ -433,6 +433,7 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
       const sx = (o.x - left) * u;
       if (sx + o.w * u < 0 || sx > cssW) continue;
       drawThing(g, o, sx, gy, u);
+      if (o.name) nameTag(g, o.name, sx + (o.w * u) / 2, gy - (o.h + 0.12) * u, cssW);
     }
     // THE WALKER, ON THE LEAD — feet where the dog's were (`walkerHeight`).
     const moving = walk.started && !walk.over;
@@ -510,7 +511,9 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
       fitText(g, title, cssW / 2, top + 36, cssW - 24, 26);
       g.font = '600 16px system-ui, sans-serif';
       const second = !walk.started ? `${WALK_LENGTH} metres — jump everything on the way`
-        : walk.arrived ? `${score(walk)} points` : `${metresLeft(walk)} metres short of ${walk.to}`;
+        : walk.arrived ? `${score(walk)} points`
+          : walk.hit && walk.hit.name ? `Ran into ${walk.hit.name}, ${metresLeft(walk)} metres short of ${walk.to}`
+            : `${metresLeft(walk)} metres short of ${walk.to}`;
       fitText(g, second, cssW / 2, top + 70, cssW - 24, 16, 600);
       // HOW THE SCORE WAS MADE, in gold: a bone is ten, and getting there a hundred.
       const metres = Math.floor(Math.min(walk.x, WALK_LENGTH));
