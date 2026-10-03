@@ -11,7 +11,7 @@
  */
 import { esc, node } from './client.js';
 import { nameTag } from './toy-tag.js';
-import { DOG, LEAD, jump, newWalk, score, step, walkerHeight } from './walkies.js';
+import { DOG, LEAD, WALK_LENGTH, jump, metresLeft, newWalk, score, step, walkerHeight } from './walkies.js';
 
 const DT = 1 / 60;
 /** Where the dog runs, metres from the left — room behind it for the walker. */
@@ -179,6 +179,46 @@ function drawWalker(g, cx, y, u, t, running, inAir) {
   g.arc(...at(0.1, 1.46), 0.02 * u, 0, Math.PI * 2);
   g.fill();
   return at(0.32, 1.02);
+}
+
+/** Text that fits a width: the size is stepped down until it does. */
+function fitText(g, text, x, y, maxW, size, weight = 800) {
+  let px = size;
+  do { g.font = `${weight} ${px}px system-ui, sans-serif`; px -= 1; } while (g.measureText(text).width > maxW && px > 11);
+  g.fillText(text, x, y);
+}
+
+/** A signpost by the path: where the walk is going, and how far. */
+function drawSign(g, sx, gy, u, text) {
+  g.font = `700 ${Math.round(0.26 * u)}px system-ui, sans-serif`;
+  const w = g.measureText(text).width + 0.3 * u;
+  g.fillStyle = '#6e4a2a';
+  g.fillRect(sx - 0.05 * u, gy - 1.5 * u, 0.1 * u, 1.5 * u);
+  g.fillStyle = '#f7f2e6';
+  roundRect(g, sx - 0.15 * u, gy - 1.85 * u, w, 0.42 * u, 0.06 * u);
+  g.fill();
+  g.strokeStyle = '#2b3a2b';
+  g.lineWidth = 2;
+  g.stroke();
+  g.fillStyle = '#1f2a1f';
+  g.textAlign = 'left';
+  g.textBaseline = 'middle';
+  g.fillText(text, sx, gy - 1.64 * u);
+}
+
+/** The arch at the end of the walk, the place's name across the top. */
+function drawArch(g, sx, gy, u, name) {
+  const span = 2.6 * u;
+  g.fillStyle = '#2f6b3a';
+  g.fillRect(sx, gy - 2.4 * u, 0.16 * u, 2.4 * u);
+  g.fillRect(sx + span, gy - 2.4 * u, 0.16 * u, 2.4 * u);
+  g.fillStyle = '#f2c23a';
+  roundRect(g, sx - 0.25 * u, gy - 2.95 * u, span + 0.66 * u, 0.6 * u, 0.12 * u);
+  g.fill();
+  g.fillStyle = '#2a1d14';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  fitText(g, name, sx + span / 2 + 0.08 * u, gy - 2.64 * u, span + 0.5 * u, Math.round(0.32 * u));
 }
 
 function drawThing(g, o, sx, gy, u) {
@@ -352,6 +392,13 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
       if (sx < -u || sx > cssW + u) continue;
       drawBone(g, sx, gy - (b.h + Math.sin(walk.t * 5 + b.x) * 0.06) * u, u);
     }
+    // the signposts every hundred metres, and the arch at the end
+    for (let at = 100; at < WALK_LENGTH; at += 100) {
+      const sx = (at - left) * u;
+      if (sx > -6 * u && sx < cssW + u) drawSign(g, sx, gy, u, `${walk.to} ${WALK_LENGTH - at} m`);
+    }
+    const archX = (WALK_LENGTH + 0.2 - left) * u;
+    if (archX < cssW + u && archX > -4 * u) drawArch(g, archX, gy, u, walk.to);
     for (const o of walk.things) {
       const sx = (o.x - left) * u;
       if (sx + o.w * u < 0 || sx > cssW) continue;
@@ -385,24 +432,38 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
     g.fillText(`${walk.bones}   ${Math.floor(walk.x)} m`, 48, 28);
     g.textAlign = 'right';
     g.fillText(`Best ${best}`, cssW - 14, 28);
+    // where this walk is going, and how far is left
+    g.textAlign = 'left';
+    g.fillStyle = 'rgba(8, 8, 14, 0.55)';
+    g.font = '600 13px system-ui, sans-serif';
+    const toLine = `To ${walk.to}: ${metresLeft(walk)} m`;
+    roundRect(g, 10, 50, g.measureText(toLine).width + 20, 26, 9);
+    g.fill();
+    g.fillStyle = '#ffffff';
+    g.fillText(toLine, 20, 64);
 
     if (!walk.started || walk.over) {
-      g.fillStyle = 'rgba(8, 8, 14, 0.6)';
-      g.fillRect(0, cssH * 0.22, cssW, 110);
+      const top = cssH * 0.22;
+      g.fillStyle = 'rgba(8, 8, 14, 0.62)';
+      g.fillRect(0, top, cssW, 128);
       g.textAlign = 'center';
       g.fillStyle = '#ffffff';
-      g.font = '800 26px system-ui, sans-serif';
-      g.fillText(walk.over ? `Woof! ${score(walk)}` : 'Walkies!', cssW / 2, cssH * 0.22 + 38);
+      const title = !walk.started ? `Walkies to ${walk.to}` : walk.arrived ? `You made it to ${walk.to}!` : `Woof! ${score(walk)}`;
+      fitText(g, title, cssW / 2, top + 36, cssW - 24, 26);
       g.font = '600 16px system-ui, sans-serif';
+      const second = !walk.started ? `${WALK_LENGTH} m — jump everything on the way`
+        : walk.arrived ? `${score(walk)} points` : `${metresLeft(walk)} m short of ${walk.to}`;
+      fitText(g, second, cssW / 2, top + 72, cssW - 24, 16, 600);
       const ready = !walk.over || performance.now() - endedAt > 700;
-      g.fillText(walk.over ? (ready ? 'Tap to go again' : '') : 'Tap to start', cssW / 2, cssH * 0.22 + 76);
+      g.font = '600 15px system-ui, sans-serif';
+      g.fillText(walk.over ? (ready ? 'Tap to go again' : '') : 'Tap to start', cssW / 2, top + 106);
     }
   }
 
   function press() {
     if (walk.over) {
       if (performance.now() - endedAt < 700) return;
-      walk = newWalk(Math.floor(Math.random() * 1e9));
+      walk = newWalk(Math.floor(Math.random() * 1e9), { notTo: walk.to });
     }
     jump(walk);
   }
@@ -427,11 +488,13 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
       if (walk.over && !was) {
         endedAt = performance.now();
         const got = score(walk);
+        const good = `Good dog${hero ? `, ${hero}` : ''}.`;
+        const there = walk.arrived ? `Made it to ${walk.to}! ` : '';
         if (got > best) {
           best = got;
           try { localStorage.setItem(key, String(best)); } catch { /* the phone forgets */ }
-          said.textContent = `A new best: ${got}. Good dog${hero ? `, ${hero}` : ''}.`;
-        } else said.textContent = `${got} — best is ${best}.`;
+          said.textContent = `${there}A new best: ${got}. ${good}`;
+        } else said.textContent = `${there}${got} — best is ${best}.`;
       }
       acc -= DT;
     }

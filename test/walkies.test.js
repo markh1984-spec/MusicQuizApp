@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { DOG, LEAD, THINGS, hitThing, jump, newWalk, score, step, walkerHeight } from '../public/assets/walkies.js';
+import { ARRIVING, DOG, LEAD, PLACES, THINGS, WALK_LENGTH, hitThing, jump, metresLeft, newWalk, score, step, walkerHeight } from '../public/assets/walkies.js';
 
 /** A player with a simple rule: jump when the next thing is this many seconds away. */
 function playFor(seed, seconds, lead) {
@@ -36,13 +36,25 @@ test('one seed is one walk', () => {
   assert.deepEqual(a.things.map((o) => [o.kind, o.x]), b.things.map((o) => [o.kind, o.x]));
 });
 
-test('EVERY GAP CAN BE JUMPED — steady timing gets through a minute and a half, on every seed', () => {
+test('EVERY GAP CAN BE JUMPED — steady timing gets all the way there, on every seed', () => {
   for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 42, 2026]) {
     for (const lead of [0.06, 0.12, 0.18]) {
       const w = playFor(seed, 90, lead);
-      assert.equal(w.over, false, `seed ${seed}, jumping ${lead}s out, hit a ${w.over && hitThing(w) && hitThing(w).kind} at ${Math.floor(w.x)}m`);
+      assert.ok(w.arrived, `seed ${seed}, jumping ${lead}s out, hit a ${hitThing(w) && hitThing(w).kind} at ${Math.floor(w.x)}m on the way to ${w.to}`);
     }
   }
+});
+
+test('every walk goes somewhere in Wokingham, never twice running, and getting there is worth a hundred', () => {
+  const w = newWalk(11);
+  assert.ok(PLACES.includes(w.to));
+  for (let s = 0; s < 40; s++) assert.notEqual(newWalk(s, { notTo: 'Den 42' }).to, 'Den 42');
+  assert.equal(metresLeft(w), WALK_LENGTH);
+  const done = playFor(3, 90, 0.12);
+  assert.ok(done.arrived && done.over);
+  assert.equal(metresLeft(done), 0);
+  assert.equal(score(done), WALK_LENGTH + done.bones * 10 + ARRIVING);
+  assert.equal(done.things.some((o) => o.x > WALK_LENGTH - 12), false, 'the doorstep is clear');
 });
 
 test('a dog that never jumps does not get far', () => {

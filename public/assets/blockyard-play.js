@@ -94,9 +94,11 @@ function texture(id) {
 }
 
 /**
- * The miner: a hard hat with a lamp, long dark hair, a red top and work
- * trousers. Drawn here,
- * on an 8 x 15 grid — 1.9 blocks tall, near enough the 1.8 the rules use — and
+ * The miner, as the host asked for StEvie (3 October 2026): **a goth** — a
+ * black hard hat with its lamp still lit, long dark brown hair, a pale face
+ * with winged eyeliner and dark lipstick, a black top and a black choker, a
+ * black skirt over purple striped tights, and chunky boots. Drawn here, on an
+ * 8 x 15 grid — 1.9 blocks tall, near enough the 1.8 the rules use — and
  * nothing like anybody else's hero.
  */
 const MINER_ROWS = 15;
@@ -105,23 +107,28 @@ function drawMiner(g, x, y, t, facing, lit) {
   const box = (gx, gy, gw, gh, colour) => { g.fillStyle = colour; g.fillRect(x + gx * u, y + gy * u, gw * u, gh * u); };
   g.save();
   if (facing < 0) { g.translate(x * 2 + 8 * u, 0); g.scale(-1, 1); }
-  // LONG DARK BROWN HAIR, from under the hat to past the shoulders — the
-  // host's call for StEvie (3 October 2026). Drawn first, so the top and
-  // the face sit over it.
-  box(0, 3, 3, 7, '#4a2c1a');
-  box(1, 0, 6, 2, '#f5c518');      // the hat
-  box(0, 2, 8, 1, '#e0ad0c');      // its brim
-  box(5, 1, 2, 1, lit ? '#fffbd0' : '#fff2a0'); // the lamp
-  box(3, 3, 4, 3, '#f1c8a0');      // face
-  box(3, 3, 2, 1, '#4a2c1a');      // the fringe under the brim
-  box(5, 4, 1, 1, '#2a1d14');      // eye
-  box(2, 6, 5, 4, '#d8463a');      // top, the hair falling down its back
-  box(2, 8, 5, 1, '#f3e04a');      // the stripe that says "worker"
-  box(7, 7, 1, 3, '#d8463a');      // the near arm
-  box(1, 10, 6, 3, '#3b4a6b');     // trousers
-  box(3, 11, 1, 2, '#2c3854');
-  box(1, 13, 2, 2, '#2a2a2a');     // boots
-  box(5, 13, 2, 2, '#2a2a2a');
+  box(0, 3, 3, 7, '#3a2216');      // the long dark brown hair, down her back
+  box(1, 0, 6, 2, '#1c1b21');      // the hat, black
+  box(0, 2, 8, 1, '#2c2a33');      // its brim
+  box(5, 1, 2, 1, lit ? '#fffbd0' : '#f5e27a'); // the lamp, still lit
+  box(3, 3, 4, 3, '#f2e6e2');      // a pale face
+  box(3, 3, 2, 1, '#3a2216');      // the fringe under the brim
+  box(5, 4, 1, 1, '#121116');      // eye, lined
+  box(6, 4, 1, 1, '#121116');      // and the wing of the eyeliner
+  box(6, 5, 1, 1, '#4a1430');      // dark lipstick
+  box(3, 6, 4, 1, '#121116');      // a black choker
+  box(5, 6, 1, 1, '#c9ced6');      // its silver charm
+  box(2, 7, 5, 3, '#1d1c22');      // black top
+  box(7, 7, 1, 2, '#1d1c22');      // the near arm
+  box(7, 9, 1, 1, '#f2e6e2');      // hand
+  box(1, 10, 6, 2, '#26242b');     // black skirt
+  box(2, 11, 4, 1, '#3a3640');     // its hem
+  box(1, 12, 2, 1, '#6a2f86');     // striped tights
+  box(5, 12, 2, 1, '#6a2f86');
+  box(1, 13, 2, 2, '#121116');     // chunky boots
+  box(5, 13, 2, 2, '#121116');
+  box(2, 13, 1, 1, '#c9ced6');     // a buckle each
+  box(6, 13, 1, 1, '#c9ced6');
   g.restore();
 }
 

@@ -36,13 +36,34 @@ export const THINGS = {
 };
 const KINDS = Object.keys(THINGS);
 
-export function newWalk(seed = 1) {
+/**
+ * WHERE EACH WALK IS GOING — somewhere in Wokingham, picked at random (the
+ * host, 3 October 2026: *"can walkies end with various Wokingham locations —
+ * station tap, den 42 etc?"*). Real places named as places, nothing more: a
+ * list to edit, one line each.
+ */
+export const PLACES = [
+  'The Station Tap', 'Den 42', 'Elms Field', 'Peach Place', 'the Market Place',
+  'All Saints Church', 'Howard Palmer Gardens', 'Joel Park', 'Cantley Park', 'Dinton Pastures',
+];
+/** How far every walk is — about a minute at the pace it builds to. */
+export const WALK_LENGTH = 600;
+/** What getting there is worth, on top of the metres and the bones. */
+export const ARRIVING = 100;
+
+/** A new walk, to anywhere but `notTo` — the last one's destination. */
+export function newWalk(seed = 1, { notTo = '' } = {}) {
+  const r = rng(seed);
+  const choices = PLACES.filter((p) => p !== notTo);
   return {
-    seed, r: rng(seed), x: 0, h: 0, vy: 0, onGround: true, hops: 1,
-    speed: START_SPEED, t: 0, bones: 0, over: false, started: false,
+    seed, r, x: 0, h: 0, vy: 0, onGround: true, hops: 1,
+    speed: START_SPEED, t: 0, bones: 0, over: false, started: false, arrived: false,
+    to: choices[Math.floor(r() * choices.length)],
     things: [], treats: [], nextAt: 14, trail: [{ x: 0, h: 0 }],
   };
 }
+
+export const metresLeft = (walk) => Math.max(0, Math.ceil(WALK_LENGTH - walk.x));
 
 /** How far behind the dog the walker runs, on the lead. */
 export const LEAD = 1.1;
@@ -68,7 +89,8 @@ export function walkerHeight(walk) {
 const gapFor = (speed) => speed * 0.75 + 2.5;
 
 function lay(walk) {
-  while (walk.nextAt < walk.x + AHEAD) {
+  // The last stretch is kept clear: nobody trips on the doorstep.
+  while (walk.nextAt < walk.x + AHEAD && walk.nextAt < WALK_LENGTH - 12) {
     const kind = KINDS[Math.floor(walk.r() * KINDS.length)];
     const thing = { kind, x: walk.nextAt, ...THINGS[kind] };
     walk.things.push(thing);
@@ -107,6 +129,7 @@ export function step(walk, dt = 1 / 60) {
   walk.trail.push({ x: walk.x, h: walk.h });
   while (walk.trail.length > 2 && walk.trail[1].x < walk.x - LEAD - 1) walk.trail.shift();
   lay(walk);
+  if (walk.x >= WALK_LENGTH) { walk.over = true; walk.arrived = true; return walk; }
   if (hitThing(walk)) { walk.over = true; return walk; }
   const d = dogBox(walk);
   walk.treats = walk.treats.filter((b) => {
@@ -119,5 +142,5 @@ export function step(walk, dt = 1 / 60) {
   return walk;
 }
 
-/** Metres walked plus ten a bone. */
-export const score = (walk) => Math.floor(walk.x) + walk.bones * 10;
+/** Metres walked, ten a bone, and a hundred for getting there. */
+export const score = (walk) => Math.floor(Math.min(walk.x, WALK_LENGTH)) + walk.bones * 10 + (walk.arrived ? ARRIVING : 0);
