@@ -2,7 +2,6 @@
 
 ## Waiting on Mark
 
-- **Change the Walkies login's name box to the dog's name** — it says the walker's own name; the box is labelled "Dog's name" now (3 Oct 2026).
 - **Share the games page, if wanted** — private until shared from its Share menu: https://claude.ai/artifact/X7i1vFN2uewVhca5ZSS6Ve (3 Oct 2026).
 - **Send the Story frame artwork** — the square frame and the two logos, so Story exports get a frame of their own (since 2 Oct 2026).
 - **Decide: do phone videos ever go on the big screen?** — "ask me tomorrow" (since 1 Oct 2026).
@@ -20,4 +19,4 @@
 
 ## Updated
 
-3 October 2026 — staff logins, phone video, and the staff games.
+4 October 2026 — staff games: lives, zombies and named cats.

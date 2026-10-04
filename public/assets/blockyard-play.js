@@ -3,6 +3,8 @@
  * `blockyard.js`; read its header for why the game is ours from the name down.
  *
  * **NO CONTROL PANEL — YOU TAP AND IT HAPPENS**, the lobby games' rule:
+ * - a ZOMBIE tapped is bopped, whatever is in your hand — two bops and it is
+ *   down for a while; a zombie's touch costs one of three lives;
  * - with the PICK chosen, tap a block within reach and it is dug into the bag;
  *   tap anywhere further off and the miner walks there;
  * - with a BLOCK chosen, tap an empty space within reach and it goes down —
@@ -17,10 +19,10 @@
  * miner** — a capped accumulator of fixed steps, as every game here does.
  */
 import { esc, node } from './client.js';
-import { nameTag } from './toy-tag.js';
+import { heart, nameTag } from './toy-tag.js';
 import {
   AIR, BLOCKS, BRICK, BEDROCK, COAL, EARTH, GEM, GLASS, GOLD, GRASS, H, LEAVES, LOG, PLANKS, RECIPES, SAND, STONE, W,
-  dig, get, inReach, jump, load, make, makeWorld, overlapsPlayer, place, rng, save, spawn, step,
+  LIVES, bop, dig, get, inReach, jump, load, make, makeWorld, newPlay, overlapsPlayer, place, revive, rng, save, spawn, tick,
 } from './blockyard.js';
 
 const DT = 1 / 60;
@@ -132,6 +134,36 @@ function drawMiner(g, x, y, t, facing, lit) {
   g.restore();
 }
 
+/**
+ * A ZOMBIE, on the miner's own 8 x 15 grid: ashen skin, a torn red-brown
+ * shirt, dark trousers, both arms out in front. A generic shambler, drawn
+ * here; the names on their tags are the joke.
+ */
+function drawZombie(g, x, y, t, facing, frame) {
+  const u = t / 8;
+  const box = (gx, gy, gw, gh, colour) => { g.fillStyle = colour; g.fillRect(x + gx * u, y + gy * u, gw * u, gh * u); };
+  const sway = Math.round(Math.sin(frame * 4) * 0.6);
+  g.save();
+  if (facing < 0) { g.translate(x * 2 + 8 * u, 0); g.scale(-1, 1); }
+  box(2, 1, 5, 1, '#3b3326');          // scraggy hair
+  box(2, 2, 5, 4, '#a3b39a');          // ashen face
+  box(4, 3, 1, 1, '#2b2420');          // hollow eyes
+  box(6, 3, 1, 1, '#2b2420');
+  box(4, 5, 3, 1, '#5d4a44');          // a mouth hanging open
+  box(2, 6, 5, 4, '#7a3b2e');          // a torn shirt
+  box(3, 8, 1, 1, '#a3b39a');          // skin through the rip
+  box(5, 9, 2, 1, '#5e2c22');
+  box(6, 6 + sway, 4, 1, '#7a3b2e');   // both arms out in front
+  box(9, 6 + sway, 1, 1, '#a3b39a');   // hands
+  box(6, 7 - sway, 4, 1, '#6a3226');
+  box(9, 7 - sway, 1, 1, '#a3b39a');
+  box(2, 10, 5, 3, '#3c3c44');         // trousers
+  box(4, 11, 1, 2, '#2e2e35');
+  box(2, 13, 2, 2, '#2a2522');         // feet
+  box(5, 13, 2, 2, '#2a2522');
+  g.restore();
+}
+
 /** A small swatch of a block for the bag — the same 8x8 picture. */
 function swatch(tex) {
   const c = document.createElement('canvas');
@@ -158,6 +190,11 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
     state = { world, bag: {}, p: spawn(world) };
   }
   let { world, bag, p } = state;
+  // THE ZOMBIES AND THE LIVES are a round of play, never saved: a world comes
+  // back as it was left, and the zombies get up again somewhere new.
+  let play = newPlay(world, p, world.seed || 1);
+  let pops = [];
+  const pop = (text, wx, wy, bad = false) => pops.push({ text, x: wx, y: wy, bad, at: performance.now() });
   const tex = {};
   for (const b of BLOCKS) if (b.id !== AIR) tex[b.id] = texture(b.id);
 
@@ -223,6 +260,7 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
         world = makeWorld(Math.floor(Math.random() * 1e9));
         bag = {};
         p = spawn(world);
+        play = newPlay(world, p, world.seed);
         tool = 'pick';
         keep();
         paintBar();
@@ -299,8 +337,52 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
         }
       }
     }
+    for (const z of play.zombies) {
+      if (z.dead || Math.abs(z.x - p.x) * T > cssW) continue;
+      drawZombie(g, (z.x - 0.5) * T - cx, (z.y - MINER_ROWS / 8) * T - cy, T, z.facing, play.t);
+      // Close to StEvie, its tag goes up a row so the two names never overlap.
+      const lift = Math.abs(z.x - p.x) < 2.8 && Math.abs(z.y - p.y) < 2 ? 30 : 0;
+      nameTag(g, z.name, z.x * T - cx, (z.y - MINER_ROWS / 8) * T - cy - 4 - lift, cssW, { bright: true });
+    }
+    // AFTER A HIT STEVIE BLINKS for as long as nothing can hurt her.
+    g.globalAlpha = play.t < play.safeUntil && Math.floor(play.t * 12) % 2 === 0 ? 0.35 : 1;
     drawMiner(g, (p.x - 0.5) * T - cx, (p.y - MINER_ROWS / 8) * T - cy, T, p.facing, p.y > world.surface[Math.floor(p.x)] + 3);
+    g.globalAlpha = 1;
     nameTag(g, hero, p.x * T - cx, (p.y - MINER_ROWS / 8) * T - cy - 4, cssW);
+    // words that float up off a bop or a hit
+    const now = performance.now();
+    pops = pops.filter((pp) => now - pp.at < 1200);
+    for (const pp of pops) {
+      const k = (now - pp.at) / 1200;
+      g.globalAlpha = 1 - k * k;
+      g.font = `800 ${Math.max(18, Math.round(0.6 * T))}px system-ui, sans-serif`;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.lineWidth = 4;
+      g.lineJoin = 'round';
+      g.strokeStyle = '#2a1410';
+      const px = Math.max(80, Math.min(cssW - 80, pp.x * T - cx));
+      const py = (pp.y - k * 1.2) * T - cy;
+      g.strokeText(pp.text, px, py);
+      g.fillStyle = pp.bad ? '#ff6b6b' : '#ffffff';
+      g.fillText(pp.text, px, py);
+      g.globalAlpha = 1;
+    }
+    // THE LIVES, three hearts top left
+    for (let i = 0; i < LIVES; i++) heart(g, 22 + i * 28, 22, 10, i < play.lives);
+    if (play.down) {
+      const top = cssH * 0.3;
+      g.fillStyle = 'rgba(8, 8, 14, 0.7)';
+      g.fillRect(0, top, cssW, 120);
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillStyle = '#ffffff';
+      g.font = '800 26px system-ui, sans-serif';
+      g.fillText('Out of lives!', cssW / 2, top + 34);
+      g.font = '600 16px system-ui, sans-serif';
+      g.fillText(`${play.hurtBy} got ${hero || 'you'}.`, cssW / 2, top + 68);
+      g.fillText('Tap to get up again — your world is still here', cssW / 2, top + 98, cssW - 24);
+    }
     const mark = flash && flash.until > performance.now() ? flash : hover;
     if (mark) {
       g.lineWidth = 2;
@@ -319,6 +401,22 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
   const walkTo = (c) => { p.targetX = Math.max(0.5, Math.min(W - 0.5, c.x + 0.5)); };
 
   function tap(c) {
+    // DOWN, a tap gets StEvie up again: three lives, at the start.
+    if (play.down) {
+      revive(world, p, play);
+      say('Back on your feet. Watch out for the zombies.');
+      return;
+    }
+    // A ZOMBIE TAPPED IS BOPPED, whatever is in your hand — two bops and it
+    // is down for a while.
+    const z = play.zombies.find((zz) => !zz.dead && Math.abs(zz.x - (c.x + 0.5)) <= 0.9 && c.y >= Math.floor(zz.y - 2) && c.y <= Math.floor(zz.y));
+    if (z) {
+      const res = bop(play, p, z);
+      if (res === 'down') { say(`${z.name} is down!`); pop(`Bopped ${z.name}!`, z.x, z.y - 2.4); return; }
+      if (res === 'hit') { say(`Bopped ${z.name} — once more!`); pop('Bop!', z.x, z.y - 2.4); return; }
+      walkTo(c);
+      return;
+    }
     const id = get(world, c.x, c.y);
     if (tool === 'pick') {
       if (id !== AIR && inReach(p, c.x, c.y)) {
@@ -378,7 +476,15 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
     if (!running) return;
     acc = Math.min(0.25, acc + (now - last) / 1000);
     last = now;
-    while (acc >= DT) { step(world, p, DT); acc -= DT; }
+    while (acc >= DT) {
+      const got = tick(world, p, play, DT);
+      if (got) {
+        if (play.down) say(`Out of lives — ${got.name} got you. Tap to get up again.`);
+        else say(`Ouch! ${got.name} got you — ${play.lives} ${play.lives === 1 ? 'life' : 'lives'} left.`);
+        pop(play.down ? 'Out of lives!' : `-1 life`, p.x, p.y - 2.4, true);
+      }
+      acc -= DT;
+    }
     if (Math.abs(p.x - lastKept.x) + Math.abs(p.y - lastKept.y) > 3) { lastKept = { x: p.x, y: p.y }; keep(); }
     draw();
     requestAnimationFrame(frame);
@@ -408,5 +514,5 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
   fit();
   if (sizer) sizer.observe(canvas);
   requestAnimationFrame((t) => { last = t; frame(t); });
-  return { close, state: () => ({ world, bag, p }) };
+  return { close, state: () => ({ world, bag, p, play }) };
 }

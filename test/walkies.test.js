@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { ARRIVING, CAT_NAMES, DOG, LEAD, PLACES, THINGS, WALK_LENGTH, hitThing, jump, metresLeft, newWalk, score, step, walkerHeight } from '../public/assets/walkies.js';
+import { ARRIVING, CAT_NAMES, DOG, LEAD, LIVES, PLACES, THINGS, WALK_LENGTH, hitThing, jump, metresLeft, newWalk, score, step, walkerHeight } from '../public/assets/walkies.js';
 
 /** A player with a simple rule: jump when the next thing is this many seconds away. */
 function playFor(seed, seconds, lead) {
@@ -57,13 +57,27 @@ test('every walk goes somewhere in Wokingham, never twice running, and getting t
   assert.equal(done.things.some((o) => o.x > WALK_LENGTH - 12), false, 'the doorstep is clear');
 });
 
-test('a dog that never jumps does not get far', () => {
+test('a dog that never jumps does not get far — three knocks and the walk is over', () => {
   const w = newWalk(5);
   jump(w);
   w.vy = 0;
-  for (let i = 0; i < 60 * 30 && !w.over; i++) step(w);
-  assert.ok(w.over, 'it walked into something');
-  assert.ok(w.x < 60, `but only after ${Math.floor(w.x)}m`);
+  for (let i = 0; i < 60 * 40 && !w.over; i++) step(w);
+  assert.ok(w.over && !w.arrived, 'it ran out of lives');
+  assert.equal(w.lives, 0);
+  assert.ok(w.x < 150, `but only after ${Math.floor(w.x)}m`);
+});
+
+test('a knock costs ONE life, the dog runs on through, and one bin cannot take two', () => {
+  const w = newWalk(1);
+  w.started = true;
+  w.nextAt = Infinity;
+  w.things = [{ kind: 'bench', x: 3, w: 1.8, h: 0.9 }, { kind: 'bin', x: 5.5, w: 0.8, h: 1.1 }, { kind: 'bin', x: 12, w: 0.8, h: 1.1 }];
+  for (let i = 0; i < 60 * 3 && !w.over; i++) step(w);
+  assert.equal(LIVES, 3);
+  assert.equal(w.over, false, 'still walking');
+  assert.equal(w.lives, 1, 'the bench cost one, the bin straight after was in the grace, the next bin cost one');
+  assert.equal(w.hit.kind, 'bin');
+  assert.ok(w.x > 13, 'and it ran on past them');
 });
 
 test('one hop in the air, and no more until it lands', () => {
@@ -141,6 +155,7 @@ test('every cat has a name off the list, picked at random, and a crash into one 
   crash.started = true;
   crash.things = [{ kind: 'cat', x: 3, w: 0.9, h: 0.8, name: 'April' }];
   crash.nextAt = Infinity;
-  for (let i = 0; i < 120 && !crash.over; i++) step(crash);
+  for (let i = 0; i < 120 && !crash.hit; i++) step(crash);
   assert.equal(crash.hit && crash.hit.name, 'April');
+  assert.equal(crash.lives, LIVES - 1, 'a life, not the walk');
 });

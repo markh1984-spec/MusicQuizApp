@@ -6,9 +6,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
-  AIR, BEDROCK, EARTH, GRASS, H, LOG, PLANKS, STONE, W,
-  dig, get, load, make, makeWorld, place, save, set, spawn, step,
+  AIR, BEDROCK, EARTH, GRASS, H, LIVES, LOG, PLANKS, STONE, W,
+  bop, dig, get, load, make, makeWorld, newPlay, place, revive, save, set, spawn, step, tick,
 } from '../public/assets/blockyard.js';
+import { NAMES } from '../public/assets/staff-names.js';
 
 const settle = (world, p, frames = 120) => { for (let i = 0; i < frames; i++) step(world, p); return p; };
 
@@ -137,4 +138,90 @@ test('the game names nobody else\'s game, characters or creatures', () => {
     const text = fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
     assert.doesNotMatch(text, /minecraft|mojang|creeper|enderman|\bsteve\b|\bnotch\b|zombie pigman/i, file);
   }
+});
+
+/* ---- zombies and lives ---- */
+
+const runFor = (world, p, play, seconds) => { for (let i = 0; i < seconds * 60; i++) tick(world, p, play); };
+
+test('a zombie for every name — "Zombie Rish" — standing on the ground, well away from the miner', () => {
+  const w = makeWorld(7);
+  const p = spawn(w);
+  const play = newPlay(w, p, 7);
+  assert.deepEqual(play.zombies.map((z) => z.name), NAMES.map((n) => `Zombie ${n}`));
+  assert.equal(play.lives, LIVES);
+  assert.equal(LIVES, 3);
+  for (const z of play.zombies) {
+    assert.ok(Math.abs(z.x - p.x) >= 18, `${z.name} started ${Math.abs(z.x - p.x).toFixed(1)} away`);
+    assert.ok(get(w, Math.floor(z.x), z.y) !== AIR, `${z.name} is standing on something`);
+  }
+});
+
+test('a zombie that sees the miner comes for them, a touch costs ONE life, and then there is grace', () => {
+  const { world, p } = flat();
+  const play = newPlay(world, p, 1);
+  for (const z of play.zombies.slice(1)) z.dead = true, z.backAt = Infinity;
+  const z = play.zombies[0];
+  Object.assign(z, { x: p.x + 6, y: p.y, targetX: null });
+  runFor(world, p, play, 4);
+  assert.equal(play.lives, 2, 'it walked over and got them once');
+  assert.equal(play.hurtBy, z.name);
+  // still on top of them during the grace: no second life
+  Object.assign(z, { x: p.x, y: p.y });
+  tick(world, p, play);
+  assert.equal(play.lives, 2, 'nothing hurts during the grace');
+});
+
+test('three touches and StEvie is down, and getting up again is three lives at the start', () => {
+  const { world, p } = flat();
+  const play = newPlay(world, p, 2);
+  for (const z of play.zombies.slice(1)) z.dead = true, z.backAt = Infinity;
+  const z = play.zombies[0];
+  for (let i = 0; i < 3; i++) {
+    Object.assign(z, { x: p.x, y: p.y });
+    tick(world, p, play);
+    play.safeUntil = 0;
+  }
+  assert.equal(play.lives, 0);
+  assert.equal(play.down, true);
+  const before = play.t;
+  tick(world, p, play);
+  assert.ok(play.t > before && play.down, 'nothing moves while down');
+  revive(world, p, play);
+  assert.equal(play.lives, 3);
+  assert.equal(play.down, false);
+  assert.ok(play.zombies.every((zz) => Math.abs(zz.x - p.x) >= 18), 'and the zombies are put well away');
+});
+
+test('two bops put a zombie down, out of reach does nothing, and it gets up again later somewhere else', () => {
+  const { world, p } = flat();
+  const play = newPlay(world, p, 3);
+  const z = play.zombies[0];
+  Object.assign(z, { x: p.x + 2, y: p.y });
+  assert.equal(bop(play, p, z), 'hit');
+  Object.assign(z, { x: p.x + 2, y: p.y });
+  assert.equal(bop(play, p, z), 'down');
+  assert.equal(z.dead, true);
+  const far = play.zombies[1];
+  Object.assign(far, { x: p.x + 20, y: p.y });
+  assert.equal(bop(play, p, far), '', 'too far to reach');
+  play.t = z.backAt;
+  tick(world, p, play);
+  assert.equal(z.dead, false, 'up again');
+  assert.ok(Math.abs(z.x - p.x) >= 18, 'somewhere else');
+});
+
+test('a zombie hops one block but a wall of two keeps it out — and it can never dig', () => {
+  const { world, p } = flat();
+  const play = newPlay(world, p, 4);
+  for (const z of play.zombies.slice(1)) z.dead = true, z.backAt = Infinity;
+  const z = play.zombies[0];
+  Object.assign(z, { x: p.x + 8, y: p.y });
+  set(world, Math.floor(p.x) + 3, 19, STONE);
+  set(world, Math.floor(p.x) + 3, 18, STONE);
+  const cells = world.cells.slice();
+  runFor(world, p, play, 8);
+  assert.equal(play.lives, 3, 'the wall held');
+  assert.ok(z.x > p.x + 3, 'it is stuck on the far side');
+  assert.deepEqual(world.cells, cells, 'and not a block was moved');
 });

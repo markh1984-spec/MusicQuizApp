@@ -205,14 +205,15 @@ try {
   await p.click('#vpWho button:has-text("Change password")');
   await p.fill('.vp-pw input[name=current]', 'not it');
   await p.fill('.vp-pw input[name=next]', 'a brand new password');
+  // WAIT FOR THE ANSWER, NEVER A GUESSED PAUSE: a change runs a password hash
+  // and the breach check, and on a busy machine 900ms was not enough.
+  const saidBy = (re) => p.waitForFunction((src) => new RegExp(src).test(document.querySelector('.vp-pw .vp-said')?.textContent || ''), re.source, { timeout: 20000 }).then(() => true, () => false);
   await p.click('.vp-pw button[type=submit]');
-  await wait(900);
-  check('the wrong current password is said', /not right/.test(await p.$eval('.vp-pw .vp-said', (n) => n.textContent)));
+  check('the wrong current password is said', await saidBy(/not right/));
   await p.fill('.vp-pw input[name=current]', 'tabby test password');
   await p.fill('.vp-pw input[name=next]', 'a brand new password');
   await p.click('.vp-pw button[type=submit]');
-  await wait(1200);
-  check('changed', /Changed/.test(await p.$eval('.vp-pw .vp-said', (n) => n.textContent)));
+  check('changed', await saidBy(/Changed/));
   const oldPw = await fetch(`${B}/api/venue-photos/sign-in`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'Tabby', password: 'tabby test password' }) });
   check('the old password no longer works', oldPw.status === 401, String(oldPw.status));
   const newPw = await fetch(`${B}/api/venue-photos/sign-in`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'Tabby', password: 'a brand new password' }) });
@@ -307,7 +308,7 @@ try {
   // No more taps: the dog walks into whatever comes first.
   await p.waitForFunction(() => /best|Good dog/.test(document.querySelector('.toy-said')?.textContent || ''), null, { timeout: 30000 }).catch(() => {});
   const over = (await p.$eval('.toy-said', (n) => n.textContent)).trim();
-  check('the walk ends at the first thing it meets, and says the score — to the dog, by name', /A new best: \d+\. Good dog, Luna\./.test(over), over);
+  check('three knocks end the walk, and it says the score — to the dog, by name', /A new best: \d+\. Good dog, Luna\./.test(over), over);
   await wait(800);
   await shot(p, 'walkies-woof.png');
   check('the best is kept on her phone', Number(await p.evaluate(() => localStorage.getItem('musicquiz.walkies.tabby'))) > 0);

@@ -17,6 +17,7 @@
  * Coordinates are in BLOCKS, `x` to the right and `y` DOWN (a row number). The
  * miner stands with their feet at `p.y`; their box is 0.6 wide and 1.8 tall.
  */
+import { NAMES } from './staff-names.js';
 
 export const W = 96;
 export const H = 48;
@@ -231,15 +232,16 @@ export function jump(p) {
  * own, stops at a wall of two, falls, lands. Pure in the world and the miner.
  */
 export function step(world, p, dt = 1 / 60) {
+  const pace = p.pace || WALK;  // a zombie carries its own, slower
   if (p.held) {
     // A key held down on a laptop: walk while it is held.
-    p.vx = p.held * WALK;
+    p.vx = p.held * pace;
     p.facing = p.held;
     p.targetX = null;
   } else if (p.targetX !== null && p.targetX !== undefined) {
     const dx = p.targetX - p.x;
     if (Math.abs(dx) < 0.08) { p.vx = 0; p.targetX = null; }
-    else { p.vx = Math.sign(dx) * WALK; p.facing = Math.sign(dx); }
+    else { p.vx = Math.sign(dx) * pace; p.facing = Math.sign(dx); }
   } else p.vx = 0;
 
   // A step up of one block is hopped; two is a wall.
@@ -342,4 +344,110 @@ export function load(text) {
   } catch {
     return null;
   }
+}
+
+/* ---- zombies, and the three lives they cost ---- */
+
+/**
+ * ZOMBIES, NAMED OFF THE STAFF LIST — "Zombie Rish" (the host, 4 October
+ * 2026), and THREE LIVES for the miner, a zombie's touch costing one. Ours:
+ * a generic shambler drawn in `blockyard-play.js`, nobody else's creature.
+ *
+ * They walk the miner's own physics at a slower pace, so they hop a one-block
+ * step, are stopped by a wall of two and can never dig: **a wall is a defence
+ * and a hole is a trap**, which is the whole game they add. After a touch
+ * there is GRACE — nothing can hurt for a moment — and the miner is knocked
+ * back, so one zombie is one life, never three in a heartbeat. Tap one to bop
+ * it; two bops puts it down, and it gets up again later, somewhere else.
+ */
+export const LIVES = 3;
+const ZOMBIE_PACE = 1.8;
+const ZOMBIE_HP = 2;
+/** How near before a zombie comes for you, in blocks across and down. */
+const SEES_ACROSS = 12;
+const SEES_DOWN = 6;
+/** Seconds of grace after a touch. */
+const SAFE_FOR = 1.5;
+/** Seconds before a bopped zombie gets up again, somewhere else. */
+const BACK_IN = 25;
+/** Never closer than this to the miner when one gets up. */
+const SPAWN_CLEAR = 18;
+
+const groundAt = (world, x) => { let y = 0; while (y < world.h && !solid(get(world, x, y))) y++; return y; };
+
+/** Stand a zombie on the ground somewhere well away from the miner. */
+export function placeZombie(world, z, p, r) {
+  let x = null;
+  for (let tries = 0; tries < 60 && x === null; tries++) {
+    const at = 2 + Math.floor(r() * (world.w - 4));
+    if (Math.abs(at + 0.5 - p.x) >= SPAWN_CLEAR) x = at;
+  }
+  if (x === null) x = p.x < world.w / 2 ? world.w - 3 : 2;
+  Object.assign(z, { x: x + 0.5, y: groundAt(world, x), vx: 0, vy: 0, onGround: true, targetX: null, held: 0, hp: ZOMBIE_HP, dead: false });
+  return z;
+}
+
+/** A fresh round of play: three lives and a zombie for every name. */
+export function newPlay(world, p, seed = 1) {
+  const r = rng(seed ^ 0x5eed);
+  const zombies = NAMES.map((n) => placeZombie(world, { name: `Zombie ${n}`, pace: ZOMBIE_PACE, facing: -1 }, p, r));
+  return { lives: LIVES, t: 0, safeUntil: 0, down: false, hurtBy: '', r, zombies };
+}
+
+/** Are two standing bodies touching? Both are 0.6 wide and 1.8 tall. */
+export const touching = (a, b) => Math.abs(a.x - b.x) < HALF * 2 && a.y - TALL < b.y && b.y - TALL < a.y;
+
+/** Within arm's length of the miner — what a bop needs. */
+export const canBop = (p, z) => !z.dead && Math.hypot(z.x - p.x, z.y - p.y) <= REACH;
+
+/**
+ * One tick of play: the miner, then every zombie, then whether one has got
+ * them. Answers the zombie that did, or null.
+ */
+export function tick(world, p, play, dt = 1 / 60) {
+  play.t += dt;
+  if (play.down) return null;
+  step(world, p, dt);
+  let got = null;
+  for (const z of play.zombies) {
+    if (z.dead) {
+      if (play.t >= z.backAt) placeZombie(world, z, p, play.r);
+      continue;
+    }
+    if (Math.abs(p.x - z.x) < SEES_ACROSS && Math.abs(p.y - z.y) < SEES_DOWN) z.targetX = p.x;
+    else if (z.targetX === null && play.r() < 0.01) z.targetX = Math.max(1, Math.min(world.w - 1, z.x + (play.r() - 0.5) * 10));
+    step(world, z, dt);
+    if (!got && play.t >= play.safeUntil && touching(z, p)) {
+      got = z;
+      play.lives -= 1;
+      play.safeUntil = play.t + SAFE_FOR;
+      play.hurtBy = z.name;
+      // Knocked back, away from it, with a hop.
+      p.targetX = Math.max(HALF, Math.min(world.w - HALF, p.x + Math.sign(p.x - z.x || 1) * 1.6));
+      jump(p);
+      if (play.lives <= 0) play.down = true;
+    }
+  }
+  return got;
+}
+
+/** A bop: answers 'down' when it put the zombie down, 'hit' when not yet, or '' out of reach. */
+export function bop(play, p, z) {
+  if (!canBop(p, z)) return '';
+  z.hp -= 1;
+  z.targetX = z.x + Math.sign(z.x - p.x || 1) * 2;
+  if (z.hp > 0) return 'hit';
+  z.dead = true;
+  z.backAt = play.t + BACK_IN;
+  return 'down';
+}
+
+/** Back on your feet: three lives, at the start, the zombies well away. */
+export function revive(world, p, play) {
+  Object.assign(p, spawn(world));
+  play.lives = LIVES;
+  play.down = false;
+  play.safeUntil = play.t + SAFE_FOR;
+  for (const z of play.zombies) placeZombie(world, z, p, play.r);
+  return play;
 }

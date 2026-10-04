@@ -3,7 +3,8 @@
  * 3 October 2026: *"can Tabby have a game that is dog themed?"*).
  *
  * One tap jumps, a second tap in the air hops again once; bins, benches,
- * puddles and the odd cat end the walk, and bones are worth having. The
+ * puddles and the odd cat each cost one of three lives, and bones are worth
+ * having. The
  * person on the other end of the lead goes where the dog went. **Our own
  * dog, drawn here, nobody famous** — this app is SOLD, the lobby games' legal
  * line, and `test/walkies.test.js` reads this file and its page for the names.
@@ -17,6 +18,7 @@
  * runs at a fixed spot on the screen; the world comes to meet it.
  */
 import { rng } from './blockyard.js';
+import { NAMES } from './staff-names.js';
 
 export const DOG = { w: 1.2, h: 0.9 };
 const GRAVITY = 40;
@@ -37,10 +39,10 @@ export const THINGS = {
 const KINDS = Object.keys(THINGS);
 
 /**
- * THE CATS HAVE NAMES — one each, at random, off this list (the host,
- * 3 October 2026). Edit the list to change them; nothing else reads it.
+ * THE CATS HAVE NAMES — one each, at random (the host, 3 October 2026). The
+ * list is `staff-names.js`, shared with Blockyard's zombies.
  */
-export const CAT_NAMES = ['Josh', 'Rish', 'April', 'George', 'Jason'];
+export const CAT_NAMES = NAMES;
 
 /**
  * WHERE EACH WALK IS GOING — somewhere in Wokingham, picked at random (the
@@ -64,12 +66,22 @@ export function newWalk(seed = 1, { notTo = '' } = {}) {
   return {
     seed, r, x: 0, h: 0, vy: 0, onGround: true, hops: 1,
     speed: START_SPEED, t: 0, bones: 0, over: false, started: false, arrived: false,
+    lives: LIVES, safeUntil: -Infinity,
     to: choices[Math.floor(r() * choices.length)],
     things: [], treats: [], nextAt: 14, trail: [{ x: 0, h: 0 }],
   };
 }
 
 export const metresLeft = (walk) => Math.max(0, Math.ceil(WALK_LENGTH - walk.x));
+
+/**
+ * THREE LIVES (the host, 4 October 2026). A knock costs one and the dog runs
+ * on through whatever it hit; the third ends the walk. After a knock there is
+ * GRACE — a few metres in which nothing else can hurt — so one bin is one life,
+ * never three in a row off the same bench.
+ */
+export const LIVES = 3;
+const GRACE = 4;
 
 /** How far behind the dog the walker runs, on the lead. */
 export const LEAD = 1.1;
@@ -121,7 +133,7 @@ const dogBox = (w) => ({ l: w.x + 0.15, r: w.x + DOG.w - 0.15, b: w.h + 0.05, t:
 
 export function hitThing(walk) {
   const d = dogBox(walk);
-  return walk.things.find((o) => d.r > o.x + 0.05 && d.l < o.x + o.w - 0.05 && d.b < o.h) || null;
+  return walk.things.find((o) => !o.struck && d.r > o.x + 0.05 && d.l < o.x + o.w - 0.05 && d.b < o.h) || null;
 }
 
 /** One tick. Nothing moves until the first tap, and nothing after the last. */
@@ -137,8 +149,15 @@ export function step(walk, dt = 1 / 60) {
   while (walk.trail.length > 2 && walk.trail[1].x < walk.x - LEAD - 1) walk.trail.shift();
   lay(walk);
   if (walk.x >= WALK_LENGTH) { walk.over = true; walk.arrived = true; return walk; }
-  const hit = hitThing(walk);
-  if (hit) { walk.over = true; walk.hit = hit; return walk; }
+  const hit = walk.x >= walk.safeUntil ? hitThing(walk) : null;
+  if (hit) {
+    hit.struck = true;
+    walk.hit = hit;
+    walk.lives -= 1;
+    walk.hurtAt = walk.t;
+    walk.safeUntil = walk.x + GRACE;
+    if (walk.lives <= 0) { walk.over = true; return walk; }
+  }
   const d = dogBox(walk);
   walk.treats = walk.treats.filter((b) => {
     const got = d.r > b.x - 0.3 && d.l < b.x + 0.3 && d.b < b.h + 0.25 && d.t > b.h - 0.25;

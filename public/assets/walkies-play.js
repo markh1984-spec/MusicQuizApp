@@ -10,8 +10,8 @@
  * accumulator, as every game here does.
  */
 import { esc, node } from './client.js';
-import { nameTag } from './toy-tag.js';
-import { DOG, LEAD, WALK_LENGTH, jump, metresLeft, newWalk, score, step, walkerHeight } from './walkies.js';
+import { heart, nameTag } from './toy-tag.js';
+import { DOG, LEAD, LIVES, WALK_LENGTH, jump, metresLeft, newWalk, score, step, walkerHeight } from './walkies.js';
 
 const DT = 1 / 60;
 /** Where the dog runs, metres from the left — room behind it for the walker. */
@@ -461,7 +461,10 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
     for (const o of walk.things) {
       const sx = (o.x - left) * u;
       if (sx + o.w * u < 0 || sx > cssW) continue;
+      // A thing already run into is faded: the dog goes through it, once.
+      g.globalAlpha = o.struck ? 0.4 : 1;
       drawThing(g, o, sx, gy, u);
+      g.globalAlpha = 1;
       if (o.name) catTag(g, o.name, sx + (o.w * u) / 2, gy - (o.h + 0.05) * u, u);
     }
     // THE WALKER, ON THE LEAD — feet where the dog's were (`walkerHeight`).
@@ -476,7 +479,11 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
     g.moveTo(...hand);
     g.quadraticCurveTo((hand[0] + collar[0]) / 2, Math.max(hand[1], collar[1]) + 0.25 * u, ...collar);
     g.stroke();
+    // AFTER A KNOCK THE DOG BLINKS for as long as nothing can hurt it.
+    const blinking = moving && walk.x < walk.safeUntil && Math.floor(walk.t * 12) % 2 === 0;
+    g.globalAlpha = blinking ? 0.35 : 1;
     drawDog(g, SEE_BEHIND * u, gy - walk.h * u, u, walk.t, moving, !walk.onGround);
+    g.globalAlpha = 1;
     nameTag(g, walker, wx, gy - (wh + 1.68) * u, cssW);
     nameTag(g, hero, (SEE_BEHIND + 1.1) * u, gy - (walk.h + 1.5) * u, cssW);
     // +10 FLOATS UP OFF EVERY BONE THE DOG GETS, so what a bone is worth is
@@ -496,10 +503,13 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
       const size = pp.cat ? Math.max(26, Math.round(0.8 * u)) : Math.round(0.5 * u);
       // a cat's name shouts across the sky, and fits the screen whatever it is
       g.font = `800 ${size}px system-ui, sans-serif`;
-      if (pp.cat) while (g.measureText(pp.text).width > cssW - 24 && parseInt(g.font, 10) > 14) g.font = `800 ${parseInt(g.font.split(' ')[1], 10) - 2}px system-ui, sans-serif`;
-      g.strokeText(pp.text, px, py);
+      if (pp.cat) while (g.measureText(pp.text).width > cssW - 24 && parseInt(g.font.split(' ')[1], 10) > 14) g.font = `800 ${parseInt(g.font.split(' ')[1], 10) - 2}px system-ui, sans-serif`;
+      // and kept INSIDE the picture, whatever it says
+      const half = g.measureText(pp.text).width / 2;
+      const cxText = Math.max(half + 12, Math.min(cssW - half - 12, px));
+      g.strokeText(pp.text, cxText, py);
       g.fillStyle = pp.cat ? '#ffffff' : '#ffd23f';
-      g.fillText(pp.text, px, py);
+      g.fillText(pp.text, cxText, py);
       g.globalAlpha = 1;
     }
 
@@ -525,6 +535,8 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
     g.fillStyle = '#ffffff';
     g.font = '600 13px system-ui, sans-serif';
     g.fillText(`Best ${best}`, cssW - 22, 58);
+    // THE LIVES, three hearts under the best
+    for (let i = 0; i < LIVES; i++) heart(g, cssW - 30 - (LIVES - 1 - i) * 26, 84, 9, i < walk.lives);
     // where this walk is going, and how far is left
     g.textAlign = 'left';
     g.fillStyle = 'rgba(8, 8, 14, 0.55)';
@@ -546,12 +558,12 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
       g.font = '600 16px system-ui, sans-serif';
       const second = !walk.started ? `${WALK_LENGTH} metres — jump everything on the way`
         : walk.arrived ? `${score(walk)} points`
-          : walk.hit && walk.hit.name ? `Ran into ${walk.hit.name}, ${metresLeft(walk)} metres short of ${walk.to}`
-            : `${metresLeft(walk)} metres short of ${walk.to}`;
+          : walk.hit && walk.hit.name ? `Out of lives — ran into ${walk.hit.name}, ${metresLeft(walk)} m short of ${walk.to}`
+            : `Out of lives, ${metresLeft(walk)} metres short of ${walk.to}`;
       fitText(g, second, cssW / 2, top + 70, cssW - 24, 16, 600);
       // HOW THE SCORE WAS MADE, in gold: a bone is ten, and getting there a hundred.
       const metres = Math.floor(Math.min(walk.x, WALK_LENGTH));
-      const sum = !walk.started ? 'Bones are 10 each · getting there is 100'
+      const sum = !walk.started ? 'Three lives · bones are 10 each · getting there is 100'
         : `${metres} m + ${walk.bones} ${walk.bones === 1 ? 'bone' : 'bones'} × 10${walk.arrived ? ' + 100 for getting there' : ''} = ${score(walk)}`;
       g.fillStyle = '#ffd23f';
       fitText(g, sum, cssW / 2, top + 100, cssW - 24, 15, 700);
@@ -588,11 +600,17 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
     while (acc >= DT) {
       const was = walk.over;
       const bonesBefore = walk.bones;
+      const livesBefore = walk.lives;
       step(walk, DT);
+      // A KNOCK IS SAID, by name when it was a cat, and how many lives are left.
+      if (walk.lives < livesBefore && walk.lives > 0) {
+        const who = walk.hit && walk.hit.name ? `Ran into ${walk.hit.name}!` : 'Ouch!';
+        pops.push({ at: performance.now(), h: 3.3, text: `${who} ${walk.lives} ${walk.lives === 1 ? 'life' : 'lives'} left`, cat: true });
+      }
       if (walk.bones > bonesBefore) pops.push({ at: performance.now(), h: walk.h + 0.9, text: '+10' }); // in front of the dog, clear of its name
       // A CAT CLEARED: the moment its far side is behind the dog's tail.
       for (const o of walk.things) {
-        if (o.name && !o.cleared && !walk.over && o.x + o.w < walk.x + 0.15) {
+        if (o.name && !o.cleared && !o.struck && !walk.over && o.x + o.w < walk.x + 0.15) {
           o.cleared = true;
           pops.push({ at: performance.now(), h: 3.3, text: `Jumped ${o.name}!`, cat: true });
         }
