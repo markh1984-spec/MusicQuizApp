@@ -223,6 +223,33 @@ export function inReach(p, x, y) {
   return dx * dx + dy * dy <= REACH * REACH;
 }
 
+/**
+ * CAN SHE ACTUALLY GET AT IT — in reach AND in sight. The host, 4 October
+ * 2026, off a screenshot of holes dug in the far side of solid stone: *"she
+ * should only be able to click squares that are reachable."* A straight line
+ * from her eyes, her middle or her feet to the middle of the target may pass
+ * through nothing solid but the target itself. Trees are scenery to the feet,
+ * so they are scenery to the eye too.
+ */
+export function inSight(world, fromX, fromY, toX, toY, target = null) {
+  const steps = Math.ceil(Math.hypot(toX - fromX, toY - fromY) / 0.15);
+  for (let i = 1; i < steps; i++) {
+    const k = i / steps;
+    const cx = Math.floor(fromX + (toX - fromX) * k);
+    const cy = Math.floor(fromY + (toY - fromY) * k);
+    if (target && cx === target.x && cy === target.y) continue;
+    if (solid(get(world, cx, cy))) return false;
+  }
+  return true;
+}
+
+const EYES = [TALL - 0.3, TALL / 2, 0.3];
+
+export function canReach(world, p, x, y) {
+  if (!inReach(p, x, y)) return false;
+  return EYES.some((up) => inSight(world, p.x, p.y - up, x + 0.5, y + 0.5, { x, y }));
+}
+
 export function jump(p) {
   if (p.onGround) { p.vy = -JUMP; p.onGround = false; }
 }
@@ -277,7 +304,7 @@ export function step(world, p, dt = 1 / 60) {
 /** Dig a block out, into the bag. Answers what was got, or null. */
 export function dig(world, bag, p, x, y) {
   const id = get(world, x, y);
-  if (id === AIR || BLOCKS[id].fixed || !inReach(p, x, y)) return null;
+  if (id === AIR || BLOCKS[id].fixed || !canReach(world, p, x, y)) return null;
   set(world, x, y, AIR);
   const got = BLOCKS[id].drops || id;
   bag[got] = (bag[got] || 0) + 1;
@@ -305,6 +332,7 @@ export function place(world, bag, p, x, y, id) {
     bag[id] -= 1;
     return '';
   }
+  if (!canReach(world, p, x, y)) return 'hidden';
   const touching = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => get(world, x + dx, y + dy) !== AIR);
   if (!touching) return 'float';
   set(world, x, y, id);
@@ -398,7 +426,9 @@ export function newPlay(world, p, seed = 1) {
 export const touching = (a, b) => Math.abs(a.x - b.x) < HALF * 2 && a.y - TALL < b.y && b.y - TALL < a.y;
 
 /** Within arm's length of the miner — what a bop needs. */
-export const canBop = (p, z) => !z.dead && Math.hypot(z.x - p.x, z.y - p.y) <= REACH;
+/** In reach and in sight — a zombie behind stone cannot be hit. */
+export const canBop = (p, z, world = null) => !z.dead && Math.hypot(z.x - p.x, z.y - p.y) <= REACH
+  && (!world || EYES.some((up) => inSight(world, p.x, p.y - up, z.x, z.y - TALL / 2)));
 
 /**
  * One tick of play: the miner, then every zombie, then whether one has got
@@ -432,8 +462,8 @@ export function tick(world, p, play, dt = 1 / 60) {
 }
 
 /** A bop: answers 'down' when it put the zombie down, 'hit' when not yet, or '' out of reach. */
-export function bop(play, p, z) {
-  if (!canBop(p, z)) return '';
+export function bop(play, p, z, world = null) {
+  if (!canBop(p, z, world)) return '';
   z.hp -= 1;
   z.targetX = z.x + Math.sign(z.x - p.x || 1) * 2;
   if (z.hp > 0) return 'hit';

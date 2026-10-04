@@ -22,7 +22,7 @@ import { esc, node } from './client.js';
 import { heart, nameTag } from './toy-tag.js';
 import {
   AIR, BLOCKS, BRICK, BEDROCK, COAL, EARTH, GEM, GLASS, GOLD, GRASS, H, LEAVES, LOG, PLANKS, RECIPES, SAND, STONE, W,
-  LIVES, bop, dig, get, inReach, jump, load, make, makeWorld, newPlay, overlapsPlayer, place, revive, rng, save, spawn, tick,
+  LIVES, bop, canReach, dig, get, inReach, jump, load, make, makeWorld, newPlay, overlapsPlayer, place, revive, rng, save, spawn, tick,
 } from './blockyard.js';
 
 const DT = 1 / 60;
@@ -33,6 +33,7 @@ const SAID = {
   float: 'It needs something next to it to hold it up.',
   you: 'No room — you are standing there.',
   edge: 'That is the edge of the world.',
+  hidden: 'You cannot reach round that — get a clear view of it first.',
 };
 
 /* ---- the drawings: every block is an 8x8 picture of our own, scaled up ---- */
@@ -471,7 +472,7 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
     // it flashes red and is knocked back, and two hits put it down a while.
     const z = play.zombies.find((zz) => !zz.dead && Math.abs(zz.x - (c.x + 0.5)) <= 0.9 && c.y >= Math.floor(zz.y - 2) && c.y <= Math.floor(zz.y));
     if (z) {
-      const res = bop(play, p, z);
+      const res = bop(play, p, z, world);
       if (res) {
         swingNow();
         p.facing = Math.sign(z.x - p.x) || p.facing;
@@ -484,12 +485,18 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
     }
     const id = get(world, c.x, c.y);
     if (tool === 'pick') {
-      if (id !== AIR && inReach(p, c.x, c.y)) {
+      if (id !== AIR && canReach(world, p, c.x, c.y)) {
         swingNow();
         p.facing = Math.sign(c.x + 0.5 - p.x) || p.facing;
         const got = dig(world, bag, p, c.x, c.y);
         if (got) { mark(c, true); say(`+1 ${BLOCKS[got].name.toLowerCase()}`); keep(); paintBar(); }
         else { mark(c, false); say('That one is too hard to dig.'); }
+        return;
+      }
+      // Close enough but round a corner or behind stone: said, not walked at.
+      if (id !== AIR && inReach(p, c.x, c.y)) {
+        mark(c, false);
+        say('You cannot reach that from here — dig your way to it.');
         return;
       }
       walkTo(c);
@@ -522,7 +529,7 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
   canvas.addEventListener('pointermove', (ev) => {
     if (ev.pointerType !== 'mouse') return;
     const c = cellAt(ev);
-    hover = { ...c, ok: inReach(p, c.x, c.y) };
+    hover = { ...c, ok: canReach(world, p, c.x, c.y) };
   });
   canvas.addEventListener('pointerleave', () => { hover = null; });
 

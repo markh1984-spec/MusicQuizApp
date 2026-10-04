@@ -33,7 +33,7 @@ function roundRect(g, x, y, w, h, r) {
  * A German Shepherd and Husky cross, facing right — the host's call for
  * Tabby (3 October 2026): the shepherd's dark saddle over tan, the husky's
  * white face mask, ice-blue eyes and a bushy tail curled over the back, and
- * the upright ears they both have. `x, y` is where its paws meet the ground.
+ * the upright ears they both have — in a pink jumper. `x, y` is where its paws meet the ground.
  */
 const COAT = { tan: '#c98f52', saddle: '#2e2d33', cream: '#f3ece0', leg: '#d4a26a', mask: '#3a3940', eye: '#8fd3f4' };
 
@@ -81,6 +81,15 @@ function drawDog(g, x, y, u, t, running, inAir) {
   g.fill();
   blob(0.62, 0.38, 0.3, 0.07, COAT.cream);
   blob(0.98, 0.52, 0.15, 0.17, COAT.cream);
+  // A PINK JUMPER (the host, 4 October 2026): over the back and the chest,
+  // ribbed at the neck and the tail end, the tan legs and belly showing.
+  g.fillStyle = '#ff6fb5';
+  roundRect(g, x + 0.2 * u, y - 0.84 * u, 0.86 * u, 0.36 * u, 0.15 * u);
+  g.fill();
+  g.fillStyle = '#e0559a';
+  for (const rx of [0.36, 0.52, 0.68]) g.fillRect(x + rx * u, y - 0.8 * u, 0.04 * u, 0.28 * u);
+  g.fillRect(x + 0.2 * u, y - 0.84 * u, 0.08 * u, 0.36 * u);
+  g.fillRect(x + 0.98 * u, y - 0.84 * u, 0.08 * u, 0.36 * u);
   leg(0.32, 0, COAT.leg); leg(0.82, Math.PI, COAT.leg);
   // the head: the dark cap and the white mask, a longer shepherd's muzzle
   blob(1.06, 0.95, 0.25, 0.24, COAT.mask);

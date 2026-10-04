@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
   AIR, BEDROCK, EARTH, GRASS, H, LIVES, LOG, PLANKS, STONE, W,
-  bop, dig, get, load, make, makeWorld, newPlay, place, revive, save, set, spawn, step, tick,
+  bop, canReach, dig, get, load, make, makeWorld, newPlay, place, revive, save, set, spawn, step, tick,
 } from '../public/assets/blockyard.js';
 import { NAMES } from '../public/assets/staff-names.js';
 
@@ -224,4 +224,41 @@ test('a zombie hops one block but a wall of two keeps it out — and it can neve
   assert.equal(play.lives, 3, 'the wall held');
   assert.ok(z.x > p.x + 3, 'it is stuck on the far side');
   assert.deepEqual(world.cells, cells, 'and not a block was moved');
+});
+
+/* ---- only what she can actually get at ---- */
+
+test('a block behind a wall cannot be dug, even within reach — the wall can', () => {
+  const { world, p } = flat();
+  const bag = {};
+  set(world, 42, 19, STONE); set(world, 42, 18, STONE); set(world, 42, 17, STONE); // a wall in front of her
+  set(world, 43, 19, GRASS); // and something on the far side, within arm's length
+  assert.equal(canReach(world, p, 43, 19), false, 'out of sight behind the wall');
+  assert.equal(dig(world, bag, p, 43, 19), null);
+  assert.equal(get(world, 43, 19), GRASS, 'still there');
+  assert.equal(dig(world, bag, p, 42, 19), STONE, 'the wall itself is fine');
+  assert.ok(canReach(world, p, 43, 19), 'and with the wall dug, it can be seen');
+});
+
+test('a block deep inside the stone cannot be dug from the surface — only the one on top', () => {
+  const { world, p } = flat();
+  const bag = {};
+  assert.equal(dig(world, bag, p, 41, 22), null, 'two blocks down, through stone');
+  assert.equal(dig(world, bag, p, 41, 21), null, 'one down and across, through the block above it');
+  assert.equal(dig(world, bag, p, 41, 20), STONE, 'the top one, beside her feet');
+  assert.equal(dig(world, bag, p, 40, 20), STONE, 'and the one under her feet');
+});
+
+test('a block cannot be built round a corner, and a zombie behind stone cannot be hit', () => {
+  const { world, p } = flat();
+  set(world, 42, 19, STONE); set(world, 42, 18, STONE); set(world, 42, 17, STONE);
+  const bag = { [PLANKS]: 1 };
+  assert.equal(place(world, bag, p, 43, 19, PLANKS), 'hidden');
+  assert.equal(bag[PLANKS], 1, 'nothing spent');
+  const play = newPlay(world, p, 9);
+  const z = play.zombies[0];
+  Object.assign(z, { x: 43.5, y: 20 });
+  assert.equal(bop(play, p, z, world), '', 'the wall is in the way');
+  set(world, 42, 19, AIR); set(world, 42, 18, AIR);
+  assert.equal(bop(play, p, z, world), 'hit', 'with the wall open, she can');
 });
