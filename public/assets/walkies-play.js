@@ -33,7 +33,7 @@ function roundRect(g, x, y, w, h, r) {
  * A German Shepherd and Husky cross, facing right — the host's call for
  * Tabby (3 October 2026): the shepherd's dark saddle over tan, the husky's
  * white face mask, ice-blue eyes and a bushy tail curled over the back, and
- * the upright ears they both have — in a pink jumper. `x, y` is where its paws meet the ground.
+ * the upright ears they both have — in a purple jumper. `x, y` is where its paws meet the ground.
  */
 const COAT = { tan: '#c98f52', saddle: '#2e2d33', cream: '#f3ece0', leg: '#d4a26a', mask: '#3a3940', eye: '#8fd3f4' };
 
@@ -81,12 +81,13 @@ function drawDog(g, x, y, u, t, running, inAir) {
   g.fill();
   blob(0.62, 0.38, 0.3, 0.07, COAT.cream);
   blob(0.98, 0.52, 0.15, 0.17, COAT.cream);
-  // A PINK JUMPER (the host, 4 October 2026): over the back and the chest,
+  // A PURPLE JUMPER (the host, 4 October 2026 — pink first, then swapped with
+  // Tabby's hoodie): over the back and the chest,
   // ribbed at the neck and the tail end, the tan legs and belly showing.
-  g.fillStyle = '#ff6fb5';
+  g.fillStyle = '#7a4fd0';
   roundRect(g, x + 0.2 * u, y - 0.84 * u, 0.86 * u, 0.36 * u, 0.15 * u);
   g.fill();
-  g.fillStyle = '#e0559a';
+  g.fillStyle = '#5f3ba8';
   for (const rx of [0.36, 0.52, 0.68]) g.fillRect(x + rx * u, y - 0.8 * u, 0.04 * u, 0.28 * u);
   g.fillRect(x + 0.2 * u, y - 0.84 * u, 0.08 * u, 0.36 * u);
   g.fillRect(x + 0.98 * u, y - 0.84 * u, 0.08 * u, 0.36 * u);
@@ -136,7 +137,7 @@ function drawDog(g, x, y, u, t, running, inAir) {
 }
 
 /**
- * The person on the other end of the lead, facing right: a ponytail, a purple
+ * The person on the other end of the lead, facing right: a ponytail, a pink
  * hoodie, jeans and trainers. Their name is the login's own, on a tag above.
  * `cx, y` is the middle of their feet on the ground. Answers where the hand is.
  */
@@ -162,11 +163,11 @@ function drawWalker(g, cx, y, u, t, running, inAir) {
     g.fill();
   }
   // the far arm swinging, the hoodie, the near arm out to the lead
-  stroke('#5f3ba8', 0.11, [0, 1.22], [-0.12 - swing * 0.4, 0.98]);
-  g.fillStyle = '#7a4fd0';
+  stroke('#e0559a', 0.11, [0, 1.22], [-0.12 - swing * 0.4, 0.98]);
+  g.fillStyle = '#ff6fb5';
   roundRect(g, cx - 0.17 * u, y - 1.32 * u, 0.34 * u, 0.54 * u, 0.12 * u);
   g.fill();
-  stroke('#7a4fd0', 0.11, [0.06, 1.22], [0.3, 1.02]);
+  stroke('#ff6fb5', 0.11, [0.06, 1.22], [0.3, 1.02]);
   g.fillStyle = '#f1c8a0';
   g.beginPath();
   g.arc(...at(0.32, 1.02), 0.05 * u, 0, Math.PI * 2);
