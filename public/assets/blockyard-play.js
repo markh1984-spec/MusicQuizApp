@@ -3,8 +3,8 @@
  * `blockyard.js`; read its header for why the game is ours from the name down.
  *
  * **NO CONTROL PANEL — YOU TAP AND IT HAPPENS**, the lobby games' rule:
- * - a ZOMBIE tapped is bopped, whatever is in your hand — two bops and it is
- *   down for a while; a zombie's touch costs one of three lives;
+ * - a ZOMBIE tapped gets the pickaxe, whatever is in your hand — two hits and
+ *   it is down for a while; a zombie's touch costs one of three lives;
  * - with the PICK chosen, tap a block within reach and it is dug into the bag;
  *   tap anywhere further off and the miner walks there;
  * - with a BLOCK chosen, tap an empty space within reach and it goes down —
@@ -104,8 +104,39 @@ function texture(id) {
  * 8 x 15 grid — 1.9 blocks tall, near enough the 1.8 the rules use — and
  * nothing like anybody else's hero.
  */
+/**
+ * HER PICKAXE — chunky pixel blocks of our own: a wooden handle and a silver
+ * head with a highlight and a shadow (the host, 4 October 2026: a pickaxe
+ * *"to fight off the zombies"*). Drawn around the hand that holds it, turned
+ * by `angle`, so one drawing swings, rests and sits in the bag.
+ */
+function drawPick(g, hx, hy, u, angle) {
+  g.save();
+  g.translate(hx, hy);
+  g.rotate(angle);
+  const px = (gx, gy, colour) => { g.fillStyle = colour; g.fillRect(gx * u, gy * u, u + 0.5, u + 0.5); };
+  for (let i = 0; i <= 5; i++) px(-0.5, -i - 0.5, i % 2 ? '#6b4220' : '#8b5a2b');
+  const head = [[-3, -4], [-3, -5], [-2, -5], [-2, -6], [-1, -6], [0, -6.5], [1, -6], [2, -6], [2, -5], [3, -5], [3, -4]];
+  for (const [gx, gy] of head) px(gx - 0.5, gy - 0.5, '#c9ced6');
+  for (const [gx, gy] of [[-2, -6], [-1, -6], [0, -6.5]]) px(gx - 0.5, gy - 0.5, '#eef2f6');
+  for (const [gx, gy] of [[-3, -4], [3, -4]]) px(gx - 0.5, gy - 0.5, '#8a9099');
+  g.restore();
+}
+
+/**
+ * Where the pickaxe rests — out in front, clear of her face and glasses — and
+ * one quick chop: wound back over her shoulder, struck down forward, back.
+ */
+const PICK_REST = 0.9;
+function pickAngle(k) {
+  if (k <= 0) return PICK_REST;
+  if (k < 0.35) return PICK_REST - (k / 0.35) * 1.5;
+  if (k < 0.7) return PICK_REST - 1.5 + ((k - 0.35) / 0.35) * 2.5;
+  return PICK_REST + 1.0 - ((k - 0.7) / 0.3) * 1.0;
+}
+
 const MINER_ROWS = 15;
-function drawMiner(g, x, y, t, facing, lit) {
+function drawMiner(g, x, y, t, facing, lit, swing = 0) {
   const u = t / 8;
   const box = (gx, gy, gw, gh, colour) => { g.fillStyle = colour; g.fillRect(x + gx * u, y + gy * u, gw * u, gh * u); };
   g.save();
@@ -141,6 +172,8 @@ function drawMiner(g, x, y, t, facing, lit) {
   box(5, 13, 2, 2, '#121116');
   box(2, 13, 1, 1, '#c9ced6');     // a buckle each
   box(6, 13, 1, 1, '#c9ced6');
+  // the pickaxe in her near hand, mirrored with her
+  drawPick(g, x + 7.5 * u, y + 9.5 * u, u * 0.9, pickAngle(swing));
   g.restore();
 }
 
@@ -149,24 +182,25 @@ function drawMiner(g, x, y, t, facing, lit) {
  * shirt, dark trousers, both arms out in front. A generic shambler, drawn
  * here; the names on their tags are the joke.
  */
-function drawZombie(g, x, y, t, facing, frame) {
+function drawZombie(g, x, y, t, facing, frame, hurt = false) {
   const u = t / 8;
   const box = (gx, gy, gw, gh, colour) => { g.fillStyle = colour; g.fillRect(x + gx * u, y + gy * u, gw * u, gh * u); };
   const sway = Math.round(Math.sin(frame * 4) * 0.6);
   g.save();
   if (facing < 0) { g.translate(x * 2 + 8 * u, 0); g.scale(-1, 1); }
   box(2, 1, 5, 1, '#3b3326');          // scraggy hair
-  box(2, 2, 5, 4, '#a3b39a');          // ashen face
+  const skin = hurt ? '#f08a80' : '#a3b39a';  // red for a moment when it is hit
+  box(2, 2, 5, 4, skin);               // ashen face
   box(4, 3, 1, 1, '#2b2420');          // hollow eyes
   box(6, 3, 1, 1, '#2b2420');
   box(4, 5, 3, 1, '#5d4a44');          // a mouth hanging open
   box(2, 6, 5, 4, '#7a3b2e');          // a torn shirt
-  box(3, 8, 1, 1, '#a3b39a');          // skin through the rip
+  box(3, 8, 1, 1, skin);               // skin through the rip
   box(5, 9, 2, 1, '#5e2c22');
   box(6, 6 + sway, 4, 1, '#7a3b2e');   // both arms out in front
-  box(9, 6 + sway, 1, 1, '#a3b39a');   // hands
+  box(9, 6 + sway, 1, 1, skin);        // hands
   box(6, 7 - sway, 4, 1, '#6a3226');
-  box(9, 7 - sway, 1, 1, '#a3b39a');
+  box(9, 7 - sway, 1, 1, skin);
   box(2, 10, 5, 3, '#3c3c44');         // trousers
   box(4, 11, 1, 2, '#2e2e35');
   box(2, 13, 2, 2, '#2a2522');         // feet
@@ -184,7 +218,15 @@ function swatch(tex) {
   return c;
 }
 
-const PICK_ICON = '<svg class="by-swatch" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 5 Q8 0 14 5 L13 6 Q8 2.5 3 6 Z" fill="#c9ced6"/><rect x="7" y="4" width="2" height="11" rx="1" fill="#9c6d3a"/></svg>';
+/** The bag's Dig slot shows the same pickaxe, at a jaunty angle. */
+function pickSwatch() {
+  const c = document.createElement('canvas');
+  c.width = 16;
+  c.height = 16;
+  c.className = 'by-swatch';
+  drawPick(c.getContext('2d'), 7, 13.5, 1.45, 0.75);
+  return c;
+}
 
 /**
  * Open the game over the page. `who` names the save, so two logins on one
@@ -204,6 +246,8 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
   // back as it was left, and the zombies get up again somewhere new.
   let play = newPlay(world, p, world.seed || 1);
   let pops = [];
+  let swingAt = -1e9;
+  const swingNow = () => { swingAt = performance.now(); };
   const pop = (text, wx, wy, bad = false) => pops.push({ text, x: wx, y: wy, bad, at: performance.now() });
   const tex = {};
   for (const b of BLOCKS) if (b.id !== AIR) tex[b.id] = texture(b.id);
@@ -235,8 +279,9 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
   };
 
   function paintBar() {
-    const slots = [`<button class="by-slot${tool === 'pick' ? ' is-on' : ''}" type="button" data-tool="pick" aria-label="Dig" aria-pressed="${tool === 'pick'}">${PICK_ICON}<span class="by-n">Dig</span></button>`];
+    const slots = [`<button class="by-slot${tool === 'pick' ? ' is-on' : ''}" type="button" data-tool="pick" aria-label="Dig" aria-pressed="${tool === 'pick'}"><span class="by-n">Dig</span></button>`];
     bar.innerHTML = slots.join('');
+    bar.querySelector('[data-tool="pick"]').prepend(pickSwatch());
     const have = BLOCKS.filter((b) => (bag[b.id] || 0) > 0);
     if (tool !== 'pick' && !(bag[tool] > 0)) tool = 'pick';
     for (const b of have) {
@@ -349,17 +394,22 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
     }
     for (const z of play.zombies) {
       if (z.dead || Math.abs(z.x - p.x) * T > cssW) continue;
-      drawZombie(g, (z.x - 0.5) * T - cx, (z.y - MINER_ROWS / 8) * T - cy, T, z.facing, play.t);
-      // Close to StEvie, its tag goes up a row so the two names never overlap.
-      const lift = Math.abs(z.x - p.x) < 2.8 && Math.abs(z.y - p.y) < 2 ? 30 : 0;
-      nameTag(g, z.name, z.x * T - cx, (z.y - MINER_ROWS / 8) * T - cy - 4 - lift, cssW, { bright: true });
+      drawZombie(g, (z.x - 0.5) * T - cx, (z.y - MINER_ROWS / 8) * T - cy, T, z.facing, play.t, performance.now() < (z.flashUntil || 0));
+      // THE TWO NAMES NEVER OVERLAP: measured where both tags would sit, and a
+      // zombie's that would land on StEvie's goes up above it instead.
+      const herBottom = (p.y - MINER_ROWS / 8) * T - cy - 4;
+      let zBottom = (z.y - MINER_ROWS / 8) * T - cy - 4;
+      const sideBySide = Math.abs(z.x - p.x) * T < 110;
+      if (hero && sideBySide && zBottom > herBottom - 30 && zBottom - 26 < herBottom) zBottom = herBottom - 28;
+      nameTag(g, z.name, z.x * T - cx, zBottom, cssW, { bright: true });
     }
     // AFTER A HIT STEVIE BLINKS for as long as nothing can hurt her.
     g.globalAlpha = play.t < play.safeUntil && Math.floor(play.t * 12) % 2 === 0 ? 0.35 : 1;
-    drawMiner(g, (p.x - 0.5) * T - cx, (p.y - MINER_ROWS / 8) * T - cy, T, p.facing, p.y > world.surface[Math.floor(p.x)] + 3);
+    const swing = Math.min(1, Math.max(0, (performance.now() - swingAt) / 280));
+    drawMiner(g, (p.x - 0.5) * T - cx, (p.y - MINER_ROWS / 8) * T - cy, T, p.facing, p.y > world.surface[Math.floor(p.x)] + 3, swing >= 1 ? 0 : swing);
     g.globalAlpha = 1;
     nameTag(g, hero, p.x * T - cx, (p.y - MINER_ROWS / 8) * T - cy - 4, cssW);
-    // words that float up off a bop or a hit
+    // words that float up off a hit or a knock — above the name tags, never on them
     const now = performance.now();
     pops = pops.filter((pp) => now - pp.at < 1200);
     for (const pp of pops) {
@@ -417,19 +467,26 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
       say('Back on your feet. Watch out for the zombies.');
       return;
     }
-    // A ZOMBIE TAPPED IS BOPPED, whatever is in your hand — two bops and it
-    // is down for a while.
+    // A ZOMBIE TAPPED GETS THE PICKAXE, whatever is in your hand: she swings,
+    // it flashes red and is knocked back, and two hits put it down a while.
     const z = play.zombies.find((zz) => !zz.dead && Math.abs(zz.x - (c.x + 0.5)) <= 0.9 && c.y >= Math.floor(zz.y - 2) && c.y <= Math.floor(zz.y));
     if (z) {
       const res = bop(play, p, z);
-      if (res === 'down') { say(`${z.name} is down!`); pop(`Bopped ${z.name}!`, z.x, z.y - 2.4); return; }
-      if (res === 'hit') { say(`Bopped ${z.name} — once more!`); pop('Bop!', z.x, z.y - 2.4); return; }
+      if (res) {
+        swingNow();
+        p.facing = Math.sign(z.x - p.x) || p.facing;
+        z.flashUntil = performance.now() + 260;
+      }
+      if (res === 'down') { say(`${z.name} is down!`); pop(`Thwacked ${z.name}!`, z.x, z.y - 4.9); return; }
+      if (res === 'hit') { say(`Thwacked ${z.name} — once more!`); pop('Thwack!', z.x, z.y - 4.9); return; }
       walkTo(c);
       return;
     }
     const id = get(world, c.x, c.y);
     if (tool === 'pick') {
       if (id !== AIR && inReach(p, c.x, c.y)) {
+        swingNow();
+        p.facing = Math.sign(c.x + 0.5 - p.x) || p.facing;
         const got = dig(world, bag, p, c.x, c.y);
         if (got) { mark(c, true); say(`+1 ${BLOCKS[got].name.toLowerCase()}`); keep(); paintBar(); }
         else { mark(c, false); say('That one is too hard to dig.'); }
@@ -491,7 +548,7 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
       if (got) {
         if (play.down) say(`Out of lives — ${got.name} got you. Tap to get up again.`);
         else say(`Ouch! ${got.name} got you — ${play.lives} ${play.lives === 1 ? 'life' : 'lives'} left.`);
-        pop(play.down ? 'Out of lives!' : `-1 life`, p.x, p.y - 2.4, true);
+        pop(play.down ? 'Out of lives!' : `-1 life`, p.x, p.y - 3.4, true);
       }
       acc -= DT;
     }
