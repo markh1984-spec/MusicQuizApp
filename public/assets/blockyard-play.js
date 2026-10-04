@@ -98,7 +98,8 @@ function texture(id) {
 /**
  * The miner, as the host asked for StEvie (3 October 2026): **a goth** — a
  * black hard hat with its lamp still lit, long dark brown hair, a pale face
- * with winged eyeliner and dark lipstick, a black top and a black choker, a
+ * with winged eyeliner, massive square glasses and dark lipstick, a black
+ * top and a black choker, a
  * black skirt over purple striped tights, and chunky boots. Drawn here, on an
  * 8 x 15 grid — 1.9 blocks tall, near enough the 1.8 the rules use — and
  * nothing like anybody else's hero.
@@ -117,6 +118,15 @@ function drawMiner(g, x, y, t, facing, lit) {
   box(3, 3, 2, 1, '#3a2216');      // the fringe under the brim
   box(5, 4, 1, 1, '#121116');      // eye, lined
   box(6, 4, 1, 1, '#121116');      // and the wing of the eyeliner
+  // MASSIVE SQUARE GLASSES (the host, 4 October 2026): a big tinted lens in a
+  // thick black frame, sticking out past the face, and the arm back to the ear.
+  box(3.9, 3.05, 3.6, 1.95, 'rgba(190, 225, 255, 0.35)');
+  box(3.9, 3.05, 3.6, 0.35, '#111014');
+  box(3.9, 4.65, 3.6, 0.35, '#111014');
+  box(3.9, 3.05, 0.35, 1.95, '#111014');
+  box(7.15, 3.05, 0.35, 1.95, '#111014');
+  box(2.4, 3.7, 1.5, 0.3, '#111014');
+  box(4.4, 3.45, 0.5, 0.25, 'rgba(255, 255, 255, 0.8)'); // a glint
   box(6, 5, 1, 1, '#4a1430');      // dark lipstick
   box(3, 6, 4, 1, '#121116');      // a black choker
   box(5, 6, 1, 1, '#c9ced6');      // its silver charm
