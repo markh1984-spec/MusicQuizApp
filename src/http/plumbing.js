@@ -30,9 +30,29 @@ import { timingSafeEqual } from './gates.js';
  */
 export const DOCUMENT_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'";
 export const IMAGE_CSP = "sandbox; script-src 'none'";
+/*
+ * ALWAYS HTTPS, FOR A YEAR, ON THIS HOST ONLY — Strict-Transport-Security,
+ * flagged missing by the 5 October 2026 outside-in sweep. Without it a
+ * browser that is sent to `http://` — a typed address, an old link — asks
+ * over plain HTTP first, and that one request is the one somebody on pub
+ * wifi can tamper with. With it, after one HTTPS visit, the browser goes
+ * straight to HTTPS for a year.
+ *
+ * SENT ON EVERY RESPONSE, NOT ONLY ONES THAT ARRIVED OVER HTTPS, and that is
+ * deliberate: `secure()` sees headers, never the request, and threading the
+ * request through every head in the server to read `x-forwarded-proto` buys
+ * nothing — the HSTS rules (RFC 6797 §8.1) make a browser IGNORE the header
+ * on a plain-HTTP response, so a local `http://127.0.0.1` run is never
+ * pinned, and the public reaches this app through Render's HTTPS.
+ *
+ * NO `includeSubDomains` AND NO `preload`, ALSO DELIBERATE: either would bind
+ * every other name under the domain (and `preload` cannot be quickly undone),
+ * and this app only speaks for the host it answered on.
+ */
+export const HSTS = 'max-age=31536000';
 export function secure(headers = {}) {
   const type = String(headers['Content-Type'] || headers['content-type'] || '');
-  const out = { 'X-Content-Type-Options': 'nosniff', ...headers };
+  const out = { 'X-Content-Type-Options': 'nosniff', 'Strict-Transport-Security': HSTS, ...headers };
   if (type.startsWith('text/html')) {
     out['Content-Security-Policy'] = DOCUMENT_CSP;
     out['X-Frame-Options'] = 'DENY';
