@@ -59,3 +59,20 @@ test('an SVG can never run script, wherever it is opened; everything else is nos
     }
   });
 });
+
+/*
+ * BROWSERS ARE TOLD TO USE HTTPS — FOR A YEAR, ON THIS HOST ONLY. The 5 October
+ * 2026 outside-in sweep found no Strict-Transport-Security on
+ * quizporium.co.uk. Exactly `max-age=31536000`: `includeSubDomains` would bind
+ * every other name under the domain and `preload` cannot be quickly undone, so
+ * either creeping in fails here. Sent on every head `secure()` writes — a
+ * browser ignores it over plain HTTP, which is why this test can read it at all.
+ */
+test('every response tells the browser to stay on HTTPS, for this host only', async () => {
+  await withServer(async (base) => {
+    for (const route of ['/console', '/home', '/play', '/login', '/o/nothing/here', '/qr.svg?text=hello', '/assets/style.css', '/assets/client.js', '/api/state?role=screen', '/health', '/api/nothing']) {
+      const res = await fetch(`${base}${route}`, { redirect: 'manual' });
+      assert.equal(header(res, 'strict-transport-security'), 'max-age=31536000', `${route} (${res.status}) does not pin HTTPS, or pins more than this host`);
+    }
+  });
+});
