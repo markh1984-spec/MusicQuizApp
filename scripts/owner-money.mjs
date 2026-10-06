@@ -149,6 +149,30 @@ try {
   check('exactly one row says what they wanted', wanted.length, 1);
   check('and it is the one who pressed Gold on the way in', wanted[0] || null, { who: 'trial-two', note: 'wanted Gold' });
 
+  /*
+   * THE £ ASKS BEFORE IT STARTS OR STOPS CHARGING ANYBODY. It flipped the free
+   * pass in one click while Close, beside it, asked — the risk the wrong way
+   * round (Part C of the September sweeps, #30). Saying No changes nothing;
+   * saying Yes does it.
+   */
+  console.log('\nTHE £ ASKS FIRST\n');
+  const freeOf = async (email) => page.evaluate(async (e) => {
+    const r = await fetch('/api/owner/accounts');
+    const d = await r.json();
+    return Boolean(((d.accounts || []).find((a) => a.email === e) || {}).comped);
+  }, email);
+  const badgeOf = (email) => page.locator('.inv-row', { hasText: email.split('@')[0] }).first().locator('.money-badge');
+  const said = [];
+  page.once('dialog', (d) => { said.push(d.message()); d.dismiss(); });
+  await badgeOf('pays-silver@example.com').click();
+  await page.waitForTimeout(600);
+  check('pressing £ asks first', said.length === 1 && /on the house/i.test(said[0]), true);
+  check('and No changes nothing', await freeOf('pays-silver@example.com'), false);
+  page.once('dialog', (d) => d.accept());
+  await badgeOf('pays-silver@example.com').click();
+  await page.waitForTimeout(900);
+  check('and Yes puts them on the house', await freeOf('pays-silver@example.com'), true);
+
   check('nothing threw', errs, []);
 
   console.log(fails ? `\n${fails} FAILED — the page is not telling the truth about the money.\n`

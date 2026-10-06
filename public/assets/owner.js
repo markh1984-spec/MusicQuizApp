@@ -1681,7 +1681,19 @@ function subscriberRow(account) {
   row.querySelector('.open-person').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
   });
-  row.querySelector('.money-badge').addEventListener('click', () => save({ comped: !account.comped }));
+  /*
+   * THE £ ASKS, LIKE CLOSE BESIDE IT. It started or stopped somebody paying in
+   * one click while Close — which deletes nothing — asked first: the risk the
+   * wrong way round (Part C of the September sweeps, #30). Same words as the
+   * badge's own tooltip, so the question and the button agree.
+   */
+  row.querySelector('.money-badge').addEventListener('click', () => {
+    const who = account.name || account.email;
+    const ask = account.comped
+      ? `Take ${who} off the house?\n\nThey go back to needing a paid subscription to run nights.`
+      : `Put ${who} on the house?\n\nThey get everything, free, until you switch it off.`;
+    if (confirm(ask)) save({ comped: !account.comped });
+  });
   row.querySelector('.close').addEventListener('click', async () => {
     if (!confirm(`Close ${account.email}?\n\nThey are signed out and cannot run a night. Nothing is deleted — their packs and invoices are kept in case they come back.`)) return;
     try {
