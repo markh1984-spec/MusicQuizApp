@@ -1774,10 +1774,12 @@ export async function preview(kind, pack) {
     </div>`);
 
   document.body.appendChild(overlay);
-  const close = () => overlay.remove();
+  // EVERY way out unhooks the key listener, not just Escape — Close and the
+  // backdrop left one behind each time (Part C of the September sweeps, #25).
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  const close = () => { overlay.remove(); document.removeEventListener('keydown', onKey); };
   overlay.querySelector('#sheetClose').addEventListener('click', close);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
-  const onKey = (e) => { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); } };
   document.addEventListener('keydown', onKey);
 
   const body = overlay.querySelector('#sheetBody');
