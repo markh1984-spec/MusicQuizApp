@@ -1,7 +1,7 @@
 /**
  * STATIC FILES — the MIME table and serveFile(). Moved whole from server.js.
  */
-import { fs, path } from './context.js';
+import { fs, path, stripCssComments } from './context.js';
 import { secure, send } from './plumbing.js';
 
 export const MIME = {
@@ -39,13 +39,17 @@ export const MIME = {
  * 304 and costs a header rather than the file. There is no build step here to
  * put a hash in a filename, and this needs none.
  */
+const strippedCss = new Map();
+
 export function serveFile(res, baseDir, relPath, { cache = false } = {}) {
   // Resolve and then check we are still inside the directory we meant.
   const full = path.resolve(baseDir, '.' + path.posix.normalize('/' + relPath));
   if (!full.startsWith(path.resolve(baseDir))) return send(res, 403, 'Forbidden');
   fs.stat(full, (statErr, stat) => {
     if (statErr) return send(res, 404, 'Not found');
-    const tag = `W/"${stat.size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}"`;
+    const css = path.extname(full).toLowerCase() === '.css';
+    // `-c` because the bytes sent are not the bytes on disk — see below.
+    const tag = `W/"${stat.size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}${css ? '-c' : ''}"`;
     const headers = {
       'Content-Type': MIME[path.extname(full).toLowerCase()] || 'application/octet-stream',
       'Cache-Control': cache ? 'public, max-age=3600' : 'no-cache',
@@ -56,8 +60,19 @@ export function serveFile(res, baseDir, relPath, { cache = false } = {}) {
       res.writeHead(304, secure(headers));
       return res.end();
     }
+    // A STYLESHEET GOES OUT WITHOUT ITS COMMENTS (`src/css-comments.js`),
+    // stripped once per version of the file and held in memory against the
+    // same tag the browser is given.
+    if (css) {
+      const kept = strippedCss.get(full);
+      if (kept && kept.tag === tag) { res.writeHead(200, secure(headers)); return res.end(kept.body); }
+    }
     fs.readFile(full, (err, data) => {
       if (err) return send(res, 404, 'Not found');
+      if (css) {
+        data = Buffer.from(stripCssComments(data.toString('utf8')), 'utf8');
+        strippedCss.set(full, { tag, body: data });
+      }
       res.writeHead(200, secure(headers));
       res.end(data);
     });

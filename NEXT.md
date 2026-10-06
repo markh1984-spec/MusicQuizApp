@@ -13,7 +13,6 @@
 ## Next up
 
 1. "Start this game again" on the quiz control view — agreed; show mock-ups first.
-2. The stylesheet is 601 KB and over half of it is comments — serve it without them.
 
 ## Updated
 
