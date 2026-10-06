@@ -48,7 +48,7 @@
  * as nights the venue ran; they contribute no points.
  */
 
-import { venueKeyOf } from './past-gigs.js';
+import { venueKeyOf, venueNameKey } from './past-gigs.js';
 
 /**
  * THE POINTS, and why everybody who turns up scores.
@@ -448,12 +448,14 @@ export function leaguesByVenue(nights = [], opts = {}) {
    */
   const byName = new Map();
   for (const [key, entry] of byVenue) {
-    const nameKey = entry.venue.trim().toLowerCase();
+    // `venueNameKey()` — the address, so a spelling without "The" is one pub.
+    const nameKey = venueNameKey(entry.venue);
     if (!byName.has(nameKey)) byName.set(nameKey, { key, venue: entry.venue, nights: [] });
     const held = byName.get(nameKey);
     // An id beats a bare name: `id:` is stable across a rename and is what
     // anything stored per venue is keyed on.
-    if (key.startsWith('id:') && !held.key.startsWith('id:')) held.key = key;
+    // And the BOOKED spelling is the one drawn, when there is one.
+    if (key.startsWith('id:') && !held.key.startsWith('id:')) { held.key = key; held.venue = entry.venue; }
     held.nights.push(...entry.nights);
   }
 

@@ -31,6 +31,7 @@
 import { HOUSE_ROOM, listArchive, updateArchivedNight, archiveResults } from './library.js';
 // The 6am roll-over lives in its own file — see the note there for why.
 import { nightDay } from './night-day.js';
+import { venueSlug } from '../public/assets/slugs.js';
 
 /** Where this room's photos are filed in the private photo repository. */
 export function photoFolder(roomId) {
@@ -300,9 +301,22 @@ export function sameVenue(a, b) {
   const idA = String(a.venueId || '').trim();
   const idB = String(b.venueId || '').trim();
   if (idA && idB) return idA === idB;
-  const nameA = String(a.venue || '').trim().toLowerCase();
-  const nameB = String(b.venue || '').trim().toLowerCase();
-  return Boolean(nameA) && nameA === nameB;
+  const nameA = venueNameKey(a.venue);
+  return Boolean(nameA) && nameA === venueNameKey(b.venue);
+}
+
+/**
+ * ONE PUB'S NAME, HOWEVER IT WAS TYPED — the key two typed names are compared
+ * on: its ADDRESS (`venueSlug()`), so "Station Tap Wokingham" and "The Station
+ * Tap, Wokingham" are one pub, as the public page already said they were. The
+ * exact lowercase name split them into two league tables and two headcount
+ * histories (Part C of the September sweeps, #26). **Equal slugs, never the
+ * nesting `sameVenueSlug()` allows** — "The Bell" and "The Bell Inn" stay two
+ * pubs here. The lowercase name stands in for a name with no slug at all.
+ */
+export function venueNameKey(name) {
+  const raw = String(name || '').trim();
+  return venueSlug(raw) || raw.toLowerCase();
 }
 
 /**

@@ -379,3 +379,25 @@ test('an EMPTY venue matches nothing at all', async () => {
   // `sameVenue()` already states.
   assert.equal(venueKeysFor({ venue: '' }).size, 0);
 });
+
+test('ONE PUB SPELT TWO WAYS IS ONE LEAGUE — "Station Tap Wokingham" is "The Station Tap, Wokingham"', async () => {
+  /*
+   * The second pass folded on the exact lowercase name, so a freehand night
+   * typed without "The" or the comma was a second table — while the public
+   * address (`sameVenueSlug()`) called them one pub (Part C of the September
+   * sweeps, #26). Two names are one pub when their ADDRESS is the same; names
+   * that only nest ("The Bell", "The Bell Inn") stay two pubs.
+   */
+  const { leaguesByVenue } = await import('../src/league.js');
+  const { sameVenue } = await import('../src/past-gigs.js');
+  const booked = { ...night(2, 'The Station Tap, Wokingham', ['Reds', 'Blues']), venueId: 'tap' };
+  const typed = night(1, 'Station Tap Wokingham', ['Reds', 'Greens']);
+  const leagues = leaguesByVenue([typed, booked]);
+  assert.deepEqual(Object.keys(leagues), ['id:tap'], 'one table, on the key the publish list uses');
+  assert.equal(leagues['id:tap'].nights, 2);
+
+  assert.ok(sameVenue({ venue: 'Crown' }, { venue: 'The Crown' }));
+  assert.ok(!sameVenue({ venue: 'The Bell' }, { venue: 'The Bell Inn' }), 'nested names stay two pubs');
+  assert.ok(!sameVenue({ venue: 'The Crown', venueId: 'a' }, { venue: 'The Crown', venueId: 'b' }), 'two ids are two pubs');
+  assert.ok(!sameVenue({ venue: '' }, { venue: '' }), 'an empty venue matches nothing');
+});

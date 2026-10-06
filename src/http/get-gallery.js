@@ -4,7 +4,7 @@
  */
 import { COVER_PHOTOS, FEATURES, HOUSE, accounts, bookingOf, comeBackText, coverPhotos, galleryNumbers, galleryPhotosOf, isNightFolder, isPublished, leaguesByVenue, leaguesRunning, listArchive, listDirs, mergeGigs, nameDecisions, nextNightAt, photoDecisions, photoFolder, photoKey, photoPins, photosRepoConfigured, publicTable, publishedNights, publishedVenues, readableNight, rooms, safePhotoName, sameVenueSlug, showsOnGallery, teamKey, venueSlug } from './context.js';
 import { secure, sendJson } from './plumbing.js';
-import { galleryRoomFor, galleryRoomFrom, nightFiles, photoBytes, roomForHost, whoIs, whoseRoom } from './identity.js';
+import { galleryRoomFor, galleryRoomFrom, gigRoomsOf, nightFiles, photoBytes, roomForHost, whoIs, whoseRoom } from './identity.js';
 import { allowed } from './gates.js';
 import { ensureArchiveRestored, ensureInvoicesRestored, venueOverlayFor } from './helpers.js';
 
@@ -159,7 +159,10 @@ export async function getGallery(req, res, url, route) {
     const runs = await leaguesRunning(roomId);
     // The quizmaster's own rulings, which overrule the word list either way.
     const ruled = await nameDecisions(roomId);
-    const nights = mergeGigs(listArchive(leagueRoom.paths.archive, { boards: true }), []);
+    // Every room the owner's nights are filed in — HOUSE too, or a host-key night never shows (Part C #8).
+    const archiveRooms = gigRoomsOf(HOUSE).some((r) => r.id === roomId) ? gigRoomsOf(HOUSE) : [leagueRoom];
+    for (const room of archiveRooms) if (room !== leagueRoom) await ensureArchiveRestored(room);
+    const nights = mergeGigs(archiveRooms.flatMap((room) => listArchive(room.paths.archive, { boards: true })), []);
     const byVenue = leaguesByVenue(nights);
     const book = leagueRoom.invoices;
     /*

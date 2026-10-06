@@ -4,7 +4,7 @@
  */
 import { CARD_SHAPES, FEATURES, LOOKS, MAX_OWN, PACK_PENCE, SCHEMES, artProvider, bookingOf, config, countOwn, defaultPrizes, fullLibrary, githubConfigured, googleConfigured, hub, leaguesByVenue, listAdvertPacks, listArchive, listOwn, maxLineStage, maxPrizes, mergeGigs, minimumTracks, missingGithubConfig, missingSpotifyConfig, openaiConfigured, packsRepoConfigured, packsRepoName, playedByVenue, recentTracks, reports, rewardsByVenue, rewardsUsed, rooms, shapeLabel, spotifyConfigured, stageLabel, stagePlan, suggestions, venueHeadcounts, venuesUsed } from './context.js';
 import { sendJson } from './plumbing.js';
-import { brandForRoom, fullLibraryTier, onlyTheirPacks, roomForHost, roomIdFor, schemeForRoom, whoIs, withShop } from './identity.js';
+import { brandForRoom, fullLibraryTier, gigRoomsFor, onlyTheirPacks, roomForHost, roomIdFor, schemeForRoom, whoIs, withShop } from './identity.js';
 import { allowed, showsFor } from './gates.js';
 import { backupStatus, ensureAdvertsRestored, ensureArchiveRestored, ensureAsksRestored, ensureInvoicesRestored, ensureOwnPacksRestored, markHidden, nowNext, seesTheirLeague, seesTheirNights, unbilledFor } from './helpers.js';
 
@@ -147,7 +147,16 @@ export async function getLibrary(req, res, url, route) {
      * only the finished table is sent. `/api/past-gigs` asks without them, so
      * the list of nights the Gigs tab draws stays the size it always was.
      */
-    const gigNights = mergeGigs(listArchive(libRoom.paths.archive, { boards: true }), []);
+    /*
+     * EVERY ROOM THIS ACCOUNT'S NIGHTS ARE FILED IN — `gigRoomsFor()`, the
+     * union Past gigs already reads. HOUSE alone left a night run on the
+     * owner's quizmaster hat out of the league, the headcounts and "heard
+     * here" on the console, while the public page read the other room
+     * (Part C of the September sweeps, #8). For everybody else it is one room.
+     */
+    const gigRooms = gigRoomsFor(req, url);
+    for (const room of gigRooms.slice(1)) await ensureArchiveRestored(room);
+    const gigNights = mergeGigs(gigRooms.flatMap((room) => listArchive(room.paths.archive, { boards: true })), []);
     return sendJson(res, 200, {
       brand: brandForRoom(roomForHost(req, url)),
       appName: config.appName,

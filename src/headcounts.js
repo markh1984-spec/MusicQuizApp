@@ -28,7 +28,7 @@
  * the bingo after it being ONE night rather than two.
  */
 
-import { venueKeyOf } from './past-gigs.js';
+import { venueKeyOf, venueNameKey } from './past-gigs.js';
 
 /**
  * How many were in the room on one night.
@@ -106,7 +106,7 @@ export function venueHeadcounts(nights = []) {
    */
   const byName = new Map();
   for (const entry of byVenue.values()) {
-    const nameKey = entry.venue.toLowerCase();
+    const nameKey = venueNameKey(entry.venue);   // the address — see `venueNameKey()`
     // `nights` arrives newest first, so the raw group created FIRST for a
     // given name is the one built from the most recent night — its spelling
     // is the one kept, same as `venuesUsed` already does.
@@ -132,10 +132,10 @@ export function venueHeadcounts(nights = []) {
  * venue is an account. Same lowercase comparison as everywhere else.
  */
 export function headcountsFor(headcounts, venue) {
-  const want = String(venue || '').trim().toLowerCase();
+  const want = venueNameKey(venue);
   if (!want) return null;
   return (headcounts && headcounts.venues || [])
-    .find((v) => v.venue.toLowerCase() === want) || null;
+    .find((v) => venueNameKey(v.venue) === want) || null;
 }
 
 /** One venue's nights, oldest first, with the four numbers worth saying. */
