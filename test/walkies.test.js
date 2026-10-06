@@ -5,15 +5,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { ARRIVING, CAT_NAMES, DOG, LEAD, LIVES, PLACES, THINGS, WALK_LENGTH, hitThing, jump, metresLeft, newWalk, score, step, walkerHeight } from '../public/assets/walkies.js';
+import { ARRIVING, BASKET, CAT_NAMES, DOG, LEAD, LIVES, TABLE_TOP, PLACES, THINGS, WALK_LENGTH, hitThing, jump, metresLeft, newWalk, score, step, walkerHeight } from '../public/assets/walkies.js';
 
-/** A player with a simple rule: jump when the next thing is this many seconds away. */
+/**
+ * A player with a simple rule: jump when the next thing on the ground is this
+ * many seconds away — but never with a hanging basket overhead or just ahead,
+ * which is walked under. A beer garden needs nothing special: its nettles are
+ * a thing on the ground, so the jump lands on the tables.
+ */
+const basketNear = (w) => w.things.some((o) => o.kind === 'basket' && o.x - (w.x + DOG.w) < w.speed * 0.75 + 0.5 && o.x + o.w > w.x - 0.3);
+function wantsJump(w, lead) {
+  const ahead = w.things.find((o) => o.kind !== 'basket' && o.x + o.w > w.x);
+  return ahead && w.onGround && !basketNear(w) && ahead.x - (w.x + DOG.w) < w.speed * lead + 0.2;
+}
 function playFor(seed, seconds, lead) {
   const w = newWalk(seed);
   w.started = true;
   for (let i = 0; i < seconds * 60; i++) {
-    const ahead = w.things.find((o) => o.x + o.w > w.x);
-    if (ahead && w.onGround && ahead.x - (w.x + DOG.w) < w.speed * lead + 0.2) jump(w);
+    if (wantsJump(w, lead)) jump(w);
     step(w);
     if (w.over) break;
   }
@@ -116,13 +125,15 @@ test('the walker on the lead goes where the dog went, so never through a bench',
     w.started = true;
     let lowest = Infinity;
     for (let i = 0; i < 60 * 40; i++) {
-      const ahead = w.things.find((o) => o.x + o.w > w.x);
-      if (ahead && w.onGround && ahead.x - (w.x + DOG.w) < w.speed * 0.12 + 0.2) jump(w);
+      if (wantsJump(w, 0.12)) jump(w);
       step(w);
-      // the walker's feet, a little narrower than the dog's box, against every thing
+      // the walker's feet, a little narrower than the dog's box, against every
+      // thing on the ground — and her head (1.7 up) against a hanging basket
       const feet = { l: w.x - LEAD + 0.3, r: w.x - LEAD + 0.75, b: walkerHeight(w) };
       for (const o of w.things) {
-        if (feet.r > o.x + 0.05 && feet.l < o.x + o.w - 0.05) lowest = Math.min(lowest, feet.b - o.h);
+        if (!(feet.r > o.x + 0.05 && feet.l < o.x + o.w - 0.05)) continue;
+        if (o.kind === 'basket') { if (feet.b < 0.05) lowest = Math.min(lowest, o.low - (feet.b + 1.7)); }
+        else lowest = Math.min(lowest, feet.b - o.h);
       }
     }
     assert.equal(w.over, false);
@@ -158,4 +169,59 @@ test('every cat has a name off the list, picked at random, and a crash into one 
   for (let i = 0; i < 120 && !crash.hit; i++) step(crash);
   assert.equal(crash.hit && crash.hit.name, 'April');
   assert.equal(crash.lives, LIVES - 1, 'a life, not the walk');
+});
+
+/* ---- walk under, walk across ---- */
+
+test('a hanging basket is walked UNDER — walking is safe, a jump there is a knock', () => {
+  const under = newWalk(1);
+  under.started = true;
+  under.nextAt = Infinity;
+  under.things = [{ kind: 'basket', x: 4, ...BASKET }];
+  for (let i = 0; i < 90; i++) step(under);
+  assert.equal(under.lives, LIVES, 'walked under it, untouched');
+  const jumper = newWalk(1);
+  jumper.started = true;
+  jumper.nextAt = Infinity;
+  jumper.things = [{ kind: 'basket', x: 2.5, ...BASKET }];
+  jump(jumper);
+  for (let i = 0; i < 60; i++) step(jumper);
+  assert.equal(jumper.lives, LIVES - 1, 'jumped into it');
+  assert.equal(jumper.hit.kind, 'basket');
+});
+
+test('the beer garden: up onto the tables and along the top clears the nettles; underneath does not', () => {
+  const garden = () => {
+    const w = newWalk(1);
+    w.started = true;
+    w.nextAt = Infinity;
+    w.ledges = [{ x: 4, w: 20, top: TABLE_TOP }];
+    w.things = [{ kind: 'nettles', x: 4, w: 20, h: 0.45 }];
+    return w;
+  };
+  const across = garden();
+  let onTop = false;
+  for (let i = 0; i < 60 * 4; i++) {
+    if (across.x > 2.4 && across.x < 3 && across.onGround) jump(across);
+    step(across);
+    if (across.onGround && across.h === TABLE_TOP) onTop = true;
+  }
+  assert.ok(onTop, 'it landed on the tables and ran along them');
+  assert.equal(across.lives, LIVES, 'and the nettles never touched it');
+  assert.ok(across.x > 24 && across.h === 0, 'then dropped off the far end');
+  const under = garden();
+  for (let i = 0; i < 60; i++) step(under);
+  assert.equal(under.lives, LIVES - 1, 'walking under the tables meets the nettles');
+  assert.equal(under.hit.kind, 'nettles');
+});
+
+test('the nettles are always too long to clear in a jump and a hop, whatever the speed', () => {
+  for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+    const w = newWalk(seed);
+    w.started = true;
+    for (let i = 0; i < 60 * 70 && !w.over; i++) { w.h = 4; w.vy = 0; step(w); }
+    for (const L of w.ledges) assert.ok(L.w > 0, 'a garden');
+  }
+  // a jump at 16 and a hop at 12 under gravity 40 are in the air 0.8s + 0.6s
+  for (const speed of [7, 11, 15]) assert.ok(Math.round(speed * 1.6 + 5) > speed * 1.4, `at ${speed} m/s`);
 });

@@ -11,7 +11,8 @@
  */
 import { esc, node } from './client.js';
 import { heart, nameTag } from './toy-tag.js';
-import { DOG, LEAD, LIVES, WALK_LENGTH, jump, metresLeft, newWalk, score, step, walkerHeight } from './walkies.js';
+import { rulesCard } from './toy-rules.js';
+import { DOG, LEAD, LIVES, TABLE_TOP, WALK_LENGTH, jump, metresLeft, newWalk, score, step, walkerHeight } from './walkies.js';
 
 const DT = 1 / 60;
 /** Where the dog runs, metres from the left — room behind it for the walker. */
@@ -296,6 +297,52 @@ function drawThing(g, o, sx, gy, u) {
     g.fill();
     g.fillStyle = 'rgba(255, 255, 255, 0.55)';
     g.fillRect(sx + w * 0.3, gy - 0.07 * u, w * 0.25, 0.03 * u);
+  } else if (o.kind === 'basket') {
+    // A hanging basket on a bracket from a post at the back of the path —
+    // the post is scenery, only the basket itself is in the way.
+    const top = gy - o.h * u;
+    const bottom = gy - o.low * u;
+    const cx = sx + w / 2;
+    g.fillStyle = '#2f5a3a';
+    g.fillRect(sx + w + 0.25 * u, gy - 3.2 * u, 0.12 * u, 3.2 * u);
+    g.fillRect(cx - 0.05 * u, gy - 3.2 * u, sx + w + 0.37 * u - cx, 0.1 * u);
+    g.strokeStyle = '#2a2a2a';
+    g.lineWidth = Math.max(1, 0.03 * u);
+    g.beginPath();
+    g.moveTo(cx, gy - 3.1 * u);
+    g.lineTo(cx, top + 0.05 * u);
+    g.stroke();
+    // trailing leaves, then the wicker bowl, then the flowers on top
+    g.fillStyle = '#3f8f3a';
+    for (const dx of [-0.42, 0.38]) g.fillRect(cx + dx * u, bottom - 0.25 * u, 0.08 * u, 0.4 * u);
+    g.fillStyle = '#9a6a3a';
+    g.beginPath();
+    g.ellipse(cx, bottom - 0.3 * u, w / 2, 0.3 * u, 0, 0, Math.PI);
+    g.fill();
+    g.fillStyle = '#7c522c';
+    g.fillRect(cx - w / 2, bottom - 0.32 * u, w, 0.06 * u);
+    for (const [dx, dy, c] of [[-0.35, -0.42, '#ff6fb5'], [-0.1, -0.55, '#ffd23f'], [0.15, -0.47, '#b07cff'], [0.36, -0.38, '#ff6fb5'], [0, -0.38, '#ffffff']]) {
+      g.fillStyle = c;
+      g.beginPath();
+      g.arc(cx + dx * u, bottom + dy * u, 0.09 * u, 0, Math.PI * 2);
+      g.fill();
+    }
+  } else if (o.kind === 'nettles') {
+    // A patch of stinging nettles: spiky clumps all the way along.
+    for (let k = 0.15; k < o.w; k += 0.55) {
+      const bx = sx + k * u;
+      g.fillStyle = k % 1.1 < 0.55 ? '#3f7d3a' : '#4f9445';
+      g.beginPath();
+      g.moveTo(bx - 0.28 * u, gy);
+      g.lineTo(bx - 0.18 * u, gy - h * 0.7);
+      g.lineTo(bx - 0.08 * u, gy - h * 0.45);
+      g.lineTo(bx, gy - h);
+      g.lineTo(bx + 0.08 * u, gy - h * 0.45);
+      g.lineTo(bx + 0.18 * u, gy - h * 0.7);
+      g.lineTo(bx + 0.28 * u, gy);
+      g.closePath();
+      g.fill();
+    }
   } else if (o.kind === 'cat') {
     // A grumpy grey cat, sitting very still, not moving for anybody.
     g.fillStyle = '#7d7f88';
@@ -467,6 +514,22 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
       const sx = (b.x - left) * u;
       if (sx < -u || sx > cssW + u) continue;
       drawBone(g, sx, gy - (b.h + Math.sin(walk.t * 5 + b.x) * 0.06) * u, u);
+    }
+    // THE BEER GARDEN'S TABLES — a top to land on, legs that are only scenery
+    for (const L of walk.ledges) {
+      const sx = (L.x - left) * u;
+      if (sx + L.w * u < 0 || sx > cssW) continue;
+      const topY = gy - TABLE_TOP * u;
+      g.fillStyle = '#5e3d22';
+      for (let k = 0.6; k < L.w; k += 2.4) {
+        g.fillRect(sx + k * u, topY, 0.1 * u, TABLE_TOP * u);
+        g.fillRect(sx + (k + 1.2) * u, topY, 0.1 * u, TABLE_TOP * u);
+        g.fillRect(sx + (k - 0.2) * u, gy - 0.5 * u, 1.7 * u, 0.1 * u);   // the bench rail
+      }
+      g.fillStyle = '#b07a45';
+      g.fillRect(sx, topY, L.w * u, 0.14 * u);
+      g.fillStyle = '#8a5a30';
+      for (let k = 2.4; k < L.w; k += 2.4) g.fillRect(sx + k * u, topY, 0.05 * u, 0.14 * u);
     }
     for (const o of walk.things) {
       const sx = (o.x - left) * u;
@@ -658,6 +721,12 @@ export function openWalkies({ who = 'you', hero = '' } = {}) {
 
   document.body.appendChild(sheet);
   fit();
+  rulesCard(sheet, [
+    'Tap to jump, and tap again in the air for one more hop.',
+    'Jump the bins, benches, puddles and cats. Walk UNDER a hanging basket — never jump there.',
+    'Jump up onto the beer-garden tables and run along the top to get past the nettles.',
+    'Each knock costs one of three lives. Bones are 10, getting there is 100.',
+  ]);
   if (sizer) sizer.observe(canvas);
   requestAnimationFrame((t) => { last = t; frame(t); });
   return { close, state: () => walk, dogWidth: DOG.w };

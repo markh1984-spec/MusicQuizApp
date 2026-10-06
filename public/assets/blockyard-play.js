@@ -10,8 +10,8 @@
  * - with a BLOCK chosen, tap an empty space within reach and it goes down —
  *   tap a block and it goes on top — and tap the miner's own feet to be lifted
  *   up one (tap anywhere on them), which is how you climb out of a hole.
- * A laptop gets the arrow keys and space as well, because the console's
- * screens are driven from one.
+ * A laptop gets WASD (or the arrows) to move and J to swing the pickaxe —
+ * see `swingKey()`.
  *
  * **THE WORLD IS KEPT ON THE PHONE** (`localStorage`, under the login's own
  * name) — it is a toy, so losing it to a cleared browser costs a toy, and
@@ -20,9 +20,10 @@
  */
 import { esc, node } from './client.js';
 import { heart, nameTag } from './toy-tag.js';
+import { rulesCard } from './toy-rules.js';
 import {
   AIR, BLOCKS, BRICK, BEDROCK, COAL, EARTH, GEM, GLASS, GOLD, GRASS, H, LEAVES, LOG, PLANKS, RECIPES, SAND, STONE, W,
-  LIVES, bop, canReach, dig, get, inReach, jump, load, make, makeWorld, newPlay, overlapsPlayer, place, revive, rng, save, spawn, tick,
+  LIVES, bop, canBop, canReach, dig, get, inReach, jump, load, make, makeWorld, newPlay, overlapsPlayer, place, revive, rng, save, spawn, tick,
 } from './blockyard.js';
 
 const DT = 1 / 60;
@@ -533,11 +534,53 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
   });
   canvas.addEventListener('pointerleave', () => { hover = null; });
 
+  /*
+   * ON A KEYBOARD (the host, 6 October 2026): A and D walk, W or space jumps,
+   * and J SWINGS THE PICKAXE the way she is facing — at the nearest zombie in
+   * front if there is one she can reach, or else at the block in front of her.
+   * Hold S while swinging to dig down, W to dig up. Arrow keys work as well.
+   */
+  let aim = 0;           // -1 up, 1 down, 0 straight ahead
+  let lastSwing = 0;
+  function swingKey() {
+    if (performance.now() - lastSwing < 220) return;   // one chop at a time, held or not
+    lastSwing = performance.now();
+    if (play.down) { tap({ x: 0, y: 0 }); return; }   // the same "get up again"
+    const face = p.facing || 1;
+    const z = play.zombies
+      .filter((zz) => !zz.dead && Math.sign(zz.x - p.x) === face && canBop(p, zz, world))
+      .sort((a, b) => Math.abs(a.x - p.x) - Math.abs(b.x - p.x))[0];
+    if (z) {
+      const res = bop(play, p, z, world);
+      swingNow();
+      z.flashUntil = performance.now() + 260;
+      if (res === 'down') { say(`${z.name} is down!`); pop(`Thwacked ${z.name}!`, z.x, z.y - 4.9); }
+      else if (res === 'hit') { say(`Thwacked ${z.name} — once more!`); pop('Thwack!', z.x, z.y - 4.9); }
+      return;
+    }
+    const col = Math.floor(p.x);
+    const ahead = Math.floor(p.x + face * 0.8);
+    const tries = aim > 0 ? [[col, Math.floor(p.y)]]
+      : aim < 0 ? [[col, Math.floor(p.y - 1.8) - 1]]
+        : [[ahead, Math.floor(p.y - 1.4)], [ahead, Math.floor(p.y - 0.5)]];
+    swingNow();
+    for (const [x, y] of tries) {
+      if (get(world, x, y) === AIR || !canReach(world, p, x, y)) continue;
+      const got = dig(world, bag, p, x, y);
+      if (got) { mark({ x, y }, true); say(`+1 ${BLOCKS[got].name.toLowerCase()}`); keep(); paintBar(); }
+      else { mark({ x, y }, false); say('That one is too hard to dig.'); }
+      return;
+    }
+  }
   const onKey = (ev) => {
     if (ev.key === 'Escape' && ev.type === 'keydown') return close();
-    const dir = { ArrowLeft: -1, a: -1, ArrowRight: 1, d: 1 }[ev.key];
+    const key = ev.key.length === 1 ? ev.key.toLowerCase() : ev.key;
+    const dir = { ArrowLeft: -1, a: -1, ArrowRight: 1, d: 1 }[key];
     if (dir) { p.held = ev.type === 'keydown' ? dir : (p.held === dir ? 0 : p.held); ev.preventDefault(); }
-    if (ev.type === 'keydown' && (ev.key === ' ' || ev.key === 'ArrowUp' || ev.key === 'w')) { jump(p); ev.preventDefault(); }
+    if (key === 's' || key === 'ArrowDown') { aim = ev.type === 'keydown' ? 1 : 0; ev.preventDefault(); }
+    if (key === 'w' || key === 'ArrowUp') aim = ev.type === 'keydown' ? -1 : 0;
+    if (ev.type === 'keydown' && (key === ' ' || key === 'ArrowUp' || key === 'w')) { jump(p); ev.preventDefault(); }
+    if (ev.type === 'keydown' && key === 'j') { swingKey(); ev.preventDefault(); }
   };
   document.addEventListener('keydown', onKey);
   document.addEventListener('keyup', onKey);
@@ -586,6 +629,13 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
   document.body.appendChild(sheet);
   paintBar();
   fit();
+  const keyboard = typeof matchMedia === 'function' && matchMedia('(pointer: fine)').matches;
+  rulesCard(sheet, [
+    'Tap a block near you to dig it. Pick a block from your bag and tap a space to build.',
+    'Tap a zombie to hit it with your pickaxe — two hits put it down.',
+    'A zombie\'s touch costs one of your three lives. They cannot dig or climb a wall two high.',
+    ...(keyboard ? ['Keyboard: A and D to walk, W to jump, J to swing the pickaxe — hold S to dig down, W to dig up.'] : []),
+  ]);
   if (sizer) sizer.observe(canvas);
   requestAnimationFrame((t) => { last = t; frame(t); });
   return { close, state: () => ({ world, bag, p, play }) };
