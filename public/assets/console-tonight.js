@@ -886,7 +886,10 @@ export function launchBar() {
              the half that belongs there. It is also the half that is a fact
              about the EVENING: "show my adverts in the breaks" is the venue
              paying for a screen. -->
-        <label class="pack-shape" title="What the big screen does at every break. The lobby always keeps the join code."><span class="set-word">In the gaps</span>
+        <!-- "Big screen in the gaps", once "In the gaps": the tile dials are the
+             PHONES in the gaps, and neither said whose (Part C #35). It fits:
+             the box is already as wide as its widest choice. -->
+        <label class="pack-shape" title="What the big screen does at every break. The lobby always keeps the join code."><span class="set-word">Big screen in the gaps</span>
           <select class="screen-pick" data-pop>${screenOptions()}</select>
         </label>
         <!-- CARD AND PRIZES JOIN THE SAME ROW — asked for on 24 August 2026:
