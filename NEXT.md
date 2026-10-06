@@ -4,7 +4,7 @@
 
 - **Say "push"** — two finished jobs passed the release check (49 of 49) and are held locally, not live: the four silent buttons and the smaller stylesheet (since 6 Oct 2026).
 - **Pick A, B or C for "Start this game again"** on the quiz control view — mock-ups sent in chat (6 Oct 2026).
-- **Pick which of the 14 still-live sweep findings to fix** — re-checked 6 Oct 2026, none on the protected surface; the table is in docs/sweeps-september-2026.md, Part C.
+- **Pick which of the 14 still-live sweep findings to fix** — re-checked 6 Oct 2026, none on the protected surface; the table is in docs/sweeps-september-2026-part-c.md.
 - **Send the Story frame artwork** — the square frame and the two logos, so Story exports get a frame of their own (since 2 Oct 2026).
 - **Decide: do phone videos ever go on the big screen?** — "ask me tomorrow" (since 1 Oct 2026).
 - **Yes or no: a "Make the Spotify playlist" button on bingo packs** — offered 2 Oct 2026.
