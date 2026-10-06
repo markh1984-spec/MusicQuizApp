@@ -459,7 +459,11 @@ export function renderSlots(slots, {
     if (!type) return '';
     const packs = new Set(slots.filter((s) => s && s.packId).map((s) => s.packId));
     const also = packs.size > 1 ? ` \u00b7 ${esc(shortTitle(pack.title))}` : '';
-    return `<div class="lb-tile-sub"><span aria-hidden="true">${roundGlyph(type, i + 1)}</span> ${esc(roundWord(type))}${also}</div>`;
+    // TWO ROUNDS THAT WOULD DRAW THE SAME TILE say which they are — rounds titled
+    // after the pack trim to one name, and same-type ones then matched (Part C #27).
+    const twin = (pack.rounds || []).some((r, j) => j !== i && r && r.type === type && roundName(pack, j) === roundName(pack, i));
+    const which = twin ? ` \u00b7 round ${i + 1}` : '';
+    return `<div class="lb-tile-sub"><span aria-hidden="true">${roundGlyph(type, i + 1)}</span> ${esc(roundWord(type))}${which}${also}</div>`;
   }
 
   function filledTile(slot, at) {
