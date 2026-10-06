@@ -629,6 +629,56 @@ Marked **[mine]** where the fault was introduced or half-fixed by the batch of
 fixes made on the night of 5 September. That distinction matters: it is the
 evidence for the working note at the foot of this file.
 
+### RE-VERIFIED 6 OCTOBER 2026 — 15 fixed, 7 partly, 14 still live, NONE on the protected surface
+
+Checked against the code by the `sweeper` agent, each live one reproduced
+unless marked. Line numbers are 6 October's. **Read this table before the
+bullets below — most of them are now history.**
+
+| # | Finding | Now | Where |
+|---|---|---|---|
+| 1 | Acting branch leaks the hash | FIXED | `identity.js` through `safe()`; `support-access.test.js` |
+| 2 | Sign-in stalls the projector | FIXED | off the thread, 8-at-once; 1.8ms under 30 sign-ins |
+| 3 | Signup has no throttle | PARTLY | 5/hour per caller, but the caller is the FIRST `X-Forwarded-For` entry — rotating it bypassed the limit (12 for 12). Whether Render passes a client's header through first is unknown |
+| 4 | A subscriber's advert QR is dead | **LIVE** | `/o/<pack>/<slide>` carries no room; `offerRoomId()` → the owner's. A subscriber's 404s, or serves the owner's slide |
+| 5 | `archivedAs` across a part boundary | FIXED | vouchers and the last part both survive; voucher half untested |
+| 6 | `winners` resets on a mixed night | FIXED | `nightWinners`; `winners-carry.test.js` |
+| 7 | Latecomer in a bingo interlude loses their team | **LIVE** | `session.js` ~1965 — plays the next quiz as a lone row beside dealt teams. Closest to the protected surface |
+| 8 | League room move | PARTLY | publish and rulings agree now; the console's table is `roomForHost()`, `/api/league` the quizmaster room — a host-key night publishes and never shows |
+| 9 | League cache re-poisons after a takedown | **LIVE** (read, not reproduced) | `league-publish.js` caches the value after its await; `gallery.js` caches the promise |
+| 10 | `?q=` mints phantom rooms | **LIVE** | two permanent idle rows on the owner's overview from anonymous GETs |
+| 11 | `Bingo prizes` label overwritten | FIXED | `bingo-prizes-label.test.js` |
+| 12 | Hide does not fold the bar | FIXED | |
+| 13 | `.console .wrap` overflow reset | FIXED | |
+| 14 | HOUSE photos filed where nothing reads | FIXED | `galleryRoomOf()` |
+| 15 | Five controls lie after a show loads | FIXED (code read) | `paintNightPicks()` after `applyShow()` |
+| 16 | Moving a feature up grandfathers trialists | **LIVE** | no status check in the grandfathering — a Bronze trialist kept Adverts after paying Bronze. A revenue leak |
+| 17 | Owner's list misreports a group seat | **LIVE** | `helpers.js` passes the raw account: bronze/11 on the list, gold/14 on the seat |
+| 18 | `Load` on Setup 404s | FIXED | removed |
+| 19 | `removeIdle` 500s on bingo | FIXED | |
+| 20 | `phonesAre()` ignores the break plan | FIXED | `view.gap` on both host views |
+| 21 | `/api/league` never restores the invoice book | **LIVE** | the public page's next-quiz line goes after a wipe until a console opens |
+| 22 | `/api/images` 404 shows the absolute path | **LIVE** | `get-packs.js` |
+| 23 | Support log floods and under-records | **LIVE** | `/api/playing` not quiet, polled every 8s by the editor |
+| 24 | Draft photo cached publicly | **LIVE** (header) | `public, max-age=86400, immutable`, no `Vary`, preview path too |
+| 25 | Preview sheet leaks a keydown listener | **LIVE**, trivial | |
+| 26 | One pub, two league tables | PARTLY | case folds now; "Station Tap Wokingham" vs the booked name still splits, while `sameVenueSlug()` calls them one |
+| 27 | Identical tiles | PARTLY | type line added; two same-type, same-title rounds still match (no shipped pack) |
+| 28 | Launch reads "1 part" | FIXED | names the pack |
+| 29 | The bin that only unlinks | PARTLY | still icon-only; its confirm now says nothing is deleted |
+| 30 | `£` / `Close` on a subscriber row | **LIVE** | `£` flips comped in one click, no confirm |
+| 31 | Photo lamp vs "Put these on the gallery" | FIXED | lamp says *once you publish this night* |
+| 32 | "This pub does not run a league" | **LIVE** | no confirm, never says it takes the public table down; *Take this table down* has none either |
+| 33 | `Prizes` / `The prizes` on bingo | FIXED | *Change the prizes* |
+| 34 | `Continue … now` / `Finish` | PARTLY | Finish arms first and says *ends the whole night*; at rest still two bare labels |
+| 35 | `In the gaps` / the corner dials | **LIVE** | audiences in tooltips only |
+| 36 | Three links to `/editor` | **LIVE** | *Write a new one*, *Pack editor*, *Write, buy or edit packs →* |
+
+**Worst first, of what is live:** #7, #4, #16, #3, #8 with #26, #21, #30, #10,
+#17, then the collisions (#32, #35, #36, #34, #29), then #24, #9, #23, #22,
+#25, #27. **The host picks** — and the working note at the foot of this file
+still applies: one fix, one check that fails first, one push.
+
 ## Still live and serious
 
 - **`whoIs()`'s acting branch leaks a subscriber's password hash** —
