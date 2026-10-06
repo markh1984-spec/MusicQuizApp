@@ -108,12 +108,19 @@ function forget(roomId) {
   held.delete(roomId);
 }
 
-async function readDecisions(roomId) {
+/*
+ * THE PROMISE IS HELD, NOT WHAT IT SETTLES TO — `gallery.js`'s shape. Held
+ * AFTER the await, a read already in flight when a takedown called `forget()`
+ * put its stale answer back the moment it landed, and the table stayed public
+ * for another window (Part C of the September sweeps, #9). Held before, the
+ * `forget()` drops it and the late answer is nobody's. A failure is never held.
+ */
+function readDecisions(roomId) {
   const cached = held.get(roomId);
   if (cached && cached.at > Date.now() - CACHE_MS) return cached.value;
-  const fresh = await readDecisionsNow(roomId);
-  held.set(roomId, { at: Date.now(), value: fresh });
-  return fresh;
+  const pending = readDecisionsNow(roomId).catch((err) => { forget(roomId); throw err; });
+  held.set(roomId, { at: Date.now(), value: pending });
+  return pending;
 }
 
 async function readDecisionsNow(roomId) {
