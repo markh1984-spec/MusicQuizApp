@@ -303,3 +303,22 @@ test('removing a seat drops it back to its OWN standing, not the ex-parent\'s', 
     assert.equal(can(eff, FEATURES.REQUEST_PACK), false, 'the gold feature it had as a seat does not follow it out');
   });
 });
+
+test('THE OWNER’S LIST SHOWS A SEAT ON ITS PARENT’S TIER, as the seat itself sees it', () => {
+  /*
+   * `view()` asked `entitlements()` about the RAW account, so a seat on a Gold
+   * company read Bronze with eleven features on the owner's Quizmasters list
+   * while its own console said Gold with fourteen (Part C of the September
+   * sweeps, #17). `effective()` is the one choke point a seat's standing goes
+   * through, and the owner's view goes through it too now.
+   */
+  withBook((book) => {
+    const parent = book.create({ email: 'boss@example.com', password: PASSWORD, name: 'Boss' });
+    book.update(parent.id, { tier: 'gold', status: 'active' });
+    const seat = book.addChild(parent.id, { email: 'seat@example.com', password: PASSWORD, name: 'Seat' });
+    const listed = book.view(book.find(seat.id)).entitlements;
+    const own = book.view(book.effective(book.find(seat.id))).entitlements;
+    assert.equal(listed.tier, own.tier, 'the owner sees the tier the seat runs on');
+    assert.deepEqual(listed.features, own.features);
+  });
+});

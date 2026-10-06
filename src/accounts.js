@@ -1300,7 +1300,9 @@ export class Accounts {
   }
 
   view(account) {
-    return { ...safe(account), entitlements: entitlements(account) };
+    // `effective()` — a seat runs on its PARENT'S tier, and the owner's list
+    // said Bronze/11 of a seat its own console called Gold/14 (Part C #17).
+    return { ...safe(account), entitlements: entitlements(this.effective(account)) };
   }
 }
 
