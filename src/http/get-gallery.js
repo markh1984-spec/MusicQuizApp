@@ -144,7 +144,7 @@ export async function getGallery(req, res, url, route) {
     const roomId = galleryRoomId();
     const preview = galleryPreview();
     const leagueRoom = rooms.get(roomId);
-    await ensureArchiveRestored(leagueRoom);
+    await Promise.all([ensureArchiveRestored(leagueRoom), ensureInvoicesRestored(leagueRoom)]);   // the book holds "Next quiz" (Part C #21)
     const live = await publishedVenues(roomId);
     /*
      * A VENUE THAT DOES NOT RUN A LEAGUE HAS NO PAGE, whatever else is set —

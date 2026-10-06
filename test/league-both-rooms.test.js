@@ -70,3 +70,27 @@ test('a host-key night and a quizmaster-hat night both reach the console AND the
     assert.ok(venues.includes('The Crown'), `the public page has the host-key night (${venues})`);
   }, { prefix: 'league-rooms' });
 });
+
+test('after a deploy the public page still says when the next quiz is — it reads the venue book back first', async () => {
+  /*
+   * "Next quiz Thursday" comes off the venue's usual night in the invoice
+   * book, and `/api/league` read the book without restoring it — so after a
+   * deploy onto an empty disk the line was gone until somebody opened a
+   * console (Part C of the September sweeps, #21).
+   */
+  await withStubbedApp(async (app) => {
+    const cookie = await owner(app);
+    file(join(app.data, 'rooms', 'qm-mark', 'archive'), 'n-hat', 'The Wheatsheaf', 'Hat Wearers', '2026-09-25');
+    writeFileSync(join(app.repo, 'invoicing-qm-mark.json'), JSON.stringify({
+      settings: {}, invoices: [], bookings: [],
+      customers: [{ id: 'wheat', name: 'The Wheatsheaf', rewards: ['A pint'], usualNight: 'thu' }],
+    }));
+    for (const route of ['/api/league/running', '/api/league/publish']) {
+      assert.equal((await post(app.base, route, { venueKey: 'the wheatsheaf', on: true }, cookie)).status, 200);
+    }
+    const page = await (await fetch(`${app.base}/api/league`)).json();
+    const wheat = (page.venues || page.leagues || []).find((l) => l.venue === 'The Wheatsheaf');
+    assert.ok(wheat, 'the table is on the page');
+    assert.match(wheat.next, /^Next quiz /, `the next-quiz line is there (${JSON.stringify(wheat.next)})`);
+  }, { prefix: 'league-next' });
+});
