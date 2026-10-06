@@ -1961,9 +1961,18 @@ export class Session {
        * night, and the team they were told at the door is the one they finish
        * on. An empty string means they had none, which is a real answer — a
        * night that is not a team night, or somebody who never picked one.
+       *
+       * EXCEPT ON A RANDOM-TEAMS NIGHT, where "had none" means "arrived when
+       * there was nothing to deal" — during a bingo interlude, which has no
+       * teams. `join()` has just dealt them one exactly as it deals every
+       * honest joiner, and deleting it left them a lone row beside averaged
+       * teams for the rest of the night, with an empty team behind them
+       * (Part C of the September sweeps, #7). Nobody already in a team is
+       * moved: that is the branch above.
        */
+      const dealing = this.engine.state.teamPlay && this.engine.state.teamMode === 'random';
       if (rec.teamId && this.engine.state.teams?.[rec.teamId]) p.teamId = rec.teamId;
-      else if (!rec.teamId) delete p.teamId;
+      else if (!rec.teamId && !dealing) delete p.teamId;
       // Put back after `join()`, like the token: an organiser is in nobody's
       // scoreboard and `join()` has just made them an ordinary contestant.
       if (rec.organiser) p.organiser = true;
