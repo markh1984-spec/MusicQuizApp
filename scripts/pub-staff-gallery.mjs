@@ -284,8 +284,18 @@ try {
   console.log('\nTABBY PLAYS WALKIES');
   await p.reload({ waitUntil: 'load' });
   await wait(1200);
-  check('Tabby\'s page has Play Walkies, and no Blockyard', (await p.locator('#vpWho .vp-play').textContent()).trim() === 'Play Walkies');
-  await p.click('#vpWho .vp-play');
+  // THE GAME IS A CARD ABOVE THE PHOTOS, with a picture of it — a pill in the
+  // account row read as one more setting (the host, 6 October 2026).
+  await p.waitForFunction(() => { const i = document.querySelector('.vp-game-pic'); return i && i.complete && i.naturalWidth > 0; }, null, { timeout: 5000 }).catch(() => {});
+  const card = await p.evaluate(() => {
+    const c = document.querySelector('#vpBody > .vp-game:first-child');
+    const pic = c && c.querySelector('.vp-game-pic');
+    return c && { name: c.querySelector('.vp-game-name').textContent, line: c.querySelector('.vp-game-line').textContent, drawn: pic.complete && pic.naturalWidth > 0, inRow: !!document.querySelector('#vpWho .vp-play') };
+  });
+  check('Tabby\'s page leads with a Walkies card, and no Blockyard', !!card && card.name === 'Walkies' && !card.inRow, JSON.stringify(card));
+  check('the card has a picture of the game, and says whose dog it is', !!card && card.drawn && /Luna/.test(card.line), card && card.line);
+  await shot(p, 'walkies-card.png');
+  await p.click('.vp-game .vp-play');
   await p.waitForSelector('.toy-sheet canvas', { timeout: 10000 }).catch(() => {});
   await wait(700);
   const park = () => p.evaluate(() => {
@@ -323,9 +333,9 @@ try {
   await ev.fill('input[name=password]', 'evie second password');
   await ev.click('.vp-form button');
   await wait(1800);
-  check('Evie\'s page has Play Blockyard', await ev.locator('#vpWho .vp-play').count() === 1);
+  check('Evie\'s page has a Blockyard card', (await ev.locator('.vp-game .vp-game-name').textContent()) === 'Blockyard');
   await shot(ev, 'evie-signed-in.png');
-  await ev.click('#vpWho .vp-play');
+  await ev.click('.vp-game .vp-play');
   await ev.waitForSelector('.toy-sheet canvas', { timeout: 10000 }).catch(() => {});
   await wait(900);
   check('and she is playing as StEvie', (await ev.getAttribute('.toy-sheet', 'aria-label')) === 'Blockyard, playing as StEvie');
@@ -363,7 +373,7 @@ try {
   await wait(400);
   const kept = await ev.evaluate(() => localStorage.getItem('musicquiz.blockyard.evie'));
   check('closing keeps the world on her phone', Boolean(kept && kept.length > 1000));
-  await ev.click('#vpWho .vp-play');
+  await ev.click('.vp-game .vp-play');
   await wait(900);
   const again = await ev.$$eval('.by-slot', (n) => n.length);
   check('and opening it again brings the same world and bag back', again >= 1 && (await picture()).colours > 25);

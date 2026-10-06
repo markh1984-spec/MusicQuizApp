@@ -2,7 +2,6 @@
 
 ## Waiting on Mark
 
-- **Share the games page, if wanted** — private until shared from its Share menu: https://claude.ai/artifact/X7i1vFN2uewVhca5ZSS6Ve (3 Oct 2026).
 - **Send the Story frame artwork** — the square frame and the two logos, so Story exports get a frame of their own (since 2 Oct 2026).
 - **Decide: do phone videos ever go on the big screen?** — "ask me tomorrow" (since 1 Oct 2026).
 - **Yes or no: a "Make the Spotify playlist" button on bingo packs** — offered 2 Oct 2026.
@@ -19,4 +18,4 @@
 
 ## Updated
 
-4 October 2026 — staff games: lives, zombies and named cats.
+6 October 2026 — staff games: StEvie flies, and the game is a card on the staff page.

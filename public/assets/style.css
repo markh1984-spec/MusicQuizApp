@@ -10553,6 +10553,25 @@ body.gallery { padding: 0; }
 .vp-said { margin: 0; min-height: 1.2em; color: var(--ink-dim); }
 .vp-who { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
 .vp-who .gal-save { min-height: 44px; }
+/* THE GAME ON A STAFF LOGIN — its own card above the photos, a picture of the
+   game and one Play. The page's one filled control while it shows; changing
+   the password puts its own up, so the card steps aside (`.vp-pw ~`). */
+.vp-game {
+  display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; align-items: center;
+  max-width: 560px; margin: 0 auto 22px; padding: 12px; border-radius: 14px;
+  background: var(--panel); cursor: pointer;
+  border: 1px solid rgba(255, 79, 163, 0.55);
+  border: 1px solid color-mix(in srgb, var(--hot) 55%, transparent);
+}
+.vp-game-pic { width: 96px; height: 96px; border-radius: 10px; display: block; }
+.vp-game-name { margin: 0; font-size: var(--fs-head); color: var(--ink); }
+.vp-game-line { margin: 4px 0 10px; color: var(--ink-dim); font-size: 14px; line-height: 1.35; }
+.vp-play {
+  min-height: 44px; padding: 0 22px; border: 0; border-radius: 10px;
+  background: linear-gradient(120deg, var(--hot), var(--hot-2));
+  color: #12101a; font: 800 16px/1 var(--ui, system-ui), sans-serif; cursor: pointer;
+}
+.vp-pw ~ .vp-game { display: none; }
 .vp-night { margin: 0 0 14px; }
 .vp-night > summary {
   min-height: 44px; display: flex; align-items: center; cursor: pointer;

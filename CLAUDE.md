@@ -1101,8 +1101,8 @@ RECORDED IN** (`remakeVideo()`).
 
 `staff-games.js` (the one list), `blockyard.js`/`walkies.js`
 (pure rules), a picker per login. **OURS FROM THE NAME DOWN** — no other
-game's names or characters; the app is SOLD (a test reads for the words). **Every Walkies gap can be jumped**, tested. **Scores and worlds
-live on the phone.** **A canvas re-measures on every resize.**
+game's names or characters; the app is SOLD (tested). **Every Walkies gap can be jumped**, tested. **Scores and worlds
+live on the phone.** **A canvas re-measures on every resize.** **A CARD, NOT A PILL.**
 
 ### THE CAMERA SHEET IS ONE FILE AND BOTH CAMERAS OPEN IT — `camera-sheet.js`
 

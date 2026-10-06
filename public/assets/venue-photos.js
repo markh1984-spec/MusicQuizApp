@@ -83,12 +83,25 @@ function show(me) {
     signInForm('Signed out.');
   });
   who.append(pw, out);
-  // A GAME ON THIS LOGIN, when the host has chosen one — `staff-games.js`,
-  // its code fetched only when pressed, so nobody else's page carries a byte.
+  // A GAME ON THIS LOGIN, when the host has chosen one — a CARD above the
+  // photos, with a picture of it, never a pill in the account row (where it
+  // read as one more setting). `staff-games.js`; its code is fetched only
+  // when pressed, so nobody else's page carries a byte of it.
   const game = staffGame(me.game);
+  let card = null;
   if (game) {
-    const play = node(`<button class="gal-save vp-play" type="button">Play ${esc(game.name)}</button>`);
-    play.addEventListener('click', async () => {
+    card = node(`
+      <section class="vp-game">
+        <img class="vp-game-pic" src="${esc(game.picture)}" alt="" width="96" height="96">
+        <div class="vp-game-words">
+          <h2 class="vp-game-name">${esc(game.name)}</h2>
+          <p class="vp-game-line">${esc(game.pitch(me.hero || ''))}</p>
+          <button class="vp-play" type="button">Play</button>
+        </div>
+      </section>`);
+    const play = card.querySelector('.vp-play');
+    // The whole card is the target — a thumb goes for the picture first.
+    card.addEventListener('click', async () => {
       try {
         const mod = await import(game.module);
         mod[game.open]({ who: me.username, hero: me.hero || '' });
@@ -96,12 +109,11 @@ function show(me) {
         play.textContent = 'That would not open — reload and try again';
       }
     });
-    who.prepend(play);
-    who.prepend(who.querySelector('.tiny'));
   }
+  const withGame = (...rest) => body.replaceChildren(...(card ? [card] : []), ...rest);
 
   if (!me.nights.length) {
-    body.replaceChildren(node('<p class="muted">No photos from your nights yet. They appear here the day after a quiz.</p>'));
+    withGame(node('<p class="muted">No photos from your nights yet. They appear here the day after a quiz.</p>'));
     return;
   }
   const list = node('<div class="vp-nights"></div>');
@@ -131,7 +143,7 @@ function show(me) {
     if (i === 0) load();
     list.appendChild(fold);
   });
-  body.replaceChildren(list);
+  withGame(list);
 }
 
 // The pub's frame, fetched once, on the first save — most visits save nothing.
