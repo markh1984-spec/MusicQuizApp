@@ -151,6 +151,23 @@ export function signupAllowed(req) {
 }
 
 /*
+ * AND A CEILING FOR EVERYBODY AT ONCE, because "one place" is a header the
+ * client writes: twelve rotated `x-forwarded-for` addresses made twelve
+ * accounts, each backing up the whole accounts book against the GitHub quota
+ * the gallery and the archive share (Part C of the September sweeps, #3).
+ * **A SAFETY NUMBER** — thirty in an hour is far above an honest day and the
+ * worst it does is make a stranger wait; it touches no join and no night.
+ * Not a captcha and not the email provider's limits, which the route still
+ * says are not worth it before there is a first subscriber.
+ */
+export const SIGNUPS_EVERYWHERE_PER_HOUR = 30;
+const signupsEverywhere = new Map();
+
+export function signupRoomLeft() {
+  return allowedFrom(signupsEverywhere, { headers: { 'x-forwarded-for': 'everybody' } }, SIGNUPS_EVERYWHERE_PER_HOUR, SIGNUP_WINDOW_MS);
+}
+
+/*
  * HOW MANY SIGN-IN ATTEMPTS ONE PLACE MAY MAKE, AND HOW MANY HASHES RUN AT ONCE.
  *
  * **SAFETY NUMBERS, like the one above.** A password check is ~40ms of scrypt,

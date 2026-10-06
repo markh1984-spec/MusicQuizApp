@@ -3,7 +3,7 @@
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
 import { FEATURES, HOUSE, KINDS, PACK_REQUEST_KIND, REFERRAL_BONUS_DAYS, TIERS, TRIAL_DAYS, accounts, can, config, emailConfigured, http, randomBytes, rooms, sendEmail, suggestions, welcomeEmail } from './context.js';
-import { isLocalRequest, readJson, sendJson, signupAllowed } from './plumbing.js';
+import { isLocalRequest, readJson, sendJson, signupAllowed, signupRoomLeft } from './plumbing.js';
 import { brandForRoom, roomIdFor, whoIs } from './identity.js';
 import { allowed } from './gates.js';
 import { pushState } from './views.js';
@@ -142,6 +142,11 @@ export async function writeMeAndSignup(req, res, url, route) {
     if (!signupAllowed(req)) {
       return sendJson(res, 429, {
         error: 'That is a lot of new accounts from one place. Try again shortly.',
+      }), true;
+    }
+    if (!signupRoomLeft()) {
+      return sendJson(res, 429, {
+        error: 'A lot of people are signing up right now. Try again in a few minutes.',
       }), true;
     }
     const body = await readJson(req);
