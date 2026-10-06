@@ -523,6 +523,7 @@ export function venuesSection() {
         <div class="venue-add">
           <input class="venue-new" type="text" maxlength="60" placeholder="The Station Tap, Wokingham">
           <button class="role-make venue-add-go">Add a venue</button>
+          <span class="tiny venue-add-said" role="status"></span>
         </div>`}
       </div>`));
 
@@ -851,9 +852,16 @@ export function venuesSection() {
 
     // Absent behind the Console door — adding a venue is Workshop work.
     const add = el.querySelector('.venue-add-go');
+    el.querySelector('.venue-new')?.addEventListener('input', () => { el.querySelector('.venue-add-said').textContent = ''; });
     add?.addEventListener('click', async () => {
-      const name = el.querySelector('.venue-new').value.trim();
-      if (!name) return;
+      const box = el.querySelector('.venue-new');
+      const name = box.value.trim();
+      // An empty press says what it wants rather than nothing at all.
+      if (!name) {
+        el.querySelector('.venue-add-said').textContent = 'Type the venue\'s name first.';
+        box.focus();
+        return;
+      }
       add.disabled = true;
       try {
         await invoiceApi('/api/invoices/customers', { method: 'POST', body: JSON.stringify({ name, rewards: [] }) });

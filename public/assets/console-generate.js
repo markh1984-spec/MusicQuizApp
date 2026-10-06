@@ -316,7 +316,13 @@ export function introImportPanel(gen) {
   const go = el.querySelector('#introGo');
   const run = async () => {
     const playlistUrl = el.querySelector('#introUrl').value.trim();
-    if (!playlistUrl) return;
+    // AN EMPTY PRESS SAYS WHAT IT WANTS, never nothing at all — a button that
+    // does nothing reads as broken (the button sweep, 3 October 2026).
+    if (!playlistUrl) {
+      el.querySelector('#introStatus').textContent = 'Paste a Spotify playlist link first.';
+      el.querySelector('#introUrl').focus();
+      return;
+    }
     const logEl = el.querySelector('#introLog');
     const status = el.querySelector('#introStatus');
     go.disabled = true;

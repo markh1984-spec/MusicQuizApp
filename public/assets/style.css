@@ -9379,6 +9379,10 @@ body.voucher { display: flex; align-items: center; justify-content: center; min-
 
 .venue-add { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 .venue-add .venue-new { flex: 1 1 220px; min-width: 0; }
+/* The touch floor, on a row a phone presses; the said line takes its own row. */
+.venue-add .venue-add-go, .grp-add-go, .sugg-send { min-height: 44px; }
+.venue-add-said { flex: 1 0 100%; }
+.venue-add-said:empty { display: none; }
 
 /* The demo prize code on My account. Big enough to be scanned off a laptop
    screen across a pub table, which is the whole use. */

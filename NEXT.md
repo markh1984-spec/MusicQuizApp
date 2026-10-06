@@ -13,8 +13,7 @@
 ## Next up
 
 1. "Start this game again" on the quiz control view — agreed; show mock-ups first.
-2. Four quiet controls from the button sweep: Build the round, Add a venue and Send it say nothing when pressed empty; Add a seat is too small to tap.
-3. The stylesheet is 601 KB and over half of it is comments — serve it without them.
+2. The stylesheet is 601 KB and over half of it is comments — serve it without them.
 
 ## Updated
 

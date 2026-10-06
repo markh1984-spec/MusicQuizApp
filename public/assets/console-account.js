@@ -306,7 +306,7 @@ function groupPanel() {
           <input type="email" class="grp-add-email" placeholder="Their email" style="flex:1">
         </div>
         <div class="row" style="margin-top:10px;align-items:center;gap:12px">
-          <button class="go grp-add-go">Add a seat</button>
+          <button class="role-make grp-add-go">Add a seat</button>
           <span class="tiny grp-add-said"></span>
         </div>
       </div>
@@ -1020,7 +1020,12 @@ function suggestionPanel() {
   const said = el.querySelector('.sugg-said');
   el.querySelector('.sugg-send').addEventListener('click', async () => {
     const words = text.value.trim();
-    if (!words) { text.focus(); return; }
+    if (!words) {
+      // An empty press says what it wants rather than only moving the caret.
+      el.querySelector('.sugg-said').textContent = 'Write something in the box first.';
+      text.focus();
+      return;
+    }
     try {
       const res = await fetch(keyed('/api/suggestions'), {
         method: 'POST',
