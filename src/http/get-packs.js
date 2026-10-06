@@ -86,8 +86,9 @@ export async function getPacks(req, res, url, route) {
           inLibrary: fs.existsSync(path.join(config.imageDir, wants)),
         })),
       }), true;
-    } catch (err) {
-      return sendJson(res, 404, { error: err.message }), true;
+    } catch {
+      // Never `err.message`: on a miss it is an ENOENT naming the server's own path (Part C #22).
+      return sendJson(res, 404, { error: 'No pack with that name.' }), true;
     }
   }
   if (route.startsWith('/api/bingo/')) {
