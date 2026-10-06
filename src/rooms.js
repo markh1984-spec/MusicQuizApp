@@ -477,6 +477,7 @@ export class Rooms {
 
   /** Every room that has a game worth knowing about, for the owner's overview. */
   summaries(opts) {
-    return this.all().map((r) => r.summary(opts));
+    // The reserved empty gallery room is nobody's night, so it is never a row.
+    return this.all().filter((r) => r.id !== GALLERY_NONE).map((r) => r.summary(opts));
   }
 }

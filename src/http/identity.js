@@ -466,7 +466,16 @@ export function galleryRoomFrom(q) {
   const want = String(q || '').trim();
   if (!want) return '';
   if (want === HOUSE) return HOUSE;
-  return accounts.find(want) ? want : GALLERY_NONE;
+  /*
+   * THE ROOM THAT ACCOUNT'S NIGHTS ARE IN, never the id itself. The owner's
+   * account holds no room — the owner runs HOUSE — so `?q=<owner id>`, which
+   * the console prints in its own public link, filed a room under it and put
+   * a nameless idle row on the owner's overview (Part C of the September
+   * sweeps, #10). `roomIdFor()` then `galleryRoomOf()`, the answer every
+   * signed-in photo route already gives.
+   */
+  const account = accounts.find(want);
+  return account ? galleryRoomOf(roomIdFor(account)) : GALLERY_NONE;
 }
 
 /** The two colours this room's screens wear. */
