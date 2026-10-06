@@ -525,3 +525,22 @@ test('and the log does not name a route that does not exist', () => {
     "`/api/photos` is not a route this app has — a log line naming it is what "
     + 'made the gap look closed for months');
 });
+
+test('THE EDITOR’S POLL IS QUIET, AND A PUBLISH OR A RULING IS SAID IN WORDS', async () => {
+  /*
+   * The editor asks `/api/playing/<kind>/<id>` every eight seconds — a raw
+   * line each time against a log that keeps 500, so an hour in the editor
+   * pushed everything else out. And publishing photographs, publishing a
+   * league table and ruling on a team name went down as `POST /api/…` — the
+   * acts a subscriber most wants to read about (Part C of the September
+   * sweeps, #23). Quiet for a GET poll only: a WRITE is never quiet.
+   */
+  const { supportQuiet, supportWords } = await import('../src/http/support-log.js');
+  assert.equal(supportQuiet('GET', '/api/playing/quiz/2006'), true, 'the poll is quiet');
+  assert.equal(supportQuiet('POST', '/api/playing/quiz/2006'), false, 'but never a write');
+  assert.equal(supportQuiet('GET', '/api/state'), true, 'the exact list still works');
+  for (const route of ['/api/past-gigs/publish', '/api/league/publish', '/api/league/name', '/api/league/running', '/api/past-gigs/venue', '/api/gallery-photo/2026-09-24/p1.jpg', '/api/gallery-pin/2026-09-24/p1.jpg']) {
+    const said = supportWords('POST', route);
+    assert.doesNotMatch(said, /^POST \//, `${route} is logged as a raw route: ${said}`);
+  }
+});

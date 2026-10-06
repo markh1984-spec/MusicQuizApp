@@ -62,6 +62,21 @@ export const SUPPORT_QUIET = ['/api/state', '/api/stream', '/health', '/api/me',
   // The console's ready light asks this every few seconds while it is open.
   '/api/host/ready'];
 
+/*
+ * AND A POLL WITH AN ID IN IT — the editor asks `/api/playing/<kind>/<id>`
+ * every eight seconds, a raw line each time against a log that keeps 500, so
+ * an hour in the editor pushed everything else out (Part C of the September
+ * sweeps, #23). **A GET only, and named rather than prefixed for any method**:
+ * the exact-match rule above exists because a prefix once covered WRITES.
+ * What the editor OPENED is still logged, off `/api/quiz/<id>`.
+ */
+export const SUPPORT_QUIET_POLLS = ['/api/playing/'];
+
+export function supportQuiet(method, route) {
+  if (SUPPORT_QUIET.includes(route)) return true;
+  return method === 'GET' && SUPPORT_QUIET_POLLS.some((p) => route.startsWith(p));
+}
+
 /**
  * What a support session did, in words a subscriber would use.
  *
@@ -126,6 +141,22 @@ export function supportWords(method, route) {
    * sentence about a thing it could not see, and *"did you look at my
    * photos"* — the question the log exists to answer — was answered wrongly.
    */
+  /*
+   * WHAT GOES PUBLIC, said in words — the acts a subscriber most wants to read
+   * about, and they went down as `POST /api/…` (Part C of the September
+   * sweeps, #23).
+   */
+  if (!read) {
+    if (route === '/api/past-gigs/publish') return 'Changed which of your nights are on your public gallery';
+    if (route === '/api/past-gigs/venue') return 'Said which pub one of your past nights was at';
+    if (route === '/api/past-gigs/posted') return 'Marked one of your nights as posted';
+    if (route === '/api/league/publish') return 'Changed which of your league tables are public';
+    if (route === '/api/league/running') return 'Changed which of your venues run a league';
+    if (route === '/api/league/name') return 'Ruled on a team name in your league';
+    if (route.startsWith('/api/gallery-photo/')) return 'Changed which of your photos are on your public gallery';
+    if (route.startsWith('/api/gallery-pin/')) return 'Changed which of your photos lead your gallery';
+    if (route.startsWith('/api/past-photo/')) return method === 'DELETE' ? 'Deleted one of your photos' : 'Changed one of your photos';
+  }
   if (PHOTO_ROUTES.some((p) => route.startsWith(p))) return 'Looked at your photos';
   if (route === '/api/library') return 'Looked at your pack library';
   return `${method} ${route}`;
@@ -161,7 +192,7 @@ export function supportGuard(req, res, url, route) {
     return false;
   }
 
-  if (!SUPPORT_QUIET.includes(route)) {
+  if (!supportQuiet(req.method, route)) {
     accounts.noteSupport(who.id, supportWords(req.method, route));
   }
   return true;
