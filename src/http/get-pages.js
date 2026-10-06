@@ -2,7 +2,7 @@
  * GET ROUTES — pages. Moved whole out of `handleGet()` in server.js;
  * the body is unchanged, it is one of the functions the shell tries in order.
  */
-import { config, loadAdvertPack, readVenuePath, rooms } from './context.js';
+import { config, loadAdvertPack, readVenuePath, rooms, tidyCode } from './context.js';
 import { onDjHost, send } from './plumbing.js';
 import { offerRoomId, whoIs } from './identity.js';
 import { serveFile } from './static.js';
@@ -97,8 +97,21 @@ export async function getPages(req, res, url, route) {
    */
   if (route.startsWith('/o/')) {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-    const bits = route.slice(3).split('/').map((b) => decodeURIComponent(b));
-    const room = rooms.get(offerRoomId());
+    let bits = route.slice(3).split('/').map((b) => decodeURIComponent(b));
+    /*
+     * THREE PARTS NAME THE ROOM BY ITS JOIN CODE (`roomOffers()` in views.js)
+     * — and a code that is no room is "nothing here", never the house room,
+     * the rule `roomForPhone()` holds. Two parts are the address from before,
+     * answered exactly as they always were.
+     */
+    let room = null;
+    if (bits.length === 3) {
+      room = rooms.byCode(tidyCode(bits[0]));
+      bits = bits.slice(1);
+      if (!room) return send(res, 404, offerPage(null, null), { 'Content-Type': 'text/html; charset=utf-8' }), true;
+    } else {
+      room = rooms.get(offerRoomId());
+    }
     /*
      * `loadAdvertPack` THROWS on a pack that is not there, so this has to
      * catch: a mistyped or retired code is the ordinary case for a public

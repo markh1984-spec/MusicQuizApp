@@ -217,7 +217,29 @@ export function viewFor(client) {
   // Which game this is, so a phone that was handed a code can tell it reached
   // the right one and the projector can print it for latecomers.
   view.joinCode = room.code;
+  if (room.code) roomOffers(view, room.code);
   return view;
+}
+
+/*
+ * AN ADVERT'S QR NAMES ITS ROOM — `/o/<code>/<pack>/<slide>`.
+ *
+ * The engine writes `/o/<pack>/<slide>` and knows nothing of rooms, so the
+ * offer page resolved every scan against the OWNER'S room: a subscriber's QR
+ * scanned to "nothing here", or to the owner's own slide when the ids matched
+ * (Part C of the September sweeps, #4). The room's join code goes in front
+ * here, where the room is known — short, and already public. COPIES, never
+ * the engine's own objects. The house room has no code and keeps the old
+ * two-part address, which the page still answers.
+ */
+function roomOffers(view, code) {
+  const roomed = (slide) => {
+    const link = slide && slide.offerLink;
+    if (!link || !/^\/o\/[^/]+\/[^/]+$/.test(link)) return slide;
+    return { ...slide, offerLink: `/o/${encodeURIComponent(code)}${link.slice(2)}` };
+  };
+  if (view.advert) view.advert = roomed(view.advert);
+  if (Array.isArray(view.breakAdverts)) view.breakAdverts = view.breakAdverts.map(roomed);
 }
 
 /*
