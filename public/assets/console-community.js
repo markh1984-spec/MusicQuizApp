@@ -1064,6 +1064,10 @@ function runningToggle(key, on) {
       ? '<button class="minor danger lg-run-off" type="button">This pub does not run a league</button>'
       : '<button class="minor lg-run-on" type="button">This pub runs a league</button>');
     btn.addEventListener('click', async () => {
+      // SWITCHING OFF A TABLE THAT IS PUBLIC TAKES IT DOWN, and the label never
+      // said so — the one takedown on this door with no question (Part C #32).
+      if (live && (published.venues || []).includes(key)
+        && !confirm('Stop the league at this pub?\n\nIts table comes off the public page too. The scores are kept, and switching it back on brings the table back to the console.')) return;
       btn.disabled = true;
       try {
         const res = await fetch(keyed('/api/league/running'), {

@@ -247,10 +247,8 @@ export function gameSection(kind, title, blurb, packs, editLabel = 'Edit', slot 
           ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) ? `<a class="minor" href="${linkTo('/editor')}">${esc(editLabel)}</a>` : ''}`}
         </div>`}
       </div>
-      ${door === 'console' ? '' : `<div class="row pack-way-row">
-        ${can(FEATURES.CATALOGUE) || can(FEATURES.OWN_PACKS) || can(FEATURES.GENERATE)
-    ? `<p class="tiny pack-way"><a href="${linkTo('/editor')}">Write, buy or edit packs →</a></p>` : ''}
-      </div>`}
+      <!-- "Write, buy or edit packs" went: a third link to the editor on one
+           screen, under "Pack editor", and buying is the Shop's (Part C #36). -->
       <div class="pin-arranger-slot"></div>
       <div class="pack-grid ${dense ? 'dense' : ''}"></div>
 

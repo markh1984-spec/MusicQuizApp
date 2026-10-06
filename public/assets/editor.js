@@ -21,6 +21,8 @@ const saveEl = document.getElementById('save');
 const checkEl = document.getElementById('check');
 const dirtyEl = document.getElementById('dirtyFlag');
 
+// Whether `?new=quiz` has been acted on — up here, above anything that can call `load()`.
+let newAsked = false;
 const hostKey = new URL(location.href).searchParams.get('key')
   || localStorage.getItem('musicquiz.hostkey')
   || '';
@@ -145,6 +147,17 @@ async function loadQuizList(selectId) {
   // something rather than on nothing at all.
   if (wanted && [...pickEl.options].some((o) => o.value === wanted)) pickEl.value = wanted;
   if (pickEl.value) await openPack(pickEl.value);
+  /*
+   * `?new=quiz` IS "WRITE A NEW ONE" — the Workshop bench's button, which
+   * landed on somebody else's pack (Part C #36). Asked once, and taken off the
+   * address so a reload does not ask again.
+   */
+  if (url.searchParams.get('new') === 'quiz' && !newAsked) {
+    newAsked = true;
+    url.searchParams.delete('new');
+    history.replaceState(null, '', url.pathname + url.search);
+    document.getElementById('newQuiz').click();
+  }
 }
 
 async function openPack(value) {

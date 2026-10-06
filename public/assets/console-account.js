@@ -1,6 +1,6 @@
 /** MY ACCOUNT — who you are, what you pay for, the shop, and getting help. */
 
-import { esc, node, postJson, binIcon } from './client.js';
+import { esc, node, postJson } from './client.js';
 import { flightPanel } from './console-flight.js';
 import { generate } from './console-generate.js';
 import { packCard, packPrice, preview } from './console-packs.js';
@@ -332,13 +332,15 @@ function groupPanel() {
       </div>
       <div class="own-row-num">
         ${seat.running ? '<span class="own-live">Running</span>' : ''}
-        <button class="minor danger grp-seat-remove" type="button" aria-label="Remove this seat" title="Remove this seat">${binIcon(16)}</button>
+        <!-- A word, not a bin: a bin deletes, and this deletes nothing (Part C #29). -->
+        <button class="minor danger grp-seat-remove" type="button">Remove seat</button>
       </div>
     </div>`;
 
   const wireRemove = (row) => {
     row.querySelector('.grp-seat-remove').addEventListener('click', async () => {
-      if (!confirm('Remove this seat? Their own account, room and packs are untouched — they simply go back to running on their own tier.')) return;
+      // `removeChild()` leaves them `cancelled`: a subscription of their own, after one grace night.
+      if (!confirm('Remove this seat from your group?\n\nNothing of theirs is deleted — their account, room and packs stay. To keep running nights after one more, they will need a subscription of their own.')) return;
       await fetch(keyed(`/api/group/seats/${encodeURIComponent(row.dataset.id)}`), {
         method: 'DELETE', headers: { 'X-Host-Key': hostKey },
       });

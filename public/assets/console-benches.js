@@ -199,7 +199,7 @@ export function workBench() {
               at once — there is nothing here to keep in step. Read it through, take
               it to Tonight, or write your own from the shelf below.`}</p>`
     : `
-            <a class="go bench-go role-make" href="${esc(linkTo('/editor'))}">Write a new one</a>
+            <a class="go bench-go role-make" href="${esc(linkTo('/editor'))}${linkTo('/editor').includes('?') ? '&' : '?'}new=quiz">Write a new one</a>
             <p class="tiny">Or pick one from the shelf below to edit, rename
               or read something you already have.</p>`}
         </div>

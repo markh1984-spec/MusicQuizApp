@@ -195,7 +195,9 @@ export function bingoActions(s, act, minor) {
    * Back does not undo an archive; this one has no such promise to break, so
    * the honest fix is to say what happens rather than to take the hatch away.
    */
-  const finish = pressTwice(minor, 'finish', 'Finish',
+  // Mid-order it is not "Finish" beside "Continue to the quiz now" — it ENDS
+  // THE NIGHT, and at rest the two read like one job (Part C #34).
+  const finish = pressTwice(minor, 'finish', continuing ? 'End the night' : 'Finish',
     continuing ? 'Press again — ends the whole night' : 'Press again to finish',
     () => act('finish'), true);
   // Nothing left to finish: inert like the button above, never gone.
