@@ -509,8 +509,8 @@ export async function getGallery(req, res, url, route) {
      * call that had been doing the validating by accident, so anybody signed in
      * got there. Filenames are deterministic, so a night is enumerable.
      */
-    if (parts.length !== 2 || !name || !isNightFolder(night)
-      || !(galleryPreview() || await isPublished(galleryRoomId(), night))) {
+    const live = parts.length === 2 && Boolean(name) && isNightFolder(night) && await isPublished(galleryRoomId(), night);
+    if (parts.length !== 2 || !name || !isNightFolder(night) || !(live || galleryPreview())) {
       return sendJson(res, 404, { error: 'Nothing here.' }), true;
     }
     // RE-CHECKED HERE rather than trusted from the listing, because a URL can
@@ -539,7 +539,7 @@ export async function getGallery(req, res, url, route) {
        * their photo gone"* — and a cache is the one place it cannot reach. A
        * day is the existing trade and it stays.
        */
-      'Cache-Control': 'public, max-age=86400, immutable',
+      'Cache-Control': live ? 'public, max-age=86400, immutable' : 'private, no-store', Vary: 'Cookie',   // a draft is private (Part C #24)
       // NOT in a search result. Being findable on Google is speculative
       // marketing value; a stranger's face turning up in a search is a
       // concrete cost, and it lands on the player rather than the business.

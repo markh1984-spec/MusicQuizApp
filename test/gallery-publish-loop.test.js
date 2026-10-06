@@ -353,3 +353,25 @@ test('a photo sent on the owner hat is filed where the gallery looks for it', as
       `filed under the flat house path as well: ${stray.join(', ')}`);
   });
 });
+
+test('A DRAFT PHOTO IS NEVER MARKED FOR A SHARED CACHE — only a published one is', async () => {
+  /*
+   * One URL, two answers by cookie: the owner's preview serves a draft's
+   * photograph, a stranger gets a 404. It went out `public, max-age=86400,
+   * immutable` with no `Vary` either way, so anything in between could keep
+   * the draft for a day and hand it on (Part C of the September sweeps, #24).
+   */
+  await withApp(async (app) => {
+    const cookie = await signedIn(app);
+    fileANight(app.data, app.repo);
+    const draft = await fetch(`${app.base}/gallery-photo/${NIGHT}/p0.jpg`, { headers: { Cookie: cookie } });
+    assert.equal(draft.status, 200, 'the owner preview serves the draft');
+    assert.match(draft.headers.get('cache-control') || '', /private/, 'a draft is private');
+    assert.doesNotMatch(draft.headers.get('cache-control') || '', /public|immutable/);
+
+    assert.equal((await post(app.base, '/api/past-gigs/publish', { night: NIGHT, on: true }, cookie)).status, 200);
+    const live = await fetch(`${app.base}/gallery-photo/${NIGHT}/p0.jpg`);
+    assert.equal(live.status, 200);
+    assert.match(live.headers.get('cache-control') || '', /public/, 'a published photo may still be cached');
+  });
+});
