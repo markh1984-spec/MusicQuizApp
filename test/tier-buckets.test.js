@@ -223,3 +223,36 @@ test('THE LADDER REACHES THE BROWSER — /api/me carries a feature map, not rung
     assert.equal(me.featureTiers[FEATURES.PHOTOS], 'gold', 'the move never reached the payload');
   });
 });
+
+test('A LIVE TRIAL IS NOT HOLDING A FEATURE — it is previewing it, and keeps nothing when one moves up', () => {
+  /*
+   * A live trial runs at the TOP of the ladder (`trialPreview()`), so every
+   * trialist "held" every feature and was grandfathered into it — a Bronze
+   * trialist kept Adverts for ever after paying for Bronze, while a Bronze
+   * payer who never trialled did not (Part C of the September sweeps, #16).
+   * A trialist is judged by the rung they signed up on, as if paying for it.
+   */
+  const accounts = store();
+  const made = accounts.create({ email: 'trial@example.com', password: 'hunter2hunter2', name: 'Trial' });
+  accounts.update(made.id, { tier: 'bronze', status: 'trialing', trialEndsAt: Date.now() + 7 * 864e5 });
+  const trialist = accounts.find(made.id);
+  assert.ok(entitlements(trialist).features.includes(FEATURES.ADVERTS), 'the trial previews Adverts');
+  const silver = subscriber(accounts, 'silver@example.com', 'silver');
+
+  const moved = accounts.setFeatureTier(FEATURES.ADVERTS, 'gold');
+  assert.equal(moved.kept, 1, 'the Silver payer is protected, and only them');
+  assert.ok(!(accounts.find(made.id).kept || []).includes(FEATURES.ADVERTS), 'the trialist keeps nothing');
+  assert.ok(accounts.find(silver.id).kept.includes(FEATURES.ADVERTS));
+
+  // …and after paying for Bronze, Bronze is what they have.
+  accounts.update(made.id, { status: 'active' });
+  assert.ok(!entitlements(accounts.find(made.id)).features.includes(FEATURES.ADVERTS));
+});
+
+test('…but a trialist whose OWN rung holds it keeps it like anybody on that rung', () => {
+  const accounts = store();
+  const made = accounts.create({ email: 'trial2@example.com', password: 'hunter2hunter2', name: 'Trial' });
+  accounts.update(made.id, { tier: 'silver', status: 'trialing', trialEndsAt: Date.now() + 7 * 864e5 });
+  accounts.setFeatureTier(FEATURES.ADVERTS, 'gold');
+  assert.ok(accounts.find(made.id).kept.includes(FEATURES.ADVERTS));
+});

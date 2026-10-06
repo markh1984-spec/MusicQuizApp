@@ -43,7 +43,7 @@ import { nightDay } from './night-day.js';
  * kindness.
  */
 const LAPSED = new Set(['past_due', 'cancelled']);
-import { ROLES, KINDS, DEFAULT_KIND, STATUSES, PAYING, TIERS, DEFAULT_TIER, findTier, tierFor, can, featuresFor, entitlements, FEATURE_TIER, switchable, setTierOverrides, tierOf, tierOverridesNow, trialLengthDays, REFERRAL_DISCOUNT } from '../public/assets/plans.js';
+import { ROLES, KINDS, DEFAULT_KIND, STATUSES, PAYING, TIERS, DEFAULT_TIER, findTier, tierFor, can, featuresFor, entitlements, FEATURE_TIER, switchable, setTierOverrides, tierOf, tierOverridesNow, trialLengthDays, trialPreview, REFERRAL_DISCOUNT } from '../public/assets/plans.js';
 import { findScheme, DEFAULT_SCHEME } from '../public/assets/schemes.js';
 
 /** Work factor for scrypt. Slow enough to matter, fast enough for a login. */
@@ -651,8 +651,20 @@ export class Accounts {
      * It also under-counted: the line the owner reads afterwards said "1
      * account kept it" while five were about to lose it.
      */
+    /*
+     * AND A LIVE TRIAL IS JUDGED BY ITS OWN RUNG, AS IF PAYING FOR IT. A
+     * trial previews the top of the ladder (`trialPreview()`), so every
+     * trialist read as holding every feature and was grandfathered into it —
+     * a Bronze trialist kept Adverts for good after paying for Bronze, where a
+     * Bronze payer who never trialled did not (Part C of the September sweeps,
+     * #16). Previewing is not holding.
+     */
+    const holds = (a) => {
+      const e = this.effective(a);
+      return featuresFor(trialPreview(e) ? { ...e, status: 'active' } : e).includes(feature);
+    };
     const holders = goingUp
-      ? this.data.accounts.filter((a) => a.role !== 'owner' && featuresFor(this.effective(a)).includes(feature))
+      ? this.data.accounts.filter((a) => a.role !== 'owner' && holds(a))
       : [];
 
     const tiers = { ...(this.data.tiers || {}) };
