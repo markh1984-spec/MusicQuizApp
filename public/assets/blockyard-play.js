@@ -23,7 +23,7 @@ import { heart, nameTag } from './toy-tag.js';
 import { rulesCard } from './toy-rules.js';
 import {
   AIR, BLOCKS, BRICK, BEDROCK, COAL, EARTH, GEM, GLASS, GOLD, GRASS, H, LEAVES, LOG, PLANKS, RECIPES, SAND, STONE, W,
-  LIVES, bop, canBop, canReach, dig, get, inReach, jump, load, make, makeWorld, newPlay, overlapsPlayer, place, revive, rng, save, spawn, tick,
+  LIVES, bop, canBop, canReach, dig, get, inReach, jump, load, make, makeWorld, newPlay, overlapsPlayer, place, revive, rng, save, spawn, tick, toggleFly,
 } from './blockyard.js';
 
 const DT = 1 / 60;
@@ -410,6 +410,16 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
     const swing = Math.min(1, Math.max(0, (performance.now() - swingAt) / 280));
     drawMiner(g, (p.x - 0.5) * T - cx, (p.y - MINER_ROWS / 8) * T - cy, T, p.facing, p.y > world.surface[Math.floor(p.x)] + 3, swing >= 1 ? 0 : swing);
     g.globalAlpha = 1;
+    if (p.flying) {
+      // little puffs under her feet: she is flying, not stuck in the air
+      g.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      for (const [dx, ph] of [[-0.22, 0], [0.18, 1.7], [0, 3.1]]) {
+        const bob = (Math.sin(play.t * 9 + ph) + 1) * 0.08;
+        g.beginPath();
+        g.arc((p.x + dx) * T - cx, (p.y + 0.14 + bob) * T - cy, T * 0.17, 0, Math.PI * 2);
+        g.fill();
+      }
+    }
     nameTag(g, hero, p.x * T - cx, (p.y - MINER_ROWS / 8) * T - cy - 4, cssW);
     // words that float up off a hit or a knock — above the name tags, never on them
     const now = performance.now();
@@ -460,7 +470,16 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
     return { x: Math.floor((ev.clientX - rect.left + cx) / T), y: Math.floor((ev.clientY - rect.top + cy) / T) };
   };
   const mark = (c, ok) => { flash = { ...c, ok, until: performance.now() + 350 }; };
-  const walkTo = (c) => { p.targetX = Math.max(0.5, Math.min(W - 0.5, c.x + 0.5)); };
+  const walkTo = (c) => {
+    p.targetX = Math.max(0.5, Math.min(W - 0.5, c.x + 0.5));
+    // Flying, a tapped spot is somewhere to fly to — up and down as well.
+    if (p.flying) p.targetY = Math.max(2, c.y + 1);
+  };
+  const flyToggle = (how) => {
+    const on = toggleFly(p);
+    say(on ? (how === 'key' ? 'Flying! Hold W to rise, S to sink — double-press W to land.' : 'Flying! Tap the sky to fly there — double-tap yourself to land.') : 'Landed.');
+  };
+  let lastSelfTap = 0;
 
   function tap(c) {
     // DOWN, a tap gets StEvie up again: three lives, at the start.
@@ -483,6 +502,13 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
       if (res === 'hit') { say(`Thwacked ${z.name} — once more!`); pop('Thwack!', z.x, z.y - 4.9); return; }
       walkTo(c);
       return;
+    }
+    // A DOUBLE TAP ON STEVIE takes off, and another lands — the phone's double
+    // jump. PICKAXE IN HAND ONLY: with a block, tapping herself builds a pillar
+    // under her feet, and a quick tap-tap-tap up a pillar must stay that.
+    if (tool === 'pick' && overlapsPlayer(p, c.x, c.y)) {
+      if (performance.now() - lastSelfTap < 350) { lastSelfTap = 0; flyToggle('tap'); return; }
+      lastSelfTap = performance.now();
     }
     const id = get(world, c.x, c.y);
     if (tool === 'pick') {
@@ -541,6 +567,7 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
    * Hold S while swinging to dig down, W to dig up. Arrow keys work as well.
    */
   let aim = 0;           // -1 up, 1 down, 0 straight ahead
+  let lastUp = 0;        // when W or space was last pressed — a double press flies
   let lastSwing = 0;
   function swingKey() {
     if (performance.now() - lastSwing < 220) return;   // one chop at a time, held or not
@@ -577,9 +604,22 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
     const key = ev.key.length === 1 ? ev.key.toLowerCase() : ev.key;
     const dir = { ArrowLeft: -1, a: -1, ArrowRight: 1, d: 1 }[key];
     if (dir) { p.held = ev.type === 'keydown' ? dir : (p.held === dir ? 0 : p.held); ev.preventDefault(); }
-    if (key === 's' || key === 'ArrowDown') { aim = ev.type === 'keydown' ? 1 : 0; ev.preventDefault(); }
-    if (key === 'w' || key === 'ArrowUp') aim = ev.type === 'keydown' ? -1 : 0;
-    if (ev.type === 'keydown' && (key === ' ' || key === 'ArrowUp' || key === 'w')) { jump(p); ev.preventDefault(); }
+    const down = ev.type === 'keydown';
+    if (key === 's' || key === 'ArrowDown') {
+      aim = down ? 1 : 0;
+      if (p.flying) p.lift = down ? 1 : (p.lift === 1 ? 0 : p.lift);
+      ev.preventDefault();
+    }
+    if (key === ' ' || key === 'ArrowUp' || key === 'w') {
+      if (key !== ' ') aim = down ? -1 : 0;
+      // A DOUBLE PRESS TAKES OFF, and another lands; a single one jumps.
+      if (down && !ev.repeat) {
+        const now = performance.now();
+        if (now - lastUp < 320) { lastUp = 0; flyToggle('key'); } else { lastUp = now; jump(p); }
+      }
+      if (p.flying) p.lift = down ? -1 : (p.lift === -1 ? 0 : p.lift);
+      ev.preventDefault();
+    }
     if (ev.type === 'keydown' && key === 'j') { swingKey(); ev.preventDefault(); }
   };
   document.addEventListener('keydown', onKey);
@@ -634,6 +674,7 @@ export function openBlockyard({ who = 'you', hero = '' } = {}) {
     'Tap a block near you to dig it. Pick a block from your bag and tap a space to build.',
     'Tap a zombie to hit it with your pickaxe — two hits put it down.',
     'A zombie\'s touch costs one of your three lives. They cannot dig or climb a wall two high.',
+    keyboard ? 'Double-press W to fly — hold W to rise, S to sink — and again to land.' : 'With the pickaxe in hand, double-tap yourself to fly — tap the sky to go there, double-tap again to land.',
     ...(keyboard ? ['Keyboard: A and D to walk, W to jump, J to swing the pickaxe — hold S to dig down, W to dig up.'] : []),
   ]);
   if (sizer) sizer.observe(canvas);

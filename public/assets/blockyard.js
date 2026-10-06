@@ -251,7 +251,24 @@ export function canReach(world, p, x, y) {
 }
 
 export function jump(p) {
-  if (p.onGround) { p.vy = -JUMP; p.onGround = false; }
+  if (p.onGround && !p.flying) { p.vy = -JUMP; p.onGround = false; }
+}
+
+/**
+ * FLYING (the host, 6 October 2026: *"a fly feature when you double jump"*).
+ * A double jump takes off and another lands. In the air there is no gravity:
+ * `p.lift` (-1 up, 1 down, held keys) or `p.targetY` (a tapped spot) moves
+ * her up and down, and walking moves her across as it always did. Blocks
+ * still stop her — flying is through the air, never through the stone — and
+ * the zombies stay on the ground, which is rather the point.
+ */
+const FLY = 5;
+export function toggleFly(p) {
+  p.flying = !p.flying;
+  p.vy = 0;
+  p.lift = 0;
+  p.targetY = null;
+  return p.flying;
 }
 
 /**
@@ -272,12 +289,20 @@ export function step(world, p, dt = 1 / 60) {
   } else p.vx = 0;
 
   // A step up of one block is hopped; two is a wall.
-  if (p.vx !== 0 && p.onGround) {
+  if (p.vx !== 0 && p.onGround && !p.flying) {
     const ahead = Math.sign(p.vx) * 0.12;
     if (boxHits(world, p, ahead, 0) && !boxHits(world, p, ahead, -1.05) && !boxHits(world, p, 0, -1.05)) jump(p);
   }
 
-  p.vy = Math.min(FALL_MAX, p.vy + GRAVITY * dt);
+  if (p.flying) {
+    // In the air: up or down only when asked, hovering otherwise.
+    if (p.lift) { p.vy = p.lift * FLY; p.targetY = null; }
+    else if (p.targetY !== null && p.targetY !== undefined) {
+      const dy = p.targetY - p.y;
+      // The last step lands exactly on the spot, rather than stopping short.
+      if (Math.abs(dy) <= FLY * dt) { p.vy = dy / dt; p.targetY = null; } else p.vy = Math.sign(dy) * FLY;
+    } else p.vy = 0;
+  } else p.vy = Math.min(FALL_MAX, p.vy + GRAVITY * dt);
 
   const x0 = p.x;
   p.x = Math.max(HALF, Math.min(world.w - HALF, p.x + p.vx * dt));
@@ -295,6 +320,7 @@ export function step(world, p, dt = 1 / 60) {
     else p.y = Math.floor(p.y - TALL) + 1 + TALL;
     if (boxHits(world, p)) p.y = y0;
     p.vy = 0;
+    if (p.flying) p.targetY = null;
   }
   p.onGround = boxHits(world, p, 0, 0.02);
   if (p.y > world.h) { p.y = world.h; p.vy = 0; }

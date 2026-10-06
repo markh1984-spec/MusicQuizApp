@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
   AIR, BEDROCK, EARTH, GRASS, H, LIVES, LOG, PLANKS, STONE, W,
-  WAKES_AT, bop, canReach, dig, get, load, make, makeWorld, newPlay, place, revive, save, set, spawn, step, tick,
+  WAKES_AT, bop, canReach, dig, toggleFly, get, load, make, makeWorld, newPlay, place, revive, save, set, spawn, step, tick,
 } from '../public/assets/blockyard.js';
 import { NAMES } from '../public/assets/staff-names.js';
 
@@ -289,4 +289,35 @@ test('the zombies wake a few seconds in, then come for her FAST — but she can 
   run.p.held = 1;
   runFor(run.world, run.p, chase, 3);
   assert.ok(run.p.x - zz.x > 5, `she pulled away (${(run.p.x - zz.x).toFixed(1)} blocks ahead)`);
+});
+
+/* ---- flying ---- */
+
+test('flying: no falling, up and down when asked, never through stone, and landing again', () => {
+  const { world, p } = flat();
+  settle(world, p, 10);
+  assert.equal(toggleFly(p), true);
+  p.lift = -1;
+  settle(world, p, 60);
+  p.lift = 0;
+  const up = p.y;
+  assert.ok(up < 17, `she rose (feet at ${up.toFixed(1)})`);
+  settle(world, p, 120);
+  assert.equal(p.y, up, 'and hovers there, no gravity');
+  p.targetX = p.x + 4;
+  settle(world, p, 120);
+  assert.equal(p.y, up, 'flying across keeps her height');
+  set(world, Math.floor(p.x), Math.floor(up - 2.5), STONE);
+  p.lift = -1;
+  settle(world, p, 60);
+  assert.ok(p.y - 1.8 >= Math.floor(up - 2.5) + 1 - 1e-6, 'a block overhead stops her');
+  p.lift = 0;
+  p.targetY = 20;
+  settle(world, p, 120);
+  assert.equal(p.y, 20, 'she can fly down to the ground and stand there');
+  p.lift = -1; settle(world, p, 30); p.lift = 0;
+  toggleFly(p);
+  settle(world, p, 120);
+  assert.equal(p.y, 20, 'landing: with flying off she falls back to the ground');
+  assert.equal(p.flying, false);
 });
