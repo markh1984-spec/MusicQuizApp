@@ -1406,10 +1406,10 @@ guarded** — it is the stated escape hatch and its confirm names what it costs.
 
 ### ONE PUB IS ONE PUB — `sameVenue()` in `past-gigs.js`
 
-Fourth sighting of the id-versus-typed-name split, so it is a function now. **An
-id beats a name; a name matches a name; an EMPTY venue matches nothing**, or a
-night with no pub lands in every pub's season. The report and the projector's
-league band both compared venue STRINGS, and one did not even trim.
+Fourth sighting of the id-versus-typed-name split. **An id beats a name; a name
+matches by its ADDRESS (`venueNameKey()`: equal slugs, never nested ones); an
+EMPTY venue matches nothing**, or a night with no pub lands in every pub's
+season. The report and the league band compared STRINGS.
 
 ### THE SUPPORT LOG IS MATCHED EXACTLY, NEVER BY PREFIX
 

@@ -108,8 +108,8 @@ to be fixed already**: of the 106 in "Everything else", 75 are fixed and 2 are
 deliberate, leaving **16 still live and 12 partly — one table** in
 **[`docs/sweeps-september-2026.md`](docs/sweeps-september-2026.md)**, under
 *Re-verified 22–23 September*, each with what it costs on a night. **Seven sit
-on the protected surface** and head it. **Part C was re-checked on 6 October
-2026 and is being fixed** — [`its own file`](docs/sweeps-september-2026-part-c.md).
+on the protected surface** and head it. **Part C was re-checked and fixed on
+6 October 2026** — [`its own file`](docs/sweeps-september-2026-part-c.md).
 
 **One is purely a decision and is ready now: `/api/brand?q=` confirms that an
 account id is real.** Recorded in the code as a trade-off, never in `docs/`.

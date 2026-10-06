@@ -15,6 +15,31 @@ Marked **[mine]** where the fault was introduced or half-fixed by the batch of
 fixes made on the night of 5 September. That distinction matters: it is the
 evidence for the working note at the foot of this file.
 
+### AND FIXED THE SAME NIGHT, 6 OCTOBER 2026 — every live and partly one
+
+One fix, one check that failed first, one commit each — the working note's
+rule. **#7** a latecomer keeps their dealt team (`latecomer-keeps-team.test.js`);
+**#4** the advert QR carries the room's join code, `/o/<code>/<pack>/<slide>`
+(`advert-qr-room.test.js`); **#16** a trialist is judged by their own rung when a
+feature moves up (`tier-buckets.test.js`); **#3** a ceiling for everybody,
+`SIGNUPS_EVERYWHERE_PER_HOUR` (`signup-flood.test.js`); **#8** the console and
+`/league` both read every room the owner's nights are in, and **#21** `/league`
+restores the venue book first (`league-both-rooms.test.js`); **#26** a typed
+name compares on its address, `venueNameKey()` (`league.test.js`); **#30** the
+£ asks (`owner-money.mjs`); **#10** an account's `?q=` names its real room and
+the reserved room is never a row (`no-phantom-rooms.test.js`); **#17** the
+owner's view goes through `effective()` (`groups.test.js`); **#24** a draft
+photo is `private, no-store` (`gallery-publish-loop.test.js`); **#9** the league
+cache holds the promise (read, not reproduced); **#22** no route names a path
+on a miss — and five DELETEs did too (`no-paths-in-errors.test.js`); **#23** the
+editor's poll is quiet and publishing is said in words
+(`support-access.test.js`); **#25** every way out of the preview unhooks its
+key; **#34** *End the night* mid-order; **#29** *Remove seat* in words, and a
+confirm that tells the truth; **#32** switching off a public league asks;
+**#36** one editor link on the shelf, and *Write a new one* opens a new quiz;
+**#35** *Big screen in the gaps*; **#27** twin tiles say which round. The UI
+ones were photographed before and after on a real account.
+
 ### RE-VERIFIED 6 OCTOBER 2026 — 15 fixed, 7 partly, 14 still live, NONE on the protected surface
 
 Checked against the code by the `sweeper` agent, each live one reproduced
