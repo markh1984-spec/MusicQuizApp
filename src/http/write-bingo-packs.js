@@ -28,7 +28,8 @@ export async function writeBingoPacks(req, res, url, route) {
       if (githubConfigured()) await deleteFile(`bingo/${id}.json`, `Delete bingo pack: ${id}`);
       return sendJson(res, 200, { ok: true }), true;
     } catch (err) {
-      return sendJson(res, 404, { error: err.message }), true;
+      // A miss's ENOENT names the server's own path — never sent (Part C #22).
+      return sendJson(res, 404, { error: err.code === 'ENOENT' ? 'No bingo pack with that name.' : err.message }), true;
     }
   }
 

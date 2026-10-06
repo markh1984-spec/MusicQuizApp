@@ -51,7 +51,8 @@ export async function writeShows(req, res, url, route) {
       deleteShow(room.paths, decodeURIComponent(route.slice('/api/shows/'.length)));
       return sendJson(res, 200, { ok: true }), true;
     } catch (err) {
-      return sendJson(res, 404, { error: err.message }), true;
+      // A miss's ENOENT names the server's own path — never sent (Part C #22).
+      return sendJson(res, 404, { error: err.code === 'ENOENT' ? 'No show with that name.' : err.message }), true;
     }
   }
 

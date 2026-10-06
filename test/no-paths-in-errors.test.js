@@ -20,3 +20,13 @@ test('asking for the pictures of a pack that is not there says so, and nothing a
     assert.match(error, /pack/i);
   });
 });
+
+test('…and neither does deleting something that is not there', async () => {
+  await withServer(async (base) => {
+    for (const route of ['/api/advert/nope-nope', '/api/bingo/nope-nope', '/api/mine/quiz/nope-nope', '/api/mine/bingo/nope-nope', '/api/shows/nope-nope']) {
+      const res = await fetch(`${base}${route}?key=live-test-key`, { method: 'DELETE' });
+      const body = await res.json().catch(() => ({}));
+      assert.doesNotMatch(String(body.error || ''), /ENOENT|\/|\\\\/, `${route} named a path: ${body.error}`);
+    }
+  });
+});

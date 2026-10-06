@@ -166,7 +166,7 @@ export async function writeOwnPacks(req, res, url, route) {
     try {
       deleteOwn('quiz', id, { config, paths: room.paths });
     } catch (err) {
-      return sendJson(res, 404, { error: err.message }), true;
+      return sendJson(res, 404, { error: err.code === 'ENOENT' ? 'No quiz of yours with that name.' : err.message }), true;
     }
     await removeOwnPackBackup(room, 'quiz', id);
     return sendJson(res, 200, { ok: true }), true;
@@ -200,7 +200,7 @@ export async function writeOwnPacks(req, res, url, route) {
     try {
       deleteOwn('bingo', id, { config, paths: room.paths });
     } catch (err) {
-      return sendJson(res, 404, { error: err.message }), true;
+      return sendJson(res, 404, { error: err.code === 'ENOENT' ? 'No bingo game of yours with that name.' : err.message }), true;
     }
     await removeOwnPackBackup(room, 'bingo', id);
     return sendJson(res, 200, { ok: true }), true;

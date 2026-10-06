@@ -29,7 +29,8 @@ export async function writeEditor(req, res, url, route) {
       try {
         deleteAdvertPack(advertRoom.paths.adverts, id);
       } catch (err) {
-        return sendJson(res, 404, { error: err.message }), true;
+        // A miss's ENOENT names the server's own path — never sent (Part C #22).
+      return sendJson(res, 404, { error: err.code === 'ENOENT' ? 'No advert set with that name.' : err.message }), true;
       }
       await deleteAdvertBackup(advertRoom, id);
       return sendJson(res, 200, { ok: true }), true;
