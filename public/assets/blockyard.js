@@ -389,15 +389,24 @@ export function load(text) {
  * it; two bops puts it down, and it gets up again later, somewhere else.
  */
 export const LIVES = 3;
-const ZOMBIE_PACE = 1.8;
+/*
+ * MORE AGGRESSIVE, ON REQUEST (the host, 6 October 2026: *"they should come to
+ * get you faster"*): two-thirds of her pace, so she can still outrun one but
+ * only just; they spot her from twice as far; out of sight they drift her way
+ * rather than wander anywhere; and they are back up sooner. They WAKE UP a few
+ * seconds in, so a game never opens with a zombie already on top of her.
+ */
+const ZOMBIE_PACE = 3.0;
 const ZOMBIE_HP = 2;
 /** How near before a zombie comes for you, in blocks across and down. */
-const SEES_ACROSS = 12;
-const SEES_DOWN = 6;
+const SEES_ACROSS = 24;
+const SEES_DOWN = 10;
+/** Seconds before the zombies wake and come for her — time to read the rules. */
+export const WAKES_AT = 6;
 /** Seconds of grace after a touch. */
 const SAFE_FOR = 1.5;
 /** Seconds before a bopped zombie gets up again, somewhere else. */
-const BACK_IN = 25;
+const BACK_IN = 15;
 /** Never closer than this to the miner when one gets up. */
 const SPAWN_CLEAR = 18;
 
@@ -444,8 +453,13 @@ export function tick(world, p, play, dt = 1 / 60) {
       if (play.t >= z.backAt) placeZombie(world, z, p, play.r);
       continue;
     }
-    if (Math.abs(p.x - z.x) < SEES_ACROSS && Math.abs(p.y - z.y) < SEES_DOWN) z.targetX = p.x;
-    else if (z.targetX === null && play.r() < 0.01) z.targetX = Math.max(1, Math.min(world.w - 1, z.x + (play.r() - 0.5) * 10));
+    const awake = play.t >= WAKES_AT;
+    if (awake && Math.abs(p.x - z.x) < SEES_ACROSS && Math.abs(p.y - z.y) < SEES_DOWN) z.targetX = p.x;
+    else if (z.targetX === null && play.r() < 0.02) {
+      // Out of sight: awake, it drifts her way; asleep, it only shuffles.
+      const toward = awake ? Math.sign(p.x - z.x || 1) * (2 + play.r() * 6) : (play.r() - 0.5) * 6;
+      z.targetX = Math.max(1, Math.min(world.w - 1, z.x + toward));
+    }
     step(world, z, dt);
     if (!got && play.t >= play.safeUntil && touching(z, p)) {
       got = z;

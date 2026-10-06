@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
   AIR, BEDROCK, EARTH, GRASS, H, LIVES, LOG, PLANKS, STONE, W,
-  bop, canReach, dig, get, load, make, makeWorld, newPlay, place, revive, save, set, spawn, step, tick,
+  WAKES_AT, bop, canReach, dig, get, load, make, makeWorld, newPlay, place, revive, save, set, spawn, step, tick,
 } from '../public/assets/blockyard.js';
 import { NAMES } from '../public/assets/staff-names.js';
 
@@ -162,8 +162,9 @@ test('a zombie that sees the miner comes for them, a touch costs ONE life, and t
   const play = newPlay(world, p, 1);
   for (const z of play.zombies.slice(1)) z.dead = true, z.backAt = Infinity;
   const z = play.zombies[0];
+  play.t = WAKES_AT;
   Object.assign(z, { x: p.x + 6, y: p.y, targetX: null });
-  runFor(world, p, play, 4);
+  for (let i = 0; i < 4 * 60 && play.lives === 3; i++) tick(world, p, play);
   assert.equal(play.lives, 2, 'it walked over and got them once');
   assert.equal(play.hurtBy, z.name);
   // still on top of them during the grace: no second life
@@ -216,6 +217,7 @@ test('a zombie hops one block but a wall of two keeps it out — and it can neve
   const play = newPlay(world, p, 4);
   for (const z of play.zombies.slice(1)) z.dead = true, z.backAt = Infinity;
   const z = play.zombies[0];
+  play.t = WAKES_AT;
   Object.assign(z, { x: p.x + 8, y: p.y });
   set(world, Math.floor(p.x) + 3, 19, STONE);
   set(world, Math.floor(p.x) + 3, 18, STONE);
@@ -261,4 +263,30 @@ test('a block cannot be built round a corner, and a zombie behind stone cannot b
   assert.equal(bop(play, p, z, world), '', 'the wall is in the way');
   set(world, 42, 19, AIR); set(world, 42, 18, AIR);
   assert.equal(bop(play, p, z, world), 'hit', 'with the wall open, she can');
+});
+
+test('the zombies wake a few seconds in, then come for her FAST — but she can still outrun one', () => {
+  const { world, p } = flat();
+  const play = newPlay(world, p, 5);
+  for (const z of play.zombies.slice(1)) z.dead = true, z.backAt = Infinity;
+  const z = play.zombies[0];
+  Object.assign(z, { x: p.x + 20, y: p.y, targetX: null });
+  runFor(world, p, play, WAKES_AT - 1);
+  assert.equal(play.lives, 3, 'asleep at first — nothing comes for her');
+  assert.ok(Math.abs(z.x - p.x) > 14, 'and it has not crossed the field');
+  play.t = WAKES_AT;
+  z.x = p.x + 20;
+  runFor(world, p, play, 7);
+  assert.ok(play.lives < 3, 'awake, it crossed twenty blocks and got her inside seven seconds');
+  // she outruns one: running away from a zombie on her heels, the gap grows
+  const run = flat();
+  const chase = newPlay(run.world, run.p, 6);
+  for (const zz of chase.zombies.slice(1)) zz.dead = true, zz.backAt = Infinity;
+  const zz = chase.zombies[0];
+  chase.t = WAKES_AT;
+  run.p.x = 10.5;
+  Object.assign(zz, { x: 7.5, y: run.p.y, targetX: null });
+  run.p.held = 1;
+  runFor(run.world, run.p, chase, 3);
+  assert.ok(run.p.x - zz.x > 5, `she pulled away (${(run.p.x - zz.x).toFixed(1)} blocks ahead)`);
 });
