@@ -355,12 +355,15 @@ function openCamera() {
        * ordinary night and every phone that has already taken one.
        */
       const owed = gateWanted(state) && !camera;
+      // A bingo round's "next break" is the next win — `photos-at-the-win.mjs`.
+      const bingoRound = Boolean(state && playsACard(state) && state.phase === 'playing');
       return `
         <div style="text-align:center;padding:22px 6px">
           <div style="font-size:44px">${owed ? '\u{1F4F7}' : '\u{1F389}'}</div>
           <b>${upNow ? 'It is on the screen' : 'Sent'}</b>
           <p class="tiny">${opened ? 'Have a look up — and you can ask for a song now.'
-            : upNow ? 'Have a look up.' : 'It goes up on the big screen at the next break.'}</p>
+            : upNow ? 'Have a look up.' : bingoRound ? 'It goes up on the big screen when somebody wins.'
+              : 'It goes up on the big screen at the next break.'}</p>
           ${owed ? `<p class="tiny">That one came out of your camera roll, so the
             night is still waiting on a photo taken now. Open the camera again
             when you are ready.</p>` : ''}

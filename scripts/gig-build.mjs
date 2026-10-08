@@ -123,6 +123,7 @@ export const GUARDS = [
   { name: 'photos-in-a-bucket',    core: false, why: 'the gallery off an object store — and does the bin mean it?' },
   { name: 'star-means-public',     core: false, why: 'does starring publish it, and does the socials post kit work?' },
   { name: 'second-screen',         core: false, why: 'the second display: the code and the photos' },
+  { name: 'photos-at-the-win',     core: false, why: 'a photo sent mid-bingo-round goes up at the win' },
   { name: 'second-laptop',         core: false, why: 'the wall on a spare laptop' },
   { name: 'funniest-photo',        core: false, why: "does the room's vote reach a drink?" },
   { name: 'bar-staff-camera',      core: false, why: 'the camera code — same bucket, and nothing else' },
