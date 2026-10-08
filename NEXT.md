@@ -13,8 +13,9 @@
 
 ## Next up
 
-1. Build "Start this game again" — option A, picked 7 Oct: on the quiz control view's button bar beside Stop, at every phase, press twice; same quiz and settings, scores to 0, phones stay in.
-2. Re-check the ~30 open findings in docs/sweeps-september-2026.md (22–23 Sept table) and fix what is live, the 7 on the protected surface first — offered, not yet asked for.
+1. Rename some buttons on the bingo control view (Start — then call your first track, Undo call, New round, Console, Continue to the bingo now, End the night) — asked for on 8 Oct after a live six-game night, "not until tomorrow"; ask which, then show options.
+2. Build "Start this game again" — option A, picked 7 Oct: on the quiz control view's button bar beside Stop, at every phase, press twice; same quiz and settings, scores to 0, phones stay in.
+3. Re-check the ~30 open findings in docs/sweeps-september-2026.md (22–23 Sept table) and fix what is live, the 7 on the protected surface first — offered, not yet asked for.
 
 ## Updated
 
