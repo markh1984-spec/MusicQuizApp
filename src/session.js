@@ -1475,6 +1475,23 @@ export class Session {
    * read off the part that is ENDING rather than kept a second way, which is
    * also what makes this survive a restart with no extra state to restore.
    */
+  /**
+   * START THIS GAME AGAIN, from where THIS game began. A quiz on its own goes
+   * back to nothing; a later stretch of a running order goes back to the
+   * totals it started with (`carriedScores`), so the earlier rounds are not
+   * lost. **A FILED NIGHT IS FORGOTTEN ON A QUIZ ON ITS OWN**, so the replay
+   * files as its own game rather than overwriting the first one's board. A
+   * running order keeps it: one evening, one row.
+   *
+   * QUIZ ONLY. Bingo has *New cards*, which is its own restart.
+   */
+  startAgain() {
+    if (this.kind !== 'quiz') return { ok: false, reason: 'quiz_only' };
+    const out = this.engine.startAgain(this.runningOrder ? this.carriedScores : null);
+    if (!this.runningOrder) this.engine.state.archivedAs = null;
+    return out;
+  }
+
   advanceOrder() {
     const list = this.runningOrder;
     if (!list || this.orderPos >= list.length - 1) return { ok: false, reason: 'no_more_parts' };
@@ -2083,6 +2100,9 @@ export class Session {
    */
   run(action, body = {}) {
     const shared = {
+      // The control view's *Start this game again* — `startAgain()`. Shared so
+      // a bingo night answers with a reason rather than nothing at all.
+      startAgain: () => this.startAgain(),
       join: () => this.engine.join({ playerId: body.playerId, name: body.name }),
       removePlayer: () => this.engine.removePlayer(String(body.playerId)),
       renamePlayer: () => this.engine.renamePlayer(String(body.playerId), String(body.name)),

@@ -2305,6 +2305,54 @@ export class Engine {
     return true;
   }
 
+  /**
+   * START THIS GAME AGAIN — the same quiz, the same settings and the same
+   * phones, back at the lobby with scores where this game began (option A,
+   * picked 7 October 2026).
+   *
+   * **THE PHONES STAY, AND THAT IS THE REASON IT IS NOT `resetAll()`.** That
+   * builds a fresh state, so every phone would rejoin and retype a name in
+   * front of a room. Here the players, their tokens and their teams are
+   * untouched, and so is everything the launch set: the look, the clock, the
+   * prizes, the winners and the break plan.
+   *
+   * **THE LEDGER IS `resetScores()`'s**, so a drink already won stays won and
+   * is marked `carried`, and the next game pays its own winners.
+   *
+   * `base` is where the scores go back TO: nothing for a quiz on its own, and
+   * for a later stretch of a running order, the totals it began with
+   * (`Session.startAgain()`). That way a restart costs this stretch and never
+   * the rest of the night.
+   */
+  startAgain(base = null) {
+    this.settlePhotoVote();
+    this.resetScores();
+    const s = this.state;
+    for (const p of this.playerList()) {
+      const b = base && typeof base === 'object' ? base[p.id] : null;
+      if (b) {
+        this.setScore(p, Number(b.score) || 0);
+        p.correctCount = Number(b.correctCount) || 0;
+        p.answeredCount = Number(b.answeredCount) || 0;
+        p.totalResponseMs = Number(b.totalResponseMs) || 0;
+      }
+      p.wanderedCount = 0;
+    }
+    s.phase = PHASES.LOBBY;
+    s.roundIndex = 0;
+    s.questionIndex = 0;
+    s.question = null;
+    s.scoreboard = false;
+    s.advert = null;
+    s.photoSlide = false;
+    s.stoppedFrom = null;
+    s.startedAt = null;
+    s.finishedAt = null;
+    s.wandered = {};
+    this.changed();
+    return { ok: true };
+  }
+
   /** Back to an empty lobby, ready for the next room. */
   resetAll() {
     this.state = Engine.freshState(this.quiz);

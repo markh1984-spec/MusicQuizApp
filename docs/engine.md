@@ -25,6 +25,25 @@ place on a night that has not finished — and the filed night is UPDATED at the
 true final, the same path bingo's mis-pressed Finish takes, so one evening is
 one row with the real board on it.
 
+### Start this game again — beside Stop, pressed twice (8 October 2026)
+
+`startAgain()` in `engine.js` and `session.js`, option A of three put up on 7
+October. It goes back to the lobby with the same quiz, the same settings and
+the same phones, so nobody retypes a name. It is not `resetAll()`, which
+builds a fresh state and sends every phone back to the join box.
+
+- **THE LEDGER IS `resetScores()`'s.** A drink already won stays won and is
+  marked `carried`; the replay pays its own winners.
+- **A LATER STRETCH OF A RUNNING ORDER GOES BACK TO THE TOTALS IT BEGAN WITH**
+  (`carriedScores`), not to 0. The button's armed label says which.
+- **ON ITS OWN, THE FILED NIGHT IS FORGOTTEN** (`archivedAs`), so the replay
+  files as its own game rather than overwriting the first board. A running
+  order keeps it: one evening, one row.
+- **QUIZ ONLY.** Bingo's restart is *New cards*. The action is shared, so a
+  bingo night answers `quiz_only` rather than nothing.
+- **PRESSED TWICE**, through the bingo view's `pressTwice()` (now exported),
+  never a native `confirm()`.
+
 ## THREE WAYS TO PLAY A NIGHT — individual, they pick, dealt at random
 
 Asked for on 23 August 2026: *"can we make the phones say 'individual, team

@@ -39,7 +39,7 @@ let showEveryPhone = false;
  */
 const ARM_MS = 5000;
 let armed = { what: '', until: 0 };
-function pressTwice(minor, what, idleLabel, armedLabel, run, danger = false) {
+export function pressTwice(minor, what, idleLabel, armedLabel, run, danger = false) {
   const isArmed = () => armed.what === what && Date.now() < armed.until;
   const b = minor(isArmed() ? armedLabel : idleLabel, () => {
     if (isArmed()) { armed = { what: '', until: 0 }; run(); return; }

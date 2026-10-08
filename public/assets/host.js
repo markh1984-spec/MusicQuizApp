@@ -16,7 +16,7 @@ import {
 } from './client.js';
 import { hostCursor } from './host-cursor.js';
 import { paintScheme } from './schemes.js';
-import { bingoPanels, bingoActions } from './host-bingo.js';
+import { bingoPanels, bingoActions, pressTwice } from './host-bingo.js';
 import { djPanels, djActions, djWhere } from './host-dj.js';
 import { cueOffsetMs, formatOffset } from './cue.js';
 import { phonesAre } from './phones.js';
@@ -1590,6 +1590,20 @@ function buildActions(s) {
     out.push(minor('Stop the quiz', () => {
       if (confirm('Stop here and show the winner? The scores are kept, and Back undoes it.')) act('finish');
     }, true, 'End the night here and go straight to the winner. Every score is kept and Back undoes it.'));
+  }
+  /*
+   * START THIS GAME AGAIN — beside Stop, at every phase after the lobby
+   * (option A, picked 7 October 2026). The same quiz, the same settings, the
+   * same phones; scores back to where this game began. PRESSED TWICE, like
+   * bingo's Finish and New cards, never a native `confirm()`: one stray tap in
+   * the dark must not wipe a room's scores. A later stretch of a running order
+   * goes back to the totals it began with, so the label says that instead.
+   */
+  if (s.phase !== 'lobby') {
+    const fromZero = !order || !order.pos;
+    out.push(pressTwice(minor, 'startAgain', 'Start this game again',
+      fromZero ? 'Press again — scores to 0' : 'Press again — back to the start of this game',
+      () => act('startAgain'), true));
   }
   return out;
 }
