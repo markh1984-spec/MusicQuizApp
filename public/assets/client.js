@@ -575,6 +575,42 @@ export function node(markup) {
 let prizesOpen = false;
 let seenAlready = null;
 
+/**
+ * WHERE A PHONE KEEPS ITS PRIZE CODES — read by the game page and by
+ * `/prizes`, so it lives here: a page module may not be imported by another
+ * page. The reasoning (its own key, never `STORE_KEY`, and the room riding
+ * with the code) is above `rememberVouchers()` in `play.js`.
+ */
+export const WALLET_KEY = 'musicquiz.drinks';
+
+/** Codes this phone has been shown, with the room each was won in. */
+export function heldCodes() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(WALLET_KEY) || '[]');
+    return Array.isArray(raw) ? raw.filter((v) => v && v.code) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveHeld(list) {
+  try {
+    localStorage.setItem(WALLET_KEY, JSON.stringify(list.slice(-20)));
+  } catch {
+    /* private browsing: tonight still works, next week will not. */
+  }
+}
+
+/**
+ * THE ADDRESS THAT FINDS THEM AGAIN — `/prizes`, asked for on 8 October 2026:
+ * *"would be useful if there was a URL they could go to to redeem their
+ * prizes QR codes"*. Under every prize list, so nobody has to remember it was
+ * said on the mic. The host's own address, never a hard-coded one.
+ */
+export function prizesWhere() {
+  return `<p class="tiny prizes-where">Lost this page? Open <b>${esc(location.host)}/prizes</b> on this phone.</p>`;
+}
+
 /** Is the prizes section open? */
 export function prizesShowing() {
   return prizesOpen;

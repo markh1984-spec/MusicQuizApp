@@ -222,6 +222,8 @@ export const RESERVED = [
   'venue-photos', 'venue-photo',
   // Fifteen seconds from a phone (`src/http/videos.js`).
   'past-video', 'venue-video',
+  // A player's prize codes, found again (`public/assets/prizes.js`).
+  'prizes',
 ];
 
 /**

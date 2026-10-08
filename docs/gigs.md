@@ -256,6 +256,25 @@ appear in one `newVoucherCode()` produces. No reserved-word check is needed.
 mark it used by hand. Same rule as everywhere else here: a network problem is
 never the end of it.
 
+### `/prizes` — the codes found again, with no game open (8 October 2026)
+
+*"Would be useful if there was a URL they could go to to redeem their prizes
+QR codes."* `public/assets/prizes.js`, `/prizes`, `prizesWhere()` under every
+prize list.
+
+- **NOTHING NEW IS STORED AND THERE IS NO LOGIN.** It reads the same pocket
+  the game page writes (`WALLET_KEY`, moved into `client.js` so both pages
+  read one definition) and asks `/api/voucher` about each code, by the game
+  page's rules: a 404 drops a code, a FAILED request keeps it, a collected
+  prize is forgotten.
+- **SAME PHONE, SAME BROWSER — and the page says so.** A wiped browser has
+  nothing to show, and offering a login that does not exist would be worse
+  than saying that plainly.
+- **THE ADDRESS IS NAMED UNDER THE LIST IT REPEATS**, from `location.host`,
+  never written out. A feature nobody finds is a feature nobody has.
+  `drinks-keep.mjs` opens it on the phone that won and again after the bar
+  scans.
+
 ## The diary — a calendar that maintains itself
 
 `public/assets/diary.js`, the **Coming up** half of the **Gigs** tab, and

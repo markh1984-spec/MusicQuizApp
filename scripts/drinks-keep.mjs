@@ -221,6 +221,23 @@ try {
     opened.words.includes('house red'), JSON.stringify(opened.words));
   if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/d2-open.png` });
 
+  /*
+   * AND THE ADDRESS THAT FINDS IT AGAIN — `/prizes`, on the same phone, with
+   * no game open at all (8 October 2026). Named under the list it repeats.
+   */
+  check('THE PRIZE LIST NAMES THE ADDRESS THAT FINDS IT AGAIN',
+    /\/prizes/.test(opened.words), JSON.stringify(opened.words.slice(-80)));
+  await page.goto(`${BASE}/prizes`, { waitUntil: 'domcontentloaded' });
+  await wait(2000);
+  const pocket = await page.evaluate(() => ({
+    qr: [...document.querySelectorAll('.win-qr')].filter((q) => q.getBoundingClientRect().height > 0 && q.complete && q.naturalWidth > 0).length,
+    words: document.querySelector('#card')?.innerText.replace(/\s+/g, ' ').trim() || '',
+  }));
+  check('/prizes SHOWS THE CODE, WITH NO GAME OPEN', pocket.qr === 1 && pocket.words.includes(code),
+    JSON.stringify(pocket));
+  check('and the prize they won', pocket.words.includes('house red'), JSON.stringify(pocket.words.slice(0, 120)));
+  if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/d2b-prizes-page.png` });
+
   /* ------------------------------------------------------ the bar takes it */
   const take = await fetch(`${BASE}/api/voucher/redeem`, {
     method: 'POST',
@@ -251,6 +268,13 @@ try {
   check('A COLLECTED PRIZE DISAPPEARS FROM THE PHONE',
     after.section === false && after.cards === 0, JSON.stringify(after));
   if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/d3-collected.png` });
+  await page.goto(`${BASE}/prizes`, { waitUntil: 'domcontentloaded' });
+  await wait(2000);
+  const emptied = await page.evaluate(() => ({
+    qr: document.querySelectorAll('.win-qr').length,
+    words: document.querySelector('#card')?.innerText.replace(/\s+/g, ' ').trim() || '',
+  }));
+  check('AND FROM /prizes', emptied.qr === 0 && /No prizes on this phone/.test(emptied.words), JSON.stringify(emptied));
 
 } finally {
   await browser.close();

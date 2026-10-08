@@ -12221,6 +12221,13 @@ input, textarea, [contenteditable] { caret-color: var(--hot); }
 /* Inside the section the card has already been framed once — a second border
    and a second ground is a box in a box. */
 .prizes-body .win-card { border: 0; background: none; padding: 0; }
+/* `/prizes` — the address that finds them again, named under every list. */
+.prizes-where { text-align: center; color: var(--ink-dim); margin: 0; }
+.prizes-where b { color: var(--ink); }
+/* The page itself: one heading, the cards stacked with room between them. */
+.prizes-page .card { display: grid; gap: 16px; padding: 16px; max-width: 480px; margin: 0 auto; }
+.prizes-title { font-size: var(--fs-title); margin: 4px 0 0; }
+.prizes-none { font-size: var(--fs-body); color: var(--ink); margin: 0; }
 
 /* ------------------------------------------------- a tab's own label
  *

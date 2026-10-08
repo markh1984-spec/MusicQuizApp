@@ -80,6 +80,9 @@ export async function getPages(req, res, url, route) {
   // Where a scanned voucher lands. Open, like /play and the sign-in page:
   // it hands out nothing on its own, the code in the address has to be right.
   if (route === '/v') return serveFile(res, config.publicDir, 'voucher.html'), true;
+  // The prize codes this phone has won, found again — `public/assets/prizes.js`.
+  // Open like `/v`: it reads the phone's own pocket and holds nothing itself.
+  if (route === '/prizes') return serveFile(res, config.publicDir, 'prizes.html'), true;
   // The photo gallery. Open, like /play and /v — it is for the people who were
   // in the room, who have no account and never will. It shows only nights the
   // quizmaster has published; see src/gallery.js.

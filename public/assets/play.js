@@ -16,6 +16,7 @@
 import {
   esc, node, ServerClock, Live, postJson, brandMark, brandWords, roomCode, roomParam,
   rememberRoom, noteDrinks, prizesShowing, prizesHead, wireDrinks, playsACard, photoVoteCard, wirePhotoVote, roundSaid, ordinal,
+  heldCodes, saveHeld, prizesWhere,
 } from './client.js';
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { buildDj, djKey, djHead } from './play-dj.js';
@@ -1754,25 +1755,8 @@ function voucherCard(s) {
  * it was won in — somebody who plays at two pubs would otherwise have each
  * one's code refused by the other and quietly dropped.
  */
-const WALLET_KEY = 'musicquiz.drinks';
-
-/** Codes this phone has been shown, with the room each was won in. */
-function heldCodes() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(WALLET_KEY) || '[]');
-    return Array.isArray(raw) ? raw.filter((v) => v && v.code) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveHeld(list) {
-  try {
-    localStorage.setItem(WALLET_KEY, JSON.stringify(list.slice(-20)));
-  } catch {
-    /* private browsing: tonight still works, next week will not. */
-  }
-}
+// `WALLET_KEY`, `heldCodes()` and `saveHeld()` live in `client.js` now, because
+// `/prizes` reads the same pocket.
 
 /**
  * Write down anything the server just showed us.
@@ -1859,7 +1843,7 @@ function wallet(s, skip = '') {
   if (!list.length) return '';
   return `<div class="prizes${prizesShowing() ? '' : ' shut'}">
       ${prizesHead(list.length)}
-      <div class="prizes-body">${list.map((v) => voucherCardFor(v)).join('')}</div>
+      <div class="prizes-body">${list.map((v) => voucherCardFor(v)).join('')}${prizesWhere()}</div>
     </div>`;
 }
 

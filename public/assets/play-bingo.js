@@ -6,7 +6,7 @@
  * refresh into a better card. Reloading just fetches the same one back.
  */
 
-import { esc, node, postJson, roomCode, prizesShowing, prizesHead, photoVoteCard, wirePhotoVote } from './client.js';
+import { esc, node, postJson, roomCode, prizesShowing, prizesHead, prizesWhere, photoVoteCard, wirePhotoVote } from './client.js';
 import { arcadeCard, wireArcade } from './lobby-menu.js';
 import { isRed } from './deck.js';
 import { cardFaceSvg, ensureCardArt } from './card-face.js';
@@ -236,7 +236,7 @@ function paintVouchers(root, s) {
   const prizes = list.length
     ? [node(`<div class="prizes${prizesShowing() ? '' : ' shut'}">
         ${prizesHead(list.length)}
-        <div class="prizes-body">${list.map((v) => voucherCard(v)).join('')}</div>
+        <div class="prizes-body">${list.map((v) => voucherCard(v)).join('')}${prizesWhere()}</div>
       </div>`)]
     : [];
   box.replaceChildren(...banner, ...prizes);
