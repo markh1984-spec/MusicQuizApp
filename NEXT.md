@@ -15,8 +15,9 @@
 
 1. Rename some buttons on the bingo control view (Start — then call your first track, Undo call, New round, Console, Continue to the bingo now, End the night) — asked for on 8 Oct after a live six-game night, "not until tomorrow"; ask which, then show options.
 2. Two phones completed a bingo on the same call (8 Oct, live) and the host could not see how to pay one — the near-miss list's ✓ reads like something to act on and is not. Read his flight record from that night first, then make a tie easy to settle.
-3. Build "Start this game again" — option A, picked 7 Oct: on the quiz control view's button bar beside Stop, at every phase, press twice; same quiz and settings, scores to 0, phones stay in.
-4. Re-check the ~30 open findings in docs/sweeps-september-2026.md (22–23 Sept table) and fix what is live, the 7 on the protected surface first — offered, not yet asked for.
+3. A simple web address a player can open to get their prize QR codes back (asked 8 Oct, live). The codes already live on their phone and show under My prizes on the game page; this is a short, memorable door to that, e.g. quizporium.co.uk/prizes.
+4. Build "Start this game again" — option A, picked 7 Oct: on the quiz control view's button bar beside Stop, at every phase, press twice; same quiz and settings, scores to 0, phones stay in.
+5. Re-check the ~30 open findings in docs/sweeps-september-2026.md (22–23 Sept table) and fix what is live, the 7 on the protected surface first — offered, not yet asked for.
 
 ## Updated
 
