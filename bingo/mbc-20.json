@@ -1,0 +1,133 @@
+{
+  "id": "mbc-20",
+  "kind": "bingo",
+  "title": "MBC 20 - 2010s",
+  "subtitle": "The 2010s, one chorus each",
+  "cardRows": 3,
+  "cardCols": 3,
+  "cardSize": 3,
+  "notes": "Written 8 October 2026 for a six-game night. Chorus-first picks: every one lands on its own within a few seconds to a half-listening room. Checked against every other pack in bingo/ — no song here is in any of them, and no artist is in this pack twice. Written as one forty-song list and split every other song into two twenty-song games for a 3×3 card, so each half spans the whole list. Its other half is MBC 21.",
+  "createdAt": "2026-10-08T00:00:00.000Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Shut Up and Dance",
+      "artist": "WALK THE MOON",
+      "year": 2014
+    },
+    {
+      "id": "t2",
+      "title": "Party Rock Anthem",
+      "artist": "LMFAO",
+      "year": 2011
+    },
+    {
+      "id": "t3",
+      "title": "Call Me Maybe",
+      "artist": "Carly Rae Jepsen",
+      "year": 2012
+    },
+    {
+      "id": "t4",
+      "title": "Titanium",
+      "artist": "David Guetta, Sia",
+      "year": 2011
+    },
+    {
+      "id": "t5",
+      "title": "Domino",
+      "artist": "Jessie J",
+      "year": 2011
+    },
+    {
+      "id": "t6",
+      "title": "Firework",
+      "artist": "Katy Perry",
+      "year": 2010
+    },
+    {
+      "id": "t7",
+      "title": "Castle on the Hill",
+      "artist": "Ed Sheeran",
+      "year": 2017
+    },
+    {
+      "id": "t8",
+      "title": "We Are Young",
+      "artist": "fun., Janelle Monáe",
+      "year": 2012
+    },
+    {
+      "id": "t9",
+      "title": "Dynamite",
+      "artist": "Taio Cruz",
+      "year": 2010
+    },
+    {
+      "id": "t10",
+      "title": "Thrift Shop",
+      "artist": "Macklemore & Ryan Lewis",
+      "year": 2012
+    },
+    {
+      "id": "t11",
+      "title": "Happier",
+      "artist": "Marshmello, Bastille",
+      "year": 2018
+    },
+    {
+      "id": "t12",
+      "title": "Locked Out of Heaven",
+      "artist": "Bruno Mars",
+      "year": 2012
+    },
+    {
+      "id": "t13",
+      "title": "Hold Back the River",
+      "artist": "James Bay",
+      "year": 2015
+    },
+    {
+      "id": "t14",
+      "title": "Take Me to Church",
+      "artist": "Hozier",
+      "year": 2014
+    },
+    {
+      "id": "t15",
+      "title": "Problem",
+      "artist": "Ariana Grande, Iggy Azalea",
+      "year": 2014
+    },
+    {
+      "id": "t16",
+      "title": "Steal My Girl",
+      "artist": "One Direction",
+      "year": 2014
+    },
+    {
+      "id": "t17",
+      "title": "Something Just Like This",
+      "artist": "The Chainsmokers, Coldplay",
+      "year": 2017
+    },
+    {
+      "id": "t18",
+      "title": "bad guy",
+      "artist": "Billie Eilish",
+      "year": 2019
+    },
+    {
+      "id": "t19",
+      "title": "Want to Want Me",
+      "artist": "Jason Derulo",
+      "year": 2015
+    },
+    {
+      "id": "t20",
+      "title": "Royals",
+      "artist": "Lorde",
+      "year": 2013
+    }
+  ]
+}

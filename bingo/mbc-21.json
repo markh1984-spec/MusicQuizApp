@@ -1,0 +1,133 @@
+{
+  "id": "mbc-21",
+  "kind": "bingo",
+  "title": "MBC 21 - 2010s",
+  "subtitle": "The 2010s, one chorus each",
+  "cardRows": 3,
+  "cardCols": 3,
+  "cardSize": 3,
+  "notes": "Written 8 October 2026 for a six-game night. Chorus-first picks: every one lands on its own within a few seconds to a half-listening room. Checked against every other pack in bingo/ — no song here is in any of them, and no artist is in this pack twice. Written as one forty-song list and split every other song into two twenty-song games for a 3×3 card, so each half spans the whole list. Its other half is MBC 20.",
+  "createdAt": "2026-10-08T00:00:00.000Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Moves Like Jagger",
+      "artist": "Maroon 5, Christina Aguilera",
+      "year": 2011
+    },
+    {
+      "id": "t2",
+      "title": "Gangnam Style",
+      "artist": "PSY",
+      "year": 2012
+    },
+    {
+      "id": "t3",
+      "title": "Wake Me Up",
+      "artist": "Avicii",
+      "year": 2013
+    },
+    {
+      "id": "t4",
+      "title": "Don't You Worry Child",
+      "artist": "Swedish House Mafia",
+      "year": 2012
+    },
+    {
+      "id": "t5",
+      "title": "Starships",
+      "artist": "Nicki Minaj",
+      "year": 2012
+    },
+    {
+      "id": "t6",
+      "title": "Shake It Off",
+      "artist": "Taylor Swift",
+      "year": 2014
+    },
+    {
+      "id": "t7",
+      "title": "Somebody That I Used to Know",
+      "artist": "Gotye, Kimbra",
+      "year": 2011
+    },
+    {
+      "id": "t8",
+      "title": "Timber",
+      "artist": "Pitbull, Kesha",
+      "year": 2013
+    },
+    {
+      "id": "t9",
+      "title": "Lean On",
+      "artist": "Major Lazer, DJ Snake, MØ",
+      "year": 2015
+    },
+    {
+      "id": "t10",
+      "title": "Paradise",
+      "artist": "George Ezra",
+      "year": 2018
+    },
+    {
+      "id": "t11",
+      "title": "Love Me Like You Do",
+      "artist": "Ellie Goulding",
+      "year": 2015
+    },
+    {
+      "id": "t12",
+      "title": "What Do You Mean?",
+      "artist": "Justin Bieber",
+      "year": 2015
+    },
+    {
+      "id": "t13",
+      "title": "Little Talks",
+      "artist": "Of Monsters and Men",
+      "year": 2012
+    },
+    {
+      "id": "t14",
+      "title": "Diamonds",
+      "artist": "Rihanna",
+      "year": 2012
+    },
+    {
+      "id": "t15",
+      "title": "Despacito",
+      "artist": "Luis Fonsi, Daddy Yankee",
+      "year": 2017
+    },
+    {
+      "id": "t16",
+      "title": "Too Close",
+      "artist": "Alex Clare",
+      "year": 2012
+    },
+    {
+      "id": "t17",
+      "title": "Old Town Road",
+      "artist": "Lil Nas X",
+      "year": 2019
+    },
+    {
+      "id": "t18",
+      "title": "Someone You Loved",
+      "artist": "Lewis Capaldi",
+      "year": 2019
+    },
+    {
+      "id": "t19",
+      "title": "Hideaway",
+      "artist": "Kiesza",
+      "year": 2014
+    },
+    {
+      "id": "t20",
+      "title": "Pumped Up Kicks",
+      "artist": "Foster the People",
+      "year": 2011
+    }
+  ]
+}

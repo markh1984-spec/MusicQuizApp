@@ -1,10 +1,10 @@
 {
   "id": "mbc-3b",
   "kind": "bingo",
-  "title": "MBC 3b - 2000s",
+  "title": "MBC 11 - 2000s",
   "subtitle": "42 tracks. Tap them as you hear them.",
   "cardSize": 3,
-  "notes": "Imported from a pasted track list. Split from MBC 3 on 1 October 2026 into two ~20-song games for a 3×3 card: every other song, so each half spans the whole pack and no artist is in a half twice. Its other half is MBC 3a.",
+  "notes": "Imported from a pasted track list. Split from MBC 3 on 1 October 2026 into two ~20-song games for a 3×3 card: every other song, so each half spans the whole pack and no artist is in a half twice. Its other half is MBC 10. Renumbered 8 October 2026 from MBC 3b to MBC 11: every twenty-song game has its own number, clear of the MBC 7, 8 and 9 playlists already in Spotify. The id stays mbc-3b, so the pubs that have heard it still know.",
   "createdAt": "2026-08-06T03:05:30.989Z",
   "tracks": [
     {

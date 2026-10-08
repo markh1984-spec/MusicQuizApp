@@ -1,0 +1,133 @@
+{
+  "id": "mbc-22",
+  "kind": "bingo",
+  "title": "MBC 22 - 2000s & 2010s Singalongs",
+  "subtitle": "Two decades of the songs a room sings back",
+  "cardRows": 3,
+  "cardCols": 3,
+  "cardSize": 3,
+  "notes": "Written 8 October 2026 for a six-game night. Chorus-first picks: every one lands on its own within a few seconds to a half-listening room. Checked against every other pack in bingo/ — no song here is in any of them, and no artist is in this pack twice. Written as one forty-song list and split every other song into two twenty-song games for a 3×3 card, so each half spans the whole list. Its other half is MBC 23.",
+  "createdAt": "2026-10-08T00:00:00.000Z",
+  "tracks": [
+    {
+      "id": "t1",
+      "title": "Hey There Delilah",
+      "artist": "Plain White T's",
+      "year": 2007
+    },
+    {
+      "id": "t2",
+      "title": "She Moves in Her Own Way",
+      "artist": "The Kooks",
+      "year": 2006
+    },
+    {
+      "id": "t3",
+      "title": "Hallelujah",
+      "artist": "Alexandra Burke",
+      "year": 2008
+    },
+    {
+      "id": "t4",
+      "title": "The Man Who Can't Be Moved",
+      "artist": "The Script",
+      "year": 2008
+    },
+    {
+      "id": "t5",
+      "title": "Let Her Go",
+      "artist": "Passenger",
+      "year": 2013
+    },
+    {
+      "id": "t6",
+      "title": "Raise Your Glass",
+      "artist": "P!nk",
+      "year": 2010
+    },
+    {
+      "id": "t7",
+      "title": "I Will Wait",
+      "artist": "Mumford & Sons",
+      "year": 2012
+    },
+    {
+      "id": "t8",
+      "title": "Chasing Pavements",
+      "artist": "Adele",
+      "year": 2008
+    },
+    {
+      "id": "t9",
+      "title": "You Raise Me Up",
+      "artist": "Westlife",
+      "year": 2005
+    },
+    {
+      "id": "t10",
+      "title": "Black and Gold",
+      "artist": "Sam Sparro",
+      "year": 2008
+    },
+    {
+      "id": "t11",
+      "title": "Stacy's Mom",
+      "artist": "Fountains of Wayne",
+      "year": 2003
+    },
+    {
+      "id": "t12",
+      "title": "I Don't Feel Like Dancin'",
+      "artist": "Scissor Sisters",
+      "year": 2006
+    },
+    {
+      "id": "t13",
+      "title": "Fight for This Love",
+      "artist": "Cheryl Cole",
+      "year": 2009
+    },
+    {
+      "id": "t14",
+      "title": "Holiday",
+      "artist": "Dizzee Rascal",
+      "year": 2009
+    },
+    {
+      "id": "t15",
+      "title": "Gotta Get Thru This",
+      "artist": "Daniel Bedingfield",
+      "year": 2001
+    },
+    {
+      "id": "t16",
+      "title": "Evergreen",
+      "artist": "Will Young",
+      "year": 2002
+    },
+    {
+      "id": "t17",
+      "title": "Dancing in the Moonlight",
+      "artist": "Toploader",
+      "year": 2000
+    },
+    {
+      "id": "t18",
+      "title": "Rockstar",
+      "artist": "Nickelback",
+      "year": 2007
+    },
+    {
+      "id": "t19",
+      "title": "Ghost",
+      "artist": "Ella Henderson",
+      "year": 2014
+    },
+    {
+      "id": "t20",
+      "title": "New Shoes",
+      "artist": "Paolo Nutini",
+      "year": 2006
+    }
+  ]
+}

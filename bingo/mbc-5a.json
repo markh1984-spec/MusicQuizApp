@@ -1,12 +1,12 @@
 {
   "id": "mbc-5a",
   "kind": "bingo",
-  "title": "MBC 5a - UK Chart",
+  "title": "MBC 14 - UK Chart",
   "subtitle": "40 tracks. Tap them as you hear them.",
   "cardRows": 3,
   "cardCols": 3,
   "cardSize": 3,
-  "notes": "UK chart pop, R&B and dance, 2000-2019. Written to sit beside MBC 3 and MBC 4 without repeating either. Split from MBC 5 on 1 October 2026 into two ~20-song games for a 3×3 card: every other song, so each half spans the whole pack and no artist is in a half twice. Its other half is MBC 5b.",
+  "notes": "UK chart pop, R&B and dance, 2000-2019. Written to sit beside MBC 3 and MBC 4 without repeating either. Split from MBC 5 on 1 October 2026 into two ~20-song games for a 3×3 card: every other song, so each half spans the whole pack and no artist is in a half twice. Its other half is MBC 15. Renumbered 8 October 2026 from MBC 5a to MBC 14: every twenty-song game has its own number, clear of the MBC 7, 8 and 9 playlists already in Spotify. The id stays mbc-5a, so the pubs that have heard it still know.",
   "createdAt": "2026-09-17T18:00:00.000Z",
   "tracks": [
     {

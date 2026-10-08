@@ -1,12 +1,12 @@
 {
   "id": "mbc-4b",
   "kind": "bingo",
-  "title": "MBC 4b - 2010s",
+  "title": "MBC 13 - 2010s",
   "subtitle": "42 tracks. Tap them as you hear them.",
   "cardRows": 3,
   "cardCols": 3,
   "cardSize": 3,
-  "notes": "Imported from a pasted track list. Split from MBC 4 on 1 October 2026 into two ~20-song games for a 3×3 card: every other song, so each half spans the whole pack and no artist is in a half twice. Its other half is MBC 4a.",
+  "notes": "Imported from a pasted track list. Split from MBC 4 on 1 October 2026 into two ~20-song games for a 3×3 card: every other song, so each half spans the whole pack and no artist is in a half twice. Its other half is MBC 12. Renumbered 8 October 2026 from MBC 4b to MBC 13: every twenty-song game has its own number, clear of the MBC 7, 8 and 9 playlists already in Spotify. The id stays mbc-4b, so the pubs that have heard it still know.",
   "createdAt": "2026-08-06T03:07:21.408Z",
   "tracks": [
     {
