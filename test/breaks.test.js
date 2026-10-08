@@ -52,13 +52,14 @@ function engineOn(extra = {}) {
 
 // ---------------------------------------------------------------- the model
 
-test('a default plan is exactly what the app did before breaks existed', () => {
+test('a default plan: every gap offers the camera AND a game (8 October 2026)', () => {
   // If this ever changes, every night launched without touching the strip
-  // changes with it — which is what the payload guard is there to catch.
+  // changes with it — which is what the payload guard is there to catch. It
+  // changed once, on purpose: a round board used to offer the camera alone.
   assert.deepEqual(DEFAULTS.lobby, { phone: PHONE.BOTH, screen: SCREEN.SCORES });
-  assert.deepEqual(DEFAULTS.round, { phone: PHONE.PHOTOS, screen: SCREEN.SCORES });
-  assert.equal(offersGame(DEFAULTS.lobby), true, 'the lobby offered a game');
-  assert.equal(offersGame(DEFAULTS.round), false, 'a round board did not');
+  assert.deepEqual(DEFAULTS.round, { phone: PHONE.BOTH, screen: SCREEN.SCORES });
+  assert.equal(offersGame(DEFAULTS.lobby), true, 'the lobby offers a game');
+  assert.equal(offersGame(DEFAULTS.round), true, 'and so does a round board now');
   assert.equal(offersPhotos(DEFAULTS.round), true, 'a round board offered the camera');
   assert.equal(showsScores(DEFAULTS.round), true, 'and put the scores up');
   assert.equal(showsAdverts(DEFAULTS.round), false, 'and no slides, ever, unasked');
@@ -137,14 +138,14 @@ test('THE PAYLOAD GUARD: a seed reaches a phone only at a break that offers a ga
   // The lobby, unconfigured — a seed, exactly as before.
   assert.ok(engine.playerView(player.id).gameSeed, 'the lobby still hands out a seed');
 
-  // A round board, unconfigured — no seed, exactly as before.
+  // A round board, unconfigured — a seed, since every gap offers a game.
   engine.state.phase = 'round_board';
-  assert.equal(engine.playerView(player.id).gameSeed, undefined,
-    'a round board does not, unless it was asked to');
+  assert.ok(engine.playerView(player.id).gameSeed, 'a round board hands one out by default');
 
-  // A round board that WAS asked to.
-  engine.state.breakPlan = { 'p0:r0': { phone: PHONE.BOTH, screen: SCREEN.SCORES } };
-  assert.ok(engine.playerView(player.id).gameSeed, 'and does when the break says so');
+  // A round board whose dial was turned to the camera alone.
+  engine.state.breakPlan = { 'p0:r0': { phone: PHONE.PHOTOS, screen: SCREEN.SCORES } };
+  assert.equal(engine.playerView(player.id).gameSeed, undefined, 'and not when the host said photos only');
+  engine.state.breakPlan = {};
 
   // A question, whatever the plan says. This is the one that matters.
   engine.state.phase = 'question';
@@ -159,10 +160,10 @@ test('THE SCORE GUARD: a score is refused anywhere that is not a break offering 
   assert.equal(engine.arcadeScore(player.id, 40).ok, true, 'the lobby takes one');
 
   engine.state.phase = 'round_board';
-  assert.equal(engine.arcadeScore(player.id, 90).ok, false, 'a plain round board does not');
+  assert.equal(engine.arcadeScore(player.id, 90).ok, true, 'a plain round board takes one now');
 
-  engine.state.breakPlan = { 'p0:r0': { phone: PHONE.BOTH, screen: SCREEN.SCORES } };
-  assert.equal(engine.arcadeScore(player.id, 90).ok, true, 'one that offers a game does');
+  engine.state.breakPlan = { 'p0:r0': { phone: PHONE.PHOTOS, screen: SCREEN.SCORES } };
+  assert.equal(engine.arcadeScore(player.id, 95).ok, false, 'one set to photos only does not');
 
   engine.state.phase = 'question';
   const refused = engine.arcadeScore(player.id, 5000);

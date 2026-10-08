@@ -143,12 +143,21 @@ export function renderBingo(s, me) {
       ${photoVoteCard(s)}
       <div class="bingo-status" id="bingoStatus"></div>
       <div class="bingo-vouchers" id="bingoVouchers"></div>
+      <!-- THE GAP AFTER A ROUND'S LAST PRIZE OFFERS A GAME (8 October 2026) —
+           the server says when (breakIdNow()), never this page. Under the
+           code, so a drink just won stays on top. -->
+      ${s.gap && s.gap.game ? `<div class="wait-menu bingo-gap-game">${arcadeCard(s)}</div>` : ''}
       <div class="bingo-grid ${hand ? 'hand' : `cols-${cols}${strip}`}"
         ${hand ? '' : `style="grid-template-columns:repeat(${cols}, 1fr)"`} id="bingoGrid"></div>
       <button class="btn bingo-call" id="bingoCall" disabled>BINGO!</button>
     </div>`);
 
   el.querySelector('#bingoCall').addEventListener('click', () => claim(el));
+  if (s.gap && s.gap.game) {
+    wireArcade(el, s, (score, game = '') => postJson('/api/arcade', {
+      playerId: me.id, token: me.token, joinCode: roomCode(), score, game,
+    }).catch(() => {}));
+  }
   wirePhotoVote(el, votePoster(me));
   paintCard(el, s, me);
   paintVouchers(el, s);

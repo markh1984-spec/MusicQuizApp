@@ -25,7 +25,8 @@ test('every break offers the camera, whatever its plan says', () => {
 
 test('the dial has two answers: photos, or photos and the game', () => {
   assert.deepEqual(Object.values(PHONE).sort(), ['both', 'photos']);
-  assert.equal(DEFAULTS.round.phone, 'photos');
+  // Every gap offers both by default since 8 October 2026 — the host's call.
+  assert.equal(DEFAULTS.round.phone, 'both');
   assert.equal(DEFAULTS.lobby.phone, 'both');
 });
 
@@ -33,8 +34,8 @@ test('an old plan saying "game only" keeps its game AND gets the camera; "nothin
   assert.equal(breakFor({ 'p0:r1': { phone: 'game' } }, 'p0:r1').phone, 'both');
   assert.equal(offersGame(breakFor({ 'p0:r1': { phone: 'game' } }, 'p0:r1')), true);
   assert.equal(breakFor({ 'p0:r1': { phone: 'nothing' } }, 'p0:r1').phone, 'photos');
-  assert.deepEqual(cleanPlan({ 'p0:r1': { phone: 'game', screen: 'scores' } }), { 'p0:r1': { phone: 'both', screen: 'scores' } });
-  assert.deepEqual(cleanPlan({ 'p0:r1': { phone: 'nothing', screen: 'scores' } }), {}, 'photos is the round default, so it is not stored');
+  assert.deepEqual(cleanPlan({ 'p0:r1': { phone: 'game', screen: 'scores' } }), {}, 'both is the round default, so it is not stored');
+  assert.deepEqual(cleanPlan({ 'p0:r1': { phone: 'nothing', screen: 'scores' } }), { 'p0:r1': { phone: 'photos', screen: 'scores' } });
 });
 
 test('a running game with an old "nothing" break still hands the phones the camera', () => {

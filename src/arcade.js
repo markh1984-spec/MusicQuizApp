@@ -15,6 +15,7 @@
  */
 
 import { lobbyGameById } from '../public/assets/lobby-games.js';
+import { gapGame } from '../public/assets/break-parts.js';
 
 /** Nothing on a projector is worth a bigger number than this. */
 export const MAX_ARCADE_SCORE = 99999;
@@ -127,6 +128,11 @@ export function arcadeBoard(state, top = 5) {
  * design of this app is a room looking UP.
  */
 export function arcadeFields(state) {
+  // A gap after the doors plays one game, picked for it — `gapGame()`.
+  const picked = gapGame(state, state.lobbyGames);
+  if (picked) {
+    return { gameSeed: state.gameSeed || 1, lobbyGame: picked, lobbySound: state.lobbySound !== false };
+  }
   return {
     gameSeed: state.gameSeed || 1,
     /*

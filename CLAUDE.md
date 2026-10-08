@@ -1772,9 +1772,9 @@ well."*
   part and round indexes already on the state, so a restart resolves it for
   free. **A stored list of five breaks would be wrong the first time a round was
   switched off**, silently, with every row still looking real.
-- **THE PLAN IS SPARSE AND EMPTY MEANS "AS IT WAS".** `DEFAULTS` reproduces the
-  app as it behaved before breaks existed — `cleanPlan()` drops anything that
-  only restates one, which is what lets `pub-unchanged.mjs` say IDENTICAL.
+- **THE PLAN IS SPARSE; EMPTY MEANS `DEFAULTS`** — camera AND a game at every
+  gap (8 Oct), a bingo round's last prize a gap too, one game PICKED per gap
+  after the doors (`gapGame()`). `cleanPlan()` drops what restates a default.
 - **THE THREE LOBBY-ONLY GUARDS CHANGED SUBJECT, THEY DID NOT GO AWAY** — they
   read "a break that offers a game" now, and outside a break `breakNow()` is
   null, so **a question is as unreachable as it ever was**. **The arcade BOARD

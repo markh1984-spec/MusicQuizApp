@@ -118,7 +118,8 @@ export function phonesAre(s) {
       // The one moment a bingo phone has something to do besides its card —
       // and the bingo lobby offers the game alone, never a photo row.
       case 'lobby': return have.game ? 'Waiting — a game' : 'Waiting';
-      case 'won': return withOffers('Someone has called it', { photos: have.photos });
+      // The gap after a round's last prize offers the game too — `breakIdNow()`.
+      case 'won': return withOffers('Someone has called it', have);
       case 'finished': return withOffers('The final card', { photos: have.photos });
       default: return withOffers('Their bingo card', { photos: have.photos });
     }

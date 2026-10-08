@@ -672,6 +672,9 @@ restates a default, so a night nobody configured has a genuinely empty plan
 and sends byte-for-byte what it always sent. That is what lets
 `pub-unchanged.mjs` still say IDENTICAL with only `gap` allowed through.
 
+**On 8 October 2026 the round default CHANGED, on purpose**: every gap offers
+the camera AND a game. See [`gap-dial.md`](gap-dial.md).
+
 ### The three guards changed SUBJECT; they did not go away
 
 The lobby game was kept out of a live quiz three ways, and two had to move

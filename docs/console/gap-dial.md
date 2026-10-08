@@ -45,3 +45,24 @@ click to cycle… in the bottom right of the pack ONCE LOADED."*
   a drop target. **The big screen is not offered there**: the lobby's projector
   is the join code and nothing may dim it.
 
+## Every gap offers the camera AND a game (8 October 2026)
+
+The round default changed on purpose — *"every time
+there needs to be a photo upload and a random game."* A round board now
+offers the camera AND a game, like the lobby. Three things came with it:
+
+- **A bingo round whose last prize has gone is a gap** (`p0:b2`,
+  `breakIdNow()`), the wait for *New cards* or *Continue*. A win with more
+  prizes to come is not: the card is still live. It has no dial on the
+  console and always takes the round default.
+- **A gap after the doors plays ONE game picked for it** (`gapGame()`), from
+  the tier's list when the room was given a choice. It is seeded from the
+  night and the gap, so every phone gets the same game, and it steps along
+  the list so two gaps in a row differ. A game the host pinned stays pinned,
+  and the doors keep the chooser: that is the long wait.
+- **A dial turned to 📷 is stored now**, because it differs from the default.
+  An older plan that said photos only was never stored, so those nights get
+  the game as well. That was the intent.
+
+That night's `pub-unchanged` against the live app reports the round board's
+`gap` and the arcade fields as changed. That is this change, reviewed.

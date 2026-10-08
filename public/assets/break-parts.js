@@ -120,16 +120,19 @@ export const SCREEN = {
 };
 
 /**
- * WHAT A BREAK DOES WHEN NOBODY HAS SAID — and these values are not a taste
- * decision, they are the app's existing behaviour written down.
+ * WHAT A BREAK DOES WHEN NOBODY HAS SAID.
  *
- * The lobby offered a game and the camera; a round board offered the camera
- * and put the scores up. Change either of these and every night that was
- * launched without touching the plan changes with it.
+ * These were the app's old behaviour written down: the lobby offered a game
+ * and the camera, and a round board only the camera. **On 8 October 2026 the
+ * round board changed to match the lobby**, which was the host's call: *"every
+ * time there needs to be a photo upload and a random game."* So every gap now
+ * offers both unless the host turns the game off on that gap's dial, and
+ * every night launched without touching the plan changed with it. That was
+ * the point.
  */
 export const DEFAULTS = {
   lobby: { phone: PHONE.BOTH, screen: SCREEN.SCORES },
-  round: { phone: PHONE.PHOTOS, screen: SCREEN.SCORES },
+  round: { phone: PHONE.BOTH, screen: SCREEN.SCORES },
 };
 
 /** Whether a break's phone setting offers the arcade game. */
@@ -173,7 +176,41 @@ export function breakIdNow(state) {
   const part = Number(state.orderPos) || 0;
   if (state.phase === 'lobby') return `p${part}:lobby`;
   if (state.phase === 'round_board') return `p${part}:r${Number(state.roundIndex) || 0}`;
+  /*
+   * A BINGO ROUND THAT HAS PAID ITS LAST PRIZE IS A GAP TOO (8 October 2026)
+   * — the wait for *New cards*, or for *Continue*. A win with more prizes to
+   * come is NOT one: the card is still being played and a game on top of it
+   * would cost somebody the next song. It is not on the console's dials
+   * (`breakSlots()` is unchanged), so it always takes the round default.
+   */
+  if (state.phase === 'won' && Array.isArray(state.stages) && state.stages.length
+    && (Number(state.stageIndex) || 0) >= state.stages.length - 1) {
+    return `p${part}:b${Number(state.round) || 1}`;
+  }
   return '';
+}
+
+/**
+ * WHICH GAME A GAP AFTER THE DOORS PLAYS — one picked at random, the same on
+ * every phone (8 October 2026, *"a photo upload and a random game"*).
+ *
+ * Only when the room was given a choice (`lobbyGames`, the tier's list): a
+ * game the host PINNED for the night stays pinned, and the doors keep the
+ * chooser — that is the long wait, where choosing is half the fun. A gap is a
+ * few minutes, so the phone goes straight into a game. **Seeded from the
+ * night and the gap, never `Math.random()`**: every phone and every reload must
+ * land on the same one, and it steps along the list so two gaps in a row do
+ * not repeat.
+ */
+export function gapGame(state, list) {
+  const id = breakIdNow(state);
+  const games = Array.isArray(list) ? list : [];
+  if (!id || id.endsWith(':lobby') || games.length < 2) return '';
+  const [part, at] = id.slice(1).split(':');
+  let h = (Number(state.gameSeed) || 1) >>> 0;
+  for (const ch of `p${part}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  const step = Number(at.slice(1)) || 0;
+  return games[(h + step) % games.length];
 }
 
 /**
