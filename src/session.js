@@ -2221,6 +2221,8 @@ export class Session {
       // A BINGO press waits on the host now — `approveClaim()` pays, `rejectClaim()` sits them out.
       approveClaim: () => this.engine.approveClaim(String(body.playerId || '')),
       rejectClaim: () => this.engine.rejectClaim(String(body.playerId || '')),
+      // A complete card paid from its row, or a tie on the prize that just went — `payCard()`.
+      payCard: () => this.engine.payCard(String(body.playerId || '')),
       /*
        * AND ONLY CARD BINGO DEALS.
        *

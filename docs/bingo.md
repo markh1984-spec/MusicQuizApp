@@ -492,6 +492,36 @@ now asks the phone's own payload across the boundary, and
 `scripts/bingo-round-ends.mjs` drives a real bingo-then-quiz order and checks
 a QR is still **painted** after the part changes.
 
+### A ✓ is paid from its row, and a tie is paid in full (8 October 2026)
+
+`payCard()` / `tieCandidates()` / `payTie()` in `src/bingo.js`, the **Give
+prize** button on a ✓ row and the tie in `winPanel()` in `host-bingo.js`.
+Off a six-game night: two phones finished together, both rows read ✓, and
+*"two people won the prize at the same time and I wasn't able to assign it."*
+A ✓ only said the card was complete. Nobody had pressed BINGO, so there was
+no Approve to press, and an approved claim told every other one the prize
+had gone.
+
+- **ONE ACTION, THREE ANSWERS.** Waiting on the host, it IS the approval.
+  With the prize still open, it pays exactly as an approved press does. With
+  the prize just gone, it is a tie.
+- **A TIE IS A CARD ALREADY COMPLETE WHEN THE PRIZE WENT.** `lastWin.calls`
+  records how many songs had been played at that moment, and the check runs
+  against those calls only. A card finished on a later song is not offered.
+  Nobody holding a prize, nobody sat out, and it is gone once *Play on* moves
+  the stage.
+- **BOTH ARE PAID THE SAME DRINK, AND THE NEXT PRIZE DOES NOT MOVE.** The tie
+  takes the first winner's `prizeIndex`, and `prizesGiven` is not touched. A
+  tie shares one place; it does not use up the next. That matches the quiz,
+  where a tie for first is paid in full.
+- **OFFERED IN THE WIN PANEL**, where the host is already looking. **Give
+  prize on the ROW is only for a card nobody is waiting on him about.** A
+  waiting one has its own Approve, and two controls for one decision is one
+  too many.
+- **THE PROJECTOR'S WIN CARD IS KEYED ON THE NAME TOO.** It was keyed on the
+  win's time alone, so a tie paid while the projector showed the first name
+  would never have reached the room. That is rule 9's fingerprint trap again.
+
 ---
 
 # CARD BINGO — a separate game on this same engine

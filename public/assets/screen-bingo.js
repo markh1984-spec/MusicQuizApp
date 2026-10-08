@@ -17,7 +17,9 @@ import { arcadeSlot, paintArcadeBoard } from './lobby-board.js';
 const cards = {
   lobby: { key: () => 'bingo:lobby', render: renderLobby, update: updateLobby },
   playing: { key: (s) => `bingo:playing:${s.round}`, render: renderPlaying, update: updatePlaying },
-  won: { key: (s) => `bingo:won:${s.win && s.win.at}`, render: renderWin },
+  // Everything the card DRAWS (rule 9): a tie paid after the win changes the
+  // NAME and nothing else, so a key of the win's time alone kept one name up.
+  won: { key: (s) => `bingo:won:${s.win && s.win.at}:${s.win && s.win.name}:${s.win && s.win.pattern}:${s.falseAlarm ? s.falseAlarm.at : ''}`, render: renderWin },
   finished: { key: () => 'bingo:finished', render: renderFinished },
 };
 

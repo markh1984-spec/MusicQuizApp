@@ -115,8 +115,15 @@ export function bingoActions(s, act, minor) {
    */
   const order = s.runningOrder;
   const continuing = Boolean(order && order.nextKind);
-  const continueWord = continuing && order.nextKind === 'cards' ? 'the card bingo'
-    : continuing && order.nextKind === 'bingo' ? 'the bingo' : 'the quiz';
+  /*
+   * A BINGO GAME FOLLOWED BY ANOTHER IS "THE NEXT GAME", never "the bingo" —
+   * off a six-game night, 8 October 2026: *"Continue to the bingo"* on a
+   * screen that was already the bingo named nothing.
+   */
+  const continueWord = !continuing ? ''
+    : order.nextKind === (s.game || 'bingo') ? 'the next game'
+    : order.nextKind === 'cards' ? 'the card bingo'
+    : order.nextKind === 'bingo' ? 'the music bingo' : 'the quiz';
 
   /*
    * AND THE TWO LABELS THAT NAME A TRACK HAVE TO NAME A CARD ON A DECK NIGHT.
@@ -159,15 +166,17 @@ export function bingoActions(s, act, minor) {
   });
   out.push(primary);
 
-  out.push(minor('Undo call', () => act('undoCall')));
+  // Says WHAT comes off: the last song (or card) called, nothing else.
+  out.push(minor(deck ? 'Undo last card' : 'Undo last song', () => act('undoCall')));
   // Same control as the quiz's own — see the comment beside it in host.js.
   // One shared popover, one shared `setRewards` action, for either game.
   // The quiz's control is "Change the prizes" and this was "Prizes" — one
   // word, and on this page the bar could already read *Prizes 5* on the
   // launch bar. The same control wears the same label on both engines.
   out.push(minor('Change the prizes', () => rewardsEditorPopover(s, act)));
-  out.push(pressTwice(minor, 'newRound', 'New round', 'Press again — new cards', () => act('newRound')));
-  out.push(minor('Console', () => { location.href = '/console' + location.search; }));
+  // "New round" did not say what it does; the cards are the thing that changes.
+  out.push(pressTwice(minor, 'newRound', 'New cards', 'Press again — new cards for everyone', () => act('newRound')));
+  out.push(minor('Back to console', () => { location.href = '/console' + location.search; }));
   /*
    * A DELIBERATE WAY TO MOVE ON EARLY — before the last configured prize is
    * won — without it being mistaken for ending the whole night.
@@ -181,10 +190,11 @@ export function bingoActions(s, act, minor) {
    * left: the case this button was actually built for.
    */
   const earlyExit = continuing && !(s.win && stage.last);
+  // Pressed twice like New cards and Finish — this was the last native
+  // `confirm()` on the view, the one a browser can silently answer No to.
   if (earlyExit) {
-    out.push(minor(`Continue to ${continueWord} now`, () => {
-      if (confirm(`Move on to ${continueWord} now? Nobody's scores or cards are lost.`)) act('advanceOrder');
-    }));
+    out.push(pressTwice(minor, 'advanceOrder', `Continue to ${continueWord} now`,
+      'Press again — move on now', () => act('advanceOrder')));
   }
   /*
    * FINISH STAYS — it is a deliberate escape hatch and `CLAUDE.md` says so.
@@ -208,14 +218,31 @@ export function bingoActions(s, act, minor) {
 }
 
 function winPanel(s, act) {
-  return node(`
+  const names = [s.win.name, ...(s.win.ties || []).map((t) => t.name)];
+  /*
+   * A TIE IS OFFERED HERE, where the host is already looking — `payCard()`.
+   * Only cards already complete when the prize went (`tieCandidates()`), so
+   * "at the same time" is the app's own reading, and the press is his.
+   */
+  const ties = Array.isArray(s.tieCandidates) ? s.tieCandidates : [];
+  const el = node(`
     <div class="panel secret">
       <h3>${esc(((s.win.label || 'a line').charAt(0).toUpperCase() + (s.win.label || 'a line').slice(1)))} — approved</h3>
       <div class="cue">
-        <div class="track">${esc(s.win.name)}</div>
-        <div class="from">Their QR code is on their phone now.</div>
+        <div class="track">${esc(names.join(' & '))}</div>
+        <div class="from">${names.length > 1 ? 'A tie — both QR codes are on their phones now.' : 'Their QR code is on their phone now.'}</div>
       </div>
+      ${ties.map((t) => `
+        <div class="claim-wait" data-id="${esc(t.playerId)}">
+          <div class="claim-who">${esc(t.name)}</div>
+          <div class="claim-check good">Also complete when the prize went — a tie?</div>
+          <div class="row"><button class="approve" data-act="tie">Give ${esc(t.name)} the prize too</button></div>
+        </div>`).join('')}
     </div>`);
+  el.querySelectorAll('[data-act="tie"]').forEach((btn) => {
+    btn.addEventListener('click', () => act('payCard', { playerId: btn.closest('.claim-wait').dataset.id }));
+  });
+  return el;
 }
 
 /**
@@ -412,12 +439,12 @@ function playersPanel(s, act) {
    */
   const stalled = s.noneLeft
     ? `<div class="tiny" style="color:var(--gold);padding:6px 0">Everybody has a prize, so
-      nobody can claim this one — one each per round. Start a new round to open it up, or
+      nobody can claim this one — one each per round. Press New cards to open it up, or
       finish here.</div>`
     : s.stalled
       ? `<div class="tiny" style="color:var(--gold);padding:6px 0">${s.stalled} completed ${
         s.stalled === 1 ? 'card' : 'cards'} cannot claim this one — already holding a prize, or sat
-        out. Play on, start a new round, or hand it over yourself.</div>`
+        out. Play on, press New cards, or hand it over yourself.</div>`
       : '';
   /*
    * DO NOT PLAY THESE — the songs that would take somebody who has already
@@ -471,6 +498,7 @@ function playersPanel(s, act) {
             ${p.falseCalls ? `<span class="off">${p.falseCalls} false</span>` : ''}
             ${noteMark(s, p)}
             <span class="sc ${p.away === 1 ? 'hot' : ''}">${p.away === 0 ? '✓' : p.away}</span>
+            ${p.payable ? `<button class="approve" data-act="pay" title="Their card is complete — give them the prize and send their code">Give prize</button>` : ''}
             <button data-act="sit" title="${p.satOut
     ? 'Let this phone claim again this round'
     : 'They did not call it — take this phone out of the running for this round'}">${p.satOut ? 'Back in' : 'Sit out'}</button>
@@ -513,6 +541,13 @@ function playersPanel(s, act) {
    * prize three tracks later off whoever genuinely just completed; this takes
    * that phone out of THIS round, and the same button puts it back.
    */
+  /*
+   * A ✓ NOBODY PRESSED BINGO ON — a phone face down on the table. Paid from
+   * the row, through the same `payCard()` the tie uses (8 October 2026).
+   */
+  el.querySelectorAll('[data-act="pay"]').forEach((btn) => {
+    btn.addEventListener('click', () => act('payCard', { playerId: btn.closest('.prow').dataset.id }));
+  });
   el.querySelectorAll('[data-act="sit"]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const row = btn.closest('.prow');
@@ -543,6 +578,7 @@ function claimsPanel(s) {
    * about them and is simply untrue of somebody beaten to a stage by a beat.
    */
   c.rejected ? 'turned down'
+    : c.tie ? 'GOOD — a tie, paid'
     : c.tooLate ? 'GOOD — just missed it'
     : (c.standDown ? 'GOOD — had one' : (c.approved || c.valid ? 'GOOD' : 'false alarm'))}</span>
           </div>`).join('')}

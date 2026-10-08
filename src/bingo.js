@@ -629,14 +629,16 @@ export class BingoGame {
   }
 
   /** A square counts only if the player marked it AND you actually played it. */
-  isGood(player, index) {
-    return Boolean(player.marks[index]) && this.state.called.includes(player.card[index]);
+  // `called` defaults to everything played; `tieCandidates()` passes the calls
+  // as they stood when a prize went, to ask who else had it complete then.
+  isGood(player, index, called = this.state.called) {
+    return Boolean(player.marks[index]) && called.includes(player.card[index]);
   }
 
   /** Which of the card's lines this player has completed, as indexes into lines(). */
-  completedLines(player) {
+  completedLines(player, called = this.state.called) {
     const out = [];
-    this.lines().forEach((line, i) => { if (line.every((sq) => this.isGood(player, sq))) out.push(i); });
+    this.lines().forEach((line, i) => { if (line.every((sq) => this.isGood(player, sq, called))) out.push(i); });
     return out;
   }
 
@@ -644,13 +646,13 @@ export class BingoGame {
    * Check a card against the prize currently being played for. Returns the
    * winning squares so the big screen can show exactly which line it was.
    */
-  evaluate(player) {
+  evaluate(player, called = this.state.called) {
     const stage = this.stage;
     if (stage === TARGETS.FULL) {
       const all = player.card.map((_, i) => i);
-      return all.every((i) => this.isGood(player, i)) ? { won: true, pattern: 'full', squares: all } : { won: false };
+      return all.every((i) => this.isGood(player, i, called)) ? { won: true, pattern: 'full', squares: all } : { won: false };
     }
-    const done = this.completedLines(player);
+    const done = this.completedLines(player, called);
     if (done.length < stage) return { won: false };
     // Every square in the lines they have finished, so the projector can light
     // up the whole win rather than an arbitrary one of them.
@@ -761,6 +763,106 @@ export class BingoGame {
     }
     this.changed();
     return { ok: true, valid: false, reason: 'not_yet' };
+  }
+
+  /**
+   * THE HOST PAYS A CARD FROM ITS ROW — and pays a tie.
+   *
+   * Off a live night, 8 October 2026: two phones finished on the same song,
+   * both rows read ✓, and *"two people won the prize at the same time and I
+   * wasn't able to assign it by the looks of things?"* A ✓ only ever said the
+   * card was complete. A phone that never pressed BINGO had no way to be
+   * paid, and once one claim was approved the other was told the prize had
+   * gone.
+   *
+   * ONE ACTION, three answers, all the host's:
+   * - **waiting on him** — it is the approval it always was;
+   * - **the prize still open** — paid exactly as an approved press is, so a
+   *   phone face down on the table is not a drink lost;
+   * - **the prize just went** — a TIE, offered only for a card that was
+   *   ALREADY complete when it went (`tieCandidates()`). Both shouted on the
+   *   same song, so both are paid the same drink. **A tie shares the prize;
+   *   it does not use up the next one** — `prizesGiven` does not move.
+   *
+   * The card must check out: a doubtful one is what the waiting panel's
+   * Approve is for, with the app's doubt written beside it.
+   */
+  payCard(playerId) {
+    const p = this.state.players[playerId];
+    if (!p) return { ok: false, reason: 'unknown_player' };
+    if (this.state.phase !== BINGO_PHASES.PLAYING && this.state.phase !== BINGO_PHASES.WON) {
+      return { ok: false, reason: 'not_playing' };
+    }
+    if (this.isSatOut(playerId)) return { ok: false, reason: 'sat_out' };
+    if (this.pendingClaim(playerId)) return this.approveClaim(playerId);
+    if (this.holdsAPrize(playerId)) return { ok: false, reason: 'already_won' };
+    if (this.stageTaken()) {
+      return this.tieCandidates().some((c) => c.id === playerId)
+        ? this.payTie(p)
+        : { ok: false, reason: 'not_a_tie' };
+    }
+    const result = this.evaluate(p);
+    if (!result.won) return { ok: false, reason: 'not_complete' };
+    const record = {
+      playerId, name: p.name, at: this.now(), valid: true,
+      pattern: result.pattern, squares: result.squares,
+      stageIndex: this.state.stageIndex || 0, approved: true, byHost: true,
+    };
+    this.state.claims.push(record);
+    return this.settle(record, p);
+  }
+
+  payableFromRow(p) {
+    const live = this.state.phase === BINGO_PHASES.PLAYING || this.state.phase === BINGO_PHASES.WON;
+    return live && !this.stageTaken() && !this.pendingClaim(p.id) && !this.holdsAPrize(p.id)
+      && !this.isSatOut(p.id) && this.evaluate(p).won;
+  }
+
+  /**
+   * Who else had a complete card AT THE MOMENT the prize went — checked
+   * against the calls as they stood then (`lastWin.calls`), so a card
+   * finished on a later song is not a tie. Nobody already holding a prize,
+   * nobody sat out, and only while the room is still on that win: *Play on*
+   * moves the stage and the tie with it. HOST-ONLY — it is a read of
+   * somebody's card.
+   */
+  tieCandidates() {
+    const win = this.state.lastWin;
+    if (!win || this.state.phase !== BINGO_PHASES.WON) return [];
+    if ((win.stageIndex || 0) !== (this.state.stageIndex || 0)) return [];
+    const then = Number.isInteger(win.calls) ? this.state.called.slice(0, win.calls) : this.state.called;
+    return this.playerList().filter((p) => p.id !== win.playerId
+      && !this.holdsAPrize(p.id) && !this.isSatOut(p.id)
+      && this.evaluate(p, then).won);
+  }
+
+  payTie(p) {
+    const win = this.state.lastWin;
+    const stageIndex = this.state.stageIndex || 0;
+    const first = (this.state.prizeWinners || []).find((w) => w.stageIndex === stageIndex);
+    const prizeIndex = first && Number.isInteger(first.prizeIndex) ? first.prizeIndex : stageIndex;
+    const at = this.now();
+    const result = this.evaluate(p);
+    const pattern = result.won ? result.pattern : win.pattern;
+    this.state.prizeWinners.push({ stageIndex, prizeIndex, playerId: p.id, name: p.name, stage: this.stage, at, tie: true });
+    if (!Array.isArray(this.state.wonThisGame)) this.state.wonThisGame = [];
+    if (!this.state.wonThisGame.includes(p.id)) this.state.wonThisGame.push(p.id);
+    const list = this.state.winners[pattern];
+    if (list && !list.includes(p.id)) list.push(p.id);
+    this.issueVoucher(prizeIndex, p.id, p.name, stageIndex);
+    win.ties = [...(win.ties || []), { playerId: p.id, name: p.name }];
+    // Their shout was right, and it is now paid: the claim list says so
+    // rather than "just missed it".
+    const shout = [...this.state.claims].reverse().find((c) => c.playerId === p.id && c.stageIndex === stageIndex);
+    if (shout) Object.assign(shout, { tooLate: false, standDown: false, approved: true, tie: true });
+    else {
+      this.state.claims.push({
+        playerId: p.id, name: p.name, at, valid: true, pattern, squares: result.squares || [],
+        stageIndex, approved: true, byHost: true, tie: true,
+      });
+    }
+    this.changed();
+    return { ok: true, valid: true, tie: true, pattern, stage: this.stage };
   }
 
   /**
@@ -888,6 +990,8 @@ export class BingoGame {
     this.state.lastWin = {
       playerId, name: p.name, pattern: result.pattern, squares: result.squares, at,
       stage: this.stage, stageIndex, label: stageLabel(this.stage),
+      // How many songs had been played when it went — what a tie is checked against.
+      calls: this.state.called.length,
     };
     /*
      * ANYBODY ELSE STILL WAITING ON THIS PRIZE IS TOLD IT HAS GONE — one
@@ -1413,7 +1517,8 @@ export class BingoGame {
       prizes: this.stages.map((st, i) => ({
         needs: st,
         label: stageLabel(st),
-        winner: (this.state.prizeWinners || []).find((w) => w.stageIndex === i)?.name || null,
+        // A tie names both — `payTie()`.
+        winner: (this.state.prizeWinners || []).filter((w) => w.stageIndex === i).map((w) => w.name).join(' & ') || null,
       })),
       round: this.state.round,
       // Both spellings: cardSize for anything that only knows squares, and the
@@ -1486,7 +1591,7 @@ export class BingoGame {
 
     if (this.state.lastWin) {
       view.win = {
-        name: this.state.lastWin.name,
+        name: [this.state.lastWin.name, ...(this.state.lastWin.ties || []).map((t) => t.name)].join(' & '),
         pattern: this.state.lastWin.pattern,
         at: this.state.lastWin.at,
       };
@@ -1605,7 +1710,8 @@ export class BingoGame {
     const vote = voteForPlayer(this.state, playerId);
     if (vote) view.photoVote = vote;
     view.won = this.state.phase === BINGO_PHASES.WON
-      && Boolean(this.state.lastWin) && this.state.lastWin.playerId === playerId;
+      && Boolean(this.state.lastWin) && (this.state.lastWin.playerId === playerId
+        || (this.state.lastWin.ties || []).some((t) => t.playerId === playerId));
     // What they have already taken, so the phone can keep score of their night.
     view.yourPrizes = (this.state.prizeWinners || [])
       .filter((w) => w.playerId === playerId)
@@ -1756,6 +1862,10 @@ export class BingoGame {
         connected: p.connected,
         won: this.state.winners.line.includes(p.id) || this.state.winners.full.includes(p.id),
         ...(this.isSatOut(p.id) ? { satOut: true } : {}),
+        // A complete card the host can pay from its row — `payCard()`. Not one
+        // waiting on him: that has its own Approve, and two controls for one
+        // decision is one too many.
+        ...(this.payableFromRow(p) ? { payable: true } : {}),
       }))
       .sort((a, b) => a.away - b.away || a.name.localeCompare(b.name));
 
@@ -1878,6 +1988,9 @@ export class BingoGame {
     });
     if (waiting.length) view.claimsWaiting = waiting;
     if (this.state.lastWin) view.win = this.state.lastWin;
+    // Who else had it complete when it went — the tie the host may pay.
+    const ties = this.tieCandidates();
+    if (ties.length) view.tieCandidates = ties.map((p) => ({ playerId: p.id, name: p.name }));
     // The prize panel — same shape as the quiz's, so host.js's existing
     // voucherPanel() draws it with no changes of its own. HOST-ONLY: a
     // voucher carries a real, scannable, one-use code, so this must never
