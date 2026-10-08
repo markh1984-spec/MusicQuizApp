@@ -2,6 +2,7 @@
 
 ## Waiting on Mark
 
+- **Say "push" for last night's six changes** — built and committed on the laptop 8 Oct 2026, release check running; nothing goes live until you say.
 - **Run the Cowork prompt for the MBC playlists** — renames the eight a/b playlists to MBC 10–17 and makes MBC 18–23; prompt is in the chat (8 Oct 2026).
 - **Send the Story frame artwork** — the square frame and the two logos, so Story exports get a frame of their own (since 2 Oct 2026).
 - **Decide: do phone videos ever go on the big screen?** — "ask me tomorrow" (since 1 Oct 2026).
@@ -13,15 +14,10 @@
 
 ## Next up
 
-1. Rename some buttons on the bingo control view (Start — then call your first track, Undo call, New round, Console, Continue to the bingo now, End the night) — asked for on 8 Oct after a live six-game night, "not until tomorrow"; ask which, then show options.
-2. Two phones completed a bingo on the same call (8 Oct, live) and the host could not see how to pay one — the near-miss list's ✓ reads like something to act on and is not. Read his flight record from that night first, then make a tie easy to settle.
-3. A simple web address a player can open to get their prize QR codes back (asked 8 Oct, live). The codes already live on their phone and show under My prizes on the game page; this is a short, memorable door to that, e.g. quizporium.co.uk/prizes.
-4. BUILD TOMORROW (agreed 8 Oct) — EVERY break offers BOTH a photo upload and a game, picked at random, by default (asked live: "every time there needs to be a photo upload and a random game"). On the quiz that is the gap dial's 📷🕹️ made the default for every gap; on bingo it is between rounds and games (after a win, New round, Continue), which needs checking first. The dial still lets him turn the game off for a break.
-5. BUILD TOMORROW (agreed 8 Oct) — the camera on a phone all through a MUSIC BINGO round (today it is the card alone until the round is won). The big screen keeps the song list clear while the round runs and puts up what was sent the moment someone wins, so nothing is lost.
-6. Paper bingo cards for players without a phone (asked 8 Oct, live) — not built. The plan offered: the app deals numbered cards for paper players exactly as it deals a phone's (server-side, rule 6), prints them on one sheet before the night, and a paper winner is checked on the control view by typing the card's number. Confirm with Mark before building.
-7. Build "Start this game again" — option A, picked 7 Oct: on the quiz control view's button bar beside Stop, at every phase, press twice; same quiz and settings, scores to 0, phones stay in.
-8. Re-check the ~30 open findings in docs/sweeps-september-2026.md (22–23 Sept table) and fix what is live, the 7 on the protected surface first — offered, not yet asked for.
+1. Push last night's six changes once Mark says so (a push restarts the live server; not during a gig): bingo button renames, Give prize and same-song ties, quizporium.co.uk/prizes, a photo and a picked game in every gap, the bingo photo wording, and Start this game again.
+2. Paper bingo cards — parked by Mark, "not now" (8 Oct). The plan if it comes back: one numbered sheet per bingo game, printed before the night; a paper card stays the same through that game's rounds; a paper winner is checked by typing the card number.
+3. Re-check the ~30 open findings in docs/sweeps-september-2026.md (22–23 Sept table) and fix what is live, the 7 on the protected surface first — offered, not yet asked for.
 
 ## Updated
 
-8 October 2026 — six new music bingo packs (MBC 18–23) live, every twenty-song game its own number, a six-game night rehearsed.
+8 October 2026 — last night's additions built on the laptop: bingo ties and renames, /prizes, every gap a photo and a game, Start this game again.
