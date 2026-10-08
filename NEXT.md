@@ -18,4 +18,4 @@
 
 ## Updated
 
-8 October 2026 — six new music bingo packs (MBC 18–23), every twenty-song game its own number, a six-game night rehearsed.
+8 October 2026 — six new music bingo packs (MBC 18–23) live, every twenty-song game its own number, a six-game night rehearsed.
