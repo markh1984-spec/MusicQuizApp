@@ -2,8 +2,9 @@
 
 ## Waiting on Mark
 
-- **Look at the new design (Gig poster)** — the whole app re-skinned 9 Oct 2026, on GitHub but not live; it goes live with the next deploy, together with the six changes below. Release check: 48 of 49 passed, the one failure (bar-layout) is fixed and passes on its own; run gig-build once more before deploying.
-- **Say "push" for tonight's six changes** — built on the laptop 8 Oct 2026, release check says SAFE TO DEPLOY; nothing goes live until you say.
+- **Deploy on Render — Manual Deploy, then "Deploy latest commit"** — brings three things live together: the Gig poster look, the six changes from 8 Oct, and Pub Prix. All on GitHub; the release check on all of it passed 50 of 50 (9 Oct 2026). A deploy restarts the live server, so not during a gig.
+- **Look at the new design (Gig poster)** — the whole app re-skinned 9 Oct 2026; you see it once the deploy above is done.
+- **Try Pub Prix with two phones before using it at a gig** — at a quiz's round scores, or once a bingo round's prize has gone: "Start Pub Prix" on the control view (9 Oct 2026).
 - **Run the Cowork prompt for the MBC playlists** — renames the eight a/b playlists to MBC 10–17 and makes MBC 18–23; prompt is in the chat (8 Oct 2026).
 - **Send the Story frame artwork** — the square frame and the two logos, so Story exports get a frame of their own (since 2 Oct 2026).
 - **Decide: do phone videos ever go on the big screen?** — "ask me tomorrow" (since 1 Oct 2026).
@@ -15,11 +16,11 @@
 
 ## Next up
 
-1. Push the Gig poster look and tonight's six changes once Mark says so (a push restarts the live server; not during a gig): bingo button renames, Give prize and same-song ties, quizporium.co.uk/prizes, a photo and a picked game in every gap, the bingo photo wording, and Start this game again.
+1. Once deployed: watch the first real Pub Prix — how many karts, whether the pack on the projector reads from the back, whether the three-second view of the road on the phone is enough.
 2. The Gig poster layouts, one screen at a time — the Tonight bar first — and drawn line icons in place of the emoji (todo/console.md). The Tonight bar is ~490px tall at 1150px+ while every other door's bay is 389px (`--bay-h`): community-bay.mjs fails on it, and it already failed before the redesign (488px).
 3. Paper bingo cards — parked by Mark, "not now" (8 Oct). The plan if it comes back: one numbered sheet per bingo game, printed before the night; a paper card stays the same through that game's rounds; a paper winner is checked by typing the card number.
 4. Re-check the ~30 open findings in docs/sweeps-september-2026.md (22–23 Sept table) and fix what is live, the 7 on the protected surface first — offered, not yet asked for.
 
 ## Updated
 
-9 October 2026 — the Gig poster redesign: new look on every screen, new fonts, gauntlet cursor and scroll rods gone.
+9 October 2026 — Pub Prix: a kart race on the projector, steered by tapping a lane on every phone; and a settled funniest-photo vote no longer sits over the next question.
