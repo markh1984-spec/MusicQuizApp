@@ -328,6 +328,20 @@ export function pushState(room) {
 }
 
 
+/**
+ * PUB PRIX: one tap, to the PROJECTOR of this room and nobody else.
+ *
+ * Not a state push — that would rebuild every phone's payload for every lane
+ * change in the room. A kart number, a server time and a lane; the projector
+ * runs the race itself off `race-track.js` (`raceTapEvent()` in `race.js`).
+ */
+export function pushRaceTap(room, event) {
+  if (!event) return;
+  const id = room ? room.id : HOUSE;
+  hub.broadcast('race', () => event,
+    (client) => client.role === 'screen' && (client.room ? client.room.id : HOUSE) === id);
+}
+
 hooks.pushState = pushState;
 
 /*

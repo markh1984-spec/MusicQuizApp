@@ -18,6 +18,7 @@ import { faceFor } from './avatar.js';
 import { arcadeSlot, paintArcadeBoard } from './lobby-board.js';
 import { playSting, loadStingFiles } from './stings.js';
 import { audio, audioReady } from './audio-kit.js';
+import { raceKey, renderRace, updateRace, raceTap, stopRace } from './race-screen.js';
 
 const cardEl = document.getElementById('card');
 const quizTitleEl = document.getElementById('quizTitle');
@@ -117,6 +118,12 @@ const cards = {
    * screen at all (see `voteForScreen()`), so nothing here can rebuild while
    * the room is looking at it.
    */
+  /*
+   * PUB PRIX — `race-screen.js`. Keyed on the race and its phase only: the
+   * picture is driven by its own frame loop and the `race` events, so a state
+   * push must never rebuild it (the QR-flash rule, on a canvas).
+   */
+  race: { key: raceKey, render: (s) => renderRace(s, () => clock.now()), update: updateRace },
   photoVote: {
     key: (s) => `vote:${(s.photoVote.photos || []).map((p) => p.id).join(',')}:${
       s.photoVote.open ? 'open' : 'done'}`,
@@ -314,7 +321,11 @@ function draw(next) {
    * settles it, so this is first in the chain to say so rather than to break a
    * tie that cannot happen.
    */
-  const card = state.photoVote
+  // A race can only be up when nothing else is: opening one clears the other
+  // flags, and every one of them (and every move) takes the race down.
+  const card = state.race
+    ? cards.race
+    : state.photoVote
     ? cards.photoVote
     : state.advert && state.advert.heading !== undefined
     ? cards.advert
@@ -333,6 +344,7 @@ function draw(next) {
     // Every card change passes here, which is the only place a break's advert
     // cycle can be reliably stopped — see `stopBreakCycle()`.
     stopBreakCycle();
+    stopRace();
     cardEl.replaceChildren(card.render(state, joinUrl));
     // The final is the one card whose content can outgrow the screen — see
     // `fitWinner()`. A frame first, so the browser has laid it out.
@@ -650,7 +662,9 @@ const PHOTO_PHASES = new Set(['lobby', 'round_board', 'final', 'won', 'finished'
 
 /** Whether a photograph may be on this screen at all, right now. */
 function photosAllowed(s) {
-  return (s.photos || []).length > 0 && PHOTO_PHASES.has(s.phase);
+  // Not over a RACE either: a photograph landing in the middle of the track
+  // hides the karts the whole room is watching.
+  return (s.photos || []).length > 0 && PHOTO_PHASES.has(s.phase) && !s.race;
 }
 
 function paintPhotos(s) {
@@ -1716,6 +1730,7 @@ fetch(`/api/join-url${roomQuery}`)
 new Live(`/api/stream?role=screen${roomParam()}`, {
   onState: draw,
   onStatus: (status) => connWarnEl.classList.toggle('hidden', status === 'online'),
+  onRace: raceTap,
 });
 
 /**

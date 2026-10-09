@@ -624,3 +624,87 @@ and nobody else does.
   can switch it off; the host's switch wins and does not wipe the phone's
   own.** **Every noise is tied to something the player DID** and never carries
   information — a pub phone is on silent.
+
+## PUB PRIX — a race on the projector, steered from every phone
+
+Asked for on 9 October 2026: *"something like Mario Kart… each player is
+racing around a track but the track is on the main screen."* Three choices
+made off options: karts that **drive themselves while the phone picks a
+lane**, the name **Pub Prix**, and **the winner gets the last drink on the
+list**, the same as the funniest photograph.
+
+It is the first game here where the BIG SCREEN is the game and the phones are
+controllers, so it breaks two of this file's habits on purpose, and both are
+written down rather than left to look like accidents.
+
+### The name, and what is not in it
+
+The host's first name for it played on *Mario Kart*. This app is sold, and
+Nintendo's marks are the line Maze Mouth, Rally and Tailback were named to stay
+off. A kart race is a genre; a plumber, item boxes, shells and bananas are not,
+and none of them is here. The hazard is a **spilt pint** and the pick-up is a
+**green boost**, which are a pub's own furniture.
+
+### Why nobody steers
+
+Pub wifi puts a quarter to half a second between a thumb and the projector.
+Steering through that is a kart that hits the wall the player already turned
+away from, in front of sixty people. A **lane** is decided a second or two
+before the thing it avoids, so the same delay costs nothing: the phone shows
+about three seconds of road ahead. The road IS the control (tap the left third
+and the kart goes left), which keeps this file's *no control panel — you tap
+and it walks there*.
+
+### One pure function, run in three places
+
+`public/assets/race-track.js` is imported by the server, the projector and the
+phone. A kart is a function of the seed (the track) and its own taps, stepped
+at a fixed 50ms, and **karts never touch each other**. That buys three things:
+
+- the **server** decides who won with the same code that draws the race (rule
+  2: the server stamps every tap, and a phone sends a lane and nothing else);
+- the **projector** draws 300ms behind the server, so a tap has nearly always
+  arrived before its moment is drawn; a later one rebuilds one kart from the
+  grid, which is cheap precisely because karts do not interact;
+- the **phone** draws half a round trip AHEAD of the server, measured from
+  every tap, so a dodge that looks just in time on the phone is just in time
+  where it is decided.
+
+A restart rebuilds the race exactly from the taps on disk.
+
+### A tap is not a state push — the stated exception to *one POST leaves a phone*
+
+Every other game here sends one POST at game over. A race cannot: a lane
+change is the game. So the exception is made as small as it can be. A tap is
+**saved** (debounced; a lost tap costs a lane, not a night), **answered** to the
+phone that sent it with the server's own time, and sent on to **the projector
+alone** as a `race` SSE event. It is never `changed()`, because a state push per
+tap would rebuild every phone's payload sixty times a second. Taps are refused
+faster than every 90ms or past 600 a race, so a script cannot fill the state
+file. On every wire **a kart is a number**: no player id, no token (rule 3).
+
+### A kart sits on the grid until its phone taps
+
+A phone face down on the table is not racing. A kart that drove itself could
+cross the line first and win a drink nobody earned, so nothing moves until its
+phone taps once; a tap in the countdown starts it at GO. **Nobody started is
+nobody won** (the photo vote's rule), and no drink is minted.
+
+### A flag at a break, settled by a move
+
+Like the funniest photo it is a **flag, never a phase** (rule 9). It opens only
+at a quiz's **round board** or a bingo round that has been **won** (never the
+lobby, whose screen belongs to the join code, and never over a card somebody
+is marking). Opening it clears the scoreboard, the advert and any vote; any of
+those, or any move, **pays whoever is in front and takes the race down**.
+Leaving a finished race up behind a question is exactly what rule 9 forbids.
+The race ends itself on the server (`armRaceTimer()`, every half second): when
+every started kart is home, ten seconds after the first, or at a hard cap.
+
+### Found building it: a settled vote sat over the next question
+
+A move SETTLES a funniest-photo vote rather than clearing it, and the projector
+draws a vote before anything else. So pressing on from a vote put the next
+question up **behind the vote's result**, which is rule 9 broken on the protected
+surface. `screenView()` no longer sends a vote at a question or a reveal (nor a
+settled one over a bingo round being played). `test/pub-prix.test.js` holds it.

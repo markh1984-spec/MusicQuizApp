@@ -686,6 +686,8 @@ export class Session {
     this.engine.state.packId = pack.id;
 
     this.armTimer();
+    // A race restored from disk keeps its clock — or nobody would ever win it.
+    this.armRaceTimer();
     return this.engine;
   }
 
@@ -888,6 +890,7 @@ export class Session {
 
     this.onPush();
     this.armTimer();
+    this.armRaceTimer();
   }
 
   /**
@@ -2024,6 +2027,33 @@ export class Session {
     if (this.autoTimer.unref) this.autoTimer.unref();
   }
 
+  /**
+   * PUB PRIX'S CLOCK — every half-second while a race is on, ask the engine
+   * whether it is over (`tickRace()`), so the winner is decided on the SERVER
+   * at the moment it happens rather than whenever somebody next presses
+   * something. Armed after every change, like `armTimer()`, and gone the
+   * moment there is no race to watch.
+   */
+  armRaceTimer() {
+    const racing = this.engine && this.engine.state && this.engine.state.race
+      && this.engine.state.race.phase === 'racing' && typeof this.engine.tickRace === 'function';
+    if (!racing) {
+      if (this.raceTimer) { clearInterval(this.raceTimer); this.raceTimer = null; }
+      return;
+    }
+    if (this.raceTimer) return;
+    this.raceTimer = setInterval(() => {
+      try {
+        // `tickRace()` calls `changed()` when it ends the race, which comes
+        // back through `handleChange()` and clears this timer.
+        this.engine.tickRace();
+      } catch (err) {
+        console.error('[race] could not check the race:', err.message);
+      }
+    }, 500);
+    if (this.raceTimer.unref) this.raceTimer.unref();
+  }
+
   // ------------------------------------------------------------------ views
 
   /**
@@ -2127,6 +2157,17 @@ export class Session {
        */
       photoVoteClose: () => this.engine.closePhotoVote(),
       photoVoteDrop: () => this.engine.dropPhotoVote(),
+      /*
+       * PUB PRIX — `src/race.js`. A CAPABILITY check, never a kind: the quiz
+       * and both bingos have a break to race in; a DJ set has no prize list
+       * and no break, and answers with a reason rather than a 500.
+       */
+      raceOpen: () => (typeof this.engine.openRace === 'function'
+        ? this.engine.openRace() : { ok: false, reason: 'not_available' }),
+      raceClose: () => (typeof this.engine.closeRace === 'function'
+        ? this.engine.closeRace() : { ok: false, reason: 'not_available' }),
+      raceDrop: () => (typeof this.engine.dropRace === 'function'
+        ? this.engine.dropRace() : { ok: false, reason: 'not_available' }),
       /*
        * UNLAUNCH ENDS THE WHOLE EVENING. The engine goes back to a fresh lobby,
        * but the order lived on the SESSION too — so the control view went on
@@ -2422,6 +2463,16 @@ export class Session {
     if (action === 'photo-vote') {
       const out = this.engine.castPhotoVote(String(body.playerId || ''), String(body.photoId || ''));
       if (out.ok) this.engine.changed();
+      return out;
+    }
+    /*
+     * PUB PRIX: a lane. SAVED but never `changed()` — a tap pushed to every
+     * phone in the room sixty times a second is the one thing this must not
+     * be. The route hands the projector its own copy (`raceTapEvent()`).
+     */
+    if (action === 'race' && typeof this.engine.steerRace === 'function') {
+      const out = this.engine.steerRace(String(body.playerId || ''), body.lane);
+      if (out.ok && !out.same) this.store.save(this.engine.state);
       return out;
     }
     if (action === 'arcade') {

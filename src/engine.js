@@ -31,6 +31,7 @@ import { comeBackView } from './comeback.js';
 import { recordArcadeScore, arcadeBoard, arcadeFields } from './arcade.js';
 import { noteForPlayer, notesForHost } from './notes.js';
 import { castVote, closeVote, dropVote, openVote, voteForHost, voteForPlayer, voteForScreen } from './photo-vote.js';
+import { openRace, steerRace, raceIsOver, finishRace, dropRace, raceForScreen, raceForPlayer, raceForHost } from './race.js';
 import { breakNow, offersGame, offersPhotos, showsScores, showsAdverts } from '../public/assets/break-parts.js';
 import { dealInto, MAX_TEAMS } from './teams.js';
 // For faceKey — a player's public handle, derived one way from their id.
@@ -230,6 +231,7 @@ export class Engine {
        * than sending an empty shape, so `pub-unchanged` still says IDENTICAL.
        */
       photoVote: null,
+      race: null,
       /*
        * MAY THE ROOM ASK FOR A ROUND at the end? Set at launch like the look
        * and the card shape, and off unless the account holds it — so a night
@@ -1379,6 +1381,7 @@ export class Engine {
     if (!out.ok) return out;
     // Two things cannot be on one projector — rule 9, and the pairing that
     // has already been got wrong once by only being written one way.
+    this.settleRace();
     this.state.scoreboard = false;
     this.state.advert = null;
     this.state.photoSlide = false;
@@ -1457,6 +1460,85 @@ export class Engine {
    */
   settlePhotoVote() {
     if (this.state.photoVote && this.state.photoVote.open) this.closePhotoVote();
+    // Every caller of this is a move or another flag going up, and a race is
+    // the same kind of thing — see `settleRace()`. One call site, so a move
+    // cannot remember the vote and forget the race (`start()` was the move
+    // the vote went missing from once).
+    this.settleRace();
+  }
+
+  /*
+   * PUB PRIX — `src/race.js`, `public/assets/race-track.js`.
+   *
+   * Only at a ROUND BOARD: the break between rounds is where it was asked for,
+   * the lobby's big screen belongs to the join code, and a race over a
+   * question is rule 9 broken in the loudest possible way.
+   */
+  openRace() {
+    if (this.state.phase !== PHASES.ROUND_BOARD) return { ok: false, reason: 'not_a_break' };
+    if (this.state.race && this.state.race.phase === 'racing') return { ok: false, reason: 'racing' };
+    const players = this.playerList().map((p) => ({ id: p.id, name: p.name }));
+    const out = openRace(this.state, players, { now: this.now(), random: this.random });
+    if (!out.ok) return out;
+    // Two things cannot be on one projector — rule 9.
+    this.state.scoreboard = false;
+    this.state.advert = null;
+    this.state.photoSlide = false;
+    if (this.state.photoVote && this.state.photoVote.open) this.closePhotoVote();
+    this.state.photoVote = null;
+    this.changed();
+    return out;
+  }
+
+  /** A phone asks for a lane. Deliberately NOT `changed()` — see `race.js`. */
+  steerRace(playerId, lane) {
+    return steerRace(this.state, playerId, lane, this.now());
+  }
+
+  /** The session's race timer asks this every half-second. */
+  tickRace() {
+    if (!raceIsOver(this.state, this.now())) return false;
+    this.closeRace();
+    return true;
+  }
+
+  /** End it now: the leader wins, the drink is minted. The result stays up. */
+  closeRace() {
+    if (!this.state.race) return { ok: false, reason: 'no_race' };
+    const out = finishRace(this.state, {
+      now: this.now(),
+      reward: this.photoVotePrize(),
+      venue: this.state.venue || '',
+      newCode: newVoucherCode,
+      // Minted to whoever holds the winner's ROW, exactly as the photo vote's
+      // drink is, or a team night's winner would have nothing on their phone.
+      owner: (playerId) => {
+        const boardId = this.boardIdFor(playerId);
+        const row = this.leaderboard().find((r) => r.id === boardId);
+        return { id: boardId, name: row ? row.name : ((this.state.players[playerId] || {}).name || '') };
+      },
+    });
+    this.changed();
+    return out;
+  }
+
+  /**
+   * A move or another flag: pay whoever is in front, then take the race off
+   * the projector — a race left up behind a question is exactly what rule 9
+   * forbids, and the drink is already on the winner's phone.
+   */
+  settleRace() {
+    if (!this.state.race) return;
+    if (this.state.race.phase === 'racing') this.closeRace();
+    this.state.race = null;
+  }
+
+  /** The host's "take it off the screen". */
+  dropRace() {
+    if (this.state.race && this.state.race.phase === 'racing') this.closeRace();
+    const out = dropRace(this.state);
+    this.changed();
+    return out;
   }
 
   /**
@@ -1779,7 +1861,7 @@ export class Engine {
      * projector, nothing to show the bar. The same three flags
      * `withdrawVouchersNoLongerOwed()` already leaves alone.
      */
-    const placings = Object.values(s.vouchers).filter((v) => !v.carried && !v.funny && !v.draw);
+    const placings = Object.values(s.vouchers).filter((v) => !v.carried && !v.funny && !v.race && !v.draw);
     const already = new Set(placings.map((v) => v.winnerId));
     const held = new Map(placings.map((v) => [v.winnerId, v]));
     for (const row of this.leaderboard()) {
@@ -1888,7 +1970,7 @@ export class Engine {
       owed.set(row.id, row.position);
     }
     for (const [code, v] of Object.entries(s.vouchers || {})) {
-      if (v.draw || v.funny || v.carried || v.redeemedAt) continue;
+      if (v.draw || v.funny || v.race || v.carried || v.redeemedAt) continue;
       if (owed.get(v.winnerId) === v.place) continue;
       delete s.vouchers[code];
     }
@@ -2190,7 +2272,7 @@ export class Engine {
    */
   withdrawUnspentPlacings() {
     for (const [code, v] of Object.entries(this.state.vouchers || {})) {
-      if (v.draw || v.funny || v.carried || v.redeemedAt) continue;
+      if (v.draw || v.funny || v.race || v.carried || v.redeemedAt) continue;
       delete this.state.vouchers[code];
     }
   }
@@ -2892,7 +2974,15 @@ export class Engine {
      * not having one, which is what keeps an ordinary payload byte-identical.
      */
     const vote = voteForScreen(s);
-    if (vote) view.photoVote = vote;
+    /*
+     * NEVER OVER A QUESTION. A move SETTLES a vote rather than clearing it, so
+     * the result card stayed in the payload — and the projector draws a vote
+     * first — so pressing on from a vote put the next question up BEHIND the
+     * result: rule 9, broken on the protected surface. Found building Pub Prix.
+     */
+    if (vote && s.phase !== PHASES.QUESTION && s.phase !== PHASES.REVEAL) view.photoVote = vote;
+    const race = raceForScreen(s);
+    if (race) view.race = race;
     if (s.scoreboard) view.leaderboard = this.leaderboard().map(publicPlayer);
 
     // An advert is looked up by the server rather than carried in state, so
@@ -3420,6 +3510,9 @@ export class Engine {
      */
     const vote = voteForPlayer(s, this.boardIdFor(playerId));
     if (vote) view.photoVote = vote;
+    // Pub Prix: this phone's own kart, by its own id — a kart is a PHONE.
+    const race = raceForPlayer(s, playerId);
+    if (race) view.race = race;
 
     const VOUCHER_PHASES = new Set([PHASES.LOBBY, PHASES.RULES, PHASES.ROUND_INTRO,
       PHASES.ROUND_BOARD, PHASES.FINAL]);
@@ -3441,7 +3534,8 @@ export class Engine {
            * to hold up at a bar.
            */
           ...(v.funny ? { funny: true, place: null } : {}),
-          ...(v.draw || v.funny ? {} : { place: v.place || 1 }),
+          ...(v.race ? { race: true, place: null } : {}),
+          ...(v.draw || v.funny || v.race ? {} : { place: v.place || 1 }),
           reward: v.reward,
           venue: v.venue,
           ...(s.venueLogo ? { logo: s.venueLogo } : {}),
@@ -3462,7 +3556,7 @@ export class Engine {
       // AND A PLACING BEATS THE FUNNIEST-PHOTO DRINK for the headline card:
       // the final slide is about the quiz that has just ended, and a table
       // can hold both now. The wallet underneath still lists every code.
-      const mine = held.find((v) => !v.carried && !v.funny && !v.draw)
+      const mine = held.find((v) => !v.carried && !v.funny && !v.race && !v.draw)
         || held.find((v) => !v.carried) || held[0];
       if (mine) {
         view.voucher = {
@@ -3476,7 +3570,8 @@ export class Engine {
            */
           ...(mine.draw ? { draw: true, place: null } : {}),
           ...(mine.funny ? { funny: true, place: null } : {}),
-          ...(mine.draw || mine.funny ? {} : { place: mine.place || 1 }),
+          ...(mine.race ? { race: true, place: null } : {}),
+          ...(mine.draw || mine.funny || mine.race ? {} : { place: mine.place || 1 }),
           reward: mine.reward,
           venue: mine.venue,
           /*
@@ -3631,6 +3726,8 @@ export class Engine {
      */
     const vote = voteForHost(s);
     if (vote) view.photoVote = vote;
+    const race = raceForHost(s);
+    if (race) view.race = race;
     // What the vote is playing for, so the control can NAME it before it is
     // pressed rather than after — see `photoVotePrize()`.
     /*

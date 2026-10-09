@@ -12277,6 +12277,56 @@ body.dj .head .score { color: var(--ink); }
 .voted-done { text-align: center; }
 .vote-won { font-size: var(--fs-head); }
 
+/* ---- PUB PRIX — the race (race-screen.js, race-phone.js, race-host.js).
+   The projector is one canvas that fills the card; the phone is a road you
+   tap. The colours on the track are drawn in the canvas, not here: gold for
+   the leader, green for a boost, amber for a spilt pint — the three a kart
+   colour is never allowed to be. */
+.race-stage { position: relative; flex: 1 1 auto; min-height: 0; width: 100%; }
+.race-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.race-phone { display: grid; gap: 10px; }
+.race-phone-head {
+  display: flex; align-items: center; gap: 10px;
+  font-size: var(--fs-lead); min-height: 44px;
+}
+.race-phone-who { flex: 1 1 auto; min-width: 0; }
+.race-phone-lap { font-weight: 800; white-space: nowrap; }
+.race-chip {
+  display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 999px;
+  background: var(--kart, #4bd8ff); color: #0b0b12; font-weight: 900;
+}
+/* The road IS the control, so nothing on it may scroll or zoom the page —
+   `touch-action: none` is load-bearing, as it is on every lobby game. */
+.race-road {
+  position: relative; height: 64vh; min-height: 320px;
+  border-radius: var(--r-card); overflow: hidden; touch-action: none;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+}
+.race-road-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.race-lanes { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); }
+.race-lanes button {
+  background: transparent; border: 0; padding: 0; margin: 0; cursor: pointer;
+  touch-action: none; -webkit-tap-highlight-color: transparent;
+}
+.race-lanes button:active { background: rgba(255, 255, 255, 0.06); }
+.race-say {
+  position: absolute; left: 50%; top: 14px; transform: translateX(-50%);
+  max-width: 90%; padding: 8px 14px; border-radius: 999px; pointer-events: none;
+  background: rgba(11, 11, 18, 0.78); color: #fff; font-weight: 800; font-size: var(--fs-lead);
+  text-align: center; opacity: 0; transition: opacity 160ms;
+}
+.race-say.shown { opacity: 1; }
+.racecard { display: grid; gap: 4px; text-align: left; }
+.racecard.won { border-color: var(--gold); }
+
+.racepanel { display: grid; gap: 8px; }
+.racepanel.live { border-color: var(--good); }
+.racepanel .go, .racepanel .minor { min-height: 44px; }
+.race-count { font-size: var(--fs-lead); }
+.race-podium { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 4px; }
+.race-place { display: inline-block; min-width: 2.6em; font-weight: 800; }
+
 /* ---- the host's end. A grid of everything sent, four pickable, then a tally. */
 .votepanel { display: grid; gap: 10px; }
 /* "Put it to the room" measured 118x21 on the control view (launch-path

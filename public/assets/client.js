@@ -1106,10 +1106,12 @@ export class ServerClock {
  * often keeps a dead connection open) and rebuild it.
  */
 export class Live {
-  constructor(url, { onState, onStatus } = {}) {
+  constructor(url, { onState, onStatus, onRace } = {}) {
     this.url = url;
     this.onState = onState || (() => {});
     this.onStatus = onStatus || (() => {});
+    // Pub Prix's taps — the projector is the only page that asks for them.
+    this.onRace = onRace || null;
     this.source = null;
     this.lastMessageAt = 0;
     this.stopped = false;
@@ -1175,6 +1177,16 @@ export class Live {
         console.error('bad state payload', err);
       }
     });
+    if (this.onRace) {
+      this.source.addEventListener('race', (event) => {
+        this.lastMessageAt = Date.now();
+        try {
+          this.onRace(JSON.parse(event.data));
+        } catch (err) {
+          console.error('bad race payload', err);
+        }
+      });
+    }
     this.source.addEventListener('error', () => this.onStatus('offline'));
   }
 

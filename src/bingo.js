@@ -27,6 +27,7 @@ import { FULL_HOUSE, MAX_PRIZES, defaultStages, stageWord } from '../public/asse
 
 import { noteForPlayer, notesForHost } from './notes.js';
 import { castVote, closeVote, dropVote, openVote, voteForHost, voteForPlayer, voteForScreen } from './photo-vote.js';
+import { openRace, steerRace, raceIsOver, finishRace, dropRace, raceForScreen, raceForPlayer, raceForHost } from './race.js';
 
 export const BINGO_PHASES = {
   LOBBY: 'lobby',
@@ -216,6 +217,7 @@ export class BingoGame {
        * advert flag. `null` on every ordinary night.
        */
       photoVote: null,
+      race: null,
       /*
        * THE LOBBY GAME — a bingo night gets Rally, a quiz night gets Maze
        * Mouth, and both read the same two fields.
@@ -1305,7 +1307,7 @@ export class BingoGame {
    */
   openPhotoVote(photos) {
     const out = openVote(this.state, photos, this.now());
-    if (out.ok) this.changed();
+    if (out.ok) { this.settleRace(); this.changed(); }
     return out;
   }
 
@@ -1347,6 +1349,60 @@ export class BingoGame {
   /** Pressing on settles a vote; it never throws one away. See the quiz's. */
   settlePhotoVote() {
     if (this.state.photoVote && this.state.photoVote.open) this.closePhotoVote();
+    // And Pub Prix, at the same call sites — see the quiz engine's own note.
+    this.settleRace();
+  }
+
+  /*
+   * PUB PRIX — the quiz engine's methods, on this game's break: between
+   * ROUNDS, which is `WON` (the round's prize has just gone). Never mid-round:
+   * a race over a card somebody is marking takes their bingo away.
+   */
+  openRace() {
+    if (this.state.phase !== BINGO_PHASES.WON) return { ok: false, reason: 'not_a_break' };
+    if (this.state.race && this.state.race.phase === 'racing') return { ok: false, reason: 'racing' };
+    const players = this.playerList().map((p) => ({ id: p.id, name: p.name }));
+    const out = openRace(this.state, players, { now: this.now(), random: this.random });
+    if (!out.ok) return out;
+    if (this.state.photoVote && this.state.photoVote.open) this.closePhotoVote();
+    this.state.photoVote = null;
+    this.changed();
+    return out;
+  }
+
+  steerRace(playerId, lane) {
+    return steerRace(this.state, playerId, lane, this.now());
+  }
+
+  tickRace() {
+    if (!raceIsOver(this.state, this.now())) return false;
+    this.closeRace();
+    return true;
+  }
+
+  closeRace() {
+    if (!this.state.race) return { ok: false, reason: 'no_race' };
+    const out = finishRace(this.state, {
+      now: this.now(),
+      reward: this.photoVotePrize(),
+      venue: this.state.venue || '',
+      newCode: newVoucherCode,
+    });
+    this.changed();
+    return out;
+  }
+
+  settleRace() {
+    if (!this.state.race) return;
+    if (this.state.race.phase === 'racing') this.closeRace();
+    this.state.race = null;
+  }
+
+  dropRace() {
+    if (this.state.race && this.state.race.phase === 'racing') this.closeRace();
+    const out = dropRace(this.state);
+    this.changed();
+    return out;
   }
 
   /**
@@ -1368,6 +1424,8 @@ export class BingoGame {
 
   playOn() {
     if (this.onLastStage) return false;
+    // A move — so a vote or a race open across it is settled, never lost.
+    this.settlePhotoVote();
     this.state.stageIndex = (this.state.stageIndex || 0) + 1;
     this.syncTarget();
     this.state.phase = BINGO_PHASES.PLAYING;
@@ -1551,7 +1609,11 @@ export class BingoGame {
      * whitelist — no sender id, no live counts. Absent on an ordinary night.
      */
     const vote = voteForScreen(this.state);
-    if (vote) view.photoVote = vote;
+    // A SETTLED vote never stays over the call sheet of the next round — the
+    // quiz engine's rule-9 fix, for the round somebody is now marking.
+    if (vote && (vote.open || this.state.phase !== BINGO_PHASES.PLAYING)) view.photoVote = vote;
+    const race = raceForScreen(this.state);
+    if (race) view.race = race;
 
     if (this.state.phase === BINGO_PHASES.LOBBY) {
       view.lobby = {
@@ -1709,6 +1771,8 @@ export class BingoGame {
      */
     const vote = voteForPlayer(this.state, playerId);
     if (vote) view.photoVote = vote;
+    const race = raceForPlayer(this.state, playerId);
+    if (race) view.race = race;
     view.won = this.state.phase === BINGO_PHASES.WON
       && Boolean(this.state.lastWin) && (this.state.lastWin.playerId === playerId
         || (this.state.lastWin.ties || []).some((t) => t.playerId === playerId));
@@ -1757,6 +1821,8 @@ export class BingoGame {
         // card, and without the marker the phone reads `place || 1` and tells
         // them they won the bingo.
         ...(v.funny ? { funny: true } : {}),
+        // Pub Prix's drink — the same reason: it is not a stage on the card.
+        ...(v.race ? { race: true } : {}),
         stage: v.stage,
         reward: v.reward,
         venue: v.venue,
@@ -1964,6 +2030,8 @@ export class BingoGame {
      */
     const vote = voteForHost(this.state);
     if (vote) view.photoVote = vote;
+    const race = raceForHost(this.state);
+    if (race) view.race = race;
     /*
      * SPREAD IN ONLY WHEN THERE IS ONE — the draw's and the comeback band's
      * own arrangement. An empty string on every host payload of every night is

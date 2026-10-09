@@ -91,9 +91,15 @@ const PER_KIND = {
      * the kind, so a fifth game that grows a plural is paid automatically
      * and one that does not is skipped rather than throwing.
      */
-    'issueVouchers'],
+    'issueVouchers',
+    /*
+     * PUB PRIX — quiz and both bingos, never a DJ set (no break, no prize
+     * list). Every call site asks `typeof … === 'function'`, so a game that
+     * has no race answers "not available" rather than throwing.
+     */
+    'openRace', 'closeRace', 'dropRace', 'steerRace', 'tickRace'],
   bingo: ['start', 'call', 'uncall', 'undoLastCall', 'playOn', 'newRound', 'finish', 'sitOut', 'sitIn', 'approveClaim', 'rejectClaim', 'payCard',
-    'mark', 'claim', 'syncTarget'],
+    'mark', 'claim', 'syncTarget', 'openRace', 'closeRace', 'dropRace', 'steerRace', 'tickRace'],
   /*
    * CARD BINGO IS MUSIC BINGO'S LIST PLUS EXACTLY ONE CALL.
    *

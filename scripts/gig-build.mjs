@@ -88,6 +88,7 @@ export const GUARDS = [
   { name: 'wifi-blip',             core: true,  why: 'the wifi drops on each screen in turn — does it come back right?' },
   { name: 'long-night',            core: true,  why: 'sixty phones, forty questions — memory, streams and push latency' },
   { name: 'flight-recorder',       core: true,  why: 'does a broken night write itself down, and can the host copy it?' },
+  { name: 'pub-prix',              core: true,  why: 'a race on the projector — drawn, decided on the server, a drink to the winner, and never over a question' },
   /*
    * CORE, THOUGH IT TOUCHES NO ROOM. `data/` is wiped on every deploy and there
    * is no disk, so the backup IS the data — and the night this guard was written

@@ -107,6 +107,8 @@ export function phonesAre(s) {
    * over. It is the thing the host has just asked the room out loud to do,
    * so it is the thing to say.
    */
+  // Pub Prix takes the whole phone while it runs (`race-phone.js`).
+  if (s.race && s.race.phase === 'racing') return 'Pub Prix — steering their karts';
   if (s.photoVote && s.photoVote.open && s.phase !== 'question') {
     return 'Voting for the funniest photo';
   }

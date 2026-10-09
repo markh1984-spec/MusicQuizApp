@@ -21,6 +21,7 @@ import { djPanels, djActions, djWhere } from './host-dj.js';
 import { cueOffsetMs, formatOffset } from './cue.js';
 import { phonesAre } from './phones.js';
 import { STINGS } from './stings.js';
+import { racePanel } from './race-host.js';
 
 const KEY_STORE = 'musicquiz.hostkey';
 
@@ -272,8 +273,12 @@ function draw(next) {
    * (`buildPanels()` is the only part that branches), and photographs belong
    * to the ROOM rather than to any of them.
    */
-  mainEl.replaceChildren(...restartNotice(state), ...advertPanel(state), ...voucherPanel(state),
-    ...buildPanels(state), ...photoPanel(state), ...votePanel(state));
+  // Pub Prix: at the TOP while a race is on the big screen — it is what the
+  // room is watching — and at the foot, present and inert, the rest of the time.
+  const race = racePanel(state, act);
+  mainEl.replaceChildren(...restartNotice(state), ...(state.race ? race : []), ...advertPanel(state),
+    ...voucherPanel(state), ...buildPanels(state), ...photoPanel(state), ...votePanel(state),
+    ...(state.race ? [] : race));
   actionsEl.replaceChildren(...buildActions(state));
   /*
    * MAKE ROOM FOR THE BAR THAT SITS ON TOP OF THE PAGE.
@@ -424,6 +429,7 @@ function advertPanel(s) {
  */
 function placeLabel(v) {
   if (v.funny) return 'Funniest photo';
+  if (v.race) return 'Pub Prix';
   if (v.draw) return 'Draw';
   return ordinal(v.place || 1);
 }

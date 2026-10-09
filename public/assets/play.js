@@ -26,6 +26,7 @@ import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
 import { paintChatButton } from './chat.js';
 import { arcadeCard, wireArcade, stopArcade } from './lobby-menu.js';
+import { buildRace, stopRacePhone, racing, raceResultCard } from './race-phone.js';
 
 const STORE_KEY = 'musicquiz.player';
 
@@ -559,7 +560,8 @@ function paintCameraButton(s) {
    * one job, which is how somebody ends up using the worse one out of habit.
    */
   const menuIsUp = ['lobby', 'rules', 'round_intro', 'round_board'].includes(s.phase) || s.game === 'dj';
-  const wanted = Boolean(gapWants(s).photos && s.you && s.phase !== 'question' && !menuIsUp);
+  // Never over a race either: it floats over the right-hand lane.
+  const wanted = Boolean(gapWants(s).photos && s.you && s.phase !== 'question' && !menuIsUp && !racing(s));
   let btn = document.getElementById('cameraBtn');
   if (!wanted) {
     if (btn) btn.remove();
@@ -582,6 +584,16 @@ function fingerprint(list) {
 }
 
 function screenKey(s) {
+  // Pub Prix takes the whole phone while this phone is racing; after it, and
+  // for a phone that joined too late, the race rides along on the usual key
+  // so its one card (`raceResultCard()`) arrives. No race, no suffix: an
+  // ordinary night's keys are exactly what they were.
+  if (racing(s)) return `race:${s.race.id}`;
+  const base = screenKeyBase(s);
+  return s.race ? `${base}:race-${s.race.id}-${s.race.phase}` : base;
+}
+
+function screenKeyBase(s) {
   if (s.game === 'dj') return djKey(s);
   if (playsACard(s)) return bingoKey(s);
   /*
@@ -647,6 +659,12 @@ function buildScreen(s) {
    * and therefore survived a long time.
    */
   stopArcade();
+  // And Pub Prix's frame loop, on every rebuild — the lobby games' rule.
+  stopRacePhone();
+  if (racing(s)) {
+    document.body.classList.remove('bingo-card');
+    return buildRace(s, { player: me, now: () => clock.now() });
+  }
   // The camera button floats over the bottom right of the phone. On a bingo
   // card that put 58 pixels of button on top of a square — one nobody can tap,
   // and therefore a full house nobody can get. This tells the stylesheet to
@@ -873,6 +891,7 @@ function buildWaiting(s, kicker, title, sub) {
            which is what makes it structurally impossible for it to land over a
            question. -->
       ${photoVoteCard(s)}
+      ${raceResultCard(s)}
       ${gateWanted(s) ? photoGate() : gapMenu(s, { photosFirst: false })}
     </div>
   `);
@@ -1478,6 +1497,8 @@ function paintHostNote(s) {
 }
 
 function updateScreen(s) {
+  // The race draws itself off its own frame loop; there is nothing here to paint.
+  if (racing(s)) return;
   if (playsACard(s)) return updateBingo(s, me);
   if (s.phase !== 'question') return;
 
@@ -1574,6 +1595,7 @@ function buildReveal(s) {
       ${resultCard}
       ${fastest ? `<div><div class="muted" style="font-size:13px;margin-bottom:6px">Fastest finger</div>${fastest}</div>` : ''}
       ${photoVoteCard(s)}
+      ${raceResultCard(s)}
     </div>
   `);
   wirePhotoVote(el, postPhotoVote);
@@ -1600,6 +1622,7 @@ function buildBoard(s) {
            is the thing just asked for out loud and it is over in a minute;
            the scores are on the wall and stay on this phone underneath. -->
       ${photoVoteCard(s)}
+      ${raceResultCard(s)}
       ${askCard(s)}
       <div class="mini-board">
         ${rows.map((p) => `
@@ -1870,7 +1893,7 @@ function voucherCardFor(v) {
    * medal COLOUR is fine and is what the card is tinted with.
    */
   const place = v.place || 1;
-  const said = { 1: 'You won', 2: 'Second place', 3: 'Third place' }[place] || 'You won';
+  const said = v.race ? 'You won Pub Prix' : ({ 1: 'You won', 2: 'Second place', 3: 'Third place' }[place] || 'You won');
   if (v.redeemedAt) {
     return `
       <div class="win-card win-spent">

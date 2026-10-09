@@ -6,7 +6,8 @@ import { CHECKS_ONLY, FEATURES, MAX_BYTES, OWNER_ONLY, changesTheLibrary, flight
 import { readBody, readJson, sendJson } from './plumbing.js';
 import { roomForHost, roomForPhone, whoIs } from './identity.js';
 import { allowed } from './gates.js';
-import { photosWanted, pushState } from './views.js';
+import { photosWanted, pushRaceTap, pushState } from './views.js';
+import { raceTapEvent } from '../race.js';
 import { backUpAsks, backUpPropUse } from './helpers.js';
 import { fileAway } from './photo-filing.js';
 
@@ -224,14 +225,16 @@ export async function writePlayers(req, res, url, route) {
 
   // What a phone is allowed to do: answer a question, mark a bingo square and
   // call house, tap away a message the host sent it, vote for the funniest
-  // photograph of the night, and — on an online night — say something in one
-  // of its own rooms. Nothing else, and nothing that could hand out a new card.
-  if (['/api/answer', '/api/answer-breakout', '/api/mark', '/api/claim', '/api/wandered', '/api/say', '/api/team', '/api/arcade', '/api/note-read', '/api/photo-vote'].includes(route) && req.method === 'POST') {
+  // photograph of the night, change lane in a Pub Prix race, and — on an
+  // online night — say something in one of its own rooms. Nothing else, and nothing that could hand out a new card.
+  if (['/api/answer', '/api/answer-breakout', '/api/mark', '/api/claim', '/api/wandered', '/api/say', '/api/team', '/api/arcade', '/api/note-read', '/api/photo-vote', '/api/race'].includes(route) && req.method === 'POST') {
     const body = await readJson(req);
     const action = route.slice('/api/'.length);
     const room = roomForPhone(req, url, body);
     res.flightRoom = room.id;
     const result = room.session.runPlayerAction(action, body);
+    // Pub Prix: the tap goes on to the projector, and only there.
+    if (action === 'race') pushRaceTap(room, raceTapEvent(room.session.engine.state, result));
     // 200 either way: the phone shows its own feedback, and a rejected action
     // is a normal thing (too late, already answered), not an error.
     return sendJson(res, 200, result), true;

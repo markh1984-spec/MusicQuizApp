@@ -10,6 +10,7 @@ import { esc, node, postJson, roomCode, prizesShowing, prizesHead, prizesWhere, 
 import { arcadeCard, wireArcade } from './lobby-menu.js';
 import { isRed } from './deck.js';
 import { cardFaceSvg, ensureCardArt } from './card-face.js';
+import { raceResultCard } from './race-phone.js';
 
 let marking = new Set(); // squares tapped but not yet confirmed by the server
 
@@ -107,6 +108,7 @@ export function renderBingo(s, me) {
         <p class="muted" style="font-size:14px">This card is yours for the whole round — it will not change.</p>
         <div class="bingo-vouchers" id="bingoVouchers"></div>
         ${photoVoteCard(s)}
+      ${raceResultCard(s)}
         <div class="wait-menu">${arcadeCard(s)}</div>
       </div>`);
     wireArcade(el, s, (score, game = '') => postJson('/api/arcade', {
@@ -141,6 +143,7 @@ export function renderBingo(s, me) {
            clock on it — nothing is taken away by a panel over the top of it
            for a minute. -->
       ${photoVoteCard(s)}
+      ${raceResultCard(s)}
       <div class="bingo-status" id="bingoStatus"></div>
       <div class="bingo-vouchers" id="bingoVouchers"></div>
       <!-- THE GAP AFTER A ROUND'S LAST PRIZE OFFERS A GAME (8 October 2026) —
@@ -281,7 +284,7 @@ function voucherCard(v) {
   return `
     <div class="win-card place-${v.place || 1}">
       ${logo}
-      <div class="sub">You got it</div>
+      <div class="sub">${v.race ? 'You won Pub Prix' : 'You got it'}</div>
       <div class="win-what">${esc(v.reward)}</div>
       <img class="win-qr" alt="Show this at the bar"
         src="/qr.svg?text=${encodeURIComponent(target)}&dark=%230b0b12&light=%23ffffff">

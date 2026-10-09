@@ -1560,6 +1560,26 @@ board), `src/arcade.js` (the scores, shared by both engines),
 
 Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
+### PUB PRIX — a race on the projector, steered by tapping a LANE
+
+`public/assets/race-track.js` (the physics — server, projector AND phone),
+`src/race.js`, `race-screen.js`, `race-phone.js`, `race-host.js`,
+`pub-prix.mjs`. Chosen 9 Oct 2026 off options: a lane, the name, the LAST drink.
+
+- **NEVER A PLAY ON MARIO KART** — this app is SOLD: no plumber, item box,
+  shell or banana. **Nobody steers**: pub wifi lag, so a LANE decided seconds
+  ahead. **A kart sits on the grid until its phone taps** — a face-down phone
+  cannot win, and nobody started is nobody won.
+- **ONE PURE FUNCTION OF THE TAPS, a fixed step, karts never touch** — the
+  server decides (rule 2), the projector draws 300ms BEHIND, the phone half a
+  round trip AHEAD.
+- **A TAP IS NOT A STATE PUSH** — saved, answered, sent to the PROJECTOR alone
+  as a `race` event: **the stated exception to *one POST leaves a phone***. A
+  kart is a NUMBER on every wire (rule 3).
+- **A FLAG AT A BREAK** — round board or bingo `WON`, never the lobby. A move
+  or another flag PAYS THE LEADER AND TAKES IT DOWN (rule 9). **And a SETTLED
+  photo vote no longer sits over the next question.** [`docs/lobby-games.md`](docs/lobby-games.md).
+
 ### A DROPDOWN IS NARROW SHUT AND WIDE OPEN — `console-pick.js`
 
 *"All dropdown boxes on the bay must popover… 'look — the usual' needs to only
@@ -3641,14 +3661,10 @@ in a night with no effect on scores, teams or tokens.
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
-### THE DRAW IS BINNED — and WHY it went is the part worth keeping
+### THE DRAW IS BINNED — **IT WENT BECAUSE THE HOST DID NOT KNOW IT EXISTED**
 
-A free drink to a random team from the bottom half, off the LAST prize on the
-venue's list. **IT WENT BECAUSE THE HOST DID NOT KNOW IT EXISTED** — no switch,
-so a venue funding three drinks quietly gave away a fourth. **DO NOT REBUILD
-IT.** Retention starts from a control he chose, never a behaviour he inherits.
-**A `draw: true` voucher is still tolerated**, so a night running across the
-deploy keeps its drink. **[`docs/engine.md`](docs/engine.md)**.
+A drink nobody chose to give. **DO NOT REBUILD IT**; a `draw: true` voucher is
+still tolerated. **[`docs/engine.md`](docs/engine.md)**.
 
 ### The tabs run ALONG a quizmaster's evening, behind their door
 
@@ -4292,21 +4308,13 @@ Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
 
 ### THE POST-NIGHT REPORT — a PDF, off the archive, out the share sheet
 
-`src/report-pdf.js`, `/api/past-gigs/<night>/report.pdf`. Nothing new
-collected. **The route sits above the generic `/api/past-gigs/<night>` match**,
-the same prefix trap the publish route guards against, and needs
-`listArchive({ boards: true })` for the podium.
-
-Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
+`src/report-pdf.js`. **The route sits above the generic `/api/past-gigs/<night>`
+match** (the prefix trap). [`docs/gigs.md`](docs/gigs.md).
 
 ### THE ADVERT SLIDE EDITOR HOLDS THE OFFER, AND READS ITS OWN COUNT BACK
 
-`slideEditor()` in `console-venues.js` collects `offerCode`/`offerWhen`.
-`/api/advert/<id>` embeds `room.offers.forPack(id)` on the same fetch, so the
-count cannot drift from the pack; the editor keeps it OUT of the object it PUTs
-back. Silent until there is a code, and until anything has scanned it.
-
-Full reasoning: **[`docs/gigs.md`](docs/gigs.md)**.
+`/api/advert/<id>` embeds `room.offers.forPack(id)`; the editor keeps the count
+OUT of what it PUTs back. [`docs/gigs.md`](docs/gigs.md).
 
 ### A LAPSED SUBSCRIPTION GETS ONE MORE NIGHT — `lastNightLeft()` in `accounts.js`
 
@@ -4548,12 +4556,8 @@ Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
 
 ### How many questions of each type
 
-`roundPlan()` in `src/generate-quiz.js` — `rounds` is a list of
-`{ type, count }`, so "fifteen general knowledge, five pictures and ten
-first-letter" is one call. **It is also the whitelist and the clamp, in ONE
-place**, so a typo is dropped rather than quietly becoming a round of general
-knowledge. **Unticking a round GREYS its count rather than hiding it**, so what
-you typed is still there when you tick it back on.
+`roundPlan()` in `src/generate-quiz.js` takes `{ type, count }` and **is the
+whitelist and the clamp, in ONE place**. **Unticking a round GREYS its count.**
 
 ---
 
@@ -4587,6 +4591,7 @@ node scripts/bar-reaches-the-room.mjs   # does the bar's card reach the room?
 node scripts/reaches-the-wall.mjs       # does a correction reach the projector?
 node scripts/picture-by-position.mjs    # is the picture on the wall, asked for by where it is?
 node scripts/lobby-games-play.mjs       # do the five games draw, run and score?
+node scripts/pub-prix.mjs   # Pub Prix, end to end
 node scripts/pack-shapes.mjs            # which quiz packs are short?
 node scripts/pack-repeats.mjs           # does one night ask the same thing twice?
 node scripts/soundboard.mjs             # do the host's sounds actually make a noise?
