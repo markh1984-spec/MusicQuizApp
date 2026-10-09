@@ -1,10 +1,14 @@
 /**
- * PUB PRIX — the race, as one pure function of the taps.
+ * PUB PRIX — the race, as one pure function of the steering.
  *
  * Asked for on 9 October 2026: *"something like Mario Kart… each player is
- * racing around a track but the track is on the main screen."* Chosen off
- * three options: karts that DRIVE THEMSELVES, and a phone that only ever says
- * which LANE to be in — dodge the spilt pints, hit the boosts.
+ * racing around a track but the track is on the main screen."* It began with
+ * karts that drove themselves and a phone that only said which LANE to be in;
+ * the same evening the host reversed that: *"can we make it instead of lanes
+ * its actual steering with the phones? its meant to be hard."* So the phone
+ * STEERS — hold the left or right of the screen — and the track fights back:
+ * every bend pushes you wide, the grass costs you speed, and a spilt pint is
+ * something you steer round rather than a lane you leave.
  *
  * **THE NAME IS PUB PRIX, NEVER A PLAY ON MARIO KART.** The host's first name
  * for it was one, and this app is SOLD: Nintendo's marks are the one line the
@@ -12,12 +16,14 @@
  * racing as a genre is free; a plumber, item boxes, shells and bananas are
  * not, and none of them is here.
  *
- * **WHY NOBODY STEERS.** Pub wifi puts a quarter to half a second between a
- * thumb and the projector. A kart steered through that crashes into the wall
- * the player already turned away from, sixty times, in front of everybody. A
- * LANE is a decision made a second or two ahead of the thing it avoids, so the
- * same delay costs nothing — the hazards are on the phone three seconds before
- * they arrive.
+ * **THE LAG IS PART OF THE GAME, AND IT IS THE SAME LAG FOR THE WINNER.** Pub
+ * wifi puts a quarter of a second between a thumb and the server — the reason
+ * the first version did not steer at all. Steering through it is HARD, which
+ * is what was asked for. Two things keep it honest: the server stamps every
+ * input (rule 2), and the phone draws its kart half a round trip AHEAD
+ * (`race-phone.js`), so what the thumb sees is what the server will decide.
+ * Nothing on the track hits harder than the grass — a late correction costs
+ * speed, never the race in one blow.
  *
  * **ONE FILE, IMPORTED BY THE SERVER, THE PROJECTOR AND THE PHONE** — the
  * `break-parts.js` arrangement. The server decides who won (rule 2: the server
@@ -36,8 +42,34 @@
  */
 import { seeded } from './seeded.js';
 
-/** Three lanes: wide enough to dodge, narrow enough to read on a phone. */
+/**
+ * THE ROAD, ACROSS: three lane-widths of tarmac, `x` from -1.5 (the INSIDE,
+ * left on the phone — the karts turn left) to +1.5, then grass to the wall at
+ * ±1.9. The pints and boosts sit on the three lines `x = -1, 0, 1`.
+ */
 export const LANES = 3;
+export const HALF = 1.5;
+export const WALL = 1.9;
+/** How fast a held side moves you across, lane-widths a second. */
+export const STEER = 2.4;
+/**
+ * How hard a bend pushes you WIDE at cruising speed, lane-widths a second —
+ * just over half of STEER, so a bend is held by keeping a thumb on the inside
+ * for about half of it. Faster is wider: a boost through a bend is a fight.
+ */
+export const DRIFT = 1.25;
+/** Off the tarmac: under half speed until you steer back on. */
+export const GRASS = 0.45;
+/** How close, centre to centre, a kart must pass a pint or a boost to hit it. */
+export const HIT = 0.5;
+/**
+ * The two left-hand bends, as stretches of the lap — the same stretches the
+ * projector draws as its turns, so a push on the phone is a bend on the wall.
+ * The lap starts mid-way along the bottom straight, heading right.
+ */
+export const BENDS = [[100, 400], [600, 900]];
+/** A bend's push ramps in and out over this much track, never a jolt. */
+export const BEND_RAMP = 40;
 export const LAPS = 3;
 /** One lap, in track units. Everything below is measured in these. */
 export const LAP = 1000;
@@ -65,10 +97,14 @@ export const AFTER_WINNER_MS = 10000;
  * race in a puddle still ends, and the leader then wins.
  */
 export const MAX_RACE_MS = 150000;
-/** The fewest milliseconds between two lane changes the server takes. */
+/** The fewest milliseconds between two steering changes the server takes. */
 export const MIN_TAP_MS = 90;
-/** The most lane changes one kart may make in a race — a SAFETY number. */
-export const MAX_TAPS = 600;
+/**
+ * The most steering changes one kart may make in a race — a SAFETY number. A
+ * thumb pressing and lifting three times a second for two and a half minutes
+ * is 900; this is a script, not a driver.
+ */
+export const MAX_TAPS = 1500;
 
 /**
  * Twelve kart colours, kept clear of the three that MEAN something here: gold
@@ -125,12 +161,13 @@ export function courseFor(seed) {
   return course;
 }
 
-/** A kart on the grid, before a single step. */
+/** A kart on the grid, before a single step — on its starting line, wheel straight. */
 export function newKart(lane = 0) {
   return {
     d: 0,
     at: null,
-    lane: clampLane(lane),
+    x: clampLane(lane) - 1,
+    steer: 0,
     slowUntil: 0,
     boostUntil: 0,
     finishedAt: null,
@@ -147,14 +184,32 @@ export function clampLane(lane) {
   return Number.isFinite(n) ? Math.max(0, Math.min(LANES - 1, n)) : 1;
 }
 
+/** Left (-1), straight (0) or right (+1) — anything else is straight. */
+export function clampSteer(v) {
+  const n = Math.round(Number(v));
+  return n === -1 || n === 1 ? n : 0;
+}
+
+/** How hard the track is pushing you wide here: 0 on a straight, 1 mid-bend. */
+export function bendAt(d) {
+  const p = ((d % LAP) + LAP) % LAP;
+  for (const [a, b] of BENDS) {
+    if (p >= a && p <= b) return Math.min(1, (p - a) / BEND_RAMP, (b - p) / BEND_RAMP);
+  }
+  return 0;
+}
+
+/** Is this kart off the tarmac? */
+export const onGrass = (kart) => Math.abs(kart.x) > HALF;
+
 /**
  * Walk one kart forward to `untilT`, a fixed step at a time.
  *
- * `taps` is that kart's lane changes, `[time, lane]`, oldest first, in SERVER
- * time. **A KART SITS ON THE GRID UNTIL ITS PHONE TAPS ONCE** — a phone face
- * down on the table is not racing, and a kart nobody is driving must not be
- * able to cross the line first and take a drink. A tap during the countdown
- * starts it at GO.
+ * `taps` is that kart's steering, `[time, steer]` — -1 left, 0 straight, +1
+ * right — oldest first, in SERVER time. **A KART SITS ON THE GRID UNTIL ITS
+ * PHONE TOUCHES THE SCREEN ONCE** — a phone face down on the table is not
+ * racing, and a kart nobody is driving must not be able to cross the line
+ * first and take a drink. A press during the countdown starts it at GO.
  *
  * Mutates and returns `kart`, so the projector can carry a kart forward frame
  * by frame instead of re-running the whole race sixty times a second.
@@ -162,19 +217,22 @@ export function clampLane(lane) {
 export function stepKart(kart, course, taps, startsAt, untilT) {
   if (kart.at === null) kart.at = startsAt;
   const list = Array.isArray(taps) ? taps : [];
+  const dt = STEP_MS / 1000;
   while (kart.finishedAt === null && kart.at + STEP_MS <= untilT) {
     const ts = kart.at;
     while (kart.ci < list.length && list[kart.ci][0] <= ts) {
-      kart.lane = clampLane(list[kart.ci][1]);
+      kart.steer = clampSteer(list[kart.ci][1]);
       kart.ci += 1;
     }
     if (kart.ci > 0) {
       if (kart.startedAt === null) kart.startedAt = ts;
-      const mult = ts < kart.slowUntil ? SLOW : ts < kart.boostUntil ? BOOST : 1;
-      const next = kart.d + (SPEED * mult * STEP_MS) / 1000;
+      const mult = speedOf(kart, ts);
+      const next = kart.d + SPEED * mult * dt;
+      // Across: the thumb, and the bend pushing you wide — harder the faster.
+      kart.x = Math.max(-WALL, Math.min(WALL, kart.x + (kart.steer * STEER + bendAt(kart.d) * DRIFT * mult) * dt));
       while (kart.ii < course.length && course[kart.ii].at <= next) {
         const it = course[kart.ii];
-        if (it.at > kart.d && it.lane === kart.lane) {
+        if (it.at > kart.d && Math.abs(kart.x - (it.lane - 1)) < HIT) {
           if (it.kind === 'spill') {
             kart.slowUntil = ts + SPILL_MS;
             kart.boostUntil = 0;
@@ -199,6 +257,12 @@ export function stepKart(kart, course, taps, startsAt, untilT) {
     kart.at += STEP_MS;
   }
   return kart;
+}
+
+/** How fast a kart is going at `ts`, as a multiple of cruising speed. */
+export function speedOf(kart, ts) {
+  const base = ts < kart.slowUntil ? SLOW : ts < kart.boostUntil ? BOOST : 1;
+  return onGrass(kart) ? base * GRASS : base;
 }
 
 /** One kart, from the grid, to `untilT`. */

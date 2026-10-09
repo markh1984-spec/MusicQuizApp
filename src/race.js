@@ -14,14 +14,14 @@
  * pressing on pays whoever is leading, because sixty people just raced. State
  * in, result out; neither engine's `changed()` is called from here.
  *
- * **A TAP IS NOT A STATE PUSH.** Sixty phones changing lane every second would
+ * **A TAP IS NOT A STATE PUSH.** Sixty phones steering every second would
  * be sixty full rebuilds of every payload in the room, every second. So a tap
- * is written into the state (and saved, debounced — a lost tap costs a lane,
+ * is written into the state (and saved, debounced — a lost tap costs a turn,
  * not a night), answered to the phone that sent it, and sent on to the
  * PROJECTOR alone as a `race` event. The phones are only pushed when the race
  * starts and when it ends.
  *
- * **THE SERVER STAMPS EVERY TAP (rule 2).** A phone sends a lane and nothing
+ * **THE SERVER STAMPS EVERY TAP (rule 2).** A phone sends a steer and nothing
  * else; the time is `now()`. The phone draws itself slightly ahead of the
  * server so a tap at the last moment on the phone still lands in time here —
  * see `race-phone.js` — but what is decided is decided on this clock.
@@ -32,7 +32,7 @@
  */
 import {
   COUNTDOWN_MS, MAX_RACE_MS, AFTER_WINNER_MS, MIN_TAP_MS, MAX_TAPS, LAPS, LANES,
-  courseFor, kartAt, standings, clampLane, kartColour,
+  courseFor, kartAt, standings, clampSteer, kartColour,
 } from '../public/assets/race-track.js';
 import { faceKey } from './engine.js';
 
@@ -78,29 +78,30 @@ export function openRace(state, players, { now, random = Math.random, seed = 0 }
 }
 
 /**
- * One phone asks for a lane. Answered with the SERVER's time, which the phone
+ * One phone steers — -1 left, 0 straight, +1 right. Answered with the
+ * SERVER's time, which the phone
  * puts in place of its own guess.
  *
  * Refused rather than queued when it is too soon after the last (`MIN_TAP_MS`)
  * or past `MAX_TAPS` — a phone mashing the screen gains nothing, and a script
  * cannot fill the state file.
  */
-export function steerRace(state, playerId, lane, now) {
+export function steerRace(state, playerId, steer, now) {
   const r = state.race;
   if (!r || r.phase !== 'racing') return { ok: false, reason: 'no_race' };
   if (now > r.startsAt + MAX_RACE_MS) return { ok: false, reason: 'over' };
   const index = r.entrants.findIndex((e) => e.playerId === String(playerId || ''));
   if (index < 0) return { ok: false, reason: 'not_racing' };
   const e = r.entrants[index];
-  const want = clampLane(lane);
+  const want = clampSteer(steer);
   const last = e.taps[e.taps.length - 1];
   if (last && now - last[0] < MIN_TAP_MS) return { ok: false, reason: 'too_fast' };
   if (e.taps.length >= MAX_TAPS) return { ok: false, reason: 'too_many' };
-  // The same lane again changes nothing — except the FIRST tap, which is what
+  // The same steer again changes nothing — except the FIRST tap, which is what
   // starts the engine (`stepKart()`: a kart sits on the grid until then).
-  if (last && last[1] === want) return { ok: true, at: last[0], lane: want, index, same: true };
+  if (last && last[1] === want) return { ok: true, at: last[0], steer: want, index, same: true };
   e.taps.push([now, want]);
-  return { ok: true, at: now, lane: want, index };
+  return { ok: true, at: now, steer: want, index };
 }
 
 /** Every kart, stepped to `t`, with what the standings need beside it. */
@@ -230,11 +231,11 @@ export function raceForScreen(state) {
   return out;
 }
 
-/** What goes to the projector the moment a tap lands. A number, a time, a lane. */
+/** What goes to the projector the moment a tap lands. A number, a time, a steer. */
 export function raceTapEvent(state, result) {
   const r = state.race;
   if (!r || !result || !result.ok || result.same) return null;
-  return { id: r.id, n: result.index, at: result.at, lane: result.lane };
+  return { id: r.id, n: result.index, at: result.at, steer: result.steer };
 }
 
 /** One phone: its own kart and nobody else's taps. */

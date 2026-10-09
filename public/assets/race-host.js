@@ -75,7 +75,7 @@ export function racePanel(s, act) {
   const el = node(`
     <div class="panel racepanel">
       <h3>Pub Prix</h3>
-      <div class="tiny">A kart race on the big screen. Every phone steers its own — tap a lane.</div>
+      <div class="tiny">A kart race on the big screen. Every phone steers its own — hold left or right.</div>
       <div class="row"><button class="go" data-race="open" ${ready && enough ? '' : 'disabled'}>${esc(label)}</button></div>
     </div>`);
   el.querySelector('[data-race="open"]').addEventListener('click', () => act('raceOpen'));

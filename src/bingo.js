@@ -1370,8 +1370,8 @@ export class BingoGame {
     return out;
   }
 
-  steerRace(playerId, lane) {
-    return steerRace(this.state, playerId, lane, this.now());
+  steerRace(playerId, steer) {
+    return steerRace(this.state, playerId, steer, this.now());
   }
 
   tickRace() {

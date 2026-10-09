@@ -301,7 +301,7 @@ function draw(next) {
     ? (state.phase === 'finished' ? 'That’s the set' : 'Requests open')
     // Pub Prix as a part: where the RACE has got to, never "Round 1 of undefined".
     : state.game === 'race'
-    ? ({ grid: 'On the grid', racing: 'Racing', done: 'Result', finished: 'That’s Pub Prix' }[state.phase] || 'Pub Prix')
+    ? ({ lobby: 'On the grid', racing: 'Racing', done: 'Result', finished: 'That’s Pub Prix' }[state.phase] || 'Pub Prix')
     : isBingo
     ? bingoTopbar(state)
     : state.phase === 'lobby'
@@ -613,7 +613,9 @@ function paintJoinCorner(s) {
    * there room", the question is "is the code already up"**, and a third game
    * is what made the two come apart.
    */
-  const wanted = !NO_JOIN_CORNER.has(s.phase)
+  // A Pub Prix part's lobby is the TRACK, not the QR panel — so the code goes
+  // in the corner there, the one moment the room is joining for the race.
+  const wanted = (!NO_JOIN_CORNER.has(s.phase) || (s.game === 'race' && s.phase !== 'finished'))
     && s.game !== 'dj'
     && !s.scoreboard
     && !(s.advert && s.advert.heading !== undefined);

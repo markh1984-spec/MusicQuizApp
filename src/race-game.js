@@ -44,17 +44,24 @@ import {
 import { kartColour, LANES, pubPrixPack } from '../public/assets/race-track.js';
 
 /**
- * GRID while the room joins and between races; RACING while one is on; DONE
- * with a result up; FINISHED when the host ends the night here.
+ * LOBBY while the room joins and between races (the karts on the grid);
+ * RACING while one is on; DONE with a result up; FINISHED when the host ends
+ * the night here.
+ *
+ * **THE WAITING PHASE IS CALLED `lobby`, LIKE EVERY OTHER GAME'S.** It was
+ * `grid`, and the console reads any phase but `lobby` as a night in full
+ * swing: a race launched and waiting hid Tonight's launch bar altogether,
+ * and `tonight-resolves.mjs` caught it. The app already knows what a waiting
+ * room is; a game that names its own is a kind test waiting to happen.
  */
-export const RACE_PHASES = { GRID: 'grid', RACING: 'racing', DONE: 'done', FINISHED: 'finished' };
+export const RACE_PHASES = { LOBBY: 'lobby', RACING: 'racing', DONE: 'done', FINISHED: 'finished' };
 
 const newSeed = (random) => Math.floor(random() * 2147483647) + 1;
 
 function freshState(now, random) {
   return {
     kind: 'race',
-    phase: RACE_PHASES.GRID,
+    phase: RACE_PHASES.LOBBY,
     startedAt: now,
     finishedAt: null,
     players: {},
@@ -91,7 +98,7 @@ export class RaceGame {
     if (!s.vouchers) s.vouchers = {};
     if (!Array.isArray(s.podiums)) s.podiums = [];
     if (!(s.nextSeed > 0)) s.nextSeed = newSeed(this.random);
-    if (!Object.values(RACE_PHASES).includes(s.phase)) s.phase = RACE_PHASES.GRID;
+    if (!Object.values(RACE_PHASES).includes(s.phase)) s.phase = RACE_PHASES.LOBBY;
   }
 
   changed() {
@@ -183,7 +190,7 @@ export class RaceGame {
     this.state.race = null;
     this.state.races = 0;
     this.state.podiums = [];
-    this.state.phase = RACE_PHASES.GRID;
+    this.state.phase = RACE_PHASES.LOBBY;
     this.state.nextSeed = newSeed(this.random);
     this.changed();
     return true;
@@ -264,8 +271,8 @@ export class RaceGame {
     return out;
   }
 
-  steerRace(playerId, lane) {
-    return steerRace(this.state, playerId, lane, this.now());
+  steerRace(playerId, steer) {
+    return steerRace(this.state, playerId, steer, this.now());
   }
 
   tickRace() {
@@ -308,7 +315,7 @@ export class RaceGame {
   dropRace() {
     if (this.state.race && this.state.race.phase === 'racing') this.closeRace();
     const out = dropRace(this.state);
-    if (this.state.phase !== RACE_PHASES.FINISHED) this.state.phase = RACE_PHASES.GRID;
+    if (this.state.phase !== RACE_PHASES.FINISHED) this.state.phase = RACE_PHASES.LOBBY;
     this.changed();
     return out;
   }

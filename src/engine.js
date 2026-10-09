@@ -1491,8 +1491,8 @@ export class Engine {
   }
 
   /** A phone asks for a lane. Deliberately NOT `changed()` — see `race.js`. */
-  steerRace(playerId, lane) {
-    return steerRace(this.state, playerId, lane, this.now());
+  steerRace(playerId, steer) {
+    return steerRace(this.state, playerId, steer, this.now());
   }
 
   /** The session's race timer asks this every half-second. */

@@ -8,8 +8,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  trackLayout, courseFor, kartAt, newKart, stepKart, standings,
+  trackLayout, courseFor, kartAt, newKart, stepKart, standings, bendAt, clampSteer, speedOf,
   LAP, RACE, LANES, COUNTDOWN_MS, MIN_TAP_MS, MAX_TAPS, AFTER_WINNER_MS, MAX_RACE_MS,
+  BENDS, HALF, WALL, GRASS, STEP_MS,
 } from '../public/assets/race-track.js';
 import {
   openRace, steerRace, raceIsOver, finishRace, raceForScreen, raceForPlayer, raceTapEvent,
@@ -57,7 +58,7 @@ test('a kart sits on the grid until its phone taps once', () => {
 
 test('a kart is the same whether it is stepped in one go or frame by frame', () => {
   const course = courseFor(11);
-  const taps = [[T0 - 500, 0], [T0 + 4000, 2], [T0 + 9000, 1], [T0 + 15_000, 0]];
+  const taps = [[T0 - 500, -1], [T0 + 4000, 1], [T0 + 9000, 0], [T0 + 15_000, -1], [T0 + 16_500, 0]];
   const once = kartAt(course, taps, 0, T0, T0 + 40_000);
   const frames = newKart(0);
   for (let t = T0; t <= T0 + 40_000; t += 17) stepKart(frames, course, taps, T0, t);
@@ -65,16 +66,71 @@ test('a kart is the same whether it is stepped in one go or frame by frame', () 
   assert.equal(frames.d, once.d);
   assert.equal(frames.hits, once.hits);
   assert.equal(frames.boosts, once.boosts);
+  assert.equal(frames.x, once.x, 'and in the same place across the road');
 });
 
-test('a spilt pint slows a kart down and a boost speeds it up', () => {
-  const course = courseFor(5);
-  const spill = course.find((c) => c.kind === 'spill');
-  const boost = course.find((c) => c.kind === 'boost');
-  const inSpill = kartAt(course, [[T0, spill.lane]], spill.lane, T0, T0 + 60_000);
-  assert.ok(inSpill.hits >= 1);
-  const onBoost = kartAt(course, [[T0, boost.lane]], boost.lane, T0, T0 + 60_000);
-  assert.ok(onBoost.boosts >= 1);
+test('a spilt pint slows a kart that drives through it, and one steered round misses it', () => {
+  // On the start straight, before the first bend, so only the thumb moves the kart.
+  const course = [{ at: 60, lane: 1, kind: 'spill' }, { at: 80, lane: 2, kind: 'boost' }];
+  const through = kartAt(course, [[T0, 0]], 1, T0, T0 + 1800);
+  assert.equal(through.hits, 1, 'straight through the middle of it');
+  // Hold right from the off: across into the outside line in time for the boost.
+  const round = kartAt(course, [[T0, 1], [T0 + 500, 0]], 1, T0, T0 + 1800);
+  assert.equal(round.hits, 0, 'steered out of the way');
+  assert.equal(round.boosts, 1, 'and onto the boost');
+  assert.ok(round.d > through.d, 'which is faster');
+});
+
+// ------------------------------------------------------------- the steering
+
+test('a held side moves the kart across; letting go holds the line on a straight', () => {
+  const course = [];
+  const left = kartAt(course, [[T0, -1]], 1, T0, T0 + 400);
+  assert.ok(left.x < -0.8, `held left for 0.4s: ${left.x}`);
+  const straight = kartAt(course, [[T0, 0]], 1, T0, T0 + 1500);
+  assert.equal(straight.x, 0, 'no thumb, no bend: dead straight');
+  assert.equal(clampSteer(-1), -1);
+  assert.equal(clampSteer(7), 0, 'anything but left or right is straight');
+  assert.equal(clampSteer('1'), 1);
+});
+
+test('a bend pushes you WIDE, and holding the inside keeps you on the tarmac', () => {
+  const [a, b] = BENDS[0];
+  assert.equal(bendAt(a - 1), 0);
+  assert.equal(bendAt((a + b) / 2), 1, 'full push mid-bend');
+  assert.equal(bendAt(LAP + (a + b) / 2), 1, 'the same bends every lap');
+  // Wheel straight through the first bend: out onto the grass.
+  const drift = kartAt([], [[T0, 0]], 1, T0, T0 + 6000);
+  assert.ok(drift.x > HALF, `let go through a bend and you go wide: x=${drift.x}`);
+  // Thumb on the inside for the first part of the bend, then off and on.
+  const held = [];
+  for (let t = 0; t < 8000; t += 500) held.push([T0 + 2000 + t, t % 1000 === 0 ? -1 : 0]);
+  const fought = kartAt([], [[T0, 0], ...held], 1, T0, T0 + 8000);
+  assert.ok(Math.abs(fought.x) <= HALF, `held the inside, stayed on: x=${fought.x}`);
+  assert.ok(fought.d > drift.d, 'and staying on the tarmac is faster than the grass');
+});
+
+test('the grass costs speed and the wall holds you on the track', () => {
+  const k = newKart(1);
+  k.x = HALF + 0.1;
+  assert.equal(speedOf(k, T0), GRASS);
+  k.x = 0;
+  assert.equal(speedOf(k, T0), 1);
+  const wall = kartAt([], [[T0, 1]], 2, T0, T0 + 10_000);
+  assert.equal(wall.x, WALL, 'held right for ten seconds: at the wall, never past it');
+  assert.ok(wall.d > 0 && wall.d < 10 * 52 * 0.6, 'still moving, but slowly');
+});
+
+test('a whole race is the same race stepped at any frame rate', () => {
+  const course = courseFor(23);
+  const taps = [];
+  for (let t = -1000; t < 120_000; t += 700) taps.push([T0 + t, [-1, 0, 1, 0][Math.floor(t / 700 + 2) % 4]]);
+  const once = kartAt(course, taps, 0, T0, T0 + 130_000);
+  const frames = newKart(0);
+  for (let t = T0; t <= T0 + 130_000; t += STEP_MS * 3 + 7) stepKart(frames, course, taps, T0, t);
+  stepKart(frames, course, taps, T0, T0 + 130_000);
+  assert.deepEqual([frames.d, frames.x, frames.hits, frames.boosts, frames.finishedAt],
+    [once.d, once.x, once.hits, once.boosts, once.finishedAt]);
 });
 
 test('a kart finishes three laps and is stamped with the exact moment', () => {
@@ -117,12 +173,12 @@ test('GO is after the countdown, and the starting lanes spread the grid', () => 
 test('a tap is stamped with the server time, and refused when it should be', () => {
   const { state } = race(2);
   const at = T0 + 1000;
-  const ok = steerRace(state, 'p0', 2, at);
-  assert.deepEqual(ok, { ok: true, at, lane: 2, index: 0 });
-  assert.equal(steerRace(state, 'p0', 1, at + MIN_TAP_MS - 1).reason, 'too_fast');
-  assert.equal(steerRace(state, 'p0', 2, at + 500).same, true, 'the same lane again is no change');
+  const ok = steerRace(state, 'p0', 1, at);
+  assert.deepEqual(ok, { ok: true, at, steer: 1, index: 0 });
+  assert.equal(steerRace(state, 'p0', -1, at + MIN_TAP_MS - 1).reason, 'too_fast');
+  assert.equal(steerRace(state, 'p0', 1, at + 500).same, true, 'the same steer again is no change');
   assert.equal(steerRace(state, 'nobody', 1, at).reason, 'not_racing');
-  assert.equal(steerRace(state, 'p1', 9, at).lane, 2, 'a lane off the road is clamped');
+  assert.equal(steerRace(state, 'p1', 9, at).steer, 0, 'anything but left or right is straight');
   const e = state.race.entrants[1];
   e.taps = Array.from({ length: MAX_TAPS }, (_, i) => [at + i * 100, i % 3]);
   assert.equal(steerRace(state, 'p1', 0, at + MAX_TAPS * 100 + 1000).reason, 'too_many');
@@ -139,7 +195,8 @@ test('it is over when every started kart is home, or ten seconds after the first
   const { state: s2 } = race(3);
   steerRace(s2, 'p0', 1, T0);
   steerRace(s2, 'p1', 1, s2.race.startsAt + 40_000);
-  const first = kartAt(courseFor(s2.race.seed), [[T0, 1]], 1, s2.race.startsAt, T0 + MAX_RACE_MS).finishedAt;
+  // From p0's OWN starting line — where you start across the road now matters.
+  const first = kartAt(courseFor(s2.race.seed), [[T0, 1]], s2.race.entrants[0].lane, s2.race.startsAt, T0 + MAX_RACE_MS).finishedAt;
   assert.equal(raceIsOver(s2, first + AFTER_WINNER_MS - 100), false);
   assert.equal(raceIsOver(s2, first + AFTER_WINNER_MS + 100), true);
 });
@@ -176,7 +233,7 @@ test('RULE 3: the projector and every race event carry a kart NUMBER, never a pl
   const { state } = race(3);
   const tap = steerRace(state, 'p1', 2, T0 + 100);
   const ev = raceTapEvent(state, tap);
-  assert.deepEqual(Object.keys(ev).sort(), ['at', 'id', 'lane', 'n']);
+  assert.deepEqual(Object.keys(ev).sort(), ['at', 'id', 'n', 'steer']);
   assert.equal(ev.n, 1);
   finishRace(state, { now: T0 + 30_000, reward: 'A pint', newCode: () => 'SECRET01' });
   const wire = JSON.stringify(raceForScreen(state));

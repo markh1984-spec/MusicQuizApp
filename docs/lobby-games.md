@@ -629,9 +629,10 @@ and nobody else does.
 
 Asked for on 9 October 2026: *"something like Mario Kart… each player is
 racing around a track but the track is on the main screen."* Three choices
-made off options: karts that **drive themselves while the phone picks a
-lane**, the name **Pub Prix**, and **the winner gets the last drink on the
-list**, the same as the funniest photograph.
+made off options: karts that drove themselves while the phone picked a lane
+(reversed that night for real steering — see below), the name **Pub Prix**,
+and **the winner gets the last drink on the list**, the same as the funniest
+photograph.
 
 It is the first game here where the BIG SCREEN is the game and the phones are
 controllers, so it breaks two of this file's habits on purpose, and both are
@@ -645,15 +646,35 @@ off. A kart race is a genre; a plumber, item boxes, shells and bananas are not,
 and none of them is here. The hazard is a **spilt pint** and the pick-up is a
 **green boost**, which are a pub's own furniture.
 
-### Why nobody steers
+### It steers — and that REVERSED the first build
 
-Pub wifi puts a quarter to half a second between a thumb and the projector.
-Steering through that is a kart that hits the wall the player already turned
-away from, in front of sixty people. A **lane** is decided a second or two
-before the thing it avoids, so the same delay costs nothing: the phone shows
-about three seconds of road ahead. The road IS the control (tap the left third
-and the kart goes left), which keeps this file's *no control panel — you tap
-and it walks there*.
+The first version did not steer: pub wifi puts a quarter to half a second
+between a thumb and the server, so a kart only ever chose a **lane**, a second
+or two ahead of what it avoided. The host reversed it the same evening: *"can
+we make it instead of lanes its actual steering with the phones? its meant to
+be hard like."*
+
+- **HOLD A SIDE OF THE SCREEN TO TURN, LET GO TO GO STRAIGHT.** The whole road
+  is the wheel, so this file's *no control panel* still holds — there are no
+  buttons to find. Not tilt: an iPhone asks permission for the motion sensor
+  every night, and a permission prompt is a phone that does not steer.
+- **WHAT MAKES IT HARD IS THE TRACK, NOT THE LAG.** Every bend pushes you WIDE
+  (`DRIFT`, just over half of `STEER`, so a bend is held with a thumb on the
+  inside about half the time), and harder the faster you go. Off the tarmac is
+  grass at `GRASS` speed; the wall stops you leaving the track. A late
+  correction costs speed, never the race in one blow.
+- **THE LAG IS STILL THE SERVER'S TO SETTLE (rule 2).** The phone sends -1, 0
+  or +1 and the server stamps it; the phone draws itself half a round trip
+  ahead, so the kart under the thumb is the kart the server will decide.
+  **Only the LATEST wish is sent**, at most every `MIN_TAP_MS + 30`, so a thumb
+  that flickers costs one request — and a refused one is retried, never drawn
+  as if it had landed.
+- **THE TURNS ARE THE PHYSICS' OWN** — `BENDS`, as stretches of the lap. The
+  projector draws its curves on exactly those stretches whatever the screen's
+  shape, so the push on the phone is the bend on the wall.
+- **A race part's waiting phase is `lobby`**, like every other game's: named
+  `grid`, the console read it as a night in full swing and hid Tonight's launch
+  bar (`tonight-resolves.mjs` caught it).
 
 ### One pure function, run in three places
 
@@ -662,7 +683,7 @@ phone. A kart is a function of the seed (the track) and its own taps, stepped
 at a fixed 50ms, and **karts never touch each other**. That buys three things:
 
 - the **server** decides who won with the same code that draws the race (rule
-  2: the server stamps every tap, and a phone sends a lane and nothing else);
+  2: the server stamps every tap, and a phone sends a steer and nothing else);
 - the **projector** draws 300ms behind the server, so a tap has nearly always
   arrived before its moment is drawn; a later one rebuilds one kart from the
   grid, which is cheap precisely because karts do not interact;
@@ -674,9 +695,9 @@ A restart rebuilds the race exactly from the taps on disk.
 
 ### A tap is not a state push — the stated exception to *one POST leaves a phone*
 
-Every other game here sends one POST at game over. A race cannot: a lane
-change is the game. So the exception is made as small as it can be. A tap is
-**saved** (debounced; a lost tap costs a lane, not a night), **answered** to the
+Every other game here sends one POST at game over. A race cannot: steering
+is the game. So the exception is made as small as it can be. A tap is
+**saved** (debounced; a lost tap costs a turn, not a night), **answered** to the
 phone that sent it with the server's own time, and sent on to **the projector
 alone** as a `race` SSE event. It is never `changed()`, because a state push per
 tap would rebuild every phone's payload sixty times a second. Taps are refused

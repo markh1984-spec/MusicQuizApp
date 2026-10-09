@@ -1,9 +1,11 @@
 /**
- * PUB PRIX ON A PHONE — your own kart, the road ahead, and three lanes to tap.
+ * PUB PRIX ON A PHONE — your own kart, the road ahead, and a wheel to hold.
  *
- * **NO CONTROL PANEL: YOU TAP THE LANE AND THE KART GOES THERE** — the lobby
- * games' own rule (`docs/lobby-games.md`). The road IS the control: tap the
- * left third, the kart moves left. Nothing to read, nothing to hold.
+ * **HOLD TO STEER — the road IS the control.** A thumb on the left half turns
+ * left, on the right half turns right, nothing held drives straight. No
+ * buttons to find in a dark pub: the whole screen is the wheel. It used to be
+ * three lanes to tap; the host asked for real steering, *"its meant to be
+ * hard"*, and the bends and the grass are what make it so.
  *
  * **IT RUNS THE SAME RACE THE SERVER DOES** — `race-track.js`, over this
  * kart's own taps — so the road scrolls smoothly however quiet the wire is.
@@ -25,7 +27,8 @@
  */
 import { esc, postJson, node, ordinal, roomCode } from './client.js';
 import {
-  courseFor, newKart, stepKart, lapOf, LAPS, LAP, SPEED, BOOST, SLOW, MIN_TAP_MS,
+  courseFor, newKart, stepKart, lapOf, bendAt, onGrass, speedOf,
+  LAPS, LAP, SPEED, MIN_TAP_MS, HALF, WALL,
 } from './race-track.js';
 
 /** How much road is on the screen, ahead of the kart — about three seconds. */
@@ -41,7 +44,16 @@ export function racing(s) {
 }
 
 export function stopRacePhone() {
-  if (live && live.raf) cancelAnimationFrame(live.raf);
+  if (live) {
+    if (live.raf) cancelAnimationFrame(live.raf);
+    if (live.timer) clearTimeout(live.timer);
+    // The arrow keys are a WINDOW listener — left behind, they would steer a
+    // race that is no longer on the screen.
+    if (live.onKey) {
+      window.removeEventListener('keydown', live.onKey);
+      window.removeEventListener('keyup', live.onKey);
+    }
+  }
   live = null;
 }
 
@@ -57,10 +69,9 @@ export function buildRace(s, { player, now }) {
       </div>
       <div class="race-road">
         <canvas class="race-road-canvas" aria-hidden="true"></canvas>
-        <div class="race-lanes">
-          <button type="button" data-lane="0" aria-label="Left lane"></button>
-          <button type="button" data-lane="1" aria-label="Middle lane"></button>
-          <button type="button" data-lane="2" aria-label="Right lane"></button>
+        <div class="race-steer" role="group" aria-label="Steering — hold the left or right of the screen">
+          <span class="race-steer-hint left" aria-hidden="true">&#9664; hold</span>
+          <span class="race-steer-hint right" aria-hidden="true">hold &#9654;</span>
         </div>
         <div class="race-say" id="raceSay" aria-live="polite"></div>
       </div>
@@ -74,7 +85,7 @@ export function buildRace(s, { player, now }) {
     pending: [],
     lead: LEAD_START,
     sim: newKart(r.you.lane),
-    vis: r.you.lane,
+    vis: r.you.lane - 1,
     colour: r.you.colour,
     canvas: el.querySelector('canvas'),
     lapEl: el.querySelector('#raceLap'),
@@ -85,14 +96,68 @@ export function buildRace(s, { player, now }) {
     now,
     raf: null,
     last: 0,
+    // THE THUMBS — every finger on the glass and which side it is on. The
+    // newest one wins, so rolling from one thumb to the other just works.
+    fingers: new Map(),
+    keys: [],
+    want: 0,
+    sentWant: (r.you.taps || []).length ? r.you.taps[r.you.taps.length - 1][1] : null,
+    lastSend: 0,
+    timer: null,
+    onKey: null,
   };
-  // `pointerdown`, not `click` — a click waits for the finger to lift, and on
-  // a road that is the difference between missing a puddle and not.
-  el.querySelectorAll('[data-lane]').forEach((b) => {
-    b.addEventListener('pointerdown', (ev) => { ev.preventDefault(); steer(Number(b.dataset.lane)); });
-  });
+  wireSteering(el.querySelector('.race-steer'));
   live.raf = requestAnimationFrame(frame);
   return el;
+}
+
+/*
+ * HOLD TO STEER. `pointerdown`, never `click` — a click waits for the finger
+ * to lift, and steering is the finger staying down. Captured, so a thumb that
+ * slides off the road still lets go when it lifts; and its side is read from
+ * where it IS, so sliding from left to right turns the wheel the other way.
+ * The arrow keys do the same on a laptop, for trying it out.
+ */
+function wireSteering(pad) {
+  const me = live;
+  const sideOf = (ev) => {
+    const box = pad.getBoundingClientRect();
+    return ev.clientX < box.left + box.width / 2 ? -1 : 1;
+  };
+  const update = () => {
+    if (live !== me) return;
+    const held = [...me.fingers.values()];
+    const key = me.keys[me.keys.length - 1];
+    want(held.length ? held[held.length - 1] : key || 0);
+  };
+  pad.addEventListener('pointerdown', (ev) => {
+    ev.preventDefault();
+    try { pad.setPointerCapture(ev.pointerId); } catch { /* an old browser — it still steers */ }
+    me.fingers.delete(ev.pointerId);
+    me.fingers.set(ev.pointerId, sideOf(ev));
+    if (navigator.vibrate) navigator.vibrate(8);
+    update();
+  });
+  pad.addEventListener('pointermove', (ev) => {
+    if (!me.fingers.has(ev.pointerId)) return;
+    const side = sideOf(ev);
+    if (me.fingers.get(ev.pointerId) !== side) { me.fingers.set(ev.pointerId, side); update(); }
+  });
+  const lift = (ev) => { if (me.fingers.delete(ev.pointerId)) update(); };
+  pad.addEventListener('pointerup', lift);
+  pad.addEventListener('pointercancel', lift);
+  pad.addEventListener('lostpointercapture', lift);
+  pad.addEventListener('contextmenu', (ev) => ev.preventDefault());
+  me.onKey = (ev) => {
+    const side = ev.key === 'ArrowLeft' ? -1 : ev.key === 'ArrowRight' ? 1 : 0;
+    if (!side) return;
+    ev.preventDefault();
+    me.keys = me.keys.filter((k) => k !== side);
+    if (ev.type === 'keydown') me.keys.push(side);
+    update();
+  };
+  window.addEventListener('keydown', me.onKey);
+  window.addEventListener('keyup', me.onKey);
 }
 
 function taps() {
@@ -103,45 +168,73 @@ function resim() {
   live.sim = newKart(live.startLane);
 }
 
-function steer(lane) {
-  if (!live) return;
+/** How long to leave between two sends — the server's floor, plus room for jitter. */
+const SEND_GAP = MIN_TAP_MS + 30;
+
+/**
+ * THE WHEEL WANTS `v`. Sent at once when the server would take it, otherwise
+ * held and sent the moment it would — only the LATEST wish, so a thumb that
+ * flickers left-right-left in a tenth of a second costs one request, not
+ * three. A refusal puts the wish back to be tried again: a turn the server
+ * never took must not be drawn on the phone as if it had.
+ */
+function want(v) {
   const me = live;
-  const at = me.now() + me.lead;
-  const all = taps();
-  const last = all[all.length - 1];
-  if (last && at - last[0] < MIN_TAP_MS) return;
-  // The lane it is already in, once the engine is running, is no change.
-  if (last && last[1] === lane) return;
-  const guess = [at, lane];
+  if (!me) return;
+  me.want = v;
+  flush(me);
+}
+
+function flush(me) {
+  if (live !== me) return;
+  const v = me.want;
+  if (v === me.sentWant) return;
+  // The engine starts on a press, never on a lift.
+  if (me.sentWant === null && v === 0) return;
+  const wait = me.lastSend + SEND_GAP - performance.now();
+  if (wait > 0) {
+    if (!me.timer) me.timer = setTimeout(() => { me.timer = null; flush(me); }, wait);
+    return;
+  }
+  const before = me.sentWant;
+  me.sentWant = v;
+  me.lastSend = performance.now();
+  const guess = [me.now() + me.lead, v];
   me.pending.push(guess);
   resim();
-  if (navigator.vibrate) navigator.vibrate(10);
   const sent = performance.now();
   const p = me.player || {};
-  postJson('/api/race', { playerId: p.id, token: p.token, joinCode: roomCode(), lane })
+  postJson('/api/race', { playerId: p.id, token: p.token, joinCode: roomCode(), steer: v })
     .then((res) => {
       if (live !== me) return;
       const half = (performance.now() - sent) / 2;
       me.lead = Math.max(0, Math.min(LEAD_MAX, me.lead * 0.7 + half * 0.3));
       me.pending = me.pending.filter((x) => x !== guess);
-      if (res && res.ok && !res.same) me.acked.push([res.at, res.lane]);
+      if (res && res.ok && !res.same) me.acked.push([res.at, res.steer]);
+      if (!res || !res.ok) {
+        // Not taken (too soon after the last, most likely): try again shortly.
+        if (me.sentWant === v) me.sentWant = before;
+        setTimeout(() => flush(me), SEND_GAP);
+      }
       resim();
     })
     .catch(() => {
       if (live !== me) return;
       me.pending = me.pending.filter((x) => x !== guess);
+      if (me.sentWant === v) me.sentWant = before;
+      setTimeout(() => flush(me), SEND_GAP * 2);
       resim();
     });
 }
 
 function frame(stamp) {
   if (!live) return;
-  if (!live.canvas.isConnected) { live = null; return; }
+  if (!live.canvas.isConnected) { stopRacePhone(); return; }
   const dt = live.last ? Math.min(0.1, (stamp - live.last) / 1000) : 0;
   live.last = stamp;
   const t = live.now() + live.lead;
   stepKart(live.sim, live.course, taps(), live.startsAt, t);
-  live.vis += (live.sim.lane - live.vis) * Math.min(1, dt * 14);
+  live.vis += (live.sim.x - live.vis) * Math.min(1, dt * 18);
   paint(t);
   say(t);
   live.raf = requestAnimationFrame(frame);
@@ -150,8 +243,7 @@ function frame(stamp) {
 function shownD(t) {
   const sim = live.sim;
   if (sim.finishedAt !== null || sim.startedAt === null || sim.at === null) return sim.d;
-  const mult = sim.at < sim.slowUntil ? SLOW : sim.at < sim.boostUntil ? BOOST : 1;
-  return sim.d + Math.max(0, Math.min(50, t - sim.at)) / 1000 * SPEED * mult;
+  return sim.d + Math.max(0, Math.min(50, t - sim.at)) / 1000 * SPEED * speedOf(sim, sim.at);
 }
 
 function paint(t) {
@@ -165,86 +257,129 @@ function paint(t) {
   }
   const ctx = c.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, W, H);
-  const laneW = W / 3;
+  const sx = W / (2 * (WALL + 0.12));             // pixels per lane-width, across
+  const X = (x) => W / 2 + x * sx;
   const kartY = H * 0.8;
-  const px = (H * 0.8) / VIEW;
+  const px = (H * 0.8) / VIEW;                     // pixels per track unit, along
   const d = shownD(t);
+  const Y = (at) => kartY - (at - d) * px;
 
-  ctx.fillStyle = '#23232d';
+  // Grass, striped so standing still LOOKS still.
+  ctx.fillStyle = '#1c3a24';
   ctx.fillRect(0, 0, W, H);
-  // Lane lines that scroll with the kart, so standing still LOOKS still.
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
-  ctx.lineWidth = 3;
+  ctx.fillStyle = '#21452b';
+  for (let a = Math.floor((d - 40) / 40) * 40; a < d + VIEW + 40; a += 80) ctx.fillRect(0, Y(a + 40), W, 40 * px);
+  // The tarmac.
+  ctx.fillStyle = '#23232d';
+  ctx.fillRect(X(-HALF), 0, X(HALF) - X(-HALF), H);
+  // A bend, where the road pushes you wide: tinted, with arrows the way it pushes.
+  for (let a = Math.floor((d - 25) / 10) * 10; a < d + VIEW; a += 10) {
+    const b = bendAt(a);
+    if (!b) continue;
+    ctx.fillStyle = `rgba(255, 138, 61, ${0.13 * b})`;
+    // Edge to edge, never overlapping: a translucent overlap draws a seam.
+    const top = Math.round(Y(a + 10)); const bottom = Math.round(Y(a));
+    ctx.fillRect(X(-HALF), top, X(HALF) - X(-HALF), bottom - top);
+  }
+  ctx.strokeStyle = 'rgba(255, 168, 110, 0.4)';
+  ctx.lineWidth = Math.max(3, sx * 0.08);
+  for (let a = Math.ceil((d - 25) / 45) * 45; a < d + VIEW; a += 45) {
+    if (bendAt(a) < 0.5) continue;
+    const y = Y(a);
+    for (const x0 of [-0.75, 0.75]) {
+      ctx.beginPath();
+      ctx.moveTo(X(x0 - 0.15), y - sx * 0.2);
+      ctx.lineTo(X(x0 + 0.15), y);
+      ctx.lineTo(X(x0 - 0.15), y + sx * 0.2);
+      ctx.stroke();
+    }
+  }
+  // Kerbs, red and white, scrolling.
+  const kerb = 20;
+  for (let a = Math.floor((d - 30) / kerb) * kerb; a < d + VIEW + kerb; a += kerb) {
+    ctx.fillStyle = Math.round(a / kerb) % 2 ? '#e5484d' : '#f4f4f4';
+    for (const side of [-1, 1]) ctx.fillRect(side < 0 ? X(-HALF) - sx * 0.12 : X(HALF), Y(a + kerb), sx * 0.12, kerb * px + 1);
+  }
+  // Lane lines, faint — the pints still sit on three lines.
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+  ctx.lineWidth = 2;
   ctx.setLineDash([22, 22]);
   ctx.lineDashOffset = -((d * px) % 44);
-  for (const x of [laneW, laneW * 2]) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-  }
+  for (const x of [-0.5, 0.5]) { ctx.beginPath(); ctx.moveTo(X(x), 0); ctx.lineTo(X(x), H); ctx.stroke(); }
   ctx.setLineDash([]);
 
   // The finish line, when it is on screen.
-  const finishY = kartY - (LAPS * LAP - d) * px;
+  const finishY = Y(LAPS * LAP);
   if (finishY > -20 && finishY < H) {
-    const sq = laneW / 6;
-    for (let i = 0; i < 18; i += 1) {
+    const sq = (X(HALF) - X(-HALF)) / 12;
+    for (let i = 0; i < 12; i += 1) {
       for (let j = 0; j < 2; j += 1) {
         ctx.fillStyle = (i + j) % 2 ? '#0b0b12' : '#f4f4f4';
-        ctx.fillRect(i * sq, finishY + j * sq, sq, sq);
+        ctx.fillRect(X(-HALF) + i * sq, finishY + j * sq, sq, sq);
       }
     }
   }
 
   // What is coming: spilt pints and boosts.
+  const r = sx * 0.34;
   for (const it of live.course) {
     if (it.at < d - 25) continue;
     if (it.at > d + VIEW) break;
-    const y = kartY - (it.at - d) * px;
-    const x = laneW * (it.lane + 0.5);
+    const y = Y(it.at);
+    const x = X(it.lane - 1);
     if (it.kind === 'spill') {
       ctx.fillStyle = 'rgba(214, 150, 40, 0.95)';
-      ctx.beginPath(); ctx.ellipse(x, y, laneW * 0.32, laneW * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.62, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = 'rgba(250, 236, 196, 0.9)';
-      ctx.beginPath(); ctx.ellipse(x - laneW * 0.08, y - laneW * 0.05, laneW * 0.11, laneW * 0.06, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x - r * 0.25, y - r * 0.15, r * 0.34, r * 0.18, 0, 0, Math.PI * 2); ctx.fill();
     } else {
       ctx.strokeStyle = '#2fe07a';
-      ctx.lineWidth = Math.max(3, laneW * 0.07);
-      for (const k of [0, laneW * 0.18]) {
+      ctx.lineWidth = Math.max(3, sx * 0.07);
+      for (const k of [0, r * 0.55]) {
         ctx.beginPath();
-        ctx.moveTo(x - laneW * 0.2, y + k + laneW * 0.1);
-        ctx.lineTo(x, y + k - laneW * 0.08);
-        ctx.lineTo(x + laneW * 0.2, y + k + laneW * 0.1);
+        ctx.moveTo(x - r * 0.6, y + k + r * 0.3);
+        ctx.lineTo(x, y + k - r * 0.25);
+        ctx.lineTo(x + r * 0.6, y + k + r * 0.3);
         ctx.stroke();
       }
     }
   }
 
-  // The kart.
-  const kx = laneW * (live.vis + 0.5);
-  const kw = laneW * 0.42; const kh = laneW * 0.56;
+  // The kart, leaning into the turn it is making.
   const sim = live.sim;
+  const kx = X(live.vis);
+  const kw = sx * 0.42; const kh = sx * 0.6;
+  ctx.save();
+  ctx.translate(kx, kartY);
+  ctx.rotate((sim.steer || 0) * 0.22);
   if (sim.at !== null && sim.at < sim.boostUntil) {
     ctx.fillStyle = 'rgba(47, 224, 122, 0.35)';
-    ctx.beginPath(); ctx.ellipse(kx, kartY + kh * 0.6, kw * 0.6, kh * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, kh * 0.6, kw * 0.6, kh * 0.5, 0, 0, Math.PI * 2); ctx.fill();
   }
+  ctx.fillStyle = '#0b0b12';
+  for (const wx of [-1, 1]) for (const wy of [-0.3, 0.3]) ctx.fillRect(wx * kw * 0.55 - kw * 0.12, wy * kh - kh * 0.12, kw * 0.24, kh * 0.24);
   ctx.fillStyle = live.colour || '#4bd8ff';
-  roundRect(ctx, kx - kw / 2, kartY - kh / 2, kw, kh, kw * 0.3);
+  roundRect(ctx, -kw / 2, -kh / 2, kw, kh, kw * 0.3);
   ctx.fill();
-  ctx.strokeStyle = '#0b0b12';
+  ctx.strokeStyle = onGrass(sim) ? '#2fe07a' : '#0b0b12';
   ctx.lineWidth = 3;
   ctx.stroke();
+  ctx.restore();
 }
 
 function say(t) {
   const sim = live.sim;
+  const started = sim.ci > 0 || live.pending.length || live.acked.length;
   let text;
   if (sim.finishedAt !== null) text = `Home in ${((sim.finishedAt - live.startsAt) / 1000).toFixed(1)}s — look up`;
   else if (t < live.startsAt) {
     const n = Math.ceil((live.startsAt - t) / 1000);
-    text = sim.ci > 0 || live.pending.length || live.acked.length ? `${n}… engine running` : `${n}… tap a lane to start your engine`;
-  } else if (sim.startedAt === null && !live.pending.length) text = 'Tap a lane to start your engine!';
+    text = started ? `${n}… engine running` : `${n}… hold left or right to start your engine`;
+  } else if (!started) text = 'Hold left or right to start your engine!';
+  else if (onGrass(sim)) text = 'On the grass — steer back on!';
   else if (sim.at !== null && sim.at < sim.slowUntil) text = 'Spilt pint!';
   else if (sim.at !== null && sim.at < sim.boostUntil) text = 'Boost!';
+  else if (bendAt(sim.d) > 0.3 || bendAt(sim.d + 45) > 0.3) text = 'Bend — hold left';
   else text = '';
   if (text !== live.said) {
     live.said = text;

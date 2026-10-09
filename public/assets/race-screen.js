@@ -2,7 +2,7 @@
  * PUB PRIX ON THE PROJECTOR — every kart, on one track, sixty times a second.
  *
  * The server sends the race ONCE (who, which colour, the seed, when GO is) and
- * then only the taps, as `race` events, one per lane change — never a stream
+ * then only the steering, as `race` events, one per change — never a stream
  * of positions. This page runs `race-track.js` over those taps itself, so the
  * picture is smooth however quiet the wire is, and it is the SAME race the
  * server is deciding the winner of, because it is the same code.
@@ -10,7 +10,7 @@
  * **IT DRAWS A LITTLE BEHIND THE SERVER — `DELAY_MS`.** A tap reaches the
  * projector a beat after it happens; drawing three tenths of a second behind
  * means it has nearly always arrived by the time its moment is drawn, so a
- * kart changes lane smoothly instead of jumping. A tap that is later still
+ * kart turns smoothly instead of jumping. A steer that is later still
  * rebuilds that one kart from the grid, which is cheap because karts never
  * touch each other.
  *
@@ -26,7 +26,7 @@ import { esc, node } from './client.js';
 import { faceFor } from './avatar.js';
 import {
   courseFor, trackLayout, newKart, stepKart, standings, lapOf,
-  LAPS, LAP, SPEED, BOOST, SLOW,
+  speedOf, LAPS, LAP, SPEED, HALF, WALL, BENDS,
 } from './race-track.js';
 
 /** How far behind the server the picture is drawn. */
@@ -88,7 +88,7 @@ export function renderRace(s, now) {
       lane: k.lane,
       taps: (k.taps || []).slice(),
       sim: newKart(k.lane),
-      vis: k.lane,
+      vis: k.lane - 1,
       grid: k.n,
     })),
     canvas: wrap.querySelector('canvas'),
@@ -119,8 +119,8 @@ export function raceTap(ev) {
   const k = live.karts[ev.n];
   if (!k) return;
   const last = k.taps[k.taps.length - 1];
-  if (last && last[0] === ev.at && last[1] === ev.lane) return;
-  k.taps.push([ev.at, ev.lane]);
+  if (last && last[0] === ev.at && last[1] === ev.steer) return;
+  k.taps.push([ev.at, ev.steer]);
   k.taps.sort((a, b) => a[0] - b[0]);
   // Already drawn past that moment: rebuild this kart from the grid.
   if (k.sim.at !== null && ev.at <= k.sim.at) k.sim = newKart(k.lane);
@@ -142,8 +142,8 @@ function frame(stamp) {
   for (const k of live.karts) {
     if (live.grid) continue;
     stepKart(k.sim, live.course, k.taps, live.startsAt, t);
-    // A lane change is drawn as a quick slide, never a jump.
-    k.vis += (k.sim.lane - k.vis) * Math.min(1, dt * 12);
+    // Drawn a touch behind the physics, so a turn glides rather than steps.
+    k.vis += (k.sim.x - k.vis) * Math.min(1, dt * 16);
   }
   paint(t);
   live.raf = requestAnimationFrame(frame);
@@ -153,8 +153,7 @@ function frame(stamp) {
 function shownD(k, t) {
   const sim = k.sim;
   if (sim.finishedAt !== null || sim.startedAt === null || sim.at === null) return sim.d;
-  const mult = sim.at < sim.slowUntil ? SLOW : sim.at < sim.boostUntil ? BOOST : 1;
-  return sim.d + Math.max(0, Math.min(50, t - sim.at)) / 1000 * SPEED * mult;
+  return sim.d + Math.max(0, Math.min(50, t - sim.at)) / 1000 * SPEED * speedOf(sim, sim.at);
 }
 
 function geometry(W, H) {
@@ -166,7 +165,8 @@ function geometry(W, H) {
   const th = H - top - bottom;
   // Wide enough that a driver's FACE reads from the back of the room.
   const laneW = Math.max(14, Math.min(tw, th) * 0.068);
-  const half = laneW * 1.5 + laneW * 0.35;
+  // The whole road, wall to wall: tarmac to ±HALF, grass to ±WALL.
+  const half = laneW * WALL + laneW * 0.12;
   let R = (th - half * 2) / 2;
   let Ls = tw - 2 * R - half * 2;
   if (Ls < R * 0.6) { R = (tw - half * 2) / (2 + 0.6); Ls = R * 0.6; }
@@ -180,29 +180,36 @@ function geometry(W, H) {
 }
 
 /**
- * A point on the stadium: `s` along the centre line from the start (the middle
- * of the bottom straight, heading right), `off` out from it. Lane 0 — LEFT on
- * the phone — is the INSIDE, because the karts turn left.
+ * A point on the stadium, `p` being where on the LAP (track units) and `off`
+ * how far out from the centre line. **THE TURNS ARE THE PHYSICS' OWN** —
+ * `BENDS` in `race-track.js` — so the stretch the phone pushes you wide on is
+ * the stretch drawn as a bend here, whatever shape the projector is. The lap
+ * starts mid-way along the bottom straight, heading right; `off` is OUTWARD,
+ * so the inside of the turn (left on the phone) is negative.
  */
-function pt(g, s, off) {
-  const { Ls, R, cx, cy, P } = g;
-  let u = ((s % P) + P) % P;
+function pt(g, p, off) {
+  const { Ls, R, cx, cy } = g;
   const h = Ls / 2;
+  const [[a1, b1], [a2, b2]] = BENDS;
+  const u = ((p % LAP) + LAP) % LAP;
   let x; let y; let nx; let ny;
-  if (u < h) { x = cx + u; y = cy + R; nx = 0; ny = 1; }
-  else if ((u -= h) < Math.PI * R) { const a = u / R; x = cx + h + R * Math.sin(a); y = cy + R * Math.cos(a); nx = Math.sin(a); ny = Math.cos(a); }
-  else if ((u -= Math.PI * R) < Ls) { x = cx + h - u; y = cy - R; nx = 0; ny = -1; }
-  else if ((u -= Ls) < Math.PI * R) { const a = u / R; x = cx - h - R * Math.sin(a); y = cy - R * Math.cos(a); nx = -Math.sin(a); ny = -Math.cos(a); }
-  else { u -= Math.PI * R; x = cx - h + u; y = cy + R; nx = 0; ny = 1; }
+  if (u < a1) { x = cx + (u / a1) * h; y = cy + R; nx = 0; ny = 1; }
+  else if (u <= b1) { const a = ((u - a1) / (b1 - a1)) * Math.PI; x = cx + h + R * Math.sin(a); y = cy + R * Math.cos(a); nx = Math.sin(a); ny = Math.cos(a); }
+  else if (u < a2) { x = cx + h - ((u - b1) / (a2 - b1)) * Ls; y = cy - R; nx = 0; ny = -1; }
+  else if (u <= b2) { const a = ((u - a2) / (b2 - a2)) * Math.PI; x = cx - h - R * Math.sin(a); y = cy - R * Math.cos(a); nx = -Math.sin(a); ny = -Math.cos(a); }
+  else { x = cx - h + ((u - b2) / (LAP - b2)) * h; y = cy + R; nx = 0; ny = 1; }
   return { x: x + nx * off, y: y + ny * off, nx, ny };
 }
 
+/** Pixels, measured along the start straight, as track units. */
+const alongPx = (g, px) => (px * BENDS[0][0]) / (g.Ls / 2 || 1);
+
 function strokeLoop(ctx, g, off) {
   ctx.beginPath();
-  const n = 220;
+  const n = 240;
   for (let i = 0; i <= n; i += 1) {
-    const p = pt(g, (g.P * i) / n, off);
-    if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    const q = pt(g, (LAP * i) / n, off);
+    if (i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
   }
   ctx.closePath();
 }
@@ -236,26 +243,37 @@ function paint(t) {
   ctx.clearRect(0, 0, W, H);
   const font = getComputedStyle(document.body).fontFamily || 'sans-serif';
 
-  // The tarmac, its kerbs and the lane lines.
+  // The grass to the wall, the tarmac, its kerbs and the lane lines.
   ctx.lineJoin = 'round';
   strokeLoop(ctx, g, 0);
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
   ctx.lineWidth = g.half * 2 + 6;
   ctx.stroke();
-  ctx.strokeStyle = '#23232d';
+  ctx.strokeStyle = '#1c3a24';
   ctx.lineWidth = g.half * 2;
   ctx.stroke();
+  ctx.strokeStyle = '#23232d';
+  ctx.lineWidth = HALF * 2 * g.laneW;
+  ctx.stroke();
+  ctx.lineWidth = Math.max(2, g.laneW * 0.12);
+  ctx.setLineDash([g.laneW * 0.4, g.laneW * 0.4]);
+  for (const [colour, shift] of [['#e5484d', 0], ['#f4f4f4', g.laneW * 0.4]]) {
+    ctx.strokeStyle = colour;
+    ctx.lineDashOffset = shift;
+    for (const off of [-HALF * g.laneW, HALF * g.laneW]) { strokeLoop(ctx, g, off); ctx.stroke(); }
+  }
+  ctx.lineDashOffset = 0;
   ctx.setLineDash([g.laneW * 0.5, g.laneW * 0.5]);
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
   ctx.lineWidth = 2;
   for (const off of [-g.laneW / 2, g.laneW / 2]) { strokeLoop(ctx, g, off); ctx.stroke(); }
   ctx.setLineDash([]);
 
   // The chequered line.
-  const sq = g.half / 3;
+  const sq = (HALF * 2 * g.laneW) / 6;
   for (let row = 0; row < 6; row += 1) {
     for (let col = 0; col < 2; col += 1) {
-      const p = pt(g, col * sq, -g.half + row * sq + sq / 2);
+      const p = pt(g, alongPx(g, col * sq), -HALF * g.laneW + row * sq + sq / 2);
       ctx.fillStyle = (row + col) % 2 ? '#0b0b12' : '#f4f4f4';
       ctx.fillRect(p.x - sq / 2, p.y - sq / 2, sq, sq);
     }
@@ -263,7 +281,7 @@ function paint(t) {
 
   // What is on the track: spilt pints and boosts, the same every lap.
   for (const it of live.layout) {
-    const p = pt(g, (it.p / LAP) * g.P, (it.lane - 1) * g.laneW);
+    const p = pt(g, it.p, (it.lane - 1) * g.laneW);
     if (it.kind === 'spill') {
       ctx.fillStyle = 'rgba(214, 150, 40, 0.92)';
       ctx.beginPath(); ctx.ellipse(p.x, p.y, g.laneW * 0.4, g.laneW * 0.3, 0, 0, Math.PI * 2); ctx.fill();
@@ -298,13 +316,14 @@ function paint(t) {
    * readable. The board beside the track has the exact order.
    */
   const kr = g.laneW * 0.46;
-  const gap = kr * 2.9;
+  // Nose to tail, in TRACK units — a kart's length is pixels on the screen.
+  const gap = (kr * 2.9) / (g.P / LAP);
   const placedAt = new Map();
   const drawn = live.karts
     .map((k) => {
       const onGrid = k.sim.startedAt === null;
       // A kart still on the grid waits BEHIND the line, three abreast.
-      const s = onGrid ? -(Math.floor(k.grid / 3) + 1) * kr * 3 : (shownD(k, t) / LAP) * g.P;
+      const s = onGrid ? -alongPx(g, (Math.floor(k.grid / 3) + 1) * kr * 3) : shownD(k, t);
       return { k, onGrid, s, d: onGrid ? -1 : k.sim.d };
     })
     .sort((a, b) => b.d - a.d || a.k.n - b.k.n);
@@ -316,7 +335,7 @@ function paint(t) {
     placedAt.set(lane, x.s);
   }
   for (const { k, onGrid, s } of drawn.reverse()) {
-    const p = pt(g, s, (k.vis - 1) * g.laneW);
+    const p = pt(g, s, k.vis * g.laneW);
     const boosting = !onGrid && k.sim.at !== null && k.sim.at < k.sim.boostUntil;
     const slowed = !onGrid && k.sim.at !== null && k.sim.at < k.sim.slowUntil;
     const leads = leader && leader.n === k.n;
@@ -393,7 +412,7 @@ function paint(t) {
     ctx.fillText(String(n), tw, g.cy - g.H * 0.03);
     ctx.font = `700 ${Math.round(g.H * 0.04)}px ${font}`;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.fillText('Tap a lane on your phone to start your engine', tw, g.cy + g.H * 0.13);
+    ctx.fillText('Hold left or right on your phone to start your engine', tw, g.cy + g.H * 0.13);
   } else if (t - live.startsAt < 1200) {
     ctx.fillStyle = '#2fe07a';
     ctx.font = `900 ${Math.round(g.H * 0.22)}px ${font}`;
@@ -403,7 +422,7 @@ function paint(t) {
     ctx.font = `600 ${Math.round(g.H * 0.034)}px ${font}`;
     ctx.fillText(leader && leader.kart.finishedAt !== null
       ? `${leader.name} is home first`
-      : 'Dodge the spilt pints · hit the green boosts', tw, g.cy);
+      : 'Hold the bends · dodge the pints', tw, g.cy);
   }
 }
 

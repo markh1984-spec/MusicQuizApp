@@ -581,7 +581,7 @@ function paintCameraButton(s) {
    * one job, which is how somebody ends up using the worse one out of habit.
    */
   const menuIsUp = ['lobby', 'rules', 'round_intro', 'round_board'].includes(s.phase) || s.game === 'dj';
-  // Never over a race either: it floats over the right-hand lane.
+  // Never over a race either: it floats over the right-hand side of the wheel.
   // A Pub Prix part draws its own selfie button on the grid card — one camera
   // control per screen, the photo gate's rule.
   const wanted = Boolean(gapWants(s).photos && s.you && s.phase !== 'question' && !menuIsUp && !racing(s)
@@ -1650,7 +1650,7 @@ function buildRacePart(s) {
         <div class="sub">Pub Prix</div>
         <img class="race-grid-face" src="${esc(face)}" alt="">
         <h2>${you ? `You are kart ${you.n + 1}` : 'You are on the grid'}</h2>
-        <p class="muted">When the lights go, tap a lane to start your engine.</p>
+        <p class="muted">When the lights go, hold the left or right of your screen to steer.</p>
         <button class="photo-gate-go race-selfie" type="button">${lastSelfie || s.photoDone ? 'Take another selfie' : 'Take a selfie for your kart'}</button>
         <p class="tiny">Your face drives your kart on the big screen.</p>` : ''}
       ${s.phase === 'finished' && !r.winner ? '<div class="panel racecard"><div class="sub">Pub Prix</div><b>That’s Pub Prix.</b></div>' : ''}

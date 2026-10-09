@@ -1555,9 +1555,10 @@ Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 `pub-prix.mjs`. Chosen 9 Oct 2026 off options: a lane, the name, the LAST drink.
 
 - **NEVER A PLAY ON MARIO KART** — this app is SOLD: no plumber, item box,
-  shell or banana. **Nobody steers**: pub wifi lag, so a LANE decided seconds
-  ahead. **A kart sits on the grid until its phone taps** — a face-down phone
-  cannot win, and nobody started is nobody won.
+  shell or banana. **IT STEERS, AND IT IS MEANT TO BE HARD** — lanes REVERSED
+  by him the same night: hold a side, bends push you wide, grass costs speed.
+  **A kart sits on the grid until its phone touches** — nobody started is
+  nobody won.
 - **ONE PURE FUNCTION OF THE TAPS, a fixed step, karts never touch** — the
   server decides (rule 2), the projector draws 300ms BEHIND, the phone half a
   round trip AHEAD.

@@ -2473,12 +2473,12 @@ export class Session {
       return out;
     }
     /*
-     * PUB PRIX: a lane. SAVED but never `changed()` — a tap pushed to every
+     * PUB PRIX: a steer. SAVED but never `changed()` — a tap pushed to every
      * phone in the room sixty times a second is the one thing this must not
      * be. The route hands the projector its own copy (`raceTapEvent()`).
      */
     if (action === 'race' && typeof this.engine.steerRace === 'function') {
-      const out = this.engine.steerRace(String(body.playerId || ''), body.lane);
+      const out = this.engine.steerRace(String(body.playerId || ''), body.steer);
       if (out.ok && !out.same) this.store.save(this.engine.state);
       return out;
     }

@@ -53,9 +53,10 @@ const playerState = (p) => get(`/api/state?role=player&playerId=${p.playerId || 
 const join = (name) => fetch(`${BASE}/api/join`, {
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }),
 }).then((r) => r.json());
-const steer = (p, lane, token = p.token) => fetch(`${BASE}/api/race`, {
+// -1 left, 0 straight, +1 right — what a phone sends while a thumb is held.
+const steer = (p, v, token = p.token) => fetch(`${BASE}/api/race`, {
   method: 'POST', headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ playerId: p.playerId || p.id, token, lane }),
+  body: JSON.stringify({ playerId: p.playerId || p.id, token, steer: v }),
 }).then((r) => r.json());
 
 /** Every `race` event the projector's stream carries, collected as it goes. */
@@ -95,6 +96,18 @@ async function toRoundBoard() {
 }
 
 /** How much of a canvas is painted, and a fingerprint of it, in the page. */
+/**
+ * HOLD a side of the phone's road, as a thumb does — a real press with the
+ * mouse, so `pointerdown`, the capture and the lift all run for real.
+ */
+async function hold(page, side, ms) {
+  const box = await page.locator('.race-steer').boundingBox();
+  await page.mouse.move(box.x + box.width * (side < 0 ? 0.2 : 0.8), box.y + box.height * 0.5);
+  await page.mouse.down();
+  await sleep(ms);
+  await page.mouse.up();
+}
+
 const sample = (page, sel) => page.evaluate((selector) => {
   const c = document.querySelector(selector);
   if (!c || !c.width) return null;
@@ -167,14 +180,14 @@ try {
     ![ann, bob, cat].some((p) => sv.includes(p.playerId || p.id) || sv.includes(p.token)));
 
   // Who may steer.
-  const forged = await steer(bob, 2, 'not-a-token');
+  const forged = await steer(bob, 1, 'not-a-token');
   check('a tap without the phone\'s token is refused', forged.ok === false && forged.reason === 'not_yours', JSON.stringify(forged));
 
   // Ann taps in the browser; Bob starts his engine over HTTP; Cat never taps;
   // the crowd all start in the countdown, which is exactly the pack that
   // would be one dot if karts were drawn on top of each other.
-  for (const [i, p] of crowd.entries()) await steer(p, i % 3);
-  await phone.locator('.race-lanes [data-lane="1"]').dispatchEvent('pointerdown');
+  for (const [i, p] of crowd.entries()) await steer(p, (i % 3) - 1);
+  await hold(phone, -1, 250);
   const bobTap = await steer(bob, 0);
   check('a tap is answered with the SERVER\'s time', bobTap.ok && Number.isFinite(bobTap.at), JSON.stringify(bobTap));
 
@@ -186,9 +199,10 @@ try {
   check('the projector canvas is painted', a && a.lit > 1000, JSON.stringify(a));
   check('and it is MOVING, not frozen', a && b && a.h !== b.h);
   // A few more taps from the phone, as a person would.
-  for (const lane of [0, 2, 1, 0]) {
-    await phone.locator(`.race-lanes [data-lane="${lane}"]`).dispatchEvent('pointerdown');
-    await sleep(900);
+  // Steering as a person would: a hold, a let-go, the other way.
+  for (const side of [-1, 1, -1]) {
+    await hold(phone, side, 450);
+    await sleep(500);
   }
   await screen.screenshot({ path: path.join(SHOTS, 'screen-racing.png') });
   await phone.screenshot({ path: path.join(SHOTS, 'phone-racing.png') });
@@ -198,10 +212,14 @@ try {
   check('the phone\'s road is painted', pa && pa.lit > 1000, JSON.stringify(pa));
 
   check('taps reached the projector as race events', events.length >= 2, `${events.length}`);
+  // Ann's own kart is 0: her holds arrived as left, right AND the let-go.
+  const annSteers = new Set(events.map((e) => JSON.parse(e)).filter((e) => e.n === 0).map((e) => e.steer));
+  check('a held press steers, and lifting the thumb straightens up',
+    annSteers.has(-1) && annSteers.has(1) && annSteers.has(0), JSON.stringify([...annSteers]));
   check('a race event carries a kart NUMBER and nothing that identifies a phone',
     events.length > 0 && events.every((e) => {
       const o = JSON.parse(e);
-      return Object.keys(o).sort().join(',') === 'at,id,lane,n'
+      return Object.keys(o).sort().join(',') === 'at,id,n,steer'
         && ![ann, bob, cat].some((p) => e.includes(p.playerId || p.id) || e.includes(p.token));
     }), events[0]);
 
@@ -238,7 +256,7 @@ try {
 
   // A move settles it, and the next question never goes up behind it.
   await host('raceOpen');
-  await steer(ann, 2);
+  await steer(ann, 1);
   await host('next');
   const after = await screenState();
   check('a move takes the race down (rule 9)', !after.race, after.phase);
@@ -303,7 +321,7 @@ try {
   check('the control view offers Pub Prix next', qb.runningOrder && qb.runningOrder.nextKind === 'race', JSON.stringify(qb.runningOrder));
   await host('advanceOrder');
   const grid = await hostState();
-  check('Continue goes to Pub Prix, on the grid', grid.game === 'race' && grid.phase === 'grid', `${grid.game} ${grid.phase}`);
+  check('Continue goes to Pub Prix, on the grid', grid.game === 'race' && grid.phase === 'lobby', `${grid.game} ${grid.phase}`);
   check('the race part is told its own drink — the venue\'s first', grid.nextPrize === 'A bottle of fizz', grid.nextPrize);
   const gs = await screenState();
   // Ann's phone from the first leg is still open, so she rejoins too — correct.
@@ -342,7 +360,7 @@ try {
   await gPhone.waitForSelector('.race-phone', { timeout: 10000 });
   check('starting it gives the phone the road', true);
   await steer(gus, 1);
-  await gPhone.locator('.race-lanes [data-lane="2"]').dispatchEvent('pointerdown');
+  await hold(gPhone, 1, 300);
   await sleep(6500);
   await gScreen.screenshot({ path: path.join(SHOTS, 'part-screen-racing.png') });
   await gCtl.waitForSelector('.actions .primary');

@@ -73,7 +73,7 @@ test('quiz → Pub Prix → quiz carries the night through the race', () => {
 
     session.advanceOrder();
     assert.equal(session.kind, 'race');
-    assert.equal(session.engine.state.phase, RACE_PHASES.GRID);
+    assert.equal(session.engine.state.phase, RACE_PHASES.LOBBY);
     assert.equal(session.engine.state.venue, 'The Crown', 'the race part has the venue');
     assert.deepEqual(session.engine.state.rewards, ['Fizz'], 'a race pays one drink — the venue\'s first, dealt from the top');
     const a = session.engine.state.players[ann.id];
