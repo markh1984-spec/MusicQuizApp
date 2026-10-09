@@ -646,13 +646,6 @@ the bonus pill, "you" on the mini board, the reveal banner. First place is gold
 everywhere in the world, so an account setting that changed it would be like a
 scheme that made red mean go.
 
-**Which leaves one known oddity, deliberately not fixed yet:** the lit menu chip
-is the only navigational use of gold — it borrows the trophy colour for a job
-that is not winning, and on the **Citrus** scheme (lime into gold) it sits next
-to a gold-ish Launch button and muddles. The fix is to make "you are here"
-neutral rather than to move gold. Left alone for now because it is on a screen
-used on a gig day.
-
 ### THE METALS ARE THREE TOKENS AND A SHEEN — `--metal-*` in `style.css`
 
 Bronze / Silver / Gold mean a TIER, and second and third on the podium.
@@ -1574,6 +1567,11 @@ Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 - **A FLAG AT A BREAK** — round board or bingo `WON`, never the lobby. A move
   or another flag PAYS THE LEADER AND TAKES IT DOWN (rule 9). **And a SETTLED
   photo vote no longer sits over the next question.** [`docs/lobby-games.md`](docs/lobby-games.md).
+- **AND A GAME OF ITS OWN — `src/race-game.js`, `LAUNCHERS.race`** (his ask, 9
+  Oct): card bingo's shape — a Tonight tile, a grid, one drink a race, the last
+  again past the list. **It answers the break race's method names**, so the
+  dispatch, tap route and clock needed nothing. **A kart's face is
+  `faceKey()`, never an id**; the selfie is `capture="user"`, camera only.
 
 ### A DROPDOWN IS NARROW SHUT AND WIDE OPEN — `console-pick.js`
 

@@ -1248,7 +1248,7 @@ export function packCard(kind, pack) {
    * rather than printing `undefined`, and the fix is one line beside its
    * siblings rather than a branch somewhere else.
    */
-  const UNIT = { quiz: ['question', pack.questionCount], cards: ['card', pack.trackCount] };
+  const UNIT = { quiz: ['question', pack.questionCount], cards: ['card', pack.trackCount], race: ['lap', 3] };
   const [word, howMany] = UNIT[kind] || ['track', pack.trackCount];
   const detail = `${howMany} ${word}${howMany === 1 ? '' : 's'}`;
 

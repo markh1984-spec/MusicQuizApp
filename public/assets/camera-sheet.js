@@ -149,7 +149,7 @@ export function openCameraSheet({
              the quizmaster publishes, so nothing goes public by itself. -->
         <p class="tiny cam-warn">${esc(warn)}</p>
         <label class="cam-pick">
-          <input type="file" accept="image/*"${capture ? ' capture="environment"' : ''} hidden>
+          <input type="file" accept="image/*"${capture ? ` capture="${capture === 'user' ? 'user' : 'environment'}"` : ''} hidden>
           <span>${esc(pickLabel)}</span>
         </label>
         <div class="cam-stage" hidden>

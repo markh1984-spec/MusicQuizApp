@@ -2131,9 +2131,10 @@ export function launchBar() {
       const pack = anyPack(lbSlots[at].packId);
       return pack ? { pack, kind: 'bingo', at, slot: lbSlots[at] } : null;
     }
-    // No tiles: one pack, and only MUSIC bingo has a card — a deck stays inert.
+    // No tiles: one pack, and only MUSIC bingo has a card — a deck and a race
+    // stay inert. Asked as "is it music bingo", never a list of the others.
     const first = lbPacks()[0];
-    if (!first || (first.rounds || []).length || lbGame === 'cards') return null;
+    if (!first || (first.rounds || []).length || (lbGame && lbGame !== 'quiz' && lbGame !== 'bingo')) return null;
     return { pack: first, kind: 'bingo', at: 0, slot: null };
   }
 

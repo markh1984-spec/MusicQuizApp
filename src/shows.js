@@ -89,7 +89,7 @@ const savedStages = (raw, prizes) => checkStages(raw && raw.stages, prizes, 35);
 export const MAX_SHOWS = 40;
 
 /** The two games one PART of a show can be — see `normaliseItem`. */
-export const SHOW_KINDS = ['quiz', 'bingo', 'cards'];
+export const SHOW_KINDS = ['quiz', 'bingo', 'cards', 'race'];
 
 /**
  * The id, from the name.

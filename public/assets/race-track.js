@@ -226,3 +226,22 @@ export function standings(rows) {
     return b.kart.d - a.kart.d || a.tie - b.tie;
   });
 }
+
+/**
+ * PUB PRIX AS A GAME OF ITS OWN — the "pack" a night's running order names
+ * when Pub Prix is one of its parts (`LAUNCHERS.race` in `session.js`).
+ *
+ * **THERE IS NO FILE, LIKE THE DECK.** A race is a track drawn from a seed, so
+ * there is nothing to write, nothing to own and nothing to correct — and
+ * generating it keeps it off every pack validator on the launch path. Shared
+ * by the server and the console so the card on the shelf and the part the
+ * room plays are one object.
+ */
+export function pubPrixPack() {
+  return {
+    id: 'pub-prix',
+    kind: 'race',
+    title: 'Pub Prix',
+    subtitle: 'A kart race on the big screen. Phones steer by tapping a lane; the winner gets a drink.',
+  };
+}

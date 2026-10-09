@@ -336,7 +336,10 @@ export function renderSlots(slots, {
    * glance and only tap the one you want to change.
    */
   /** A deck deals one hand of thirteen; there is no card shape to choose and one prize a round. */
-  function handSaid() {
+  // What a whole-pack tile with no card says — per KIND, never a deck's line
+  // on a race (a kind test written when there were two games).
+  function handSaid(kind) {
+    if (kind === 'race') return '<div class="mix-bingo-said tiny">A kart race \u00b7 a drink a race</div>';
     return '<div class="mix-bingo-said tiny">13 cards each \u00b7 a prize a round</div>';
   }
 
@@ -486,7 +489,7 @@ export function renderSlots(slots, {
           <span class="drag-grip" aria-hidden="true" title="Drag to move this round">${gripIcon()}</span>
           <b class="lb-tile-name">${esc(name)}</b>
         </div>
-        ${musicBingo ? bingoSaid(slot, pack) : isBingo ? handSaid() : one ? typeLine(pack, slot.rounds[0]) : roundDots(slot, at)}
+        ${musicBingo ? bingoSaid(slot, pack) : isBingo ? handSaid(slot.kind) : one ? typeLine(pack, slot.rounds[0]) : roundDots(slot, at)}
       </div>`);
 
     tile.querySelector('.lb-tile-off').addEventListener('mousedown', (ev) => ev.stopPropagation());

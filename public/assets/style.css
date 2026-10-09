@@ -12319,6 +12319,19 @@ body.dj .head .score { color: var(--ink); }
 .race-say.shown { opacity: 1; }
 .racecard { display: grid; gap: 4px; text-align: left; }
 .racecard.won { border-color: var(--gold); }
+/* The winner's own face on the projector's result, ringed in their kart's
+   colour — a photograph from tonight, or the drawn face. */
+.race-winner-face {
+  width: 18vh; height: 18vh; object-fit: cover; border-radius: 999px;
+  border: 0.7vh solid var(--kart, var(--gold)); background: var(--kart, var(--gold));
+  margin: 1vh auto;
+}
+/* A Pub Prix PART on the phone, before the lights: your kart, your face. */
+.race-grid { display: grid; gap: 12px; justify-items: center; text-align: center; }
+.race-grid-face {
+  width: 132px; height: 132px; object-fit: cover; border-radius: 999px;
+  border: 6px solid var(--kart, #4bd8ff); background: var(--kart, #4bd8ff);
+}
 
 .racepanel { display: grid; gap: 8px; }
 .racepanel.live { border-color: var(--good); }

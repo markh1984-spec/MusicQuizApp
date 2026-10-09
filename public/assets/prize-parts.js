@@ -147,16 +147,23 @@ export function nightReminder(parts) {
   const all = Array.isArray(parts) ? parts : [];
   const filled = (p) => (Array.isArray(p && p.list) ? p.list : [])
     .filter((r) => String(r || '').trim()).length;
-  const fixed = all.filter((p) => p && p.kind !== 'cards').reduce((n, p) => n + filled(p), 0);
+  // Card bingo and Pub Prix pay per GAME, and nobody knows at launch how many.
+  const perGameKind = (p) => p && (p.kind === 'cards' || p.kind === 'race');
+  const fixed = all.filter((p) => p && !perGameKind(p)).reduce((n, p) => n + filled(p), 0);
   const perGame = all.some((p) => p && p.kind === 'cards' && filled(p));
+  const perRace = all.some((p) => p && p.kind === 'race' && filled(p));
   // A round is a game (24 September 2026): a music bingo round past its list
   // pays the last drink again, so extra rounds are SAID rather than counted,
   // exactly as card bingo's games are.
   const extraRounds = all.some((p) => p && p.kind === 'bingo' && filled(p));
-  if (!fixed && !perGame) return '';
-  if (!fixed) return 'Tonight gives out one drink for every game of card bingo you play.';
-  const also = [
+  const each = [
     perGame ? 'one for every game of card bingo you play' : '',
+    perRace ? 'one for every Pub Prix race' : '',
+  ].filter(Boolean).join(' and ');
+  if (!fixed && !each) return '';
+  if (!fixed) return `Tonight gives out ${each.replace(/^one /, 'one drink ')}.`;
+  const also = [
+    each,
     extraRounds ? 'one for every extra round of bingo' : '',
   ].filter(Boolean).join(' and ');
   return `Tonight gives out ${fixed} drink${fixed === 1 ? '' : 's'}${also ? `, plus ${also}` : ''}.`;
@@ -190,6 +197,8 @@ export function paysOf(part, { winners = 3, bingo = 0 } = {}) {
    * question should answer it for itself rather than inherit a deck's.
    */
   if (kind === 'cards') return 1;
+  // A Pub Prix race is one game and pays one drink; another race is another game.
+  if (kind === 'race') return 1;
   return Math.max(1, Math.floor(Number(part && part.prizes) || Number(bingo) || 1));
 }
 

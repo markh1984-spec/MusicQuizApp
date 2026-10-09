@@ -115,6 +115,13 @@ export function phonesAre(s) {
 
   const have = offers(s);
 
+  // A Pub Prix PART between races: their kart and a selfie, or the result.
+  if (s.game === 'race') {
+    if (s.phase === 'done') return 'The race result';
+    if (s.phase === 'finished') return 'The end of Pub Prix';
+    return 'Their kart on the grid — and a selfie for it';
+  }
+
   if (s.game === 'bingo' || s.game === 'cards') {
     switch (s.phase) {
       // The one moment a bingo phone has something to do besides its card —

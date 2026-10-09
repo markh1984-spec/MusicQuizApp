@@ -1034,17 +1034,17 @@ export function offerPage(pack, slide) {
     <meta name="robots" content="noindex, nofollow">
     <title>${slide ? esc(slide.heading || 'Tonight\u2019s offer') : 'Not found'}</title>
     <style>
-      :root { color-scheme: dark; }
-      body { margin: 0; min-height: 100vh; display: grid; place-items: center;
-             background: #0b0b12; color: #f4f4f8; font: 16px/1.5 system-ui, -apple-system, sans-serif; padding: 24px; }
-      .card { max-width: 26rem; text-align: center; }
-      h1 { font-size: 1.5rem; margin: 0 0 8px; }
+      @font-face { font-family: 'Big Shoulders'; src: url('/assets/fonts/big-shoulders.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+      @font-face { font-family: 'Hanken Grotesk'; src: url('/assets/fonts/hanken-grotesk.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+      :root { color-scheme: dark; --bg: #100f0e; --ink: #f2ede4; --ink-dim: #a8a093; --line: rgba(242, 237, 228, 0.28); }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px;
+             background: var(--bg); color: var(--ink); font: 16px/1.5 'Hanken Grotesk', -apple-system, sans-serif; }
+      .card { max-width: 26rem; text-align: center; } h1 { font: 800 2rem/1.05 'Big Shoulders', sans-serif; margin: 0 0 8px; text-wrap: balance; }
       .code { display: inline-block; margin: 18px 0 10px; padding: 14px 22px; border-radius: 999px;
-              border: 2px dashed rgba(255,255,255,.35); font-size: 2rem; font-weight: 900; letter-spacing: .08em; }
+              border: 2px dashed var(--line); font: 900 2rem/1 'Big Shoulders', sans-serif; letter-spacing: .08em; }
       .say { margin: 0 0 18px; font-size: 1.05rem; }
-      .where { color: #a9a9bb; font-size: .9rem; }
-      a.go { display: inline-block; margin-top: 18px; color: #0b0b12; background: #f4f4f8;
-             padding: 12px 20px; border-radius: 10px; font-weight: 800; text-decoration: none; }
+      .where { color: var(--ink-dim); font-size: .9rem; }
+      a.go { display: inline-block; margin-top: 18px; color: var(--bg); background: var(--ink); padding: 12px 20px; border-radius: 10px; font-weight: 800; text-decoration: none; }
     </style>`;
 
   if (!slide) {

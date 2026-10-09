@@ -21,6 +21,7 @@ import {
 import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { buildDj, djKey, djHead } from './play-dj.js';
 import { openCameraSheet } from './camera-sheet.js';
+import { avatarUrl } from './avatar.js';
 import { openVideoRecorder } from './video-recorder.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
@@ -264,8 +265,18 @@ const PHOTO_PHASES_PHONE = new Set(['lobby', 'round_board', 'final', 'won', 'fin
  * cannot get into the state where a borrowed Android shows a black rectangle
  * with a room watching.
  */
-function openCamera() {
+/*
+ * PUB PRIX'S SELFIE — the face that drives your kart. `selfie: true` opens the
+ * FRONT camera and nothing else (`capture="user"`: no camera roll, asked for
+ * as *"camera only"*), and keeps the picture so the grid card can show it
+ * back. It is an ordinary photograph otherwise, through the same route, on
+ * the same wall — sending it is the consent, as it always is.
+ */
+let lastSelfie = '';
+function openCamera(opts) {
+  const selfie = Boolean(opts && opts.selfie === true);
   openCameraSheet({
+    ...(selfie ? { capture: 'user', pickLabel: 'Take a selfie' } : {}),
     // Tonight's look, from the game state — the same value that paints the
     // projector and this page, so the props cannot disagree with either.
     look: (state && state.look) || DEFAULT_LOOK,
@@ -302,7 +313,7 @@ function openCamera() {
      * send already says *"It goes up on the big screen at the next break"*,
      * which is the moment somebody is actually asking.
      */
-    heading: 'Send up a photo',
+    heading: selfie ? 'Your face on your kart' : 'Send up a photo',
     warn: 'Keep it decent. Photos may be used to promote the night.',
     // A joined phone, because `/api/photo` wants a player id. Not a security
     // boundary — it stops a stray request putting an unattributed picture on a
@@ -317,6 +328,10 @@ function openCamera() {
       });
       const data = await res.json().catch(() => ({}));
       if (!data.ok) throw new Error(reasonText(data.reason));
+      if (selfie) {
+        if (lastSelfie) URL.revokeObjectURL(lastSelfie);
+        lastSelfie = URL.createObjectURL(blob);
+      }
     },
     done: ({ camera }) => {
       /*
@@ -454,6 +469,12 @@ function draw(next) {
       const head = djHead(state);
       teamScoreEl.textContent = head.score;
       teamRankEl.textContent = head.rank;
+    } else if (state.game === 'race') {
+      // No score on a Pub Prix part — the head says which kart is yours. It
+      // read `you.score` and threw, which takes the whole phone down.
+      const kart = state.race && state.race.you;
+      teamScoreEl.textContent = kart ? `#${kart.n + 1}` : '—';
+      teamRankEl.textContent = kart ? 'your kart' : 'next race';
     } else if (playsACard(state)) {
       // No score in bingo — what matters is how close you are.
       teamScoreEl.textContent = state.you.squaresAway === 0 ? '✓' : state.you.squaresAway;
@@ -561,7 +582,10 @@ function paintCameraButton(s) {
    */
   const menuIsUp = ['lobby', 'rules', 'round_intro', 'round_board'].includes(s.phase) || s.game === 'dj';
   // Never over a race either: it floats over the right-hand lane.
-  const wanted = Boolean(gapWants(s).photos && s.you && s.phase !== 'question' && !menuIsUp && !racing(s));
+  // A Pub Prix part draws its own selfie button on the grid card — one camera
+  // control per screen, the photo gate's rule.
+  const wanted = Boolean(gapWants(s).photos && s.you && s.phase !== 'question' && !menuIsUp && !racing(s)
+    && s.game !== 'race');
   let btn = document.getElementById('cameraBtn');
   if (!wanted) {
     if (btn) btn.remove();
@@ -595,6 +619,11 @@ function screenKey(s) {
 
 function screenKeyBase(s) {
   if (s.game === 'dj') return djKey(s);
+  // A Pub Prix PART: the race's own state, plus anything drawn under it.
+  if (s.game === 'race') {
+    const r = s.race || {};
+    return `racepart:${s.phase}:${r.id || ''}:${r.you ? r.you.n : '-'}:${lastSelfie ? 's' : ''}${s.photoDone ? 'p' : ''}:${s.photoVote ? (s.photoVote.open ? 'vote' : 'voted') : ''}:${(s.vouchers || []).map((v) => v.code + (v.redeemedAt ? '!' : '')).join(',')}`;
+  }
   if (playsACard(s)) return bingoKey(s);
   /*
    * A CARD KEY IS A FINGERPRINT OF WHAT IT DRAWS, NEVER ONE FIELD OF IT — the
@@ -673,6 +702,7 @@ function buildScreen(s) {
   // So the head can stop painting its number gold — see the rule below.
   document.body.classList.toggle('dj', s.game === 'dj');
   if (s.game === 'dj') return buildDj(s, { openCamera, player: me });
+  if (s.game === 'race') return buildRacePart(s);
   if (playsACard(s)) return renderBingo(s, me);
   switch (s.phase) {
     case 'question': return buildAnswers(s);
@@ -1598,6 +1628,38 @@ function buildReveal(s) {
       ${raceResultCard(s)}
     </div>
   `);
+  wirePhotoVote(el, postPhotoVote);
+  return el;
+}
+
+/**
+ * A PUB PRIX PART on the phone, whenever this phone is not steering — the
+ * grid before the lights (your kart, your face, the selfie button), a race
+ * on that started without you, and the result after. The race itself takes
+ * the whole screen through `buildRace()` above, as it does at a break.
+ */
+function buildRacePart(s) {
+  const r = s.race || {};
+  const you = r.you;
+  const colour = you ? you.colour : '#4bd8ff';
+  const onGrid = r.phase === 'grid';
+  const face = lastSelfie || avatarUrl(s.you ? s.you.name : '');
+  const el = node(`
+    <div class="race-grid" style="--kart:${esc(colour)}">
+      ${onGrid ? `
+        <div class="sub">Pub Prix</div>
+        <img class="race-grid-face" src="${esc(face)}" alt="">
+        <h2>${you ? `You are kart ${you.n + 1}` : 'You are on the grid'}</h2>
+        <p class="muted">When the lights go, tap a lane to start your engine.</p>
+        <button class="photo-gate-go race-selfie" type="button">${lastSelfie || s.photoDone ? 'Take another selfie' : 'Take a selfie for your kart'}</button>
+        <p class="tiny">Your face drives your kart on the big screen.</p>` : ''}
+      ${s.phase === 'finished' && !r.winner ? '<div class="panel racecard"><div class="sub">Pub Prix</div><b>That’s Pub Prix.</b></div>' : ''}
+      ${onGrid ? '' : raceResultCard(s)}
+      ${wallet(s, '')}
+      ${photoVoteCard(s)}
+    </div>`);
+  const shot = el.querySelector('.race-selfie');
+  if (shot) shot.addEventListener('click', () => openCamera({ selfie: true }));
   wirePhotoVote(el, postPhotoVote);
   return el;
 }

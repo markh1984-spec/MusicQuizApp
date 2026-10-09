@@ -282,6 +282,137 @@ try {
     JSON.stringify(closed.body.ok));
   await host('newRound'); await host('newRound');
   check('a new round takes it down', !(await screenState()).race);
+
+  /* ------------------------------------- Pub Prix as a PART of the night */
+  // Quiz -> Pub Prix -> quiz, the way Tonight sends it when a race tile sits
+  // between two rounds: `src/race-game.js`, `LAUNCHERS.race`.
+  const rounds = (pack.roundTitles || []).length || pack.rounds || 2;
+  const lo = await host('launchOrder', {
+    replace: true, venue: 'The Chequered Flag',
+    rewards: ['A bottle of fizz', 'A round of drinks', 'A pint'],
+    segments: [
+      { kind: 'quiz', order: [{ packId: pack.id, round: 0 }] },
+      { kind: 'race', packId: 'pub-prix' },
+      { kind: 'quiz', order: [{ packId: pack.id, round: Math.min(1, rounds - 1) }] },
+    ],
+  });
+  check('a night with Pub Prix in the middle launches', lo.status === 200, `${lo.status} ${JSON.stringify(lo.body).slice(0, 200)}`);
+  const fay = await join('Fay'); const gus = await join('Gus'); const hal = await join('Hal');
+  const qb = await toRoundBoard();
+  check('the first quiz part reaches its board', qb.phase === 'round_board', qb.phase);
+  check('the control view offers Pub Prix next', qb.runningOrder && qb.runningOrder.nextKind === 'race', JSON.stringify(qb.runningOrder));
+  await host('advanceOrder');
+  const grid = await hostState();
+  check('Continue goes to Pub Prix, on the grid', grid.game === 'race' && grid.phase === 'grid', `${grid.game} ${grid.phase}`);
+  check('the race part is told its own drink — the venue\'s first', grid.nextPrize === 'A bottle of fizz', grid.nextPrize);
+  const gs = await screenState();
+  // Ann's phone from the first leg is still open, so she rejoins too — correct.
+  const onGrid = gs.race ? gs.race.karts.map((k) => k.name) : [];
+  check('the projector shows every phone on the grid', gs.race && gs.race.phase === 'grid'
+    && ['Fay', 'Gus', 'Hal'].every((n) => onGrid.includes(n)), JSON.stringify(onGrid));
+  check('no player id or token on the grid\'s payload',
+    ![fay, gus, hal].some((p) => JSON.stringify(gs).includes(p.playerId || p.id) || JSON.stringify(gs).includes(p.token)));
+  const fp = await playerState(fay);
+  check('a phone is told which kart is its own', fp.race && fp.race.you && fp.race.you.n === 0, JSON.stringify(fp.race));
+
+  const gScreen = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  await gScreen.goto(`${BASE}/screen`);
+  await gScreen.waitForSelector('canvas.race-canvas', { timeout: 10000 });
+  await sleep(600);
+  const ga = await sample(gScreen, 'canvas.race-canvas');
+  check('the projector draws the grid', ga && ga.lit > 1000, JSON.stringify(ga));
+  await gScreen.screenshot({ path: path.join(SHOTS, 'part-screen-grid.png') });
+  const gPhone = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  await gPhone.goto(`${BASE}/play`);
+  await gPhone.evaluate((me) => localStorage.setItem('musicquiz.player', JSON.stringify(me)),
+    { id: fay.playerId || fay.id, token: fay.token, name: 'Fay' });
+  await gPhone.goto(`${BASE}/play`);
+  await gPhone.waitForSelector('.race-grid', { timeout: 10000 });
+  const selfie = await gPhone.$('.race-selfie');
+  check('the phone offers a selfie for the kart', Boolean(selfie));
+  await gPhone.screenshot({ path: path.join(SHOTS, 'part-phone-grid.png'), fullPage: true });
+  const gCtl = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await gCtl.goto(`${BASE}/host?key=${KEY}`);
+  await gCtl.waitForSelector('.actions .primary', { timeout: 10000 });
+  const startText = await gCtl.textContent('.actions .primary');
+  check('the control view\'s one button starts the race and names the drink', /Start the race — winner gets A bottle of fizz/.test(startText || ''), startText);
+  await gCtl.screenshot({ path: path.join(SHOTS, 'part-host-grid.png'), fullPage: true });
+
+  await gCtl.click('.actions .primary');
+  await gPhone.waitForSelector('.race-phone', { timeout: 10000 });
+  check('starting it gives the phone the road', true);
+  await steer(gus, 1);
+  await gPhone.locator('.race-lanes [data-lane="2"]').dispatchEvent('pointerdown');
+  await sleep(6500);
+  await gScreen.screenshot({ path: path.join(SHOTS, 'part-screen-racing.png') });
+  await gCtl.waitForSelector('.actions .primary');
+  await gCtl.click('.actions .primary'); // End the race now
+  let pd = null;
+  for (let i = 0; i < 20 && !pd; i += 1) { const h = await hostState(); if (h.race && h.race.phase === 'done') pd = h; else await sleep(300); }
+  check('ending it names a winner who started', pd && pd.race.winner && ['Fay', 'Gus'].includes(pd.race.winner.name), JSON.stringify(pd && pd.race.winner));
+  const minted = pd && Object.values(pd.vouchers || {}).find((v) => v.race);
+  check('and mints the part\'s own first drink', minted && minted.reward === 'A bottle of fizz', JSON.stringify(minted));
+  await sleep(800);
+  await gScreen.screenshot({ path: path.join(SHOTS, 'part-screen-result.png') });
+  await gCtl.screenshot({ path: path.join(SHOTS, 'part-host-result.png'), fullPage: true });
+  const contText = await gCtl.textContent('.actions .primary');
+  check('after the race, the one button continues to the quiz', /Continue to the quiz/.test(contText || ''), contText);
+  await host('advanceOrder');
+  const back = await hostState();
+  check('the night carries on into the second quiz', back.game === 'quiz', back.game);
+  // The race's drink is minted with the night's venue — proof the part got it
+  // (that it carries on into the quiz is `test/race-part.test.js`'s).
+  check('the venue reached the race part', (back.vouchers || []).some((v) => v.race && v.venue === 'The Chequered Flag'),
+    JSON.stringify((back.vouchers || []).map((v) => v.venue)));
+  check('the race\'s drink is still on the winner\'s phone',
+    (back.vouchers || []).some((v) => v.race && v.reward === 'A bottle of fizz'), JSON.stringify((back.vouchers || []).map((v) => v.reward)));
+  check('everybody is still in the room', (back.players || back.leaderboard || []).length >= 3 || back.playerCount >= 3, String(back.playerCount));
+
+  /* ----------------------------------------- and from the console's own bar */
+  // A real host's path: a quiz pack tapped in, then the Pub Prix card, prizes
+  // typed in the table, Launch pressed — and the REQUEST BODY read, because a
+  // field missing from a launch whitelist is dropped in silence.
+  const con = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const conErrors = [];
+  con.on('pageerror', (e) => conErrors.push(String(e)));
+  // The night before is still running, so Launch asks first — say yes.
+  con.on('dialog', (d) => d.accept());
+  await con.goto(`${BASE}/console?key=${KEY}`, { waitUntil: 'load' });
+  await con.waitForSelector('.pack-card', { timeout: 20000 });
+  await con.waitForTimeout(800);
+  await con.evaluate(() => document.querySelector('button.tab[data-tab="race"]')?.click());
+  await con.waitForTimeout(500);
+  const raceCards = await con.evaluate(() => [...document.querySelectorAll('.pack-card[data-pack]')].map((c) => c.dataset.pack));
+  check('the Pub Prix tab holds one card', raceCards.length === 1 && raceCards[0] === 'pub-prix', JSON.stringify(raceCards));
+  await con.screenshot({ path: path.join(SHOTS, 'console-race-tab.png') });
+  await con.evaluate(() => document.querySelector('button.tab[data-tab="quiz"]')?.click());
+  await con.waitForTimeout(400);
+  await con.evaluate((id) => document.querySelector(`.pack-card[data-pack="${id}"]`)?.click(), pack.id);
+  await con.waitForTimeout(900);
+  await con.evaluate(() => document.querySelector('button.tab[data-tab="race"]')?.click());
+  await con.waitForTimeout(400);
+  await con.evaluate(() => document.querySelector('.pack-card[data-pack="pub-prix"]')?.click());
+  await con.waitForTimeout(900);
+  const lastTile = await con.evaluate(() => [...document.querySelectorAll('.lb-tiles .lb-tile.is-pack')].pop()?.textContent.replace(/\s+/g, ' ').trim() || '');
+  check('tapping it puts a Pub Prix tile on Tonight, after the rounds', /Pub Prix/.test(lastTile) && /kart race/.test(lastTile), lastTile);
+  await con.evaluate(() => document.querySelector('.lb-pz-head')?.click());
+  await con.waitForTimeout(300);
+  for (const inp of await con.$$('.lb-prizes input')) await inp.fill('A pint');
+  await con.evaluate(() => document.querySelector('.lb-pz-head')?.click());
+  await con.waitForTimeout(400);
+  await con.screenshot({ path: path.join(SHOTS, 'console-tonight.png') });
+  let sent = null;
+  con.on('request', (r) => { if (/\/api\/host\/launch/.test(r.url())) sent = { url: r.url(), data: r.postData() }; });
+  await con.evaluate(() => document.querySelector('.lb-go')?.click());
+  await con.waitForTimeout(1500);
+  if (!sent) { await con.evaluate(() => document.querySelector('.lb-go')?.click()); await con.waitForTimeout(1500); }
+  const segs = sent ? (JSON.parse(sent.data).segments || []) : [];
+  check('Launch sends the race as its own part, with its own drink',
+    /launchOrder/.test(sent ? sent.url : '') && segs.some((x) => x.kind === 'race' && x.packId === 'pub-prix' && (x.rewards || [])[0] === 'A pint'),
+    JSON.stringify(segs.map((x) => x.kind)));
+  const lit = await hostState();
+  check('and the night is up with Pub Prix next', lit.runningOrder && lit.runningOrder.nextKind === 'race', JSON.stringify(lit.runningOrder));
+  check('the console threw nothing', conErrors.length === 0, conErrors.join(' | '));
 } finally {
   await browser.close();
   await stop();

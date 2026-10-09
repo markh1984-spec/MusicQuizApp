@@ -30,6 +30,7 @@ function whyNot(s) {
 
 export function racePanel(s, act) {
   if (s.game === 'dj') return [];
+  if (s.game === 'race') return racePartPanel(s);
   const r = s.race;
   const prize = s.photoVotePrize || '';
 
@@ -79,4 +80,106 @@ export function racePanel(s, act) {
     </div>`);
   el.querySelector('[data-race="open"]').addEventListener('click', () => act('raceOpen'));
   return [el];
+}
+
+/*
+ * ============================================ PUB PRIX AS A PART OF THE NIGHT
+ *
+ * `src/race-game.js`. The race IS the game here, so what the break panel
+ * offers as a button lives in the action bar instead: ONE filled control,
+ * the thing to press next — start, end, continue — exactly as the quiz's and
+ * the bingo's bars work. This panel only says where the race has got to.
+ */
+function racePartPanel(s) {
+  const r = s.race || {};
+  if (r.phase === 'racing') {
+    return [node(`
+      <div class="panel racepanel live">
+        <h3>Racing</h3>
+        <div class="race-count"><b>${r.started}</b> of ${r.karts} karts moving</div>
+        <div class="tiny">It ends itself ten seconds after the first kart home.</div>
+      </div>`)];
+  }
+  if (r.phase === 'done') {
+    const w = r.winner;
+    const podium = (r.results || []).map((x) => `
+      <li><span class="race-place">${ordinal(x.place)}</span> ${esc(x.name)}${
+        x.time !== null && x.time !== undefined ? ` <span class="tiny">${x.time.toFixed(1)}s</span>` : ''}</li>`).join('');
+    const drink = !w ? 'Nobody started their engine, so nobody won — the next race pays the same drink.'
+      : w.code ? `${esc(w.name)}'s drink is on their phone — <b>${esc(w.code)}</b>.`
+        : 'Nothing on the prize list, so no drink was sent.';
+    return [node(`
+      <div class="panel racepanel">
+        <h3>${w ? `${esc(w.name)} won` : 'No winner'}</h3>
+        ${podium ? `<ol class="race-podium">${podium}</ol>` : ''}
+        <div class="tiny">${drink}</div>
+      </div>`)];
+  }
+  const karts = r.karts || 0;
+  return [node(`
+    <div class="panel racepanel">
+      <h3>${s.phase === 'finished' ? 'Finished' : 'The grid'}</h3>
+      <div class="race-count"><b>${karts}</b> ${karts === 1 ? 'kart' : 'karts'} on the grid</div>
+      <div class="tiny">Phones join with the code on the big screen. A selfie on the phone puts their face on their kart.</div>
+    </div>`)];
+}
+
+/** What the next part is called on the Continue button. */
+export function nextPartWord(kind) {
+  return { quiz: 'the quiz', bingo: 'the music bingo', cards: 'the card bingo', race: 'Pub Prix' }[kind] || 'the next game';
+}
+
+/**
+ * THE ACTION BAR ON A PUB PRIX PART. One filled button, the next thing to do:
+ * start the race, end it, or carry on. Finish takes TWO presses (bingo's
+ * `pressTwice()` rule — a native confirm can be silently suppressed).
+ */
+export function raceActions(s, act, minorButton) {
+  const r = s.race || {};
+  const order = s.runningOrder;
+  const next = order && order.nextKind ? nextPartWord(order.nextKind) : '';
+  const prize = s.nextPrize || '';
+  const enough = (s.playerCount || 0) >= (s.minKarts || 2);
+  const startLabel = !enough ? 'Needs two phones to race'
+    : prize ? `${s.racesRun ? 'Race again' : 'Start the race'} — winner gets ${prize}`
+      : `${s.racesRun ? 'Race again' : 'Start the race'} — no prize on the list`;
+  const out = [];
+  const primary = (label, handler, disabled = false) => {
+    const b = node(`<button class="primary" ${disabled ? 'disabled' : ''}>${esc(label)}</button>`);
+    b.addEventListener('click', handler);
+    out.push(b);
+  };
+  const finish = () => {
+    let armed = false;
+    const b = minorButton('Finish here', () => {
+      if (!armed) { armed = true; b.textContent = 'Press again to finish the night'; return; }
+      act('finish');
+    }, true);
+    return b;
+  };
+  if (s.phase === 'finished') return out;
+  if (r.phase === 'racing') {
+    primary('End the race now', () => act('raceClose'));
+    return out;
+  }
+  if (r.phase === 'done') {
+    if (next) primary(`Continue to ${next}`, () => act('advanceOrder'));
+    else primary(startLabel, () => act('raceOpen'), !enough);
+    if (next) out.push(minorButton(startLabel, () => act('raceOpen')));
+    if (!next) out.push(finish());
+    return out;
+  }
+  primary(startLabel, () => act('raceOpen'), !enough);
+  if (next) out.push(minorButton(`Skip to ${next}`, () => act('advanceOrder')));
+  else out.push(finish());
+  return out;
+}
+
+/** The status line's "where the game has got to". */
+export function raceWhere(s) {
+  const r = s.race || {};
+  if (s.phase === 'finished') return 'Pub Prix — finished';
+  if (r.phase === 'racing') return 'Pub Prix — racing';
+  if (r.phase === 'done') return 'Pub Prix — result';
+  return 'Pub Prix — on the grid';
 }

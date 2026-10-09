@@ -34,6 +34,7 @@ import {
   COUNTDOWN_MS, MAX_RACE_MS, AFTER_WINNER_MS, MIN_TAP_MS, MAX_TAPS, LAPS, LANES,
   courseFor, kartAt, standings, clampLane, kartColour,
 } from '../public/assets/race-track.js';
+import { faceKey } from './engine.js';
 
 /**
  * Two phones at least — one kart is a lap of honour, not a race, and a drink
@@ -48,13 +49,15 @@ export const MAX_KARTS = 80;
  * Open a race. `players` is `[{ id, name }]`, everybody on the board right
  * now; somebody who joins mid-race waits for the next one.
  */
-export function openRace(state, players, { now, random = Math.random } = {}) {
+export function openRace(state, players, { now, random = Math.random, seed = 0 } = {}) {
   const list = (Array.isArray(players) ? players : []).filter((p) => p && p.id).slice(0, MAX_KARTS);
   if (list.length < MIN_KARTS) return { ok: false, reason: 'too_few' };
   const openedAt = now;
   state.race = {
     id: `r${openedAt.toString(36)}`,
-    seed: Math.floor(random() * 2147483647) + 1,
+    // A Pub Prix PART names its seed (`RaceGame`), so the track drawn on the
+    // grid while the room joins is the track they race on.
+    seed: seed > 0 ? Math.floor(seed) : Math.floor(random() * 2147483647) + 1,
     openedAt,
     startsAt: openedAt + COUNTDOWN_MS,
     phase: 'racing',
@@ -214,7 +217,9 @@ export function raceForScreen(state) {
     seed: r.seed,
     startsAt: r.startsAt,
     phase: r.phase,
-    karts: r.entrants.map((e, n) => ({ n, name: e.name, lane: e.lane, colour: kartColour(n), taps: e.taps })),
+    // `face` is `faceKey()`, never the id (rule 3) — the key the photographs
+    // on this same payload already carry, so the kart finds its driver's face.
+    karts: r.entrants.map((e, n) => ({ n, name: e.name, lane: e.lane, colour: kartColour(n), taps: e.taps, face: faceKey(e.playerId) })),
   };
   if (r.phase === 'done') {
     out.endedAt = r.endedAt;

@@ -708,3 +708,59 @@ draws a vote before anything else. So pressing on from a vote put the next
 question up **behind the vote's result**, which is rule 9 broken on the protected
 surface. `screenView()` no longer sends a vote at a question or a reveal (nor a
 settled one over a bingo round being played). `test/pub-prix.test.js` holds it.
+
+### And a game of its own — Pub Prix as a part of the night
+
+`src/race-game.js`, `LAUNCHERS.race`, the **Pub Prix** tab on the Console
+door, `nextPartWord()`/`raceActions()` in `race-host.js`. Asked for the same
+day: *"what would be good is if it was like a game type — you've got the card
+bingo and then you've got the music bingo. These are game types that give a
+free drink."*
+
+- **CARD BINGO'S SHAPE, EXACTLY.** A built-in "pack" with no file
+  (`pubPrixPack()` in `race-track.js`), a shelf of one, a Tonight tile, a
+  whole-pack part of a running order. `wholePackKind()` answered yes the day
+  the launcher was added; nothing in the running-order code changed.
+- **THE ENGINE ANSWERS THE BREAK RACE'S METHOD NAMES** — `openRace`,
+  `steerRace`, `tickRace`, `closeRace`, `dropRace`. So the session's shared
+  dispatch, the phone's tap route, the projector's `race` event and
+  `armRaceTimer()` reach it unchanged: every one already asked a capability,
+  never a kind.
+- **IT CARRIES WHAT IT DOES NOT USE.** The next part's options are read off
+  the ending part's state (`nightWideOpts()`), so the venue, the look, the
+  break plan and the teams must survive a race untouched. The state is a
+  plain object nothing here destructures — the whitelist trap, avoided by
+  having no whitelist.
+- **A RACE IS A GAME, AND A GAME PAYS ONE DRINK** — the part's own list from
+  the top, the last again past the list (`rewardFor()`, bingo's rule for a
+  round), and **a race nobody started spends nothing**: the next one pays the
+  same drink. `paysOf()` answers 1 for a race, so the prize table draws one
+  box, *Each race*.
+- **THE GRID IS THE TRACK THEY RACE ON** — `nextSeed` is chosen before the
+  race and handed to `openRace()`, so the layout the room looks at while
+  joining is the layout they drive.
+- **ONE FILLED BUTTON ON THE CONTROL VIEW**: start, end, continue. Finish
+  takes two presses, never a native `confirm()`.
+- **A NIGHT THAT ENDS ON PUB PRIX FILES AS THE QUIZ IT WAS** —
+  `scoresOfTheNight()`, as for a night ending on the bingo; `kind: 'race'`
+  otherwise, which the league drops.
+
+### Faces on the karts
+
+*"People can upload photos of themselves — camera only — and you can see
+their face driving that kart."*
+
+- **THE PHOTOGRAPH THEY ALREADY SEND.** A kart carries its driver's
+  `faceKey()` (never the id — rule 3) and `faceFor()` finds their latest
+  photograph from tonight on the same payload, falling back to the drawn
+  face. Nothing new is stored; the kill switch empties the photographs and
+  the drawn faces come back.
+- **THE SELFIE IS `capture="user"`** — the front camera and no camera roll.
+  An ordinary photograph otherwise, through `/api/photo`, on the same wall:
+  sending it is the consent.
+- **2D, NOT A 3D HEAD.** A real 3D model of a face is a paid image-to-3D
+  service plus a 3D renderer, against *no dependencies* — so it was offered,
+  not built. A circle on a chassis reads from the back of a pub; a head that
+  takes ten seconds to come back from somebody's API does not.
+- **THE LANES WIDENED TO 6.8% OF THE TRACK** so a face is ~35px on a 720p
+  projector, and the board shows the face beside every name.

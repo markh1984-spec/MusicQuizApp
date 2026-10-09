@@ -123,6 +123,7 @@ export function bingoActions(s, act, minor) {
   const continueWord = !continuing ? ''
     : order.nextKind === (s.game || 'bingo') ? 'the next game'
     : order.nextKind === 'cards' ? 'the card bingo'
+    : order.nextKind === 'race' ? 'Pub Prix'
     : order.nextKind === 'bingo' ? 'the music bingo' : 'the quiz';
 
   /*

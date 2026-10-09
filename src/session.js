@@ -38,6 +38,7 @@ import { leagueTable } from './league.js';
 import { findSlide, listAdvertPacks, loadAdvertPack } from './adverts.js';
 import { cleanPlan } from '../public/assets/break-parts.js';
 import { deckPack } from '../public/assets/deck.js';
+import { RACE_LAUNCHER } from './race-game.js';
 import { readPack, listOwn } from './own-packs.js';
 import { cleanComeBack } from './comeback.js';
 import { composeQuiz, isComposed } from './running-order.js';
@@ -150,6 +151,12 @@ const LAUNCHERS = {
     isOver: (s) => s.phase === DJ_PHASES.FINISHED,
     empty: { id: 'dj', title: 'DJ set' },
   },
+  /*
+   * PUB PRIX AS A PART OF THE NIGHT — `src/race-game.js`. Built in like the
+   * deck, so a running order can put a race between two quiz rounds and
+   * `wholePackKind()` treats it as one whole pack the moment it is here.
+   */
+  race: RACE_LAUNCHER,
 };
 
 /**

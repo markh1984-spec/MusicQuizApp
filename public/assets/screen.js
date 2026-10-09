@@ -299,6 +299,9 @@ function draw(next) {
   // room is being asked for rather than printing "Round 1 of undefined".
   roundPillEl.textContent = state.game === 'dj'
     ? (state.phase === 'finished' ? 'That’s the set' : 'Requests open')
+    // Pub Prix as a part: where the RACE has got to, never "Round 1 of undefined".
+    : state.game === 'race'
+    ? ({ grid: 'On the grid', racing: 'Racing', done: 'Result', finished: 'That’s Pub Prix' }[state.phase] || 'Pub Prix')
     : isBingo
     ? bingoTopbar(state)
     : state.phase === 'lobby'
@@ -323,7 +326,15 @@ function draw(next) {
    */
   // A race can only be up when nothing else is: opening one clears the other
   // flags, and every one of them (and every move) takes the race down.
-  const card = state.race
+  /*
+   * …EXCEPT ON A PUB PRIX PART, where the race is the GAME rather than a flag
+   * and the track or a result is always up — so the funniest photograph, put
+   * to the room between races, goes over it. The engine never sends the two
+   * together while a race is running.
+   */
+  const card = state.photoVote && state.game === 'race'
+    ? cards.photoVote
+    : state.race
     ? cards.race
     : state.photoVote
     ? cards.photoVote

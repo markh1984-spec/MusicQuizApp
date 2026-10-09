@@ -78,7 +78,10 @@ const NOT_ON_THE_CONSOLE = ['dj'];
 test('and the server can launch every kind the console offers — both ways', () => {
   const src = fs.readFileSync(new URL('../src/session.js', import.meta.url), 'utf8');
   const block = src.slice(src.indexOf('const LAUNCHERS = {'));
-  const kinds = [...block.slice(0, block.indexOf('\n};')).matchAll(/^ {2}(\w+): \{$/gm)].map((m) => m[1]);
+  // An entry is written inline (`cards: {`) OR imported (`race: RACE_LAUNCHER,`).
+  // Matching only the first let Pub Prix's launcher in unseen — a guard that
+  // reads a table as text must read every shape the table is written in.
+  const kinds = [...block.slice(0, block.indexOf('\n};')).matchAll(/^ {2}(\w+): (?:\{|[A-Z_]+,)$/gm)].map((m) => m[1]);
   assert.ok(kinds.length, 'could not read LAUNCHERS at all — this guard is measuring nothing');
 
   for (const kind of NOT_ON_THE_CONSOLE) {
@@ -151,7 +154,7 @@ test('GAME_KINDS and shelfOf cannot part company', async () => {
   const shell = fs.readFileSync(new URL('../public/assets/console.js', import.meta.url), 'utf8');
   const kinds = JSON.parse((shell.match(/GAME_KINDS = (\[[^\]]*\])/) || [])[1].replace(/'/g, '"'));
   const state = await withLocalStorage();
-  state.setLibrary({ quizzes: [{ id: 'q' }], bingo: [{ id: 'b' }], cards: [{ id: 'c' }] });
+  state.setLibrary({ quizzes: [{ id: 'q' }], bingo: [{ id: 'b' }], cards: [{ id: 'c' }], race: [{ id: 'r' }] });
   for (const k of kinds) {
     assert.equal(state.shelfOf(k).length, 1, `${k} is on GAME_KINDS but has no shelf in shelfOf()`);
   }

@@ -88,6 +88,8 @@ const KIND_EDGE = {
   // Card bingo: the deck's own red, so a night of two bingos tells them apart.
   cards: '#e5484d',
   breakout: '#f97316',
+  // Pub Prix: sky blue — not a trophy, not a pack's green, not a bingo's purple.
+  race: '#38bdf8',
 };
 
 /**
@@ -222,7 +224,7 @@ const EDGE_ALPHA = 0.85;
  * the panel and "Music quiz" in the archive (the eighth kind test written
  * when there were two games). An unnamed kind falls back to its id.
  */
-export const KIND_NAMES = { quiz: 'Music quiz', bingo: 'Music bingo', cards: 'Card bingo' };
+export const KIND_NAMES = { quiz: 'Music quiz', bingo: 'Music bingo', cards: 'Card bingo', race: 'Pub Prix' };
 export function kindName(kind) {
   const key = String(kind || '').toLowerCase();
   return KIND_NAMES[key] || key;

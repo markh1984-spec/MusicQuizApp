@@ -21,7 +21,7 @@ import { djPanels, djActions, djWhere } from './host-dj.js';
 import { cueOffsetMs, formatOffset } from './cue.js';
 import { phonesAre } from './phones.js';
 import { STINGS } from './stings.js';
-import { racePanel } from './race-host.js';
+import { racePanel, raceActions, raceWhere } from './race-host.js';
 
 const KEY_STORE = 'musicquiz.hostkey';
 
@@ -332,6 +332,7 @@ function restartNotice(s) {
 
 function whereLabel(s) {
   if (s.game === 'dj') return djWhere(s);
+  if (s.game === 'race') return raceWhere(s);
   if (playsACard(s)) {
     return s.phase === 'lobby'
       ? 'Bingo — waiting to start'
@@ -537,6 +538,8 @@ function buildPanels(s) {
   // scanned, so they keep the narrower measure.
   document.body.classList.toggle('bingo', playsACard(s));
   if (s.game === 'dj') return djPanels(s, djAct);
+  // A Pub Prix part: the race panel is already at the top (`racePanel()`).
+  if (s.game === 'race') return [];
   if (playsACard(s)) return bingoPanels(s, act);
   const panels = [];
 
@@ -1225,6 +1228,7 @@ function minorButton(text, handler, danger = false) {
 
 function buildActions(s) {
   if (s.game === 'dj') return djActions(s, djAct, minorButton);
+  if (s.game === 'race') return raceActions(s, act, minorButton);
   if (playsACard(s)) return bingoActions(s, act, minorButton);
 
   /*
@@ -1241,6 +1245,7 @@ function buildActions(s) {
   const atLastRoundBoard = s.phase === 'round_board' && s.roundIndex >= s.roundCount - 1;
   const continuing = Boolean(order && order.nextKind) && atLastRoundBoard;
   const continueWord = continuing && order.nextKind === 'cards' ? 'the card bingo'
+    : continuing && order.nextKind === 'race' ? 'Pub Prix'
     : continuing && order.nextKind === 'bingo' ? 'the bingo' : 'the quiz';
 
   const label = continuing ? `Continue to ${continueWord}` : ({

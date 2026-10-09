@@ -23,6 +23,7 @@
  * is the one already on the scoreboard.
  */
 import { esc, node } from './client.js';
+import { faceFor } from './avatar.js';
 import {
   courseFor, trackLayout, newKart, stepKart, standings, lapOf,
   LAPS, LAP, SPEED, BOOST, SLOW,
@@ -35,7 +36,33 @@ const BOARD_ROWS = 10;
 
 let live = null;
 
-export const raceKey = (s) => `race:${s.race.id}:${s.race.phase}`;
+/*
+ * THE FACES — each driver's own photograph from tonight, or the drawn face
+ * when they sent none (`faceFor()`, matched on `faceKey`, never the name).
+ * Loaded once per address and kept, so sixty karts at sixty frames a second
+ * never ask the network twice. The photographs ride on this same payload and
+ * the kill switch empties them, so a stopped camera puts the drawn faces back.
+ */
+const faces = new Map();
+function faceImage(k) {
+  const url = faceFor(live.photos, { faceKey: k.face || '', name: k.name });
+  let img = faces.get(url);
+  if (!img) {
+    img = new Image();
+    img.decoding = 'async';
+    img.src = url;
+    faces.set(url, img);
+  }
+  return img.complete && img.naturalWidth ? img : null;
+}
+
+/*
+ * A CARD KEY IS A FINGERPRINT OF WHAT IT DRAWS (rule 9). On the GRID that is
+ * who is on it — a phone joining puts a kart on the line — so the names are
+ * in the key there; once racing, the karts are fixed and taps come as events.
+ */
+export const raceKey = (s) => `race:${s.race.id}:${s.race.phase}${
+  s.race.phase === 'grid' ? `:${(s.race.karts || []).map((k) => `${k.n}.${k.name}`).join('\u0001')}:${s.race.over ? 1 : 0}` : ''}`;
 
 /** The card, either the race itself or, once it is over, the result. */
 export function renderRace(s, now) {
@@ -46,12 +73,17 @@ export function renderRace(s, now) {
   live = {
     id: r.id,
     startsAt: r.startsAt,
+    // THE GRID — a Pub Prix part before the lights: nobody moves, nobody counts.
+    grid: r.phase === 'grid',
+    over: Boolean(r.over),
+    photos: s.photos || [],
     now,
     course: courseFor(r.seed),
     layout: trackLayout(r.seed),
     karts: r.karts.map((k) => ({
       n: k.n,
       name: k.name,
+      face: k.face || '',
       colour: k.colour,
       lane: k.lane,
       taps: (k.taps || []).slice(),
@@ -71,6 +103,8 @@ export function renderRace(s, now) {
 /** A state push while the same race is up — a reconnect may carry taps we missed. */
 export function updateRace(s) {
   if (!live || !s.race || s.race.id !== live.id) return;
+  // A photograph sent since the race went up becomes that driver's face.
+  live.photos = s.photos || [];
   for (const k of s.race.karts || []) {
     const mine = live.karts[k.n];
     if (!mine || !Array.isArray(k.taps) || k.taps.length <= mine.taps.length) continue;
@@ -106,6 +140,7 @@ function frame(stamp) {
   live.last = stamp;
   const t = live.now() - DELAY_MS;
   for (const k of live.karts) {
+    if (live.grid) continue;
     stepKart(k.sim, live.course, k.taps, live.startsAt, t);
     // A lane change is drawn as a quick slide, never a jump.
     k.vis += (k.sim.lane - k.vis) * Math.min(1, dt * 12);
@@ -129,7 +164,8 @@ function geometry(W, H) {
   const bottom = H * 0.09;
   const tw = W - board - pad * 3;
   const th = H - top - bottom;
-  const laneW = Math.max(14, Math.min(tw, th) * 0.06);
+  // Wide enough that a driver's FACE reads from the back of the room.
+  const laneW = Math.max(14, Math.min(tw, th) * 0.068);
   const half = laneW * 1.5 + laneW * 0.35;
   let R = (th - half * 2) / 2;
   let Ls = tw - 2 * R - half * 2;
@@ -261,14 +297,14 @@ function paint(t) {
    * it is drawn just behind it: a pack, in the right order, every number
    * readable. The board beside the track has the exact order.
    */
-  const kr = g.laneW * 0.42;
-  const gap = kr * 2.15;
+  const kr = g.laneW * 0.46;
+  const gap = kr * 2.9;
   const placedAt = new Map();
   const drawn = live.karts
     .map((k) => {
       const onGrid = k.sim.startedAt === null;
       // A kart still on the grid waits BEHIND the line, three abreast.
-      const s = onGrid ? -(Math.floor(k.grid / 3) + 1) * kr * 2.4 : (shownD(k, t) / LAP) * g.P;
+      const s = onGrid ? -(Math.floor(k.grid / 3) + 1) * kr * 3 : (shownD(k, t) / LAP) * g.P;
       return { k, onGrid, s, d: onGrid ? -1 : k.sim.d };
     })
     .sort((a, b) => b.d - a.d || a.k.n - b.k.n);
@@ -283,18 +319,12 @@ function paint(t) {
     const p = pt(g, s, (k.vis - 1) * g.laneW);
     const boosting = !onGrid && k.sim.at !== null && k.sim.at < k.sim.boostUntil;
     const slowed = !onGrid && k.sim.at !== null && k.sim.at < k.sim.slowUntil;
-    if (boosting) { ctx.fillStyle = 'rgba(47, 224, 122, 0.35)'; ctx.beginPath(); ctx.arc(p.x, p.y, kr * 1.6, 0, Math.PI * 2); ctx.fill(); }
-    ctx.globalAlpha = onGrid ? 0.55 : 1;
-    ctx.fillStyle = k.colour;
-    ctx.beginPath(); ctx.arc(p.x, p.y, kr, 0, Math.PI * 2); ctx.fill();
-    ctx.lineWidth = leader && leader.n === k.n ? 3 : 2;
-    ctx.strokeStyle = leader && leader.n === k.n ? '#ffd23f' : slowed ? 'rgba(214, 150, 40, 1)' : '#0b0b12';
-    ctx.stroke();
-    ctx.fillStyle = '#0b0b12';
-    ctx.font = `800 ${Math.round(kr * 1.05)}px ${font}`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(k.n + 1), p.x, p.y + 1);
+    const leads = leader && leader.n === k.n;
+    if (boosting) { ctx.fillStyle = 'rgba(47, 224, 122, 0.35)'; ctx.beginPath(); ctx.arc(p.x, p.y, kr * 1.9, 0, Math.PI * 2); ctx.fill(); }
+    // On the GRID of a Pub Prix part everybody is waiting, so nobody is dimmed;
+    // mid-race a kart still on the line is, because it has not started.
+    ctx.globalAlpha = onGrid && !live.grid ? 0.55 : 1;
+    drawKart(ctx, p, kr, k, { leads, slowed, font });
     ctx.globalAlpha = 1;
   }
 
@@ -310,7 +340,7 @@ function paint(t) {
   const lap = leader ? lapOf(leader.kart.d) : 1;
   ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
   ctx.font = `700 ${Math.round(g.H * 0.032)}px ${font}`;
-  ctx.fillText(leader && leader.kart.finishedAt !== null ? 'Chequered flag' : `Lap ${lap} of ${LAPS}`, bx + 18, by + g.H * 0.125);
+  ctx.fillText(live.grid ? 'Waiting for the lights' : leader && leader.kart.finishedAt !== null ? 'Chequered flag' : `Lap ${lap} of ${LAPS}`, bx + 18, by + g.H * 0.125);
   // Room for the "+ N more" line INSIDE the panel, when there is one.
   const more = order.length > BOARD_ROWS;
   const rowH = Math.min(g.H * 0.068, (bh - g.H * 0.18) / (BOARD_ROWS + (more ? 1 : 0)));
@@ -320,12 +350,11 @@ function paint(t) {
     ctx.fillStyle = i === 0 && x.kart.startedAt !== null ? '#ffd23f' : 'rgba(255, 255, 255, 0.85)';
     ctx.font = `800 ${Math.round(rowH * 0.48)}px ${font}`;
     ctx.fillText(String(i + 1), bx + 16, y);
-    ctx.fillStyle = x.colour;
-    ctx.beginPath(); ctx.arc(bx + 16 + rowH * 0.85, y - rowH * 0.17, rowH * 0.24, 0, Math.PI * 2); ctx.fill();
+    face(ctx, x, bx + 16 + rowH * 1.05, y - rowH * 0.17, rowH * 0.32, Math.max(2, rowH * 0.07));
     ctx.fillStyle = '#ffffff';
     ctx.font = `700 ${Math.round(rowH * 0.44)}px ${font}`;
-    const name = fit(ctx, `${x.n + 1} · ${x.name}`, bw - rowH * 1.4 - 70);
-    ctx.fillText(name, bx + 16 + rowH * 1.25, y);
+    const name = fit(ctx, `${x.n + 1} · ${x.name}`, bw - rowH * 1.6 - 70);
+    ctx.fillText(name, bx + 16 + rowH * 1.5, y);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.textAlign = 'right';
     ctx.font = `600 ${Math.round(rowH * 0.38)}px ${font}`;
@@ -345,7 +374,19 @@ function paint(t) {
   const tw = g.cx;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  if (t < live.startsAt) {
+  if (live.grid) {
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `900 ${Math.round(g.H * 0.075)}px ${font}`;
+    ctx.fillText(live.over ? 'That’s Pub Prix' : 'Get ready to race', tw, g.cy - g.H * 0.05);
+    ctx.font = `700 ${Math.round(g.H * 0.036)}px ${font}`;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    if (!live.over) {
+      ctx.fillText(`${live.karts.length} kart${live.karts.length === 1 ? '' : 's'} · join now to race`, tw, g.cy + g.H * 0.03);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+      ctx.font = `600 ${Math.round(g.H * 0.03)}px ${font}`;
+      ctx.fillText('Take a selfie on your phone and it drives your kart', tw, g.cy + g.H * 0.085);
+    }
+  } else if (t < live.startsAt) {
     const n = Math.ceil((live.startsAt - t) / 1000);
     ctx.fillStyle = '#ffffff';
     ctx.font = `900 ${Math.round(g.H * 0.26)}px ${font}`;
@@ -364,6 +405,59 @@ function paint(t) {
       ? `${leader.name} is home first`
       : 'Dodge the spilt pints · hit the green boosts', tw, g.cy);
   }
+}
+
+/**
+ * ONE KART: a chassis in its colour, pointing the way the track runs, with the
+ * driver's FACE on it — their own photograph from tonight, or the drawn one.
+ * The number stays on the nose, because it is what the phone calls them.
+ */
+function drawKart(ctx, p, kr, k, { leads, slowed, font }) {
+  const tx = p.ny; const ty = -p.nx; // along the track, the way it is driven
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(Math.atan2(ty, tx));
+  // Wheels, then the body over them.
+  ctx.fillStyle = '#0b0b12';
+  for (const wx of [-0.75, 0.8]) for (const wy of [-0.78, 0.78]) {
+    roundRect(ctx, (wx - 0.28) * kr, (wy - 0.16) * kr, 0.56 * kr, 0.32 * kr, 0.12 * kr); ctx.fill();
+  }
+  ctx.fillStyle = k.colour;
+  roundRect(ctx, -1.3 * kr, -0.66 * kr, 2.6 * kr, 1.32 * kr, 0.5 * kr); ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = slowed ? 'rgba(214, 150, 40, 1)' : '#0b0b12';
+  ctx.stroke();
+  ctx.restore();
+  // The driver sits just behind the middle; the number rides on the nose.
+  const hx = p.x - tx * kr * 0.25; const hy = p.y - ty * kr * 0.25;
+  face(ctx, k, hx, hy, kr * 0.92, leads ? 3 : 2, leads ? '#ffd23f' : '#ffffff');
+  const nx = p.x + tx * kr * 1.05; const ny = p.y + ty * kr * 1.05;
+  ctx.fillStyle = '#0b0b12';
+  ctx.font = `800 ${Math.round(kr * 0.62)}px ${font}`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(k.n + 1), nx, ny + 1);
+}
+
+/** A driver's face in a circle, ringed — on a kart and on the board. */
+function face(ctx, k, x, y, r, ring, ringColour = k.colour) {
+  const img = faceImage(k);
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.closePath();
+  ctx.fillStyle = k.colour;
+  ctx.fill();
+  if (img) {
+    ctx.clip();
+    // Cover the circle, centred — a photograph is rarely square.
+    const sc = Math.max((r * 2) / img.naturalWidth, (r * 2) / img.naturalHeight);
+    const w = img.naturalWidth * sc; const h = img.naturalHeight * sc;
+    ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+  }
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.lineWidth = ring;
+  ctx.strokeStyle = ringColour;
+  ctx.stroke();
 }
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -400,11 +494,14 @@ function renderResult(s) {
       </div>`);
   }
   const first = results.find((x) => x.index === r.winner.index);
+  const kart = (r.karts || [])[r.winner.index] || {};
+  const photo = faceFor(s.photos || [], { faceKey: kart.face || '', name: r.winner.name });
   const runners = results.filter((x) => x.index !== r.winner.index && x.started).slice(0, 2);
   const time = (x) => (x && x.time !== null && x.time !== undefined ? `${x.time.toFixed(1)}s` : `lap ${x ? x.lap : ''}`);
   return node(`
     <div class="winner race-result">
       <div class="kicker">Pub Prix winner</div>
+      <img class="race-winner-face" src="${esc(photo)}" alt="" style="--kart:${esc(kart.colour || '#ffd23f')}">
       <h1 class="grad-text">${esc(r.winner.name)}</h1>
       <div class="score">${first && first.time !== null ? `${first.time.toFixed(1)} seconds` : 'In front when the flag came down'}</div>
       ${runners.length ? `<div class="runners">${runners.map((x, i) => `

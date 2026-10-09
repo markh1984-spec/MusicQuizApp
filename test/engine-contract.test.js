@@ -40,6 +40,7 @@ import fs from 'node:fs';
 import { Engine } from '../src/engine.js';
 import { BingoGame } from '../src/bingo.js';
 import { DjSet } from '../src/dj.js';
+import { RaceGame } from '../src/race-game.js';
 import { serverSource } from './server-source.js';
 
 /** Every engine answers all of these, whatever game it is. */
@@ -112,6 +113,12 @@ const PER_KIND = {
    */
   cards: null,   // filled in below, from bingo's
   dj: ['finish', 'notePhoto', 'request', 'played', 'bin', 'where'],
+  /*
+   * PUB PRIX AS A PART OF THE NIGHT — `src/race-game.js`. The race methods
+   * the quiz and bingo engines answer for the BREAK race, so the shared
+   * dispatch, the tap route and the race clock reach it unchanged.
+   */
+  race: ['openRace', 'closeRace', 'dropRace', 'steerRace', 'tickRace', 'finish', 'where'],
 };
 PER_KIND.cards = [...PER_KIND.bingo, 'drawNext'];
 
@@ -126,6 +133,7 @@ const ENGINES = {
    */
   cards: BingoGame.prototype,
   dj: DjSet.prototype,
+  race: RaceGame.prototype,
 };
 
 for (const [kind, proto] of Object.entries(ENGINES)) {
