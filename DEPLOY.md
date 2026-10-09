@@ -216,6 +216,28 @@ DJ app's playlist list like any other.
 
 ---
 
+## Your hub's income page
+
+Optional. Your hub (the separate app that shows your income from every
+project) can read **monthly totals of the gig invoices you have marked paid**
+from `GET /api/hub/income`. Totals only — never a venue, a contact, an invoice
+number or a line.
+
+1. Make a long random token — at least 32 characters, used for nothing else
+   (not the host key). On a Mac: `openssl rand -hex 32`.
+2. Render → your service → **Environment** → **Add Environment Variable**:
+   `HUB_INCOME_TOKEN`, set to that token. Saving it with a deploy restarts
+   the app, so not during a gig.
+3. Give the hub the same token; it sends it as `Authorization: Bearer <token>`.
+
+Until the variable is set the address answers `503 {"error":"not_configured"}`,
+which is also how to check it is there. A wrong token is `401`, and an address
+that keeps getting it wrong is locked out for fifteen minutes. If the invoice
+book could not be read back after a deploy, it answers
+`503 {"error":"source_unavailable"}` rather than a month of zeros.
+
+---
+
 ## Updating the app later
 
 ```bash

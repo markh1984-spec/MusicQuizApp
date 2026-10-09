@@ -9,6 +9,7 @@
 - **Send the Story frame artwork** — the square frame and the two logos, so Story exports get a frame of their own (since 2 Oct 2026).
 - **Decide: do phone videos ever go on the big screen?** — "ask me tomorrow" (since 1 Oct 2026).
 - **Yes or no: a "Make the Spotify playlist" button on bingo packs** — offered 2 Oct 2026.
+- **Hub income link: set `HUB_INCOME_TOKEN` in Render and the matching token in the hub** — lets the hub read your paid gig-invoice totals per month (totals only, nothing per venue). It is on the branch `claude/seo-2026-10-09-qz-hub-income`, not yet on `MusicQuizApp`, so it goes live with a merge and the next deploy; until the token is set, `/api/hub/income` answers 503 not_configured. Steps in DEPLOY.md, "Your hub's income page" (9 Oct 2026).
 
 ## Waiting on someone else
 
@@ -26,3 +27,4 @@
 9 October 2026 — Pub Prix: a kart race on the projector, steered by tapping a lane on every phone; and a settled funniest-photo vote no longer sits over the next question.
 9 October 2026, evening — the Gig poster's missed bits: the switches, the editor, the control view's links, the intro round's equaliser.
 9 October 2026, late — every ordinary button (Sign out included) wears the short underline under its words instead of the curved bottom edge.
+9 October 2026 — the hub income link: `GET /api/hub/income`, Mark's paid gig invoices as monthly totals for his hub (branch `claude/seo-2026-10-09-qz-hub-income`).

@@ -1301,7 +1301,15 @@ const ROOT = new URL('..', import.meta.url).pathname;
  * entitlement from the one the route enforces. Each is a bug that shipped and
  * was measured in a browser, and the first ran a night with nobody to pay.
  */
-const BUDGET = 290_000;
+/*
+ * AND TO 291_000 ON 9 OCTOBER 2026, for the hub's income line,
+ * `/api/hub/income`: Mark's gig invoices as monthly totals for his hub. It
+ * earns always-loaded space for two prohibitions a session must meet before it
+ * touches money or the invoice book: nothing per venue ever leaves on it, and
+ * a book that was not read back is a 503, never a month of zeros. The
+ * reasoning is in the two modules' headers, not here.
+ */
+const BUDGET = 291_000;
 
 test('CLAUDE.md STAYS INSIDE ITS BUDGET', () => {
   const bytes = statSync(`${ROOT}CLAUDE.md`).size;

@@ -3456,6 +3456,7 @@ src/own-packs.js       a quizmaster's own packs — theirs, and private from the
 src/trials.js          who is due a trial-is-ending email, and who must never get one
 src/spend.js           what Claude and OpenAI have actually cost, written down as it happens
 src/chat.js            online chat: what a room is, who is in it, what may be said mid-question
+src/hub-income.js      Mark's hub: paid gig invoices as monthly totals, nothing per venue
 public/                the screens; *-bingo.js files hold the bingo variants
   assets/console*.js   the console: a shell plus one module per door or tab
   assets/brandmark.js  the question-in-a-mic logo, shared with the server as the favicon
@@ -4505,6 +4506,19 @@ anything. **Called from the webhook route**, never from `applyBilling()`.
   correct: a trial ends on the 20th or it does not.
 
 Full reasoning for both: **[`docs/business/plumbing.md`](docs/business/plumbing.md)**.
+
+### MARK'S HUB READS HIS GIG INVOICES AS MONTHLY TOTALS — `/api/hub/income`
+
+`src/hub-income.js` builds it, `src/http/hub-income.js` is the door (9 October
+2026): the HOUSE room's book in the hub's shared contract. **Paid money only**,
+in the UK month it was marked paid, at `totals().due` — the figure the invoice
+tab prints; what is owed is a warning sentence, never a month's figure.
+**Never a venue, contact, invoice number or line.**
+
+- **ITS OWN TOKEN, `HUB_INCOME_TOKEN`** (Bearer, 32+ characters), never the host
+  key. Unset is 503 `not_configured`; wrong tokens lock an address out.
+- **A BOOK NOT READ BACK IS 503 `source_unavailable`, NEVER ZEROS** —
+  `bookReadable()`: after a deploy an empty disk looks like a year of no gigs.
 
 ### A phone must not say you were right before the projector does
 
