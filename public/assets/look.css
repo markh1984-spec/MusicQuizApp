@@ -1,0 +1,550 @@
+/*
+ * THE LOOK — "Gig poster", chosen 9 October 2026.
+ *
+ * ---
+ *
+ * Asked for as *"a full UI redesign of quizporium, it looks a bit AI slop"*.
+ * Four directions were rendered on the real pages (Studio, Daylight, Gig
+ * poster, The Local) and he chose this one, for every screen, look first and
+ * layouts after, and the gauntlet cursor dropped.
+ *
+ * **WHAT MADE IT LOOK LIKE AI WAS THE TREATMENT, NOT THE COLOUR.** A gradient
+ * on almost everything, coloured glows and drifting blobs behind every page,
+ * gradient-filled headings, spaced-out capitals as labels, glassy panels and
+ * the system font in heavy weights. This file takes every one of those away
+ * and puts a venue flyer in their place: off-black and paper-white, flat spot
+ * inks, a condensed display face for the words that matter and a plain
+ * grotesk for everything else. The account's own pink and orange are still
+ * the default; they are printed flat now instead of glowing.
+ *
+ * ---
+ *
+ * **IT IS A SKIN, LOADED AFTER `style.css` ON EVERY PAGE, AND IT WINS.** One
+ * file means one place to read the look, one `<link>` to take it off, and no
+ * edit spread across 12,000 lines of a stylesheet whose comments record why
+ * every rule is where it is. Every rule below changes how a thing LOOKS —
+ * colour, type, surface, edge. **Nothing here may change what a thing DOES,
+ * where it sits, or whether it is shown**: layout is the next job, screen by
+ * screen, and it belongs in `style.css` beside the reasoning for it.
+ *
+ * `!important` is used where a rule in `style.css` is more specific than this
+ * one could sensibly be. It is the skin's job to win; the cost is that a rule
+ * added to `style.css` later will not beat it, so **a colour or font change
+ * goes HERE, not there.**
+ *
+ * ---
+ *
+ * **THE RULES THAT DO NOT MOVE, because they are about meaning:**
+ *
+ * - a quizmaster's scheme still sets `--hot` / `--hot-2`, so this file never
+ *   names them — only what they paint;
+ * - a seasonal look still repaints the room: the palette below applies to
+ *   the default look ONLY (`:root:not([data-look])`, `[data-look="default"]`),
+ *   so Halloween keeps its own `--bg`, `--a`..`--f` and `--gold`;
+ * - gold is the trophy, green makes something, red deletes;
+ * - one filled control per screen — THE NIGHT — now filled FLAT in the
+ *   account's own colour rather than a two-colour sweep: the poster prints
+ *   one ink per shape. That is the only GUI rule this changes;
+ * - capitals stay for emphasis: labels are sentence case, in the display
+ *   face, which carries the weight the capitals used to.
+ *
+ * The fonts are self-hosted, subset to Latin, OFL-licensed (the licences sit
+ * beside them in `fonts/`), and loaded from this server — no dependency and no
+ * call out to Google. `font-display: swap`, so a slow pub wifi shows the words
+ * in the fallback rather than nothing.
+ */
+
+@font-face {
+  font-family: 'Big Shoulders';
+  src: url('/assets/fonts/big-shoulders.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Hanken Grotesk';
+  src: url('/assets/fonts/hanken-grotesk.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ------------------------------------------------------------- the tokens */
+
+:root {
+  --font-ui: 'Hanken Grotesk', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+  --font-display: 'Big Shoulders', 'Hanken Grotesk', 'Arial Narrow', sans-serif;
+  /* a handful of rules in style.css spell their font as var(--ui, …) */
+  --ui: var(--font-ui);
+  /* the paper and the ink of the poster, for things a look must not repaint */
+  --paper: #f2ede4;
+  --ink-black: #100f0e;
+  --inked: 0.42vh;
+}
+
+/* The default look's palette. A seasonal look matches neither selector and
+   keeps every value it sets in style.css. */
+:root:not([data-look]), [data-look="default"] {
+  --bg: #100f0e;
+  --bg-2: #1a1816;
+  --panel: #1a1816;
+  --panel-line: rgba(242, 237, 228, 0.12);
+  --ink: #f2ede4;
+  --ink-dim: #a8a093;
+  --gold: #ffe14d;
+  --good: #19c37d;
+  --bad: #ff4b3e;
+  /* the option inks: riso blue, yellow, fluoro pink, green, orange, violet —
+     the same spacing round the wheel as before, so no two read alike from
+     the back of a room */
+  --a: #3b82ff;
+  --b: #ffe14d;
+  --c: #ff4fa3;
+  --d: #19c37d;
+  --e: #ff6c2f;
+  --f: #9b7bff;
+}
+
+/* Every surface reads the same three values, whatever page it is on. The
+   console's own account-tinted surface (style.css, "ONE SURFACE") is flattened
+   to the poster's card colour: the tint was a glow by another name. */
+body {
+  --surf-1: var(--panel);
+  --surf-2: var(--panel);
+  --surf-line: var(--panel-line);
+  --surface: var(--panel);
+  --raised: #221f1c;
+  --line-strong: rgba(242, 237, 228, 0.28);
+}
+
+/* ------------------------------------------------- the ambience, removed */
+
+/* A <button> does not inherit the page's font unless told — the bingo squares
+   came out in the browser's own face. */
+button, input, select, textarea { font-family: inherit; }
+
+
+html, body { font-family: var(--font-ui); }
+body, body.console, body.landing, body.phone, body.host, body.editor, body.screen {
+  background: var(--bg) !important;
+}
+body::after { display: none !important; }
+
+/* ------------------------------------------- no gradient text, anywhere */
+
+.grad-text, .brand-app, .brand-who, .winner .dip-name, .console .tab-head h2,
+.ad-words h1, .acct-val.brand-preview, .cam-guide .cam-looks-head > span, .cam-hint span,
+.room-code, .lobby-count.soon b, .lobby-count.now, .wait-count.soon b, .wait-count.now {
+  background: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  -webkit-text-fill-color: currentColor;
+  color: var(--ink) !important;
+}
+.lobby-count.soon b, .lobby-count.now, .wait-count.soon b, .wait-count.now { color: var(--hot) !important; }
+
+/* The name: "Mark's" above, the app under it — both flat, in the display face. */
+.brand-name { font-family: var(--font-display); font-weight: 900 !important; letter-spacing: 0 !important; }
+.brand-who { color: var(--ink-dim) !important; transform: none !important; font-style: normal !important; }
+
+/* ------------------------------------------------- labels, not shouting */
+
+.pill, .screen .topbar .title, .round-intro .kicker, .reveal-banner .label,
+.winner .kicker, .winner .dip-label, .winner .cb-note, .lobby-prize .lp-label,
+.now-playing .np-label, .screen .titles .brand-name, .team-pick-head,
+.arcade-board .ab-head, .ld-eyebrow, .phone .online-q-num {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+/* =================================================================
+ * THE PROJECTOR
+ * ================================================================= */
+
+.screen .topbar { border-bottom: 2px solid var(--panel-line) !important; font-size: 1.8vh !important; color: var(--ink-dim); }
+.screen .topbar .title { font-weight: 600 !important; color: var(--ink-dim); }
+.screen .titles .brand-name { opacity: 1 !important; font-size: 2.2vh !important; }
+.screen .topbar .pill { background: none !important; border: 0 !important; padding: 0 !important; font-weight: 600 !important; color: var(--ink-dim); }
+.screen .topbar .right { gap: 1.4vw !important; }
+.screen .topbar .right .pill + .pill::before { content: '·'; margin-right: 1.4vw; opacity: 0.6; }
+
+/* The question: tall condensed type, big. */
+.q-prompt {
+  font-family: var(--font-display);
+  font-weight: 800 !important;
+  font-size: 8.4vh !important;
+  line-height: 0.98 !important;
+  letter-spacing: -0.005em !important;
+  text-wrap: balance;
+}
+.q-prompt.small { font-size: 6.8vh !important; }
+.q-head .pill.q-counter {
+  background: none !important; border: 0 !important; padding: 0 !important;
+  font-family: var(--font-display); font-size: 3vh !important; font-weight: 800 !important; color: var(--ink);
+}
+.answered-count { font-size: 2.3vh !important; font-weight: 600 !important; }
+
+/* The clock is a level meter: segments, not a gradient sweep. */
+.timer-wrap { align-items: center !important; }
+.timer-bar {
+  height: 3.4vh !important; border-radius: 4px !important;
+  background: repeating-linear-gradient(90deg, rgba(242, 237, 228, 0.1) 0 1.1vw, transparent 1.1vw 1.5vw) !important;
+}
+.timer-bar span {
+  border-radius: 0 !important;
+  background: var(--ink) !important;
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 1.1vw, transparent 1.1vw 1.5vw);
+          mask: repeating-linear-gradient(90deg, #000 0 1.1vw, transparent 1.1vw 1.5vw);
+}
+.timer-num { font-family: var(--font-display); font-weight: 900 !important; font-size: 9vh !important; line-height: 0.9; letter-spacing: 0 !important; }
+.timer-num.urgent { color: var(--bad); }
+
+/* The answers: black tiles, inked outline in the option's colour, the letter
+   a solid block of it. The pink one, bottom left, from the back of the room. */
+.option {
+  background: var(--ink-black) !important;
+  border: var(--inked) solid var(--panel-line) !important;
+  border-radius: 14px !important;
+  color: var(--ink) !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+.option:nth-child(1) { border-color: var(--a) !important; }
+.option:nth-child(2) { border-color: var(--b) !important; }
+.option:nth-child(3) { border-color: var(--c) !important; }
+.option:nth-child(4) { border-color: var(--d) !important; }
+.option:nth-child(5) { border-color: var(--e) !important; }
+.option:nth-child(6) { border-color: var(--f) !important; }
+.option .letter {
+  font-family: var(--font-display);
+  font-weight: 900 !important; font-size: 1.05em !important;
+  width: 1.7em !important; height: 1.7em !important;
+  border-radius: 8px !important;
+  color: var(--ink-black) !important;
+}
+.option .tally { color: inherit !important; opacity: 0.75; font-family: var(--font-display); }
+.option.correct { background: var(--good) !important; border-color: var(--good) !important; color: var(--ink-black) !important; transform: scale(1.015) !important; }
+.option.dimmed { opacity: 0.3 !important; }
+.options.alphabet .option { font-family: var(--font-display); }
+
+.reveal-banner {
+  background: var(--raised) !important;
+  border: 2px solid var(--panel-line) !important;
+  box-shadow: none !important;
+}
+.reveal-banner .label { font-family: var(--font-display); font-size: 0.8em !important; font-weight: 800 !important; }
+.reveal-banner .who { font-family: var(--font-display); font-weight: 800 !important; }
+.reveal-banner .pts { font-family: var(--font-display); }
+.reveal-banner .fastest-face { border: 0 !important; border-radius: 8px !important; }
+.answer-said { font-family: var(--font-display); }
+
+/* The lobby: the quiz's name as the headline of the flyer. */
+.lobby h1 { font-family: var(--font-display); font-weight: 900 !important; font-size: 12vh !important; line-height: 0.9 !important; letter-spacing: 0 !important; color: var(--ink) !important; }
+.lobby .sub { color: var(--ink-dim) !important; }
+.lobby .join-steps .n { background: var(--hot) !important; color: var(--ink-black) !important; border-radius: 6px !important; font-family: var(--font-display); }
+.qr-panel { box-shadow: none !important; border-radius: 14px !important; }
+.player-chip { background: var(--raised) !important; border: 1px solid var(--panel-line) !important; font-weight: 600 !important; }
+.lobby-count { background: var(--raised) !important; border-color: var(--panel-line) !important; }
+.lobby-count b, .lobby-count.now { font-family: var(--font-display); }
+
+/* How it works. */
+.rules h1 { font-family: var(--font-display); font-weight: 900 !important; font-size: 10vh !important; letter-spacing: 0 !important; }
+.rules-score { background: var(--panel) !important; border: 2px solid var(--panel-line) !important; }
+.rules-score-row .big { font-family: var(--font-display); font-size: 8.6vh !important; }
+.rules-score-row .big i { letter-spacing: 0 !important; }
+
+/* A round's own title card. */
+.round-intro .kicker { font-family: var(--font-display); font-size: 3.6vh !important; font-weight: 800 !important; color: var(--hot) !important; }
+.round-intro h1 { font-family: var(--font-display); font-weight: 900 !important; font-size: 15vh !important; line-height: 0.88 !important; letter-spacing: 0 !important; }
+
+/* The scores. */
+.board h1 { font-family: var(--font-display); font-weight: 900 !important; font-size: 8vh !important; letter-spacing: 0 !important; }
+.board-row { background: var(--panel) !important; border: 2px solid var(--panel-line) !important; }
+.board-row .pos, .board-row .score { font-family: var(--font-display); }
+.board-row.top1 { background: var(--ink-black) !important; border-color: var(--gold) !important; }
+.board-row.top2 { border-color: color-mix(in srgb, var(--metal-silver) 60%, transparent) !important; }
+.board-row.top3 { border-color: color-mix(in srgb, var(--metal-bronze) 60%, transparent) !important; }
+
+/* The end of the night. */
+.winner .kicker { font-family: var(--font-display); color: var(--gold) !important; font-size: 4.4vh !important; font-weight: 800 !important; }
+.winner h1 {
+  font-family: var(--font-display);
+  font-weight: 900 !important; font-size: 19vh !important; line-height: 0.88 !important; letter-spacing: -0.01em !important;
+  color: var(--gold) !important; -webkit-text-fill-color: var(--gold);
+}
+.winner .score { font-family: var(--font-display); font-weight: 900 !important; font-size: 8vh !important; }
+.winner .runner { background: var(--panel) !important; border: 0.36vh solid var(--panel-line) !important; }
+.winner .place-2 { border-color: color-mix(in srgb, var(--metal-silver) 60%, transparent) !important; }
+.winner .place-3 { border-color: color-mix(in srgb, var(--metal-bronze) 60%, transparent) !important; }
+.winner .rname { font-family: var(--font-display); font-weight: 800 !important; font-size: 6.4vh !important; }
+.winner .rscore, .winner .cb-line { font-family: var(--font-display); }
+.winner .comeback, .winner .dip { background: var(--panel) !important; border: 2px solid var(--panel-line) !important; }
+.winner .cb-note, .winner .dip-label { font-family: var(--font-display); font-weight: 700 !important; }
+
+.sound-arm { background: var(--panel) !important; border: 1px solid var(--panel-line) !important; color: var(--ink-dim) !important; }
+
+/* =================================================================
+ * THE PHONE
+ * ================================================================= */
+
+.phone-brand { opacity: 1 !important; }
+.phone .head .team { font-family: var(--font-display); font-size: 26px !important; font-weight: 900 !important; }
+.phone .head .score { font-family: var(--font-display); font-size: 30px !important; font-weight: 900 !important; }
+.phone h1.grad-text { font-family: var(--font-display); font-weight: 900 !important; }
+.phone .pill { background: var(--raised) !important; border: 1px solid var(--panel-line) !important; }
+.wait-sub { color: var(--ink-dim); }
+
+.phone .timer .bar { height: 18px !important; border-radius: 3px !important; background: repeating-linear-gradient(90deg, rgba(242, 237, 228, 0.1) 0 10px, transparent 10px 14px) !important; }
+#pTimerBar {
+  border-radius: 0 !important; background: var(--ink) !important;
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 10px, transparent 10px 14px);
+          mask: repeating-linear-gradient(90deg, #000 0 10px, transparent 10px 14px);
+}
+.phone .timer .num { font-family: var(--font-display); font-size: 34px !important; font-weight: 900 !important; }
+
+.answer-btn {
+  background: var(--ink-black) !important;
+  border: 3px solid var(--panel-line) !important;
+  color: var(--ink) !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+.answer-btn:nth-child(1) { border-color: var(--a) !important; }
+.answer-btn:nth-child(2) { border-color: var(--b) !important; }
+.answer-btn:nth-child(3) { border-color: var(--c) !important; }
+.answer-btn:nth-child(4) { border-color: var(--d) !important; }
+.answer-btn:nth-child(5) { border-color: var(--e) !important; }
+.answer-btn:nth-child(6) { border-color: var(--f) !important; }
+.answer-btn .letter { font-family: var(--font-display); font-weight: 900 !important; font-size: 20px !important; border-radius: 6px !important; color: var(--ink-black) !important; }
+.answer-btn .text { font-size: 19px; }
+.answer-btn.key { font-family: var(--font-display); }
+.answer-btn.chosen { background: var(--raised) !important; border-color: var(--ink) !important; }
+.answer-btn.right { background: color-mix(in srgb, var(--good) 22%, var(--ink-black)) !important; border-color: var(--good) !important; }
+.answer-btn.wrong { background: color-mix(in srgb, var(--bad) 18%, var(--ink-black)) !important; border-color: var(--bad) !important; }
+.answer-btn.picked { background: color-mix(in srgb, var(--good) 14%, var(--ink-black)) !important; border-color: var(--good) !important; }
+
+.result { background: var(--panel) !important; border: 3px solid var(--panel-line) !important; }
+.result.good { border-color: var(--good) !important; background: color-mix(in srgb, var(--good) 14%, var(--ink-black)) !important; }
+.result.bad { border-color: var(--bad) !important; background: color-mix(in srgb, var(--bad) 12%, var(--ink-black)) !important; }
+.result.part { border-color: var(--gold) !important; background: color-mix(in srgb, var(--gold) 12%, var(--ink-black)) !important; }
+.result .big, .result .pts { font-family: var(--font-display); font-weight: 900 !important; }
+.result .big { font-size: 40px !important; }
+.result .pts { font-size: 54px !important; }
+.mini-row { background: var(--panel) !important; border: 2px solid var(--panel-line) !important; }
+.mini-row.you { border-color: var(--gold) !important; background: var(--ink-black) !important; }
+.mini-row .pos, .mini-row .score { font-family: var(--font-display); }
+
+.photo-gate { background: var(--panel) !important; border: 2px solid var(--panel-line) !important; }
+.photo-gate-go { background: var(--hot) !important; color: var(--ink-black) !important; font-family: var(--font-display) !important; font-weight: 800 !important; font-size: 20px !important; }
+
+/* =================================================================
+ * THE HOST'S CONTROL VIEW
+ * ================================================================= */
+
+body.host { background: var(--bg) !important; }
+.host .bar { background: var(--bg) !important; backdrop-filter: none !important; border-bottom: 2px solid var(--panel-line) !important; }
+.host .bar .clock { font-family: var(--font-display); font-size: 34px !important; }
+.host .bar .where { font-family: var(--font-display); font-size: 20px; }
+.room-code { font-family: var(--font-display); letter-spacing: 0.06em !important; color: var(--ink) !important; }
+
+/* =================================================================
+ * EVERY PAGE A QUIZMASTER DRIVES — the console, the host view, the editor
+ * ================================================================= */
+
+/* Panels: flat card, a firmer edge, no frosted glass. */
+.panel, .console .panel, body.console .panel, .host .panel {
+  background: var(--panel) !important;
+  border: 2px solid var(--panel-line) !important;
+  box-shadow: none !important;
+}
+.console .panel.running.live { border-color: color-mix(in srgb, var(--good) 70%, var(--panel-line)) !important; background: var(--panel) !important; }
+.panel.warn, .panel.backup-warn { background: var(--panel) !important; border-color: var(--gold) !important; }
+.panel.generate, .panel.quiz-generate, .panel.import { background: var(--panel) !important; }
+
+.console .topbar, .editor .topbar {
+  background: var(--bg) !important;
+  backdrop-filter: none !important;
+  border-bottom: 2px solid var(--panel-line) !important;
+}
+.console .brand-name { font-size: 22px !important; }
+.topnav a {
+  border: 0 !important; background: none !important;
+  color: var(--ink-dim) !important;
+  font-family: var(--font-display); font-size: 18px !important; font-weight: 800 !important;
+}
+.topnav a:hover { color: var(--ink) !important; }
+/* you are here: a raised chip with a straight underline in the account colour —
+   an inset shadow followed the pill's curve and read as a ring */
+.topnav a.here {
+  color: var(--ink) !important; background: var(--raised) !important; box-shadow: none !important;
+  text-decoration: underline 3px var(--hot); text-underline-offset: 7px;
+}
+.mode-chip { background: none !important; border-color: var(--panel-line) !important; color: var(--ink-dim) !important; }
+
+/* The tab column. */
+.tabbar { border-right: 2px solid var(--panel-line) !important; }
+.tab { color: var(--ink-dim) !important; font-weight: 700 !important; font-size: 16px !important; }
+.tab.on { color: var(--ink) !important; background: var(--raised) !important; border-left-color: var(--hot) !important; }
+.tabcount { background: var(--raised) !important; color: var(--ink-dim) !important; font-family: var(--font-display); font-size: 13px !important; font-weight: 800 !important; }
+.tab.on .tabcount { background: var(--hot) !important; color: var(--ink-black) !important; }
+.console .tab-head h2, .tab-own-head, .console .game-section .game-head h2 {
+  font-family: var(--font-display); font-weight: 900 !important; letter-spacing: 0 !important;
+}
+
+/* Fields and dropdowns: quiet, the same as each other, the caret a flat block. */
+.pick-face, .lb-where, .console select, .editor select,
+input[type="text"], input[type="search"], input[type="email"], input[type="password"],
+input[type="number"], input[type="url"], input:not([type]), textarea {
+  background-color: var(--raised) !important;
+  border: 1px solid var(--panel-line) !important;
+  color: var(--ink) !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+.pick-face:hover, .lb-where:hover { border-color: var(--hot) !important; }
+.pick-caret {
+  background-color: var(--hot) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1.5 1.5 6 6l4.5-4.5' fill='none' stroke='%23100f0e' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 11px 8px !important;
+  width: 24px !important;
+}
+.pick-menu { background: var(--raised) !important; border: 2px solid var(--panel-line) !important; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55) !important; }
+.set-word { color: var(--ink-dim) !important; font-weight: 600 !important; }
+
+/* ORDINARY: a flat face and the account's colour on the bottom edge. */
+.console a.minor, .console button.minor, .console label.minor, .actions .minor,
+.host .panel a.minor, .host .panel button.minor, .host .panel label.minor {
+  background: var(--raised) !important;
+  border: 1px solid var(--panel-line) !important;
+  border-bottom: 2px solid var(--hot) !important;
+  color: var(--ink) !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+/* DESTRUCTIVE: red, outlined, never filled — in every scheme. */
+.console button.minor.danger, .console a.minor.danger, .actions .minor.danger,
+.host .panel button.minor.danger, .host .panel a.minor.danger {
+  background: var(--raised) !important;
+  border: 1px solid color-mix(in srgb, var(--bad) 50%, transparent) !important;
+  border-bottom: 2px solid var(--bad) !important;
+  color: var(--bad) !important;
+}
+/* MAKE SOMETHING: green, but the fill stays dark so it never out-shouts the night. */
+.role-make { background: color-mix(in srgb, var(--good) 14%, var(--raised)) !important; border-color: color-mix(in srgb, var(--good) 60%, transparent) !important; }
+
+/* THE NIGHT, and every other thing style.css filled with the two-colour
+   sweep: one ink per shape. Found by searching style.css for the gradient,
+   not by eye, so a control is not missed because nobody happened to open it.
+   `:not(:disabled)`, or a disabled control's own rule loses to this one and
+   it looks pressable. */
+:is(.lb-go, .actions .primary, .phone .btn, .editor button.go, .running-links .control-link,
+    .pack-card .go, .gen-row .go, .sheet-actions .go, .game-head .go, .inv-actions .go,
+    .sign-in button.go, .panel.joinq .go, .sugg-compose .go, .sugg-send, .team-add, .v-go,
+    .vp-form button.primary, .vp-play, .photo-gate-go, .ld-cta, .ld-signup-form button.go,
+    .dj-camera-first .dj-shoot, .snap-take, .camera-btn, .chat-send, .cam-send, .lock-btn,
+    .own-open, .ld-tier-badge, .arcade-going.soon,
+    .minor.on, .ask-idea.on, .sugg-kind.on, .pile.on, .cphoto-pin.is-on):not(:disabled) {
+  background: var(--hot) !important;
+  color: var(--ink-black) !important;
+  box-shadow: none !important;
+  filter: none;
+}
+.actions .primary:disabled, .phone .btn:disabled {
+  background: none !important; border: 2px dashed var(--line-strong) !important; color: var(--ink-dim) !important;
+}
+.actions .primary, .phone .btn { font-family: var(--font-display); font-weight: 900 !important; font-size: 26px !important; }
+.camera-btn { border: 2px solid var(--ink-black) !important; }
+/* The dropdown's chevron keeps its block of the account colour — flat now. */
+.console select, .editor select, .lb-where {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23100f0e' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"), linear-gradient(var(--hot), var(--hot)) !important;
+}
+.cam-guide::after { background: var(--hot) !important; }
+.lb-go { font-family: var(--font-display); font-size: 26px !important; font-weight: 900 !important; }
+.lb-go:disabled { background: none !important; border: 2px dashed var(--line-strong) !important; color: var(--ink-dim) !important; }
+/* the owner's hat switch keeps its fill (it is his, and only his) */
+.hat-switch .hat-half.live { background: var(--hot) !important; color: var(--ink-black) !important; }
+/* the in-the-room / online switch is a choice, not the night */
+.lb-mode-switch .hat-half.live, .lb-mode-switch .hat-half[data-online="1"].live {
+  background: var(--raised) !important; color: var(--ink) !important;
+  box-shadow: inset 0 0 0 1px var(--line-strong) !important;
+}
+.hat-switch { background: var(--raised) !important; border: 1px solid var(--panel-line) !important; }
+.hat-switch .hat-half { font-weight: 700 !important; }
+
+/* The Tonight tiles. */
+.lb-tile.lb-drop, .lb-tile.mix-drop, .bench-slot .lb-drop { border: 2px dashed var(--line-strong) !important; color: var(--ink-dim) !important; background: none !important; }
+.lb-tile-n { font-family: var(--font-display); }
+.lb-tile-n.is-empty { background: var(--raised) !important; color: var(--ink-dim) !important; }
+.lb-tile.is-pack { border: 2px solid var(--panel-line) !important; }
+.lb-tile.is-pack.tinted { background: linear-gradient(var(--pk-b), var(--pk-b)), var(--panel) !important; }
+.lb-tile-name { font-weight: 700; }
+.gap-dial { background: var(--raised) !important; border: 1px solid var(--panel-line) !important; }
+.lb-rd.on { background: var(--raised) !important; border: 1px solid var(--panel-line) !important; }
+.lb-say { color: var(--ink-dim) !important; }
+.lb-ready, .lb-ready b { color: var(--ink) !important; }
+.lb-ready a { border-color: var(--panel-line) !important; border-bottom: 2px solid var(--hot) !important; }
+
+/* The pack shelf: a flat colour block per era, the era word printed into it,
+   the title in the display face. */
+.pack-card { border: 2px solid var(--panel-line) !important; box-shadow: none !important; }
+.pack-card.tinted { background: linear-gradient(var(--pk-b), var(--pk-b)), var(--panel) !important; }
+.pack-card.tinted:not(.broken) { border-bottom: 3px solid var(--pk-edge) !important; }
+.pack-card.shut::before { background: linear-gradient(to top, rgba(16, 15, 14, 0.92) 40%, transparent) !important; }
+.pack-word {
+  background: none !important;
+  -webkit-background-clip: border-box !important; background-clip: border-box !important;
+  -webkit-text-fill-color: currentColor;
+  filter: none !important;
+  font-family: var(--font-display);
+  font-style: normal !important;
+  font-weight: 900 !important;
+  color: rgba(242, 237, 228, 0.16) !important;
+  opacity: 1 !important;
+}
+button.pack-title { font-family: var(--font-display); font-weight: 800 !important; line-height: 1 !important; color: var(--ink) !important; }
+.pack-card.shut .pack-title.t-s { font-size: 22px !important; }
+.pack-card.shut .pack-title.t-m { font-size: 19px !important; }
+.pack-card.shut .pack-title.t-l { font-size: 16px !important; }
+.pack-card .tiny { color: var(--ink-dim) !important; }
+
+/* =================================================================
+ * THE SALES PAGE
+ * ================================================================= */
+
+body.landing { background: var(--bg) !important; }
+.ld-top { border-bottom: 2px solid var(--panel-line); }
+.ld-top .brand-name { font-size: 24px !important; }
+.ld-nav > a:first-child { color: var(--ink) !important; white-space: nowrap; }
+.ld-nav-cta { white-space: nowrap; }
+.ld-eyebrow { color: var(--hot-2) !important; font-weight: 700 !important; font-size: 15px !important; }
+.ld-h1, .ld-h2, .ld-sell-item h3, .ld-tier-name, .ld-tier-price, .ld-signup-card h1, .ld-signup-done h1 {
+  font-family: var(--font-display);
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+}
+.ld-h1 { font-size: clamp(54px, 12vw, 96px) !important; line-height: 0.9 !important; }
+.ld-h2 { font-size: clamp(36px, 6vw, 52px) !important; line-height: 0.95 !important; }
+.ld-sell-item h3 { font-size: 26px !important; font-weight: 800 !important; }
+.ld-tier-price { font-size: 48px !important; }
+.ld-cta { font-weight: 800 !important; }
+.ld-cta-secondary { color: var(--ink) !important; border-bottom: 1px solid var(--line-strong) !important; }
+.ld-strip { border-color: var(--panel-line) !important; }
+.ld-shot img { border: 2px solid var(--panel-line) !important; box-shadow: none !important; }
+.ld-sell-item { background: var(--panel) !important; border: 2px solid var(--panel-line) !important; border-bottom: 4px solid var(--hot) !important; }
+.ld-tier { background: var(--panel) !important; border: 2px solid var(--panel-line) !important; }
+.ld-tier-best { border-color: var(--hot) !important; }
+.ld-faq-item, .ld-signup-card { background: var(--panel) !important; border: 2px solid var(--panel-line) !important; }
+.ld-honest { background: var(--bg-2) !important; }
+
+/* The narrowest phones: the header's three things on one line. It overflowed
+   by 23px before this file and by 72 with the links kept whole, so the
+   brand and the button step down rather than "Sign in" breaking in two. */
+@media (max-width: 420px) {
+  .ld-top .brand { gap: 6px; }
+  .ld-top .brand-name { font-size: 20px !important; }
+  .ld-nav { gap: 10px; }
+  .ld-nav > a:first-child { font-size: 14px !important; }
+  .ld-nav-cta { padding: 8px 12px !important; font-size: 14px !important; }
+}

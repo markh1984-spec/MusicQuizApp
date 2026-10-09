@@ -538,7 +538,7 @@ opening a second file.
 - **SSE, not websockets**
 - **No build step**
 - **Packs are JSON files**
-- **The console wears a gauntlet cursor — open hand, closed fist while dragging — and scroll rods on its panels, console only** — and the public gallery since 31 August 2026. Never the projector or a phone.
+- **The look is the Gig poster — `look.css` over `style.css` on every page; no gauntlet cursor, no scroll rods** — a colour or a font changes in `look.css`.
 - **No profanity filter on team names** — **in the ROOM. Do not add word
   filtering to the projector, the phones or the console.** The public league
   page and the landlord's report are the one exception, and it is a SCOPE
@@ -592,7 +592,7 @@ corner radii.
 
 | Role | What it looks like | Where |
 |---|---|---|
-| **The night** | filled, the account's own gradient, rounded | Launch, Take control. **One per screen, maximum** |
+| **The night** | filled flat, the account's own colour, rounded | Launch, Take control. **One per screen, maximum** |
 | **Make something** | filled green | Write it, Import, Make the pictures |
 | **Ordinary** | outlined, no fill | Read, Rename, Save, Send |
 | **Destructive** | outlined **red**, never filled | Delete, Close, Stop |
@@ -601,14 +601,14 @@ corner radii.
 **FILL MEANS COMMITMENT.** That is why destructive is outlined rather than
 filled: a filled red Delete is as loud as Launch, next to Launch, on a card
 somebody is tapping in a dark pub. It is also why there is only ever one filled
-gradient on a screen — the moment there are two, neither is the thing to press.
+control on a screen — the moment there are two, neither is the thing to press.
 
 **A text box and a dropdown look identical** — same height, fill, border,
 radius — which is why the venue box looked wrong beside three styled selects:
 it was a bare `<input>` with no rule at all.
 
 **With ONE deliberate difference: the dropdown's chevron sits on a small block
-of the account's own gradient.** Taken off once, on the reasoning that three
+of the account's own colour.** Taken off once, on the reasoning that three
 gradient tabs beside a Launch button compete with it, and the host looked at
 both and put it back — *"adds a splash of colour but is obviously different
 from the other button that has a full gradient"*. He is right, and the reason
@@ -878,21 +878,18 @@ Full reasoning: **[`docs/business.md`](docs/business.md)**.
 
 ### THE CONSOLE'S THEME — one surface, one heading ladder, a bar that stays
 
-**ONE SURFACE, TINTED WITH THE ACCOUNT'S OWN COLOUR** — `--surf-1`, `--surf-2`,
-`--surf-line`, applied by overriding `--panel` and `--panel-line` **for
-`body.console` alone**. One override is one decision; editing the twenty-nine
-rules that say `var(--panel)` is twenty-nine chances to drift again. **The
-surfaces are OPAQUE**, which is load-bearing: translucent, the same pack card
-comes out a different colour depending on which wash it lands over. The console
-keeps the corner washes and the drift every other surface has — it was the one
-page in the app with its ambience switched off.
+**ONE SURFACE** — `--surf-1`, `--surf-2`, `--surf-line`, applied by
+overriding `--panel` and `--panel-line` **for `body.console` alone**, set flat
+by `look.css`. One override is one decision; editing the twenty-nine rules that
+say `var(--panel)` is twenty-nine chances to drift again. **The surfaces are
+OPAQUE**, which is load-bearing: translucent, the same pack card comes out a
+different colour depending on what it lands over.
 
 **THREE HEADING STEPS, AND THE TAB'S OWN IS DRAWN IN ONE PLACE.** `tabBody()`
-prints the tab's own label as the heading, in the account gradient at
-`--fs-title`, and a section under it drops to `--fs-head` and stays white. In
-`tabBody()` rather than in nine render functions, because a heading each is
-exactly the arrangement that let four of them go missing. **Behind an
-`@supports`**: gradient text is transparent text.
+prints the tab's own label as the heading at `--fs-title`, and a section
+under it drops to `--fs-head`. In `tabBody()` rather than in nine render
+functions, because a heading each is exactly the arrangement that let four of
+them go missing.
 
 **THE TABS ARE A COLUMN DOWN THE LEFT, AND THE SAME COLUMN ON A PHONE** —
 `.consolecols`, 190px and sticky from 900px, full width below it. The

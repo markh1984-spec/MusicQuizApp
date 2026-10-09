@@ -963,7 +963,7 @@ body::after {
    a pinned Tonight are still two things claiming the same top-left. */
 body.is-dragging-card .tabbar { position: static; }
 /* `.launchbar.panel`, NOT `.launchbar` ALONE — `body.console .panel` sets its
-   own `position: relative` for the scroll rods, at EQUAL specificity (two
+   own `position: relative` (kept from the scroll rods), at EQUAL specificity (two
    classes on body's element each), so whichever rule is LATER in the sheet
    wins the `position` property regardless of what this comment says it
    should be. It was: `position: relative` silently beat `position: sticky`
@@ -2346,203 +2346,20 @@ body.console {
 body.console::after { display: none; }
 
 /*
- * THE GAUNTLET IS THE CURSOR NOW, EVERYWHERE — the quill was dropped:
- * *"drop the quill - I'm happy with the open hand and then the grabby hand
- * when grabbing stuff."* One glove doing both jobs is genuinely simpler than
- * a quill for pointing plus a glove for dragging, and it was the host's own
- * call once he had lived with both for a session.
- *
- * CONSOLE ONLY — My account, Console, Workshop, Post gig, Owner page. Never
- * the projector or a phone: those screens live by instant, high-contrast
- * readability in a dark room, which a decorative flourish works against.
- *
- * DRAWN AND JUDGED AT 32px, the only size a cursor is ever seen at. Three
- * silhouettes were rendered for the fist and the first two were unreadable
- * at that size; what survives the shrink is CHUNKY separated fingers, a
- * thumb clearly out to one side, and a cuff cut back to a band rather than a
- * full skirt, which at 32px is just a pale blob with the hand sat on it.
- *
- * A CURSOR CANNOT FOLLOW THE ACCOUNT'S COLOURS and nothing here should try:
- * it is a static image file, so it cannot read `--hot` the way a page
- * element can. Cream and gold, on purpose rather than by omission.
- *
- * THE INDEX FINGER READS AS A PRESS, NOT JUST A POINT — asked for directly,
- * on 21 August 2026, after four lengths were rendered side by side and
- * judged at 32px: *"D for the unclick and A on click."* Hovering shows the
- * finger reaching out (D, the longest of the four); the moment a button is
- * actually pressed the finger comes back down to its original, shorter
- * length (A) — the same gesture a real fingertip makes meeting a surface,
- * reaching before contact and flattening on it. Only that one finger's
- * length changes between the two; every other path is identical, and the
- * closed fist while dragging is untouched — this is about clicking, not
- * grabbing.
+ * THE GAUNTLET CURSOR IS GONE — 9 October 2026, with the Gig poster look
+ * (`look.css`). It was part of the sci-fi feel the redesign was asked to
+ * remove, and the host chose to drop it. The ordinary pointer, hand and text
+ * cursors each control already asks for are back in charge. The drawings are
+ * in git history if anybody wants them.
  */
-/* ---- AND THE PUBLIC GALLERY WEARS IT TOO, asked for on 31 August 2026:
-   *"can we keep the mouse clicker from the app for this as well?"*
- *
- * It is still never the projector and never a phone — the decision's own
- * prohibition, and untouched. The gallery is neither: it is a page somebody
- * reads on a laptop, and it is the one public page that should feel like the
- * app rather than like a stock web page. On a phone it costs nothing, because
- * a touch screen has no cursor to draw. */
-body.console, body.console *,
-body.gallery, body.gallery * {
-  cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M8.8 21.6 L24.4 21.6 L27 26.4 Q23.53 28.3 20.07 26.1 Q16.6 28.3 13.13 26.1 Q9.67 28.3 6.2 26.4 Z' fill='%23e6d5ad'/%3E%3Cpath d='M7.4 23.5 L25.8 23.5' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cpath d='M9.8 13.6 Q4.8 14 3.8 16.8 Q3 19.6 6 20.4 Q8.6 21 10.6 20.4 Z' fill='%23eddfbc'/%3E%3Cpath d='M8.8 21.6 L8.8 5 Q8.8 3.2 10.62 3.2 Q12.45 3.2 12.45 5 L12.45 11.2 Q12.7 12.15 12.95 11.2 L12.95 8 Q12.95 6.3 14.65 6.3 Q16.35 6.3 16.35 8 L16.35 11.2 Q16.6 12.15 16.85 11.2 L16.85 8.5 Q16.85 6.8 18.5 6.8 Q20.15 6.8 20.15 8.5 L20.15 11.2 Q20.4 12.15 20.65 11.2 L20.65 10.2 Q20.65 8.6 22.5 8.6 Q24.4 8.6 24.4 10.2 L24.4 21.6 Z' fill='%23f6ecd6'/%3E%3Cpath d='M12.7 13 L12.7 14.9 M16.6 13 L16.6 15 M20.4 13 L20.4 14.9' stroke='%23c9b183' stroke-width='0.95' fill='none'/%3E%3C/g%3E%3C/svg%3E")
-    16 15, pointer !important;
-}
-/*
- * THE PRESS — an ordinary `:active`, at the SAME open-hand shape the default
- * used before this change, so clicking anything briefly draws the finger
- * back to where it always was. Broad on purpose (`body.console *:active`,
- * the same reach as the default rule above) rather than scoped to buttons
- * and links only — the default cursor is drawn just as broadly, and a click
- * that did not press-and-release would be a rule with a gap in it.
- *
- * WINS OVER THE DEFAULT ON SPECIFICITY ALONE, no source-order dependence:
- * `body.console *:active` carries one more pseudo-class than `body.console
- * *`, so it is not sensitive to which of the two rules is written first.
- * The closed fist below is more specific again (`[draggable="true"]:active`
- * carries an attribute selector on top), so a press that IS a drag still
- * shows the fist rather than this — the ordering here only has to make
- * sense to a reader, not to the cascade.
- */
-body.console *:active,
-body.gallery *:active {
-  cursor:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M8.8 21.6 L24.4 21.6 L27 26.4 Q23.53 28.3 20.07 26.1 Q16.6 28.3 13.13 26.1 Q9.67 28.3 6.2 26.4 Z' fill='%23e6d5ad'/%3E%3Cpath d='M7.4 23.5 L25.8 23.5' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cpath d='M9.8 13.6 Q4.8 14 3.8 16.8 Q3 19.6 6 20.4 Q8.6 21 10.6 20.4 Z' fill='%23eddfbc'/%3E%3Cpath d='M8.8 21.6 L8.8 8.5 Q8.8 6.8 10.62 6.8 Q12.45 6.8 12.45 8.5 L12.45 11.2 Q12.7 12.15 12.95 11.2 L12.95 8 Q12.95 6.3 14.65 6.3 Q16.35 6.3 16.35 8 L16.35 11.2 Q16.6 12.15 16.85 11.2 L16.85 8.5 Q16.85 6.8 18.5 6.8 Q20.15 6.8 20.15 8.5 L20.15 11.2 Q20.4 12.15 20.65 11.2 L20.65 10.2 Q20.65 8.6 22.5 8.6 Q24.4 8.6 24.4 10.2 L24.4 21.6 Z' fill='%23f6ecd6'/%3E%3Cpath d='M12.7 13 L12.7 14.9 M16.6 13 L16.6 15 M20.4 13 L20.4 14.9' stroke='%23c9b183' stroke-width='0.95' fill='none'/%3E%3C/g%3E%3C/svg%3E")
-    16 15, pointer !important;
-}
-/*
- * `!important` because dozens of scattered `cursor: pointer` rules on
- * classes this page shares with host.js/play.js (buttons, chat, tabs) are
- * each individually more specific than a body selector and would otherwise
- * keep the ordinary hand — see the note by the nine other !importants in
- * this file. Three cursor states still carry real meaning, so they are
- * restored right after at the same weight: the fist while actually
- * dragging, a disabled control, and a text field's insertion point. The
- * OPEN hand needs no separate rule of its own any more — it is the default
- * now, so a draggable element already shows it without being named.
- */
-body.console [draggable="true"]:active,
-body.console .drag-grip:active,
-body.console .dragging {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg stroke='%233a2a16' stroke-width='1.2' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M8.8 21.2 L24.4 21.2 L27 26 Q23.53 27.9 20.07 25.7 Q16.6 27.9 13.13 25.7 Q9.67 27.9 6.2 26 Z' fill='%23e6d5ad'/%3E%3Cpath d='M7.4 23.1 L25.8 23.1' stroke='%23b8923f' stroke-width='1.15'/%3E%3Cpath d='M9.6 15.2 Q6.4 15.6 6.1 18 Q5.9 20.3 8.6 20.6 L10.8 20.6 Z' fill='%23eddfbc'/%3E%3Cpath d='M8.8 21.2 L8.8 14.4 Q8.8 10.9 10.7 10.7 Q12.5 10.5 12.7 11.9 Q12.9 10.2 14.7 10.2 Q16.4 10.2 16.6 11.7 Q16.8 10 18.6 10.1 Q20.2 10.2 20.4 11.7 Q20.7 10.4 22.3 10.7 Q24.4 11.2 24.4 14.2 L24.4 21.2 Z' fill='%23f6ecd6'/%3E%3Cpath d='M12.7 12.6 L12.7 14.8 M16.6 12.4 L16.6 14.9 M20.4 12.6 L20.4 14.8' stroke='%23c9b183' stroke-width='0.95' fill='none'/%3E%3C/g%3E%3C/svg%3E") 16 15, grabbing !important;
-}
-body.console button:disabled,
-body.console [disabled],
-body.gallery button:disabled,
-body.gallery [disabled] { cursor: default !important; }
-body.console input:not([type="checkbox"]):not([type="radio"]),
-body.console textarea { cursor: text !important; }
 
 /*
- * THE SCROLL SHADOW — one token, not a dozen rules, for the same reason
- * --panel/--panel-line above are one override rather than twenty-nine: a
- * single place to change it is a single chance to get it right.
- */
-body.console { --scroll-shadow: inset 0 10px 14px -10px rgba(0, 0, 0, 0.5), inset 0 -10px 14px -10px rgba(0, 0, 0, 0.5); }
-body.console .panel,
-body.console .pack-card,
-body.console .venue-card,
-body.console .launchbar,
-body.console .tier-panel,
-/* :not()s so a live drag-drop indicator's own box-shadow is never fought —
-   an element wearing .drop-before/.drop-after simply does not match this
-   rule at all, rather than winning a specificity fight against it. */
-body.console .lb-tile:not(.drop-before):not(.drop-after) {
-  box-shadow: var(--scroll-shadow);
-}
-
-/*
- * THE SCROLL RODS — a turned dowel through the rolled top and bottom edge of
- * the page, poking out past it, in the account's own two colours.
- *
- * WHAT SELLS A CYLINDER IS THE SHADING, NOT THE SHAPE. The first attempt was a
- * pill with a highlight along its top edge and it read as a painted stripe: a
- * real rod is dark where it turns away at the very top, brightest a quarter of
- * the way down, then a long fall to a dark underside. Those five stops are the
- * whole illusion, and the white must stay LOW — pushed up, it bleaches the hue
- * out and the rod stops being the quizmaster's colour, which is the one thing
- * it was asked to be.
- *
- * ON `.panel` ALONE, and that is not laziness — `.launchbar` is only ever set
- * ALONGSIDE `.panel` in the markup, so naming both would give Tonight and the
- * two benches a doubled rod each.
+ * THE SCROLL RODS AND THE CURLED-PARCHMENT SHADOW ARE GONE — 9 October 2026,
+ * with the Gig poster look. A turned dowel through every panel and an inset
+ * curl on every card were decoration, and the poster prints flat. `position: relative` stays: absolutely placed
+ * children on the console's panels still measure from it.
  */
 body.console .panel { position: relative; }
-body.console .panel::before,
-body.console .panel::after {
-  content: '';
-  position: absolute;
-  /* 10px, against the wrap's own 16px of padding, so a rod can never be what
-     pushes the page sideways on a phone. */
-  left: -9px; right: -9px;
-  height: 8px;
-  border-radius: var(--r-pill);
-  pointer-events: none;
-  background:
-    /* a catchlight on each turned knob, where a real one would take the light */
-    radial-gradient(circle 4px at 4.5px 34%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 70%),
-    radial-gradient(circle 4px at calc(100% - 4.5px) 34%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 70%),
-    /* a dark rim low on each knob, so the ball reads as a sphere */
-    radial-gradient(circle 6px at 5.5px 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.42) 92%),
-    radial-gradient(circle 6px at calc(100% - 5.5px) 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.42) 92%),
-    /*
-     * THE LONG ROLL RECEDES AND THE ENDS KEEP THE COLOUR, which is both what
-     * was asked for — *"little scroll endings… within the colours defined by
-     * the account"* — and what a real one does: a stained dowel, brass at the
-     * tips. Drawn evenly at full strength it came out brighter than Launch,
-     * twice on every panel, which breaks the one-filled-gradient-per-screen
-     * rule outright: the loudest thing on the console was a decoration nobody
-     * can press. Darkening the MIDDLE rather than the whole rod keeps the
-     * quizmaster's colour where the eye actually lands.
-     */
-    linear-gradient(90deg, rgba(0, 0, 0, 0) 7px, rgba(0, 0, 0, 0.5) 15px,
-                    rgba(0, 0, 0, 0.5) calc(100% - 15px), rgba(0, 0, 0, 0) calc(100% - 7px)),
-    /* the cylinder */
-    linear-gradient(180deg, rgba(0, 0, 0, 0.6) 0%, rgba(255, 255, 255, 0.16) 24%,
-                    rgba(0, 0, 0, 0.2) 46%, rgba(0, 0, 0, 0.5) 76%, rgba(0, 0, 0, 0.72) 100%),
-    /* the account's own two colours, exactly as Launch takes them */
-    linear-gradient(120deg, var(--hot), var(--hot-2));
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
-}
-body.console .panel::before { top: -4px; }
-body.console .panel::after { bottom: -4px; }
-
-/*
- * AND THE KNOBS, where the browser can mask. A plain pill is the same width
- * end to end, which reads as a bar through the page rather than a rod with
- * finials on it. Masking lets the ends be a FATTER circle than the roll
- * between them — the reference silhouette — while the fill underneath stays
- * the account gradient, which an SVG data URI could never read.
- *
- * THE ROLL STOPS SHORT OF EACH KNOB, leaving a GROOVE. Three finial shapes
- * were rendered side by side — plain, groove, knob-plus-collar-ring — and
- * the groove won: it is the one turned-on-a-lathe detail that still reads
- * at 11px tall, where the collar ring is just a stutter.
- *
- * Behind `@supports` because without mask compositing the element would paint
- * as a full RECTANGLE, which is far worse than the pill it replaces — the same
- * guard, and the same reasoning, as the gradient hairline on the photo card.
- */
-@supports (mask-composite: add) and (mask-image: radial-gradient(#000, #000)) {
-  body.console .panel::before,
-  body.console .panel::after {
-    height: 11px;
-    border-radius: 0;
-    mask-image:
-      radial-gradient(circle 5.5px at 5.5px 50%, #000 99%, transparent 100%),
-      radial-gradient(circle 5.5px at calc(100% - 5.5px) 50%, #000 99%, transparent 100%),
-      linear-gradient(#000, #000);
-    mask-size: 100% 100%, 100% 100%, calc(100% - 26px) 7px;
-    mask-position: 0 0, 0 0, center;
-    mask-repeat: no-repeat;
-    mask-composite: add;
-  }
-  body.console .panel::before { top: -5.5px; }
-  body.console .panel::after { bottom: -5.5px; }
-}
 /* 1180 RATHER THAN 1000, AND THE TAB BAR IS WHY.
    Nine tabs come to a bit over 1000px, so in a 968px column one of them
    always wrapped — and a wrapped bar that is also STICKY costs a hundred and

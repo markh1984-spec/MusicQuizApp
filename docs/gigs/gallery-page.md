@@ -108,7 +108,8 @@ for the same room."*
   whether there are neighbours on both sides, one, or neither — a flex row
   would slide it about as the ends came and went. The empty span holds its
   column open. It stacks to a column below 560px.
-- **And the gallery wears the app's gauntlet cursor now** — asked for in the
+- **And the gallery wore the app's gauntlet cursor** (gone on 9 October 2026
+  with the Gig poster look, everywhere) — asked for in the
   same breath. Still never the projector and never a phone, which is the
   decision's own prohibition: the gallery is neither, and on a touch screen it
   costs nothing because there is no cursor to draw.
