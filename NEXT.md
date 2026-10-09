@@ -2,8 +2,8 @@
 
 ## Waiting on Mark
 
-- **Deploy on Render again — Manual Deploy, then "Deploy latest commit"**. Brings Pub Prix as its own game type, with faces on the karts and real steering in Pub Prix live; the Gig poster look and the first Pub Prix are live already. A deploy restarts the live server, so not during a gig (9 Oct 2026).
-- **Try Pub Prix with two phones before using it at a gig** — it steers now: hold the left or right of the screen; it is meant to be hard, so say if it is too hard or too easy. Two ways to start it (9 Oct 2026):
+- **Deploy on Render again — Manual Deploy, then "Deploy latest commit"**. Brings Pub Prix as its own game type, with faces on the karts, real steering in Pub Prix and tilt-to-steer live; the Gig poster look and the first Pub Prix are live already. A deploy restarts the live server, so not during a gig (9 Oct 2026).
+- **Try Pub Prix with two phones before using it at a gig** — tip the phone to steer (or hold the left or right of the screen); it is meant to be hard, so say if it is too hard or too easy. On an iPhone, tap "Steer by tilting the phone" first and allow it. Two ways to start it (9 Oct 2026):
   - At a quiz's round scores, or once a bingo round's prize has gone, press "Start Pub Prix" on the control view.
   - Or put it in the night itself: tap the Pub Prix card on the Console, then put its tile between two rounds on Tonight.
 - **Yes or no: a real 3D head on the karts**. Today each kart shows a flat photo of the player's face. A 3D head would need a paid image-to-3D service. Offered 9 Oct 2026.
@@ -35,3 +35,4 @@
 9 October 2026, night — deployed everything on GitHub: the Gig poster look, Pub Prix, the hub income link and browsers kept on https (HSTS).
 9 October 2026, night — Pub Prix is its own game type (a tab, a Tonight tile, one drink a race), each kart carries its driver's face, and the offer page wears the Gig poster colours.
 9 October 2026, night — Pub Prix steers: hold a side of the phone; the bends push you wide and the grass slows you.
+9 October 2026, night — tip the phone to steer, holding the screen as the backup.

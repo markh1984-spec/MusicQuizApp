@@ -309,3 +309,43 @@ export function pubPrixPack() {
     subtitle: 'A kart race on the big screen. Phones steer by tapping a lane; the winner gets a drink.',
   };
 }
+
+/*
+ * ============================================================ TILT TO STEER
+ *
+ * *"if they tip the phone right they steer right on the game? LOL that's
+ * amazing"* — so it does (9 October 2026), and holding the screen stays as
+ * the backup for a phone that says no.
+ *
+ * **HOW FAR THE PHONE IS TIPPED IS GRAVITY ACROSS THE SCREEN**, worked out
+ * from the orientation angles: the left-right component of "down", from -1
+ * (tipped hard left) to +1. Computed from the whole rotation rather than read
+ * off one angle, because `gamma` alone means a different thing on a phone
+ * held upright (like a wheel) and one held flat (like a tray) — gravity across
+ * the screen is the same answer in both. And it follows the SCREEN, so a
+ * phone turned on its side still steers the way it looks.
+ */
+export function tiltAmount(beta, gamma, angle = 0) {
+  const b = (Number(beta) || 0) * Math.PI / 180;
+  const g = (Number(gamma) || 0) * Math.PI / 180;
+  const gx = Math.cos(b) * Math.sin(g);   // gravity along the device's x
+  const gy = -Math.sin(b);                // …and its y
+  const a = ((Math.round(Number(angle) / 90) * 90) % 360 + 360) % 360;
+  if (a === 90) return -gy;
+  if (a === 180) return -gx;
+  if (a === 270) return gy;
+  return gx;
+}
+
+/** Tipped past here, the wheel turns; back inside the smaller one, it centres. */
+export const TILT_ON = 0.26;   // about 15 degrees
+export const TILT_OFF = 0.14;  // about 8 — the gap stops a wobbling hand flickering
+
+/** The wheel a tilt asks for, given what it is now: -1, 0 or +1. */
+export function tiltToSteer(amount, now = 0) {
+  const x = Number(amount) || 0;
+  if (now !== 0 && Math.sign(x) === now && Math.abs(x) > TILT_OFF) return now;
+  if (x > TILT_ON) return 1;
+  if (x < -TILT_ON) return -1;
+  return 0;
+}

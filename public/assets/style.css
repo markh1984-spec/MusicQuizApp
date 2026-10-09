@@ -12319,6 +12319,16 @@ body.dj .head .score { color: var(--ink); }
 }
 .race-steer-hint.left { left: 12px; }
 .race-steer-hint.right { right: 12px; }
+/* An iPhone has to be ASKED before it tells a page how it is tipped, and only
+   from a press — so this is a real button, at the touch floor, outlined in the
+   account's colour: an ordinary control, never a second filled one. */
+.race-tilt {
+  min-height: 44px; padding: 0 18px; border-radius: 999px; cursor: pointer;
+  background: transparent; color: var(--ink); font-weight: 800;
+  border: 2px solid var(--hot, #ff4fa3);
+}
+.race-tilt-slot:empty { display: none; }
+.race-tilt-slot { display: grid; justify-items: center; }
 .race-say {
   position: absolute; left: 50%; top: 14px; transform: translateX(-50%);
   max-width: 90%; padding: 8px 14px; border-radius: 999px; pointer-events: none;

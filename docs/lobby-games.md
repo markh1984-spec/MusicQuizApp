@@ -654,10 +654,17 @@ or two ahead of what it avoided. The host reversed it the same evening: *"can
 we make it instead of lanes its actual steering with the phones? its meant to
 be hard like."*
 
-- **HOLD A SIDE OF THE SCREEN TO TURN, LET GO TO GO STRAIGHT.** The whole road
-  is the wheel, so this file's *no control panel* still holds — there are no
-  buttons to find. Not tilt: an iPhone asks permission for the motion sensor
-  every night, and a permission prompt is a phone that does not steer.
+- **TIP THE PHONE TO TURN — and holding a side of the screen is the backup.**
+  Built as holding first (an iPhone asks permission for the motion sensor), then
+  the host read "hold to steer" as tilting — *"LOL that's amazing"* — and chose
+  tilt off two options. So both: the tilt is `tiltAmount()`, gravity ACROSS THE
+  SCREEN worked out from the whole rotation (one angle means different things
+  on a phone held flat and one held up like a wheel), with a gap between
+  `TILT_ON` and `TILT_OFF` so a shaking hand does not flicker the wheel. **A
+  thumb always wins**, so a phone that refuses still races. **An iPhone is
+  asked from a press** — a button on the grid card, and on the race itself —
+  and the answer lasts until the page reloads; everywhere else the sensor just
+  starts. The whole road is still the wheel: no control panel.
 - **WHAT MAKES IT HARD IS THE TRACK, NOT THE LAG.** Every bend pushes you WIDE
   (`DRIFT`, just over half of `STEER`, so a bend is held with a thumb on the
   inside about half the time), and harder the faster you go. Off the tarmac is

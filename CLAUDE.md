@@ -1556,7 +1556,8 @@ Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
 
 - **NEVER A PLAY ON MARIO KART** — this app is SOLD: no plumber, item box,
   shell or banana. **IT STEERS, AND IT IS MEANT TO BE HARD** — lanes REVERSED
-  by him the same night: hold a side, bends push you wide, grass costs speed.
+  by him the same night: TIP THE PHONE (or hold a side — a thumb wins), bends
+  push you wide, grass costs speed.
   **A kart sits on the grid until its phone touches** — nobody started is
   nobody won.
 - **ONE PURE FUNCTION OF THE TAPS, a fixed step, karts never touch** — the

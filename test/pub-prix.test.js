@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import {
   trackLayout, courseFor, kartAt, newKart, stepKart, standings, bendAt, clampSteer, speedOf,
   LAP, RACE, LANES, COUNTDOWN_MS, MIN_TAP_MS, MAX_TAPS, AFTER_WINNER_MS, MAX_RACE_MS,
-  BENDS, HALF, WALL, GRASS, STEP_MS,
+  BENDS, HALF, WALL, GRASS, STEP_MS, tiltAmount, tiltToSteer, TILT_ON, TILT_OFF,
 } from '../public/assets/race-track.js';
 import {
   openRace, steerRace, raceIsOver, finishRace, raceForScreen, raceForPlayer, raceTapEvent,
@@ -119,6 +119,25 @@ test('the grass costs speed and the wall holds you on the track', () => {
   const wall = kartAt([], [[T0, 1]], 2, T0, T0 + 10_000);
   assert.equal(wall.x, WALL, 'held right for ten seconds: at the wall, never past it');
   assert.ok(wall.d > 0 && wall.d < 10 * 52 * 0.6, 'still moving, but slowly');
+});
+
+test('TILT: how far the phone is tipped, held flat or held up like a wheel', () => {
+  assert.equal(Math.round(tiltAmount(0, 0) * 100), 0, 'flat on the table: no tilt');
+  assert.ok(Math.abs(tiltAmount(0, 30) - 0.5) < 0.01, 'flat, tipped 30 degrees to the right');
+  // Held upright and rolled 30 degrees right, a phone reports beta 60, gamma 90.
+  assert.ok(Math.abs(tiltAmount(60, 90) - 0.5) < 0.01, 'held up like a wheel, the same answer');
+  assert.ok(tiltAmount(0, -30) < -0.49, 'and to the left');
+  // Turned on its side, it follows the SCREEN, not the phone's own edges.
+  assert.ok(Math.abs(tiltAmount(30, 0, 90) - 0.5) < 0.01, 'landscape: screen-right is the phone\'s old top');
+  assert.ok(Math.abs(tiltAmount(-30, 0, 270) - 0.5) < 0.01);
+});
+
+test('TILT: a wobbling hand does not flicker the wheel', () => {
+  assert.equal(tiltToSteer(TILT_ON + 0.01, 0), 1, 'past the line, it turns');
+  assert.equal(tiltToSteer(TILT_ON - 0.01, 0), 0, 'short of it, it does not');
+  assert.equal(tiltToSteer(TILT_OFF + 0.02, 1), 1, 'once turning, it holds until well back');
+  assert.equal(tiltToSteer(TILT_OFF - 0.02, 1), 0, 'and centres once level');
+  assert.equal(tiltToSteer(-0.5, 1), -1, 'straight across to the other lock');
 });
 
 test('a whole race is the same race stepped at any frame rate', () => {

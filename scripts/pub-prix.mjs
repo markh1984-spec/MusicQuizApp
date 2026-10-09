@@ -216,6 +216,14 @@ try {
   const annSteers = new Set(events.map((e) => JSON.parse(e)).filter((e) => e.n === 0).map((e) => e.steer));
   check('a held press steers, and lifting the thumb straightens up',
     annSteers.has(-1) && annSteers.has(1) && annSteers.has(0), JSON.stringify([...annSteers]));
+  // TILT — the phone's sensor, as the browser reports it.
+  const tiltFrom = events.length;
+  const tip = (gamma) => phone.evaluate((g) => window.dispatchEvent(
+    new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 20, gamma: g })), gamma);
+  await tip(45); await sleep(450); await tip(0); await sleep(450);
+  const tilted = events.slice(tiltFrom).map((e) => JSON.parse(e)).filter((e) => e.n === 0).map((e) => e.steer);
+  check('tipping the phone right steers right, and levelling it straightens up',
+    tilted.includes(1) && tilted[tilted.length - 1] === 0, JSON.stringify(tilted));
   check('a race event carries a kart NUMBER and nothing that identifies a phone',
     events.length > 0 && events.every((e) => {
       const o = JSON.parse(e);

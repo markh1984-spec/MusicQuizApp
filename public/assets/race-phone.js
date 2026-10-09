@@ -27,7 +27,7 @@
  */
 import { esc, postJson, node, ordinal, roomCode } from './client.js';
 import {
-  courseFor, newKart, stepKart, lapOf, bendAt, onGrass, speedOf,
+  courseFor, newKart, stepKart, lapOf, bendAt, onGrass, speedOf, tiltAmount, tiltToSteer,
   LAPS, LAP, SPEED, MIN_TAP_MS, HALF, WALL,
 } from './race-track.js';
 
@@ -37,6 +37,98 @@ const LEAD_START = 120;
 const LEAD_MAX = 350;
 
 let live = null;
+
+/*
+ * ============================================================ TILT TO STEER
+ *
+ * Tip the phone and the kart turns — `tiltAmount()` in `race-track.js`. A
+ * thumb on the screen still wins, so holding is the backup and never fights
+ * the tilt.
+ *
+ * **ONE LISTENER FOR THE WHOLE PAGE**, kept across races (it only records the
+ * angle), and module state rather than the race's, because an iPhone's
+ * permission is asked ONCE and is good until the page is reloaded.
+ *
+ * **AN iPHONE MUST BE ASKED, FROM A TAP** — `DeviceOrientationEvent
+ * .requestPermission()` throws outside a press — so a phone that needs it
+ * draws a button, on the grid card and on the race. Anywhere else the sensor
+ * simply starts; a laptop has none, never sends an angle, and holds instead.
+ */
+const tilt = { listening: false, asked: false, refused: false, seen: false, wheel: 0 };
+const needsAsking = () => typeof DeviceOrientationEvent !== 'undefined'
+  && typeof DeviceOrientationEvent.requestPermission === 'function';
+const screenAngle = () => {
+  const o = window.screen && window.screen.orientation;
+  if (o && typeof o.angle === 'number') return o.angle;
+  return typeof window.orientation === 'number' ? window.orientation : 0;
+};
+
+function onTilt(ev) {
+  if (ev.beta === null || ev.gamma === null || ev.beta === undefined) return;
+  tilt.seen = true;
+  const next = tiltToSteer(tiltAmount(ev.beta, ev.gamma, screenAngle()), tilt.wheel);
+  if (next === tilt.wheel) return;
+  tilt.wheel = next;
+  if (live && live.update) live.update();
+}
+
+function listen() {
+  if (tilt.listening) return;
+  tilt.listening = true;
+  window.addEventListener('deviceorientation', onTilt);
+}
+
+/** Is tilting on, waiting to be allowed, or not available here? */
+export function tiltState() {
+  if (tilt.refused) return 'refused';
+  if (tilt.listening) return tilt.seen ? 'on' : 'starting';
+  return needsAsking() ? 'ask' : 'off';
+}
+
+/**
+ * Turn tilting on — called from a PRESS, which an iPhone insists on. Resolves
+ * to the new `tiltState()`.
+ */
+export async function enableTilt() {
+  if (tilt.listening) return tiltState();
+  if (needsAsking()) {
+    tilt.asked = true;
+    try {
+      const answer = await DeviceOrientationEvent.requestPermission();
+      if (answer !== 'granted') { tilt.refused = true; return tiltState(); }
+    } catch {
+      tilt.refused = true;
+      return tiltState();
+    }
+  }
+  listen();
+  return tiltState();
+}
+
+// Everywhere that needs no permission, the sensor starts with the page.
+if (typeof window !== 'undefined' && !needsAsking()) listen();
+
+/** The button that asks — drawn only where a phone has to be asked. */
+export function tiltButton(cls = '') {
+  const state = tiltState();
+  if (state !== 'ask' && state !== 'refused') return '';
+  return state === 'refused'
+    ? `<p class="tiny race-tilt-no ${cls}">Tilt is off on this phone — hold the left or right of the screen instead.</p>`
+    : `<button class="race-tilt ${cls}" type="button">Steer by tilting the phone</button>`;
+}
+
+/** Wire whatever `tiltButton()` drew inside `root`; `after` repaints the caller. */
+export function wireTiltButton(root, after = () => {}) {
+  const b = root.querySelector('.race-tilt');
+  if (!b) return;
+  b.addEventListener('click', async (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    b.disabled = true;
+    await enableTilt();
+    after();
+  });
+}
 
 /** Is this phone in a race right now? Then the race is the whole screen. */
 export function racing(s) {
@@ -67,11 +159,12 @@ export function buildRace(s, { player, now }) {
         <span class="race-phone-who"><b>Pub Prix</b> · kart ${r.you.n + 1}</span>
         <span class="race-phone-lap" id="raceLap"></span>
       </div>
+      <div class="race-tilt-slot">${tiltButton()}</div>
       <div class="race-road">
         <canvas class="race-road-canvas" aria-hidden="true"></canvas>
         <div class="race-steer" role="group" aria-label="Steering — hold the left or right of the screen">
-          <span class="race-steer-hint left" aria-hidden="true">&#9664; hold</span>
-          <span class="race-steer-hint right" aria-hidden="true">hold &#9654;</span>
+          <span class="race-steer-hint left" aria-hidden="true">&#9664; ${tilt.seen ? 'tilt or hold' : 'hold'}</span>
+          <span class="race-steer-hint right" aria-hidden="true">${tilt.seen ? 'tilt or hold' : 'hold'} &#9654;</span>
         </div>
         <div class="race-say" id="raceSay" aria-live="polite"></div>
       </div>
@@ -107,6 +200,15 @@ export function buildRace(s, { player, now }) {
     onKey: null,
   };
   wireSteering(el.querySelector('.race-steer'));
+  // Allowed mid-race, the button goes and the hints say so.
+  const slot = el.querySelector('.race-tilt-slot');
+  wireTiltButton(slot, () => {
+    slot.innerHTML = tiltButton();
+    wireTiltButton(slot, () => { slot.innerHTML = tiltButton(); });
+    el.querySelectorAll('.race-steer-hint').forEach((h, i) => {
+      h.textContent = tilt.listening ? (i ? 'tilt or hold \u25B6' : '\u25C0 tilt or hold') : h.textContent;
+    });
+  });
   live.raf = requestAnimationFrame(frame);
   return el;
 }
@@ -124,12 +226,15 @@ function wireSteering(pad) {
     const box = pad.getBoundingClientRect();
     return ev.clientX < box.left + box.width / 2 ? -1 : 1;
   };
+  // A thumb wins, then a key, then the tilt — so holding is always the backup.
   const update = () => {
     if (live !== me) return;
     const held = [...me.fingers.values()];
     const key = me.keys[me.keys.length - 1];
-    want(held.length ? held[held.length - 1] : key || 0);
+    want(held.length ? held[held.length - 1] : key || tilt.wheel || 0);
   };
+  me.update = update;
+  update();
   pad.addEventListener('pointerdown', (ev) => {
     ev.preventDefault();
     try { pad.setPointerCapture(ev.pointerId); } catch { /* an old browser — it still steers */ }
@@ -374,12 +479,12 @@ function say(t) {
   if (sim.finishedAt !== null) text = `Home in ${((sim.finishedAt - live.startsAt) / 1000).toFixed(1)}s — look up`;
   else if (t < live.startsAt) {
     const n = Math.ceil((live.startsAt - t) / 1000);
-    text = started ? `${n}… engine running` : `${n}… hold left or right to start your engine`;
-  } else if (!started) text = 'Hold left or right to start your engine!';
+    text = started ? `${n}… engine running` : `${n}… ${tilt.seen ? 'tilt or hold' : 'hold left or right'} to start your engine`;
+  } else if (!started) text = `${tilt.seen ? 'Tilt or hold' : 'Hold left or right'} to start your engine!`;
   else if (onGrass(sim)) text = 'On the grass — steer back on!';
   else if (sim.at !== null && sim.at < sim.slowUntil) text = 'Spilt pint!';
   else if (sim.at !== null && sim.at < sim.boostUntil) text = 'Boost!';
-  else if (bendAt(sim.d) > 0.3 || bendAt(sim.d + 45) > 0.3) text = 'Bend — hold left';
+  else if (bendAt(sim.d) > 0.3 || bendAt(sim.d + 45) > 0.3) text = tilt.seen ? 'Bend — lean left' : 'Bend — hold left';
   else text = '';
   if (text !== live.said) {
     live.said = text;

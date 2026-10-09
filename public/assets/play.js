@@ -27,7 +27,7 @@ import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
 import { paintChatButton } from './chat.js';
 import { arcadeCard, wireArcade, stopArcade } from './lobby-menu.js';
-import { buildRace, stopRacePhone, racing, raceResultCard } from './race-phone.js';
+import { buildRace, stopRacePhone, racing, raceResultCard, tiltButton, wireTiltButton, tiltState } from './race-phone.js';
 
 const STORE_KEY = 'musicquiz.player';
 
@@ -1650,9 +1650,10 @@ function buildRacePart(s) {
         <div class="sub">Pub Prix</div>
         <img class="race-grid-face" src="${esc(face)}" alt="">
         <h2>${you ? `You are kart ${you.n + 1}` : 'You are on the grid'}</h2>
-        <p class="muted">When the lights go, hold the left or right of your screen to steer.</p>
+        <p class="muted">When the lights go, tip your phone to steer — or hold the left or right of the screen.</p>
         <button class="photo-gate-go race-selfie" type="button">${lastSelfie || s.photoDone ? 'Take another selfie' : 'Take a selfie for your kart'}</button>
-        <p class="tiny">Your face drives your kart on the big screen.</p>` : ''}
+        <p class="tiny">Your face drives your kart on the big screen.</p>
+        <div class="race-tilt-slot">${tiltButton()}</div>` : ''}
       ${s.phase === 'finished' && !r.winner ? '<div class="panel racecard"><div class="sub">Pub Prix</div><b>That’s Pub Prix.</b></div>' : ''}
       ${onGrid ? '' : raceResultCard(s)}
       ${wallet(s, '')}
@@ -1660,6 +1661,15 @@ function buildRacePart(s) {
     </div>`);
   const shot = el.querySelector('.race-selfie');
   if (shot) shot.addEventListener('click', () => openCamera({ selfie: true }));
+  // An iPhone asks once, from a press — better here, before the lights, than
+  // mid-countdown. The answer lasts until the page is reloaded.
+  const slot = el.querySelector('.race-tilt-slot');
+  if (slot) {
+    wireTiltButton(slot, () => {
+      slot.innerHTML = tiltState() === 'refused' ? tiltButton()
+        : '<p class="tiny">Tilt is on — tip the phone to steer.</p>';
+    });
+  }
   wirePhotoVote(el, postPhotoVote);
   return el;
 }
