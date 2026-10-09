@@ -695,23 +695,18 @@ boring grey box."*
 
 The corners are the radius rule above — 10 / 14 / 999, nothing sharp anywhere.
 
-**An ordinary button gets DEPTH plus an EDGE, and that pairing is the whole
-answer.** The face is a top-lit surface rather than a flat swatch, so it reads
-as an object you press; the account's own colour is the bottom border. Three
-tinted options were rendered first and all three were turned down with the
-second constraint that makes this work: ***"don't want a wall of red either"***
-— a row of six buttons filled with the account colour is as wrong as a row of
-six grey ones, in the other direction.
+**An ordinary button is a raised face with a SHORT STRAIGHT UNDERLINE in the
+account's colour under its words** — never a filled face: ***"don't want a
+wall of red either"***. One button says whose app this is; six in a row still
+say it once.
 
-So the colour is on the EDGE and never on the face. One button says whose app
-this is; six of them in a row still say it once.
+**IT WAS A 2px BOTTOM BORDER and he asked twice for it gone** (9 October 2026:
+*"I prefer the new one everywhere"*) — it ran the whole width and bent round
+the corners. The lit door and the switches wear the same underline, so there
+is one mark; `look.css` lists every control that had the edge. **Do not bring
+a coloured bottom border back on a control.**
 
-**The underline is a boxed control's bottom border, not a bar under a bare
-label** — which is how the tab bar marks the tab you are on. Same colour,
-different object. It was raised as a collision before he chose this and chosen
-anyway; if the two ever end up side by side, this is the note.
-
-**Destructive keeps RED on its edge in every scheme**, like everywhere else: a
+**Destructive keeps RED, underline included, in every scheme**: a
 quizmaster's colours change the app's personality, never what red means.
 
 **AND THE LIT MENU CHIP FOLLOWS THE SCHEME NOW, so gold is the trophy colour

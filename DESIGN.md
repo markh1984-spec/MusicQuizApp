@@ -50,11 +50,13 @@ components:
     textColor: "{colors.make-green}"
   button-ordinary:
     backgroundColor: "{colors.raised}"
-    border: "1px panel-line, 2px account-hot on the bottom edge"
+    border: "1px panel-line all round"
+    underline: "3px account-hot under the words, 5px below them"
     textColor: "{colors.paper}"
   button-destructive:
     backgroundColor: "{colors.raised}"
-    border: "1px red at 50%, 2px red on the bottom edge"
+    border: "1px red at 50% all round"
+    underline: "3px red under the words"
     textColor: "{colors.destructive-red}"
 ---
 
@@ -103,7 +105,7 @@ room and not costing the host attention beat any decoration.
 
 ### The account's colour
 `--hot` is whatever the quizmaster chose (a `data-scheme` on `<html>`). It
-fills THE NIGHT, marks the bottom edge of an ordinary button, the chevron block
+fills THE NIGHT, underlines the words of an ordinary button, the chevron block
 on a dropdown, the lit tab and the join-step numbers. **`look.css` never names
 `--hot` or `--hot-2`** — that is what keeps every scheme working.
 
@@ -163,10 +165,13 @@ at a time from here (see `todo/console.md`).
   what it wants.
 - **Make something** — dark fill tinted green, green text and edge. Never a
   full green fill, which would out-shout the night.
-- **Ordinary** — raised face, hairline, the account's colour on the bottom
-  edge only. A row of six never becomes a wall of colour.
-- **Destructive** — red text and red bottom edge on the raised face, never
-  filled, on every scheme.
+- **Ordinary** — raised face, hairline all round, and a short straight
+  underline in the account's colour under the words — the same mark as the
+  lit door and a chosen switch. Never a coloured bottom border: that ran the
+  whole width and bent round the corners, and was taken out on 9 October.
+  A row of six never becomes a wall of colour.
+- **Destructive** — red text, red hairline and a red underline on the raised
+  face, never filled, on every scheme.
 - **Choose** — a field and a dropdown look alike; the dropdown's chevron sits
   on a small block of the account's colour, the cue that it opens.
 - **Switches** (the hat switch, the tier rungs, In the room / Online, On/Off)
@@ -195,6 +200,9 @@ ink, a filled letter block. The timer is the same segmented meter.
 - **Don't** bring back glows, gradient fills or gradient text — the poster is
   flat, and the old look's tells were exactly those.
 - **Don't** name `--hot`/`--hot-2` in `look.css`.
+- **Don't** put a coloured bottom border on a control; the account colour is
+  an underline under the words. (A pack card's green or purple foot is the
+  kind of pack, not a button, and stays.)
 - **Don't** add a third typeface, or load a font from anywhere but
   `/assets/fonts/`.
 - **Don't** use capitals for an ordinary label.

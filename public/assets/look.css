@@ -416,24 +416,50 @@ input[type="number"], input[type="url"], input:not([type]), textarea {
 .pick-menu { background: var(--raised) !important; border: 2px solid var(--panel-line) !important; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55) !important; }
 .set-word { color: var(--ink-dim) !important; font-weight: 600 !important; }
 
-/* ORDINARY: a flat face and the account's colour on the bottom edge. */
+/*
+ * ORDINARY: a flat face, one hairline all round, and the account's colour as
+ * a SHORT STRAIGHT UNDERLINE under the words — 9 October 2026, Mark: "the
+ * sign out button has the old underline style I prefer the new one
+ * everywhere". It was a 2px bottom border, which ran the button's whole width
+ * and bent round its corners; the lit door and the switches already wore the
+ * underline, so now there is one way of putting the account colour on a
+ * control. Every control that had the old edge is listed here, found by a
+ * computed-style scan of every door, tab and screen for a bottom border
+ * coloured differently from the top — not by eye.
+ */
 .console a.minor, .console button.minor, .console label.minor, .actions .minor,
 .host .panel a.minor, .host .panel button.minor, .host .panel label.minor {
   background: var(--raised) !important;
   border: 1px solid var(--panel-line) !important;
-  border-bottom: 2px solid var(--hot) !important;
   color: var(--ink) !important;
   font-weight: 700 !important;
   box-shadow: none !important;
 }
-/* DESTRUCTIVE: red, outlined, never filled — in every scheme. */
+.minor, .lb-fold, .gal-book-link, .bay-head-live, .mine-pick.is-head, .dj-shoot, .dj-go, .dj-send,
+.snap-pick, .lb-ready a, .ld-cta-secondary, .wait-item-what b, .gap-dial.is-set .gap-dial-icon {
+  text-decoration: underline 3px var(--hot) !important;
+  text-underline-offset: 5px;
+  text-decoration-skip-ink: none;
+}
+/* the old edge, gone from everything that wore one: the sides' hairline all round */
+:is(.wait-item, .gal-book-link, .by-slot, .bay-head-live, .mine-pick.is-head, .dj-card, .dj-shoot,
+    .dj-go, .dj-send, .dj-door-links a.minor, .snap-pick, .lb-ready a, .gap-dial.is-set) {
+  border-color: var(--panel-line) !important; border-bottom-width: 1px !important;
+}
+.ld-cta-secondary { border-bottom: 0 !important; }
+.lb-fold { background: var(--raised) !important; color: var(--ink) !important; }
+/* a filled control carries no underline — the ink would vanish into the fill */
+.minor.on, .pile.on, .dj-camera-first .dj-shoot { text-decoration: none !important; }
+/* live is green, the app's fixed meaning for "it is actually up" */
+.bay-head-live.is-live { text-decoration-color: var(--good) !important; }
+/* DESTRUCTIVE: red, outlined, never filled — in every scheme; the underline red too. */
 .console button.minor.danger, .console a.minor.danger, .actions .minor.danger,
 .host .panel button.minor.danger, .host .panel a.minor.danger {
   background: var(--raised) !important;
   border: 1px solid color-mix(in srgb, var(--bad) 50%, transparent) !important;
-  border-bottom: 2px solid var(--bad) !important;
   color: var(--bad) !important;
 }
+.minor.danger { text-decoration-color: var(--bad) !important; }
 /* MAKE SOMETHING: green, but the fill stays dark so it never out-shouts the night. */
 .role-make { background: color-mix(in srgb, var(--good) 14%, var(--raised)) !important; border-color: color-mix(in srgb, var(--good) 60%, transparent) !important; }
 
@@ -508,7 +534,6 @@ input[type="number"], input[type="url"], input:not([type]), textarea {
 .lb-rd.on { background: var(--raised) !important; border: 1px solid var(--panel-line) !important; }
 .lb-say { color: var(--ink-dim) !important; }
 .lb-ready, .lb-ready b { color: var(--ink) !important; }
-.lb-ready a { border-color: var(--panel-line) !important; border-bottom: 2px solid var(--hot) !important; }
 
 /* The pack shelf: a flat colour block per era, the era word printed into it,
    the title in the display face. */
@@ -553,10 +578,10 @@ body.landing { background: var(--bg) !important; }
 .ld-sell-item h3 { font-size: 26px !important; font-weight: 800 !important; }
 .ld-tier-price { font-size: 48px !important; }
 .ld-cta { font-weight: 800 !important; }
-.ld-cta-secondary { color: var(--ink) !important; border-bottom: 1px solid var(--line-strong) !important; }
+.ld-cta-secondary { color: var(--ink) !important; }
 .ld-strip { border-color: var(--panel-line) !important; }
 .ld-shot img { border: 2px solid var(--panel-line) !important; box-shadow: none !important; }
-.ld-sell-item { background: var(--panel) !important; border: 2px solid var(--panel-line) !important; border-bottom: 4px solid var(--hot) !important; }
+.ld-sell-item { background: var(--panel) !important; border: 2px solid var(--panel-line) !important; }
 .ld-tier { background: var(--panel) !important; border: 2px solid var(--panel-line) !important; }
 .ld-tier-best { border-color: var(--hot) !important; }
 .ld-faq-item, .ld-signup-card { background: var(--panel) !important; border: 2px solid var(--panel-line) !important; }
