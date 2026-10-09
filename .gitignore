@@ -20,6 +20,8 @@ data/*
 
 # Screenshots from scripts/shots.mjs
 screenshots/
+# ...and from scripts/picture-by-position.mjs, which writes to shots/
+shots/
 
 .DS_Store
 *.log
