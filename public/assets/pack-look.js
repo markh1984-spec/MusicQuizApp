@@ -90,6 +90,8 @@ const KIND_EDGE = {
   breakout: '#f97316',
   // Pub Prix: sky blue — not a trophy, not a pack's green, not a bingo's purple.
   race: '#38bdf8',
+  // Up or Down: teal — clear of the trophy gold and of every other edge here.
+  updown: '#14b8a6',
 };
 
 /**
@@ -224,7 +226,7 @@ const EDGE_ALPHA = 0.85;
  * the panel and "Music quiz" in the archive (the eighth kind test written
  * when there were two games). An unnamed kind falls back to its id.
  */
-export const KIND_NAMES = { quiz: 'Music quiz', bingo: 'Music bingo', cards: 'Card bingo', race: 'Pub Prix' };
+export const KIND_NAMES = { quiz: 'Music quiz', bingo: 'Music bingo', cards: 'Card bingo', race: 'Pub Prix', updown: 'Up or Down' };
 export function kindName(kind) {
   const key = String(kind || '').toLowerCase();
   return KIND_NAMES[key] || key;

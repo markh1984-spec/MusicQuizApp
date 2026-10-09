@@ -1574,6 +1574,11 @@ Full reasoning: **[`docs/lobby-games.md`](docs/lobby-games.md)**.
   again past the list. **It answers the break race's method names**, so the
   dispatch, tap route and clock needed nothing. **A kart's face is
   `faceKey()`, never an id**; the selfie is `capture="user"`, camera only.
+- **AND UP OR DOWN — `src/updown.js`, his pick of five (9 Oct)**: higher or
+  lower, wrong (or silent) is out, **nobody out on a pair or when ALL are
+  wrong**, last one standing drinks. **The wall shows how many voted, never
+  the split, until the turn.** Both stand on `src/part-game.js`;
+  `ONE_A_GAME` in `prize-parts.js` names every one-drink-a-game kind.
 
 ### A DROPDOWN IS NARROW SHUT AND WIDE OPEN — `console-pick.js`
 
@@ -3656,11 +3661,6 @@ in a night with no effect on scores, teams or tokens.
   skipped — there is no answer for a fact-checker to check.
 
 Full reasoning: **[`docs/engine.md`](docs/engine.md)**.
-
-### THE DRAW IS BINNED — **IT WENT BECAUSE THE HOST DID NOT KNOW IT EXISTED**
-
-A drink nobody chose to give. **DO NOT REBUILD IT**; a `draw: true` voucher is
-still tolerated. **[`docs/engine.md`](docs/engine.md)**.
 
 ### The tabs run ALONG a quizmaster's evening, behind their door
 

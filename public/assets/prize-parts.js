@@ -143,23 +143,28 @@ export function typedQuizRewards(parts) {
  * @param {Array<{kind: string, list: string[]}>} parts  the table's parts
  * @returns {string} the reminder, or '' when nothing is set to be won
  */
+/**
+ * THE GAMES THAT PAY ONE DRINK A GAME, and play as many games as the host
+ * likes — card bingo, Pub Prix, Up or Down. NAMED, so the prize table, the
+ * deal and the reminder ask one list rather than three copies of a kind test.
+ * The word is what one game of it is called in a sentence.
+ */
+export const ONE_A_GAME = { cards: 'game of card bingo', race: 'Pub Prix race', updown: 'game of Up or Down' };
+export const paysOneAGame = (kind) => Object.prototype.hasOwnProperty.call(ONE_A_GAME, kind);
+
 export function nightReminder(parts) {
   const all = Array.isArray(parts) ? parts : [];
   const filled = (p) => (Array.isArray(p && p.list) ? p.list : [])
     .filter((r) => String(r || '').trim()).length;
-  // Card bingo and Pub Prix pay per GAME, and nobody knows at launch how many.
-  const perGameKind = (p) => p && (p.kind === 'cards' || p.kind === 'race');
-  const fixed = all.filter((p) => p && !perGameKind(p)).reduce((n, p) => n + filled(p), 0);
-  const perGame = all.some((p) => p && p.kind === 'cards' && filled(p));
-  const perRace = all.some((p) => p && p.kind === 'race' && filled(p));
+  // These pay per GAME, and nobody knows at launch how many games there will be.
+  const fixed = all.filter((p) => p && !paysOneAGame(p.kind)).reduce((n, p) => n + filled(p), 0);
+  const perKind = Object.keys(ONE_A_GAME).filter((k) => all.some((p) => p && p.kind === k && filled(p)));
   // A round is a game (24 September 2026): a music bingo round past its list
   // pays the last drink again, so extra rounds are SAID rather than counted,
   // exactly as card bingo's games are.
   const extraRounds = all.some((p) => p && p.kind === 'bingo' && filled(p));
-  const each = [
-    perGame ? 'one for every game of card bingo you play' : '',
-    perRace ? 'one for every Pub Prix race' : '',
-  ].filter(Boolean).join(' and ');
+  const each = perKind.map((k) => (k === 'cards'
+    ? 'one for every game of card bingo you play' : `one for every ${ONE_A_GAME[k]}`)).join(' and ');
   if (!fixed && !each) return '';
   if (!fixed) return `Tonight gives out ${each.replace(/^one /, 'one drink ')}.`;
   const also = [
@@ -196,9 +201,8 @@ export function paysOf(part, { winners = 3, bingo = 0 } = {}) {
    * answer for it. Named rather than fallen into: a fifth game asking this
    * question should answer it for itself rather than inherit a deck's.
    */
-  if (kind === 'cards') return 1;
-  // A Pub Prix race is one game and pays one drink; another race is another game.
-  if (kind === 'race') return 1;
+  // A game pays one drink; another game is another drink — `ONE_A_GAME`.
+  if (paysOneAGame(kind)) return 1;
   return Math.max(1, Math.floor(Number(part && part.prizes) || Number(bingo) || 1));
 }
 

@@ -1823,6 +1823,7 @@ export class BingoGame {
         ...(v.funny ? { funny: true } : {}),
         // Pub Prix's drink — the same reason: it is not a stage on the card.
         ...(v.race ? { race: true } : {}),
+        ...(v.updown ? { updown: true } : {}),
         stage: v.stage,
         reward: v.reward,
         venue: v.venue,

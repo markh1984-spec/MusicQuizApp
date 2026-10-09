@@ -12359,6 +12359,54 @@ body.dj .head .score { color: var(--ink); }
 .race-podium { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 4px; }
 .race-place { display: inline-block; min-width: 2.6em; font-weight: 800; }
 
+/* ---- UP OR DOWN — higher or lower (updown-screen.js, play.js, updown-host.js).
+   Sized in vh on the projector like every other card there; the cards are
+   card-face.js's own drawings. */
+.ud-stage { display: grid; gap: 2.4vh; justify-items: center; text-align: center; width: 100%; }
+.ud-head { display: grid; gap: 0.6vh; }
+.ud-said { font-size: 9vh; line-height: 1; margin: 0; }
+.ud-said.ud-higher, .ud-said.ud-lower { color: var(--good); }
+.ud-said.ud-same { color: var(--gold); }
+.ud-cards { display: flex; align-items: center; justify-content: center; gap: 4vh; }
+.ud-card { width: 24vh; aspect-ratio: 5 / 7; border-radius: 1.6vh; overflow: hidden; background: #fff; box-shadow: 0 1.2vh 3vh rgba(0, 0, 0, 0.45); }
+.ud-card svg { width: 100%; height: 100%; display: block; }
+.ud-back {
+  display: grid; place-items: center; color: rgba(255, 255, 255, 0.85); font: 900 12vh/1 var(--font-display, sans-serif);
+  background: repeating-linear-gradient(45deg, var(--hot) 0 1.2vh, color-mix(in srgb, var(--hot) 70%, #000) 1.2vh 2.4vh);
+  border: 0.8vh solid #fff;
+}
+.ud-turned { animation: ud-turn 420ms ease-out; }
+@keyframes ud-turn { from { transform: rotateY(90deg); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ud-turned { animation: none; } }
+.ud-arrow { font-size: 10vh; color: var(--ink-dim); }
+.ud-foot { display: flex; gap: 3vh; align-items: center; font-size: 3.2vh; }
+.ud-clock { font: 900 6vh/1 var(--font-display, sans-serif); min-width: 9vh; font-variant-numeric: tabular-nums; }
+.ud-clock.urgent { color: var(--bad); }
+.ud-count b, .ud-voted { font-variant-numeric: tabular-nums; }
+.ud-standing { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.2vh 2vh; max-width: 90%; }
+.ud-who { display: inline-flex; align-items: center; gap: 0.8vh; font-size: 2.4vh; font-weight: 700; }
+.ud-who img { width: 4.6vh; height: 4.6vh; border-radius: 999px; object-fit: cover; }
+.ud-waiting .ud-say { font-size: 3.4vh; margin: 0; }
+.ud-waiting .ud-count { font-size: 2.6vh; color: var(--ink-dim); }
+
+/* The phone: the card to beat, and two thumbs' worth of button. */
+.ud-phone { display: grid; gap: 12px; justify-items: center; text-align: center; }
+.ud-phone .ud-mini { width: 110px; aspect-ratio: 5 / 7; border-radius: 10px; overflow: hidden; background: #fff; }
+.ud-phone .ud-mini svg { width: 100%; height: 100%; display: block; }
+.ud-votes { display: grid; gap: 12px; width: 100%; }
+.ud-vote {
+  min-height: 92px; border-radius: 14px; font: 900 30px/1 var(--font-display, sans-serif); cursor: pointer;
+  border: 3px solid var(--panel-line); background: var(--panel); color: var(--ink);
+  touch-action: manipulation;
+}
+.ud-vote.picked { border-color: var(--hot); background: color-mix(in srgb, var(--hot) 22%, var(--panel)); }
+.ud-vote:disabled { opacity: 0.5; cursor: default; }
+.ud-left { font-variant-numeric: tabular-nums; }
+
+/* The host's panel. */
+.udpanel { display: grid; gap: 8px; }
+.udpanel .ud-split-host { font-size: var(--fs-lead); font-variant-numeric: tabular-nums; }
+
 /* ---- the host's end. A grid of everything sent, four pickable, then a tally. */
 .votepanel { display: grid; gap: 10px; }
 /* "Put it to the room" measured 118x21 on the control view (launch-path

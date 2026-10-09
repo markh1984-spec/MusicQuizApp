@@ -22,6 +22,7 @@ import { cueOffsetMs, formatOffset } from './cue.js';
 import { phonesAre } from './phones.js';
 import { STINGS } from './stings.js';
 import { racePanel, raceActions, raceWhere } from './race-host.js';
+import { upDownPanel, upDownActions, upDownWhere } from './updown-host.js';
 
 const KEY_STORE = 'musicquiz.hostkey';
 
@@ -333,6 +334,7 @@ function restartNotice(s) {
 function whereLabel(s) {
   if (s.game === 'dj') return djWhere(s);
   if (s.game === 'race') return raceWhere(s);
+  if (s.game === 'updown') return upDownWhere(s);
   if (playsACard(s)) {
     return s.phase === 'lobby'
       ? 'Bingo — waiting to start'
@@ -431,6 +433,7 @@ function advertPanel(s) {
 function placeLabel(v) {
   if (v.funny) return 'Funniest photo';
   if (v.race) return 'Pub Prix';
+  if (v.updown) return 'Up or Down';
   if (v.draw) return 'Draw';
   return ordinal(v.place || 1);
 }
@@ -540,6 +543,7 @@ function buildPanels(s) {
   if (s.game === 'dj') return djPanels(s, djAct);
   // A Pub Prix part: the race panel is already at the top (`racePanel()`).
   if (s.game === 'race') return [];
+  if (s.game === 'updown') return upDownPanel(s);
   if (playsACard(s)) return bingoPanels(s, act);
   const panels = [];
 
@@ -1229,6 +1233,7 @@ function minorButton(text, handler, danger = false) {
 function buildActions(s) {
   if (s.game === 'dj') return djActions(s, djAct, minorButton);
   if (s.game === 'race') return raceActions(s, act, minorButton);
+  if (s.game === 'updown') return upDownActions(s, act, minorButton);
   if (playsACard(s)) return bingoActions(s, act, minorButton);
 
   /*
@@ -1246,6 +1251,7 @@ function buildActions(s) {
   const continuing = Boolean(order && order.nextKind) && atLastRoundBoard;
   const continueWord = continuing && order.nextKind === 'cards' ? 'the card bingo'
     : continuing && order.nextKind === 'race' ? 'Pub Prix'
+    : continuing && order.nextKind === 'updown' ? 'Up or Down'
     : continuing && order.nextKind === 'bingo' ? 'the bingo' : 'the quiz';
 
   const label = continuing ? `Continue to ${continueWord}` : ({

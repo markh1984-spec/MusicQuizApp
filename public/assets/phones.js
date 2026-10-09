@@ -115,6 +115,13 @@ export function phonesAre(s) {
 
   const have = offers(s);
 
+  // UP OR DOWN: two buttons while a card is up, otherwise how it went.
+  if (s.game === 'updown') {
+    if (s.phase === 'guessing') return 'Higher or lower — two buttons';
+    if (s.phase === 'shown') return 'Whether they are still in';
+    if (s.phase === 'done') return 'Who won';
+    return s.phase === 'finished' ? 'The end of Up or Down' : 'Waiting for you to deal';
+  }
   // A Pub Prix PART between races: their kart and a selfie, or the result.
   if (s.game === 'race') {
     if (s.phase === 'done') return 'The race result';

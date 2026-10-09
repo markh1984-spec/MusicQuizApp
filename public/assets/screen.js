@@ -19,6 +19,7 @@ import { arcadeSlot, paintArcadeBoard } from './lobby-board.js';
 import { playSting, loadStingFiles } from './stings.js';
 import { audio, audioReady } from './audio-kit.js';
 import { raceKey, renderRace, updateRace, raceTap, stopRace } from './race-screen.js';
+import { upDownKey, renderUpDown, updateUpDown, stopUpDown } from './updown-screen.js';
 
 const cardEl = document.getElementById('card');
 const quizTitleEl = document.getElementById('quizTitle');
@@ -124,6 +125,8 @@ const cards = {
    * push must never rebuild it (the QR-flash rule, on a canvas).
    */
   race: { key: raceKey, render: (s) => renderRace(s, () => clock.now()), update: updateRace },
+  // UP OR DOWN — `updown-screen.js`; the clock and the vote count paint in place.
+  updown: { key: upDownKey, render: (s) => renderUpDown(s, () => clock.now()), update: updateUpDown },
   photoVote: {
     key: (s) => `vote:${(s.photoVote.photos || []).map((p) => p.id).join(',')}:${
       s.photoVote.open ? 'open' : 'done'}`,
@@ -302,6 +305,8 @@ function draw(next) {
     // Pub Prix as a part: where the RACE has got to, never "Round 1 of undefined".
     : state.game === 'race'
     ? ({ lobby: 'On the grid', racing: 'Racing', done: 'Result', finished: 'That’s Pub Prix' }[state.phase] || 'Pub Prix')
+    : state.game === 'updown'
+    ? (state.updown && state.phase !== 'lobby' ? `${state.updown.alive} still in` : 'Up or Down')
     : isBingo
     ? bingoTopbar(state)
     : state.phase === 'lobby'
@@ -332,8 +337,10 @@ function draw(next) {
    * to the room between races, goes over it. The engine never sends the two
    * together while a race is running.
    */
-  const card = state.photoVote && state.game === 'race'
+  const card = state.photoVote && (state.game === 'race' || state.game === 'updown')
     ? cards.photoVote
+    : state.game === 'updown'
+    ? cards.updown
     : state.race
     ? cards.race
     : state.photoVote
@@ -356,6 +363,7 @@ function draw(next) {
     // cycle can be reliably stopped — see `stopBreakCycle()`.
     stopBreakCycle();
     stopRace();
+    stopUpDown();
     cardEl.replaceChildren(card.render(state, joinUrl));
     // The final is the one card whose content can outgrow the screen — see
     // `fitWinner()`. A frame first, so the browser has laid it out.
@@ -615,7 +623,7 @@ function paintJoinCorner(s) {
    */
   // A Pub Prix part's lobby is the TRACK, not the QR panel — so the code goes
   // in the corner there, the one moment the room is joining for the race.
-  const wanted = (!NO_JOIN_CORNER.has(s.phase) || (s.game === 'race' && s.phase !== 'finished'))
+  const wanted = (!NO_JOIN_CORNER.has(s.phase) || ((s.game === 'race' || s.game === 'updown') && s.phase !== 'finished'))
     && s.game !== 'dj'
     && !s.scoreboard
     && !(s.advert && s.advert.heading !== undefined);
@@ -677,7 +685,8 @@ const PHOTO_PHASES = new Set(['lobby', 'round_board', 'final', 'won', 'finished'
 function photosAllowed(s) {
   // Not over a RACE either: a photograph landing in the middle of the track
   // hides the karts the whole room is watching.
-  return (s.photos || []).length > 0 && PHOTO_PHASES.has(s.phase) && !s.race;
+  // Never over a race, nor over Up or Down's cards — those ARE the screen.
+  return (s.photos || []).length > 0 && PHOTO_PHASES.has(s.phase) && !s.race && s.game !== 'updown';
 }
 
 function paintPhotos(s) {

@@ -284,7 +284,7 @@ function voucherCard(v) {
   return `
     <div class="win-card place-${v.place || 1}">
       ${logo}
-      <div class="sub">${v.race ? 'You won Pub Prix' : 'You got it'}</div>
+      <div class="sub">${v.race ? 'You won Pub Prix' : v.updown ? 'You won Up or Down' : 'You got it'}</div>
       <div class="win-what">${esc(v.reward)}</div>
       <img class="win-qr" alt="Show this at the bar"
         src="/qr.svg?text=${encodeURIComponent(target)}&dark=%230b0b12&light=%23ffffff">

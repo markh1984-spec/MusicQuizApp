@@ -199,6 +199,7 @@ export function shelfOf(kind) {
     bingo: library && library.bingo,
     cards: library && library.cards,
     race: library && library.race,
+    updown: library && library.updown,
   };
   return shelves[kind] || [];
 }

@@ -22,6 +22,7 @@ import { renderBingo, updateBingo, bingoKey } from './play-bingo.js';
 import { buildDj, djKey, djHead } from './play-dj.js';
 import { openCameraSheet } from './camera-sheet.js';
 import { avatarUrl } from './avatar.js';
+import { cardFaceSvg, ensureCardArt } from './card-face.js';
 import { openVideoRecorder } from './video-recorder.js';
 import { paintLook, DEFAULT_LOOK } from './looks.js';
 import { paintScheme } from './schemes.js';
@@ -469,6 +470,11 @@ function draw(next) {
       const head = djHead(state);
       teamScoreEl.textContent = head.score;
       teamRankEl.textContent = head.rank;
+    } else if (state.game === 'updown') {
+      // In or out, and how many are left — Up or Down has no score.
+      const u = state.updown;
+      teamScoreEl.textContent = !u ? '—' : u.status === 'in' ? 'In' : u.status === 'out' ? 'Out' : '—';
+      teamRankEl.textContent = u ? `${u.alive} still in` : 'waiting';
     } else if (state.game === 'race') {
       // No score on a Pub Prix part — the head says which kart is yours. It
       // read `you.score` and threw, which takes the whole phone down.
@@ -585,7 +591,7 @@ function paintCameraButton(s) {
   // A Pub Prix part draws its own selfie button on the grid card — one camera
   // control per screen, the photo gate's rule.
   const wanted = Boolean(gapWants(s).photos && s.you && s.phase !== 'question' && !menuIsUp && !racing(s)
-    && s.game !== 'race');
+    && s.game !== 'race' && s.game !== 'updown');
   let btn = document.getElementById('cameraBtn');
   if (!wanted) {
     if (btn) btn.remove();
@@ -619,6 +625,12 @@ function screenKey(s) {
 
 function screenKeyBase(s) {
   if (s.game === 'dj') return djKey(s);
+  // UP OR DOWN: the card, your vote, and whether you are still in.
+  if (s.game === 'updown') {
+    const u = s.updown || {};
+    return `updown:${s.phase}:${u.id || ''}:${u.turn || 0}:${u.status || ''}:${u.vote || ''}:${u.winner ? u.winner.name : ''}:${
+      s.photoVote ? (s.photoVote.open ? 'vote' : 'voted') : ''}:${(s.vouchers || []).map((v) => v.code + (v.redeemedAt ? '!' : '')).join(',')}`;
+  }
   // A Pub Prix PART: the race's own state, plus anything drawn under it.
   if (s.game === 'race') {
     const r = s.race || {};
@@ -690,6 +702,7 @@ function buildScreen(s) {
   stopArcade();
   // And Pub Prix's frame loop, on every rebuild — the lobby games' rule.
   stopRacePhone();
+  stopUpDownClock();
   if (racing(s)) {
     document.body.classList.remove('bingo-card');
     return buildRace(s, { player: me, now: () => clock.now() });
@@ -703,6 +716,7 @@ function buildScreen(s) {
   document.body.classList.toggle('dj', s.game === 'dj');
   if (s.game === 'dj') return buildDj(s, { openCamera, player: me });
   if (s.game === 'race') return buildRacePart(s);
+  if (s.game === 'updown') return buildUpDown(s);
   if (playsACard(s)) return renderBingo(s, me);
   switch (s.phase) {
     case 'question': return buildAnswers(s);
@@ -1674,6 +1688,86 @@ function buildRacePart(s) {
   return el;
 }
 
+/*
+ * UP OR DOWN on the phone — the card to beat and two thumbs' worth of button.
+ * The vote goes the moment it is pressed and the button lights at once; a
+ * vote the server turned down puts the lights back, because a phone that
+ * shows a choice the server never took is the one fault this game cannot
+ * have (it is how somebody goes out for a guess they did not make).
+ */
+let upDownClock = null;
+function stopUpDownClock() {
+  if (upDownClock) clearInterval(upDownClock);
+  upDownClock = null;
+}
+
+function buildUpDown(s) {
+  ensureCardArt();
+  const u = s.updown;
+  const SAID = { higher: 'Higher', lower: 'Lower', same: 'A pair' };
+  let body;
+  if (!u) {
+    body = `
+      <div class="sub">Up or Down</div>
+      <h2>Higher or lower?</h2>
+      <p class="muted">A card goes up on the big screen. Say whether the next one is higher or lower — wrong guesses are out, and the last one standing gets a drink.</p>
+      <p class="tiny">Waiting for the host to deal.</p>`;
+  } else if (s.phase === 'done' || (s.phase === 'finished' && u.winner)) {
+    body = u.winner && u.winner.you
+      ? '<div class="sub">Up or Down</div><h2>You won!</h2><p class="muted">Last one standing — your drink is in My prizes.</p>'
+      : `<div class="sub">Up or Down</div><h2>${esc(u.winner ? u.winner.name : 'Nobody')} won</h2>
+        <p class="muted">${u.status === 'out' ? `You went out on card ${u.outOn}.` : 'Well played.'}</p>`;
+  } else if (u.status === 'watching') {
+    body = `<div class="sub">Up or Down</div><h2>A game is on — look up</h2>
+      <p class="muted">You will be in the next one.</p>`;
+  } else if (u.status === 'out') {
+    body = `<div class="sub">Up or Down</div><h2>You're out</h2>
+      <p class="muted">${u.outOn === u.turn && u.next ? `It was ${esc(SAID[u.said] || '')}. ` : ''}${u.alive} still in — watch the big screen.</p>`;
+  } else if (s.phase === 'shown') {
+    body = `<div class="sub">Up or Down · card ${u.turn}</div>
+      <div class="ud-mini">${cardFaceSvg(u.next)}</div>
+      <h2>${esc(SAID[u.said] || '')} — ${u.pair || u.everyoneWrong ? 'everybody stays' : 'you\'re through!'}</h2>
+      <p class="muted">${u.alive} still in.</p>`;
+  } else {
+    body = `<div class="sub">Up or Down · card ${u.turn}</div>
+      <div class="ud-mini">${cardFaceSvg(u.card)}</div>
+      <h2>Is the next card higher or lower?</h2>
+      <div class="ud-votes">
+        <button class="ud-vote${u.vote === 'up' ? ' picked' : ''}" type="button" data-way="up">&#9650; Higher</button>
+        <button class="ud-vote${u.vote === 'down' ? ' picked' : ''}" type="button" data-way="down">&#9660; Lower</button>
+      </div>
+      <p class="tiny ud-left" aria-live="polite"></p>`;
+  }
+  const el = node(`<div class="ud-phone">${body}${wallet(s, '')}${photoVoteCard(s)}</div>`);
+  wirePhotoVote(el, postPhotoVote);
+  const buttons = [...el.querySelectorAll('.ud-vote')];
+  if (buttons.length) {
+    const leftEl = el.querySelector('.ud-left');
+    const tick = () => {
+      if (!leftEl.isConnected) { stopUpDownClock(); return; }
+      const left = Math.max(0, (Number(u.closesAt) || 0) - clock.now());
+      leftEl.textContent = left > 0 ? `${Math.ceil(left / 1000)} seconds to say` : 'Time is up — eyes on the big screen';
+      if (left <= 0) buttons.forEach((b) => { b.disabled = true; });
+    };
+    tick();
+    upDownClock = setInterval(tick, 250);
+    buttons.forEach((b) => b.addEventListener('click', async () => {
+      const way = b.dataset.way;
+      const before = buttons.find((x) => x.classList.contains('picked'));
+      buttons.forEach((x) => x.classList.toggle('picked', x === b));
+      if (navigator.vibrate) navigator.vibrate(12);
+      try {
+        const res = await postJson('/api/updown', { playerId: me.id, token: me.token, joinCode: roomCode(), choice: way });
+        if (!res || !res.ok) throw new Error(res && res.reason);
+      } catch {
+        buttons.forEach((x) => x.classList.toggle('picked', x === before));
+        leftEl.textContent = 'That did not send — tap again';
+      }
+    }));
+  }
+  return el;
+}
+
 function buildBoard(s) {
   const rows = s.leaderboard || [];
   const isFinal = s.phase === 'final';
@@ -1965,7 +2059,7 @@ function voucherCardFor(v) {
    * medal COLOUR is fine and is what the card is tinted with.
    */
   const place = v.place || 1;
-  const said = v.race ? 'You won Pub Prix' : ({ 1: 'You won', 2: 'Second place', 3: 'Third place' }[place] || 'You won');
+  const said = v.race ? 'You won Pub Prix' : v.updown ? 'You won Up or Down' : ({ 1: 'You won', 2: 'Second place', 3: 'Third place' }[place] || 'You won');
   if (v.redeemedAt) {
     return `
       <div class="win-card win-spent">

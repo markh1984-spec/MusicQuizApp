@@ -340,6 +340,7 @@ export function renderSlots(slots, {
   // on a race (a kind test written when there were two games).
   function handSaid(kind) {
     if (kind === 'race') return '<div class="mix-bingo-said tiny">A kart race \u00b7 a drink a race</div>';
+    if (kind === 'updown') return '<div class="mix-bingo-said tiny">Higher or lower \u00b7 a drink a game</div>';
     return '<div class="mix-bingo-said tiny">13 cards each \u00b7 a prize a round</div>';
   }
 

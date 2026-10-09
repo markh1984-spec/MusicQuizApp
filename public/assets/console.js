@@ -734,7 +734,7 @@ export const QUIZ_ROUNDS = [
  * shelf would join the dropdown by accident all over again. `LAUNCHERS` in
  * `src/session.js` is the server's half; a third game adds a line to both.
  */
-export const GAME_KINDS = ['quiz', 'bingo', 'cards', 'race'];
+export const GAME_KINDS = ['quiz', 'bingo', 'cards', 'race', 'updown'];
 
 export const TABS = [
   {
@@ -905,9 +905,7 @@ export const TABS = [
     },
   },
   {
-    /* CARD BINGO and PUB PRIX — each its own tab and name, one card, no
-     * generator, no editor, **Console door only**. **Do not move a deck onto
-     * the Music Bingo shelf.** Why: `deck.js`, `src/race-game.js`. */
+    /* CARD BINGO, PUB PRIX, UP OR DOWN: one card each, Console only — never a deck on Music Bingo. */
     id: 'cards',
     doors: ['console'],
     needs: FEATURES.LIBRARY,
@@ -917,6 +915,8 @@ export const TABS = [
   },
   { id: 'race', doors: ['console'], needs: FEATURES.LIBRARY, label: 'Pub Prix',
     blurb: 'A kart race on the big screen. The winner gets a drink.', packs: () => library.race || [] },
+  { id: 'updown', doors: ['console'], needs: FEATURES.LIBRARY, label: 'Up or Down',
+    blurb: 'Higher or lower? The last one standing gets a drink.', packs: () => library.updown || [] },
   {
     /*
      * PREPARE A NIGHT — a whole evening, built in advance and dragged onto

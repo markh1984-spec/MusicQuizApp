@@ -225,9 +225,10 @@ export async function writePlayers(req, res, url, route) {
 
   // What a phone is allowed to do: answer a question, mark a bingo square and
   // call house, tap away a message the host sent it, vote for the funniest
-  // photograph of the night, change lane in a Pub Prix race, and — on an
+  // photograph of the night, steer in a Pub Prix race, say higher or lower in
+  // Up or Down, and — on an
   // online night — say something in one of its own rooms. Nothing else, and nothing that could hand out a new card.
-  if (['/api/answer', '/api/answer-breakout', '/api/mark', '/api/claim', '/api/wandered', '/api/say', '/api/team', '/api/arcade', '/api/note-read', '/api/photo-vote', '/api/race'].includes(route) && req.method === 'POST') {
+  if (['/api/answer', '/api/answer-breakout', '/api/mark', '/api/claim', '/api/wandered', '/api/say', '/api/team', '/api/arcade', '/api/note-read', '/api/photo-vote', '/api/race', '/api/updown'].includes(route) && req.method === 'POST') {
     const body = await readJson(req);
     const action = route.slice('/api/'.length);
     const room = roomForPhone(req, url, body);

@@ -41,6 +41,7 @@ import { Engine } from '../src/engine.js';
 import { BingoGame } from '../src/bingo.js';
 import { DjSet } from '../src/dj.js';
 import { RaceGame } from '../src/race-game.js';
+import { UpDownGame } from '../src/updown.js';
 import { serverSource } from './server-source.js';
 
 /** Every engine answers all of these, whatever game it is. */
@@ -119,6 +120,8 @@ const PER_KIND = {
    * dispatch, the tap route and the race clock reach it unchanged.
    */
   race: ['openRace', 'closeRace', 'dropRace', 'steerRace', 'tickRace', 'finish', 'where'],
+  // UP OR DOWN — `src/updown.js`, reached through capability checks only.
+  updown: ['startUpDown', 'turnCard', 'nextCard', 'voteUpDown', 'finish', 'where'],
 };
 PER_KIND.cards = [...PER_KIND.bingo, 'drawNext'];
 
@@ -134,6 +137,7 @@ const ENGINES = {
   cards: BingoGame.prototype,
   dj: DjSet.prototype,
   race: RaceGame.prototype,
+  updown: UpDownGame.prototype,
 };
 
 for (const [kind, proto] of Object.entries(ENGINES)) {

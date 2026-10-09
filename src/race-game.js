@@ -32,11 +32,9 @@
  * a game nobody expected to be free should not hand its winner a blank phone.
  */
 
-import {
-  cleanTeamName, faceKey, isSafeId, newId, newToken, newVoucherCode, ownsPlayer,
-  MAX_PLAYERS, rememberRemoved, wasRemoved, forgetRemoved,
-} from './engine.js';
-import { castVote, closeVote, dropVote, openVote, voteForHost, voteForPlayer, voteForScreen } from './photo-vote.js';
+import { faceKey, newVoucherCode } from './engine.js';
+import { PartGame } from './part-game.js';
+import { voteForHost, voteForPlayer, voteForScreen } from './photo-vote.js';
 import {
   openRace, steerRace, raceIsOver, finishRace, dropRace,
   raceForScreen, raceForPlayer, raceForHost, MIN_KARTS, MAX_KARTS,
@@ -58,121 +56,26 @@ export const RACE_PHASES = { LOBBY: 'lobby', RACING: 'racing', DONE: 'done', FIN
 
 const newSeed = (random) => Math.floor(random() * 2147483647) + 1;
 
-function freshState(now, random) {
-  return {
-    kind: 'race',
-    phase: RACE_PHASES.LOBBY,
-    startedAt: now,
-    finishedAt: null,
-    players: {},
-    removed: [],
-    teams: {},
-    race: null,
-    // How many races have finished in this part — which drink the next pays.
-    races: 0,
-    // The track the grid shows is the track they race on.
-    nextSeed: newSeed(random),
-    // The winners of every race in this part, for the filed night.
-    podiums: [],
-    vouchers: {},
-    rewards: [],
-    photoVote: null,
-    arcade: {},
-    // Written EXPLICITLY, so ABSENT can mean launched — see the quiz's.
-    launched: false,
-  };
-}
-
-export class RaceGame {
+/**
+ * The room, the drinks and the photo vote are `PartGame`'s, shared with Up or
+ * Down; what is here is the race.
+ */
+export class RaceGame extends PartGame {
   constructor({ pack = null, state = null, now = () => Date.now(), onChange = () => {}, random = Math.random } = {}) {
-    this.pack = pack || pubPrixPack();
-    this.now = now;
-    this.random = random;
-    this.onChange = onChange;
-    this.state = state && state.kind === 'race' ? state : freshState(this.now(), this.random);
-    // An older state must not arrive half built — fill gaps, never destructure.
-    const s = this.state;
-    if (!s.players) s.players = {};
-    if (!Array.isArray(s.removed)) s.removed = [];
-    if (!s.teams) s.teams = {};
-    if (!s.vouchers) s.vouchers = {};
-    if (!Array.isArray(s.podiums)) s.podiums = [];
-    if (!(s.nextSeed > 0)) s.nextSeed = newSeed(this.random);
-    if (!Object.values(RACE_PHASES).includes(s.phase)) s.phase = RACE_PHASES.LOBBY;
-  }
-
-  changed() {
-    this.onChange();
-  }
-
-  // ------------------------------------------------------------- the phones
-
-  /** The same join contract as every other engine — see `DjSet.join()`. */
-  join({ playerId, name, token = '' }) {
-    const at = this.now();
-    if (playerId) forgetRemoved(this.state, playerId);
-    const claimed = playerId && this.state.players[playerId];
-    const existing = claimed && ownsPlayer(claimed, token) ? claimed : null;
-    if (existing) {
-      if (!existing.token) existing.token = newToken();
-      existing.connected = true;
-      existing.lastSeenAt = at;
-      const want = cleanTeamName(name);
-      if (want && want !== existing.name) existing.name = want;
-      this.changed();
-      return existing;
-    }
-    if (Object.keys(this.state.players).length >= MAX_PLAYERS) return { id: '', name: '', full: true };
-    const id = playerId && isSafeId(playerId) && !this.state.players[playerId] ? playerId : newId();
-    const player = {
-      id,
-      token: newToken(),
-      name: cleanTeamName(name) || `Driver ${Object.keys(this.state.players).length + 1}`,
-      joinedAt: at,
-      lastSeenAt: at,
-      connected: true,
-    };
-    this.state.players[id] = player;
-    this.changed();
-    return player;
-  }
-
-  touch(id) {
-    const player = this.state.players[String(id || '')];
-    if (!player) return null;
-    player.lastSeenAt = this.now();
-    player.connected = true;
-    return player;
-  }
-
-  /** Everybody who RACES — an organiser holds a phone but is in nobody's race. */
-  playerList() {
-    return Object.values(this.state.players).filter((p) => !p.organiser);
-  }
-
-  everyone() {
-    return Object.values(this.state.players);
-  }
-
-  removePlayer(id) {
-    if (!this.state.players[id]) return false;
-    delete this.state.players[id];
-    rememberRemoved(this.state, id);
-    this.changed();
-    return true;
-  }
-
-  wasRemoved(id) {
-    return wasRemoved(this.state, id);
-  }
-
-  renamePlayer(id, name) {
-    const player = this.state.players[id];
-    const clean = cleanTeamName(name);
-    if (!player || !clean) return false;
-    player.name = clean;
-    this.changed();
-    return true;
+    super({
+      kind: 'race',
+      pack: pack || pubPrixPack(),
+      state,
+      now,
+      onChange,
+      random,
+      phases: Object.values(RACE_PHASES),
+      // The track the grid shows is the track they race on.
+      fresh: () => ({ race: null, nextSeed: newSeed(random) }),
+    });
+    if (!(this.state.nextSeed > 0)) this.state.nextSeed = newSeed(this.random);
+    // A state from before the base kept its count as `races`.
+    if (this.state.races && !this.state.games) this.state.games = this.state.races;
   }
 
   /** Everybody who has never started an engine in a race this part. */
@@ -188,7 +91,7 @@ export class RaceGame {
   /** Back to the grid: the room stays, the races go. */
   resetAll() {
     this.state.race = null;
-    this.state.races = 0;
+    this.state.games = 0;
     this.state.podiums = [];
     this.state.phase = RACE_PHASES.LOBBY;
     this.state.nextSeed = newSeed(this.random);
@@ -203,52 +106,10 @@ export class RaceGame {
     return 'the grid';
   }
 
-  // ------------------------------------------------------------- the prizes
+  /** The photo vote waits for the flag — never over a race in full flight. */
+  busy() { return this.state.phase === RACE_PHASES.RACING; }
 
-  rewardList() {
-    const list = Array.isArray(this.state.rewards) ? this.state.rewards : [];
-    const out = list.map((r) => String(r || '').trim());
-    while (out.length && !out[out.length - 1]) out.pop();
-    return out;
-  }
-
-  /** The Nth race's drink — and past the list, the last one again. */
-  rewardFor(raceIndex) {
-    const list = this.rewardList();
-    if (list[raceIndex]) return list[raceIndex];
-    return list.length ? list[list.length - 1] : '';
-  }
-
-  setRewards(list) {
-    if (!Array.isArray(list)) return false;
-    this.state.rewards = list.slice(0, 10).map((r) => String(r ?? '').trim().slice(0, 200));
-    this.changed();
-    return true;
-  }
-
-  redeemVoucher(code, { by = 'scan' } = {}) {
-    const v = (this.state.vouchers || {})[String(code || '').toUpperCase()];
-    if (!v) return { ok: false, reason: 'unknown' };
-    if (v.redeemedAt) return { ok: false, reason: 'already', voucher: v };
-    v.redeemedAt = this.now();
-    v.history.push({ what: 'redeemed', by, at: v.redeemedAt });
-    this.changed();
-    return { ok: true, voucher: v };
-  }
-
-  reinstateVoucher(code) {
-    const v = (this.state.vouchers || {})[String(code || '').toUpperCase()];
-    if (!v) return { ok: false, reason: 'unknown' };
-    if (!v.redeemedAt) return { ok: false, reason: 'not_redeemed', voucher: v };
-    v.history.push({ what: 'reinstated', by: 'host', at: this.now(), was: v.redeemedAt });
-    v.redeemedAt = null;
-    v.reinstated += 1;
-    this.changed();
-    return { ok: true, voucher: v };
-  }
-
-  /** The race IS the game — no lobby game beside it. */
-  arcadeScore() { return { ok: false, reason: 'no_game' }; }
+  settleGame() { this.settleRace(); }
 
   // ------------------------------------------------------------- the race
 
@@ -287,14 +148,14 @@ export class RaceGame {
     if (r.phase === 'done') return { ok: true, winner: r.winner };
     const out = finishRace(this.state, {
       now: this.now(),
-      reward: this.rewardFor(this.state.races || 0),
+      reward: this.rewardFor(this.state.games || 0),
       venue: this.state.venue || '',
       newCode: newVoucherCode,
     });
     // A race nobody started is not a game played — the next one pays the
     // same drink, rather than a lap of nobody spending the first prize.
     if (out.winner) {
-      this.state.races = (this.state.races || 0) + 1;
+      this.state.games = (this.state.games || 0) + 1;
       this.state.podiums.push({
         at: this.now(),
         results: (r.results || []).slice(0, 3).map((x) => ({ name: x.name, place: x.place, time: x.time })),
@@ -320,59 +181,6 @@ export class RaceGame {
     return out;
   }
 
-  finish() {
-    this.settlePhotoVote();
-    this.state.phase = RACE_PHASES.FINISHED;
-    this.state.finishedAt = this.now();
-    this.changed();
-    return true;
-  }
-
-  // ------------------------------------------------- the funniest photograph
-
-  openPhotoVote(photos) {
-    if (this.state.phase === RACE_PHASES.RACING) return { ok: false, reason: 'racing' };
-    const out = openVote(this.state, photos, this.now());
-    if (out.ok) this.changed();
-    return out;
-  }
-
-  /** The last prize on the table, like the other engines'. */
-  photoVotePrize() {
-    const prizes = this.rewardList();
-    return prizes.length ? prizes[prizes.length - 1] : '';
-  }
-
-  closePhotoVote() {
-    const v = this.state.photoVote;
-    if (!v) return { ok: false, reason: 'no_vote' };
-    if (!v.open) return { ok: true, winner: v.winner };
-    const out = closeVote(this.state, {
-      now: this.now(),
-      random: this.random,
-      reward: this.photoVotePrize(),
-      venue: this.state.venue || '',
-      newCode: newVoucherCode,
-    });
-    this.changed();
-    return out;
-  }
-
-  settlePhotoVote() {
-    if (this.state.photoVote && this.state.photoVote.open) this.closePhotoVote();
-    this.settleRace();
-  }
-
-  dropPhotoVote() {
-    const out = dropVote(this.state);
-    this.changed();
-    return out;
-  }
-
-  castPhotoVote(playerId, photoId) {
-    return castVote(this.state, playerId, photoId);
-  }
-
   // -------------------------------------------------------------- the views
 
   /**
@@ -382,7 +190,7 @@ export class RaceGame {
    */
   gridForScreen() {
     return {
-      id: `grid${this.state.races || 0}`,
+      id: `grid${this.state.games || 0}`,
       seed: this.state.nextSeed,
       startsAt: null,
       phase: 'grid',
@@ -429,20 +237,7 @@ export class RaceGame {
     if (this.state.phase !== RACE_PHASES.FINISHED || this.state.race) {
       view.race = this.state.race ? raceForPlayer(this.state, p.id) : this.gridForPlayer(p.id);
     }
-    const mine = Object.values(this.state.vouchers || {})
-      .filter((v) => v.winnerId === p.id)
-      .map((v) => ({
-        code: v.code,
-        name: v.name,
-        place: v.place,
-        ...(v.funny ? { funny: true } : {}),
-        ...(v.race ? { race: true } : {}),
-        reward: v.reward,
-        venue: v.venue,
-        ...(this.state.venueLogo ? { logo: this.state.venueLogo } : {}),
-        issuedAt: v.issuedAt,
-        redeemedAt: v.redeemedAt,
-      }));
+    const mine = this.phoneVouchers(p.id);
     if (mine.length) view.vouchers = mine;
     const vote = voteForPlayer(this.state, p.id);
     if (vote && this.state.phase !== RACE_PHASES.RACING) view.photoVote = vote;
@@ -453,7 +248,7 @@ export class RaceGame {
   gridForPlayer(playerId) {
     const list = this.playerList();
     const n = list.findIndex((p) => p.id === playerId);
-    const out = { id: `grid${this.state.races || 0}`, phase: 'grid', startsAt: null, karts: list.length };
+    const out = { id: `grid${this.state.games || 0}`, phase: 'grid', startsAt: null, karts: list.length };
     if (n >= 0 && n < MAX_KARTS) out.you = { n, lane: n % LANES, colour: kartColour(n), taps: [] };
     return out;
   }
@@ -472,8 +267,8 @@ export class RaceGame {
       })),
       race: r ? raceForHost(this.state) : { phase: 'grid', karts: this.playerList().length, started: 0 },
       // Which drink the next race pays, NAMED on the host's button.
-      nextPrize: this.rewardFor(this.state.races || 0),
-      racesRun: this.state.races || 0,
+      nextPrize: this.rewardFor(this.state.games || 0),
+      racesRun: this.state.games || 0,
       minKarts: MIN_KARTS,
       rewards: this.rewardList(),
       vouchers: Object.values(this.state.vouchers || {}),
@@ -499,7 +294,7 @@ export class RaceGame {
       vouchers: Object.values(this.state.vouchers || {}),
       startedAt: this.state.startedAt,
       finishedAt: this.state.finishedAt,
-      races: this.state.races || 0,
+      races: this.state.games || 0,
       podiums: this.state.podiums.slice(),
       players: this.playerList().length,
       leaderboard: this.playerList().map((p) => {

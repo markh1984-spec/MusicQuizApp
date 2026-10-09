@@ -1861,7 +1861,7 @@ export class Engine {
      * projector, nothing to show the bar. The same three flags
      * `withdrawVouchersNoLongerOwed()` already leaves alone.
      */
-    const placings = Object.values(s.vouchers).filter((v) => !v.carried && !v.funny && !v.race && !v.draw);
+    const placings = Object.values(s.vouchers).filter((v) => !v.carried && !v.funny && !v.race && !v.updown && !v.draw);
     const already = new Set(placings.map((v) => v.winnerId));
     const held = new Map(placings.map((v) => [v.winnerId, v]));
     for (const row of this.leaderboard()) {
@@ -1970,7 +1970,7 @@ export class Engine {
       owed.set(row.id, row.position);
     }
     for (const [code, v] of Object.entries(s.vouchers || {})) {
-      if (v.draw || v.funny || v.race || v.carried || v.redeemedAt) continue;
+      if (v.draw || v.funny || v.race || v.updown || v.carried || v.redeemedAt) continue;
       if (owed.get(v.winnerId) === v.place) continue;
       delete s.vouchers[code];
     }
@@ -2272,7 +2272,7 @@ export class Engine {
    */
   withdrawUnspentPlacings() {
     for (const [code, v] of Object.entries(this.state.vouchers || {})) {
-      if (v.draw || v.funny || v.race || v.carried || v.redeemedAt) continue;
+      if (v.draw || v.funny || v.race || v.updown || v.carried || v.redeemedAt) continue;
       delete this.state.vouchers[code];
     }
   }
@@ -3535,7 +3535,8 @@ export class Engine {
            */
           ...(v.funny ? { funny: true, place: null } : {}),
           ...(v.race ? { race: true, place: null } : {}),
-          ...(v.draw || v.funny || v.race ? {} : { place: v.place || 1 }),
+          ...(v.updown ? { updown: true, place: null } : {}),
+          ...(v.draw || v.funny || v.race || v.updown ? {} : { place: v.place || 1 }),
           reward: v.reward,
           venue: v.venue,
           ...(s.venueLogo ? { logo: s.venueLogo } : {}),
@@ -3556,7 +3557,7 @@ export class Engine {
       // AND A PLACING BEATS THE FUNNIEST-PHOTO DRINK for the headline card:
       // the final slide is about the quiz that has just ended, and a table
       // can hold both now. The wallet underneath still lists every code.
-      const mine = held.find((v) => !v.carried && !v.funny && !v.race && !v.draw)
+      const mine = held.find((v) => !v.carried && !v.funny && !v.race && !v.updown && !v.draw)
         || held.find((v) => !v.carried) || held[0];
       if (mine) {
         view.voucher = {
@@ -3571,6 +3572,7 @@ export class Engine {
           ...(mine.draw ? { draw: true, place: null } : {}),
           ...(mine.funny ? { funny: true, place: null } : {}),
           ...(mine.race ? { race: true, place: null } : {}),
+          ...(mine.updown ? { updown: true, place: null } : {}),
           ...(mine.draw || mine.funny || mine.race ? {} : { place: mine.place || 1 }),
           reward: mine.reward,
           venue: mine.venue,

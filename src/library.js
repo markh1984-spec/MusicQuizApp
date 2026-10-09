@@ -19,8 +19,9 @@ import { listQuizzes, searchBlob } from './quizzes.js';
 import { validateBingoPack, cardShape, shapeFields } from './bingo.js';
 import { deckPack } from '../public/assets/deck.js';
 import { pubPrixPack } from '../public/assets/race-track.js';
+import { upDownPack } from '../public/assets/updown-rules.js';
 
-export const GAME_KINDS = ['quiz', 'bingo', 'cards', 'race'];
+export const GAME_KINDS = ['quiz', 'bingo', 'cards', 'race', 'updown'];
 
 /** Every bingo pack in the folder, summarised. */
 export function listBingoPacks(dir) {
@@ -137,6 +138,7 @@ export function fullLibrary({ quizDir, bingoDir, dataDir, imageDir = '' }, roomI
     })],
     // PUB PRIX — a shelf of one, for the deck's reason: a race is a seed.
     race: [decorate({ ...pubPrixPack() })],
+    updown: [decorate({ ...upDownPack() })],
   };
 }
 

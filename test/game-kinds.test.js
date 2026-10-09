@@ -154,7 +154,7 @@ test('GAME_KINDS and shelfOf cannot part company', async () => {
   const shell = fs.readFileSync(new URL('../public/assets/console.js', import.meta.url), 'utf8');
   const kinds = JSON.parse((shell.match(/GAME_KINDS = (\[[^\]]*\])/) || [])[1].replace(/'/g, '"'));
   const state = await withLocalStorage();
-  state.setLibrary({ quizzes: [{ id: 'q' }], bingo: [{ id: 'b' }], cards: [{ id: 'c' }], race: [{ id: 'r' }] });
+  state.setLibrary({ quizzes: [{ id: 'q' }], bingo: [{ id: 'b' }], cards: [{ id: 'c' }], race: [{ id: 'r' }], updown: [{ id: 'u' }] });
   for (const k of kinds) {
     assert.equal(state.shelfOf(k).length, 1, `${k} is on GAME_KINDS but has no shelf in shelfOf()`);
   }

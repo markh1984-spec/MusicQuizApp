@@ -36,7 +36,7 @@
  */
 import { bestBingoShape, esc } from './client.js';
 import { partsOfSlots } from './console-tonight-mix.js';
-import { FULL_HOUSE, checkStages, dealPrizes, defaultStages, moveStage, nightReminder, paysOf, stageChoices, stageWord, typedQuizRewards } from './prize-parts.js';
+import { FULL_HOUSE, checkStages, dealPrizes, defaultStages, moveStage, nightReminder, paysOf, paysOneAGame, stageChoices, stageWord, typedQuizRewards } from './prize-parts.js';
 
 /*
  * CARD BINGO'S ONE BOX PAYS EVERY GAME, SO IT SAYS SO. A deck pays a prize a
@@ -45,9 +45,9 @@ import { FULL_HOUSE, checkStages, dealPrizes, defaultStages, moveStage, nightRem
  * thing on the control where the host sets what every game of card bingo is
  * worth. Named per kind, like `UNIT` on a pack card.
  */
-// Pub Prix the same way: one drink a race, the last again past the list.
-const boxWord = (part, at) => (part.kind === 'cards' ? 'Each game'
-  : part.kind === 'race' ? 'Each race' : placeWord(at + 1));
+// Pub Prix and Up or Down the same way: one drink a game, the last again past the list.
+const boxWord = (part, at) => (part.kind === 'race' ? 'Each race'
+  : paysOneAGame(part.kind) ? 'Each game' : placeWord(at + 1));
 
 /** "1st", "2nd", "3rd" — the same wording the venue card's own prize rows use. */
 export function placeWord(n) {
@@ -70,6 +70,7 @@ function partName(part) {
   if (part.kind === 'quiz') return 'Quiz';
   if (part.kind === 'cards') return 'Card bingo';
   if (part.kind === 'race') return 'Pub Prix';
+  if (part.kind === 'updown') return 'Up or Down';
   return 'Bingo';
 }
 
@@ -203,7 +204,7 @@ export function prizeTableInto(box, parts, { open, venueName, venueList }) {
       // "the line", "the full house" — and what the host chose; a quiz's by
       // its place.
       const chips = Array.from({ length: n }, (_, at) => `<span class="lb-pz${
-        list[at] ? '' : ' lb-pz-none'}"><i>${esc(part.lines ? stageWord(part.lines[at]) : (part.kind === 'cards' || part.kind === 'race' ? boxWord(part, at) : String(at + 1)))}</i>${
+        list[at] ? '' : ' lb-pz-none'}"><i>${esc(part.lines ? stageWord(part.lines[at]) : (paysOneAGame(part.kind) ? boxWord(part, at) : String(at + 1)))}</i>${
         esc(list[at] || 'Nothing set')}</span>`).join('');
       return `<span class="lb-pz-line"><b>${esc(partName(part))}</b>${chips}</span>`;
     }

@@ -792,3 +792,38 @@ their face driving that kart."*
   takes ten seconds to come back from somebody's API does not.
 - **THE LANES WIDENED TO 6.8% OF THE TRACK** so a face is ~35px on a 720p
   projector, and the board shows the face beside every name.
+
+## UP OR DOWN — higher or lower, the last one standing gets a drink
+
+`src/updown.js` (the engine), `public/assets/updown-rules.js` (the rules,
+shared by the server and the browser), `updown-screen.js`, `updown-host.js`,
+the phone's builder in `play.js`, `up-or-down.mjs`. Picked by the host on 9
+October 2026 off five ideas for a drink game between rounds: *"up or down
+sounds good"*.
+
+- **A CARD GOES UP; EVERY PHONE STILL IN SAYS HIGHER OR LOWER; THE HOST TURNS
+  THE NEXT.** Wrong is out, and so is a phone that never said — a game you can
+  win by leaving your phone in your pocket is not one. Ace low, King high, the
+  deck card bingo already draws (`card-face.js`).
+- **NOBODY GOES OUT ON A PAIR, AND THE WHOLE ROOM CANNOT GO OUT AT ONCE.** A
+  pair is nobody's fault; a card that would knock out every phone still in
+  knocks out none — *nobody right is not nobody winning*. So every game ends
+  with exactly one person holding the drink.
+- **THE WIFI DOES NOT DECIDE IT.** One tap per card with twelve seconds to make
+  it, and the deadline is the SERVER's (rule 2). The one drink game where a
+  slow phone loses nothing — why it was the recommended one of the five.
+- **HOW MANY HAVE SAID, NEVER WHICH WAY, UNTIL THE CARD TURNS.** A split on the
+  wall while the clock runs is the back of the room copying the front. The
+  host sees it live; after the turn it goes up, because then it is the joke.
+- **HOST-PACED, NOT ON A TIMER.** The clock closes the vote; the host turns the
+  card when the patter is done. One filled button — deal, turn, next card,
+  continue — and Finish takes two presses.
+- **ONE DRINK A GAME, THE LAST AGAIN PAST THE LIST** — `rewardFor()`, as Pub
+  Prix. `ONE_A_GAME` in `prize-parts.js` is the one list of kinds that pay
+  that way (card bingo, Pub Prix, Up or Down), so the prize table, the deal
+  and the night's reminder cannot disagree.
+- **A DRINK IT MINTS IS `updown: true, place: null`** — carried into the quiz
+  after it, the quiz engine treats it exactly as a Pub Prix drink, or the
+  phone would tell the winner they won the QUIZ.
+- **IT STANDS ON `src/part-game.js` WITH PUB PRIX** — the room, the tokens,
+  the drinks and the photo vote written once for both.

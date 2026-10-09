@@ -29,7 +29,8 @@ function whyNot(s) {
 }
 
 export function racePanel(s, act) {
-  if (s.game === 'dj') return [];
+  // A DJ set has no break; Up or Down is its own game and has no room for a race.
+  if (s.game === 'dj' || s.game === 'updown') return [];
   if (s.game === 'race') return racePartPanel(s);
   const r = s.race;
   const prize = s.photoVotePrize || '';

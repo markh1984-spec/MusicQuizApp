@@ -39,6 +39,7 @@ import { findSlide, listAdvertPacks, loadAdvertPack } from './adverts.js';
 import { cleanPlan } from '../public/assets/break-parts.js';
 import { deckPack } from '../public/assets/deck.js';
 import { RACE_LAUNCHER } from './race-game.js';
+import { UPDOWN_LAUNCHER } from './updown.js';
 import { readPack, listOwn } from './own-packs.js';
 import { cleanComeBack } from './comeback.js';
 import { composeQuiz, isComposed } from './running-order.js';
@@ -157,6 +158,11 @@ const LAUNCHERS = {
    * `wholePackKind()` treats it as one whole pack the moment it is here.
    */
   race: RACE_LAUNCHER,
+  /*
+   * UP OR DOWN — higher or lower, the last one standing gets a drink.
+   * `src/updown.js`. Built in, a whole-pack part, Pub Prix's shape.
+   */
+  updown: UPDOWN_LAUNCHER,
 };
 
 /**
@@ -2176,6 +2182,17 @@ export class Session {
       raceDrop: () => (typeof this.engine.dropRace === 'function'
         ? this.engine.dropRace() : { ok: false, reason: 'not_available' }),
       /*
+       * UP OR DOWN — `src/updown.js`. Capability checks, never a kind, for
+       * the reason the race's are: a control view left open on another game
+       * gets a reason, not a 500.
+       */
+      updownStart: () => (typeof this.engine.startUpDown === 'function'
+        ? this.engine.startUpDown() : { ok: false, reason: 'not_available' }),
+      updownTurn: () => (typeof this.engine.turnCard === 'function'
+        ? this.engine.turnCard() : { ok: false, reason: 'not_available' }),
+      updownNext: () => (typeof this.engine.nextCard === 'function'
+        ? this.engine.nextCard() : { ok: false, reason: 'not_available' }),
+      /*
        * UNLAUNCH ENDS THE WHOLE EVENING. The engine goes back to a fresh lobby,
        * but the order lived on the SESSION too — so the control view went on
        * offering "Continue to the bingo" over a night nobody was running, and
@@ -2481,6 +2498,14 @@ export class Session {
       const out = this.engine.steerRace(String(body.playerId || ''), body.steer);
       if (out.ok && !out.same) this.store.save(this.engine.state);
       return out;
+    }
+    /*
+     * UP OR DOWN: higher or lower. Behind `ownsPlayer` above like every other
+     * player action — a vote decides who is out, so a phone that could vote
+     * as somebody else could knock them out of the game.
+     */
+    if (action === 'updown' && typeof this.engine.voteUpDown === 'function') {
+      return this.engine.voteUpDown(String(body.playerId || ''), String(body.choice || ''));
     }
     if (action === 'arcade') {
       return this.engine.arcadeScore(String(body.playerId || ''), body.score, String(body.game || ''));

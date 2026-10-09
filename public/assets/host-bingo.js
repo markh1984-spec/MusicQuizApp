@@ -124,6 +124,7 @@ export function bingoActions(s, act, minor) {
     : order.nextKind === (s.game || 'bingo') ? 'the next game'
     : order.nextKind === 'cards' ? 'the card bingo'
     : order.nextKind === 'race' ? 'Pub Prix'
+    : order.nextKind === 'updown' ? 'Up or Down'
     : order.nextKind === 'bingo' ? 'the music bingo' : 'the quiz';
 
   /*
