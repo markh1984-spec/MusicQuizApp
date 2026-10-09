@@ -169,6 +169,10 @@ at a time from here (see `todo/console.md`).
   filled, on every scheme.
 - **Choose** — a field and a dropdown look alike; the dropdown's chevron sits
   on a small block of the account's colour, the cue that it opens.
+- **Switches** (the hat switch, the tier rungs, In the room / Online, On/Off)
+  — the chosen half is a raised face with paper type and the account colour
+  underlined, exactly like the lit door in the menu. Never a fill: one mark
+  means "this one" everywhere. A lit tier rung keeps its metal.
 
 ### The projector
 - **Options** are black tiles with a thick outline in their own ink and a

@@ -83,7 +83,7 @@ const TINT = { top: 0.30, bottom: 0.16 };
  * string `LAUNCHERS` and the console's `TABS` already use.
  */
 const KIND_EDGE = {
-  quiz: '#2fe07a',
+  quiz: '#19c37d',
   bingo: '#a855f7',
   // Card bingo: the deck's own red, so a night of two bingos tells them apart.
   cards: '#e5484d',

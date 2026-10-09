@@ -103,6 +103,9 @@
   --d: #19c37d;
   --e: #ff6c2f;
   --f: #9b7bff;
+  /* the old cyan accent: the poster has no cyan, so what used it — links on
+     the control view, the picker banner — prints in paper */
+  --cool: #f2ede4;
 }
 
 /* Every surface reads the same three values, whatever page it is on. The
@@ -463,15 +466,32 @@ input[type="number"], input[type="url"], input:not([type]), textarea {
 .cam-guide::after { background: var(--hot) !important; }
 .lb-go { font-family: var(--font-display); font-size: 26px !important; font-weight: 900 !important; line-height: 1; } /* line-height 1 keeps the button the height style.css measured --bay-h against */
 .lb-go:disabled { background: none !important; border: 2px dashed var(--line-strong) !important; color: var(--ink-dim) !important; }
-/* the owner's hat switch keeps its fill (it is his, and only his) */
-.hat-switch .hat-half.live { background: var(--hot) !important; color: var(--ink-black) !important; }
-/* the in-the-room / online switch is a choice, not the night */
-.lb-mode-switch .hat-half.live, .lb-mode-switch .hat-half[data-online="1"].live {
-  background: var(--raised) !important; color: var(--ink) !important;
-  box-shadow: inset 0 0 0 1px var(--line-strong) !important;
+/*
+ * EVERY SWITCH WEARS THE MENU'S MARK — 9 October 2026, evening. Mark: "you
+ * missed a few bits", with the hat switch, the tier rungs, In the room /
+ * Online and Hide in the picture. They were the old capsules with the colour
+ * flattened, and "this one" was drawn three different ways in one bar: a pink
+ * fill, a grey fill and a ring. Now a chosen half reads like the lit door
+ * beside it — a raised face, paper type, the account colour underlined — so
+ * there is one mark for "this one" and no second filled shape near Launch.
+ * Lit tier rungs keep their metals: there the colour is the meaning.
+ */
+.hat-switch, .tier-preview { border-radius: var(--r-field) !important; background: var(--panel) !important; border: 1px solid var(--panel-line) !important; }
+.hat-switch .hat-half, .tier-preview .tier-half {
+  border-radius: 7px !important; font-family: var(--font-display); font-weight: 800 !important;
+  letter-spacing: 0.01em !important; font-size: 15px; line-height: 1.1;
 }
-.hat-switch { background: var(--raised) !important; border: 1px solid var(--panel-line) !important; }
-.hat-switch .hat-half { font-weight: 700 !important; }
+/* one face and size for both now, so the rungs lose the extra pixel of
+   padding style.css gave them for a smaller font: level, measured */
+@media (min-width: 561px) { .tier-preview .tier-half { padding-top: 10px; padding-bottom: 10px; } }
+.hat-switch .hat-half.live, .lb-mode-switch .hat-half.live, .lb-mode-switch .hat-half[data-online="1"].live,
+.tier-preview .tier-half.live:not(.t-bronze):not(.t-silver):not(.t-gold) {
+  background: var(--raised) !important; color: var(--ink) !important; box-shadow: none !important;
+  text-decoration: underline 3px var(--hot); text-underline-offset: 5px;
+}
+.hat-switch .hat-half:hover:not(.live), .tier-preview .tier-half:hover:not(.live) { background: var(--raised) !important; }
+.topbar-out, .lb-fold { font-family: var(--font-display); font-weight: 800 !important; font-size: 16px !important; letter-spacing: 0.01em; }
+.lb-fold { border-radius: var(--r-field) !important; }
 
 /* The Tonight tiles. */
 .lb-tile.lb-drop, .lb-tile.mix-drop, .bench-slot .lb-drop { border: 2px dashed var(--line-strong) !important; color: var(--ink-dim) !important; background: none !important; }
@@ -545,6 +565,44 @@ body.landing { background: var(--bg) !important; }
 /* The narrowest phones: the header's three things on one line. It overflowed
    by 23px before this file and by 72 with the links kept whole, so the
    brand and the button step down rather than "Sign in" breaking in two. */
+/*
+ * WHAT THE FIRST PASS MISSED — 9 October 2026, evening. Found by a computed-
+ * style scan of every door, every tab and the live screens, and by listing
+ * every gradient left in style.css rather than by eye: a disabled Save still
+ * wore the old sweep, the editor's round head its pink-and-cyan wash, a dozen
+ * controls the top-lit white face, and the intro round's equaliser, the bingo
+ * call and the owner's generator their two-colour fills.
+ */
+/* a disabled filled control is the same flat ink; its own rule dims it */
+:is(.editor button.go, .running-links .control-link, .pack-card .go, .gen-row .go, .sheet-actions .go,
+    .game-head .go, .inv-actions .go, .sign-in button.go, .panel.joinq .go, .sugg-compose .go, .sugg-send,
+    .team-add, .v-go, .vp-form button.primary, .vp-play, .photo-gate-go, .ld-signup-form button.go,
+    .camera-btn, .chat-send, .cam-send, .lock-btn, .own-open):disabled {
+  background: var(--hot) !important; color: var(--ink-black) !important; box-shadow: none !important;
+}
+/* the old top-lit face on ordinary things: a flat raised face, like .minor */
+:is(.cal-cell.has, .arcade-pick-one, .wait-item, .by-slot, .bay-head-live, .mine-pick.is-head,
+    .dj-card, .dj-shoot, .dj-go, .dj-send, .dj-door-links a.minor, .vote-pic) {
+  background: var(--raised) !important;
+}
+:is(.bay-head-live, .mine-pick.is-head):hover { background: color-mix(in srgb, var(--ink) 8%, var(--raised)) !important; }
+.bay-pick.tinted { background: linear-gradient(var(--pk-b), var(--pk-b)), var(--panel) !important; }
+/* green that makes something: flat green, ink-black type */
+.console .bench .bench-go, .bingo-call:not(:disabled) { background: var(--good) !important; color: var(--ink-black) !important; }
+.panel.quiz-generate { border-color: var(--panel-line) !important; }
+.panel.quiz-generate .gen-row .go { background: color-mix(in srgb, var(--good) 14%, var(--raised)) !important; color: var(--good) !important; border: 1px solid color-mix(in srgb, var(--good) 60%, transparent) !important; }
+/* the intro round's equaliser and the owner's spend bars: one ink */
+.intro-visual i, .budget-bar span, .job-bar span { background: var(--hot) !important; }
+.now-playing { background: var(--panel) !important; }
+/* the editor */
+.round-head { background: var(--raised) !important; }
+.round-head .type-tag { text-transform: none !important; letter-spacing: 0.01em !important; font-family: var(--font-display); font-size: 14px !important; }
+.extra-fields.cue { background: color-mix(in srgb, var(--gold) 8%, transparent) !important; border-color: color-mix(in srgb, var(--gold) 30%, transparent) !important; }
+/* the last cyan washes */
+.pick-banner { background: var(--raised) !important; border-color: var(--line-strong) !important; }
+.ad-pick-tag { background: var(--raised) !important; color: var(--ink) !important; }
+.cal-dot.one { background: rgba(242, 237, 228, 0.14) !important; }
+
 @media (max-width: 420px) {
   .ld-top .brand { gap: 6px; }
   .ld-top .brand-name { font-size: 20px !important; }
