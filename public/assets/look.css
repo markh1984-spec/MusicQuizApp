@@ -461,7 +461,7 @@ input[type="number"], input[type="url"], input:not([type]), textarea {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23100f0e' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"), linear-gradient(var(--hot), var(--hot)) !important;
 }
 .cam-guide::after { background: var(--hot) !important; }
-.lb-go { font-family: var(--font-display); font-size: 26px !important; font-weight: 900 !important; }
+.lb-go { font-family: var(--font-display); font-size: 26px !important; font-weight: 900 !important; line-height: 1; } /* line-height 1 keeps the button the height style.css measured --bay-h against */
 .lb-go:disabled { background: none !important; border: 2px dashed var(--line-strong) !important; color: var(--ink-dim) !important; }
 /* the owner's hat switch keeps its fill (it is his, and only his) */
 .hat-switch .hat-half.live { background: var(--hot) !important; color: var(--ink-black) !important; }
@@ -480,6 +480,10 @@ input[type="number"], input[type="url"], input:not([type]), textarea {
 .lb-tile.is-pack { border: 2px solid var(--panel-line) !important; }
 .lb-tile.is-pack.tinted { background: linear-gradient(var(--pk-b), var(--pk-b)), var(--panel) !important; }
 .lb-tile-name { font-weight: 700; }
+/* The round-type line is a secondary line, so it is set at the note size.
+   At 16px Hanken's "knowledge" is 77px and a 1000px window leaves it 73 beside
+   the dial (`bar-layout.mjs` caught it running under). */
+.lb-tile-sub { font-size: var(--fs-note); }
 .gap-dial { background: var(--raised) !important; border: 1px solid var(--panel-line) !important; }
 .lb-rd.on { background: var(--raised) !important; border: 1px solid var(--panel-line) !important; }
 .lb-say { color: var(--ink-dim) !important; }
