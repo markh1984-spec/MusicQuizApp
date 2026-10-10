@@ -119,6 +119,15 @@ body {
   --raised: #221f1c;
   --line-strong: rgba(242, 237, 228, 0.28);
 }
+/* AND THE CONSOLE'S OWN TWO TOKENS TAKE THE PAGE'S VALUE, NOT THE SURFACE'S.
+   style.css sets `body.console { --panel: var(--surface); --panel-line:
+   var(--surf-line) }`, and the rule above points those back at --panel and
+   --panel-line: a cycle, so both resolved to NOTHING on the console. Every
+   `var(--panel)` fill and every `var(--panel-line)` hairline there silently
+   dropped out — found 10 October 2026, when the pack cards came out the page's
+   own colour with no frame and no tint. `inherit` takes :root's value, so a
+   seasonal look's own panel still comes through. */
+body.console { --panel: inherit; --panel-line: inherit; }
 
 /* ------------------------------------------------- the ambience, removed */
 
@@ -535,12 +544,43 @@ input[type="number"], input[type="url"], input:not([type]), textarea {
 .lb-say { color: var(--ink-dim) !important; }
 .lb-ready, .lb-ready b { color: var(--ink) !important; }
 
-/* The pack shelf: a flat colour block per era, the era word printed into it,
-   the title in the display face. */
-.pack-card { border: 2px solid var(--panel-line) !important; box-shadow: none !important; }
-.pack-card.tinted { background: linear-gradient(var(--pk-b), var(--pk-b)), var(--panel) !important; }
-.pack-card.tinted:not(.broken) { border-bottom: 3px solid var(--pk-edge) !important; }
-.pack-card.shut::before { background: linear-gradient(to top, rgba(16, 15, 14, 0.92) 40%, transparent) !important; }
+/*
+ * THE PACK CARD — 10 October 2026, Mark: "can we redesign this slightly", off
+ * the bingo shelf, choosing option B of three rendered on the real shelf.
+ *
+ * - THE ERA WORD IS PRINTED, NOT GHOSTED: 80s / DISCO / 00s in the subject's
+ *   own ink (`--pk-ink`, from pack-look.js) at the top left, whole and
+ *   readable. It was a faded word behind the title with a fade over it, the
+ *   pin sitting on it and the title running through it.
+ * - NO COLOURED FOOT. The kind of pack was a curved 3px bottom edge — the very
+ *   mark taken off every button on 9 October. The kind is in the WORDS
+ *   ("40 tracks", "40 questions", "52 cards") and in the tab you are on.
+ * - A PLAIN CARD: the panel and its hairline. No wash, no lines, no fade.
+ * - THE PIN IS TOP RIGHT, so it never sits on the era word.
+ * - ONE TITLE SIZE, left-aligned; the three-line clamp stays as the last
+ *   resort it always was, and the full name is the tooltip.
+ * - THE COUNT AND WHEN IT WAS PLAYED ARE TWO LINES (console-packs.js), the
+ *   second brighter while it still says "Never played".
+ * - A QUIZ CARD IS 10:11, NOT SQUARE, with a smaller word: it carries a row
+ *   of round squares, and square it ran its title into the era word. Not
+ *   taller than that — the first card must still sit in a 900px window with
+ *   the Tonight slot it is dragged to (console-frame.mjs).
+ */
+/* the dashed frame of a pack already in Tonight is style.css's, in the
+   account colour, so this one leaves it alone rather than name that colour */
+.pack-card { border-width: 2px !important; box-shadow: none !important; }
+.pack-card:not(.in-tonight) { border: 2px solid var(--panel-line) !important; }
+.pack-card.broken { border-color: var(--bad) !important; }
+.pack-card.tinted:not(.in-tonight) { background: var(--panel) !important; }
+/* "In tonight" sits top right: the pin steps down beneath it,
+   and a pack already in Tonight drops its era word — it is dimmed and dashed,
+   and the label says the one thing that matters about it now */
+.pack-card.shut.in-tonight .pack-pin { top: 22px !important; }
+.pack-card.in-tonight { background: none !important; }
+.pack-card.shut.in-tonight .pack-word { visibility: hidden; }
+.pack-card.shut::before { display: none !important; }
+.pack-card.shut { align-items: stretch; padding: 11px 12px !important; gap: 4px !important; }
+.pack-card.shut.has-rounds { aspect-ratio: 10 / 11; }
 .pack-word {
   background: none !important;
   -webkit-background-clip: border-box !important; background-clip: border-box !important;
@@ -552,11 +592,56 @@ input[type="number"], input[type="url"], input:not([type]), textarea {
   color: rgba(242, 237, 228, 0.16) !important;
   opacity: 1 !important;
 }
+/* on a shelf card: whole, at the top left, in the subject's own ink knocked
+   halfway back into the card, so it is the poster's headline without being
+   brighter than the title. IN THE FLOW, as the card's first line, pushed to
+   the top by its own auto margin — so a long name can never run into it: the
+   card grows instead, and only where it must, which at the framed widths is
+   nowhere on the quiz shelf. */
+.pack-card.shut .pack-word {
+  position: static !important; flex: none; margin-bottom: auto; align-self: flex-start;
+  inset: 10px auto auto 12px !important; right: auto !important; bottom: auto !important;
+  display: block !important;
+  font-size: calc(var(--pk-word-size) * 0.95) !important;
+  line-height: 0.85 !important; letter-spacing: -0.01em !important;
+  color: color-mix(in srgb, var(--pk-ink, #a8a093) 42%, var(--panel)) !important;
+}
+/* and it scales with the card: between 900 and 1150px six cards share a narrow
+   column and there is no height left for the word above a two-line title, so
+   it shrinks with the card and, there, steps back to a tint behind the words */
+/* the card grows rather than clip a name: `clip` is not a scroll container,
+   so the aspect ratio's automatic minimum (its content) applies, where
+   `hidden` would hold it square and squeeze the title to two lines */
+.pack-card.shut { container-type: inline-size; min-height: auto !important; overflow: hidden !important; overflow: clip !important; }
+.pack-card.shut .pack-word { font-size: min(calc(var(--pk-word-size) * 0.95), 38cqi) !important; }
+/* a quiz card spends a row on its round squares, so its word is smaller */
+.pack-card.shut.has-rounds .pack-word { font-size: min(calc(var(--pk-word-size) * 0.72), 29cqi) !important; }
+@container (max-width: 110px) {
+  .pack-card.shut .pack-word { position: absolute !important; color: color-mix(in srgb, var(--pk-ink, #a8a093) 22%, var(--panel)) !important; }
+  /* and the name steps down rather than lose a word: a truncated name is
+     wrong where a wrapped one is only untidy (style.css says why) */
+  .pack-card.shut .pack-title.t-s, .pack-card.shut .pack-title.t-m, .pack-card.shut .pack-title.t-l { font-size: 15px !important; }
+  /* the word is behind the words here, so the title keeps a band clear at the
+     top for the pin (and for "In tonight" and the pin under it) — the card
+     grows a little rather than print a name under a pin. And a fourth line:
+     the card can grow now, so the clamp that guarded a square is not needed
+     to cut "MBC 22 - 2000s & 2010s Singalongs" short */
+  .pack-card.shut > .pack-title { margin-top: 16px; -webkit-line-clamp: 4 !important; }
+  .pack-card.shut.in-tonight > .pack-title { margin-top: 40px; }
+}
+/* a card that grew to fit its name takes its row with it, so one row is one
+   height rather than a ragged edge */
+.pack-grid > .pack-card.shut { align-self: stretch; justify-self: stretch; }
+.pack-card.shut .pack-pin { left: auto !important; right: 0 !important; }
 button.pack-title { font-family: var(--font-display); font-weight: 800 !important; line-height: 1 !important; color: var(--ink) !important; }
-.pack-card.shut .pack-title.t-s { font-size: 22px !important; }
-.pack-card.shut .pack-title.t-m { font-size: 19px !important; }
-.pack-card.shut .pack-title.t-l { font-size: 16px !important; }
+.pack-card.shut .pack-title { text-align: left; padding-left: 0 !important; padding-right: 0 !important; }
+.pack-card.shut .pack-title.t-s, .pack-card.shut .pack-title.t-m, .pack-card.shut .pack-title.t-l { font-size: 18px !important; line-height: 1.02 !important; }
 .pack-card .tiny { color: var(--ink-dim) !important; }
+.pack-card.shut > .pack-meta { display: grid !important; gap: 1px; -webkit-line-clamp: unset !important; text-align: left; font-size: 12.5px; line-height: 1.25; }
+.pack-meta .pack-count { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pack-meta .pack-played { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pack-meta .pack-played.is-fresh { color: var(--ink); }
+.pack-card.shut > .pack-rounds { justify-content: flex-start !important; margin: 2px -12px 0 !important; padding: 0 8px !important; gap: 2px !important; }
 
 /* =================================================================
  * THE SALES PAGE

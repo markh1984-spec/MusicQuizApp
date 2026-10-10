@@ -2867,28 +2867,10 @@ body.console .panel { position: relative; }
 .pack-card.tinted, .lb-tile.tinted {
   background: linear-gradient(120deg, var(--pk-a), var(--pk-b)), var(--panel);
 }
-/*
- * AND AN EDGE ALONG THE BOTTOM, in the same colour at full strength.
- *
- * The wash has to stay faint or it fights the title, which means the HUE is
- * hard to name on a dark card and two close colours read as one. Three pixels
- * with nothing written over them says it outright — so the two together do a
- * job neither does alone: the wash gives the card a mood, the edge gives it an
- * identity you can match against the Tonight slot from across the page.
- *
- * ON THE BOTTOM, at the host's own reading, and he is right: an ordinary button
- * already carries the account's colour on its bottom border and the tab bar
- * underlines the tab you are on, so this is a shape the eye has already learned
- * here. A stripe down the LEFT was rendered beside it and turned down for that
- * reason — nothing else in the app does it, so it would be a second visual
- * language invented for a job the first one already covers.
- *
- * `:not(.broken)` is load-bearing. A broken pack is bordered in `--bad`, and
- * this rule comes later in the sheet, so without the guard a pack's subject
- * colour would quietly overwrite the red on the one card that has something
- * wrong with it. Red keeps its meaning everywhere; that is the rule.
- */
-.pack-card.tinted:not(.broken) { border-bottom: 3px solid var(--pk-edge); }
+/* THE KIND OF PACK WAS A 3px FOOT HERE, in quiz green or bingo purple, and it
+   came off on 10 October 2026 with the curved bottom edge on every button: the
+   kind is in the words ("40 tracks", "40 questions") and the tab. look.css,
+   THE PACK CARD. */
 
 /* ---- THE ERA, PRINTED BIG BEHIND THE CARD.
  *
@@ -2983,22 +2965,8 @@ body.console .panel { position: relative; }
  * the corner is still free and where you are scanning nine of them.
  */
 .lb-tile.is-pack .pack-word { display: none; }
-/*
- * THE TILE NEEDS ITS OWN, MORE SPECIFIC RULE — and it was written without one,
- * which cost the feature its whole point on the half that matters most.
- *
- * `.lb-tile.is-pack` sets the SHORTHAND `border: 1px solid var(--panel-line)`,
- * it has the same specificity as `.lb-tile.tinted`, and it appears three
- * thousand lines further down — so it won, and the shorthand reset all four
- * sides. The slot showed a hairline in the account colour while the card below
- * it showed a bold subject-coloured edge: **the pack changed appearance on
- * being dragged into the hole**, which is the exact thing the shared function
- * exists to prevent. Nothing threw, nothing failed, and the card looked right.
- *
- * Naming `.is-pack` here out-specifies it wherever either rule sits in the
- * file, rather than relying on source order — which is what let this happen.
- */
-.lb-tile.is-pack.tinted { border-bottom: 3px solid var(--pk-edge); }
+/* (The tile's kind foot went with the pack card's, 10 October 2026; its second
+   line already says "bingo" or the round's type in words.) */
 /* Two patterns, shared by every subject that wants one — scan lines for the
    decades that had them and a diagonal for the heavy ones. Deliberately only
    two: a texture per subject would be a stylesheet that grows every time a
@@ -11605,10 +11573,7 @@ body.landing {
 .bay-pick.tinted {
   background: linear-gradient(120deg, var(--pk-a), var(--pk-b)), var(--surf-2, rgba(255, 255, 255, 0.04));
 }
-/* THE KIND ALONG THE BOTTOM, exactly as a pack card wears it — quiz green,
-   bingo purple. Three pixels that answer "which game is this" before the words
-   are read, on the one list where both kinds sit together. */
-.bay-pick.tinted { border-bottom: 2px solid var(--pk-edge); }
+/* (The rail row's kind foot went with the pack card's, 10 October 2026.) */
 .bay-side { min-width: 0; }
 .bay-side .lg-table { margin-top: 8px; }
 

@@ -382,6 +382,9 @@ export function packLook(pack) {
       word: subject.word || '',
       a: rgba(subject.a, TINT.top),
       b: rgba(subject.b, TINT.bottom + 0.1),
+      // the subject's own colour at full strength, which the era word is
+      // printed in on the shelf card — the wash above is the same hue faded
+      ink: rgba(subject.a, 1),
       pattern: subject.pattern || 'none',
     };
   }
@@ -393,6 +396,7 @@ export function packLook(pack) {
     word: '',
     a: `hsla(${h}, 55%, 45%, ${TINT.top})`,
     b: `hsla(${(h + 34) % 360}, 50%, 26%, ${TINT.bottom + 0.1})`,
+    ink: `hsla(${h}, 55%, 45%, 1)`,
     pattern: 'none',
   };
 }
@@ -418,7 +422,7 @@ export function packLookAttrs(pack, kind) {
     // The edge is the KIND, the wash is the subject — see the note on
     // KIND_EDGE. They are on one element and mean two different things, which
     // is exactly why they must not be generated in two different places.
-    style: `--pk-a: ${look.a}; --pk-b: ${look.b}; --pk-edge: ${kindEdge(kind)}`,
+    style: `--pk-a: ${look.a}; --pk-b: ${look.b}; --pk-ink: ${look.ink}; --pk-edge: ${kindEdge(kind)}`,
     word: look.word,
     /*
      * Sized here rather than in the sheet, because the length varies and the

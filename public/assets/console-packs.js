@@ -1253,6 +1253,19 @@ export function packCard(kind, pack) {
   const detail = `${howMany} ${word}${howMany === 1 ? '' : 's'}`;
 
   const played = playedLine(pack);
+  /*
+   * THE COUNT AND WHEN IT WAS PLAYED ARE TWO LINES, AND THE TALLY IS A TOOLTIP
+   * — 10 October 2026, Mark's "can we redesign this slightly" off the shelf.
+   * As one line they wrapped wherever the words happened to fall and the clamp
+   * cut "Played here 8 days ago · 3 times in all" to "…". The count is its own
+   * line; when it was played here is the next one, brighter while it is still
+   * "Never played"; the running tally ("3 times in all") moves into that line's
+   * tooltip, because it is the least of the three for choosing tonight's pack.
+   */
+  const tally = played.match(/^(.*) · (\d+ times? in all)$/);
+  const playedFace = tally ? tally[1] : played;
+  const playedTip = tally ? `Played ${tally[2]}` : '';
+  const hasRounds = kind === 'quiz' && !pack.broken && roundCount > 0;
 
   /*
    * WHAT A CARD KEEPS — and it is not quite "the name only".
@@ -1275,7 +1288,7 @@ export function packCard(kind, pack) {
    */
   const look = packLookAttrs(pack, kind === 'quiz' && isBreakoutPack(pack) ? 'breakout' : kind);
   const el = node(`
-    <div class="pack-card shut ${look.cls} ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''} ${packIsInTonight(pack.id) ? 'in-tonight' : ''}"
+    <div class="pack-card shut ${look.cls} ${pack.broken ? 'broken' : ''} ${ownPack ? 'own' : ''} ${freshness(pack).expired ? 'stale' : ''} ${packIsInTonight(pack.id) ? 'in-tonight' : ''} ${hasRounds ? 'has-rounds' : ''}"
       style="${look.style}"
       draggable="${pack.broken ? 'false' : 'true'}" data-pack="${esc(pack.id)}" data-kind="${esc(kind)}">
       ${packWord(look)}
@@ -1288,8 +1301,8 @@ export function packCard(kind, pack) {
            shortTitle() in pack-look.js. -->
       <button class="pack-title ${titleSize(shortTitle(pack.title))}" title="${esc(pack.title)}">${esc(shortTitle(pack.title))}</button>
       ${ownPack ? '<div class="pack-yours" title="You wrote this one. Nobody else can read it.">Yours</div>' : ''}
-      <div class="tiny">${esc(detail)} · ${esc(played)}</div>
-      ${kind === 'quiz' && !pack.broken && roundCount ? `<div class="lb-rounds pack-rounds" title="Tap a round to put just that one in Tonight — or drag it there">
+      <div class="tiny pack-meta"><span class="pack-count">${esc(detail)}</span><span class="pack-played${/^Never played/.test(playedFace) ? ' is-fresh' : ''}"${playedTip ? ` title="${esc(playedTip)}"` : ''}>${esc(playedFace)}</span></div>
+      ${hasRounds ? `<div class="lb-rounds pack-rounds" title="Tap a round to put just that one in Tonight — or drag it there">
         ${(pack.rounds || []).map((r, i) => `
         <button class="lb-rd on has-glyph" type="button" draggable="true" data-round="${i}"
           title="${esc(roundWord(r.type))} — ${esc(r.title || `Round ${i + 1}`)} — tap to put just this round in Tonight"

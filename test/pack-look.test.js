@@ -199,7 +199,7 @@ test('nothing a human typed reaches the style attribute', () => {
   const attrs = packLookAttrs({ title: '"><script>alert(1)</script>' });
   assert.ok(!attrs.style.includes('<'), attrs.style);
   assert.ok(!attrs.style.includes('"'), attrs.style);
-  assert.match(attrs.style, /^--pk-a: [^;]+; --pk-b: [^;]+; --pk-edge: [^;]+$/);
+  assert.match(attrs.style, /^--pk-a: [^;]+; --pk-b: [^;]+; --pk-ink: [^;]+; --pk-edge: [^;]+$/);
 });
 
 test('a pack that says Disco is a disco pack, not a soul one', () => {

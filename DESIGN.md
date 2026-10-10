@@ -179,6 +179,15 @@ at a time from here (see `todo/console.md`).
   underlined, exactly like the lit door in the menu. Never a fill: one mark
   means "this one" everywhere. A lit tier rung keeps its metal.
 
+### Pack cards (the shelf)
+A plain panel with its hairline. The era — 80s, DISCO, 00s — is printed whole
+at the top left in the subject's own ink, knocked halfway back into the card;
+the title below in the display face at one size, then the count, then when it
+was last played here (paper while it still says "Never played"). The pin sits
+top right. A quiz card is 10:11, its word a little smaller, to hold its row
+of round squares; every other card is square, and any card grows rather than
+clip its name. No wash, no fade, no coloured foot.
+
 ### The projector
 - **Options** are black tiles with a thick outline in their own ink and a
   filled letter block; the right answer fills green.
@@ -200,9 +209,8 @@ ink, a filled letter block. The timer is the same segmented meter.
 - **Don't** bring back glows, gradient fills or gradient text — the poster is
   flat, and the old look's tells were exactly those.
 - **Don't** name `--hot`/`--hot-2` in `look.css`.
-- **Don't** put a coloured bottom border on a control; the account colour is
-  an underline under the words. (A pack card's green or purple foot is the
-  kind of pack, not a button, and stays.)
+- **Don't** put a coloured bottom border on a control or a card; the account
+  colour is an underline under the words, and a pack's kind is said in words.
 - **Don't** add a third typeface, or load a font from anywhere but
   `/assets/fonts/`.
 - **Don't** use capitals for an ordinary label.

@@ -4074,35 +4074,31 @@ Launch, and nine identical cards make that a reading task.
   stripped so "R'n'B" and "RnB" are one thing, so the spaced forms are listed
   too.
 
-- **A WASH, NEVER A FILL AND NEVER A BORDER**, capped low — which is why it can
-  coexist with gold/green/red: a Christmas pack IS red and green, and `broken`
-  is a BORDER, so the two never speak in the same place. Test on the alpha.
-- **The same colours and trimmed name on the card and the Tonight slot**, from
-  one function. **The same pack is the same colour on every device and
-  reload.**
-- **THE EDGE IS THE KIND OF PACK; THE BACKGROUND IS THE ERA.** Two channels,
-  two questions, one glance. Quiz green, bingo purple, **adding a kind is one
-  line** in `KIND_EDGE`. **The Tonight tile takes its kind from the PACK, not
-  the tab** — Tonight holds both at once, and two TABS can share one kind.
-- **A SHUT CARD IS A SQUARE POSTER.** **`aspect-ratio` is on `.shut` ALONE**,
-  or the shape decides what an open card may carry. **The fade is a
-  `::before`, never a wrapper.**
+- **ON THE SHELF THE ERA IS A WORD IN ITS OWN INK; ON A TONIGHT TILE A WASH**
+  (10 October 2026, Mark's pick of three rendered). Whole, top left, in
+  `--pk-ink` knocked halfway into the panel — never ghosted behind the title.
+  It shrinks with the card (`cqi`) and is a faint tint from 900 to 1150px,
+  where six cards leave no height for it. **The tint is never a border**:
+  `broken` keeps its red.
+- **THERE IS NO KIND EDGE ANY MORE** — the curved 3px foot went with the
+  buttons'. The kind is in the WORDS ("40 tracks", "40 questions", a tile's
+  "bingo"). **Do not bring a coloured bottom border back.**
+- **The same pack is the same colour on every device and reload**, from one
+  function.
+- **A SHUT CARD IS A SQUARE POSTER, and a QUIZ card (`has-rounds`) is 10:11** —
+  its round squares pushed the title into the era word. **`aspect-ratio` is on
+  `.shut` ALONE.** **It GROWS rather than clip a name** — `overflow: clip`, never
+  `hidden`, which holds the ratio and squeezes the title.
 - **THE DRAWN TITLE IS TRIMMED AND THE STORED ONE IS NOT** (`shortTitle()`).
   **Nothing writes anything — SEARCH LOOKS INSIDE TITLES.** **Falls back to
-  the full title when the trim empties it.** Three sizes by length, calibrated
-  to the REAL 146px card: **a design measured against invented content is
-  measured against nothing**.
-- **THE ERA IN THE CORNER RAN THROUGH THE TITLES** — the Tonight tile keeps
-  the corner. **Only printed when short enough to read.** Gradient text behind
-  an `@supports` with a SOLID colour first. It needed `position: relative` on
-  `.pack-card` — the **Yours** badge was positioning against the wrong
-  ancestor.
-- **THE EDGE IS THE KIND AND THE WASH IS THE ERA.** **On the bottom because an
-  ordinary button already carries the account colour there** — a LEFT stripe
-  was rendered and turned down. **`:not(.broken)` is load-bearing**: the tint
-  rule comes later and would overwrite the red. **The TILE needs
-  `.lb-tile.is-pack` named in its rule** — **a shorthand `border` lower in the
-  sheet beats a longhand `border-bottom` higher up, and nothing throws.**
+  the full title when the trim empties it.** **ONE size, and a name WRAPS
+  rather than truncates**; the count and when it was played are two lines, the
+  tally in the played line's tooltip.
+- **AND THE CONSOLE'S `--panel` WAS A LOOP** — style.css's `body.console
+  { --panel: var(--surface) }` against look.css's `--surface: var(--panel)`
+  resolved both to nothing, so every console card lost its fill and frame.
+  `body.console { --panel: inherit }`. **A token defined by another token can
+  be a cycle, and nothing throws.**
 - **CARTOON FIGURES WERE TRIED AND DO NOT READ — do not re-propose them
   without new evidence.** **And never a named person** — this app is sold.
 
